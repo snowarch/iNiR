@@ -5,9 +5,6 @@ import QtQuick.Layouts
 import qs
 import qs.modules.common
 import qs.modules.common.widgets
-import qs.modules.iris.style
-import qs.modules.iris.components
-
 // A value in a widget's quick controls: its name and figure on one line, the slider under it.
 // `moved` fires while dragging (preview), `committed` once on release.
 ColumnLayout {
@@ -24,7 +21,7 @@ ColumnLayout {
     signal committed(real value)
 
     readonly property bool iris: (Config.options?.panelFamily ?? "ii") === "iris"
-    readonly property real d: root.iris ? IrisStyle.density : 1
+    readonly property real d: root.iris ? FamilyStyle.density : 1
     readonly property real span: Math.max(0.0001, root.to - root.from)
     property real live: NaN
     readonly property real shown: Number.isNaN(root.live) ? root.value : root.live
@@ -46,37 +43,40 @@ ColumnLayout {
             Layout.fillWidth: true
             text: root.title
             elide: Text.ElideRight
-            color: root.iris ? IrisStyle.textSecondary : Appearance.colors.colSubtext
-            font.family: root.iris ? IrisStyle.fontMain : Appearance.font.family.main
-            font.pixelSize: root.iris ? IrisStyle.typeMeta : Appearance.font.pixelSize.smallest
+            color: root.iris ? FamilyStyle.textSecondary : Appearance.colors.colSubtext
+            font.family: root.iris ? FamilyStyle.fontMain : Appearance.font.family.main
+            font.pixelSize: root.iris ? FamilyStyle.typeMeta : Appearance.font.pixelSize.smallest
             font.weight: Font.DemiBold
             font.capitalization: root.iris || Appearance.editorialEverywhere ? Font.MixedCase : Font.AllUppercase
             font.letterSpacing: root.iris ? 0 : 1
         }
         StyledText {
             text: root.label(root.shown)
-            color: root.iris ? IrisStyle.textSecondary : Appearance.colors.colOnLayer2
-            font.family: root.iris ? IrisStyle.fontNumbers : Appearance.font.family.numbers
+            color: root.iris ? FamilyStyle.textSecondary : Appearance.colors.colOnLayer2
+            font.family: root.iris ? FamilyStyle.fontNumbers : Appearance.font.family.numbers
             font.features: ({ "tnum": 1 })
-            font.pixelSize: root.iris ? IrisStyle.typeMeta : Appearance.font.pixelSize.smaller
+            font.pixelSize: root.iris ? FamilyStyle.typeMeta : Appearance.font.pixelSize.smaller
         }
     }
 
-    IrisScrubber {
+    FamilyPart {
+        id: familyScrubber
         visible: root.iris
+        when: root.iris
         Layout.fillWidth: true
-        knob: true
-        fillColor: IrisStyle.accent
-        stepSize: root.stepSize / root.span
-        value: (root.value - root.from) / root.span
-        onMoved: v => {
-            root.live = root.snap(root.from + v * root.span)
-            root.moved(root.live)
-        }
-        onSeekRequested: v => {
-            const committed = root.snap(root.from + v * root.span)
-            root.live = NaN
-            root.committed(committed)
+        part: "control.scrubber"
+        props: ({ knob: true, fillColor: FamilyStyle.accent, stepSize: root.stepSize / root.span, value: (root.value - root.from) / root.span })
+        Connections {
+            target: familyScrubber.item
+            function onMoved(v: real): void {
+                root.live = root.snap(root.from + v * root.span)
+                root.moved(root.live)
+            }
+            function onSeekRequested(v: real): void {
+                const committed = root.snap(root.from + v * root.span)
+                root.live = NaN
+                root.committed(committed)
+            }
         }
     }
 

@@ -1,8 +1,0 @@
-{
- "about": "What Waffle draws on surfaces several families share (modules/common/FamilyParts.qml). Part name -> file in this folder.",
- "parts": {
-  "closeConfirm": "closeConfirm/WCloseConfirmContent.qml",
-  "lockSurface": "lock/WaffleLockSurfaceSafe.qml",
-  "lockSurface.hyprland": "lock/WaffleLockSurface.qml"
- }
-}

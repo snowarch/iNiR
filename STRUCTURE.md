@@ -152,9 +152,9 @@ inir/
 **Entry Points:**
 - `shell.qml`: Root entry — loads services, selects panel family, triggers panel loading
 - `modules/ii/critical/ShellIiCriticalPanels.qml`: ii first-frame composition
-- `modules/ii/ShellIiPanelsImpl.qml`: deferred/on-demand ii composition (entries in `modules/ii/plugin.json`)
+- `modules/ii/ShellIiPanelsImpl.qml`: deferred/on-demand ii composition (a part in `modules/ii/plugin.json`)
 - `modules/waffle/critical/ShellWaffleCriticalPanels.qml`: Waffle first-frame composition
-- `modules/waffle/ShellWafflePanelsImpl.qml`: deferred/on-demand Waffle composition (entries in its `plugin.json`)
+- `modules/waffle/ShellWafflePanelsImpl.qml`: deferred/on-demand Waffle composition (a part in its `plugin.json`)
 - `settings.qml`: Standalone shared Settings entrypoint (same page registry as the shell overlay)
 - `welcome.qml`: First-run wizard
 

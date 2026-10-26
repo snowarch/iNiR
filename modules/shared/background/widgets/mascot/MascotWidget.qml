@@ -8,8 +8,6 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.shared.background.widgets
-import qs.modules.iris.style
-
 /**
  * Desktop mascot widget: a pose from the catalog living on the wallpaper
  * layer, pose picked visually in Settings › Widgets › Mascot. Tapping her
@@ -316,7 +314,7 @@ AbstractBackgroundWidget {
                         StyledText {
                             Layout.fillWidth: true
                             text: root.customPath.length > 0 ? Translation.tr("Custom image") : root._poseLabel(root.pose)
-                            color: root.widgetIrisFamily ? IrisStyle.text : Appearance.colors.colOnLayer2
+                            color: root.widgetIrisFamily ? FamilyStyle.text : Appearance.colors.colOnLayer2
                             font.pixelSize: Appearance.font.pixelSize.small
                             font.weight: Font.DemiBold
                             wrapMode: Text.NoWrap

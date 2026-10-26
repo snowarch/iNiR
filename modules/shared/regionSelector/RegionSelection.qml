@@ -3,9 +3,6 @@ import qs
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
-import qs.modules.waffle.regionSelector as WaffleRegion
-import qs.modules.iris.regionSelector as IrisRegion
-import qs.modules.iris.style
 import qs.services
 import QtQuick
 import QtQuick.Controls
@@ -61,29 +58,29 @@ PanelWindow {
     readonly property var shellInsets: ShellLayoutController.desktopInsets(root.screen?.name ?? "")
 
     // Tri-style color support
-    property color overlayColor: root.useIris ? IrisStyle.veilStrong
+    property color overlayColor: root.useIris ? FamilyStyle.veilStrong
         : Appearance.angelEverywhere ? ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.33)
         : Appearance.inirEverywhere ? ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.53)
         : Appearance.auroraEverywhere ? ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.4) : ColorUtils.applyAlpha(Appearance.colors.colScrim, 0.53)
-    property color brightText: root.useIris ? IrisStyle.onMedia
+    property color brightText: root.useIris ? FamilyStyle.onMedia
         : Appearance.inirEverywhere ? Appearance.inir.colText
         : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer0
         : (Appearance.m3colors.darkmode ? Appearance.colors.colOnLayer0 : Appearance.colors.colLayer0)
-    property color brightSecondary: root.useIris ? IrisStyle.onMediaSecondary
+    property color brightSecondary: root.useIris ? FamilyStyle.onMediaSecondary
         : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
         : Appearance.auroraEverywhere ? Appearance.aurora.colTextSecondary
         : (Appearance.m3colors.darkmode ? Appearance.colors.colSecondary : Appearance.colors.colOnSecondary)
-    property color brightTertiary: root.useIris ? IrisStyle.accent
+    property color brightTertiary: root.useIris ? FamilyStyle.accent
         : Appearance.zzzEverywhere ? Appearance.zzz.accent
         : Appearance.inirEverywhere ? Appearance.inir.colPrimary
         : Appearance.auroraEverywhere ? Appearance.colors.colPrimary
         : (Appearance.m3colors.darkmode ? Appearance.colors.colTertiary : Qt.lighter(Appearance.colors.colPrimary))
-    property color selectionBorderColor: root.useIris ? IrisStyle.onMedia
+    property color selectionBorderColor: root.useIris ? FamilyStyle.onMedia
         : Appearance.zzzEverywhere ? Appearance.zzz.accent
         : Appearance.inirEverywhere ? Appearance.inir.colBorder
         : Appearance.auroraEverywhere ? Appearance.aurora.colPopupBorder
         : ColorUtils.mix(brightText, brightSecondary, 0.5)
-    property color selectionFillColor: root.useIris ? IrisStyle.onMediaFill
+    property color selectionFillColor: root.useIris ? FamilyStyle.onMediaFill
         : Appearance.zzzEverywhere ? ColorUtils.transparentize(Appearance.zzz.accent, 0.86)
         : Appearance.inirEverywhere ? ColorUtils.transparentize(Appearance.inir.colPrimary, 0.8)
         : Appearance.auroraEverywhere ? ColorUtils.transparentize(Appearance.colors.colPrimary, 0.8)
@@ -92,7 +89,7 @@ PanelWindow {
     property color windowFillColor: ColorUtils.transparentize(windowBorderColor, 0.85)
     property color imageBorderColor: brightTertiary
     property color imageFillColor: ColorUtils.transparentize(imageBorderColor, 0.85)
-    property color onBorderColor: root.useIris ? IrisStyle.onMedia
+    property color onBorderColor: root.useIris ? FamilyStyle.onMedia
         : Appearance.inirEverywhere ? Appearance.inir.colText
         : Appearance.auroraEverywhere ? Appearance.colors.colOnLayer0 : Appearance.colors.colScrim
     readonly property var windows: useNiri
@@ -702,22 +699,27 @@ PanelWindow {
 
                 Loader {
                     id: controlsLoader
-                    sourceComponent: regionSelectionControls.useWaffle ? waffleControls
-                        : root.useIris ? irisControls : materialControls
+                    sourceComponent: (regionSelectionControls.useWaffle || root.useIris)
+                        && Plugins.part(Plugins.active, "regionToolbar").length > 0 ? familyControls : materialControls
                 }
 
+                // The family's own toolbar (its part `regionToolbar`); Material's below otherwise.
                 Component {
-                    id: irisControls
-                    IrisRegion.IrisOptionsToolbar {
-                        action: root.action
-                        selectionMode: root.selectionMode
-                        onActionChanged: root.action = action
-                        onSelectionModeChanged: root.selectionMode = selectionMode
-                        onDismiss: root.dismiss()
-                        onFullscreenRequested: root.snipFullscreen()
-                        onColorPickerRequested: {
-                            root.dismiss();
-                            ShellExec.execDetachedArgs(["/usr/bin/bash", "-c", "sleep 0.3; /usr/bin/hyprpicker -a"], "Pick color");
+                    id: familyControls
+                    FamilyPart {
+                        id: familyToolbar
+                        part: "regionToolbar"
+                        props: ({ action: root.action, selectionMode: root.selectionMode })
+                        Connections {
+                            target: familyToolbar.item
+                            function onActionChanged(): void { root.action = familyToolbar.item.action }
+                            function onSelectionModeChanged(): void { root.selectionMode = familyToolbar.item.selectionMode }
+                            function onDismiss(): void { root.dismiss() }
+                            function onFullscreenRequested(): void { root.snipFullscreen() }
+                            function onColorPickerRequested(): void {
+                                root.dismiss();
+                                ShellExec.execDetachedArgs(["/usr/bin/bash", "-c", "sleep 0.3; /usr/bin/hyprpicker -a"], "Pick color");
+                            }
                         }
                     }
                 }
@@ -762,23 +764,6 @@ PanelWindow {
                                 colRipple: Appearance.colors.colTertiaryContainerActive
                                 colOnBackground: Appearance.colors.colOnTertiaryContainer
                             }
-                        }
-                    }
-                }
-
-                // Waffle (Windows 11) controls
-                Component {
-                    id: waffleControls
-                    WaffleRegion.WOptionsToolbar {
-                        action: root.action
-                        selectionMode: root.selectionMode
-                        onActionChanged: root.action = action
-                        onSelectionModeChanged: root.selectionMode = selectionMode
-                        onDismiss: root.dismiss()
-                        onFullscreenRequested: root.snipFullscreen()
-                        onColorPickerRequested: {
-                            root.dismiss();
-                            ShellExec.execDetachedArgs(["/usr/bin/bash", "-c", "sleep 0.3; /usr/bin/hyprpicker -a"], "Pick color");
                         }
                     }
                 }

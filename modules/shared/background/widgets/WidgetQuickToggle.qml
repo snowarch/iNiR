@@ -5,9 +5,6 @@ import qs
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
-import qs.modules.iris.style
-import qs.modules.iris.components
-
 // An on/off option in a widget's quick controls: a row with its glyph, its name and a switch. The
 // whole row toggles. A choice between values is WidgetQuickChoices, never a lit capsule.
 Rectangle {
@@ -19,20 +16,20 @@ Rectangle {
     signal toggled()
 
     readonly property bool iris: (Config.options?.panelFamily ?? "ii") === "iris"
-    readonly property real d: root.iris ? IrisStyle.density : 1
+    readonly property real d: root.iris ? FamilyStyle.density : 1
 
     opacity: root.enabled ? 1 : 0.45
     implicitWidth: Math.round(200 * root.d)
     implicitHeight: Math.round(38 * root.d)
-    radius: root.iris ? IrisStyle.radiusRow
+    radius: root.iris ? FamilyStyle.radiusRow
         : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
         : Appearance.regaliaEverywhere ? Appearance.regalia.controlRadius
         : Appearance.rounding.small
-    color: root.iris ? (hover.hovered ? IrisStyle.fillHover : IrisStyle.fillQuiet)
+    color: root.iris ? (hover.hovered ? FamilyStyle.fillHover : FamilyStyle.fillQuiet)
         : ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, hover.hovered ? 0.09 : 0.045)
     Behavior on color {
-        enabled: root.iris ? IrisStyle.motionEnabled : Appearance.animationsEnabled
-        ColorAnimation { duration: root.iris ? IrisStyle.feedbackDuration : Appearance.animation.elementMoveFast.duration }
+        enabled: root.iris ? FamilyStyle.motionEnabled : Appearance.animationsEnabled
+        ColorAnimation { duration: root.iris ? FamilyStyle.feedbackDuration : Appearance.animation.elementMoveFast.duration }
     }
 
     MaterialSymbol {
@@ -44,7 +41,7 @@ Rectangle {
         text: root.iconName
         fill: root.checked ? 1 : 0
         iconSize: Math.round(17 * root.d)
-        color: root.iris ? (root.checked ? IrisStyle.text : IrisStyle.textSecondary)
+        color: root.iris ? (root.checked ? FamilyStyle.text : FamilyStyle.textSecondary)
             : root.checked ? Appearance.colors.colOnLayer2 : Appearance.colors.colSubtext
     }
     StyledText {
@@ -55,9 +52,9 @@ Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         text: root.label
         elide: Text.ElideRight
-        color: root.iris ? IrisStyle.text : Appearance.colors.colOnLayer2
-        font.family: root.iris ? IrisStyle.fontMain : Appearance.font.family.main
-        font.pixelSize: root.iris ? IrisStyle.typeLabel : Appearance.font.pixelSize.smaller
+        color: root.iris ? FamilyStyle.text : Appearance.colors.colOnLayer2
+        font.family: root.iris ? FamilyStyle.fontMain : Appearance.font.family.main
+        font.pixelSize: root.iris ? FamilyStyle.typeLabel : Appearance.font.pixelSize.smaller
     }
 
     HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
@@ -77,13 +74,17 @@ Rectangle {
         width: root.iris ? irisSwitch.width : materialSwitch.width
         height: root.iris ? irisSwitch.height : materialSwitch.height
 
-        IrisSwitch {
+        FamilyPart {
             id: irisSwitch
             visible: root.iris
+            when: root.iris
             anchors.centerIn: parent
-            on: root.checked
-            name: root.label
-            onToggled: answer.restart()
+            part: "control.switch"
+            props: ({ on: root.checked, name: root.label })
+            Connections {
+                target: irisSwitch.item
+                function onToggled(): void { answer.restart() }
+            }
         }
         StyledSwitch {
             id: materialSwitch

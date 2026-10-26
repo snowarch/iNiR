@@ -206,17 +206,17 @@ Scope {
         }
     }
 
-    // The lock surface is the active family's (FamilyParts "lockSurface", "lockSurface.hyprland" where it differs);
+    // The lock surface is the active family's (Plugins part "lockSurface", "lockSurface.hyprland" where it differs);
     // Material's is the shared one. The family is read while unlocked and kept while locked, so a family switch never
     // swaps the surface under a locked session.
-    readonly property string family: Config.ready && !GlobalStates.screenLocked ? FamilyParts.active : root._cachedFamily
+    readonly property string family: Config.ready && !GlobalStates.screenLocked ? Plugins.active : root._cachedFamily
     property string _cachedFamily: "ii"
     onFamilyChanged: if (!GlobalStates.screenLocked) root._cachedFamily = root.family
-    readonly property string familySurface: (!CompositorService.isNiri && FamilyParts.url(root._cachedFamily, "lockSurface.hyprland"))
-        || FamilyParts.url(root._cachedFamily, "lockSurface")
+    readonly property string familySurface: (!CompositorService.isNiri && Plugins.part(root._cachedFamily, "lockSurface.hyprland"))
+        || Plugins.part(root._cachedFamily, "lockSurface")
 
     Component.onCompleted: {
-        if (Config.ready) root._cachedFamily = FamilyParts.active
+        if (Config.ready) root._cachedFamily = Plugins.active
         root.initIfReady()
     }
     
@@ -245,7 +245,7 @@ Scope {
                 id: lockSurfaceLoader
                 active: GlobalStates.screenLocked && Config.ready
                 // A surface that arrives from the wallpaper (iRiS) loads in one go: an async first frame is a bare colour flash.
-                asynchronous: !FamilyParts.flag(root._cachedFamily, "lockSurfaceSync")
+                asynchronous: !Plugins.flag(root._cachedFamily, "lockSurfaceSync")
                 anchors.fill: parent
                 // Don't animate opacity - causes issues during hot-reload
                 opacity: active ? 1 : 0

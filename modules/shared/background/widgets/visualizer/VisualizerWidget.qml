@@ -11,7 +11,6 @@ import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.models
 import qs.modules.common.widgets
-import qs.modules.iris.widgets
 import qs.modules.shared.background.widgets
 
 AbstractBackgroundWidget {
@@ -38,9 +37,9 @@ AbstractBackgroundWidget {
     implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 304) * scaleFactor)
     implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : Math.round(Number(root._readConfigKey("contentHeight") ?? 104) * scaleFactor)
     // Under an iRiS Design that prints this widget (AIRISU), the print is its face; elsewhere it draws itself.
-    irisFace: IrisFaceData.prints.visualizer ? designPrint : null
+    irisDesignPart: "widgetVisualizer"
+    irisDesignPrint: "visualizer"
     irisSizes: ["medium", "small", "large"]
-    Component { id: designPrint; IrisDesignFace { widget: root; part: "widgetVisualizer" } }
     // What a print reads: the spectrum, whether it is moving, and its ceiling.
     readonly property var printPoints: cavaProcess.points
     readonly property bool printLive: root._active && cavaProcess.audioSignalActive

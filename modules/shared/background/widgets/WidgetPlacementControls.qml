@@ -6,8 +6,6 @@ import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
-import qs.modules.iris.style
-
 // Where a widget sits and what can be done to it: anchor, free or quietest spot, scale and
 // opacity, then lock, front, reset and remove. The same page answers "More actions" and a right click,
 // so nothing here opens a popup window over the desktop layer.
@@ -17,7 +15,7 @@ ColumnLayout {
     property bool wide: false
 
     readonly property bool iris: (Config.options?.panelFamily ?? "ii") === "iris"
-    readonly property real d: root.iris ? IrisStyle.density : 1
+    readonly property real d: root.iris ? FamilyStyle.density : 1
     readonly property var zoneGlyphs: ({ topLeft: "north_west", topCenter: "north", topRight: "north_east",
         centerLeft: "west", center: "filter_center_focus", centerRight: "east",
         bottomLeft: "south_west", bottomCenter: "south", bottomRight: "south_east" })

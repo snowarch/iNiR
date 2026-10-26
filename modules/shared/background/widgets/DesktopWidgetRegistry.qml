@@ -14,7 +14,7 @@ import QtQml
 //      no Material face, so Material's shelf leaves it out.
 //   3. Its config block in modules/common/Config.qml (`background.widgets.<key>`, `enable` at `defaultOn`).
 //   4. Its FadeLoader in Background.qml; with `lock`, its Component in modules/iris/lock/IrisLockWidgets.qml.
-//   5. A family's own face stays that family's: an iRiS face is `widgetFace.<part>` in modules/iris/parts.json and
+//   5. A family's own face stays that family's: an iRiS face is `widgetFace.<part>` in modules/iris/plugin.json and
 //      `irisFacePart: "<part>"` on the widget.
 // Entry order is the shelf's; the iRiS gallery keeps its own (IrisFaceData.order, a widget it lacks goes last).
 QtObject {

@@ -4,21 +4,18 @@ import QtQuick
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
-import qs.modules.iris.style
-import qs.modules.iris.components
-
 Rectangle {
     id: root
 
     property var segments: []
     property int currentIndex: 0
     signal activated(int index)
-    readonly property real d: IrisStyle.density
+    readonly property real d: FamilyStyle.density
     readonly property real segmentWidth: (root.width - 4) / Math.max(1, root.segments.length)
 
     implicitHeight: Math.round(32 * root.d)
     radius: height / 2
-    color: IrisStyle.fillQuiet
+    color: FamilyStyle.fillQuiet
 
     WheelHandler {
         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
@@ -34,8 +31,8 @@ Rectangle {
         width: root.segmentWidth
         x: 2 + root.segmentWidth * Math.max(0, root.currentIndex)
         radius: height / 2
-        color: IrisStyle.fillHover
-        Behavior on x { NumberAnimation { duration: IrisStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.morphCurve } }
+        color: FamilyStyle.fillHover
+        Behavior on x { NumberAnimation { duration: FamilyStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: FamilyStyle.morphCurve } }
     }
 
     Row {
@@ -65,13 +62,14 @@ Rectangle {
                         visible: text.length > 0
                         iconSize: Math.round(16 * root.d)
                         fill: segment.selected ? 1 : 0
-                        color: segment.selected ? IrisStyle.accent : segment.containsMouse ? IrisStyle.text : IrisStyle.textSecondary
+                        color: segment.selected ? FamilyStyle.accent : segment.containsMouse ? FamilyStyle.text : FamilyStyle.textSecondary
                     }
-                    IrisText {
+                    StyledText {
                         anchors.verticalCenter: parent.verticalCenter
+                        defaultFont: FamilyStyle.fontMain
                         text: Translation.tr(segment.modelData.label)
-                        color: segment.selected || segment.containsMouse ? IrisStyle.text : IrisStyle.textSecondary
-                        font.pixelSize: 12.5 * IrisStyle.typeScale
+                        color: segment.selected || segment.containsMouse ? FamilyStyle.text : FamilyStyle.textSecondary
+                        font.pixelSize: 12.5 * FamilyStyle.typeScale
                         font.weight: segment.selected ? Font.DemiBold : Font.Medium
                     }
                 }

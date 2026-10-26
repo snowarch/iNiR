@@ -896,14 +896,14 @@ ShellRoot {
             LazyLoader {
                 loading: family.chosen
                 activeAsync: family.chosen
-                source: Plugins.entry(family.modelData, "critical")
+                source: Plugins.part(family.modelData, "critical")
             }
 
             LazyLoader {
                 readonly property bool enabled: family.chosen && GlobalStates.deferredPanelsReady
                 loading: enabled
                 activeAsync: enabled
-                source: Plugins.entry(family.modelData, "panels")
+                source: Plugins.part(family.modelData, "panels")
             }
         }
     }

@@ -7,8 +7,6 @@ import Quickshell
 import qs
 import qs.services
 import qs.modules.common
-import qs.modules.iris.style
-import qs.modules.iris.components as Iris
 import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.common.widgets.widgetCanvas
@@ -16,12 +14,12 @@ import qs.modules.common.widgets.widgetCanvas
 Rectangle {
     id: root
 
-    property real padding: OverlayLook.iris ? Math.round(6 * IrisStyle.density) : 8
+    property real padding: OverlayLook.iris ? Math.round(6 * FamilyStyle.density) : 8
 
     opacity: GlobalStates.overlayOpen ? 1 : 0
     implicitWidth: contentRow.implicitWidth + (padding * 2)
     implicitHeight: contentRow.implicitHeight + (padding * 2)
-    color: OverlayLook.iris ? IrisStyle.bodySurface
+    color: OverlayLook.iris ? FamilyStyle.bodySurface
         : Appearance.angelEverywhere || Appearance.regaliaEverywhere ? "transparent"
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
         : Appearance.colors.colSurfaceContainer
@@ -30,7 +28,7 @@ Rectangle {
         : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
         : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
         : Appearance.rounding.large
-    border.color: OverlayLook.iris ? IrisStyle.border
+    border.color: OverlayLook.iris ? FamilyStyle.border
         : Appearance.regaliaEverywhere ? "transparent"
         : Appearance.angelEverywhere ? Appearance.angel.colBorder
         : Appearance.inirEverywhere ? Appearance.inir.colBorder
@@ -95,9 +93,9 @@ Rectangle {
 
     Behavior on opacity {
         animation: NumberAnimation {
-            duration: OverlayLook.iris ? IrisStyle.emergeDuration : Appearance.animation.elementMoveFast.duration
+            duration: OverlayLook.iris ? FamilyStyle.emergeDuration : Appearance.animation.elementMoveFast.duration
             easing.type: OverlayLook.iris ? Easing.BezierSpline : Appearance.animation.elementMoveFast.type
-            easing.bezierCurve: OverlayLook.iris ? IrisStyle.emergeCurve : Appearance.animation.elementMoveFast.bezierCurve
+            easing.bezierCurve: OverlayLook.iris ? FamilyStyle.emergeCurve : Appearance.animation.elementMoveFast.bezierCurve
         }
     }
 
@@ -107,10 +105,10 @@ Rectangle {
             fill: parent
             margins: root.padding
         }
-        spacing: OverlayLook.iris ? Math.round(4 * IrisStyle.density) : 6
+        spacing: OverlayLook.iris ? Math.round(4 * FamilyStyle.density) : 6
 
         Row {
-            spacing: OverlayLook.iris ? Math.round(2 * IrisStyle.density) : 4
+            spacing: OverlayLook.iris ? Math.round(2 * FamilyStyle.density) : 4
             Repeater {
                 model: ScriptModel {
                     values: OverlayContext.availableWidgets
@@ -125,12 +123,14 @@ Rectangle {
 
         Separator {}
         TimeWidget { visible: !OverlayLook.iris }
-        Iris.IrisClock {
+        FamilyPart {
             visible: OverlayLook.iris
+            when: OverlayLook.iris
             Layout.alignment: Qt.AlignVCenter
-            Layout.leftMargin: Math.round(8 * IrisStyle.density)
-            Layout.rightMargin: Math.round(6 * IrisStyle.density)
-            pixelSize: 18 * IrisStyle.typeScale
+            Layout.leftMargin: Math.round(8 * FamilyStyle.density)
+            Layout.rightMargin: Math.round(6 * FamilyStyle.density)
+            part: "clock"
+            props: ({ pixelSize: 18 * FamilyStyle.typeScale })
         }
         Separator {
             visible: Battery.available
@@ -142,7 +142,7 @@ Rectangle {
 
     component Separator: Rectangle {
         implicitWidth: 1
-        color: OverlayLook.iris ? IrisStyle.hairlineStrong
+        color: OverlayLook.iris ? FamilyStyle.hairlineStrong
             : Appearance.angelEverywhere ? Appearance.angel.colBorderSubtle
             : Appearance.inirEverywhere ? Appearance.inir.colBorderSubtle
             : Appearance.colors.colOutlineVariant
@@ -192,7 +192,7 @@ Rectangle {
             font {
                 family: OverlayLook.fontNumbers
                 variableAxes: Appearance.font.variableAxes.numbers
-                pixelSize: OverlayLook.iris ? 14 * IrisStyle.typeScale : 18
+                pixelSize: OverlayLook.iris ? 14 * FamilyStyle.typeScale : 18
             }
         }
     }
@@ -214,18 +214,18 @@ Rectangle {
         }
         implicitWidth: implicitHeight
 
-        Binding on colBackground { when: OverlayLook.iris; value: ColorUtils.applyAlpha(IrisStyle.fill, 0) }
-        Binding on colBackgroundHover { when: OverlayLook.iris; value: IrisStyle.fillHover }
-        Binding on colRipple { when: OverlayLook.iris; value: IrisStyle.fillActive }
-        colBackgroundToggled: OverlayLook.iris ? IrisStyle.tintFill(IrisStyle.accent)
+        Binding on colBackground { when: OverlayLook.iris; value: ColorUtils.applyAlpha(FamilyStyle.fill, 0) }
+        Binding on colBackgroundHover { when: OverlayLook.iris; value: FamilyStyle.fillHover }
+        Binding on colRipple { when: OverlayLook.iris; value: FamilyStyle.fillActive }
+        colBackgroundToggled: OverlayLook.iris ? FamilyStyle.tintFill(FamilyStyle.accent)
             : Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlate
             : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
             : Appearance.colors.colSecondaryContainer
-        colBackgroundToggledHover: OverlayLook.iris ? IrisStyle.tintFillHover(IrisStyle.accent)
+        colBackgroundToggledHover: OverlayLook.iris ? FamilyStyle.tintFillHover(FamilyStyle.accent)
             : Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateHover
             : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
             : Appearance.colors.colSecondaryContainerHover
-        colRippleToggled: OverlayLook.iris ? IrisStyle.tintFillHover(IrisStyle.accent)
+        colRippleToggled: OverlayLook.iris ? FamilyStyle.tintFillHover(FamilyStyle.accent)
             : Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateActive
             : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
             : Appearance.colors.colSecondaryContainerActive
@@ -234,17 +234,17 @@ Rectangle {
 
         contentItem: Item {
             anchors.centerIn: parent
-            implicitWidth: OverlayLook.iris ? Math.round(30 * IrisStyle.density) : 32
-            implicitHeight: OverlayLook.iris ? Math.round(30 * IrisStyle.density) : 32
+            implicitWidth: OverlayLook.iris ? Math.round(30 * FamilyStyle.density) : 32
+            implicitHeight: OverlayLook.iris ? Math.round(30 * FamilyStyle.density) : 32
             MaterialSymbol {
                 id: iconWidget
                 anchors.centerIn: parent
-                iconSize: OverlayLook.iris ? Math.round(19 * IrisStyle.density) : 24
+                iconSize: OverlayLook.iris ? Math.round(19 * FamilyStyle.density) : 24
                 fill: OverlayLook.iris && widgetButton.toggled ? 1 : 0
                 text: widgetButton.identifier === "recorder" && RecorderStatus.isRecording ? "radio_button_checked" : widgetButton.materialSymbol
                 color: widgetButton.identifier === "recorder" && RecorderStatus.isRecording
                         ? OverlayLook.colError
-                        : OverlayLook.iris ? (widgetButton.toggled ? IrisStyle.accent : widgetButton.buttonHovered ? IrisStyle.text : IrisStyle.textSecondary)
+                        : OverlayLook.iris ? (widgetButton.toggled ? FamilyStyle.accent : widgetButton.buttonHovered ? FamilyStyle.text : FamilyStyle.textSecondary)
                         : (widgetButton.toggled
                             ? (Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateInk
                                 : Appearance.angelEverywhere ? Appearance.angel.colPrimary : Appearance.colors.colOnSecondaryContainer)

@@ -5,8 +5,6 @@ import Quickshell
 import Quickshell.Io
 import qs.modules.common
 import qs.modules.common.functions
-import qs.modules.iris.style
-
 Item {
     id: root
 
@@ -25,9 +23,9 @@ Item {
     implicitWidth: card.width
     implicitHeight: card.height
 
-    // Under iRiS, a Design that draws toasts (IrisDesign part `toast`) draws this one over the card's geometry; the card
+    // A family whose worn Design draws toasts (FamilyStyle.toastSkin) draws this one over the card's geometry; the card
     // stays, unseen, for its clock, its hover and its click.
-    readonly property string designUrl: (Config.options?.panelFamily ?? "ii") === "iris" ? IrisStyle.toastSkin : ""
+    readonly property string designUrl: FamilyStyle.toastSkin
     Loader {
         id: designToast
         anchors.fill: card

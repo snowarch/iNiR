@@ -1,6 +1,5 @@
 import QtQuick
 import qs.modules.common
-import qs.modules.iris.style
 import qs.modules.common.functions
 
 Rectangle {
@@ -10,7 +9,7 @@ Rectangle {
     property real surfaceOpacity: -1
     property bool useSurfaceColorOverride: false
     property color surfaceColorOverride: Qt.rgba(0, 0, 0, 0)
-    readonly property color surfaceColor: OverlayLook.iris ? IrisStyle.bodySurface
+    readonly property color surfaceColor: OverlayLook.iris ? FamilyStyle.bodySurface
         : Appearance.angelEverywhere ? Appearance.angel.colGlassPanel
         : Appearance.inirEverywhere ? Appearance.inir.colLayer1
         : Appearance.auroraEverywhere ? Appearance.colors.colLayer2Base

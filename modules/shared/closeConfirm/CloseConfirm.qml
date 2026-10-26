@@ -143,11 +143,11 @@ Scope {
                 id: contentLoader
                 anchors.fill: parent
                 focus: true
-                // A family draws its own confirmation (FamilyParts "closeConfirm"); Material's is the shared one.
+                // A family draws its own confirmation (Plugins part "closeConfirm"); Material's is the shared one.
                 // Every content declares targetWindow as required: a family's file loads through setSource with it
                 // as an initial property, since a bare source URL fails to Loader.Error and would leave this
                 // keyboard-exclusive fullscreen window with no way out.
-                readonly property string familySource: FamilyParts.url(FamilyParts.active, "closeConfirm")
+                readonly property string familySource: Plugins.part(Plugins.active, "closeConfirm")
                 function pick(): void {
                     if (familySource.length > 0) setSource(familySource, { targetWindow: root.targetWindow })
                     else sourceComponent = iiContent

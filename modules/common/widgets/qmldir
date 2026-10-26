@@ -34,6 +34,7 @@ DialogListItem 1.0 DialogListItem.qml
 DirectoryIcon 1.0 DirectoryIcon.qml
 DragManager 1.0 DragManager.qml
 EscalonadoShadow 1.0 EscalonadoShadow.qml
+FamilyPart 1.0 FamilyPart.qml
 FadeLoader 1.0 FadeLoader.qml
 Favicon 1.0 Favicon.qml
 FloatingActionButton 1.0 FloatingActionButton.qml

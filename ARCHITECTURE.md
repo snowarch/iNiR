@@ -35,12 +35,13 @@ Three mutually exclusive UI families, switchable at runtime (`Super+Shift+W`):
 | Panels | ii (iiBar, iiDock, iiSidebarLeft, ...) | w (wBar, wStartMenu, wActionCenter, ... + shared ii panels) | iris (irisBar, irisBackground, irisPalette, irisControlCenter, ...) |
 
 Families are plugins: each folder under `modules/` with a `plugin.json` is one, and `services/Plugins.qml` lists
-them. `shell.qml` never names a family; for the chosen one it loads the `critical` entry first and the heavier
-`panels` entry after `deferredPanelsReady`:
+them with the files each hands the base by name (`parts`). `shell.qml` never names a family; for the chosen one it
+loads the `critical` part first and the heavier `panels` part after `deferredPanelsReady`. Shared surfaces ask the
+same way for what a family draws on them (`Plugins.part(Plugins.active, "lockSurface")`, a widget face):
 
 ```text
-shell.qml -> Plugins.entry(family, "critical")   e.g. modules/iris/critical/ShellIrisCriticalPanels.qml
-shell.qml -> Plugins.entry(family, "panels")     e.g. modules/iris/ShellIrisPanelsImpl.qml
+shell.qml -> Plugins.part(family, "critical")    e.g. modules/iris/critical/ShellIrisCriticalPanels.qml
+shell.qml -> Plugins.part(family, "panels")      e.g. modules/iris/ShellIrisPanelsImpl.qml
 ```
 
 Inside the implementation roots, `PanelLoader`, `DeferredPanelLoader`, and `OnDemandPanelLoader` choose whether a surface should be resident. For example:

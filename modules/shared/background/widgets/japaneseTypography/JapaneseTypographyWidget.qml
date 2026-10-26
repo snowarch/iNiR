@@ -7,7 +7,6 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
-import qs.modules.iris.widgets
 import qs.modules.shared.background.widgets
 import "JapaneseTypographyPresets.js" as JapanesePresets
 
@@ -84,9 +83,9 @@ AbstractBackgroundWidget {
     implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 330) * root.scaleFactor)
     implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : Math.round(Number(root._readConfigKey("contentHeight") ?? 600) * root.scaleFactor)
     // Under an iRiS Design that prints this widget (AIRISU), the print is its face; elsewhere it draws itself.
-    irisFace: IrisFaceData.prints.japaneseTypography ? designPrint : null
+    irisDesignPart: "widgetJapanese"
+    irisDesignPrint: "japaneseTypography"
     irisSizes: ["small", "medium", "large"]
-    Component { id: designPrint; IrisDesignFace { widget: root; part: "widgetJapanese" } }
     resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
     resizeMinWidth: 220
     resizeMinHeight: 320

@@ -6,7 +6,6 @@ import Quickshell
 import qs
 import qs.services
 import qs.modules.common
-import qs.modules.iris.style
 import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.common.widgets.widgetCanvas
@@ -574,7 +573,7 @@ AbstractBackgroundWidget {
                                 text: root._getDisplayText(resourceMeter.modelData.key)
                                 color: root.widgetInk
                                 font {
-                                    family: root.widgetIris ? IrisStyle.fontMain : root.widgetNumbersFamily
+                                    family: root.widgetIris ? FamilyStyle.fontMain : root.widgetNumbersFamily
                                     pixelSize: Math.round(resourceMeter.side * 0.29)
                                     weight: Font.Bold
                                     features: ({ "tnum": 1 })
@@ -679,7 +678,7 @@ AbstractBackgroundWidget {
                             color: barRow._liveColor
                             font {
                                 pixelSize: barRow.big > 0 ? Math.round(barRow.big * 0.8) : Appearance.font.pixelSize.smaller
-                                family: root.widgetIris ? IrisStyle.fontMain : root.widgetNumbersFamily
+                                family: root.widgetIris ? FamilyStyle.fontMain : root.widgetNumbersFamily
                                 weight: barRow.big > 0 ? Font.DemiBold : Font.Normal
                             }
                             horizontalAlignment: Text.AlignRight
@@ -732,7 +731,7 @@ AbstractBackgroundWidget {
                             StyledText {
                                 text: root._getDisplayText(modelData.key)
                                 color: root._graphColor(modelData.key)
-                                font { pixelSize: Appearance.font.pixelSize.smaller; family: root.widgetIris ? IrisStyle.fontMain : root.widgetNumbersFamily }
+                                font { pixelSize: Appearance.font.pixelSize.smaller; family: root.widgetIris ? FamilyStyle.fontMain : root.widgetNumbersFamily }
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                         }
@@ -750,7 +749,7 @@ AbstractBackgroundWidget {
                         required property var modelData
                         text: modelData.label
                         color: root._metricSubtext
-                        font { pixelSize: Appearance.font.pixelSize.smaller - 2; family: root.widgetIris ? IrisStyle.fontMain : root.widgetNumbersFamily }
+                        font { pixelSize: Appearance.font.pixelSize.smaller - 2; family: root.widgetIris ? FamilyStyle.fontMain : root.widgetNumbersFamily }
                         anchors.right: parent.right
                         anchors.rightMargin: 2
                         y: parent._legendH + (parent.height - parent._legendH) * (1.0 - modelData.pct) - height / 2
@@ -881,7 +880,7 @@ AbstractBackgroundWidget {
                                 color: ringCol._liveColor
                                 font {
                                     pixelSize: Math.max(10, Math.round(ringCol._ringSize * 0.26))
-                                    family: root.widgetIris ? IrisStyle.fontMain : root.widgetNumbersFamily
+                                    family: root.widgetIris ? FamilyStyle.fontMain : root.widgetNumbersFamily
                                     weight: Font.DemiBold
                                 }
                             }
@@ -977,7 +976,7 @@ AbstractBackgroundWidget {
                                 color: textChip._liveColor
                                 font {
                                     pixelSize: Math.round(Appearance.font.pixelSize.normal * root.scaleFactor)
-                                    family: root.widgetIris ? IrisStyle.fontMain : root.widgetNumbersFamily
+                                    family: root.widgetIris ? FamilyStyle.fontMain : root.widgetNumbersFamily
                                     weight: Font.DemiBold
                                 }
                                 anchors.verticalCenter: parent.verticalCenter
@@ -1076,7 +1075,7 @@ AbstractBackgroundWidget {
                                         Math.round(Appearance.font.pixelSize.hugeass * root.scaleFactor),
                                         Math.round(tile.height * 0.30),
                                         Math.round(tile.width * 0.34)))
-                                    family: root.widgetIris ? IrisStyle.fontMain : root.widgetNumbersFamily
+                                    family: root.widgetIris ? FamilyStyle.fontMain : root.widgetNumbersFamily
                                     weight: Font.Bold
                                 }
                             }

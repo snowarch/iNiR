@@ -9,8 +9,6 @@ import qs.modules.common.widgets
 import qs.modules.common.functions
 import qs.modules.shared.overlay
 import qs.modules.shared.overlay.sidebarRight.volumeMixer
-import qs.modules.iris.style
-import qs.modules.iris.stage
 import Quickshell.Services.Mpris
 
 StyledOverlayWidget {
@@ -121,20 +119,19 @@ StyledOverlayWidget {
         id: cardPage
         property string kind: ""
         property bool bleeds: false
-        readonly property real pad: cardPage.bleeds ? 0 : Math.round(14 * IrisStyle.density)
+        readonly property real pad: cardPage.bleeds ? 0 : Math.round(14 * FamilyStyle.density)
         clip: true
         contentWidth: width
         contentHeight: (cardLoader.item?.implicitHeight ?? 0) + cardPage.pad * 2
         boundsBehavior: Flickable.StopAtBounds
-        Loader {
+        FamilyPart {
             id: cardLoader
-            active: cardPage.visible && cardPage.kind.length > 0
+            when: cardPage.visible && cardPage.kind.length > 0
             x: cardPage.pad
             y: cardPage.pad
             width: cardPage.width - cardPage.pad * 2
-            sourceComponent: IrisCardContent {
-                kind: cardPage.kind
-            }
+            part: "card"
+            props: ({ kind: cardPage.kind })
         }
     }
 

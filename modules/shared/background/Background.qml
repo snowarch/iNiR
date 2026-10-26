@@ -42,10 +42,6 @@ import qs.modules.shared.background.widgets.newsTicker
 import qs.modules.shared.background.widgets.mascot
 import qs.modules.shared.background.widgets.japaneseTypography
 import qs.modules.shared.background.desktopItems
-import qs.modules.iris.components
-import qs.modules.iris.style
-import qs.modules.iris.frame
-import qs.modules.iris.background
 import "root:modules/common/functions/parallax.js" as ParallaxMath
 import "widgets/OrganicEdgeConfig.js" as OrganicEdgeConfig
 import "root:modules/common/functions/ArrangeMath.js" as ArrangeMath
@@ -879,7 +875,7 @@ Scope {
         // turn the Bottom layer keyboard-focusable during reload.
         // A desktop menu is a grabbing popup of this surface: its parent's keyboard
         // mode never changes while one is open.
-        readonly property bool _menuOpen: irisDesktopMenu.active || desktopContextMenu.active || desktopItemContextMenu.active
+        readonly property bool _menuOpen: (familyDesktopMenu.item?.active ?? false) || desktopContextMenu.active || desktopItemContextMenu.active
         // Once a desktop menu has closed, the keyboard its right-click took goes back too.
         on_MenuOpenChanged: if (!bgRoot._menuOpen) Qt.callLater(bgRoot.releaseKeyboard)
         readonly property bool _needsKeyboardFocus: GlobalStates.deferredPanelsReady
@@ -1524,7 +1520,7 @@ Scope {
 
         // Arranging widgets under a family that stages it: its paper behind the card, its card edge over it.
         readonly property var editCard: DesktopEditStage.cardFor(bgRoot.screenName, bgRoot.width, bgRoot.height)
-        readonly property string editStagePart: FamilyParts.url(FamilyParts.active, "editStage")
+        readonly property string editStagePart: Plugins.part(Plugins.active, "editStage")
         Loader {
             anchors.fill: parent
             active: bgRoot.editCard.p > 0 && bgRoot.editStagePart.length > 0
@@ -1873,30 +1869,22 @@ Scope {
                 }
             }
 
-            Loader {
+            // The family's texture over the wallpaper (its parts `wallpaper.leak`, `wallpaper.afterglow`).
+            FamilyPart {
                 id: textureLoader
                 z: 0.5
                 anchors.fill: wallpaperContainer
-                active: bgRoot.textureWallpaperActive && bgRoot._familyOwnsScreen
-                sourceComponent: bgRoot.irisTexture === "leak" ? leakFilter : afterglowFilter
-            }
-            Component {
-                id: afterglowFilter
-                IrisAfterglowWallpaper {
-                    onShown: bgRoot.wallpaperLayerRevision++
-                    source: wallpaperContainer
-                    live: bgRoot.wallpaperIsVideo || bgRoot.wallpaperIsGif
-                }
-            }
-            Component {
-                id: leakFilter
-                IrisLeakWallpaper {
-                    onShown: bgRoot.wallpaperLayerRevision++
-                    source: wallpaperContainer
-                    picture: bgRoot.wallpaperPathRaw
-                    // The light alone never shows the picture: a video under it needs no redraw.
-                    live: (bgRoot.wallpaperIsVideo || bgRoot.wallpaperIsGif)
-                        && Config.options?.iris?.appearance?.leak?.backdrop !== "light"
+                when: bgRoot.textureWallpaperActive && bgRoot._familyOwnsScreen
+                readonly property bool leak: bgRoot.irisTexture === "leak"
+                part: leak ? "wallpaper.leak" : "wallpaper.afterglow"
+                // The light alone never shows the picture: a video under it needs no redraw.
+                props: leak ? ({ source: wallpaperContainer, picture: bgRoot.wallpaperPathRaw,
+                        live: (bgRoot.wallpaperIsVideo || bgRoot.wallpaperIsGif) && Config.options?.iris?.appearance?.leak?.backdrop !== "light" })
+                    : ({ source: wallpaperContainer, live: bgRoot.wallpaperIsVideo || bgRoot.wallpaperIsGif })
+                Connections {
+                    target: textureLoader.item
+                    ignoreUnknownSignals: true
+                    function onShown(): void { bgRoot.wallpaperLayerRevision++ }
                 }
             }
 
@@ -2073,13 +2061,13 @@ Scope {
                         GlobalStates.clearDesktopItemSelection()
                         if (desktopContextMenu.active) desktopContextMenu.close()
                         if (desktopItemContextMenu.active) desktopItemContextMenu.close()
-                        if (irisDesktopMenu.active) irisDesktopMenu.close()
+                        if (familyDesktopMenu.item?.active) familyDesktopMenu.item.close()
                         return
                     }
                     if (desktopItemContextMenu.active) desktopItemContextMenu.close()
                     desktopMenuAnchor.x = mouse.x
                     desktopMenuAnchor.y = mouse.y
-                    if ((Config.options?.panelFamily ?? "ii") === "iris") irisDesktopMenu.requestOpen()
+                    if (familyDesktopMenu.item) familyDesktopMenu.item.requestOpen()
                     else desktopContextMenu.requestOpen()
                 }
             }
@@ -2148,37 +2136,19 @@ Scope {
             Connections {
                 target: GlobalStates
                 function onIrisDesktopMenuRequested(outputName: string, x: real, y: real): void {
-                    if (outputName !== bgRoot.screenName || (Config.options?.panelFamily ?? "ii") !== "iris") return
+                    if (outputName !== bgRoot.screenName || !familyDesktopMenu.item) return
                     desktopMenuAnchor.x = x
                     desktopMenuAnchor.y = y
-                    irisDesktopMenu.requestOpen()
+                    familyDesktopMenu.item.requestOpen()
                 }
             }
 
-            IrisDesktopMenu {
-                id: irisDesktopMenu
+            // The family's own desktop menu (its part `desktopMenu`); the shared one below otherwise.
+            FamilyPart {
+                id: familyDesktopMenu
                 z: 27
-                anchorItem: desktopMenuAnchor
-                readonly property int gridSize: Config.getNestedValue("background.widgets.editGrid.size", 32)
-                readonly property bool gridSnap: Config.getNestedValue("background.widgets.editGrid.snap", true)
-                model: GlobalStates.widgetEditMode ? [
-                    { text: Translation.tr("Add widgets"), iconName: "dashboard_customize", tint: "teal",
-                        action: () => { GlobalStates.widgetSearchOpen = true } },
-                    { text: Translation.tr("Snap to grid"), iconName: "grid_on", checked: irisDesktopMenu.gridSnap, keepOpen: true,
-                        action: () => Config.setNestedValue("background.widgets.editGrid.snap", !irisDesktopMenu.gridSnap) },
-                    { type: "separator" },
-                    { text: Translation.tr("Grid size"), iconName: "grid_4x4", detail: irisDesktopMenu.gridSize + " px",
-                        action: () => {
-                            const sizes = [16, 32, 48, 64]
-                            Config.setNestedValue("background.widgets.editGrid.size",
-                                sizes[(sizes.indexOf(irisDesktopMenu.gridSize) + 1) % sizes.length])
-                        } },
-                    { text: Translation.tr("Widget settings"), iconName: "settings",
-                        action: () => GlobalStates.openSettingsAt("widgets") },
-                    { type: "separator" },
-                    { text: Translation.tr("Done"), iconName: "check", tint: "green",
-                        action: () => GlobalStates.setWidgetEditMode(false) }
-                ] : IrisDesktopActions.menu(bgRoot.screenName, bgRoot.wallpaperPath, bgRoot.wallpaperPath)
+                part: "desktopMenu"
+                props: ({ anchorItem: desktopMenuAnchor, screenName: bgRoot.screenName, wallpaperPath: bgRoot.wallpaperPath })
             }
 
             // Managed items use the same stable screen-level popup path as the
@@ -2827,13 +2797,13 @@ Scope {
                         readonly property bool here: DesktopArrange.dragOutput === bgRoot.screenName && DesktopArrange.phase !== "idle"
                         readonly property var carry: DesktopEditStage.carry?.output === bgRoot.screenName ? DesktopEditStage.carry : null
                         readonly property bool iris: (Config.options?.panelFamily ?? "ii") === "iris"
-                        readonly property color ink: guides.iris ? IrisStyle.accent : Appearance.colors.colPrimary
-                        readonly property color paper: guides.iris ? IrisStyle.raised : Appearance.colors.colPrimaryContainer
-                        readonly property color paperInk: guides.iris ? IrisStyle.text : Appearance.colors.colOnPrimaryContainer
+                        readonly property color ink: guides.iris ? FamilyStyle.accent : Appearance.colors.colPrimary
+                        readonly property color paper: guides.iris ? FamilyStyle.raised : Appearance.colors.colPrimaryContainer
+                        readonly property color paperInk: guides.iris ? FamilyStyle.text : Appearance.colors.colOnPrimaryContainer
                         // One screen pixel, and type at its true size, while the desktop is a card.
                         readonly property real hair: 1 / Math.max(0.2, bgRoot.editCard.s)
                         readonly property real radius: guides.iris
-                            ? Math.round(Math.max(0, Math.min(40, Config.options?.iris?.widgets?.radius ?? 22)) * IrisStyle.density)
+                            ? Math.round(Math.max(0, Math.min(40, Config.options?.iris?.widgets?.radius ?? 22)) * FamilyStyle.density)
                             : Appearance.rounding.small
                         readonly property real strength: !guides.here ? 0 : DesktopArrange.phase === "drag" ? 0.6
                             : DesktopArrange.phase === "confirm" ? 1 : 0
@@ -2884,7 +2854,7 @@ Scope {
                             width: guides.carry?.width ?? 0
                             height: guides.carry?.height ?? 0
                             radius: guides.radius
-                            color: guides.iris ? IrisStyle.tintFill(IrisStyle.accent) : CF.ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.08)
+                            color: guides.iris ? FamilyStyle.tintFill(FamilyStyle.accent) : CF.ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.08)
                             border.width: guides.hair
                             border.color: guides.ink
                             Behavior on x { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
@@ -2956,8 +2926,8 @@ Scope {
                                         anchors.centerIn: parent
                                         text: name.text
                                         color: guides.paperInk
-                                        font.family: guides.iris ? IrisStyle.fontMain : Appearance.font.family.main
-                                        font.pixelSize: (guides.iris ? IrisStyle.typeFootnote : Appearance.font.pixelSize.smaller) * guides.hair
+                                        font.family: guides.iris ? FamilyStyle.fontMain : Appearance.font.family.main
+                                        font.pixelSize: (guides.iris ? FamilyStyle.typeFootnote : Appearance.font.pixelSize.smaller) * guides.hair
                                         font.weight: Font.DemiBold
                                     }
                                 }

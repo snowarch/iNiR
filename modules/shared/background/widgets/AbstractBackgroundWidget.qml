@@ -11,10 +11,6 @@ import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.common.widgets.widgetCanvas
-import qs.modules.iris.style
-import qs.modules.iris.widgets
-import qs.modules.iris.components
-
 AbstractWidget {
     id: root
 
@@ -120,17 +116,17 @@ AbstractWidget {
     Behavior on implicitWidth {
         enabled: root.animateGeometry
         NumberAnimation {
-            duration: root.widgetIris ? IrisStyle.morphDuration : Appearance.animation.elementMove.duration
+            duration: root.widgetIris ? FamilyStyle.morphDuration : Appearance.animation.elementMove.duration
             easing.type: root.widgetIris ? Easing.BezierSpline : Appearance.animation.elementMove.type
-            easing.bezierCurve: root.widgetIris ? IrisStyle.morphCurve : Appearance.animation.elementMove.bezierCurve
+            easing.bezierCurve: root.widgetIris ? FamilyStyle.morphCurve : Appearance.animation.elementMove.bezierCurve
         }
     }
     Behavior on implicitHeight {
         enabled: root.animateGeometry
         NumberAnimation {
-            duration: root.widgetIris ? IrisStyle.morphDuration : Appearance.animation.elementMove.duration
+            duration: root.widgetIris ? FamilyStyle.morphDuration : Appearance.animation.elementMove.duration
             easing.type: root.widgetIris ? Easing.BezierSpline : Appearance.animation.elementMove.type
-            easing.bezierCurve: root.widgetIris ? IrisStyle.morphCurve : Appearance.animation.elementMove.bezierCurve
+            easing.bezierCurve: root.widgetIris ? FamilyStyle.morphCurve : Appearance.animation.elementMove.bezierCurve
         }
     }
     readonly property real widgetOpacity: {
@@ -538,7 +534,7 @@ AbstractWidget {
 
     // Eased transitions follow motionActive: behind windows a value snaps instead. Every animation that starts
     // makes Qt's threaded loop request a frame from every shell window (QSGThreadedRenderLoop::animationStarted).
-    readonly property bool animationsActive: (root.widgetIris ? IrisStyle.motionEnabled : Appearance.animationsEnabled) && root.motionActive
+    readonly property bool animationsActive: (root.widgetIris ? FamilyStyle.motionEnabled : Appearance.animationsEnabled) && root.motionActive
 
     // Visual feedback when paused - desaturation + slight dim
     // Config option to disable visual effect if user only wants GPU savings
@@ -1100,9 +1096,9 @@ AbstractWidget {
         target: root
         property: "_shelf"
         to: 1
-        duration: root.widgetIrisFamily ? IrisStyle.duration(380) : Appearance.animation.elementMoveEnter.duration
+        duration: root.widgetIrisFamily ? FamilyStyle.duration(380) : Appearance.animation.elementMoveEnter.duration
         easing.type: Easing.BezierSpline
-        easing.bezierCurve: root.widgetIrisFamily ? IrisStyle.morphCurve : Appearance.animation.elementMoveEnter.bezierCurve
+        easing.bezierCurve: root.widgetIrisFamily ? FamilyStyle.morphCurve : Appearance.animation.elementMoveEnter.bezierCurve
     }
     NumberAnimation {
         id: shelfShrink
@@ -1121,9 +1117,9 @@ AbstractWidget {
         target: root
         property: "_glide"
         to: 0
-        duration: root.widgetIrisFamily ? IrisStyle.duration(420) : Appearance.animation.elementMove.duration
+        duration: root.widgetIrisFamily ? FamilyStyle.duration(420) : Appearance.animation.elementMove.duration
         easing.type: Easing.BezierSpline
-        easing.bezierCurve: root.widgetIrisFamily ? IrisStyle.morphCurve : Appearance.animation.elementMove.bezierCurve
+        easing.bezierCurve: root.widgetIrisFamily ? FamilyStyle.morphCurve : Appearance.animation.elementMove.bezierCurve
     }
     // Taking a widget away while a shelf is out sends it into its picture there.
     function takeAway(): void {
@@ -1182,7 +1178,7 @@ AbstractWidget {
 
     // What the widget wears while arranging, when the family draws it (its part `widgetOutfit`): then the engine's own
     // toolbar, name and outline step aside and only its sheet of controls stays.
-    readonly property string _outfitPart: FamilyParts.url(FamilyParts.active, "widgetOutfit")
+    readonly property string _outfitPart: Plugins.part(Plugins.active, "widgetOutfit")
     readonly property bool _outfitted: GlobalStates.widgetEditMode && root._outfitPart.length > 0
     Loader {
         z: 200
@@ -1328,9 +1324,9 @@ AbstractWidget {
                     anchors.fill: parent
                     visible: root.widgetIrisFamily
                     radius: height / 2
-                    color: IrisStyle.surface
+                    color: FamilyStyle.surface
                     border.width: 1
-                    border.color: IrisStyle.hairlineStrong
+                    border.color: FamilyStyle.hairlineStrong
                 }
 
                 Flow {
@@ -1425,11 +1421,11 @@ AbstractWidget {
             clip: true
 
             Behavior on height {
-                enabled: editPopoverPanel.settled && (root.irisFaced ? IrisStyle.motionEnabled : Appearance.animationsEnabled)
+                enabled: editPopoverPanel.settled && (root.irisFaced ? FamilyStyle.motionEnabled : Appearance.animationsEnabled)
                 NumberAnimation {
-                    duration: root.irisFaced ? IrisStyle.moveDuration : Appearance.animation.elementMove.duration
+                    duration: root.irisFaced ? FamilyStyle.moveDuration : Appearance.animation.elementMove.duration
                     easing.type: Easing.BezierSpline
-                    easing.bezierCurve: root.irisFaced ? IrisStyle.moveCurve : Appearance.animation.elementMove.bezierCurve
+                    easing.bezierCurve: root.irisFaced ? FamilyStyle.moveCurve : Appearance.animation.elementMove.bezierCurve
                 }
             }
 
@@ -1471,19 +1467,18 @@ AbstractWidget {
                 sourceComponent: Item {
                     Rectangle {
                         anchors.fill: parent
-                        visible: root.widgetIrisFamily && !IrisStyle.fieldChamfer
-                        radius: IrisStyle.radiusCard
-                        color: IrisStyle.surface
+                        visible: root.widgetIrisFamily && !FamilyStyle.fieldChamfer
+                        radius: FamilyStyle.radiusCard
+                        color: FamilyStyle.surface
                         border.width: 1
-                        border.color: IrisStyle.hairlineStrong
+                        border.color: FamilyStyle.hairlineStrong
                     }
                     // Under a chamfered Design the sheet takes the cut like every other body.
-                    IrisCutPlate {
+                    FamilyPart {
                         anchors.fill: parent
-                        visible: root.widgetIrisFamily && IrisStyle.fieldChamfer
-                        color: IrisStyle.surface
-                        stroke: IrisStyle.hairlineStrong
-                        strokeWidth: 1
+                        when: root.widgetIrisFamily && FamilyStyle.fieldChamfer
+                        part: "cutPlate"
+                        props: ({ color: FamilyStyle.surface, stroke: FamilyStyle.hairlineStrong, strokeWidth: 1 })
                     }
                     PanelSurface {
                         id: editPopoverSurface
@@ -1588,13 +1583,13 @@ AbstractWidget {
                 anchors.verticalCenter: parent.verticalCenter
                 readonly property string name: root.configEntryName.split(".").pop().replace(/([A-Z])/g, " $1").toLowerCase().trim()
                 text: root.widgetIrisFamily ? name.charAt(0).toUpperCase() + name.slice(1) : name
-                font.family: root.widgetIrisFamily ? IrisStyle.fontMain : Appearance.font.family.main
+                font.family: root.widgetIrisFamily ? FamilyStyle.fontMain : Appearance.font.family.main
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 font.weight: root.widgetIrisFamily ? Font.DemiBold : Font.Normal
                 font.capitalization: root.widgetIrisFamily ? Font.MixedCase : Font.Capitalize
-                color: root.widgetIrisFamily ? IrisStyle.text : Appearance.colors.colOnLayer0
+                color: root.widgetIrisFamily ? FamilyStyle.text : Appearance.colors.colOnLayer0
                 style: root.widgetIrisFamily ? Text.Raised : Text.Normal
-                styleColor: root.widgetIrisFamily ? IrisStyle.plateShadow : "transparent"
+                styleColor: root.widgetIrisFamily ? FamilyStyle.plateShadow : "transparent"
             }
         }
     }
@@ -1610,8 +1605,8 @@ AbstractWidget {
         border {
             width: root.editSelected || root.locked ? 2 : 1
             color: ColorUtils.applyAlpha(root.locked
-                    ? (root.widgetIrisFamily ? IrisStyle.danger : Appearance.colors.colError)
-                    : (root.widgetIrisFamily ? IrisStyle.accent : Appearance.colors.colPrimary),
+                    ? (root.widgetIrisFamily ? FamilyStyle.danger : Appearance.colors.colError)
+                    : (root.widgetIrisFamily ? FamilyStyle.accent : Appearance.colors.colPrimary),
                 root.locked ? (root.editSelected ? 0.86 : 0.42)
                     : root.editSelected ? 0.88 : widgetEditHover.hovered ? 0.62 : 0.26)
         }
@@ -1653,8 +1648,8 @@ AbstractWidget {
         visible: root._resizeVisible && rh._axisSupported
         width: 12; height: 12
         radius: root.widgetIrisFamily ? 6 : 4
-        color: root.widgetIrisFamily ? IrisStyle.accent : Appearance.colors.colPrimary
-        border { width: 1; color: root.widgetIrisFamily ? IrisStyle.surface : ColorUtils.applyAlpha(Appearance.colors.colOnPrimary, 0.3) }
+        color: root.widgetIrisFamily ? FamilyStyle.accent : Appearance.colors.colPrimary
+        border { width: 1; color: root.widgetIrisFamily ? FamilyStyle.surface : ColorUtils.applyAlpha(Appearance.colors.colOnPrimary, 0.3) }
         opacity: rhArea.containsMouse || rhArea.pressed ? 1.0 : 0.7
 
         // Track drag start state in canvas-space to avoid feedback loops
@@ -1865,13 +1860,12 @@ AbstractWidget {
         }
     }
 
-    Loader {
+    FamilyPart {
         z: 202
-        active: GlobalStates.widgetEditMode && root.irisFaced && root.irisSizeChoices.length > 1 && !root.locked
-        sourceComponent: IrisSizeGrip {
-            widget: root
-            visible: root.editSelected || root._gripHover || root._irisSizing
-        }
+        when: GlobalStates.widgetEditMode && root.irisFaced && root.irisSizeChoices.length > 1 && !root.locked
+        family: "iris"
+        part: "widget.sizeGrip"
+        props: ({ widget: root, visible: root.editSelected || root._gripHover || root._irisSizing })
     }
     Loader {
         z: 202
@@ -1899,7 +1893,7 @@ AbstractWidget {
     }
     Timer {
         id: _irisSizeSettle
-        interval: IrisStyle.morphDuration + 40
+        interval: FamilyStyle.morphDuration + 40
         onTriggered: {
             if (root._isZonePlacement)
                 root.snapToZone(root.placementStrategy)
@@ -1981,9 +1975,9 @@ AbstractWidget {
         property string targetKey: ""
         property real toX: 0
         property real toY: 0
-        NumberAnimation { target: root; property: "x"; to: stackAbsorb.toX; duration: IrisStyle.moveDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.moveCurve }
-        NumberAnimation { target: root; property: "y"; to: stackAbsorb.toY; duration: IrisStyle.moveDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.moveCurve }
-        NumberAnimation { target: root; property: "absorb"; from: 0; to: 1; duration: IrisStyle.moveDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: IrisStyle.moveCurve }
+        NumberAnimation { target: root; property: "x"; to: stackAbsorb.toX; duration: FamilyStyle.moveDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: FamilyStyle.moveCurve }
+        NumberAnimation { target: root; property: "y"; to: stackAbsorb.toY; duration: FamilyStyle.moveDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: FamilyStyle.moveCurve }
+        NumberAnimation { target: root; property: "absorb"; from: 0; to: 1; duration: FamilyStyle.moveDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: FamilyStyle.moveCurve }
         onFinished: root._joinStack(stackAbsorb.targetKey)
     }
     // Once it has joined, the stack turns to it, so the drop is seen to have landed.
@@ -2029,9 +2023,9 @@ AbstractWidget {
         id: stackSlide
         target: root
         property: "stackPos"
-        duration: IrisStyle.moveDuration
+        duration: FamilyStyle.moveDuration
         easing.type: Easing.BezierSpline
-        easing.bezierCurve: IrisStyle.moveCurve
+        easing.bezierCurve: FamilyStyle.moveCurve
     }
 
     ShellEditSizeBadge {
@@ -2039,10 +2033,10 @@ AbstractWidget {
         anchors.centerIn: parent
         active: root._isResizing
         valueText: Math.round(root.width) + " × " + Math.round(root.height) + " px"
-        accentColor: root.widgetIrisFamily ? IrisStyle.accent : Appearance.colors.colPrimary
-        surfaceColor: root.widgetIrisFamily ? IrisStyle.surface : Appearance.colors.colLayer2
-        textColor: root.widgetIrisFamily ? IrisStyle.text : Appearance.colors.colOnLayer2
-        fontFamily: root.widgetIrisFamily ? IrisStyle.fontNumbers : Appearance.font.family.main
+        accentColor: root.widgetIrisFamily ? FamilyStyle.accent : Appearance.colors.colPrimary
+        surfaceColor: root.widgetIrisFamily ? FamilyStyle.surface : Appearance.colors.colLayer2
+        textColor: root.widgetIrisFamily ? FamilyStyle.text : Appearance.colors.colOnLayer2
+        fontFamily: root.widgetIrisFamily ? FamilyStyle.fontNumbers : Appearance.font.family.main
         fontPixelSize: Appearance.font.pixelSize.smaller
     }
 
@@ -2090,7 +2084,7 @@ AbstractWidget {
         ?? (root._manifestKeyList.length > 0 ? root._autoPopoverComponent : null)
     property string _quickTab: "widget"
     readonly property string identityGlyph: DesktopWidgetRegistry.glyph(root.configEntryName)
-    readonly property color identityTint: root.widgetIrisFamily ? IrisStyle.identityOf(DesktopWidgetRegistry.tint(root.configEntryName))
+    readonly property color identityTint: root.widgetIrisFamily ? FamilyStyle.identityOf(DesktopWidgetRegistry.tint(root.configEntryName))
         : DesktopWidgetRegistry.tint(root.configEntryName)
     // The page that holds position, lock and removal: "arrange" in an iRiS face's sheet, "layout" otherwise.
     readonly property string _arrangeTab: root.irisFaced ? "arrange" : "layout"
@@ -2117,7 +2111,13 @@ AbstractWidget {
     Component {
         id: _irisPopoverRef
         // Its plates lie 12 px inside the sheet's corner (popoverLoader's margins).
-        IrisWidgetControls { widget: root; plateRadius: IrisStyle.concentric(IrisStyle.radiusCard, 12, IrisStyle.radiusChip); plateCut: IrisStyle.nestedCut(IrisStyle.chamferCut, 12) }
+        FamilyPart {
+            readonly property real resolvedWidth: item?.resolvedWidth ?? implicitWidth
+            family: "iris"
+            part: "widget.controls"
+            props: ({ widget: root, plateRadius: FamilyStyle.concentric(FamilyStyle.radiusCard, 12, FamilyStyle.radiusChip),
+                plateCut: FamilyStyle.nestedCut(FamilyStyle.chamferCut, 12) })
+        }
     }
 
     Component {
@@ -2162,13 +2162,18 @@ AbstractWidget {
                 model: semanticQuickRoot.pages
                 onPicked: value => root._quickTab = value
             }
-            IrisSegmented {
-                visible: root.widgetIrisFamily && semanticQuickRoot.pages.filter(entry => entry.visible !== false).length > 1
+            FamilyPart {
+                id: quickTabsPart
+                visible: when
+                when: root.widgetIrisFamily && semanticQuickRoot.pages.filter(entry => entry.visible !== false).length > 1
                 Layout.fillWidth: true
-                options: semanticQuickRoot.pages.filter(entry => entry.visible !== false)
-                current: semanticQuickRoot.page
-                accessibleName: Translation.tr("Quick controls")
-                onPicked: value => root._quickTab = value
+                part: "control.segmented"
+                props: ({ options: semanticQuickRoot.pages.filter(entry => entry.visible !== false), current: semanticQuickRoot.page,
+                    accessibleName: Translation.tr("Quick controls") })
+                Connections {
+                    target: quickTabsPart.item
+                    function onPicked(value: var): void { root._quickTab = value }
+                }
             }
 
             Loader {
@@ -2451,10 +2456,10 @@ AbstractWidget {
     // Ink is chosen by the backdrop, never by the shell's mode: iRiS speaks its own light and dark ink;
     // elsewhere the generated tone for each polarity, taken toward white or black while keeping its
     // hue, since light mode's inverse tone is a mid grey and dark mode's a mid grey the other way.
-    readonly property color _inkLight: root.widgetIrisFamily ? IrisStyle.inkOnDark
+    readonly property color _inkLight: root.widgetIrisFamily ? FamilyStyle.inkOnDark
         : Appearance.m3colors.darkmode ? Appearance.colors.colOnLayer0
         : ColorUtils.mix(Appearance.m3colors.m3inverseOnSurface, Qt.rgba(1, 1, 1, 1), 0.3)
-    readonly property color _inkDark: root.widgetIrisFamily ? IrisStyle.inkOnLight
+    readonly property color _inkDark: root.widgetIrisFamily ? FamilyStyle.inkOnLight
         : Appearance.m3colors.darkmode
         ? ColorUtils.mix(Appearance.m3colors.m3inverseOnSurface, Qt.rgba(0, 0, 0, 1), 0.55)
         : Appearance.colors.colOnLayer0
@@ -2481,7 +2486,7 @@ AbstractWidget {
     }
     Behavior on colText {
         enabled: root.animationsActive
-        ColorAnimation { duration: root.widgetIris ? IrisStyle.revealDuration : Appearance.animation.elementMoveFast.duration }
+        ColorAnimation { duration: root.widgetIris ? FamilyStyle.revealDuration : Appearance.animation.elementMoveFast.duration }
     }
 
     // ── Centralized desktop-widget semantic palette ──────────────────────────
@@ -2563,23 +2568,25 @@ AbstractWidget {
     }
     readonly property string irisPaletteName: {
         const name = String(root.irisWidgetOptions.tint ?? "wallpaper")
-        return IrisStyle.widgetPaletteNames.includes(name) ? name : "wallpaper"
+        return FamilyStyle.widgetPaletteNames.includes(name) ? name : "wallpaper"
     }
     readonly property bool irisWallpaperTint: root.irisPaletteName === "wallpaper"
     readonly property real irisVibrance: Math.max(0, Math.min(100, Number(root.irisWidgetOptions.vibrance ?? 85))) / 100
-    readonly property var irisPalette: IrisStyle.widgetPalette(root.irisPaletteName, root.irisVibrance)
+    readonly property var irisPalette: FamilyStyle.widgetPalette(root.irisPaletteName, root.irisVibrance)
     readonly property color irisAccent: root.irisPalette[0]
     readonly property color irisAccent2: root.irisPalette[1]
     readonly property color irisAccent3: root.irisPalette[2]
-    readonly property color irisTintedPlate: ColorUtils.mix(IrisStyle.surface, root.irisAccent, 0.82)
-    readonly property color irisPlate: root.irisMaterial === "tinted" ? root.irisTintedPlate : IrisStyle.surface
+    readonly property color irisTintedPlate: ColorUtils.mix(FamilyStyle.surface, root.irisAccent, 0.82)
+    readonly property color irisPlate: root.irisMaterial === "tinted" ? root.irisTintedPlate : FamilyStyle.surface
 
-    // An iRiS face is either named (`irisFacePart: "clock"`, listed in modules/iris/parts.json as widgetFace.clock) or
-    // given as a Component by a widget whose face depends on the worn Design.
+    // An iRiS face is named (`irisFacePart: "clock"`, a part widgetFace.clock in modules/iris/plugin.json), or the worn
+    // Design's print of the widget (`irisDesignPart`) when the Design prints one for `irisDesignPrint`.
     property string irisFacePart: ""
-    property Component irisFace: null
-    readonly property string irisFaceUrl: root.irisFacePart.length > 0 ? FamilyParts.url("iris", "widgetFace." + root.irisFacePart) : ""
-    readonly property bool hasIrisFace: root.irisFace !== null || root.irisFaceUrl.length > 0
+    property string irisDesignPart: ""
+    property string irisDesignPrint: ""
+    readonly property string irisFaceUrl: root.irisFacePart.length > 0 ? Plugins.part("iris", "widgetFace." + root.irisFacePart)
+        : root.irisDesignPart.length > 0 && FamilyStyle.facePrints[root.irisDesignPrint] ? Plugins.part("iris", "designFace") : ""
+    readonly property bool hasIrisFace: root.irisFaceUrl.length > 0
     readonly property bool irisOnly: DesktopWidgetRegistry.irisOnly(root.configEntryName)
     readonly property var designChoices: {
         const list = []
@@ -2784,8 +2791,8 @@ AbstractWidget {
         }
     }
 
-    readonly property real irisUnit: Math.round(170 * IrisStyle.density * root.scaleFactor)
-    readonly property real irisGutter: Math.round(16 * IrisStyle.density * root.scaleFactor)
+    readonly property real irisUnit: Math.round(170 * FamilyStyle.density * root.scaleFactor)
+    readonly property real irisGutter: Math.round(16 * FamilyStyle.density * root.scaleFactor)
     property real irisFaceWidth: root.irisSize === "small" ? root.irisUnit : root.irisUnit * 2 + root.irisGutter
     property real irisFaceHeight: root.irisSize === "large" ? root.irisUnit * 2 + root.irisGutter : root.irisUnit
     // A new size glides there while arranging, as a widget does on a phone; outside the mode it is just the size.
@@ -2834,8 +2841,10 @@ AbstractWidget {
         // A face answers to its own rows (Material, Opacity in iRiS Settings); Material's Opacity and Dimming are hidden
         // while a face is drawn, and a value left there from before faded it to a ghost with no row to undo it.
         opacity: 1
-        sourceComponent: root.irisFace
-        function loadNamed(): void { if (root.irisFace === null && root.irisFaceUrl.length > 0) setSource(root.irisFaceUrl, { widget: root }) }
+        function loadNamed(): void {
+            if (root.irisFaceUrl.length > 0)
+                setSource(root.irisFaceUrl, root.irisFacePart.length > 0 ? { widget: root } : { widget: root, part: root.irisDesignPart })
+        }
         Component.onCompleted: loadNamed()
         Connections {
             target: root
@@ -2845,21 +2854,21 @@ AbstractWidget {
 
     function widgetSemanticSet(role: string): var {
         if (root.widgetIris) {
-            const lifted = role === "surface" ? IrisStyle.text
-                : role === "signal" ? IrisStyle.danger
-                : role === "success" ? IrisStyle.success
-                : role === "warning" ? IrisStyle.secondaryAccent
+            const lifted = role === "surface" ? FamilyStyle.text
+                : role === "signal" ? FamilyStyle.danger
+                : role === "success" ? FamilyStyle.success
+                : role === "warning" ? FamilyStyle.secondaryAccent
                 : role === "tertiary" ? root.irisAccent3
                 : role === "secondary" ? root.irisAccent2 : root.irisAccent;
             const onLight = root.inkOnLight && !root.widgetHasSurface
             const sample = root.widgetHasSurface || root.regionBrightness < 0 ? null
                 : { level: root.regionBrightness, spread: root.regionBrightnessSpread }
-            const foreground = role === "surface" ? (onLight ? IrisStyle.inkOnLight : lifted)
-                : sample ? IrisStyle.markOn(lifted, sample, onLight, 3)
-                : onLight ? IrisStyle.deepAccent(lifted, IrisStyle.inkOnLight) : lifted;
-            return { color: foreground, onColor: IrisStyle.surface,
-                container: role === "surface" ? root.irisPlate : ColorUtils.mix(root.irisPlate, IrisStyle.text, 0.9),
-                onContainer: IrisStyle.text };
+            const foreground = role === "surface" ? (onLight ? FamilyStyle.inkOnLight : lifted)
+                : sample ? FamilyStyle.markOn(lifted, sample, onLight, 3)
+                : onLight ? FamilyStyle.deepAccent(lifted, FamilyStyle.inkOnLight) : lifted;
+            return { color: foreground, onColor: FamilyStyle.surface,
+                container: role === "surface" ? root.irisPlate : ColorUtils.mix(root.irisPlate, FamilyStyle.text, 0.9),
+                onContainer: FamilyStyle.text };
         }
         // Bare Material widgets under iRiS (iNstrument, Readout) draw with the same three accents as the faces.
         // Their neutral is the ink itself and their states the Island's, never the Material scheme's
@@ -2868,17 +2877,17 @@ AbstractWidget {
         if (root.widgetIrisFamily && !root.widgetHasSurface) {
             const onLight = root.inkOnLight
             if (role === "surface")
-                return { color: root.colText, onColor: onLight ? IrisStyle.inkOnDark : IrisStyle.inkOnLight,
-                    container: ColorUtils.mix(IrisStyle.surface, root.colText, 0.9), onContainer: IrisStyle.text };
-            const seed = role === "signal" ? IrisStyle.dangerOnMedia : role === "warning" ? IrisStyle.highlightOnMedia
-                : role === "success" ? (IrisStyle.light ? Lume.mark(IrisStyle.success, 0.35, 0, false, 3) : IrisStyle.success)
+                return { color: root.colText, onColor: onLight ? FamilyStyle.inkOnDark : FamilyStyle.inkOnLight,
+                    container: ColorUtils.mix(FamilyStyle.surface, root.colText, 0.9), onContainer: FamilyStyle.text };
+            const seed = role === "signal" ? FamilyStyle.dangerOnMedia : role === "warning" ? FamilyStyle.highlightOnMedia
+                : role === "success" ? (FamilyStyle.light ? Lume.mark(FamilyStyle.success, 0.35, 0, false, 3) : FamilyStyle.success)
                 : role === "tertiary" ? root.irisAccent3 : role === "secondary" ? root.irisAccent2 : root.irisAccent
             const sample = root.regionBrightness < 0 || !root.positionColorAdaptationEnabled ? null
                 : { level: root.regionBrightness, spread: root.regionBrightnessSpread }
-            const shown = sample ? IrisStyle.markOn(seed, sample, onLight, 3)
-                : onLight ? IrisStyle.deepAccent(seed, IrisStyle.inkOnLight) : seed
-            return { color: shown, onColor: IrisStyle.onTintFor(seed),
-                container: ColorUtils.mix(IrisStyle.surface, seed, 0.78), onContainer: IrisStyle.text };
+            const shown = sample ? FamilyStyle.markOn(seed, sample, onLight, 3)
+                : onLight ? FamilyStyle.deepAccent(seed, FamilyStyle.inkOnLight) : seed
+            return { color: shown, onColor: FamilyStyle.onTintFor(seed),
+                container: ColorUtils.mix(FamilyStyle.surface, seed, 0.78), onContainer: FamilyStyle.text };
         }
         const c = Appearance.colors;
         // Bare on a light region in a dark theme, an accent takes its container tone: the same
@@ -2952,8 +2961,8 @@ AbstractWidget {
     // Surfaces use semantic containers directly. This removes the old HSL
     // wallpaper-region re-toning that could turn generated warm palettes muddy.
     readonly property color widgetPlateColor: root.widgetIris && root.forceDarkInk
-        ? ColorUtils.mix(IrisStyle.text, IrisStyle.accent, 0.98)
-        : root.widgetIris && root.forceLightInk ? IrisStyle.surface
+        ? ColorUtils.mix(FamilyStyle.text, FamilyStyle.accent, 0.98)
+        : root.widgetIris && root.forceLightInk ? FamilyStyle.surface
         : root.widgetSemanticContainer(root.widgetSurfaceRole)
     readonly property bool widgetPlateIsDark: ColorUtils.relativeLuminance(root.widgetPlateColor) < 0.38
     readonly property color widgetSurfaceInk: root.forceLightInk ? root._inkLight
@@ -2967,8 +2976,8 @@ AbstractWidget {
     readonly property bool widgetEditorial: !root.widgetIris && Appearance.editorialEverywhere
     // Family-owned type: iRiS widgets speak the Island's typeface; every other
     // family keeps the shell fonts it always used.
-    readonly property string widgetBodyFamily: root.widgetIris ? IrisStyle.fontMain : Appearance.font.family.main
-    readonly property string widgetNumbersFamily: root.widgetIrisFamily ? IrisStyle.fontNumbers : Appearance.font.family.numbers
+    readonly property string widgetBodyFamily: root.widgetIris ? FamilyStyle.fontMain : Appearance.font.family.main
+    readonly property string widgetNumbersFamily: root.widgetIrisFamily ? FamilyStyle.fontNumbers : Appearance.font.family.numbers
     // Metadata labels: shouting caps are Material/Instrument grammar; iRiS uses
     // sentence case (first letter up, the rest as written by the locale).
     function widgetCase(text): string {
@@ -2976,7 +2985,7 @@ AbstractWidget {
         return root.widgetIris ? value.charAt(0).toUpperCase() + value.slice(1) : value.toUpperCase()
     }
     readonly property int widgetCapitalization: root.widgetIris ? Font.MixedCase : Font.AllUppercase
-    readonly property string widgetTitleFamily: root.widgetIris ? IrisStyle.fontMain : root.widgetEditorial
+    readonly property string widgetTitleFamily: root.widgetIris ? FamilyStyle.fontMain : root.widgetEditorial
         ? Appearance.editorial.displayFamily : Appearance.font.family.main
     // iRiS display type: one chosen weight for titles and figures, with the
     // slight negative tracking large system numerals use.
@@ -2991,8 +3000,8 @@ AbstractWidget {
         ? Appearance.editorial.spacing : 1
     readonly property int widgetLabelWeight: root.widgetEditorial ? Appearance.editorial.labelWeight : Font.Medium
     readonly property real widgetMetadataTracking: root.widgetEditorial ? Appearance.editorial.metadataTracking : 0
-    readonly property real widgetControlRadius: root.widgetIris ? Math.round(12 * IrisStyle.density) : root.widgetEditorial ? Appearance.rounding.small : Appearance.rounding.normal
-    readonly property real widgetCardRadius: root.widgetIris ? Math.round(Math.max(0, Math.min(40, Config.options?.iris?.widgets?.radius ?? 22)) * IrisStyle.density) : root.widgetEditorial ? Appearance.editorial.radius : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
+    readonly property real widgetControlRadius: root.widgetIris ? Math.round(12 * FamilyStyle.density) : root.widgetEditorial ? Appearance.rounding.small : Appearance.rounding.normal
+    readonly property real widgetCardRadius: root.widgetIris ? Math.round(Math.max(0, Math.min(40, Config.options?.iris?.widgets?.radius ?? 22)) * FamilyStyle.density) : root.widgetEditorial ? Appearance.editorial.radius : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
         : Appearance.cookieEverywhere ? Appearance.cookie.roundLarge
         : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
         : Appearance.inirEverywhere ? Appearance.inir.roundingNormal

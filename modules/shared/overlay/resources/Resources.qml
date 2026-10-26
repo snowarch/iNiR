@@ -7,7 +7,6 @@ import Qt5Compat.GraphicalEffects
 import qs
 import qs.services
 import qs.modules.common
-import qs.modules.iris.style
 import qs.modules.common.widgets
 import qs.modules.shared.overlay
 
@@ -154,7 +153,7 @@ StyledOverlayWidget {
             }
             Graph {
                 anchors.fill: parent
-                Binding on color { when: OverlayLook.iris; value: IrisStyle.accent }
+                Binding on color { when: OverlayLook.iris; value: FamilyStyle.accent }
                 values: root.resources[tabBar.currentIndex]?.history ?? []
                 points: ResourceUsage.historyLength
                 alignment: Graph.Alignment.Right

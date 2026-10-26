@@ -12,8 +12,6 @@ import qs.services.deferred
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
-import qs.modules.ii.pill
-import qs.modules.waffle.looks
 import qs.modules.common.pill
 
 // Edge-hover workspace navigator with window thumbnails and a now-playing
@@ -95,31 +93,9 @@ Scope {
             readonly property bool isRight: (Config.options?.workspaceStrip?.side ?? "right") === "right"
             readonly property string edgeSlot: isRight ? "right" : "left"
 
-            function outputEnabled(configuredOutputs): bool {
-                if (!Array.isArray(configuredOutputs) || configuredOutputs.length === 0)
-                    return true
-                if (screenName.length > 0 && configuredOutputs.includes(screenName))
-                    return true
-                const currentNames = Quickshell.screens.map(screen => screen?.name ?? "")
-                return !configuredOutputs.some(name => currentNames.includes(name))
-            }
-
-            readonly property bool waffleBarShown:
-                (Config.options?.panelFamily ?? "ii") === "waffle"
-                && (Config.options?.enabledPanels ?? []).includes("wBar")
-                && (GlobalStates.barOpen ?? true)
-                && outputEnabled(Config.options?.waffles?.bar?.screenList ?? [])
-            readonly property var panelInsets: {
-                if ((Config.options?.panelFamily ?? "ii") === "ii")
-                    return ShellLayoutController.desktopInsets(screenName)
-                const insets = ({ left: 0, top: 0, right: 0, bottom: 0 })
-                if (waffleBarShown) {
-                    const edge = (Config.options?.waffles?.bar?.bottom ?? true)
-                        ? "bottom" : "top"
-                    insets[edge] = Looks.scaledBar(48, modelData)
-                }
-                return insets
-            }
+            // Material's panels through the layout service, another family's chrome through its own style.
+            readonly property var panelInsets: (Config.options?.panelFamily ?? "ii") === "ii"
+                ? ShellLayoutController.desktopInsets(screenName) : FamilyStyle.insets(modelData)
             readonly property int rawTopPanelInset: Math.max(0, panelInsets?.top ?? 0)
             readonly property int rawBottomPanelInset: Math.max(0, panelInsets?.bottom ?? 0)
             readonly property int rawSidePanelInset: Math.max(0,

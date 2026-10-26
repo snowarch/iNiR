@@ -9,7 +9,6 @@ import qs.modules.shared.background.widgets
 import qs.modules.shared.background.widgets.instrument
 import qs.modules.shared.mediaControls.presets
 import qs.modules.shared.mediaControls.components
-import qs.modules.iris.components
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -430,10 +429,12 @@ AbstractBackgroundWidget {
     
     Component {
         id: irisPlayerComponent
-        IrisMediaCard {
-            compact: ["compact", "minimal"].includes(root.effectiveRenderedPreset)
-            active: root.visible && root.powerActive
-            showBackground: false
+        FamilyPart {
+            property var player: null
+            family: "iris"
+            part: "mediaCard"
+            props: ({ compact: ["compact", "minimal"].includes(root.effectiveRenderedPreset), active: root.visible && root.powerActive,
+                showBackground: false, player: player })
         }
     }
 
@@ -597,9 +598,11 @@ AbstractBackgroundWidget {
                             StyledText { Layout.fillWidth: true; text: Translation.tr("Nothing playing"); color: root.widgetInk; elide: Text.ElideRight; font.family: root.widgetTitleFamily; font.pixelSize: Math.round(15 * root.scaleFactor); font.weight: Font.DemiBold }
                         }
                     }
-                    IrisArtwork {
+                    FamilyPart {
                         anchors.centerIn: parent
-                        visible: root.widgetIris
+                        when: root.widgetIris
+                        family: "iris"
+                        part: "artwork"
                         width: Math.min(parent.width, parent.height) * 0.6
                         height: width
                     }

@@ -5,8 +5,10 @@
   "summary": "Material 3 Expressive panels, bars, docks and widgets in nine global styles.",
   "version": "2.33.0",
   "provides": "modules/ii",
-  "entries": {
+  "parts": {
     "critical": "critical/ShellIiCriticalPanels.qml",
-    "panels": "ShellIiPanelsImpl.qml"
+    "panels": "ShellIiPanelsImpl.qml",
+    "editStage": "edit/MaterialEditStage.qml",
+    "widgetOutfit": "edit/MaterialWidgetOutfit.qml"
   }
 }

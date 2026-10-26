@@ -7,8 +7,6 @@ import qs.modules.common.functions
 import qs.modules.waffle.looks
 import qs.services
 import qs.modules.iris.components
-import qs.modules.iris.style
-
 // Elegant family transition overlay
 //
 // Choreography:
@@ -358,7 +356,7 @@ Scope {
 
         // iRiS arrives as its own mark: the real IrisMark, orbiting, over the veiled wallpaper, its name
         // under it in the family's title face. It emerges on the family's curve and leaves the way it
-        // came, never bouncing; the shell then grows inward on its own arrival (IrisStyle.arrival).
+        // came, never bouncing; the shell then grows inward on its own arrival.
         Item {
             id: irisRoot
             anchors.fill: parent
@@ -368,34 +366,34 @@ Scope {
 
             Column {
                 anchors.centerIn: parent
-                spacing: Math.round(16 * IrisStyle.density)
+                spacing: Math.round(16 * FamilyStyle.density)
                 opacity: irisRoot.shown
                 scale: root._phase ? 0.94 : (irisRoot.entered ? 1 : 0.86)
                 Behavior on opacity {
                     NumberAnimation {
-                        duration: root._phase ? IrisStyle.recedeDuration : IrisStyle.emergeDuration
+                        duration: root._phase ? FamilyStyle.recedeDuration : FamilyStyle.emergeDuration
                         easing.type: Easing.BezierSpline
-                        easing.bezierCurve: root._phase ? IrisStyle.recedeCurve : IrisStyle.emergeCurve
+                        easing.bezierCurve: root._phase ? FamilyStyle.recedeCurve : FamilyStyle.emergeCurve
                     }
                 }
                 Behavior on scale {
                     NumberAnimation {
-                        duration: root._phase ? IrisStyle.recedeDuration : IrisStyle.emergeDuration
+                        duration: root._phase ? FamilyStyle.recedeDuration : FamilyStyle.emergeDuration
                         easing.type: Easing.BezierSpline
-                        easing.bezierCurve: root._phase ? IrisStyle.recedeCurve : IrisStyle.emergeCurve
+                        easing.bezierCurve: root._phase ? FamilyStyle.recedeCurve : FamilyStyle.emergeCurve
                     }
                 }
 
                 IrisMark {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    implicitSize: Math.round(72 * IrisStyle.density)
+                    implicitSize: Math.round(72 * FamilyStyle.density)
                     orbiting: true
                 }
                 IrisText {
                     anchors.horizontalCenter: parent.horizontalCenter
                     role: IrisText.Display
                     text: "iRiS"
-                    color: IrisStyle.onMedia
+                    color: FamilyStyle.onMedia
                 }
             }
         }

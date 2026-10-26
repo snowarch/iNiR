@@ -5,9 +5,11 @@ import QtQuick
 import Qt.labs.folderlistmodel
 import Quickshell
 import Quickshell.Io
+import qs.modules.common
 
 // What is installed: every folder under modules/ that carries a plugin.json (the families today, components and
-// the person's plugin folder next). The shell finds a plugin's entry files here and never names one in code.
+// the person's plugin folder next). A plugin lists the files it hands the base by name (`parts`: its panels, what it
+// draws on shared surfaces) and yes/no facts about them (`flags`); the base asks here and never names its files.
 Singleton {
     id: root
 
@@ -15,21 +17,25 @@ Singleton {
     property int _read: 0
     readonly property bool ready: folders.status === FolderListModel.Ready && root._read >= folders.count
     readonly property var families: Object.keys(root.manifests).filter(id => root.manifests[id].kind === "family").sort()
+    readonly property string active: String(Config.options?.panelFamily ?? "ii")
 
     function has(id: string): bool { return !!root.manifests[id] }
-    // The shell-relative path of a plugin's entry ("" when the plugin or the entry is missing).
-    function entry(id: string, key: string): string {
+    // The file a plugin draws a part with, or "" when it has none (the base keeps its own).
+    function part(id: string, name: string): string {
         const manifest = root.manifests[id]
-        const file = String(manifest?.entries?.[key] ?? "")
-        return file.length > 0 ? `${manifest.provides}/${file}` : ""
+        const file = String(manifest?.parts?.[name] ?? "")
+        // Resolved beside this file, so a part keeps the scheme the shell's own files load with: a file:// twin of a
+        // root: folder breaks that folder's qmldir for every later import of it.
+        return file.length > 0 ? Qt.resolvedUrl(`../${manifest.provides}/${file}`).toString() : ""
     }
+    function flag(id: string, name: string): bool { return Boolean(root.manifests[id]?.flags?.[name]) }
 
     function _take(folder: string, raw: string): void {
         let manifest = null
         try { manifest = JSON.parse(raw) } catch (e) { console.warn(`[Plugins] modules/${folder}/plugin.json: ${e}`) }
         if (manifest?.id === folder && typeof manifest.kind === "string") {
             const next = Object.assign({}, root.manifests)
-            next[folder] = Object.assign({ provides: `modules/${folder}`, entries: {} }, manifest)
+            next[folder] = Object.assign({ provides: `modules/${folder}`, parts: {}, flags: {} }, manifest)
             root.manifests = next
         }
         root._read++

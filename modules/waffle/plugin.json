@@ -5,8 +5,13 @@
   "summary": "Windows 11 for people who want it: taskbar, Start, Action Center.",
   "version": "2.33.0",
   "provides": "modules/waffle",
-  "entries": {
+  "parts": {
     "critical": "critical/ShellWaffleCriticalPanels.qml",
-    "panels": "ShellWafflePanelsImpl.qml"
+    "panels": "ShellWafflePanelsImpl.qml",
+    "closeConfirm": "closeConfirm/WCloseConfirmContent.qml",
+    "lockSurface": "lock/WaffleLockSurfaceSafe.qml",
+    "lockSurface.hyprland": "lock/WaffleLockSurface.qml",
+    "style": "WaffleFamilyStyle.qml",
+    "regionToolbar": "regionSelector/WOptionsToolbar.qml"
   }
 }
