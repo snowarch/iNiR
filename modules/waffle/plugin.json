@@ -14,7 +14,8 @@
     "style": "WaffleFamilyStyle.qml",
     "regionToolbar": "regionSelector/WOptionsToolbar.qml",
     "familyTransition": "WaffleFamilyTransition.qml",
-    "settingsApp": "settings/WaffleSettingsApp.qml"
+    "settingsApp": "settings/WaffleSettingsApp.qml",
+    "config": "WaffleConfigSchema.qml"
   },
   "settingsFrom": {
     "family": "ii",
@@ -22,5 +23,6 @@
   },
   "customWidget": {
     "face": "widgets/templates/WaffleCard.qml"
-  }
+  },
+  "configKey": "waffles"
 }
