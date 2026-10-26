@@ -609,6 +609,8 @@ Loader {
                     ScrollView {
                         Layout.fillWidth: true
                         implicitHeight: 150 * root.d
+                        // The note wraps to the view, never widens it: its width read the view's (a loop at large sizes).
+                        contentWidth: availableWidth
                         TextArea {
                             id: noteEditor
                             placeholderText: Translation.tr("Write something to keep…")
