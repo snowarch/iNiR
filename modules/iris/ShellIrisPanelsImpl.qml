@@ -143,9 +143,9 @@ Item {
         identifier: "irisSettings"
         requireEnabledPanel: false
         open: !root.settingsWindowed && (GlobalStates.settingsOverlayOpen || GlobalStates.irisSettingsWarm)
-        // Kept built for ten minutes after it closes (SekaiPop keeps its Settings alive): opening again is instant,
-        // and a Settings left alone gives its memory back. Gone at once when Settings moves to a window.
-        closeGraceMs: root.settingsWindowed ? 0 : 600000
+        // Kept built a moment after it closes, so a quick reopen is instant; ten minutes held ~130 MB and every layout
+        // it showed after each close (and a hover toward its key builds it). Gone at once when Settings is a window.
+        closeGraceMs: root.settingsWindowed ? 0 : 20000
         component: IrisSettingsOverlay {}
     }
 
