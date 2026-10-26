@@ -67,9 +67,9 @@ AbstractBackgroundWidget {
     }
     readonly property var article: root.articleCount > 0
         ? NewsService.articles[root.headlineIndex % root.articleCount] : null
+    readonly property string articleAge: root.displayedArticle ? NewsService.formatTime(root.displayedArticle.timestamp) : ""
     readonly property string articleMeta: root.displayedArticle
-        ? [root.displayedArticle.source,
-            NewsService.formatTime(root.displayedArticle.timestamp)]
+        ? [root.displayedArticle.source, root.articleAge]
             .filter(value => value && value.length > 0).join(" • ")
         : ""
 
@@ -284,10 +284,13 @@ AbstractBackgroundWidget {
                 spacing: 5
 
                 StyledText {
+                    id: metaText
                     Layout.fillWidth: true
                     visible: root.showMeta
-                    text: root.articleMeta.length > 0
-                        ? root.articleMeta : Translation.tr("News")
+                    // Too narrow for the source too: the age alone (elided, "Clarin.com • 1…" lost the age).
+                    text: root.articleMeta.length === 0 ? Translation.tr("News")
+                        : metaFit.advanceWidth <= metaText.width || root.articleAge.length === 0 ? root.articleMeta : root.articleAge
+                    TextMetrics { id: metaFit; font: metaText.font; text: root.articleMeta }
                     color: root.instrument ? root.widgetAccentVisible : root.widgetInkMuted
                     font.family: root.instrument ? Appearance.font.family.monospace : root.widgetBodyFamily
                     font.pixelSize: Math.round((root.instrument
