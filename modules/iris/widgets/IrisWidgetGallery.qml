@@ -30,12 +30,23 @@ ColumnLayout {
         return DesktopWidgetLayout.enabled(root.outputName, key, Config.getNestedValue("background.widgets." + key + ".enable", false))
     }
 
+    readonly property real longestWord: {
+        nameMetrics.font
+        let widest = 0
+        for (const entry of root.entries)
+            for (const word of String(entry.label ?? "").split(/\s+/))
+                widest = Math.max(widest, nameMetrics.advanceWidth(word))
+        return widest
+    }
+    FontMetrics { id: nameMetrics; font.family: IrisStyle.fontRead; font.pixelSize: IrisStyle.typeMeta; font.letterSpacing: IrisStyle.tracking(IrisStyle.typeMeta) }
+
     spacing: Math.round(12 * root.d)
 
     GridLayout {
         id: grid
         Layout.fillWidth: true
-        readonly property real tile: Math.round(76 * root.d)
+        // At least as wide as the longest word of any name: a name wraps between words, never inside one.
+        readonly property real tile: Math.max(Math.round(76 * root.d), Math.ceil(root.longestWord) + Math.round(8 * root.d))
         columns: Math.max(3, Math.floor((width + columnSpacing) / (tile + columnSpacing)))
         columnSpacing: Math.round(6 * root.d)
         rowSpacing: Math.round(10 * root.d)
@@ -48,6 +59,7 @@ ColumnLayout {
                 required property var modelData
                 readonly property bool on: { Config.revision; return root.isOn(entry.modelData.key) }
                 Layout.fillWidth: true
+                Layout.alignment: Qt.AlignTop
                 Layout.preferredHeight: icon.height + name.implicitHeight + Math.round(8 * root.d)
 
                 Rectangle {
@@ -107,6 +119,8 @@ ColumnLayout {
                     text: entry.modelData.label
                     color: entry.on ? IrisStyle.text : IrisStyle.subtext
                     font.pixelSize: IrisStyle.typeMeta
+                    wrapMode: Text.WordWrap
+                    maximumLineCount: 2
                     elide: Text.ElideRight
                 }
                 HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }

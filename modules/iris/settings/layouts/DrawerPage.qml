@@ -43,6 +43,8 @@ Item {
             color: IrisStyle.text
             font.family: IrisStyle.fontTitle
             font.pixelSize: page.u(40)
+            fontSizeMode: Text.HorizontalFit
+            minimumPixelSize: page.u(24)
             font.weight: Font.Bold
             font.letterSpacing: -Math.round(page.u(40) * 0.015)
         }

@@ -170,8 +170,19 @@ Item {
         : root.groups.length === 1 ? root.groups[0].title : ""
     readonly property real pageWidth: root.sceneDrawn ? Number(root.scene.pageWidth ?? frame.width) : frame.width - root.sidebarFull
     readonly property real sidebarNeed: root.sceneDrawn ? Number(root.scene.need ?? 0) : sidebarLayout.implicitHeight + 2 * sidebar.pad + Math.round(4 * root.d)
-    // The sidebar keeps its width on every section: it never narrows to a rail (2026-10-15).
-    readonly property real sidebarFull: Math.round(Math.min(272 * root.d, frame.width * 0.3))
+    // The sidebar keeps its width on every section: it never narrows to a rail (2026-10-15). It is as wide as the longest
+    // area name prints bold (the one you are on), within a third of the window: a translated name never elides.
+    readonly property real sidebarFull: Math.round(Math.min(Math.max(272 * root.d, root.longestArea + 88 * root.d), frame.width * 0.3))
+    // Reads the metrics' font so it measures again once the font's bindings land (first measured at the default weight).
+    readonly property real longestArea: areaMetrics.font.pixelSize > 0 ? root.sections.reduce((widest, section) => Math.max(widest,
+        areaMetrics.advanceWidth(Translation.tr(String(section.title ?? "")))), 0) : 0
+    FontMetrics {
+        id: areaMetrics
+        font.family: IrisStyle.fontRead
+        font.pixelSize: IrisStyle.typeBody
+        font.letterSpacing: IrisStyle.tracking(IrisStyle.typeBody)
+        font.weight: IrisStyle.weight(Font.Bold)
+    }
     readonly property bool wideEnough: root.pageWidth >= Math.round(720 * root.d)
     // The Hub is a section of its own: its page fills the pane.
     readonly property bool pageInPane: root.advancedPage >= 0 && root.wideEnough && root.morePages.some(entry => root.pageIndexOf(entry.key) === root.advancedPage)
@@ -1912,6 +1923,8 @@ Item {
                 text: hero.grouped ? root.openGroup : Translation.tr(root.currentSection.subtitle ?? root.currentSection.title)
                 font.pixelSize: IrisStyle.typeTitle
                 font.weight: IrisStyle.weight(Font.DemiBold)
+                wrapMode: Text.WordWrap
+                maximumLineCount: 2
                 elide: Text.ElideRight
             }
             IrisText {

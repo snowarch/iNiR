@@ -61,7 +61,27 @@ Rectangle {
         ? root.options.map(option => Number(skin.item.widthFor(Translation.tr(String(option.label ?? ""))))) : []
     readonly property real hugWidth: root.hugWidths.length > 0 ? Math.ceil(root.hugWidths.reduce((sum, w) => sum + w, 0)) + 2 * root.inset : 0
     readonly property bool hugs: root.hugWidth > 0 && root.width >= root.hugWidth - 1
-    implicitHeight: Math.round((skin.item?.wantHeight ?? (root.pictured ? 52 : root.glyphOnly ? 32 : 28)) * root.d)
+    // Even shares cut a long name while a short one has air: then each segment takes its name's width plus an even part
+    // of what is left (Apple's apportionsSegmentWidthsByContent); squeezed further, all shrink by the same ratio.
+    readonly property var needs: root.glyphOnly ? [] : root.hugWidths.length > 0 ? root.hugWidths
+        : labelMetrics.font.pixelSize <= 0 ? [] : root.options.map(option => labelMetrics.advanceWidth(Translation.tr(String(option.label ?? "")))
+            + (String(option.swatch ?? "").length > 0 ? 18 * root.d : 0) + 24 * root.d)
+    readonly property real needTotal: root.needs.reduce((sum, w) => sum + w, 0)
+    // Squeezed, a name breaks between words but never inside one: its longest word is its floor.
+    readonly property var floors: root.needs.length === 0 || labelMetrics.font.pixelSize <= 0 ? [] : root.options.map(option => Math.max(0,
+        ...Translation.tr(String(option.label ?? "")).split(/\s+/).map(word => labelMetrics.advanceWidth(word)))
+        + (String(option.swatch ?? "").length > 0 ? 18 * root.d : 0) + 16 * root.d)
+    readonly property var shares: {
+        if (root.hugs || !root.needs.some(need => need > root.slot)) return []
+        const room = root.width - 2 * root.inset
+        if (root.needTotal <= room) return root.needs.map(w => w + (room - root.needTotal) / root.count)
+        const floorTotal = root.floors.reduce((sum, w) => sum + w, 0)
+        if (floorTotal >= room) return root.floors.map(w => w * room / floorTotal)
+        return root.floors.map((w, i) => w + (root.needs[i] - w) * (room - floorTotal) / (root.needTotal - floorTotal))
+    }
+    // Names that cannot share one line even so take two, and the track grows to hold them.
+    readonly property bool squeezed: !root.pictured && !root.skinned && root.width > 0 && root.needTotal > root.width - 2 * root.inset + 1
+    implicitHeight: Math.round((skin.item?.wantHeight ?? (root.pictured ? 52 : root.glyphOnly ? 32 : root.squeezed ? 42 : 28)) * root.d)
     implicitWidth: root.hugWidth > 0 ? root.hugWidth : root.glyphOnly ? root.count * (root.implicitHeight - 2 * root.inset) + 2 * root.inset : 0
     readonly property real thumbRadius: root.pictured ? IrisStyle.radiusTile - root.inset
         : IrisStyle.controlPlated ? IrisStyle.pieceRadius(root.height - 2 * root.inset) : (root.height - 2 * root.inset) / 2
@@ -76,9 +96,10 @@ Rectangle {
     }
 
     function slotX(index: int): int {
-        if (root.hugs) {
+        const widths = root.hugs ? root.hugWidths : root.shares
+        if (widths.length > 0) {
             let x = root.inset
-            for (let i = 0; i < Math.min(index, root.hugWidths.length); i++) x += root.hugWidths[i]
+            for (let i = 0; i < Math.min(index, widths.length); i++) x += widths[i]
             return Math.round(x)
         }
         return root.inset + Math.round(index * root.slot)
@@ -257,6 +278,10 @@ Rectangle {
                     anchors.verticalCenter: parent.verticalCenter
                     // Bounded by its segment: a slot too narrow for a translation elides instead of spilling over its neighbour.
                     width: Math.min(implicitWidth, Math.max(0, segment.width - Math.round(16 * root.d)))
+                    wrapMode: root.squeezed ? Text.WordWrap : Text.NoWrap
+                    maximumLineCount: 2
+                    horizontalAlignment: Text.AlignHCenter
+                    lineHeight: root.squeezed ? 0.9 : 1
                     elide: Text.ElideRight
                     text: Translation.tr(String(segment.modelData.label ?? ""))
                     font.family: (root.fontFor ? root.fontFor(segment.modelData) : "") || (root.synth ? IrisStyle.fontSynthLabel : IrisStyle.fontMain)

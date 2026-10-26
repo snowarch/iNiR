@@ -83,7 +83,7 @@ PreviewScene {
                         }
                     }
                     Rectangle {
-                        visible: card.current
+                        visible: card.current && orbitRoot.on
                         anchors.left: parent.left
                         anchors.top: parent.top
                         anchors.margins: Math.round(8 * orbitRoot.d)

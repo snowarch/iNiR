@@ -41,7 +41,7 @@ PreviewScene {
             width: parent.width - 2 * x
             spacing: Math.round(8 * pal.d)
             IrisText { text: Translation.tr("Your shell"); font.weight: IrisStyle.weight(Font.DemiBold); font.pixelSize: IrisStyle.typeBody }
-            IrisText { Layout.fillWidth: true; text: Translation.tr("Ink on its paper, colours that keep their meaning"); color: IrisStyle.subtext; elide: Text.ElideRight; font.pixelSize: IrisStyle.typeMeta }
+            IrisText { Layout.fillWidth: true; text: Translation.tr("Ink on its paper, colours that keep their meaning"); color: IrisStyle.subtext; wrapMode: Text.WordWrap; maximumLineCount: 2; elide: Text.ElideRight; font.pixelSize: IrisStyle.typeMeta }
             Row {
                 spacing: Math.round(8 * pal.d)
                 Repeater {
