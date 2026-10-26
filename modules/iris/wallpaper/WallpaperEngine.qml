@@ -774,7 +774,7 @@ Item {
         const target = root.selectionTarget
         root.committing = true
         Wallpapers.applySelectionTarget(entry.path, target, Appearance.m3colors.darkmode, root.targetMonitor)
-        if (target === "backdrop" || target === "waffle-backdrop") Wallpapers.cancelWallpaperPreview()
+        if (Wallpapers.isBackdropTarget(target)) Wallpapers.cancelWallpaperPreview()
         else Wallpapers.clearWallpaperPreview()
         Config.setNestedValue("wallpaperSelector.selectionTarget", "main")
         Config.setNestedValue("wallpaperSelector.targetMonitor", "")

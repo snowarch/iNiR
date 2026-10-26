@@ -439,17 +439,8 @@ Singleton {
         property string _destPath: ""
         onExited: (exitCode) => {
             if (exitCode !== 0) { root.error = "Failed to copy result to wallpapers"; return }
-            // Route by active family — each family owns its own wallpaper surface.
-            // Mirrors what the wallpaper selector does via currentSelectionTarget().
-            const isWaffle = (Config.options?.panelFamily ?? "ii") === "waffle"
-            const waffleOwnWallpaper = isWaffle && !(Config.options?.waffles?.background?.useMainWallpaper ?? true)
-            if (waffleOwnWallpaper) {
-                // Waffle has its own wallpaper — apply only to waffle surface + regen colors
-                Wallpapers.applySelectionTarget(_destPath, "waffle", Appearance.m3colors.darkmode)
-            } else {
-                // ii, or waffle following main → full pipeline on main wallpaper
-                Wallpapers.apply(_destPath, Appearance.m3colors.darkmode)
-            }
+            // A family keeping its own wallpaper gets the result there, like a pick in the selector.
+            Wallpapers.applySelectionTarget(_destPath, Wallpapers.familyTarget(), Appearance.m3colors.darkmode)
         }
     }
 

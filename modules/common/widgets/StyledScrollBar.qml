@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import qs.modules.common
 import qs.modules.common.functions
+import qs.services
 
 ScrollBar {
     id: root
@@ -16,8 +17,9 @@ ScrollBar {
         radius: width / 2
         color: Appearance.colors.colOnSurfaceVariant
         
-        // iRiS shows it only under the pointer: a bar flashing on every wheel turn fights its pages.
-        readonly property bool shows: Config.options?.panelFamily === "iris" ? (root.hovered || root.pressed) : root.active
+        // A family that keeps them quiet (flag `quietScrollbars`, iRiS) shows it only under the pointer: a bar flashing
+        // on every wheel turn fights its pages.
+        readonly property bool shows: Plugins.flag(Plugins.active, "quietScrollbars") ? (root.hovered || root.pressed) : root.active
         opacity: root.policy === ScrollBar.AlwaysOn || (shows && root.size < 1.0) ? 0.5 : 0
         Behavior on opacity {
             NumberAnimation {

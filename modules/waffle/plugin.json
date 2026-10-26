@@ -15,7 +15,8 @@
     "regionToolbar": "regionSelector/WOptionsToolbar.qml",
     "familyTransition": "WaffleFamilyTransition.qml",
     "settingsApp": "settings/WaffleSettingsApp.qml",
-    "config": "WaffleConfigSchema.qml"
+    "config": "WaffleConfigSchema.qml",
+    "layout": "WaffleLayout.qml"
   },
   "settingsFrom": {
     "family": "ii",
@@ -54,6 +55,69 @@
     "iiMascotCompanion"
   ],
   "flags": {
-    "verbs": true
+    "verbs": true,
+    "taskbarSorting": true
+  },
+  "settings": {
+    "wallpaper": {
+      "key": "waffles.background"
+    },
+    "font": {
+      "key": "waffles.theming.font.family",
+      "fallback": "Noto Sans"
+    }
+  },
+  "devDestinations": [
+    {
+      "id": "waffle/start",
+      "surface": "waffle-search",
+      "view": "start",
+      "settleMs": 350
+    },
+    {
+      "id": "waffle/all-apps",
+      "surface": "waffle-search",
+      "view": "all-apps",
+      "settleMs": 350
+    },
+    {
+      "id": "waffle/search",
+      "surface": "waffle-search",
+      "view": "search",
+      "settleMs": 450
+    },
+    {
+      "id": "waffle/action-center",
+      "surface": "waffle-action-center",
+      "settleMs": 350
+    },
+    {
+      "id": "waffle/notification-center",
+      "surface": "waffle-notification-center",
+      "settleMs": 350
+    },
+    {
+      "id": "waffle/widgets",
+      "surface": "waffle-widgets",
+      "settleMs": 350
+    },
+    {
+      "id": "waffle/taskview",
+      "surface": "waffle-taskview",
+      "settleMs": 450
+    }
+  ],
+  "switch": {
+    "name": "Switch to Waffle Panel Family",
+    "description": "Use the Windows 11 / Waffle panel layout",
+    "icon": "grid_view",
+    "keywords": [
+      "family",
+      "panel",
+      "waffle",
+      "win11",
+      "windows",
+      "layout"
+    ]
   }
 }

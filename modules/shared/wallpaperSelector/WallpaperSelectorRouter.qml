@@ -114,12 +114,8 @@ Scope {
         const explicitMonitor = GlobalStates.wallpaperSelectorTargetMonitor
             || (Config.options?.wallpaperSelector?.targetMonitor ?? "")
         const explicitTarget = Config.options?.wallpaperSelector?.selectionTarget ?? "main"
-        if (!explicitMonitor && explicitTarget === "main") {
-            if (Config.options?.panelFamily === "waffle") {
-                const useMain = Config.options?.waffles?.background?.useMainWallpaper ?? true
-                Config.setNestedValue("wallpaperSelector.selectionTarget", useMain ? "main" : "waffle")
-            } else Config.setNestedValue("wallpaperSelector.selectionTarget", "main")
-        }
+        if (!explicitMonitor && explicitTarget === "main")
+            Config.setNestedValue("wallpaperSelector.selectionTarget", Wallpapers.familyTarget())
         if (explicitMonitor)
             root._openWithMonitor(explicitMonitor)
         else

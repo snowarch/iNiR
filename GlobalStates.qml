@@ -128,7 +128,7 @@ Singleton {
     readonly property bool settingsNativeDialogOpen:
         Object.keys(root._settingsNativeDialogs).length > 0
 
-    // A Settings page by its name ("widgets", "orbit", "iris", "about"), in the family's own Settings.
+    // A Settings page by its name ("widgets", "orbit", "about"), in the family's own Settings.
     function openSettingsAt(key: string, section): void {
         root._openSettings(root.settingsPageKeys.indexOf(key), key, section)
     }
@@ -323,7 +323,7 @@ Singleton {
     // Dialog requests from other panels (e.g. left sidebar → right sidebar)
     property bool requestWifiDialog: false
     property bool requestBluetoothDialog: false
-    // Selection targets: "main", "backdrop", "waffle", "waffle-backdrop"
+    // Selection targets: "main", "backdrop", and a family's own wallpaper and backdrop: "<id>", "<id>-backdrop"
     property string wallpaperSelectionTarget: "main"
     // Target monitor for wallpaper selector (set before opening, avoids config timing issues)
     property string wallpaperSelectorTargetMonitor: ""
@@ -371,7 +371,7 @@ Singleton {
         }
     }
     property bool controlPanelOpen: false
-    // The active family's desktop menu, asked to open at a point of an output (`inir iris desktopMenu`).
+    // The active family's desktop menu, asked to open at a point of an output (the family's own `desktopMenu` IPC).
     signal familyDesktopMenuRequested(string outputName, real x, real y)
     // A surface on screen shows seconds (a lock rehearsed while unlocked): the clock ticks each second meanwhile.
     property bool clockShowsSeconds: false
@@ -379,7 +379,7 @@ Singleton {
     property bool workspaceShowNumbers: false
     property var activeBooruImageMenu: null  // Track which BooruImage has its menu open
     property var activeTaskViewMenu: null  // Track which WindowThumbnail has its menu open
-    // The palette search (Waffle's Start, iRiS's Spotlight).
+    // The palette search (a family's Start or Spotlight).
     property bool searchOpen: false
     // What the active family publishes about its own panels: a bit per open panel, its quick settings, its
     // notification list on screen.

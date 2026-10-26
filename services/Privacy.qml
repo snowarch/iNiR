@@ -108,17 +108,18 @@ Singleton {
     readonly property bool anyActive: root.micActive || root.cameraActive || root.screenSharing
 
     // Cameras opened through V4L2 never show in PipeWire: look at who holds /dev/video* open, only while one exists
-    // and only for iRiS, the family that shows it.
+    // and only for a family that shows it (flag `cameraWatch`).
+    readonly property bool _cameraWatched: Plugins.flag(Plugins.active, "cameraWatch")
     property bool hasCamera: false
     Process {
-        running: Config.ready && (Config.options?.panelFamily ?? "") === "iris"
+        running: Config.ready && root._cameraWatched
         command: ["sh", "-c", "ls /dev/video* >/dev/null 2>&1 && echo yes || echo no"]
         stdout: StdioCollector { onStreamFinished: root.hasCamera = this.text.trim() === "yes" }
     }
     Timer {
         interval: 5000
         repeat: true
-        running: root.hasCamera && (Config.options?.panelFamily ?? "") === "iris"
+        running: root.hasCamera && root._cameraWatched
         triggeredOnStart: true
         onTriggered: if (!v4l2.running) v4l2.running = true
         onRunningChanged: if (!running) root.v4l2Apps = []

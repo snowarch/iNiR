@@ -14,7 +14,7 @@ Item {
     readonly property string path: `${Directories.stateUserPath}/generated/iris-surface.json`
     // The wallpaper colour theme only: a preset is its own palette. The Theme material reads the scheme's own background
     // from iris-seeds.json (IrisWashi), not the paper handed over here, so it wears the person's choices like any other.
-    readonly property bool wanted: ThemeService.irisMaterialApps && ThemeService.isAutoTheme
+    readonly property bool wanted: ThemeService.familyAppsSurface && ThemeService.isAutoTheme
     readonly property string seed: root.wanted ? root.hex(IrisStyle.appsSurface) : ""
     readonly property bool accentWanted: ThemeService.panelFamily === "iris" && ThemeService.isAutoTheme && IrisStyle.appsShareAccent
     readonly property string accent: root.accentWanted ? root.hex(IrisStyle.appsAccent) : ""

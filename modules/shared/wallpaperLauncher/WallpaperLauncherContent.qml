@@ -89,7 +89,7 @@ FocusScope {
         const target = root.selectionTarget
         Wallpapers.applySelectionTarget(path, root.selectionTarget,
             Appearance.m3colors.darkmode, root.selectionMonitorName)
-        if (target === "backdrop" || target === "waffle-backdrop") {
+        if (Wallpapers.isBackdropTarget(target)) {
             // Backdrop selection previews against the visible desktop. Applying
             // it must restore that desktop because its configured path did not change.
             Wallpapers.cancelWallpaperPreview()

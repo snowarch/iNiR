@@ -44,5 +44,17 @@
     "iiRecordingOsd",
     "iiDashboard",
     "iiMascotCompanion"
-  ]
+  ],
+  "switch": {
+    "name": "Switch to ii Panel Family",
+    "description": "Use the Material ii panel layout",
+    "icon": "dashboard",
+    "keywords": [
+      "family",
+      "panel",
+      "ii",
+      "material",
+      "layout"
+    ]
+  }
 }

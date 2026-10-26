@@ -50,10 +50,12 @@ Singleton {
         // (the seed of the new mode starts one) and undo it. The Settings switch shows it off; the person turns it back on.
         if (Config.options?.appearance?.wallpaperTheming?.autoDarkLightMode ?? false)
             Config.setNestedValue("appearance.wallpaperTheming.autoDarkLightMode", false)
-        // A scheme iRiS was told to keep is the mode: leaving it behind would put the shell and the apps in different ones on the next regeneration.
-        const scheme = String(Config.options?.iris?.appearance?.scheme ?? "auto")
-        if ((Config.options?.panelFamily ?? "ii") === "iris" && scheme !== "auto")
-            Config.setNestedValue("iris.appearance.scheme", dark ? "dark" : scheme === "ink" ? "ink" : "light")
+        // A scheme the family was told to keep is the mode: leaving it behind would put the shell and the apps in different
+        // ones on the next regeneration. A light scheme by another name (iRiS's ink) stays itself.
+        const schemeKey = Plugins.settingKey(Plugins.active, "scheme")
+        const scheme = String(Plugins.setting(Plugins.active, "scheme", "auto"))
+        if (schemeKey.length > 0 && scheme !== "auto")
+            Config.setNestedValue(schemeKey, dark ? "dark" : scheme === "dark" ? "light" : scheme)
         darkModeProc.command = [
             "/usr/bin/bash",
             Directories.wallpaperSwitchScriptPath,
@@ -328,9 +330,9 @@ Singleton {
     // containers with their own plates and every other style resolves back to
     // the Material roles.
     function _styleAppPaletteOverlay(): var {
-        // iRiS hands its own surface to the generator (IrisAppsSync): the Material style's layers
-        // are another family's, and overwrote the apps' ramp with them (#242122 over iRiS's #221f20).
-        if ((Config.options?.panelFamily ?? "ii") === "iris") return null
+        // A family that hands its own surface to the generator (flag `appsPalette`, iRiS's IrisAppsSync): the Material
+        // style's layers are another family's, and overwrote the apps' ramp with them (#242122 over iRiS's #221f20).
+        if (Plugins.flag(Plugins.active, "appsPalette")) return null
         const c = Appearance.colors
         if (!c) return null
 
@@ -450,11 +452,8 @@ Singleton {
     readonly property string _loginScreenKey: {
         const o = Config.options
         if (!o) return ""
-        const lock = o.iris?.lock
-        const look = o.iris?.appearance
-        return JSON.stringify([o.lock?.loginScreen, o.lock?.loginStyle, o.panelFamily, o.lock?.materialShapeChars, lock?.scene, lock?.type,
-            lock?.blocks?.session, look?.fontFamily, look?.numbersFontFamily, look?.titleFontFamily,
-            look?.followTheme, look?.theme?.surface])
+        return JSON.stringify([o.lock?.loginScreen, o.lock?.loginStyle, o.panelFamily, o.lock?.materialShapeChars]
+            .concat(Plugins.loginReads.map(key => Config.getNestedValue(key, null))))
     }
     // What the config held once loaded, like _appliedAppTargetsKey below.
     property string _syncedLoginScreenKey: ""
@@ -473,11 +472,12 @@ Singleton {
     IpcHandler {
         target: "loginScreen"
         function set(look: string): string {
-            if (["auto", "classic", "iris"].indexOf(look) < 0) return "unknown look: " + look + " (auto, classic or iris)"
+            const looks = ["auto", "classic"].concat(Plugins.loginScreens)
+            if (looks.indexOf(look) < 0) return "unknown look: " + look + " (" + looks.join(", ") + ")"
             Config.setNestedValue("lock.loginScreen", look)
             return look
         }
-        // The iRiS login's composition: cover (the picture as a cover), frame (hung in a mat), lens (the time as a lens).
+        // The composed login's layout: cover (the picture as a cover), frame (hung in a mat), lens (the time as a lens).
         function style(name: string): string {
             if (["cover", "frame", "lens"].indexOf(name) < 0) return "unknown style: " + name + " (cover, frame or lens)"
             Config.setNestedValue("lock.loginStyle", name)
@@ -486,8 +486,8 @@ Singleton {
         function status(): string {
             if (!root.loginScreenInstalled) return "not installed"
             const look = String(Config.options?.lock?.loginScreen ?? "auto")
-            const iris = look === "iris" || (look === "auto" && (Config.options?.panelFamily ?? "ii") === "iris")
-            const shown = iris ? "iris, " + String(Config.options?.lock?.loginStyle ?? "lens") : "classic"
+            const worn = look === "auto" ? (Plugins.loginScreen(Plugins.active) || "classic") : look
+            const shown = worn !== "classic" ? worn + ", " + String(Config.options?.lock?.loginStyle ?? "lens") : "classic"
             return look === "auto" ? "auto (" + shown + ")" : shown
         }
         function sync(): void { loginScreenSync.restart() }

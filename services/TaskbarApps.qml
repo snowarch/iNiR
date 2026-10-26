@@ -9,8 +9,7 @@ import qs.services
 Singleton {
     id: root
 
-    readonly property bool sortingEnabled:
-        (Config.options?.panelFamily ?? "ii") === "waffle"
+    readonly property bool sortingEnabled: Plugins.flag(Plugins.active, "taskbarSorting")
     property int _identityRulesRevision: 0
     readonly property var apps: _apps
     property var _apps: []

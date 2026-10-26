@@ -50,14 +50,19 @@
     "wallpaper.leak": "background/IrisLeakWallpaper.qml",
     "regionToolbar": "regionSelector/IrisOptionsToolbar.qml",
     "familyTransition": "IrisFamilyTransition.qml",
-    "config": "IrisConfigSchema.qml"
+    "config": "IrisConfigSchema.qml",
+    "layout": "IrisLayout.qml"
   },
   "flags": {
     "lockSurfaceSync": true,
     "lazyServices": true,
     "verbs": true,
     "mediaFeedback": true,
-    "sidebarsAnyScreen": true
+    "sidebarsAnyScreen": true,
+    "appsPalette": true,
+    "liveJobs": true,
+    "cameraWatch": true,
+    "quietScrollbars": true
   },
   "customWidget": {
     "face": "widgets/templates/IrisCompact.qml",
@@ -76,5 +81,66 @@
     "irisSessionScreen",
     "irisLock",
     "irisPolkit"
-  ]
+  ],
+  "settings": {
+    "font": {
+      "key": "iris.appearance.fontFamily",
+      "fallback": "Geist"
+    },
+    "scheme": {
+      "key": "iris.appearance.scheme",
+      "fallback": "auto"
+    },
+    "appsSurface": {
+      "key": "iris.appearance.materialForApps",
+      "fallback": true
+    },
+    "bannerDuration": {
+      "key": "iris.notifications.duration",
+      "fallback": 4000
+    }
+  },
+  "loginScreen": {
+    "look": "iris",
+    "reads": [
+      "iris.lock.scene",
+      "iris.lock.type",
+      "iris.lock.blocks.session",
+      "iris.appearance.fontFamily",
+      "iris.appearance.numbersFontFamily",
+      "iris.appearance.titleFontFamily",
+      "iris.appearance.followTheme",
+      "iris.appearance.theme.surface"
+    ]
+  },
+  "devDestinations": [
+    {
+      "id": "iris/palette",
+      "surface": "iris-palette",
+      "settleMs": 300
+    },
+    {
+      "id": "iris/controls",
+      "surface": "iris-controls",
+      "settleMs": 300
+    },
+    {
+      "id": "iris/session",
+      "surface": "iris-session",
+      "settleMs": 300
+    }
+  ],
+  "switch": {
+    "name": "Switch to iRiS Panel Family",
+    "description": "Use the minimal iRiS shell layout",
+    "icon": "visibility",
+    "keywords": [
+      "family",
+      "panel",
+      "iris",
+      "minimal",
+      "lightweight",
+      "layout"
+    ]
+  }
 }

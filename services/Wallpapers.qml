@@ -158,11 +158,22 @@ Singleton {
         return Qt.rect(left, top, right - left, bottom - top)
     }
 
-    // Wallpaper path resolution for aurora/backdrop
-    readonly property bool isWaffleFamily: (Config.options?.panelFamily ?? "ii") === "waffle"
-    readonly property bool useBackdropWallpaper: isWaffleFamily
-        ? ((Config.options?.waffles?.background?.backdrop?.enable ?? false) && (Config.options?.waffles?.background?.backdrop?.hideWallpaper ?? false))
-        : ((Config.options?.background?.backdrop?.enable ?? false) && (Config.options?.background?.backdrop?.hideWallpaper ?? false))
+    // A family can keep a wallpaper and backdrop of its own apart from the main ones (plugin.json setting `wallpaper`,
+    // shaped like `background`); its selection targets are its id and "<id>-backdrop".
+    function _ownBackground(id: string): var {
+        const key = Plugins.settingKey(id, "wallpaper")
+        return key.length > 0 ? (Config.getNestedValue(key, null) ?? ({})) : null
+    }
+    readonly property var activeOwnBackground: root._ownBackground(Plugins.active)
+    readonly property bool useBackdropWallpaper: {
+        const backdrop = (root.activeOwnBackground ?? Config.options?.background)?.backdrop
+        return (backdrop?.enable ?? false) && (backdrop?.hideWallpaper ?? false)
+    }
+    function isBackdropTarget(target: string): bool { return target === "backdrop" || String(target).endsWith("-backdrop") }
+    // The target a plain pick lands on: the active family's own wallpaper while it keeps one apart from the main.
+    function familyTarget(): string {
+        return root.activeOwnBackground && !(root.activeOwnBackground.useMainWallpaper ?? true) ? Plugins.active : "main"
+    }
     readonly property bool backdropOnlyShadowOverrideWanted: Config.ready && CompositorService.isNiri && useBackdropWallpaper
     property bool _backdropShadowSyncQueued: false
 
@@ -307,12 +318,12 @@ Singleton {
     function currentThemingWallpaperPath(monitorName = ""): string {
         const targetMonitor = monitorName || (WallpaperListener.multiMonitorEnabled ? WallpaperListener.getFocusedMonitor() : "")
         const mainPath = currentMainWallpaperPath(targetMonitor)
-        const waffleMainPath = currentWaffleWallpaperPath(targetMonitor)
+        const familyMainPath = currentFamilyWallpaperPath(Plugins.active, targetMonitor)
 
         if (root.useBackdropWallpaper || root.useBackdropForColors) {
-            if (root.isWaffleFamily) {
-                const waffleBackdrop = Config.options?.waffles?.background?.backdrop ?? {}
-                return (waffleBackdrop.useMainWallpaper ?? true) ? waffleMainPath : (waffleBackdrop.wallpaperPath || waffleMainPath)
+            if (root.activeOwnBackground) {
+                const ownBackdrop = root.activeOwnBackground.backdrop ?? {}
+                return (ownBackdrop.useMainWallpaper ?? true) ? familyMainPath : (ownBackdrop.wallpaperPath || familyMainPath)
             }
 
             const iiBackdrop = Config.options?.background?.backdrop ?? {}
@@ -326,7 +337,7 @@ Singleton {
             return iiBackdrop.wallpaperPath || mainPath
         }
 
-        return root.isWaffleFamily ? waffleMainPath : mainPath
+        return familyMainPath
     }
 
     readonly property string effectiveWallpaperPath: {
@@ -737,16 +748,16 @@ Singleton {
         return Config.options?.background?.wallpaperPath ?? ""
     }
 
-    function currentWaffleWallpaperPath(monitorName = ""): string {
+    function currentFamilyWallpaperPath(id: string, monitorName = ""): string {
         const mainPath = currentMainWallpaperPath(monitorName)
-        const waffleBackground = Config.options?.waffles?.background ?? {}
-        return (waffleBackground.useMainWallpaper ?? true) ? mainPath : (waffleBackground.wallpaperPath || mainPath)
+        const own = root._ownBackground(id)
+        return !own || (own.useMainWallpaper ?? true) ? mainPath : (own.wallpaperPath || mainPath)
     }
 
     // The image the desktop actually shows on an output: the backdrop's when it replaces the wallpaper
     // ("show only the backdrop", ii and iRiS), the main wallpaper otherwise. Glass and Lume read this one,
     // or they sample a wallpaper nobody sees.
-    readonly property bool desktopShowsBackdrop: !root.isWaffleFamily && root.useBackdropWallpaper
+    readonly property bool desktopShowsBackdrop: !root.activeOwnBackground && root.useBackdropWallpaper
     readonly property real desktopDim: root.desktopShowsBackdrop
         ? Math.max(0, Math.min(1, Number(Config.options?.background?.backdrop?.dim ?? 35) / 100)) : 0
     readonly property real desktopSaturation: root.desktopShowsBackdrop ? Number(Config.options?.background?.backdrop?.saturation ?? 0) : 0
@@ -774,23 +785,24 @@ Singleton {
             }
             return iiBackdrop.wallpaperPath || mainPath
         }
-        case "waffle": {
-            return currentWaffleWallpaperPath(monitorName)
-        }
-        case "waffle-backdrop": {
-            const waffleBackdrop = Config.options?.waffles?.background?.backdrop ?? {}
-            const waffleMain = currentWaffleWallpaperPath(monitorName)
-            if (waffleBackdrop.useMainWallpaper ?? true)
-                return waffleMain
+        default: {
+            const family = normalizedTarget.replace(/-backdrop$/, "")
+            const own = root._ownBackground(family)
+            if (!own)
+                return mainPath
+            const familyMain = currentFamilyWallpaperPath(family, monitorName)
+            if (family === normalizedTarget)
+                return familyMain
+            const ownBackdrop = own.backdrop ?? {}
+            if (ownBackdrop.useMainWallpaper ?? true)
+                return familyMain
             if (WallpaperListener.multiMonitorEnabled && monitorName) {
                 const monitorData = WallpaperListener.effectivePerMonitor[monitorName] ?? null
                 if (monitorData && monitorData.backdropPath)
                     return monitorData.backdropPath
             }
-            return waffleBackdrop.wallpaperPath || waffleMain
+            return ownBackdrop.wallpaperPath || familyMain
         }
-        default:
-            return mainPath
         }
     }
 
@@ -936,46 +948,35 @@ Singleton {
                 Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--noswitch"])
             root.changed()
             return
-        case "waffle":
-            const waffleVisible = (Config.options?.panelFamily ?? "ii") === "waffle"
-            const adoptedWafflePreview = waffleVisible
-                ? root._adoptVisiblePreview(normalizedPath, monitorName)
-                : false
-            if (waffleVisible && !adoptedWafflePreview)
+        default: {
+            const family = normalizedTarget.replace(/-backdrop$/, "")
+            const key = Plugins.settingKey(family, "wallpaper")
+            if (key.length === 0)
+                break
+            const backdrop = family !== normalizedTarget
+            const shown = family === Plugins.active
+            const prefix = backdrop ? key + ".backdrop" : key
+            const adopted = !backdrop && shown ? root._adoptVisiblePreview(normalizedPath, monitorName) : false
+            if (!backdrop && shown && !adopted)
                 root.requestWallpaperBlurTransition("")
-            Config.setNestedValue("waffles.background.useMainWallpaper", false)
-            Config.setNestedValue("waffles.background.wallpaperPath", normalizedPath)
-            Config.setNestedValue("waffles.background.thumbnailPath", thumbnailPath)
-            if (adoptedWafflePreview)
+            Config.setNestedValue(prefix + ".useMainWallpaper", false)
+            Config.setNestedValue(prefix + ".wallpaperPath", normalizedPath)
+            Config.setNestedValue(prefix + ".thumbnailPath", thumbnailPath)
+            if (adopted)
                 root._clearInternalPreview()
             if (needsThumbnail)
                 root.ensureThumbnailForPath(normalizedPath, "large")
-            // Regen colors from this wallpaper when waffle is active
-            if ((Config.options?.panelFamily ?? "ii") === "waffle") {
+            // Colours follow the family's own picture while it is the one on screen.
+            if (shown && (!backdrop || (Config.options?.appearance?.wallpaperTheming?.useBackdropForColors ?? false))) {
                 root._applyInProgress = true
                 _applySuppressTimer.restart()
                 root._queueWallpaperScript(normalizedPath, darkMode, true)
             }
             root.changed()
-            return
-        case "waffle-backdrop":
-            Config.setNestedValue("waffles.background.backdrop.useMainWallpaper", false)
-            Config.setNestedValue("waffles.background.backdrop.wallpaperPath", normalizedPath)
-            Config.setNestedValue("waffles.background.backdrop.thumbnailPath", thumbnailPath)
-            if (needsThumbnail)
-                root.ensureThumbnailForPath(normalizedPath, "large")
-            if ((Config.options?.panelFamily ?? "ii") === "waffle"
-                    && (Config.options?.appearance?.wallpaperTheming?.useBackdropForColors ?? false)) {
-                root._applyInProgress = true
-                _applySuppressTimer.restart()
-                root._queueWallpaperScript(normalizedPath, darkMode, true)
-            }
-            root.changed()
-            return
-        default:
-            root.apply(normalizedPath, darkMode, monitorName)
             return
         }
+        }
+        root.apply(normalizedPath, darkMode, monitorName)
     }
 
     function apply(path, darkMode = Appearance.m3colors.darkmode, monitorName = "") {
@@ -1136,10 +1137,7 @@ Singleton {
         if (globalTarget && globalTarget !== "main")
             return globalTarget
 
-        if ((Config.options?.panelFamily ?? "ii") === "waffle")
-            return (Config.options?.waffles?.background?.useMainWallpaper ?? true) ? "main" : "waffle"
-
-        return "main"
+        return root.familyTarget()
     }
 
     function select(filePath, darkMode = Appearance.m3colors.darkmode, monitorName = "", target = "") {

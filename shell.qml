@@ -354,7 +354,7 @@ ShellRoot {
     // Bar.qml / VerticalBar.qml. Both ii bars are instantiated together, so a
     // per-bar handler collided and Quickshell dropped one with a warning. All
     // three bars only toggle GlobalStates.barOpen, so a single shared handler is
-    // family-agnostic and serves the horizontal bar, vertical bar and waffle.
+    // family-agnostic and serves the horizontal bar, vertical bar and any family's bar.
     IpcHandler {
         target: "bar"
         function mediaWidth(px: string): string {
@@ -647,7 +647,7 @@ ShellRoot {
     // Keep one permanent IPC router so mode/family changes never overlap two
     // `altSwitcher` handlers during Loader teardown. The heavy ii visual tree is
     // present only for visual ii presets; the router handles no-UI cycling and
-    // forwards visual commands to ii internally or to Waffle's family module.
+    // forwards visual commands to ii internally or to the active family's own.
     readonly property bool iiAltSwitcherNoVisual:
         (Config.options?.altSwitcher?.noVisualUi ?? false)
         && (Config.options?.altSwitcher?.preset ?? "default") !== "skew"
@@ -666,7 +666,7 @@ ShellRoot {
 
     // Load ONLY the active family panels to reduce startup time.
     // Using `source:` instead of `component:` to avoid parsing inactive family at compile time.
-    // This saves ~135 file parses when using ii family (waffle not parsed) and vice versa.
+    // Only the active family's files are parsed (~135 fewer).
     // Family-agnostic IPC routers. Both panel files used to instantiate their
     // own copy, so during a family switch — when the outgoing loader is still
     // being torn down — two instances existed and Quickshell dropped one
@@ -875,7 +875,7 @@ ShellRoot {
         const currentIndex = families.indexOf(currentFamily)
         const nextIndex = families.indexOf(nextFamily)
 
-        // Determine direction: ii -> waffle = left, waffle -> ii = right
+        // Later in the cycle slides left, earlier slides right.
         const direction = nextIndex > currentIndex ? "left" : "right"
         root.startFamilyTransition(nextFamily, direction)
     }

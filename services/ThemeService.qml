@@ -23,22 +23,26 @@ Singleton {
     readonly property var wallpaperThemingCfg: Config.options?.appearance?.wallpaperTheming ?? null
     readonly property var terminalAdjCfg: wallpaperThemingCfg?.terminalColorAdjustments ?? null
     readonly property string panelFamily: Config.options?.panelFamily ?? "ii"
-    readonly property bool waffleUsesMainWallpaper: Config.options?.waffles?.background?.useMainWallpaper ?? true
-    // What iRiS asks of the system's mode and of the apps' surfaces: both are read by switchwall.sh, so a change regenerates.
-    readonly property string irisSchemeChoice: panelFamily === "iris" ? String(Config.options?.iris?.appearance?.scheme ?? "auto") : "auto"
-    readonly property bool irisMaterialApps: panelFamily === "iris" && (Config.options?.iris?.appearance?.materialForApps ?? true)
+    readonly property bool familyUsesMainWallpaper: {
+        const key = Plugins.settingKey(panelFamily, "wallpaper")
+        return key.length === 0 || (Config.getNestedValue(key + ".useMainWallpaper", true) ?? true)
+    }
+    // What the active family asks of the system's mode and of the apps' surfaces (its plugin.json settings `scheme`,
+    // `appsSurface`): both are read by switchwall.sh, so a change regenerates.
+    readonly property string familySchemeChoice: String(Plugins.setting(panelFamily, "scheme", "auto"))
+    readonly property bool familyAppsSurface: Boolean(Plugins.setting(panelFamily, "appsSurface", false))
     property string appsSurfaceSeed: ""
     // A scheme the person picks is also their saved preference, so Auto keeps what they last saw instead of an older toggle.
-    onIrisSchemeChoiceChanged: {
-        if (!Config.ready || irisSchemeChoice === "auto") return
-        const wantDark = irisSchemeChoice === "dark"
+    onFamilySchemeChoiceChanged: {
+        if (!Config.ready || familySchemeChoice === "auto") return
+        const wantDark = familySchemeChoice === "dark"
         if ((Config.options?.appearance?.customTheme?.darkmode ?? true) !== wantDark)
             Config.setNestedValue("appearance.customTheme.darkmode", wantDark)
     }
     readonly property string liveRegenSignature: JSON.stringify({
         theme: currentTheme,
         panelFamily: root.panelFamily,
-        waffleUsesMainWallpaper: root.waffleUsesMainWallpaper,
+        familyUsesMainWallpaper: root.familyUsesMainWallpaper,
         paletteType: Config.options?.appearance?.palette?.type ?? "auto",
         themingWallpaperPath: Wallpapers.effectiveWallpaperPath ?? "",
         enableAppsAndShell: wallpaperThemingCfg?.enableAppsAndShell ?? true,
@@ -57,8 +61,9 @@ Singleton {
         termBackgroundBrightness: terminalAdjCfg?.backgroundBrightness ?? 0.5,
         softenColors: Config.options?.appearance?.softenColors ?? true,
         autoDarkLightMode: wallpaperThemingCfg?.autoDarkLightMode ?? false,
-        irisScheme: root.irisSchemeChoice === "ink" ? "light" : root.irisSchemeChoice,
-        irisMaterialApps: root.irisMaterialApps,
+        // Light schemes by another name (iRiS's ink) regenerate nothing.
+        familyScheme: ["auto", "dark"].includes(root.familySchemeChoice) ? root.familySchemeChoice : "light",
+        familyAppsSurface: root.familyAppsSurface,
     })
     property string _lastLiveRegenSignature: ""
     property string _lastPanelFamily: ""
@@ -195,7 +200,7 @@ Singleton {
                 colourTheme: root.currentTheme,
                 saved: (Config.options?.appearance?.customTheme?.darkmode ?? true) ? "dark" : "light",
                 fromWallpaper: wallpaperThemingCfg?.autoDarkLightMode ?? false,
-                irisScheme: root.irisSchemeChoice
+                familyScheme: root.familySchemeChoice
             })
         }
     }

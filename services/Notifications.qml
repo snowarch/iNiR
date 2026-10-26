@@ -424,9 +424,10 @@ Singleton {
         }
 
         // 3) Defaults by urgency (use enum comparison, not fragile toString).
-        // iRiS banners have their own, shorter, duration for low and normal.
-        if (Config.options?.panelFamily === "iris" && notification.urgency !== NotificationUrgency.Critical)
-            return Math.max(1000, Number(Config.options?.iris?.notifications?.duration ?? 4000));
+        // A family with banners of its own (setting `bannerDuration`, iRiS) times low and normal itself.
+        const familyDuration = Number(Plugins.setting(Plugins.active, "bannerDuration", 0));
+        if (familyDuration > 0 && notification.urgency !== NotificationUrgency.Critical)
+            return Math.max(1000, familyDuration);
         if (notification.urgency === NotificationUrgency.Low) {
             return Config.options?.notifications?.timeoutLow ?? 5000;
         } else if (notification.urgency === NotificationUrgency.Critical) {
@@ -492,8 +493,8 @@ Singleton {
             }
             root.list = [...root.list, newNotifObject];
 
-            // In iRiS a job with progress lives in the Island; its notice stays in the list, without a popup.
-            if (job && Config.options?.panelFamily === "iris") {
+            // A family that shows jobs live (flag `liveJobs`, iRiS's Island) keeps their notice in the list, without a popup.
+            if (job && Plugins.flag(Plugins.active, "liveJobs")) {
                 notifFileView.setText(stringifyList(root.list));
                 return
             }

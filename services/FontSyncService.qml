@@ -20,11 +20,9 @@ Singleton {
     }
 
     // Track the current font from config
-    readonly property string family: Config.options?.panelFamily ?? "ii"
-    readonly property string mainFont: root.family === "iris"
-        ? (String(Config.options?.iris?.appearance?.fontFamily ?? "") || "Geist")
-        : root.family === "waffle" ? (Config.options?.waffles?.theming?.font?.family ?? "Noto Sans")
-        : (Config.options?.appearance?.typography?.mainFont ?? "Roboto Flex")
+    // The active family's own font when it keeps one (plugin.json setting `font`), Material's typography otherwise.
+    readonly property string mainFont: String(Plugins.setting(Plugins.active, "font",
+        Config.options?.appearance?.typography?.mainFont ?? "Roboto Flex"))
     readonly property string monoFont: Config.options?.appearance?.typography?.monospaceFont ?? "JetBrainsMono Nerd Font"
     readonly property real sizeScale: Config.options?.appearance?.typography?.sizeScale ?? 1.0
 

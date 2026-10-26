@@ -36,6 +36,23 @@ Singleton {
         return file.length > 0 ? Qt.resolvedUrl(`../${manifest.provides}/${file}`).toString() : ""
     }
     function flag(id: string, name: string): bool { return Boolean(root.manifests[id]?.flags?.[name]) }
+    // A setting the base honours for a plugin, read where the plugin keeps it (`settings`: { slot: { key, fallback } }):
+    // its fallback when unset or empty, `otherwise` when the plugin keeps none.
+    function setting(id: string, slot: string, otherwise: var): var {
+        const spec = root.manifests[id]?.settings?.[slot]
+        if (!spec?.key) return otherwise
+        const value = Config.getNestedValue(String(spec.key), undefined)
+        return value === undefined || value === null || value === "" ? (spec.fallback ?? otherwise) : value
+    }
+    function settingKey(id: string, slot: string): string { return String(root.manifests[id]?.settings?.[slot]?.key ?? "") }
+    // The login look a family wears when the person leaves it on auto (`loginScreen`: { look, reads }), and the keys
+    // that look is drawn from, so a change to them re-syncs it.
+    function loginScreen(id: string): string { return String(root.manifests[id]?.loginScreen?.look ?? "") }
+    readonly property var loginScreens: Object.keys(root.manifests).map(id => root.loginScreen(id)).filter(look => look.length > 0)
+    readonly property var loginReads: Object.keys(root.manifests).sort().reduce((all, id) => all.concat(Array.from(root.manifests[id].loginScreen?.reads ?? [])), [])
+    // Where the dev tools can open a family's own surfaces (`devDestinations`), each tagged with its family.
+    readonly property var devDestinations: Object.keys(root.manifests).sort().reduce((all, id) => all.concat(
+        Array.from(root.manifests[id].devDestinations ?? []).map(entry => Object.assign({ family: id, view: "", safe: true }, entry))), [])
     // The panels a family turns on when it first runs (`enabledPanels`).
     function panels(id: string): var { return Array.from(root.manifests[id]?.enabledPanels ?? []) }
     // A file of a plugin on disk, for what is copied rather than loaded (a template).
