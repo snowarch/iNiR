@@ -55,10 +55,10 @@ AbstractBackgroundWidget {
     readonly property var weeks: root.getMonthMatrix(root.viewingDate)
     readonly property color accentFace: root.widgetSemanticContainer(root.widgetPrimaryRole)
     readonly property color accentInk: root.widgetSemanticOnContainer(root.widgetPrimaryRole)
-    // Instrument reads on the wallpaper: sampled ink instead of surface ink.
-    readonly property color ink: root.instrument ? root.widgetInk : root.widgetSurfaceInk
-    readonly property color inkMuted: root.instrument
-        ? root.widgetInkMuted : ColorUtils.applyAlpha(root.widgetSurfaceInk, 0.58)
+    // With no plate under it (Instrument, or the card turned off) it reads on the wallpaper: sampled ink.
+    readonly property color ink: root.widgetInk
+    readonly property color inkMuted: root.widgetHasSurface
+        ? ColorUtils.applyAlpha(root.widgetSurfaceInk, 0.58) : root.widgetInkMuted
     readonly property color accentMark: root.instrument ? root.widgetAccentVisible : root.accentFace
     readonly property color accentMarkInk: root.instrument ? root.widgetAccentVisible : root.accentInk
 

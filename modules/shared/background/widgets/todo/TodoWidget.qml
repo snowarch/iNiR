@@ -63,10 +63,10 @@ AbstractBackgroundWidget {
     readonly property var visibleTaskEntries: root.showCompleted
         ? root.taskEntries : root.taskEntries.filter(item => !item.done)
     widgetSurfaceEnabled: !root.instrument
-    // Instrument reads on the wallpaper: sampled ink instead of surface ink.
-    readonly property color ink: root.instrument ? root.widgetInk : root.widgetSurfaceInk
-    readonly property color inkMuted: root.instrument
-        ? root.widgetInkMuted : ColorUtils.applyAlpha(root.widgetSurfaceInk, 0.62)
+    // With no plate under it (Instrument, or the card turned off) it reads on the wallpaper: sampled ink.
+    readonly property color ink: root.widgetInk
+    readonly property color inkMuted: root.widgetHasSurface
+        ? ColorUtils.applyAlpha(root.widgetSurfaceInk, 0.62) : root.widgetInkMuted
     readonly property color signal: root.widgetAccentVisible
 
     readonly property color primaryFace: root.widgetSemanticContainer(root.widgetPrimaryRole)
