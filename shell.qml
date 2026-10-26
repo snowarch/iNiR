@@ -504,8 +504,6 @@ ShellRoot {
         }
     }
 
-    // Waffle interaction routers are also root-owned so commands remain
-    // available while the heavier Waffle host is deferred.
     IpcHandler {
         target: "search"
         function toggle(): void { GlobalStates.searchOpen = !GlobalStates.searchOpen }
@@ -513,88 +511,50 @@ ShellRoot {
         function open(): void { GlobalStates.searchOpen = true }
     }
 
-    IpcHandler {
-        target: "wactionCenter"
-        function toggle(): void { GlobalStates.waffleActionCenterOpen = !GlobalStates.waffleActionCenterOpen }
-        function close(): void { GlobalStates.waffleActionCenterOpen = false }
-        function open(): void { GlobalStates.waffleActionCenterOpen = true }
-    }
-
-    IpcHandler {
-        target: "wnotificationCenter"
-        function toggle(): void { GlobalStates.waffleNotificationCenterOpen = !GlobalStates.waffleNotificationCenterOpen }
-        function close(): void { GlobalStates.waffleNotificationCenterOpen = false }
-        function open(): void { GlobalStates.waffleNotificationCenterOpen = true }
-    }
-
-    IpcHandler {
-        target: "wwidgets"
-        function toggle(): void { GlobalStates.waffleWidgetsOpen = !GlobalStates.waffleWidgetsOpen }
-        function close(): void { GlobalStates.waffleWidgetsOpen = false }
-        function open(): void { GlobalStates.waffleWidgetsOpen = true }
-    }
-
+    // Shared verbs: the active family answers first (GlobalStates.familyVerbs), Material's behaviour otherwise.
     IpcHandler {
         target: "taskview"
-        function _isWaffle(): bool { return (Config.options?.panelFamily ?? "ii") === "waffle" }
-        function _isIris(): bool { return (Config.options?.panelFamily ?? "ii") === "iris" }
-        // iRiS: Orbit when it is on, Spotlight (what task view opened before Orbit) when it is off.
-        function _irisOrbit(): bool { return Config.options?.iris?.orbit?.enable ?? false }
         function toggle(): void {
-            if (_isWaffle()) { GlobalStates.waffleTaskViewOpen = !GlobalStates.waffleTaskViewOpen; return }
-            if (_isIris()) { if (_irisOrbit()) GlobalStates.irisOrbitOpen = !GlobalStates.irisOrbitOpen; else GlobalStates.searchOpen = !GlobalStates.searchOpen; return }
-            if (CompositorService.isNiri) GlobalStates.toggleOrbit("")
+            const verb = GlobalStates.familyVerb("taskview", "toggle")
+            if (verb) verb()
+            else if (CompositorService.isNiri) GlobalStates.toggleOrbit("")
         }
         function close(): void {
-            if (_isWaffle()) { GlobalStates.waffleTaskViewOpen = false; return }
-            if (_isIris()) { GlobalStates.irisOrbitOpen = false; GlobalStates.searchOpen = false; return }
-            if (GlobalStates.overviewMode === "orbit") GlobalStates.closeOverview()
+            const verb = GlobalStates.familyVerb("taskview", "close")
+            if (verb) verb()
+            else if (GlobalStates.overviewMode === "orbit") GlobalStates.closeOverview()
         }
         function open(): void {
-            if (_isWaffle()) { GlobalStates.waffleTaskViewOpen = true; return }
-            if (_isIris()) { if (_irisOrbit()) GlobalStates.irisOrbitOpen = true; else GlobalStates.searchOpen = true; return }
-            if (CompositorService.isNiri) GlobalStates.openOrbit("")
+            const verb = GlobalStates.familyVerb("taskview", "open")
+            if (verb) verb()
+            else if (CompositorService.isNiri) GlobalStates.openOrbit("")
         }
     }
 
     IpcHandler {
         target: "orbit"
-        // iRiS has its own Orbit (a Place in the chassis, one layout, no Studio); the rest of the verbs are ii's.
-        function _isIris(): bool { return (Config.options?.panelFamily ?? "ii") === "iris" }
-        function toggle(): void {
-            if (_isIris()) { GlobalStates.irisOrbitOpen = !GlobalStates.irisOrbitOpen; return }
-            if (CompositorService.isNiri) GlobalStates.toggleOrbit("")
+        function _family(name: string): bool {
+            const verb = GlobalStates.familyVerb("orbit", name)
+            if (verb) verb()
+            return verb !== null
         }
-        function close(): void {
-            if (_isIris()) { GlobalStates.irisOrbitOpen = false; return }
-            if (GlobalStates.overviewMode === "orbit") GlobalStates.closeOverview()
-        }
-        function open(): void {
-            if (_isIris()) { GlobalStates.irisOrbitOpen = true; return }
-            if (CompositorService.isNiri) GlobalStates.openOrbit("")
-        }
-        function pocket(): void {
-            if (_isIris()) { GlobalStates.irisOrbitOpen = true; return }
-            if (CompositorService.isNiri) GlobalStates.openOrbitPocket("")
-        }
-        function studio(): void { if (!_isIris() && CompositorService.isNiri) GlobalStates.openOrbitStudio("") }
+        function toggle(): void { if (!_family("toggle") && CompositorService.isNiri) GlobalStates.toggleOrbit("") }
+        function close(): void { if (!_family("close") && GlobalStates.overviewMode === "orbit") GlobalStates.closeOverview() }
+        function open(): void { if (!_family("open") && CompositorService.isNiri) GlobalStates.openOrbit("") }
+        function pocket(): void { if (!_family("pocket") && CompositorService.isNiri) GlobalStates.openOrbitPocket("") }
+        function studio(): void { if (!_family("studio") && CompositorService.isNiri) GlobalStates.openOrbitStudio("") }
         function find(query: string): void {
-            if (_isIris()) { GlobalStates.irisOrbitQuery = query; GlobalStates.irisOrbitOpen = true; return }
-            if (CompositorService.isNiri) GlobalStates.openOrbitLens("", query)
+            const verb = GlobalStates.familyVerb("orbit", "find")
+            if (verb) verb(query)
+            else if (CompositorService.isNiri) GlobalStates.openOrbitLens("", query)
         }
-        function stage(): void { if (!_isIris() && CompositorService.isNiri) GlobalStates.openOrbitView("", "stage") }
-        function orbital(): void { if (!_isIris() && CompositorService.isNiri) GlobalStates.openOrbitView("", "orbital") }
-        function next(): void {
-            if (_isIris()) { NiriService.focusWorkspaceDown(); return }
-            if (CompositorService.isNiri) GlobalStates.orbitNavigateRequested(1)
-        }
-        function previous(): void {
-            if (_isIris()) { NiriService.focusWorkspaceUp(); return }
-            if (CompositorService.isNiri) GlobalStates.orbitNavigateRequested(-1)
-        }
+        function stage(): void { if (!_family("stage") && CompositorService.isNiri) GlobalStates.openOrbitView("", "stage") }
+        function orbital(): void { if (!_family("orbital") && CompositorService.isNiri) GlobalStates.openOrbitView("", "orbital") }
+        function next(): void { if (!_family("next") && CompositorService.isNiri) GlobalStates.orbitNavigateRequested(1) }
+        function previous(): void { if (!_family("previous") && CompositorService.isNiri) GlobalStates.orbitNavigateRequested(-1) }
         function status(): string {
-            if (_isIris()) return JSON.stringify({ family: "iris", open: GlobalStates.irisOrbitOpen,
-                enabled: Config.options?.iris?.orbit?.enable ?? false, output: GlobalStates.focusedScreen?.name ?? "" })
+            const verb = GlobalStates.familyVerb("orbit", "status")
+            if (verb) return verb()
             const outputName = NiriService.currentOutput ?? ""
             const orbitCorner = Config.options?.orbit?.hotCorner ?? "topRight"
             return JSON.stringify(Object.assign({}, GlobalStates.orbitRuntimeStatus, {
@@ -613,7 +573,7 @@ ShellRoot {
             }))
         }
         function toggleView(): void {
-            if (!CompositorService.isNiri || _isIris()) return
+            if (_family("toggleView") || !CompositorService.isNiri) return
             if (GlobalStates.overviewOpen && GlobalStates.overviewMode === "orbit")
                 GlobalStates.toggleOrbitStageView()
             else
@@ -770,37 +730,29 @@ ShellRoot {
 
     IpcHandler {
         target: "clipboard"
-        function _isWaffle(): bool { return (Config.options?.panelFamily ?? "ii") === "waffle" }
-        function _isIris(): bool { return (Config.options?.panelFamily ?? "ii") === "iris" }
-        function _openIrisClipboard(): void {
-            LauncherSearch.ensurePrefix(Config.options?.search?.prefix?.clipboard ?? ";")
-            GlobalStates.searchOpen = true
-        }
         function open(): void {
-            if (_isWaffle()) GlobalStates.waffleClipboardOpen = true
-            else if (_isIris()) _openIrisClipboard()
+            const verb = GlobalStates.familyVerb("clipboard", "open")
+            if (verb) verb()
             else GlobalStates.clipboardOpen = true
         }
         function close(): void {
-            if (_isWaffle()) GlobalStates.waffleClipboardOpen = false
-            else if (_isIris()) GlobalStates.searchOpen = false
+            const verb = GlobalStates.familyVerb("clipboard", "close")
+            if (verb) verb()
             else GlobalStates.clipboardOpen = false
         }
         function toggle(): void {
-            if (_isWaffle()) GlobalStates.waffleClipboardOpen = !GlobalStates.waffleClipboardOpen
-            else if (_isIris()) {
-                if (GlobalStates.searchOpen) GlobalStates.searchOpen = false
-                else _openIrisClipboard()
-            }
+            const verb = GlobalStates.familyVerb("clipboard", "toggle")
+            if (verb) verb()
             else GlobalStates.clipboardOpen = !GlobalStates.clipboardOpen
         }
     }
 
     IpcHandler {
         target: "overview"
-        function _usesPalette(): bool {
-            const family = Config.options?.panelFamily ?? "ii"
-            return family === "waffle" || family === "iris"
+        function _family(name: string): bool {
+            const verb = GlobalStates.familyVerb("overview", name)
+            if (verb) verb()
+            return verb !== null
         }
         function _usePillLauncher(): bool {
             return (Config.options?.panelFamily ?? "ii") === "ii"
@@ -808,30 +760,26 @@ ShellRoot {
                 && (Config.options?.bar?.pill?.superSpaceLauncher ?? "overview") === "pill"
         }
         function toggle(): void {
-            if (_usesPalette()) { GlobalStates.searchOpen = !GlobalStates.searchOpen; return }
+            if (_family("toggle")) return
             if (_usePillLauncher()) { GlobalStates.pillSurfaceCommand("toggle", "launcher"); return }
             GlobalStates.overviewSearchPrefix = ""
             GlobalStates.toggleOverview("")
         }
         function close(): void {
-            if (_usesPalette()) { GlobalStates.searchOpen = false; return }
+            if (_family("close")) return
             if (_usePillLauncher()) { GlobalStates.pillSurfaceCommand("close", "launcher"); return }
             GlobalStates.overviewOpen = false
         }
         function open(): void {
-            if (_usesPalette()) { GlobalStates.searchOpen = true; return }
+            if (_family("open")) return
             if (_usePillLauncher()) { GlobalStates.pillSurfaceCommand("open", "launcher"); return }
             GlobalStates.overviewSearchPrefix = ""
             GlobalStates.openOverview("")
         }
         function toggleReleaseInterrupt(): void { GlobalStates.superReleaseMightTrigger = false }
         function clipboardToggle(): void {
+            if (_family("clipboardToggle")) return
             const prefix = Config.options?.search?.prefix?.clipboard ?? ";"
-            if (_usesPalette()) {
-                LauncherSearch.ensurePrefix(prefix)
-                GlobalStates.searchOpen = true
-                return
-            }
             if (GlobalStates.overviewOpen && GlobalStates.overviewSearchPrefix.length > 0) {
                 GlobalStates.overviewOpen = false
             } else {
@@ -840,12 +788,8 @@ ShellRoot {
             }
         }
         function actionOpen(): void {
+            if (_family("actionOpen")) return
             const prefix = Config.options?.search?.prefix?.action ?? "/"
-            if (_usesPalette()) {
-                LauncherSearch.ensurePrefix(prefix)
-                GlobalStates.searchOpen = true
-                return
-            }
             GlobalStates.overviewSearchPrefix = prefix
             GlobalStates.openOverview("")
         }

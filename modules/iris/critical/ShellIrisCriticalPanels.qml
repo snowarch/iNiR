@@ -11,6 +11,8 @@ import qs.modules.iris.style
 Item {
     id: root
 
+    IrisVerbs {}
+
     component CriticalPanelLoader: LazyLoader {
         required property string identifier
         property bool extraCondition: true

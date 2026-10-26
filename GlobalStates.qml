@@ -103,6 +103,14 @@ Singleton {
     property bool clipboardOpen: false
     // True only while iNiR asks Niri for internal window-preview frames.
     property bool windowPreviewCaptureActive: false
+    // The active family's own answers to the shared verbs (taskview, orbit, clipboard), set by its `critical` part:
+    // { target: { verb: function } }. A verb it leaves out keeps Material's behaviour.
+    property var familyVerbs: ({})
+    function familyVerb(target: string, name: string): var {
+        const verb = root.familyVerbs?.[target]?.[name]
+        return typeof verb === "function" ? verb : null
+    }
+
     property bool settingsOverlayOpen: false
     property int settingsOverlayRequestedPage: -1 // Set before opening to navigate to a specific page
     property string settingsOverlayRequestedKey: "" // The same page by name, for a Settings that keeps its own pages
