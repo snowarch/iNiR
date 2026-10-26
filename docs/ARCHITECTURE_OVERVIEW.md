@@ -1,124 +1,69 @@
 # Architecture Overview
 
-How iNiR is put together, from the highest level down to the part that matters for your question.
-
-## The 30-second version
-
-The core shell is one Quickshell/QML runtime. Bars, panels, config and most service state live in that process, while system integration deliberately crosses into D-Bus, compositor sockets and helper subprocesses/daemons where that work does not belong in QML.
+iNiR is one Quickshell (QML) process. Bars, panels, config and most service state live in it. Work that does not belong in QML goes to D-Bus, the compositor socket, or helper scripts and daemons.
 
 ```
 Your apps
    |
-iNiR shell (bar, panels, notifications, settings, everything)
+iNiR shell (QML, one panel family at a time)
    |
-Quickshell (QML shell framework)
+Quickshell
    |
-Niri compositor (windows, rendering, input)
-   |
-Wayland protocol --> GPU
+Niri (windows, rendering, input)
 ```
 
 ## Entry point
 
-`shell.qml` is the root. It's a `ShellRoot` (Quickshell-specific, not a regular QML Item). On load it:
+`shell.qml` is the root `ShellRoot`. It forces the startup-critical singletons, waits for `Config.ready`, applies the theme and loads the selected family's critical host. After the first frame it loads that family's deferred panels. Boot timings are written to `~/.cache/inir/last-boot.json`, and `inir status` reports them. The full sequence is in [Runtime and Boot](RUNTIME.md).
 
-1. Force-instantiates critical singletons (Idle, PowerProfilePersistence)
-2. Waits for `Config.ready` (JSON config loaded from disk)
-3. Applies the current theme
-4. Loads the selected family's small critical host for first-frame surfaces
-5. After the entry frame, enables deferred services and the thin `ShellIiPanels.qml` / `ShellWafflePanels.qml` / `ShellIrisPanels.qml` wrapper, which loads the corresponding `modules/*/Shell*PanelsImpl.qml`
+## Three families
 
-Boot phases are recorded to `~/.cache/inir/last-boot.json`; `inir status` can report the measured phase breakdown instead of relying on a fixed startup-time claim.
+- **Material (ii)**: the default. Bar on an edge, sidebars, overview. Nine global styles: material, cards, aurora, inir, angel, regalia, zzz, cookie and editorial.
+- **Waffle**: Windows 11 layouts, with a taskbar at the bottom. Its `Looks` palette follows the active global style.
+- **iRiS**: one Island that sits on any edge or becomes a full-width bar, plus a Dock. Studio and Themes edit iRiS only.
 
-## Three panel families
+Only one family runs at a time. Super+Shift+W cycles them. All three read the same `Config` and services, and each keeps its own presentation: `Appearance.*` for ii and shared code, `Looks.*` for Waffle, `IrisStyle.*` for iRiS. See [Panel Families](PANEL_FAMILIES.md).
 
-The shell has three separate visual identities that share the same services layer:
+## Services and config
 
-**Material ii** uses the shared `Appearance` system with nine global styles: material, cards, aurora, inir, angel, regalia, zzz, cookie and editorial. Bar at the top/edge. Sidebars from the edges. Overview launcher.
+About 100 singletons in `services/` own compositor IPC, audio, network, notifications, theming and content. See [Services Catalogue](SERVICES.md).
 
-**Waffle** uses Windows 11 Fluent Design. Taskbar at the bottom. Start menu. Action center. Notification center. Its layout/components remain Waffle-owned while `Looks` can adapt colors/material semantics from the selected global style.
+- Schema: `modules/common/Config.qml`. Defaults: `defaults/config.json`, 70 top-level sections.
+- User file: `~/.config/inir/config.json`. The shell reads it through `~/.config/illogical-impulse/`, which migration 019 links to `~/.config/inir/`.
+- Write with `Config.setNestedValue("section.key", value)`. Read with `Config.options?.section?.key ?? fallback`.
 
-**iRiS** uses its own `IrisStyle` system. Its Island can live on any edge or become a full-width bar, the Dock can move independently, and pieces can attach to the chassis or float on the desktop. Studio and shareable Themes edit the family without changing ii or Waffle.
-
-They're mutually exclusive at runtime. Switch with `Super+Shift+W`. All three read from the same Config singleton and shared services, while their presentation stays family-owned through `Appearance.*`, `Looks.*` or `IrisStyle.*`.
-
-More details: [Panel Families](PANEL_FAMILIES.md)
-
-## Services layer
-
-70+ QML singletons handle everything that isn't pure UI:
-
-- **Compositor IPC**: NiriService talks to Niri via socket, gets workspace/window/output state
-- **System integration**: Audio (PipeWire), Network (NetworkManager), Bluetooth (BlueZ), Battery (UPower)
-- **Data management**: Notifications, clipboard history, events, weather, calendar sync
-- **Theming**: MaterialThemeLoader watches `colors.json`, ThemeService orchestrates the pipeline
-- **Content**: AI chat (Gemini/OpenAI/Ollama), YT Music player, anime tracking
-
-Services are registered in `services/qmldir` and available everywhere as singletons.
-
-Full catalog: [Services Catalog](SERVICES.md)
-
-## Config system
-
-One JSON file, one QML schema, one write method:
-
-- **Schema**: `modules/common/Config.qml` (~60 top-level sections)
-- **User file**: `~/.config/inir/config.json` (canonical; legacy installs are preserved through the compatibility resolver/symlink)
-- **Defaults**: `defaults/config.json`
-- **Write**: `Config.setNestedValue("section.key", value)` (the only way that persists)
-- **Read**: `Config.options?.section?.key ?? fallback`
-
-Users configure everything through the graphical Settings UI. The JSON file is an implementation detail they shouldn't need to touch.
-
-More details: [Config System](CONFIG_SYSTEM.md)
+See [Config System](CONFIG_SYSTEM.md).
 
 ## Theming pipeline
 
-Pick a wallpaper and the entire system follows:
-
 ```
-Wallpaper image
-   |
-generate_colors_material.py (Material You color extraction)
-   |
-colors.json (full Material 3 palette)
-   |
-MaterialThemeLoader (QML file watcher)
-   |
-Appearance tokens (400+ color/size/animation properties)
-   |
-Every UI component
-   |
-External apps (GTK, terminals, Firefox, VS Code, Discord...)
+Wallpaper
+  -> scripts/colors/generate_colors_material.py
+  -> colors.json
+  -> MaterialThemeLoader
+  -> Appearance tokens
+  -> every surface, then external apps
 ```
 
-The pipeline also supports 46 built-in theme presets (Catppuccin, Gruvbox, Nord, etc.) that bypass wallpaper extraction and inject colors directly.
+The 49 built-in presets, plus Auto, skip the wallpaper step and set colours directly. See [Theming Architecture](THEMING_ARCHITECTURE.md).
 
-More details: [Theming Architecture](THEMING_ARCHITECTURE.md)
+## Directory map
 
-## Directory structure
+| Path | Contents | Risk |
+|---|---|---|
+| `modules/common/` | Config, Appearance, Directories, shared widgets | High |
+| `services/` | System integration singletons | High |
+| `scripts/inir` | Launcher and CLI in bash, about 5,000 lines | High |
+| `sdata/` | Install, update, migrations, distro data | High |
+| `modules/ii/sidebar/` | Physical sidebar hosts and live layout | High |
+| `modules/shared/` | Surfaces that two or more families load | Normal |
+| `modules/ii/`, `modules/waffle/`, `modules/iris/` | Family composition and surfaces | Normal |
+| `defaults/` | Shipped config and app configs | Medium |
+| `translations/` | 18 locales | Low |
 
-A simplified map of what lives where:
+The full breakdown is in [Project Map](PROJECT_MAP.md).
 
-| Directory | What's in it | Risk level |
-|-----------|-------------|------------|
-| `modules/common/` | Config, Appearance, shared widgets | Critical |
-| `services/` | 70+ system integration singletons | High |
-| `scripts/inir` | CLI launcher (~3600 lines of bash) | High |
-| `sdata/` | Install, update, migrations | High |
-| `defaults/` | Shipped default config and app configs | Medium |
-| `modules/ii/bar/` | Top bar (ii family) | Normal |
-| `modules/waffle/` | Complete Windows 11 family | Normal |
-| `modules/ii/sidebar/` | Physical sidebar hosts and live layout behavior | High |
-| `modules/ii/sidebarLeft/` | Semantic feature content: AI chat, YT Music, widgets | Normal |
-| `modules/ii/sidebarRight/` | Semantic system content: toggles, calendar, tools | Normal |
-| `translations/` | i18n strings (18 locales) | Low |
-
-Full breakdown: [Project Map](PROJECT_MAP.md)
-
-## Distribution
-
-iNiR ships as a git repo with an interactive installer:
+## Install and update
 
 ```bash
 git clone https://github.com/snowarch/inir.git
@@ -126,14 +71,12 @@ cd inir
 ./setup install
 ```
 
-Three install topologies are recognized:
+There are three install topologies:
 
-- **repo-copy**: normal `./setup install`, with the checkout as update source and a synchronized runtime at `~/.config/quickshell/inir/`
-- **repo-link**: development/runtime points at the checkout itself
-- **package-managed**: `make install`, distro packages or Nix own a system-prefix runtime and its updates
+- **repo-copy**: the normal install. The checkout is the update source, and a synced runtime lives in `~/.config/quickshell/inir/`.
+- **repo-link**: the runtime points at the checkout itself.
+- **package-managed**: `make install`, a distro package or Nix owns the runtime and its updates.
 
-Updates: `./setup update` or `inir update` (git pull + sync + migrate + restart).
+Update with `./setup update` or `inir update`. The systemd unit is wired through a wants link on `niri.service`, not `graphical-session.target`, so it never starts under another desktop.
 
-The systemd service wires to the compositor via wants links, not `graphical-session.target` (which would also start on KDE/GNOME).
-
-More details: [Installation](INSTALL.md), [Setup & Update](SETUP.md)
+See [Install](INSTALL.md) and [Setup and Update](SETUP.md).

@@ -1,66 +1,21 @@
 # iNiR
 
-A complete desktop shell for Niri, built with Quickshell and QML.
+iNiR is a desktop shell for the Niri compositor, built with Quickshell. It gives you a bar, a dock, sidebars, notifications, an overview, a lock screen, wallpapers, theming and a Settings window, all in one shell.
 
-It provides the bar, dock, sidebars, notifications, settings, wallpapers, overview, lock screen, IPC and theming in one shell. Niri is the supported and tested compositor; legacy Hyprland compatibility paths remain from the original fork.
+It comes in three looks, called families. Material ii is the default. Waffle is styled after Windows 11. iRiS puts one Island on a screen edge that turns into whatever you open. Press Super+Shift+W to switch between them.
 
-## Start here
+## Where to start
 
-- [Install](INSTALL)
-- [Setup, updates and rollback](SETUP)
-- [Keybinds](KEYBINDS)
-- [IPC reference](IPC)
-- [Panel families](PANEL_FAMILIES)
-- [iRiS](IRIS)
-- [Configuration](CONFIG_SYSTEM)
-- [Community Hub](HUB)
-- [Known limitations](LIMITATIONS)
-- [Managed desktop items](DESKTOP_ITEMS)
-- [Void Linux](VOID)
+- [Install](INSTALL.md): install iNiR on your distro.
+- [Setup, updates and rollback](SETUP.md): keep iNiR up to date, repair it and remove it.
+- [Keybinds](KEYBINDS.md): every shortcut that ships with iNiR.
+- [Known limitations](LIMITATIONS.md): what does not work yet. Read it before you report a bug.
 
-## Common commands
+Most things live in Settings, which opens with Super+comma.
 
-```bash
-inir run
-inir restart
-inir settings
-inir logs
-inir doctor
-inir update
-```
+## More
 
-## Branches
-
-`main` is the stable branch used by installations and updates.
-
-`prerelease` is where development happens. It may be ahead by a lot. That is the point.
-
-## Runtime shape
-
-```text
-Niri
-  -> Quickshell
-  -> shell.qml
-  -> shared config and services
-  -> ii, Waffle, or iRiS
-  -> panels, overlays and widgets
-```
-
-The shell is configurable through Settings and `config.json`. Persistent writes go through the config service; editing QML is not part of normal use.
-
-## Reference
-
-| Area | Page |
-|---|---|
-| Installation and packages | [Install](INSTALL), [Packages](PACKAGES) |
-| Void Linux | [Void guide](VOID), [Capability matrix](VOID_CAPABILITIES) |
-| Runtime and architecture | [Runtime](RUNTIME), [Architecture](ARCHITECTURE_OVERVIEW) |
-| iRiS | [iRiS family guide](IRIS), [Panel families](PANEL_FAMILIES) |
-| Services and modules | [Services](SERVICES), [Modules](MODULES) |
-| Wallpapers and theming | [Wallpaper](WALLPAPER), [Theming](THEMING_ARCHITECTURE) |
-| Desktop references | [Managed desktop items](DESKTOP_ITEMS) |
-| Widgets, themes and web apps from others | [Community Hub](HUB) |
-| Compositor support | [Compositors](COMPOSITORS) |
-| Performance | [Optimization](OPTIMIZATION) |
-
-If the wiki disagrees with the current shell, the shell wins. Then the wiki gets fixed.
+- [Panel families](PANEL_FAMILIES.md): Material ii, Waffle and iRiS compared.
+- [iRiS](IRIS.md): the Island family in detail.
+- [Community Hub](HUB.md): widgets, colour themes and web apps made by others.
+- [Void Linux](VOID.md) and [NixOS](NIXOS.md): notes for those systems.

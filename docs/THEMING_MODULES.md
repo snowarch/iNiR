@@ -1,72 +1,29 @@
 # Theming Modules
 
-## Goal
+A module is one shell script in `scripts/colors/modules/` that themes one app. `applycolor.sh` runs it through its target manifest. The modules and their targets are listed in [Theming Targets](THEMING_TARGETS.md).
 
-`applycolor.sh` is the theming orchestrator.
-It auto-discovers modules in `scripts/colors/modules/` and runs them in filename order.
+## How they run
 
-This keeps the shell product understandable:
-
-- `switchwall.sh`
-- generates palette artifacts
-- `applycolor.sh`
-- fans those artifacts out to modules
-- each module owns one integration surface
+- A module runs only when a manifest in `scripts/colors/targets/` names it. Once any manifest exists, a module that no manifest names never runs.
+- `applycolor.sh` skips the whole run when the generated files, config, scripts and app installs are unchanged. `--force` or `INIR_THEME_FORCE=1` runs it anyway.
+- Enabled modules run in parallel under `nice` and `ionice`, two to four at a time: half your CPUs by default, and `INIR_THEME_MAX_JOBS` overrides it.
+- Runs take a lock (`applycolor.lock`, waiting up to 120 s). Each module logs to `~/.local/state/quickshell/user/generated/theming_modules.log`, tagged with its target id.
 
 ## Module contract
 
-A module is a single shell file in `scripts/colors/modules/`.
-
-Examples:
-
-- `10-terminals.sh`
-- `20-gtk-kde.sh`
-- `30-editors.sh`
-- `31-zed.sh`
-- `40-chrome.sh`
-- `50-spicetify.sh`
-- `60-sddm.sh`
-- `70-steam.sh`
-- `80-pear-desktop.sh`
-- `85-limusic.sh`
-- `90-cava.sh`
-- `95-claude-code.sh`
-
-Rules:
-
-- it must source `scripts/colors/lib/module-runtime.sh`
-- it should exit `0` when its target is disabled or missing
-- it should only own one integration area
-- it should be safe to run after any wallpaper regeneration
+- File name `NN-name.sh`, one integration area per module.
+- Source `scripts/colors/lib/module-runtime.sh` first, and set `COLOR_MODULE_ID` so the log names the target.
+- Gate on the config key with `config_bool`. Exit 0 when the key is off, or the app or its files are missing.
+- Read palette files from `~/.local/state/quickshell/user/generated/`, not from the wallpaper.
+- Do not edit `applycolor.sh`.
 
 ## Shared runtime
 
-`module-runtime.sh` provides:
+`module-runtime.sh` sets `SCRIPT_DIR`, `STATE_DIR` (`$XDG_STATE_HOME/quickshell`), `CONFIG_FILE`, `TARGETS_DIR` and `MODULES_DIR`. Its helpers include:
 
-- XDG/config/state paths
-- `CONFIG_FILE`
-- `STATE_DIR`
-- `SCRIPT_DIR`
-- `config_bool()`
-- `config_json()`
-- `venv_python()`
-- `log_module()`
+- `config_bool '<jq path>' <fallback>`, for example `.appearance.wallpaperTheming.enableChrome`.
+- `log_module`, `write_if_changed` and `theme_mode`, which returns `dark` or `light` from `theme-meta.json`.
 
-## How contributors add a new theming module
+## Adding a module
 
-1. Create `scripts/colors/modules/NN-name.sh`
-2. Source `lib/module-runtime.sh`
-3. Gate it with config and dependency checks
-4. Read palette artifacts from `~/.local/state/quickshell/user/generated/`
-5. Exit cleanly when not applicable
-6. Do not edit `applycolor.sh`
-
-## Product boundary
-
-The theming core should stay small:
-
-- palette generation belongs in `switchwall.sh` + generators
-- fan-out belongs in `applycolor.sh`
-- integrations belong in modules
-
-That split is what keeps iNiR maintainable as a Linux shell product instead of a pile of ad-hoc scripts.
+Scaffold the target with `inir theme scaffold <id>`. It writes the manifest and a stub module. See [Theming Targets](THEMING_TARGETS.md).

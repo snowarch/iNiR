@@ -6,38 +6,41 @@
 - [Setup and updates](SETUP)
 - [Keybinds](KEYBINDS)
 - [Known limitations](LIMITATIONS)
-- [Managed desktop items](DESKTOP_ITEMS)
 
 ### Use
 - [Panel families](PANEL_FAMILIES)
 - [iRiS](IRIS)
-- [Configuration](CONFIG_SYSTEM)
-- [Community Hub](HUB)
+- [Settings](CONFIG_SYSTEM)
 - [Wallpaper](WALLPAPER)
+- [Colours and themes](THEMING_PRESETS)
+- [Editorial style](EDITORIAL_STYLE)
+- [Organic Edge](ORGANIC_EDGE)
 - [Notifications](NOTIFICATIONS)
 - [Calendar](CALENDAR)
 - [Autostart](AUTOSTART)
 - [Audio and media](AUDIO_MEDIA)
+- [Desktop items](DESKTOP_ITEMS)
+- [Hub](HUB)
+- [Game performance](GAME_PERFORMANCE)
+- [Japanese OCR](JAPANESE_OCR)
+- [Vesktop](VESKTOP)
 
-### Script and extend
+### System
+- [Packages](PACKAGES)
+- [Compositors](COMPOSITORS)
+- [Optimization](OPTIMIZATION)
+- [Void Linux](VOID)
+- [Void capabilities](VOID_CAPABILITIES)
+- [NixOS](NIXOS)
+
+### For developers
 - [IPC reference](IPC)
 - [Global actions](GLOBAL_ACTIONS)
 - [Services](SERVICES)
 - [Modules](MODULES)
 - [Architecture](ARCHITECTURE_OVERVIEW)
 - [Project map](PROJECT_MAP)
-
-### Theming
-- [Architecture](THEMING_ARCHITECTURE)
-- [Targets](THEMING_TARGETS)
-- [Presets](THEMING_PRESETS)
-- [Modules](THEMING_MODULES)
-
-### System
 - [Runtime](RUNTIME)
-- [Packages](PACKAGES)
-- [Void Linux](VOID)
-- [Void capability matrix](VOID_CAPABILITIES)
-- [Compositors](COMPOSITORS)
-- [Optimization](OPTIMIZATION)
-- [NixOS](NIXOS)
+- [Theming architecture](THEMING_ARCHITECTURE)
+- [Theming targets](THEMING_TARGETS)
+- [Theming modules](THEMING_MODULES)

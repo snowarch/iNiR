@@ -1,131 +1,27 @@
-# Vesktop Theming
+# Vesktop theme
 
-iNiR includes automatic Discord/Vesktop theming that syncs with your wallpaper colors.
+iNiR can colour Discord to match your wallpaper, through Vesktop. It comes with three themes, and they update when you change your wallpaper or theme preset.
 
-## Included Themes
+## Turn it on
 
-### iNiR Material
-A Material Design Discord theme based on [refact0r/system24](https://github.com/refact0r/system24) with Material You colors from your wallpaper.
+1. Install [Vesktop](https://github.com/Vencord/Vesktop).
+2. Check that **Vesktop/Discord** is on. It is on by default. Find it under **Settings › Advanced › Color generation** in Material, **Waffle Settings › Themes › Theming** in Waffle, or **iRiS Settings › Style › App colours** in iRiS.
+3. Setup copies the themes into `~/.config/vesktop/themes/`. In Vesktop, open **Settings › Vencord › Themes** and turn on one of them.
 
-Features:
-- Oxanium font (iNiR branding)
-- Material Design styling (rounded corners, proper spacing)
-- Compact server icons and scrollbars
-- Full Material You color integration
-- Auto-sync with wallpaper changes
-- Auto-sync with theme preset changes
+## The themes
 
-### iNiR TUI
-A terminal-style System24 flavor that keeps the upstream TUI layout and applies iNiR's generated Material You palette on top.
+- **iNiR Material** uses Material You colours on the System24 layout, with the Oxanium font.
+- **iNiR TUI** is the same layout in a terminal style, with square panels and the JetBrainsMono Nerd Font.
+- **iNiR Midnight** uses the Midnight layout with the same colours.
 
-Features:
-- JetBrainsMono Nerd Font, shipped by iNiR
-- Square panels and profile pictures
-- Compact System24 title bar
-- ASCII channel titles and loader
-- Panel labels and text-style Spotify progress
-- Full Material You color integration
-- Auto-sync with wallpaper and theme preset changes
+## When the colours change
 
-### iNiR Midnight
-A cleaner Midnight-based Discord flavor using the same generated iNiR palette without System24's TUI layout.
+Changing the wallpaper or the theme preset rebuilds the palette for all three themes. If Discord does not pick up the change, press **Ctrl+R** in Vesktop.
 
-## Setup
+## If it looks wrong
 
-1. Install [Vesktop](https://github.com/Vencord/Vesktop) (or any Vencord-based client)
+- **Colours but no layout:** the themes load their base style from the internet. Check your connection, then press **Ctrl+R**.
+- **Old colours:** change the wallpaper again, or pick the theme preset again, then press **Ctrl+R**.
+- **Theme missing from the list:** check that it is turned on under **Settings › Vencord › Themes**.
 
-2. The theme is automatically installed to `~/.config/vesktop/themes/` during iNiR setup
-
-3. In Vesktop, go to Settings → Vencord → Themes and enable one of the installed iNiR themes: `iNiR Material`, `iNiR TUI`, or `iNiR Midnight`.
-
-4. Colors will automatically update when you change your wallpaper or theme preset!
-
-## How It Works
-
-### Wallpaper Changes (Auto mode)
-When you change your wallpaper:
-1. `switchwall.sh` runs `generate_colors_material.py` to generate Material You colors
-2. `system24_palette.sh` generates all three Discord themes with the same embedded palette
-3. Vesktop should auto-reload theme changes (if it doesn't, use Ctrl+R)
-
-### Theme Preset Changes
-When you change theme preset in Settings:
-1. `apply-gtk-theme.sh` applies GTK/KDE colors
-2. It also calls `system24_palette.sh` to regenerate the Vesktop themes
-3. Vesktop should auto-reload theme changes (if it doesn't, use Ctrl+R)
-
-### Color Mapping
-
-| system24 Variable | Material You Source |
-|-------------------|---------------------|
-| `--accent-*` | `primary` color ladder |
-| `--accent-new` | `primary` (for NEW badge) |
-| `--bg-*` | `surface_container_*` variants |
-| `--text-*` | `on_surface` / `on_surface_variant` |
-| `--red-*` | `error` color ladder |
-| `--green-*` | `tertiary` color ladder |
-| `--blue-*` | `secondary` color ladder |
-
-## Manual Regeneration
-
-If colors get out of sync, regenerate manually:
-
-```fish
-# Regenerate theme
-bash ~/.config/quickshell/inir/scripts/colors/system24_palette.sh
-
-# Or trigger a full wallpaper refresh
-~/.config/quickshell/inir/scripts/colors/switchwall.sh --noswitch
-```
-
-## Customization
-
-### Changing Fonts
-
-Edit the system24 generator source (`scripts/colors/system24_palette.py`, invoked via `scripts/colors/system24_palette.sh`) and change the font variables:
-
-```css
-body {
-    --font: 'Your Font';        /* Main font */
-    --code-font: 'Mono Font';   /* Code blocks */
-}
-```
-
-Then regenerate the theme.
-
-## Troubleshooting
-
-### Colors not updating
-- Check that `~/.config/vesktop/themes/system24.theme.css`, `inir-tui.theme.css`, and `inir-midnight.theme.css` exist
-- Some installs use `~/.config/Vesktop/themes/` (capital V)
-- Verify the theme is enabled in Vesktop settings
-- Try Ctrl+R in Vesktop to force reload
-
-### Theme not appearing
-- Ensure the `.theme.css` file is in `~/.config/vesktop/themes/`
-- Check Vesktop console for CSS errors (Ctrl+Shift+I)
-
-### Visual inconsistencies / theme looks half-applied
-- This theme relies on the System24 base CSS. If the remote `@import` fails (network/CSP), you may only get colors but not layout/styling.
-- Open DevTools (Ctrl+Shift+I) and check:
-  - Network tab for failed `system24.css` requests
-  - Console tab for `@import`/CSP related errors
-- Optional: place a local copy of System24 at `~/.config/vesktop/themes/system24.local.css` (same folder as the theme). If present, iNiR will import it first.
-
-### Wrong colors
-- Run `bash ~/.config/quickshell/inir/scripts/colors/system24_palette.sh` to regenerate
-- Check `~/.local/state/quickshell/user/generated/palette.json` exists
-
-### Debugging generation failures
-- Run `bash ~/.config/quickshell/inir/scripts/colors/system24_palette.sh` in a terminal and check for errors
-- If you're using preset themes (Settings), `apply-gtk-theme.sh` no longer suppresses Python errors, so `qs log -c inir` (or your shell logs) should show failures
-
-### Hot-reload not working
-- The theme palette is embedded in the main file, so Ctrl+R should work
-- If Vesktop window is not focused, the reload script may not work
-- Try manually pressing Ctrl+R in Vesktop
-
-## Credits
-
-- [refact0r](https://github.com/refact0r) for system24 theme base
-- [Vencord](https://github.com/Vencord) for the Discord mod platform
+The themes are built on System24 by [refact0r](https://github.com/refact0r), and on Vencord.

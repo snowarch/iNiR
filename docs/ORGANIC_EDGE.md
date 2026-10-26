@@ -1,38 +1,55 @@
 # Organic Edge
 
-Organic Edge is an independent desktop field, configured in **Settings → Widgets → Screen edges** or through the border icon in desktop edit mode. It renders behind desktop widgets and windows and never captures pointer input. Enabling the regular Visualizer is not required. It follows the live wallpaper's pause rule: behind a fullscreen window, or once tiled windows fill the screen when Pause is set to When covered, it holds its last frame and stops listening to audio, so it costs nothing you can't see.
+Organic Edge draws a soft, moving band along the edges of your desktop, behind your windows and widgets. It can move with the music, and it ignores the mouse.
 
-Choose one or more sides, start from a composition, or apply a complete scene. Scenes are intentionally opinionated combinations of composition, material, color and music response; composition presets change only topology/geometry, material presets change only body/contour/light, and response presets change only audio dynamics. Fine tuning therefore no longer requires sacrificing unrelated choices. Adjust length, position, inward reach, screen inset, physical corner radius and reach per side. **Corner handoff** is separate from physical corner radius: it controls how strongly adjacent full-length edges become one field. In **Join connected edges** mode, full-length adjacent sides share one corner field instead of drawing two competing crests; four selected sides behave as one continuous frame. **Keep edges separate** preserves independent rails. “Respect bars and dock” uses the current panel insets. Coordinates are logical pixels; reach is capped at 45% of the available axis to preserve the centre.
+## Turn it on
 
-Material and shape are separate. Silk uses a translucent moving sheen; Aurora emphasizes luminous strands; Contour draws a fine crest; Liquid uses a fuller body. Flow keeps the original organic contour, Ribbon makes broad continuous waves, Pulse cells localize musical bulges, and Filament concentrates fine high-frequency motion. Adaptive color follows album artwork when a usable cover exists and falls back to the wallpaper-derived scheme; Wallpaper, Album, Theme, Vivid, Iridescent, monochrome, cool and warm remain explicit source/profile choices. Vivid/cool/warm transform semantic source colors instead of using fixed RGB palettes. Custom exposes three color pickers. Flow, Spectrum, Beat and Static define how color travels through the field; Clean, Shimmer, Echo, Prism, Bloom, Caustic and Afterglow change the light treatment without adding another renderer. Overall opacity, body opacity, crest brightness, glow intensity and glow spread are independent so light can grow without turning the field into a solid band.
+1. Open **Settings › Widgets**, then pick **Screen edges**.
+2. Turn on **Enable Organic edge**.
 
-Music response can be tuned separately from appearance. Velvet, Balanced, Rhythmic, Percussive and Fine detail response presets adjust the envelope without replacing the selected material or shape. Local live/peak energy drives the contour in addition to the global envelope, so bass, mids, treble and transients have distinct jobs instead of scaling the whole edge uniformly: bass pushes body/reach and Bloom, mids shape groove and liquid caustics, treble concentrates in crest/shimmer/prism, and peaks feed Afterglow. Sensitivity and Audio range control deformation, Beat pulse controls geometric movement, Beat glow lights the crest and halo, Transient punch emphasizes attacks, and Bass drive/Treble shimmer split low-frequency movement from high-frequency light. Attack and Release tune how quickly the field catches and settles after a hit; smoothing and frequency separation remain available for finer control. Motion direction follows the perimeter's clockwise coordinate system and can be reversed without changing frequency order. Motion speed and ambient motion are integrated continuously, so live tuning changes velocity without resetting phase.
+You don't need the Visualizer widget. The band listens to the audio on its own.
 
-Silence is also a designed state. **Ambient** keeps the configured low-speed drift, **Still** lets audio energy decay and then freezes the field, and **Hide** lets the remaining energy/opacity decay before unloading the renderer. Rest presence controls how visible Ambient and Still remain while silent; it does not affect Hide. This keeps music start/stop transitions continuous instead of treating audio activity as a hard on/off switch.
+## Start from a preset
 
-The field follows desktop widget power saving, GameMode and session locking. Global animation disable freezes motion. Disabled or suppressed fields release their renderer; audio capture uses the existing shared Cava subscription rather than a process per side.
+Each preset changes only its own part, so your other choices stay:
 
-## Implementation contract
+- **Compositions** change where the band sits, such as **Horizon**, **Corner Drift** or **Full Frame**.
+- **Material presets** change the body, outline and light, such as **Soft Silk**, **Aurora Thread** or **Liquid Tide**.
+- **Response presets** change how it reacts to music: **Velvet**, **Balanced**, **Rhythmic**, **Percussive** and **Fine detail**.
+- **Scenes** set all of the above together, such as **Album Tide** or **Afterglow Frame**.
 
-- `OrganicEdgeWidget.qml` owns Config, output selection, panel-aware geometry, palette and lifecycle.
-- `OrganicEdgeConfig.js` owns scenes, response presets, control metadata and fallback values. `Config.qml` and `defaults/config.json` declare persistence and fresh-install defaults.
-- `OrganicAudioMotion.qml` owns audio normalization, twelve smoothed bands, decaying peaks, energy, pulse and the continuous animation clock. Both Organic renderers inherit it; motion tuning eases velocity without resetting phase, and it has no Config, Cava or screen dependency.
-- `OrganicScreenEdge.qml` exposes the screen renderer's uniforms. `OrganicScreenEdge.frag` performs one direct scene-graph draw without a wallpaper texture, blur pass or offscreen framebuffer. Pixels beyond enabled edge reaches skip field evaluation. Connected corners use one shared field whose blend strength is independent from the physical display mask; independent overlaps retain union blending. Perimeter direction is explicit so future hosts can reverse visual travel without rewriting edge coordinates. Color is weight-normalized and output is premultiplied.
-- `OrganicAudioBlob.qml` retains the existing radial/media renderer API. Its shader is separate from the screen material.
+Presets and **Reset Organic edge** keep your displays and the on or off switch.
 
-Shader edges and depths use top/right/bottom/left order. Geometry is `(span, position, taper, cornerRadius)`, with ratios in 0–1 except logical-pixel corner radius. Topology is `(joinConnected, flowDirection, cornerBlend, reserved)`, where direction is ±1 and corner blend is 0–1. Depths are logical pixels. Material is `(restingThickness, detail, glow, styleIndex)`, with style indices Silk=0, Aurora=1, Contour=2, Liquid=3. Keep the GLSL uniform block and QML properties synchronized. Bake portable shader variants with:
+## Placement
 
-```sh
-/usr/lib/qt6/bin/qsb --qt6 -o modules/common/widgets/OrganicScreenEdge.frag.qsb modules/common/widgets/OrganicScreenEdge.frag
-```
+- **Displays** appears with more than one screen. The reset button in that section puts the band back on all screens.
+- **Active sides** picks the edges. **Join connected edges** makes neighbouring sides one continuous frame. **Keep edges separate** keeps each side independent.
+- **Edge length** and **Position along edge** set how much of each side it covers, and where.
+- **Field depth** sets how far in it reaches. Reach stops at 45% of the screen, so the middle stays clear. The four reach sliders set each side on its own.
+- **Screen inset** moves the band in from the edge. **Screen corner radius** matches your screen's rounded corners. **Corner handoff** sets how strongly neighbouring sides merge.
+- **Respect bars and dock** keeps the band clear of your panels.
+- **Travel direction** runs the motion clockwise or counter-clockwise.
 
-Persistence lives under `background.edgeWidgets.organic`. Empty `edges` preserves the legacy single `edge`; empty `screenList` means all displays. Presets and reset never change the enabled displays. The source and baked shader must ship together.
+## Look and colour
 
-```sh
-inir background organicEdgeState
-inir background setOrganicEdgeEnabled true
-inir background applyOrganicEdgePreset "Album Tide"
-inir background applyOrganicEdgeComposition "Full Frame"
-inir background applyOrganicEdgeMaterial "Aurora Thread"
-inir background applyOrganicEdgeResponse "Fine detail"
-```
+- **Material** picks the body: **Silk**, **Aurora**, **Contour** or **Liquid**.
+- **Palette source** picks the colours. **Adaptive** follows album art while a cover is playing, and the wallpaper otherwise. **Custom** shows three colour pickers.
+- **Color movement** sets how colour travels: **Flow**, **Spectrum**, **Beat** or **Static**.
+- **Light** adds a treatment, from **Clean** to **Peak afterglow**.
+- **Overall opacity**, **Body opacity**, **Crest brightness** and **Glow intensity** set how bright and solid it is. Glow can grow without filling the whole edge.
+
+## Music
+
+- **React to audio** turns the music response on or off.
+- Bass moves the body and reach, treble lights the crest, and sudden hits give short bursts.
+- **When silent** picks what happens when the sound stops. **Ambient** keeps a slow drift, **Still when silent** freezes the last frame, and **Hide when silent** fades it out.
+- **Audio sensitivity**, **Beat pulse**, **Attack speed** and **Release speed** tune how strongly and how quickly it responds.
+
+## When it pauses
+
+- It follows **Settings › Widgets › Power Saving**. When that pauses desktop widgets on a screen, the band stops too. It also stops during GameMode and on the lock screen.
+- It follows the live wallpaper's pause rule. Behind a fullscreen or covered screen, the band holds still when that rule says the wallpaper should. Set the rule in **iRiS Settings › Desktop › Live wallpapers › Pause**: **Never**, **Behind fullscreen** or **When covered**. The default is **When covered**. Material has no control for it.
+
+## In iRiS
+
+**Music on the edges**, under **Now Playing › Frame music**, lets the music drive this band and the iRiS frame.

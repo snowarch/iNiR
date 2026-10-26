@@ -1,142 +1,147 @@
-# Services Catalog
+# Services Catalogue
 
-70+ QML singletons that handle everything that isn't pure UI. Each service is registered in `services/qmldir` (or `services/deferred/qmldir`) and available as a singleton import everywhere.
+About 100 QML singletons hold the state and system work that UI should not own. `services/qmldir` registers the eager ones and `services/deferred/qmldir` the ones loaded after the first frame (see [Runtime and Boot](RUNTIME.md)). Modules use them by name.
 
-> Only some services expose an IPC handler. The real IPC targets are listed where they exist; if a service has no `IPC target:` note, it has no `IpcHandler` and is not callable from the `inir` CLI. To regenerate the authoritative list: `grep -rl IpcHandler services/ | xargs grep -oP 'target:\s*"\K[^"]+'`.
+Before you change a service, find its consumers and prefer additive changes:
 
-## Compositor
+```bash
+grep -r "ServiceName\." modules/ services/
+```
 
-| Service | What it does |
-|---------|-------------|
-| **NiriService** | Niri IPC via Unix socket. Tracks workspaces, windows, outputs, keyboard layouts. Event-driven with reactive properties. IPC target: `keyboard` (layout switching). |
-| **CompositorService** | Detects compositor (Niri/Hyprland/GNOME), provides sorted toplevel windows and compositor-agnostic APIs. |
-| **HyprlandData** | Hyprland window, workspace, monitor, and layer data via `hyprctl`. |
-| **HyprlandKeybinds** | Parses Hyprland config for keybind cheatsheet. |
-| **HyprlandXkb** | Keyboard layout tracking for Hyprland. |
+## IPC targets
 
-## Audio and Media
+Only a service with an `IpcHandler` answers `inir <target> <function>`. Some handlers live outside `services/`: `customWidgets` is in `shell.qml`. To list every target:
 
-| Service | What it does |
-|---------|-------------|
-| **Audio** | PipeWire integration. Default sink/source, volume, mute, per-app mixer. EasyEffects virtual sink detection. IPC target: `audio`. |
-| **MprisController** | MPRIS player management. Filters real players, deduplicates YT Music instances, tracks active player with grace period for track transitions. IPC target: `mpris`. |
-| **YtMusic** | YouTube Music player. Search, queue, playback via mpv + yt-dlp. IPC target: `ytmusic`. |
-| **SongRec** | Music recognition via SongRec (Shazam-like audio fingerprinting). |
+```bash
+grep -rl IpcHandler --include=*.qml . | xargs grep -oP 'target:\s*"\K[^"]+'
+```
 
-## System
+New targets go in [IPC](IPC.md).
 
-| Service | What it does |
-|---------|-------------|
-| **Network** | NetworkManager integration. WiFi networks, connection status, signal strength. IPC target: `network`. |
-| **BluetoothStatus** | Bluetooth adapter and device status via BlueZ D-Bus. IPC target: `bluetooth`. |
-| **Battery** | UPower integration. Percentage, charging state, charge limit control, low/critical thresholds. IPC target: `battery`. |
-| **Vpn** | VPN state from NetworkManager profiles (OpenVPN, WireGuard, IPSec) and Tailscale. Toggle, import, add. IPC target: `vpn`. |
-| **DeviceEvents** | What was just plugged in, connected or lost (networks, Bluetooth, USB, charger, audio output, displays, drives), one event at a time for each family's OSD. IPC target: `connections`. |
-| **Brightness** | Monitor brightness via brightnessctl (laptop) and ddcutil (external monitors). Per-screen control. IPC target: `brightness`. |
-| **PowerProfilePersistence** | Restores the user's power profile on startup. |
-| **GameMode** | Fullscreen detection with auto/manual activation. Suppresses animations, notifications, blur when gaming. IPC target: `gamemode`. |
-| **GamePerformanceService** | Focused-game detection and optional MangoHud CSV telemetry, with ResourceUsage fallback for system metrics. |
-| **Idle** | Idle management via swayidle. Screen-off, lock, and suspend timeouts. Set `idle.onBattery.enable` to apply a separate, shorter set of timeouts while a laptop runs unplugged. |
-| **ResourceUsage** | CPU, RAM, GPU, temperature, disk polling. History arrays for graphs. Auto-stop timer (15s) when no consumers active. |
-| **ScreenTime** | Optional focused-app usage tracking. Local JSON storage, daily totals, hourly buckets, 3/14 day range aggregation. Disabled unless `sidebar.screenTime.enable` is true. |
-| **SystemInfo** | Distro name, username, desktop environment detection. |
-| **ShellLayoutController** | Validates and persists bar, dock, taskbar and sidebar placement across panel families. IPC target: `shellLayout`. |
-| **Privacy** | Mic and screen sharing detection via PipeWire link analysis. IPC target: `privacy`. |
+## Compositor and windows
 
-## Theming and Appearance
+| Service | Purpose | IPC |
+|---|---|---|
+| `NiriService` | Niri socket: outputs, workspaces, windows, layouts | `keyboard` |
+| `NiriKeybinds` | Niri keybinds, parsed by `scripts/parse_niri_keybinds.py` | |
+| `CompositorService` | Picks Niri or Hyprland from the socket environment | |
+| `HyprlandData`, `HyprlandKeybinds`, `HyprlandXkb` | Legacy Hyprland paths, not maintained | |
+| `ShellLayoutController` | Bar, dock and sidebar placement | |
+| `ShellEditSession` | Edit mode for moving shell pieces to the edges | `shellLayout` |
+| `MinimizedWindows` | Minimised windows, moved to a separate workspace | `minimize` |
+| `TaskbarApps`, `WindowPreviewService` | Dock and taskbar apps; window previews | |
 
-| Service | What it does |
-|---------|-------------|
-| **ThemeService** | Theme orchestration. Applies presets, triggers wallpaper-based regeneration, manages auto vs manual mode. Light/dark via IPC target: `colorMode`; Material global style via IPC target: `globalStyle`. |
-| **MaterialThemeLoader** | Watches `colors.json` (generated by the color pipeline) and loads Material 3 colors into Appearance tokens. Also syncs the SDDM login screen to the family. IPC target: `loginScreen`. |
-| **NiriAnimationPresets** | Niri animation presets, shipped and your own, matched against `config.d/60-animations.kdl`. IPC target: `niriAnimations`. |
-| **ThemePresets** | 46 built-in theme presets (Catppuccin, Gruvbox, Nord, Angel, etc.) with full M3 color definitions. |
-| **Wallpapers** | Wallpaper management. Multi-monitor support, video wallpapers, backdrop system, auto-cycling. |
-| **WallpaperListener** | Multi-monitor wallpaper config resolver. |
-| **IconThemeService** | Icon theme management. Syncs to GTK, KDE, Qt5ct, Qt6ct. Smart Electron app icon resolution. |
-| **FontSyncService** | Syncs shell fonts to GTK/KDE desktop settings. |
-| **AwwwBackend** | awww animated wallpaper daemon integration. |
-| **GowallService** | gowall wallpaper color extraction and palette generation. |
+## Desktop and widgets
 
-## Data and Storage
+| Service | Purpose | IPC |
+|---|---|---|
+| `DesktopItems`, `DesktopArrange`, `DesktopEditStage`, `DesktopEditHistory`, `DesktopPresets`, `DesktopWidgetLayout` | Desktop edit mode | |
+| `DesktopWidgetStacks` | Widgets stacked in one spot, rotating or paging | `widgetStacks` |
+| `CustomWidgets` | User widgets: scan, create, remove | `customWidgets` (in `shell.qml`) |
+| `WidgetPowerManager` | Pauses widget rendering in game mode, fullscreen, present, edit | `widgetpower` |
+| `LivePins` | Live snips of one window. Niri only, through qs-rs | `livePins` |
 
-| Service | What it does |
-|---------|-------------|
-| **Notifications** | Notification management with persistent storage, popup control, grouping, DND mode, GameMode integration. IPC target: `notifications`. |
-| **Cliphist** | Clipboard history with fuzzy search. Uses cliphist backend. IPC target: `cliphistService`. |
-| **Events** | Local calendar events with categories, priorities, reminders, recurrence. JSON storage. |
-| **CalendarSync** | External calendar sync via ICS/iCal URLs. Fetches with curl, parses in JS. Supports Google Calendar, Outlook, Nextcloud, any CalDAV. |
-| **Weather** | Open-Meteo weather data with GPS, manual coordinates, or city name location. |
-| **Todo** | Todo list with JSON + markdown sync. |
-| **Notepad** | Persistent plaintext notepad. |
-| **KeyringStorage** | Secure API key storage via GNOME Keyring (secret-tool). |
-| **DateTime** | Date/time formatting, uptime tracking. |
+## Audio, media and network
 
-## Desktop Integration
+| Service | Purpose | IPC |
+|---|---|---|
+| `Audio` | PipeWire devices, volume, mute, per-app mixer | `audio` |
+| `MprisController` | MPRIS players, grace period between tracks | `mpris` |
+| `YtMusic` | YouTube Music through mpv and yt-dlp | `ytmusic` |
+| `InnerTube`, `MpvIpc`, `CavaService` (deferred) | Browsing via `scripts/innertube.py`; mpv JSON socket; shared cava | |
+| `Network` | NetworkManager through `nmcli` | `network` |
+| `Vpn` | OpenVPN, WireGuard, IPsec and Tailscale | `vpn` |
+| `BluetoothStatus` | Adapter and devices through `Quickshell.Bluetooth` | `bluetooth` |
+| `DeviceEvents` | Devices plugged in, connected or lost, one event at a time | `connections` |
+| `Privacy` | Microphone and screen sharing, from PipeWire links | `privacy` |
 
-| Service | What it does |
-|---------|-------------|
-| **Autostart** | Autostart manager. Reads/writes the managed section of `~/.config/niri/config.d/50-startup.kdl`. Niri's own `spawn-at-startup` directives are the source of truth, not a Config JSON list. IPC target: `autostart`. |
-| **TrayService** | System tray with workarounds for problematic apps (Vesktop, Steam, etc.). |
-| **PolkitService** | PolicyKit authentication agent for privileged operations. |
-| **Hyprsunset** | Night light via wlsunset (Niri) or hyprsunset (Hyprland). Scheduled or manual. |
-| **EasyEffects** | EasyEffects audio effects toggle. Supports native and flatpak. |
-| **RecorderStatus** | Screen recording status detection (wf-recorder). |
-| **MascotMood** | Session-long personality mood for the mascot, with time-of-day seeding and jittered changes. IPC target: `mascotMood`. |
-| **SessionWarnings** | Detects running package managers before logout. |
-| **ConflictKiller** | Kills conflicting system trays and notification daemons on startup. |
-| **FirstRunExperience** | First-run wizard trigger. |
+## Power and hardware
 
-## Application Management
+| Service | Purpose | IPC |
+|---|---|---|
+| `Idle` | swayidle timeouts. `idle.onBattery.enable` adds shorter ones | |
+| `Battery` | UPower: charge, state, charge limit | `battery` |
+| `Brightness` | `brightnessctl` for laptops, `ddcutil` for external monitors | `brightness` |
+| `PowerProfilePersistence` | Restores the power profile at startup | |
+| `GameMode` | Fullscreen detection, automatic or manual | `gamemode` |
+| `GamePerformanceService` | Focused game detection, optional MangoHud CSV | |
+| `ResourceUsage` | CPU, RAM, GPU, temperature, disk. Stops after `resources.autoStopDelay` | |
+| `ScreenTime` | Focused-app usage, only with `sidebar.screenTime.enable` | |
+| `MemoryPressureService` | Watches the JS heap (Qt V4 memfd leak), offers a restart | `memory` |
 
-| Service | What it does |
-|---------|-------------|
-| **AppLauncher** | Default app slot manager (terminal, browser, file manager, etc.). |
-| **AppSearch** | Desktop entry fuzzy search with icon substitution mappings. |
-| **AppCatalog** | Curated software catalog with multi-distro install support. IPC target: `appCatalog`. |
-| **Hub** | The community hub as every family's Hub page sees it: catalogue, installs and updates through `scripts/inir-hub.py`, one action at a time. IPC target: `hub`. |
-| **LauncherSearch** | Overview search with prefix routing (apps, actions, calculator, packages). |
-| **TaskbarApps** | Dock/taskbar app list (merged pinned + open windows). |
-| **MinimizedWindows** | Niri window minimization via hidden workspace. IPC target: `minimize`. |
-| **WindowPreviewService** | Window preview caching for task view. |
-| **GlobalActions** | Modular action registry for keyboard-driven workflows. User-extensible. IPC target: `globalActions`. |
+## Theming and appearance
 
-## Content
+| Service | Purpose | IPC |
+|---|---|---|
+| `ThemeService` | Applies presets, regenerates from the wallpaper | `globalStyle`, `colorMode` |
+| `MaterialThemeLoader` | Loads `colors.json` into Material 3 tokens, syncs SDDM | `loginScreen` |
+| `Lume` | Keeps content readable over whatever is behind it | |
+| `WallpaperLuma` | Brightness and unevenness of the wallpaper under a rect | |
+| `Wallpapers`, `WallpaperListener` | Selection, per-monitor and backdrop resolution | |
+| `AwwwBackend` | awww animated wallpaper daemon | |
+| `IconThemeService`, `FontSyncService` | Icon and font sync to GTK, KDE and Qt | |
+| `NiriAnimationPresets` | Presets matched to `config.d/60-animations.kdl` | `niriAnimations` |
+| `GowallService` (deferred) | Palette extraction with gowall | |
 
-| Service | What it does |
-|---------|-------------|
-| **Ai** | LLM chat. Gemini, OpenAI, Mistral, OpenRouter, Ollama. Tool use, streaming, conversation history. IPC target: `ai`. |
-| **AnimeService** | AniList GraphQL API. Anime schedule, seasonal listing. |
-| **Wallhaven** | Wallhaven.cc wallpaper search with rate limiting. |
-| **Booru** | Multi-booru image board API (yande.re, konachan, danbooru, etc.). |
-| **VoiceSearch** | Voice recording + Gemini transcription + web search. IPC target: `voiceSearch`. |
-| **Emojis** | Emoji picker data. |
-| **PackageSearch** | Async package manager search (pacman + AUR or XBPS). IPC target: `packageSearch`. |
+`ThemePresets` is not a service. It lives in `modules/common/ThemePresets.qml`: 49 presets and Auto.
+
+## Data and storage
+
+| Service | Purpose | IPC |
+|---|---|---|
+| `Notifications` | Storage, popups, grouping, do not disturb | `notifications` |
+| `LiveActivities` | Notifications with progress, shown as activities | |
+| `Cliphist` (deferred) | Clipboard history | `cliphistService` |
+| `Shelf` (deferred) | Recent clips, screenshots and dropped files | |
+| `Events`, `CalendarSync` | Local events in JSON; ICS feeds through `curl` | |
+| `Weather` | Open-Meteo, from GPS, coordinates or a city | |
+| `WorldClock` | Timezones for the world clock widgets | |
+| `Todo`, `Notepad` | Todo list with JSON and markdown sync; plain notes | |
+| `KeyringStorage` (deferred) | API keys in GNOME Keyring, through `secret-tool` | |
+| `DateTime`, `SystemInfo` | Date and uptime; distro and desktop detection | |
+
+## Session and system
+
+| Service | Purpose | IPC |
+|---|---|---|
+| `Autostart` | The managed section of `config.d/50-startup.kdl` | `autostart` |
+| `TrayService` | System tray, with workarounds for Vesktop and Steam | |
+| `ConflictKiller` | Stops conflicting tray and notification daemons at startup | |
+| `Hyprsunset` | Night light through wlsunset (Niri) or hyprsunset | |
+| `EasyEffects` (deferred) | Audio effects toggle, native or Flatpak | |
+| `PolkitService` | PolicyKit agent | |
+| `SessionWarnings` (deferred) | Warns about running package managers before logout | |
+| `FirstRunExperience` | First-run check; applies a bundled wallpaper, runs `inir welcome` | |
+| `MascotMood` | Mood for the mascot | `mascotMood` |
+
+## Applications and content
+
+| Service | Purpose | IPC |
+|---|---|---|
+| `AppLauncher`, `AppSearch` | Default apps; desktop entry search | |
+| `AppCatalog` | Curated catalogue with multi-distro installs | `appCatalog` |
+| `Hub` | Community hub, installs through `scripts/inir-hub.py` | `hub` |
+| `LauncherSearch` (deferred) | Overview search with prefix routing | |
+| `GlobalActions` | Registry of keyboard-driven actions | `globalActions` |
+| `PackageSearch` (deferred) | Package search: pacman with AUR, or XBPS | `packageSearch` |
+| `Ai` | Gemini, OpenAI, Mistral, OpenRouter, Ollama; tools and streaming | `ai` |
+| `VoiceSearch` | Recording and Gemini transcription | `voiceSearch` |
+| `AnimeService`, `NewsService` (deferred) | AniList; Google News RSS | |
+| `Booru`, `Wallhaven` | Image board and wallpaper search | |
+| `Emojis`, `LatexRenderer`, `Ydotool` (deferred) | Emoji data; LaTeX through MicroTeX; virtual input | |
 
 ## Utilities
 
-| Service | What it does |
-|---------|-------------|
-| **TimerService** | Pomodoro timer with persistent state. Countdown, pomodoro and stopwatch. IPC target: `timer`. |
-| **Updates** | System update checker (`checkupdates` on Arch, `xbps-install -nu` on Void). |
-| **ShellUpdates** | iNiR update checker. Git-based, tracks commits behind remote. IPC target: `shellUpdate`. |
-| **Ydotool** | Virtual keyboard input for on-screen keyboard. |
-| **LatexRenderer** | LaTeX math rendering via MicroTeX. |
-| **Translation** | i18n string lookup. Auto language detection across 18 locale catalogs. |
-| **DevNavigation** | Deterministic development navigation for loading lazy surfaces and internal settings views. IPC target: `dev`. |
-| **DesktopWidgetStacks** | Desktop widgets stacked into one spot that rotate or page (create, add, remove, dissolve, page, move, rotate, interval, status). IPC target: `widgetStacks`. |
-| **CustomWidgets** | User-installed custom widget management (scan/create/list/remove from the widgets dir). IPC target: `customWidgets`. |
-| **LivePins** | Live snips: a piece of one window kept on screen at display rate, remembered by app and crop (qs-rs on niri only). IPC target: `livePins`. |
-| **MemoryPressureService** | Monitors JSGCHeap accumulation (Qt V4 memfd leak); notifies and offers a shell restart. IPC target: `memory`. |
-| **WidgetPowerManager** | Pauses desktop-widget rendering on game mode / fullscreen / present windows / edit mode. IPC target: `widgetpower`. |
+| Service | Purpose | IPC |
+|---|---|---|
+| `TimerService` | Countdown, Pomodoro and stopwatch | `timer` |
+| `Updates` | Package updates: `checkupdates` on Arch, `xbps-install -nu` on Void | |
+| `ShellUpdates` | iNiR updates from git: commits behind the remote | `shellUpdate` |
+| `Translation` | Strings from the 18 catalogues in `translations/` | |
+| `DevNavigation` | Development navigation: loads lazy surfaces and Settings pages by name | `dev` |
 
-## For contributors
+## Contributor rules
 
-Services are stability boundaries. Changes to a service API affect every module that consumes it.
-
-Before modifying a service:
-
-1. Check consumer count: `grep -r "ServiceName\." modules/ services/`
-2. Prefer add-only changes to public APIs
-3. Register new services in `services/qmldir`
-4. Add IPC targets to [IPC Reference](IPC.md) if applicable
+- Add-only changes to public APIs. A rename breaks every consumer.
+- New services go in `services/qmldir`, or in `services/deferred/qmldir` if they can wait.
+- Eager services run at startup, so keep their timers, polling and file I/O cheap.

@@ -1,104 +1,31 @@
 # Theming Architecture
 
-This document describes the current iNiR theming pipeline at a high level.
+Theming runs in two stages. `switchwall.sh` writes palette files to `~/.local/state/quickshell/user/generated/`, then `applycolor.sh` hands them to each app.
 
-For component styling, see the [Editorial style guide](EDITORIAL_STYLE.md).
+## Palette generation
 
-## Pipeline overview
+- Inputs: a wallpaper (`switchwall.sh --image`), a seed colour (`--color`), light or dark (`--mode`), a scheme (`--scheme`), and iRiS's surface (`iris-surface.json`) when iRiS is the family and its apps follow Material. Presets in `modules/common/ThemePresets.qml` write `colors.json` and `palette.json` directly.
+- `scripts/colors/generate_colors_material.py` is the only palette generator. It renders the templates in `~/.config/matugen` (installed from `defaults/matugen/`) with `{{colors.<token>.<mode>.<prop>}}` placeholders. matugen is gone, but the paths keep its name.
 
-The theming system has two big stages:
+| File | Use |
+|---|---|
+| `colors.json` | Shell and UI palette, read by `MaterialThemeLoader.qml` |
+| `palette.json` | Shell palette, read by most target modules |
+| `app-palette.json` | Palette for the app targets |
+| `terminal.json` | Terminal palette |
+| `material_colors.scss` | Compatibility values for the terminal, editor and Zed targets |
+| `theme-meta.json` | `source`, `mode` and `scheme` |
 
-1. **Palette generation**
-2. **Target application**
+`palette.json` and `terminal.json` override matching values from `material_colors.scss`.
 
-## 1. Palette generation
+## Target application
 
-Inputs can come from:
+- `applycolor.sh` runs every enabled target module. `MaterialThemeLoader.qml`, the installer and the Settings button for open terminals call it.
+- `apply-targets.sh` runs the targets you name (`inir theme apply`).
+- Manifests are in `scripts/colors/targets/`, modules in `scripts/colors/modules/`. See [Theming Targets](THEMING_TARGETS.md) and [Theming Modules](THEMING_MODULES.md).
 
-- wallpaper image
-- explicit seed color
-- manual preset theme
-- dark/light mode choice
-- palette type / scheme variant
+## Runtime
 
-Main generators today:
-
-- `scripts/colors/switchwall.sh`
-- `scripts/colors/generate_colors_material.py`
-- `modules/common/ThemePresets.qml`
-
-Main generated artifacts today:
-
-- `~/.local/state/quickshell/user/generated/colors.json`
-- `~/.local/state/quickshell/user/generated/material_colors.scss`
-- `~/.local/state/quickshell/user/generated/palette.json`
-- `~/.local/state/quickshell/user/generated/terminal.json`
-- `~/.local/state/quickshell/user/generated/theme-meta.json`
-
-## 2. Target application
-
-Target application consumes the generated artifacts and writes app-specific outputs.
-
-Current orchestrators:
-
-- `scripts/colors/applycolor.sh`
-- `scripts/colors/apply-targets.sh`
-
-Target metadata lives in:
-
-- `scripts/colors/targets/*.json`
-
-Target implementations live in:
-
-- `scripts/colors/modules/*.sh`
-
-## Runtime authority
-
-Important practical rule:
-
-- `colors.json` is the runtime shell/UI palette authority
-- `material_colors.scss` is still a compatibility input for terminal/editor targets
-- `palette.json` is the explicit shell palette contract for future target consumers
-- `terminal.json` is the explicit terminal palette contract for future target consumers
-- `theme-meta.json` carries generation metadata such as source, mode, scheme, and generator
-- `generate_colors_material.py` is the single authoritative palette generator: it handles
-  both Material You color extraction AND template rendering (GTK, KDE, etc.)
-
-Current state:
-
-- `matugen` has been removed as a dependency. All color generation and template rendering
-  is handled by Python (`materialyoucolor` library + built-in template engine)
-- templates use `{{colors.token.mode.hex}}` syntax (compatible with former matugen templates)
-- template manifest: `defaults/matugen/templates.json` (declares input/output paths)
-- first shell/UI consumers now prefer `palette.json` and fall back to `colors.json`
-- terminal/editor generators and terminal escape-sequence application now prefer `terminal.json` + `palette.json` and keep `material_colors.scss` as compatibility fallback
-- browser mode detection now prefers `theme-meta.json` instead of scraping SCSS state
-- new scaffolded targets now default to `palette.json` as their declared input
-- the existing Go VSCode generator now also consumes `terminal.json` explicitly instead of relying only on SCSS for ANSI data
-- the editors target now has a small shared Go theming core used by both VSCode and OpenCode generators
-- the migration remains compatibility-first, not big-bang
-
-## Current target model
-
-Each target manifest declares:
-
-- `id`
-- `label`
-- `module`
-- `category`
-- `inputs`
-- `description`
-- optional `configKey`
-
-This is the first compatibility slice of the modular system.
-
-## Near-term direction
-
-The intended next improvements are:
-
-- stronger `doctor` checks per target
-- target scaffolding for new integrations
-- migrate target consumers from compatibility files toward the explicit generated contracts
-- cleaner separation between `generate`, `apply`, and `reload`
-
-A compiled-language migration (Go themegen) is in place for some editor targets: the Go sources live in `scripts/colors/{opencode,vscode,zed}_themegen/` (built on demand, with Python `theme_generator.py` fallbacks if Go is unavailable). System24 theming is handled by `scripts/colors/system24_palette.sh`, not a Go binary.
+- `services/ThemeService.qml` picks the theme. Auto themes run `switchwall.sh`. A manual change also runs `system24_palette.sh` for Vesktop when `enableVesktop` is on.
+- `services/MaterialThemeLoader.qml` reads `colors.json` and `app-palette.json`, and debounces the `applycolor.sh` run.
+- `services/Lume.qml` keeps text readable over the wallpaper. It reads `WallpaperLuma`, not these files.

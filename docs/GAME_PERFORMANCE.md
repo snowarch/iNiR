@@ -1,137 +1,39 @@
-# Game Performance Overlay
+# Game performance panel
 
-The `gamePerformance` widget is available in the `Super+G` overlay. Open the
-overlay and select the Game performance button in its taskbar to add it. It
-shows the focused game's identity, system CPU/GPU/RAM telemetry, and
-FPS/frametime history when MangoHud logging is active.
+The Game performance panel shows the game you are playing: its FPS and frametime, plus your CPU, GPU and RAM use. It lives in the Super+G overlay.
 
-## Enable FPS and frametime
+## Show the panel
 
-FPS is produced by the game renderer, not by Niri or the shell. Install MangoHud
-and launch the game through it:
+1. Press **Super+G** to open the overlay.
+2. Press **Game performance** in the overlay's taskbar.
 
-```bash
-sudo pacman -S mangohud
-```
+## Get FPS and frametime
 
-For 32-bit games, install `lib32-mangohud` too when the multilib repository is
-enabled:
+FPS comes from MangoHud, not from iNiR, so install MangoHud with your package manager and start the game through it. On Arch that is `sudo pacman -S mangohud`, plus `lib32-mangohud` for 32-bit games.
 
-```bash
-sudo pacman -S lib32-mangohud
-```
+- For a Steam game, add `mangohud %command%` to its launch options.
+- For a Proton game, add `MANGOHUD=1 %command%` instead.
 
-For native Steam games, add this to the game's launch options:
+Keep any options the game already has after `%command%`, then restart the game. Installing MangoHud alone does not change a Steam game.
 
-```text
-mangohud %command%
-```
+Until MangoHud writes a log, the panel says what is missing: MangoHud is not installed, MangoHud logging is not active, or it asks you to launch the game with MangoHud logging. It shows `--` for values the game does not report, rather than a guess.
 
-For Proton games such as DiRT Rally 2.0, use the MangoHud Vulkan layer instead:
+iNiR has no control for MangoHud's log. Set `autostart_log=1` and `output_folder=~/.local/state/quickshell/user/mangohud` in `~/.config/MangoHud/MangoHud.conf`.
 
-```text
-MANGOHUD=1 %command%
-```
+## Change the view
 
-Keep any existing game arguments after `%command%`, then fully stop and relaunch
-the game. Installing MangoHud alone does not inject it into a Steam game.
+Press the view button in the panel's titlebar to cycle through four views. The one you pick is kept.
 
-Then enable a transparent, automatically-started log in
-`~/.config/MangoHud/MangoHud.conf`:
+- **Minimal** is the starting view: four lines with GPU, CPU, average thread load and FPS.
+- **Simple** adds FPS and frametime graphs with a summary.
+- **Compact** shows only numbers, with no graphs: FPS, frametime, CPU, GPU, VRAM, and the average, minimum and maximum FPS.
+- **Detailed** adds frame pacing, CPU core bars and clocks, GPU clocks, power, voltage, RAM, swap, resolution, graphics API, Wine or Proton version and driver.
 
-```text
-no_display=0
-fps=1
-frametime=1
-frame_timing=1
-frame_timing_detailed=1
-cpu_stats=1
-cpu_temp=1
-cpu_mhz=1
-core_load=1
-core_bars=1
-gpu_stats=1
-gpu_temp=1
-gpu_core_clock=1
-gpu_mem_clock=1
-vram=1
-gpu_power=1
-gpu_voltage=1
-ram=1
-swap=1
-procmem=1
-engine_version=1
-engine_short_names=1
-gpu_name=1
-vulkan_driver=1
-wine=1
-exec_name=1
-arch=1
-display_server=1
-resolution=1
-fex_stats=1
-log_versioning=1
-alpha=0
-background_alpha=0
-output_folder=~/.local/state/quickshell/user/mangohud
-autostart_log=1
-log_interval=500
-```
+## Change the background
 
-Create the output directory first if it does not exist:
+The panel follows the overlay's background opacity unless you set its own.
 
-```bash
-mkdir -p ~/.local/state/quickshell/user/mangohud
-```
+- Material: **Settings › Panels › Floating tools (Super+G) › Background & dim**, then **Game Performance background opacity (%)**. Zero is fully transparent.
+- Waffle: **Waffle Settings › Interface › Floating tools (Super+G)**, then the same opacity control.
 
-Do not set `no_display=1` with `autostart_log`: MangoHud skips the frame path
-that starts automatic logging when the HUD is disabled. The transparent config
-above keeps that path active without drawing a second HUD. The overlay reads the
-live CSV sample while the game is running and stops accepting it when the sample
-becomes stale. If MangoHud is not installed or logging is not active, the widget
-displays a clear status instead of inventing an FPS value.
-
-The widget reacts to compositor window events instead of polling focus. While
-it is open, one monitor process follows the selected window's PID and samples
-the active MangoHud log every 500 ms; log and process discovery are cached until
-the target changes or its log becomes stale. A fresh MangoHud log can identify
-games whose window title or app ID does not match the fallback game patterns.
-
-The widget starts in minimal view. It is a four-line readout for GPU, CPU,
-average thread load, and FPS, with colored labels and no graph or card chrome.
-Its surface follows the active theme palette, while the reference green, blue,
-purple, and red accents are blended 60/40 with the theme's semantic colors.
-Click its view button to cycle through the persistent minimal, simple, compact,
-and detailed views using the titlebar view button. Simple view restores the
-graph-and-summary presentation;
-compact view is intended to match the Steam performance overlay and shows only
-numeric FPS, frametime, CPU, GPU, VRAM, average, minimum, and maximum values
-without graphs. Detailed view adds FPS and frametime graphs, frame-pacing
-statistics, CPU core bars and frequency, GPU clocks, power, voltage, RAM, swap,
-disk usage, resolution, graphics API, Wine/Proton, FEX, driver, and MangoHud
-metadata.
-
-The Game Performance surface inherits `overlay.backgroundOpacity` by default.
-Set `overlay.gamePerformance.backgroundOpacity` in the settings UI to override
-it for this widget only. Values range from `0` (transparent) to `1` (opaque);
-the setting is available under Settings -> Panels -> Floating tools -> Background
-& dim in both panel families. The `Transparent Game Performance background`
-toggle is a shortcut for a fully transparent panel and takes precedence over
-the numeric opacity value.
-
-MangoHud's CSV format varies by driver and version. The overlay displays `--`
-when a requested field is not exported. API, Wine/Proton, FEX, and resolution
-are supplemented from the target process and compositor; frame-pacing values
-are calculated from the collected frametime samples. On NVIDIA systems where
-`voltage.gpu` is unavailable, voltage remains `--` rather than using a guessed
-value.
-
-## Other distributions
-
-- Debian/Ubuntu: `sudo apt install mangohud`
-- Fedora: `sudo dnf install mangohud`
-- Flatpak Steam: install `org.freedesktop.Platform.VulkanLayer.MangoHud` and
-  enable it with `flatpak override --user --env=MANGOHUD=1 com.valvesoftware.Steam`
-
-See the [MangoHud documentation](https://github.com/flightlessmango/MangoHud)
-for renderer-specific setup and configuration options.
+**Transparent Game Performance background** makes the panel fully transparent. It wins over the opacity value.

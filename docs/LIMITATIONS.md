@@ -1,225 +1,72 @@
-# Known Limitations
+# Known limitations
 
-Things that don't work, work weirdly, or will bite you when you least expect it. Read this before filing a bug report - I promise half your questions are answered here.
+These are the things that do not work, work differently, or will catch you out. Read this before you report a bug. Half your questions are answered here.
 
----
+## Compositor
 
-## Compositor Support
+iNiR is built for Niri. Hyprland is not supported, so anything that only worked on Hyprland does not work here.
 
-ii is built for **Niri**. Some features were inherited from the original Hyprland version and don't work on Niri.
+## Hardware
 
-### Niri-Only (Works)
+**Brightness.** Laptop screens work through the backlight. External monitors need `ddcutil` and DDC/CI switched on in the monitor's own menu. DDC/CI is slow, so brightness changes on external monitors can lag.
 
-| Feature | Status |
-|---------|--------|
-| Bar, sidebars, overview | ✅ Full support |
-| Alt+Tab window switcher | ✅ Full support |
-| Clipboard history | ✅ Full support |
-| Region tools (screenshot, OCR, recording) | ✅ Full support |
-| Lock screen | ✅ Full support |
-| Wallpaper + theming | ✅ Full support |
-| Notifications | ✅ Full support |
-| Settings GUI | ✅ Full support |
+**Audio.** iNiR needs PipeWire. PulseAudio-only setups do not work. Volume protection can be too strict after suspend. Turn it off in Settings › System › Audio.
 
-### Hyprland-Only (Won't Work on Niri)
+**Weather and location.** Weather comes from Open-Meteo and needs no key. It refreshes every 10 minutes by default. Change that in Settings › Services › Weather. GPS is off by default. When you turn on "Use GPS location", it needs geoclue.
 
-| Feature | Why |
-|---------|-----|
-| Screen zoom | Uses `hyprctl keyword cursor:zoom_factor`. |
-| GlobalShortcut bindings | Hyprland's global shortcut system. On Niri, use `config.kdl` keybinds instead. |
-| CompositorFocusGrab | Click-outside-to-close for sidebars uses Hyprland's focus grab. On Niri, click the backdrop or press Escape. |
-| Lock screen blur hack | The "push windows off-screen for blur" trick is Hyprland-specific. |
+## AI
 
-### Works on Both
-
-| Feature | Hyprland | Niri |
-|---------|----------|------|
-| Night light | `hyprsunset` | `wlsunset` (auto-detected) |
-| Anti-flashbang brightness | ✅ | ✅ |
-
----
-
-## Hardware & Drivers
-
-### Brightness Control
-
-- **Laptops**: Works via `brightnessctl` (backlight class).
-- **External monitors**: Requires `ddcutil` and a monitor that supports DDC/CI. Many monitors don't, or have it disabled by default.
-- **DDC is slow**: External monitor brightness changes have a 300ms debounce because DDC/CI is glacially slow.
-
-### Audio
-
-- **PipeWire required**: ii uses PipeWire APIs directly. PulseAudio-only setups won't work.
-- **Volume protection**: The "prevent sudden volume spikes" feature can be overzealous after suspend/resume. Disable it in settings if it's annoying.
-
-### GPS/Weather
-
-- **GPS requires geoclue**: If `geoclue` isn't running or configured, GPS-based weather location silently falls back to IP geolocation.
-- **Weather API**: Uses Open-Meteo (free, no key required). Fetch interval is configurable (default 10 min).
-
----
-
-## AI Chat
-
-### API Keys
-
-- **Stored in gnome-keyring**: API keys are stored via `secret-tool`. If gnome-keyring isn't running or unlocked, keys won't persist.
-- **No key = no chat**: Online models (Gemini, Mistral, OpenRouter) require API keys. The sidebar will tell you how to get one.
-
-### Model Limitations
-
-- **Function calling**: Only works reliably with Gemini API format. OpenAI/Mistral function calling is experimental.
-- **Ollama**: Local models are auto-detected but require Ollama to be running (`ollama serve`).
-- **Search tool**: Only Gemini models support the built-in Google Search tool. Other models get a "switch to search mode" function instead.
-
-### Policy Restrictions
-
-- `policies.ai = 2` in config disables all online AI models. Only local Ollama models will appear.
-
----
+- Online models (Gemini, Mistral, OpenRouter) need an API key. Keys are stored in your keyring through `secret-tool`, so the keyring has to be running and unlocked.
+- Ollama models appear only while Ollama is running on this machine.
+- Only Gemini models have Google Search built in. Other models get a "switch to search mode" function instead.
+- To block online models, set Settings › System › Safety › Policies › AI Policy to Local only.
 
 ## Clipboard
 
-- **Requires cliphist**: The clipboard panel is just a frontend for `cliphist`. No cliphist = no history.
-- **Image previews**: Binary clipboard entries (images) show metadata only, not actual previews.
-- **Max 400 entries**: Hardcoded limit to prevent the fuzzy search from choking on huge histories.
+Clipboard history needs `cliphist`. It keeps the latest 400 entries. Image entries show thumbnails.
 
----
+## Screenshots and recording
 
-## Screenshots & Recording
-
-### OCR
-
-- **Requires Tesseract**: OCR needs `tesseract` plus at least one language model.
-- **Language-aware**: the installer provides English, Spanish, Russian, Japanese, Simplified Chinese, and Traditional Chinese models, including vertical Japanese/Chinese variants. Tools > Snipping selects one model (or a deliberate combination) instead of running every installed model at once, which keeps recognition accuracy predictable.
-- **Auto mode follows the session locale** and falls back to an installed model if that locale's model is unavailable.
-
-### Screen Recording
-
-- **Requires wf-recorder**: Region recording uses `wf-recorder`. Not installed = recording fails silently.
-- **No system audio by default**: "Record with sound" captures mic input, not system audio. For system audio, you need PipeWire loopback setup.
-
-### Image Search
-
-- **Google Lens**: Reverse image search uploads to Google Lens. Privacy-conscious users: don't use this feature.
-
----
+- OCR needs Tesseract. The installer adds English, Spanish, Russian, Japanese, Chinese (Simplified and Traditional) and their vertical variants. Pick the language in Settings › Tools › Snipping. Auto follows your system language.
+- Recording needs `wf-recorder`. Record with sound uses the audio set in Settings › Tools › Recording. It defaults to system audio, not your microphone.
+- Google Lens search (Super+Shift+A) sends the picture to Google. Do not use it if that matters to you.
 
 ## Theming
 
-### Color Generation
+- Colours from a wallpaper need the Python packages that setup installs. `inir doctor` repairs them if they go missing.
+- Theme presets, such as Catppuccin, replace the colours from your wallpaper.
+- Firefox and its forks (LibreWolf, Floorp, Waterfox, Zen) read the new colours when they start.
+- Chromium browsers (Chrome, Chromium, ungoogled-chromium, Brave, Helium, Thorium) repaint a few seconds after a wallpaper change. The first time, iNiR asks for your password once, to set up their policy folders.
+- Vivaldi, Edge and Opera are not themed.
+- Terminal colours are set in Settings › Themes › Advanced › Terminal Colors. That covers alacritty, btop, foot, ghostty, kitty, konsole, lazygit, starship, wezterm and yazi. Other terminals need their colours set by hand.
 
-- **Python venv required for wallpaper theming**: The `materialyoucolor` library must be installed in the project venv.
-- **First run is slow**: Initial theme generation can take a few seconds on slower machines.
+## Overview and windows
 
-### Theme Presets
+- The overview shows live window previews while it is open. Game mode turns them off.
+- The wallpaper behind the overview needs Niri's layer rules for `quickshell:iiBackdrop` and `quickshell:wBackdrop`. They ship in the default Niri config. If the wallpaper does not show there, those rules are missing from your config.
 
-- Theme presets (Gruvbox, Catppuccin, etc.) override wallpaper-generated colors. You can't have both "wallpaper-based colors" and "Catppuccin" at the same time.
+## Lock screen
 
-### Browsers
+- The lock screen uses your system's PAM setup. Test it before you rely on it.
+- Fingerprint unlock is tried when `fprintd` is installed.
+- Unlocking the keyring at login is optional.
 
-- **Firefox and its forks** (LibreWolf, Floorp, Waterfox, Zen) take new colors when they start, not while they're open. They wear them with the default "System theme"; another theme you picked in Firefox keeps its own look.
-- **Chromium browsers** (Chrome, Chromium, ungoogled-chromium, Brave, Helium, Thorium) repaint a few seconds after the wallpaper changes. They build their own palette from one color, so their accent won't match the shell's exactly. The first time, iNiR asks for your password once to make their policy folders under `/etc` writable; if you dismiss it, a notification gives you the commands to run instead. Flatpak Chromium needs no password. Flatpak Chrome and Brave pick up a new color when they start.
-- **Vivaldi, Edge and Opera** aren't themed. Vivaldi draws its window with its own theme system, Edge has no policy for colors, and Opera doesn't read policies.
+## Language
 
-### Terminal Theming
-
-- **Supported tools**: Auto-theming covers foot, kitty, alacritty, starship, fuzzel, btop, lazygit, and yazi. Each can be toggled individually in Settings → Terminal Colors.
-- **Other terminals**: Not supported. You'll need to manually set colors or use pywal/similar.
-
-### Void Linux
-
-- **Validated profile**: the supported Void target is glibc + runit + elogind/Turnstile. Void musl and a seatd-only session are not release targets for this port.
-- **First install should be interactive**: `./setup install -y` intentionally avoids taking over networking or enabling SDDM. Run the interactive installer once if you want setup to offer the NetworkManager and graphical-login handoffs.
-- **Hardware drivers stay with the base OS**: iNiR installs its shell and userland providers, not GPU firmware, Mesa/Vulkan selection, proprietary drivers, bootloader configuration or hardware-specific kernel parameters.
-
----
-
-## Overview & Window Management
-
-### Window Previews
-
-- **No live previews**: Unlike some shells, ii doesn't capture live window thumbnails. You see app icons, not actual window content.
-- **Workspace snapshots disabled**: The code for workspace screenshots exists but is disabled (too slow/unreliable).
-
-### Window Matching
-
-- **App ID matching**: ii matches windows by `app_id`. Some apps (especially Electron apps) have weird or missing app IDs, causing icon mismatches.
-- **Quickshell windows**: All ii windows have `app_id: "org.quickshell"`. This is correct, not a bug.
-
-### Backdrop & Wallpaper
-
-- **Family backgrounds**: Material ii and Waffle have independent backdrop/wallpaper settings. iRiS intentionally uses the shared main wallpaper and does not maintain another animated-wallpaper configuration.
-- **Niri layer rules required**: The backdrop uses Niri's `place-within-backdrop` layer rule. If your wallpaper doesn't show in overview, check that your `config.kdl` has the layer rules for `quickshell:iiBackdrop` and `quickshell:wBackdrop`.
-- **Migration is automatic**: Switching between families auto-migrates your `enabledPanels` config. You shouldn't need to touch it manually.
-
----
-
-## Lock Screen
-
-### Security Notes
-
-- **PAM authentication**: Uses system PAM. If PAM is misconfigured, you might lock yourself out.
-- **Keyring unlock**: Optional feature to unlock gnome-keyring on login. Requires keyring to be set up with the same password as your user account.
-- **Fingerprint**: Fingerprint unlock is attempted automatically if `fprintd` is available.
-
-### Hyprlock Fallback
-
-- `lock.useHyprlock = true` in config makes the lock keybind launch Hyprlock instead of ii's lock screen. Only works on Hyprland.
-
----
-
-## Translations
-
-- **Incomplete translations**: Not all strings are translated. English is the fallback.
-- **Auto-detection**: Language is detected from system locale. Override with `language.ui` in config.
-- **Generated translations**: AI-generated translations live under the iNiR config directory (`~/.config/inir/translations/` on canonical/migrated installs). Quality varies.
-
----
+Language follows your system locale. Change it in Settings › System › Locale › UI Language.
 
 ## Performance
 
-### Low Power Mode
+Low power effects, in Settings › Effects, turns off visual effects such as blur and animations. Use it on slow hardware or on battery.
 
-- `performance.lowPower = true` disables blur effects and some animations. Use this on potato hardware or when on battery.
+## Display server
 
-### Memory Usage
+iNiR runs on Wayland only. There is no X11 mode.
 
-- ii loads modules lazily, but a fully-loaded shell with all features enabled uses ~200-400MB RAM. Disable panels you don't use in Settings → General → Enabled Panels.
+## Reporting a bug
 
-### Startup Time
+1. Run `inir logs --issues`. It lists every warning and error since the shell started, grouped.
+2. Check this page.
+3. Note your versions: `niri --version` and `qs --version`.
 
-- First launch after reboot is slower due to config parsing and theme loading. Subsequent launches are faster.
-
----
-
-## Miscellaneous
-
-### Multi-Monitor
-
-- ii spawns UI elements per-screen. Most features work, but some edge cases (like dragging windows between monitors in overview) aren't implemented.
-
-### Touchscreen/Tablet
-
-- Basic touch support exists but isn't well-tested. On-screen keyboard works but is basic.
-
-### Wayland-Only
-
-- ii is Wayland-only. No X11 support, no XWayland workarounds for the shell itself. (Your apps can still use XWayland via `xwayland-satellite`.)
-
-### Config Hot-Reload
-
-- Most config changes apply immediately. Some (like enabling/disabling modules) require restarting iNiR with `inir restart`.
-
----
-
-## Reporting Issues
-
-Before opening an issue and making me read your bug report:
-
-1. Check `inir logs` for errors - the answer is usually right there
-2. Verify the feature isn't listed as a known limitation above - yes, you have to actually read this page
-3. Test with a fresh config: `mv ~/.config/inir/config.json ~/.config/inir/config.json.bak` (older unmigrated installs may still resolve the legacy directory)
-4. Include your Niri version (`niri --version`) and Quickshell version (`qs --version`)
-
-If it's still broken after all that, congratulations - you found a real bug. Gold star for you.
+If it is still broken after that, report it. If you would rather ask someone first, the Discord is faster.

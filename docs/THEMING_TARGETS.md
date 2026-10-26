@@ -1,284 +1,45 @@
 # Theming Targets
 
-This document explains the first modular layer of the iNiR theming system.
+A target is one app integration. It has a manifest in `scripts/colors/targets/<id>.json` and a module in `scripts/colors/modules/`. The `inir theme` command lists, checks, applies and scaffolds them.
 
-## Goal
+## Declared targets
 
-Users and contributors should be able to understand:
+The gate is the `configKey` under `appearance.wallpaperTheming`. `applycolor.sh` skips a target while its gate is `false`. `module` means the module checks its own key.
 
-- which theming targets exist
-- which generated inputs they consume
-- how to apply a specific target
-- how to add a new app integration without understanding the whole pipeline
+| Target | Module | Gate | Reads |
+|---|---|---|---|
+| `gtk-kde` (GTK, KDE, Qt) | `20-gtk-kde.sh` | `enableAppsAndShell` | `app-palette.json`, `palette.json` |
+| `terminals` | `10-terminals.sh` | `enableTerminal` | `app-palette.json`, `palette.json`, `terminal.json`, `material_colors.scss` |
+| `editors` (VSCode, OpenCode, Neovim) | `30-editors.sh` | module | `app-palette.json`, `palette.json`, `terminal.json`, `material_colors.scss` |
+| `zed` | `31-zed.sh` | `enableZed` | `app-palette.json`, `palette.json`, `terminal.json`, `material_colors.scss` |
+| `chrome` (Chromium family) | `40-chrome.sh` | module | `app-palette.json`, `palette.json`, `theme-meta.json` |
+| `firefox` (Firefox family) | `45-firefox.sh` | module | `app-palette.json` |
+| `spicetify` | `50-spicetify.sh` | `enableSpicetify` | `app-palette.json`, `palette.json` |
+| `sddm` | `60-sddm.sh` | `enableAppsAndShell` | `app-palette.json`, `palette.json` |
+| `steam` | `70-steam.sh` | `enableSteam` | `app-palette.json`, `palette.json`, `colors.json` |
+| `pear-desktop` | `80-pear-desktop.sh` | `enablePearDesktop` | `app-palette.json`, `palette.json`, `colors.json` |
+| `limusic` | `85-limusic.sh` | module | `app-palette.json`, `palette.json`, `colors.json` |
+| `cava` | `90-cava.sh` | `enableCava` | `palette.json` |
+| `claude-code` | `95-claude-code.sh` | `enableClaudeCode` | `terminal.json`, `palette.json`, `theme-meta.json` |
 
-## Current model
+The toggles are in Material Settings › Advanced › Color. iRiS Settings has its own App colours group. Vesktop has no target: `ThemeService` runs `system24_palette.sh` for it.
 
-The theming pipeline has two phases:
-
-1. **Palette generation**
-   - `switchwall.sh`
-   - `generate_colors_material.py`
-   - `ThemePresets.qml`
-
-2. **Target application**
-   - `scripts/colors/applycolor.sh`
-   - target modules under `scripts/colors/modules/`
-
-The new modular layer adds **target manifests** under:
-
-- `scripts/colors/targets/*.json`
-
-Each manifest declares:
-
-- stable target id
-- backing module script
-- category
-- expected inputs
-- high-level description
-
-## Listing targets
+## Commands
 
 ```bash
-inir theme list-targets
+inir theme list-targets          # id, label, category, module, inputs
+inir theme inspect terminals     # manifest, module path, inputs that exist
+inir theme doctor [id]           # errors on a missing module; warns on missing inputs, a non-executable module or a gate that is off
+inir theme apply <id...|all>     # runs the modules now, ignoring the configKey gate
+inir theme scaffold <id>         # writes a manifest and a stub module, never overwrites
 ```
 
-Output columns:
+`scaffold` takes `--label`, `--category` (default `custom`), `--inputs` (default `app-palette.json palette.json`), `--config-key` (default `appearance.wallpaperTheming.enableAppsAndShell`), `--index` (the module number, default `70`), `--module` and `--description`.
 
-- `id`
-- `label`
-- `category`
-- `module`
-- `inputs`
+## Adding a target
 
-## Inspecting a target
+1. Run `inir theme scaffold myapp --label "My App" --inputs palette.json`.
+2. Fill in `scripts/colors/modules/70-myapp.sh`. Read the palette from `~/.local/state/quickshell/user/generated/` and write the app's files.
+3. Run `inir theme doctor myapp`, then `inir theme apply myapp`.
 
-```bash
-inir theme inspect terminals
-```
-
-This prints:
-
-- manifest metadata
-- backing module path
-- whether the module exists
-- whether it is executable
-- resolved generated input paths
-
-## Validating targets
-
-Validate all declared targets:
-
-```bash
-inir theme doctor
-```
-
-Validate one target:
-
-```bash
-inir theme doctor editors
-```
-
-The doctor currently checks:
-
-- manifest parseability
-- backing module existence
-- module executability
-- declared generated inputs
-- current config gate value when the target declares a `configKey`
-
-## Applying targets selectively
-
-Apply one target:
-
-```bash
-inir theme apply terminals
-```
-
-Apply several:
-
-```bash
-inir theme apply gtk-kde editors chrome
-```
-
-Apply all declared targets:
-
-```bash
-inir theme apply all
-```
-
-## Scaffolding a new target
-
-Create a new target skeleton:
-
-```bash
-inir theme scaffold myapp
-```
-
-Example with custom metadata:
-
-```bash
-inir theme scaffold myapp \
-  --label "My App" \
-  --category custom \
-  --inputs palette.json terminal.json \
-  --config-key appearance.wallpaperTheming.enableAppsAndShell
-```
-
-If you do not pass `--inputs`, the scaffold now defaults to:
-
-```text
-palette.json
-```
-
-Use `terminal.json` or `material_colors.scss` only when the target really needs terminal/ANSI data.
-
-This creates:
-
-- `scripts/colors/targets/myapp.json`
-- `scripts/colors/modules/70-myapp.sh`
-
-The scaffold refuses to overwrite existing files.
-
-## Declared targets today
-
-- `gtk-kde`
-- `terminals`
-- `editors`
-- `chrome`
-- `spicetify`
-- `sddm`
-- `steam` (Material You colors via Millennium Material-Theme)
-- `cava`
-- `pear-desktop` (YouTube Music's own colour tokens; live over DevTools, port in `~/.config/pear-flags.conf`)
-- `limusic` (writes `~/.config/limusic/matugen.css`, which LiMusic re-reads live when it has Matugen theme support)
-- `claude-code` (writes iNiR, iNiR Soft, iNiR Monokai and iNiR Monokai Soft to Claude Code's `themes/` folder; the first two use the terminal palette's own slots, so code and diffs follow the wallpaper)
-- `zed`
-
-Current declared input model:
-
-- palette-first targets: `gtk-kde`, `chrome`, `spicetify`, `sddm`, `steam`
-- terminal-first targets: `terminals`
-- mixed targets: `editors`
-
-## Inputs
-
-Current generated inputs are still:
-
-- `~/.local/state/quickshell/user/generated/colors.json`
-- `~/.local/state/quickshell/user/generated/material_colors.scss`
-- `~/.local/state/quickshell/user/generated/palette.json`
-- `~/.local/state/quickshell/user/generated/terminal.json`
-- `~/.local/state/quickshell/user/generated/theme-meta.json`
-- `~/.local/state/quickshell/user/generated/app-palette.json` (generated by `switchwall.sh`; consumed by most per-app targets: chrome, editors, gtk-kde, pear-desktop, limusic, sddm, spicetify, steam, terminals, zed)
-
-Today:
-
-- `colors.json` and `material_colors.scss` remain compatibility inputs used by current targets
-- `palette.json`, `terminal.json`, and `theme-meta.json` are the new explicit contracts for future target work
-
-This lets the target layer evolve without forcing a big-bang rewrite of existing integrations.
-
-## Adding a new app target
-
-### 1. Create the module
-
-Add a script under:
-
-- `scripts/colors/modules/<nn>-<name>.sh`
-
-The module should:
-
-- read the generated inputs it needs
-- respect config toggles when appropriate
-- generate/apply the app-specific output
-- exit cleanly when the app is not installed or the integration is disabled
-
-### 2. Create the manifest
-
-Add:
-
-- `scripts/colors/targets/<id>.json`
-
-You can also generate both files automatically with:
-
-```bash
-inir theme scaffold <id>
-```
-
-Example:
-
-```json
-{
-  "id": "myapp",
-  "label": "My App",
-  "module": "70-myapp.sh",
-  "category": "custom",
-  "inputs": ["palette.json"],
-  "description": "Apply generated iNiR palette to My App.",
-  "configKey": "appearance.wallpaperTheming.enableAppsAndShell"
-}
-```
-
-### 3. Verify it
-
-List targets:
-
-```bash
-inir theme list-targets
-```
-
-Apply only your target:
-
-```bash
-inir theme apply myapp
-```
-
-Inspect the generated target:
-
-```bash
-inir theme inspect myapp
-```
-
-Doctor-check it:
-
-```bash
-inir theme doctor myapp
-```
-
-## Design intent
-
-This is the first compatibility slice, not the final architecture.
-
-It deliberately does **not** replace the current pipeline yet.
-Instead it gives iNiR:
-
-- explicit target discovery
-- selective apply
-- a clearer mental model for contributors
-- a migration path away from ad-hoc module discovery
-
-Future work can build on this to add:
-
-- stable palette schemas
-- generator/apply separation per target
-- `doctor`-style validation per target
-- scaffolding for new app integrations
-
-## Architecture summary
-
-Today the modular layer is:
-
-1. **Palette generation**
-   - produces generated inputs under `~/.local/state/quickshell/user/generated/`
-2. **Target manifests**
-   - declare what each integration is and which generated inputs it expects
-3. **Target modules**
-   - the real implementation scripts that generate or apply app-specific output
-4. **CLI layer**
-    - `inir theme list-targets`
-    - `inir theme inspect <id>`
-    - `inir theme doctor [id]`
-    - `inir theme scaffold <id>`
-    - `inir theme apply <ids...|all>`
-
-This means contributors can now reason about theming by target, instead of reverse-engineering the entire apply pipeline first.
+Declare only `palette.json` unless the app needs ANSI colours. Then add `terminal.json` or `material_colors.scss`.

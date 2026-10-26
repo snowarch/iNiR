@@ -1,52 +1,60 @@
-# Theming Presets
+# Colours and themes
 
-46 built-in color presets that bypass wallpaper-based color generation and apply predefined palettes.
+By default the shell and the apps you switch on take their colours from your wallpaper. You can also pick a colour theme, build your own, and choose which apps follow along.
 
-## How presets work
+## Colours from the wallpaper
 
-Normally, iNiR extracts colors from your wallpaper using Material You. Presets skip that step and inject a complete Material 3 color palette directly. The palette propagates to external apps (GTK, terminals, Firefox, etc.) the same way wallpaper colors do.
+- **Settings › Quick › Wallpaper & Colors** has **Light** and **Dark** buttons, and **Wallpaper color strength (%)**, which sets how vivid the accents are.
+- **Settings › Themes › Colors › Scheme Variant** sets how the palette is built: Auto (the default), Content, Expressive, Fidelity, Fruit Salad, Monochrome, Neutral, Rainbow or Tonal Spot.
+- **Colour family**: **Around the accent** keeps the second and third colours close to the accent. **As generated** uses the scheme's own colours.
+- **Auto light/dark from wallpaper** picks light or dark from each wallpaper's brightness. Pressing Light or Dark by hand turns it off.
+- **Colors only** (Quick page) takes the colours from a thumbnail and keeps the wallpaper. **Derive theme colors from backdrop** (Wallpaper › Effects › Backdrop) takes them from the backdrop instead.
 
-Apply presets from Settings > Appearance > Theme, or via IPC:
+## Colour themes
 
-```bash
-inir theme setPreset gruvbox-dark
-inir theme setPreset catppuccin-mocha
-inir theme auto                        # back to wallpaper-based
-```
+**Settings › Themes › Colors › Color Themes** lists the themes, starting with **Auto (Wallpaper)**. Search, filter by tag (Pastel, Retro, Neon and others), or use the favourites and recent themes at the top. The 48 presets include Catppuccin, Gruvbox, Nord, Dracula, Tokyo Night, Rosé Pine, Everforest, Solarized, Monokai and Kanagawa, plus iNiR's own Angel, Regalia and iRiS Ink.
 
-When a preset is active, changing wallpapers changes the background image but doesn't regenerate colors.
+Some themes also change the corner rounding or the font style.
 
-## Preset catalog
+- **Soften colors (less intense)** tones the palette down.
+- **Invert colors (complementary)** rotates every colour 180°. Only the shell changes. Terminals and other apps keep theirs.
 
-The full, current list of presets lives in `modules/common/ThemePresets.qml` and drifts as presets are added or renamed. Get the live list instead of trusting a copy here:
+## Custom themes
 
-```bash
-grep -oP '^\s*id:\s*"\K[^"]+' modules/common/ThemePresets.qml | grep -vE '^(auto|custom)$'
-```
+**Settings › Themes › Advanced › Custom Theme Editor** starts from a base preset. Adjust saturation, brightness and temperature, pick a colour harmony (Complementary, Analogous, Triadic or Split), then press **Apply**.
 
-At time of writing there are 46 theme presets (plus the special `auto` and `custom` entries), spanning Catppuccin (4 flavors), Gruvbox, Nord, Dracula, Tokyo Night, Kanagawa, Rose Pine, Everforest, Solarized, Monokai, Ayu, the iNiR signature styles (Angel / Angel Light), and many more. Preset IDs are kebab-case (e.g. `rose-pine`, `gruvbox-dark`, `tokyo-night`, `one-dark`). Use the ID, not a display name, when scripting.
+Name the theme and press Enter to save it. Saved themes appear under **Themes › Colors › Saved themes**. **Export** and **Import** copy a theme through the clipboard.
 
-## Preset features
+Light mode in the editor is experimental. For the best results, start from Angel Light, Catppuccin Latte or Sakura.
 
-Some presets include metadata that affects more than just colors (all defined per-preset in `modules/common/ThemePresets.qml`):
+## Light and dark
 
-- **Rounding scale** (`roundingScale`): multiplier for corner rounding. Varies widely (e.g. Matrix uses a tighter scale, Zen Garden a softer/larger one).
-- **Font style** (`fontStyle`): `mono`, `serif`, or `sans` override. Used by many presets (most terminal/retro themes are `mono`, Angel is `serif`, etc.).
-- **Border width** (`borderWidthScale`): a handful of presets tune border thickness (e.g. Matrix thicker, some lighter).
+The **Light** and **Dark** buttons switch the shell and the apps between the two. **Theme Scheduling** (Settings › Themes › Motion) switches between a day and a night theme at set times, 06:00 and 18:00 by default.
 
-Don't rely on the exact value for a given preset. Read the preset's `meta` block in `ThemePresets.qml`.
+## Terminals and apps
 
-## Variant system
+**Settings › Themes › Advanced › Terminal Colors** chooses which terminals and tools follow the theme: kitty, alacritty, foot, WezTerm, Ghostty, Konsole, Starship, btop, lazygit and yazi. It also sets colour saturation, brightness and harmony. **Apply to open terminals** repaints windows that are already open.
 
-Presets can be used as seeds for Material You scheme variants. Instead of using the preset colors directly, the engine generates a full Material 3 scheme from the preset's primary color:
+**Settings › Advanced › Color generation** switches each app on or off:
 
-- **Tonal Spot**: standard Material You mapping
-- **Expressive**: more vibrant secondary/tertiary colors
-- **Fidelity**: stays closer to the source color
-- **Content**: muted, content-focused palette
+- **Shell & utilities** (on): GTK apps, fuzzel, the login screen and other utilities. Qt apps and terminals need it.
+- **Qt apps** (on): Qt and KDE apps.
+- **Terminal** (on): terminal colour schemes.
+- **Vesktop/Discord** (on): needs Vesktop with the system24 theme.
+- **Spotify (Spicetify)** (on): pick the layout under **Spotify theme**.
+- **Steam (Millennium)** and **Pear Desktop (YouTube Music)** (on).
+- **VSCode editors** and **Zed editor** (on). **Neovim / LazyVim** (off).
+- **Chrome / Chromium** (on): Chromium browsers, Brave included. A system-wide install asks for your password once.
+- **Firefox** (on): Firefox, LibreWolf, Floorp, Waterfox and Zen. They follow the wallpaper from their next launch.
+- **Theme standalone Cava** (on): the audio visualiser.
+- **LiMusic**, **Claude Code** and **OpenCode** (off).
 
-## Custom presets
+Turning Chrome or Firefox off gives their colours back.
 
-There's no UI for creating custom presets yet, but you can add them by editing `modules/common/ThemePresets.qml`. Each preset is a JavaScript object with the full Material 3 color token set.
+## iRiS
 
-The easiest way to create a custom preset is to copy an existing one and modify the colors. The token names follow the Material 3 specification.
+**iRiS Settings › Style › Material** sets the colour style (iRiS, Washi or Material You) and what every surface is made of: Black, Graphite or Midnight, or Wallpaper or Theme. The three dark names change in the light and paper styles.
+
+**Match the shell** makes the shell take the theme's accent, highlight and material too. It shows once a colour theme is picked.
+
+Waffle users find these under **Waffle Settings › Themes**.

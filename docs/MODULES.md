@@ -1,169 +1,79 @@
-# Modules Catalog
+# Modules Catalogue
 
-UI components organized by panel family. Modules handle rendering and interaction. They don't own global state, they read from services and config singletons.
+Modules are the UI. They render and orchestrate, and they read state from `services/`, `Config` and `GlobalStates` without owning it.
 
-## How modules load
+## Folders
 
-Panel loading has two stages. `shell.qml` first activates one family-specific critical host:
+| Folder | Holds |
+|---|---|
+| `modules/ii/` | Material (ii): bar, vertical bar, dock, sidebars, dashboard, control panel, notification popups, OSD, settings |
+| `modules/waffle/` | Waffle: taskbar, start menu, action center, notification center, task view, widgets, `looks/` tokens, settings |
+| `modules/iris/` | iRiS: bar, field, frame, dock, control, studio, settings, style. See [iRiS](IRIS.md) |
+| `modules/shared/` | Surfaces that two or more families load: background, overview, clipboard, lock, mascot and more |
+| `modules/common/` | The kit: `Config.qml`, `Appearance.qml`, `Directories.qml`, `ThemePresets.qml`, and `widgets/` (about 190 widgets, listed in `widgets/qmldir`) |
 
-- `modules/ii/critical/ShellIiCriticalPanels.qml`
-- `modules/waffle/critical/ShellWaffleCriticalPanels.qml`
+## How panels load
 
-After the first shell frame, `GlobalStates.deferredPanelsReady` enables the thin root wrapper (`ShellIiPanels.qml`, `ShellWafflePanels.qml`, or `ShellIrisPanels.qml`), which loads the corresponding family implementation root.
+Loading has two stages. `shell.qml` loads one family's critical host first (`modules/{ii,waffle,iris}/critical/Shell*CriticalPanels.qml`). It holds only first-frame surfaces. When `GlobalStates.deferredPanelsReady` is set, the thin root (`ShellIiPanels.qml`, `ShellWafflePanels.qml` or `ShellIrisPanels.qml`) loads the family's `Shell*PanelsImpl.qml`. That impl declares `DeferredPanelLoader` and `OnDemandPanelLoader`.
 
-Those implementation roots use `PanelLoader`, `DeferredPanelLoader`, and `OnDemandPanelLoader`. Depending on the loader, a panel is gated by some combination of:
+A panel loads only when:
 
-1. `Config.ready`
-2. Its identifier being present in `enabledPanels`
-3. A family/feature-specific `extraCondition`
-4. The shell-entry/deferred phase or the panel's actual open/resident state
+1. `Config.ready` is true.
+2. Its ID is in `Config.options.enabledPanels`. The default list is in `defaults/config.json`. Users switch panels off in Settings › Modules.
+3. Any `extraCondition` holds.
+4. Its open state or the deferred phase allows it.
 
-Users can disable any panel from Settings without touching config files.
+## Material ii panel IDs
 
-## Material ii Panels
+| Module | Panel ID |
+|---|---|
+| `ii/bar/` | `iiBar` |
+| `ii/verticalBar/` | `iiVerticalBar` |
+| `ii/dock/` | `iiDock` |
+| `shared/background/` | `iiBackground` |
+| `ii/sidebar/`, `ii/sidebarLeft/`, `ii/sidebarRight/` | `iiSidebarLeft`, `iiSidebarRight` |
+| `ii/controlPanel/` | `iiControlPanel` |
+| `ii/dashboard/` | `iiDashboard` |
+| `ii/notificationPopup/`, `ii/onScreenDisplay/` | `iiNotificationPopup`, `iiOnScreenDisplay` |
 
-### Core
+`sidebar/` is the physical host. `sidebarLeft/` holds feature content (AI chat, YT Music, Wallhaven, translator, World Clock). `sidebarRight/` holds system content (quick toggles, calendar, notifications, mixer, Bluetooth and Wi-Fi, Screen Time). Either role can sit on either edge.
 
-| Module | Panel ID | Description |
-|--------|----------|-------------|
-| `bar/` | `iiBar` | Top bar. Workspaces, clock, system indicators, tray, weather. ~35 QML files. |
-| `verticalBar/` | `iiVerticalBar` | Vertical bar variant for left/right edge placement. |
-| `dock/` | `iiDock` | Application dock. Supports all 4 edges (top/bottom/left/right). Scroll an icon to cycle that app's windows; `dock.notificationBadge` puts an app's pending notification count on its icon. |
-| `background/` | `iiBackground` | Desktop wallpaper layer. Parallax, blur, desktop widget canvas. |
+Surfaces in `modules/shared/` keep their `ii` IDs: `iiOverview`, `iiOverlay`, `iiClipboard`, `iiCheatsheet`, `iiMediaControls`, `iiWallpaperSelector`, `iiWallpaperLauncher`, `iiSessionScreen`, `iiOnScreenKeyboard`, `iiLock`, `iiPolkit`, `iiRegionSelector`, `iiScreenCorners`, `iiTilingOverlay`, `iiShellUpdate`, `iiRecordingOsd`, `iiWorkspaceStrip`, `iiMascotCompanion`, `iiBootGreeting`.
 
-### Sidebars
+## Waffle panel IDs
 
-| Module | Panel ID | Description |
-|--------|----------|-------------|
-| `sidebar/` | shared host | Physical left/right layer-shell hosts. They resolve semantic feature/system roles, own focus, masks, animations and live layout resize handles. |
-| `sidebarLeft/` | `iiSidebarLeft` | Feature-role content: AI chat (Gemini/OpenAI/Ollama), YT Music player, Wallhaven browser, anime tracker, translator, draggable widgets and World Clock. The role can occupy either physical edge. |
-| `sidebarRight/` | `iiSidebarRight` | System-role content: quick toggles, calendar with external sync, notification center, volume mixer, Bluetooth/WiFi management, pomodoro timer, todo, calculator, notepad, system monitor and Screen Time. The role can occupy either physical edge. |
+| Module | Panel ID |
+|---|---|
+| `waffle/bar/` | `wBar` |
+| `waffle/background/` | `wBackground` |
+| `waffle/backdrop/` | `wBackdrop` |
+| `waffle/startMenu/` | `wStartMenu` |
+| `waffle/actionCenter/` | `wActionCenter` |
+| `waffle/notificationCenter/` | `wNotificationCenter` |
+| `waffle/taskview/` | `wTaskView` |
+| `waffle/widgets/` | `wWidgets` |
+| `waffle/notificationPopup/`, `waffle/onScreenDisplay/` | `wNotificationPopup`, `wOnScreenDisplay` |
+| `waffle` presentation of shared lock, polkit and session screen | `wLock`, `wPolkit`, `wSessionScreen` |
 
-### Overlays
+`waffle/looks/Looks.qml` holds the Waffle tokens. Waffle owns its clipboard in `modules/waffle/clipboard/`.
 
-| Module | Panel ID | Description |
-|--------|----------|-------------|
-| `overview/` | `iiOverview` | Workspace overview with app search, calculator, and global actions. |
-| `ii/` | `iiOverlay` | Notification overlays and ii-specific UI elements. |
-| `clipboard/` | `iiClipboard` | Clipboard history browser with search and image preview. `Ctrl+P` pins an entry to the top of the list; pins store their own decoded copy in `clipboard.pinned`, so they outlive the cliphist history. |
-| `cheatsheet/` | `iiCheatsheet` | Keybind viewer pulled from compositor config. |
-| `controlPanel/` | `iiControlPanel` | Quick settings panel. |
-| `dashboard/` | `iiDashboard` | Centered hub panel: welcome, clock, agenda (local events + ICS), notifications, todo, notes, media, weather, calendar, system usage, GitHub heatmap. Modular three-column layout with in-panel edit mode; configured in Settings › Dashboard. IPC target `dashboard`. |
-| `mediaControls/` | `iiMediaControls` | MPRIS media player popup with multiple layout presets. |
-| `wallpaperSelector/` | `iiWallpaperSelector` | Wallpaper browser with directory navigation. |
-| `wallpaperLauncher/` | `iiWallpaperLauncher` | Shared compact wallpaper carousel with search, static and animated libraries, live preview and IPC navigation. |
-| `sessionScreen/` | `iiSessionScreen` | Logout, reboot, shutdown, suspend screen. |
+## Bar layout
 
-### System
+The ii bar reads `bar.layout`, which has five zones: `left`, `centerLeft`, `center`, `centerRight` and `right`. `workspaces` stays in the centre. The bar page is `modules/ii/settings/BarConfig.qml`.
 
-| Module | Panel ID | Description |
-|--------|----------|-------------|
-| `notificationPopup/` | `iiNotificationPopup` | Notification toast popups. |
-| `onScreenDisplay/` | `iiOnScreenDisplay` | Volume and brightness OSD. |
-| `onScreenKeyboard/` | `iiOnScreenKeyboard` | Virtual keyboard. |
-| `lock/` | `iiLock` | Lock screen with PAM authentication and fingerprint support. |
-| `polkit/` | `iiPolkit` | PolicyKit authentication dialog. |
-| `regionSelector/` | `iiRegionSelector` | Screenshot and screen recording region selection. |
-| `screenCorners/` | `iiScreenCorners` | Hot corners. |
-| `tilingOverlay/` | `iiTilingOverlay` | Tiling hints overlay. |
-| `shellUpdate/` | `iiShellUpdate` | Shell update notification banner. |
-| `recordingOsd/` | `iiRecordingOsd` | Screen recording indicator (disabled by default). |
-| `workspaceStrip/` | `iiWorkspaceStrip` | Optional edge navigator with cached workspace previews, selected-card app summaries, window focus and close controls, drag-to-move, scroll navigation, and MPRIS media controls. Hover the configured edge to open it, then hover a card to inspect that workspace. Shared with waffle. IPC target `workspaceStrip`. |
-| `mascot/` | `iiMascotCompanion` | Playful full-body mascot companion: peeks from screen edges, reacts to shell events (music, battery, network, updates, notifications, screenshots, gaming, unlock), plays chase/hide-and-seek, and can physically interact with desktop widgets in chaos mode. Curated poses and per-surface overrides live in Settings › Mascot; a desktop widget variant lives in Settings › Widgets. Never over fullscreen, game mode, lock or session screens. Shared with waffle. IPC targets `mascot`, `mascotMood`. |
+`modulesLayout`, `edgeModulesLayout` and `modulesPlacement` are deprecated. `Config.qml` keeps them only so old files still load. Migration `028-bar-modular-layout` is disabled, because the bar falls back to its built-in layout and existing configs need no rewrite.
 
-## Waffle Panels
+## Notable behaviour
 
-### Core
+- **Screen Time.** `services/ScreenTime.qml` runs only when `sidebar.screenTime.enable` is on, which is off by default. The widgets are `modules/ii/sidebarRight/screenTime/ScreenTimeWidget.qml` and `modules/waffle/actionCenter/screenTime/ScreenTimePage.qml`.
+- **World Clock.** `modules/ii/sidebarLeft/widgets/WorldClockWidget.qml`, configured under `sidebar.widgets.worldClock_settings`.
+- **Dock.** Scrolling an app icon cycles that app's windows (`modules/ii/dock/DockAppButton.qml`). `dock.notificationBadge` shows pending notifications on icons.
+- **Clipboard.** `Ctrl+P` pins an entry. Pins are stored in `clipboard.pinned`.
 
-| Module | Panel ID | Description |
-|--------|----------|-------------|
-| `waffle/bar/` | `wBar` | Bottom taskbar. Start button, pinned apps, open windows, system tray, clock. |
-| `waffle/background/` | `wBackground` | Desktop wallpaper layer (waffle variant). |
+## Contributor rules
 
-### Primary Overlays
-
-| Module | Panel ID | Description |
-|--------|----------|-------------|
-| `waffle/startMenu/` | `wStartMenu` | Start menu with app grid, search, pinned apps, recommendations. |
-| `waffle/actionCenter/` | `wActionCenter` | Quick settings. WiFi, Bluetooth, volume, brightness, toggles, Screen Time entry point. |
-| `waffle/notificationCenter/` | `wNotificationCenter` | Notification list with calendar and external event integration. |
-| `waffle/taskview/` | `wTaskView` | Task view (workspace overview with window previews). |
-| `waffle/widgets/` | `wWidgets` | Desktop widgets panel. |
-
-### System
-
-| Module | Panel ID | Description |
-|--------|----------|-------------|
-| `waffle/notificationPopup/` | `wNotificationPopup` | Notification popups (Fluent style). |
-| `waffle/onScreenDisplay/` | `wOnScreenDisplay` | Volume/brightness OSD (Fluent style). |
-| `lock/` + `waffle/lock/` presentation | `wLock` | Shared lock owner with Waffle-specific surface presentation. |
-| `polkit/` + Waffle presentation | `wPolkit` | Shared PolicyKit owner rendered for Waffle. |
-| `sessionScreen/` + Waffle presentation | `wSessionScreen` | Shared session owner rendered for Waffle. |
-
-### Design System
-
-| Module | Description |
-|--------|-------------|
-| `waffle/looks/` | `Looks.qml` - complete visual token system. Colors, typography, motion, rounding. |
-| `waffle/settings/` | Waffle-specific settings pages. |
-
-## Shared Infrastructure
-
-### modules/common/ (~203 files)
-
-The foundation everything else builds on.
-
-| Component | What it is |
-|-----------|-----------|
-| **Config.qml** | Configuration singleton. ~60 config sections. [Details](CONFIG_SYSTEM.md) |
-| **Appearance.qml** | ii visual tokens. ~500 properties covering colors, rounding, typography, animation. |
-| **Directories.qml** | Centralized path resolution. Config, cache, data, scripts, media directories. |
-| **widgets/** | 130+ reusable widgets registered in `widgets/qmldir`. Layout, input, display, media, and specialized components. |
-| **ThemePresets.qml** | 46 built-in theme presets. |
-| **StylePresets.qml** | Style variant definitions. |
-
-## Current notable modules
-
-### Bar layout editor
-
-The ii bar is driven by `Config.options.bar.layout`, split into five zones:
-
-`left`, `centerLeft`, `center`, `centerRight`, `right`
-
-The Settings page uses `BarModuleOrderEditor.qml` to reorder modules and drag available modules into zones. `workspaces` stays the centered pivot. The old `modulesLayout`, `edgeModulesLayout`, and `modulesPlacement` keys are deprecated compatibility baggage, not the runtime source of truth.
-
-Migration `028-bar-modular-layout` exists but is disabled. The bar has a built-in classic fallback, so existing users do not need config rewrites just to update. Good. We learned.
-
-### Screen Time
-
-`services/ScreenTime.qml` tracks focused app usage when `sidebar.screenTime.enable` is true.
-
-Visible surfaces:
-
-- `modules/ii/sidebarRight/screenTime/ScreenTimeWidget.qml`
-- `modules/waffle/actionCenter/screenTime/ScreenTimePage.qml`
-
-It stores local daily JSON under the iNiR state directory. It has daily totals, app totals, hourly buckets, and per-app hourly drill-down. It is off by default and hidden from sidebar layouts while disabled.
-
-### World Clock
-
-`modules/ii/sidebarLeft/widgets/WorldClockWidget.qml` is a sidebar-left widget configured through `sidebar.widgets.worldClock_settings`.
-
-If no timezones are configured, it suggests useful zones from the user's locale/system timezone. If the user configures timezones, Settings owns the explicit list and order.
-
-### Shared panels
-
-Some panels work under both families. They keep their `ii` prefix but load in waffle mode too:
-
-`iiBootGreeting`, `iiCheatsheet`, `iiOnScreenKeyboard`, `iiOverlay`, `iiOverview`, `iiRegionSelector`, `iiScreenCorners`, `iiWallpaperSelector`, `iiWallpaperLauncher`, `iiRecordingOsd`, `iiWorkspaceStrip`, `iiMascotCompanion`
-
-Waffle owns its clipboard implementation separately (`modules/waffle/clipboard/`); the legacy `iiClipboard` identifier can still appear in family/config compatibility lists, but the ii clipboard component is not the active Waffle clipboard surface.
-
-## For contributors
-
-1. Read [Architecture Overview](ARCHITECTURE_OVERVIEW.md) to locate the module's place in the tree and its owning family
-2. Identify which family owns the module before making visual changes
-3. Use the correct token system: `Appearance.*` for ii, `Looks.*` for waffle
-4. Register new panels in the correct composition owner: a `critical/` host only for first-frame surfaces, otherwise the family's `Shell*PanelsImpl.qml`; keep shell-wide IPC routers in `shell.qml` when the command must exist before heavy panels load
-5. Register new shared widgets in `modules/common/widgets/qmldir`
-6. If touching shared modules, test every family that consumes the changed contract
+1. Read [Architecture Overview](ARCHITECTURE_OVERVIEW.md) and find the family that owns the module.
+2. Use `Appearance.*` in ii and shared code, `Looks.*` in Waffle, and `IrisStyle.*` in iRiS.
+3. Put first-frame surfaces in a `critical/` host. Everything else goes in the family's `Shell*PanelsImpl.qml`. Shell-wide IPC routers stay in `shell.qml`.
+4. Register shared widgets in `modules/common/widgets/qmldir`.
+5. If you touch a shared module, test every family that loads it.

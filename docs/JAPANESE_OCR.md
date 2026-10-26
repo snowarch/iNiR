@@ -1,43 +1,36 @@
-# Japanese OCR study assistant
+# Japanese OCR study card
 
-iNiR can turn Japanese pixels from any Wayland surface into a local dictionary lookup. It is designed for games, manga, images, PDFs, video and applications where the shell cannot inspect a browser DOM or native text node.
+iNiR can read Japanese from any part of your screen: games, manga, images, PDFs and video. You draw a box around the text, and the words it finds are looked up in a dictionary that runs on your computer.
 
-## Normal user flow
+## Set it up
 
-1. Open **Settings → Tools → Snipping** and choose the expected OCR language. For Japanese use **Japanese** for normal horizontal writing or **Japanese (vertical)** for vertical manga/book text.
-2. Use the normal region selector and draw a tight box around a word, short phrase or line. OCR works from pixels, so excluding unrelated text gives the recognizer a much easier job. Small selections are enlarged automatically before Tesseract runs.
-3. If the required Tesseract language data is missing, iNiR first reuses distro-installed data and can otherwise provision the missing model once in `~/.local/share/inir/tessdata/` without sudo.
-4. Japanese OCR copies the full recognized text and opens a compact study card beside the captured region.
-5. On first use, choose **Install Japanese dictionary**. iNiR downloads and indexes Jitendex automatically; normal users do not need to find a Yomitan ZIP. After indexing, dictionary lookup is local/offline.
-6. The compact card shows the useful matched term, canonical headword/reading, romaji and concise definitions. **Expand** shows the complete OCR selection, extra dictionary information, translation and study actions.
+1. Open **Settings › Tools › Snipping**.
+2. Under **Snipping & OCR**, set **Text language** to **Japanese** for horizontal text, or **Japanese (vertical)** for vertical manga and books. **Japanese + English** is there for mixed text.
+3. Under **Japanese study assistant**, press **Install Japanese dictionary (~37 MB)**. iNiR downloads and indexes the Jitendex dictionary for you. Lookups work offline after that.
 
-## What the matcher does
+If Tesseract is missing its Japanese data, iNiR uses the copy your system has. Otherwise it downloads the data once into `~/.local/share/inir/tessdata/`, without sudo.
 
-Japanese has no required spaces between words, while OCR can insert spaces between individual glyphs. The lookup backend therefore:
+## Look up text
 
-- collapses OCR-only spaces between Japanese characters;
-- scans Japanese runs even when bullets, romaji or translated text surround them;
-- checks both written forms and dictionary readings (`どこ` can resolve `何処`);
-- prefers useful multi-character terms and dictionary priority over accidental one-kana matches;
-- deinflects common polite, negative, past/te, passive, causative, godan, `する`/`来る` and i-adjective forms;
-- validates generated base forms against Yomitan rule tags before accepting them.
+1. Press **Super+Shift+X** and draw a tight box around a word, a phrase or a line. Leave out other text, since OCR works from the pixels.
+2. A study card opens beside the box with the word it matched.
 
-A tight capture is still important. OCR cannot recover characters that are visually ambiguous, heavily stylized, occluded or too low resolution.
+Short selections, under 140 pixels tall, are enlarged before OCR runs.
 
-## Dictionary and translation
+The card shows the matched word, its dictionary form and reading, romaji and short definitions. **Expand lookup** adds the full OCR text, more dictionary detail, **Translate selection** and the Anki actions. **Compact view** goes back to the small card. A copy button copies the text.
 
-The recommended dictionary is **Jitendex**, downloaded on demand rather than bundled in the repository. iNiR accepts Yomitan v3 `term_bank_*`, `term_meta_bank_*` and `kanji_bank_*` archives for advanced users who want additional dictionaries. Pitch/frequency/IPA metadata is used when the imported dictionary provides it.
+There is no hover lookup yet, so you always draw a box. Blurred, very stylised or tiny text may come out wrong.
 
-Dictionary lookup itself is offline after installation. **Translate** is separate and reuses iNiR's existing `translate-shell` integration, so translation requires network access to the configured translation engine. The compact card translates the matched term; the expanded card can translate the complete OCR selection.
+**Translate selection** and the card's translation use translate-shell, so they need an internet connection. Dictionary lookups work offline.
 
-## Anki
+Under **Japanese study assistant**, **More dictionary options** lets you import another Yomitan dictionary ZIP.
 
-Anki is optional. OCR, dictionary lookup and translation do not depend on it.
+## Anki (optional)
 
-To save flashcards, Anki Desktop must be running with the **AnkiConnect** add-on enabled. Settings reports whether Anki is missing, closed, running without an AnkiConnect listener, or connected. Advanced endpoint/deck/model/field options remain available for non-default Anki setups.
+You don't need Anki for OCR or lookups. To add cards, open Anki Desktop with the AnkiConnect add-on enabled. **Settings › Tools › Snipping › Anki (optional)** shows whether Anki is missing, closed, running without AnkiConnect, or connected. **Install / check AnkiConnect** helps you set it up. **Show Anki actions in the study card** turns the card's Anki buttons on or off.
 
-Settings also provides a small catalog of ready-made Japanese decks. iNiR resolves the current upstream release, downloads the `.apkg` to the user's Downloads folder and opens it for import; third-party deck bytes are not bundled with iNiR.
+**Advanced Anki settings** holds the endpoint, deck, note type and field names, for setups that are not the defaults.
 
-## Current boundary
+## Ready-made decks
 
-This implementation is region-OCR-first. It does **not** yet provide browser-extension-style “hold a modifier and inspect the exact word under the cursor” behavior. A compositor-wide cursor lookup would need its own fast capture/word-localization layer because Wayland deliberately does not expose arbitrary application text to the shell. The current compact/expandable card and local dictionary backend are designed so that interaction can be added later without replacing the data layer.
+**Ready-made Japanese study decks** lists Kaishi 1.5k, Manabi 2.7k and Niponismo. iNiR downloads the latest `.apkg` to your Downloads folder and opens it for import. The decks are not bundled with iNiR.
