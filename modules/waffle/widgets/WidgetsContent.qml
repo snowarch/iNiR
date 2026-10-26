@@ -11,6 +11,7 @@ import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.waffle.looks
+import qs.modules.waffle.state
 
 WBarAttachedPanelContent {
     id: root
@@ -18,7 +19,7 @@ WBarAttachedPanelContent {
     revealFromSides: true
     revealFromLeft: true
 
-    property QtObject resourceMonitor: ResourceUsageMonitor { active: GlobalStates.waffleWidgetsOpen }
+    property QtObject resourceMonitor: ResourceUsageMonitor { active: WaffleState.widgetsOpen }
 
     readonly property bool barAtBottom: Config.options?.waffles?.bar?.bottom ?? false
     readonly property var quickActionDefinitions: [
@@ -64,7 +65,7 @@ WBarAttachedPanelContent {
             return
         }
 
-        GlobalStates.waffleWidgetsOpen = false
+        WaffleState.widgetsOpen = false
     }
 
     contentItem: ColumnLayout {
@@ -134,7 +135,7 @@ WBarAttachedPanelContent {
                         }
                         onClicked: {
                             Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"])
-                            GlobalStates.waffleWidgetsOpen = false
+                            WaffleState.widgetsOpen = false
                         }
                     }
                 }
@@ -400,7 +401,7 @@ WBarAttachedPanelContent {
                             contentItem: FluentIcon { anchors.centerIn: parent; icon: "open"; implicitSize: Looks.dp(14) }
                             onClicked: {
                                 Session.launchTaskManager()
-                                GlobalStates.waffleWidgetsOpen = false
+                                WaffleState.widgetsOpen = false
                             }
                         }
                     }

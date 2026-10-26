@@ -7,6 +7,7 @@ import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.waffle.looks
 import Quickshell
+import qs.modules.waffle.state
 
 PopupWindow {
     id: root
@@ -88,12 +89,12 @@ PopupWindow {
     }
 
     readonly property bool _anyPanelOpen: GlobalStates.searchOpen
-        || GlobalStates.waffleActionCenterOpen
-        || GlobalStates.waffleNotificationCenterOpen
-        || GlobalStates.waffleWidgetsOpen
-        || GlobalStates.waffleAltSwitcherOpen
-        || GlobalStates.waffleClipboardOpen
-        || GlobalStates.waffleTaskViewOpen
+        || WaffleState.actionCenterOpen
+        || WaffleState.notificationCenterOpen
+        || WaffleState.widgetsOpen
+        || WaffleState.altSwitcherOpen
+        || WaffleState.clipboardOpen
+        || WaffleState.taskViewOpen
     on_AnyPanelOpenChanged: if (_anyPanelOpen && root.visible) root.close()
 
     Timer {

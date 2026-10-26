@@ -8,6 +8,7 @@ import qs.modules.common
 import qs.modules.waffle.background as WaffleBackgroundModule
 import qs.modules.waffle.bar as WaffleBarModule
 import qs.modules.waffle.backdrop as WaffleBackdropModule
+import qs.modules.waffle.state
 
 Item {
     id: root
@@ -17,23 +18,23 @@ Item {
     // Here and not in the deferred panels, so the commands answer from the first frame.
     IpcHandler {
         target: "wactionCenter"
-        function toggle(): void { GlobalStates.waffleActionCenterOpen = !GlobalStates.waffleActionCenterOpen }
-        function close(): void { GlobalStates.waffleActionCenterOpen = false }
-        function open(): void { GlobalStates.waffleActionCenterOpen = true }
+        function toggle(): void { WaffleState.actionCenterOpen = !WaffleState.actionCenterOpen }
+        function close(): void { WaffleState.actionCenterOpen = false }
+        function open(): void { WaffleState.actionCenterOpen = true }
     }
 
     IpcHandler {
         target: "wnotificationCenter"
-        function toggle(): void { GlobalStates.waffleNotificationCenterOpen = !GlobalStates.waffleNotificationCenterOpen }
-        function close(): void { GlobalStates.waffleNotificationCenterOpen = false }
-        function open(): void { GlobalStates.waffleNotificationCenterOpen = true }
+        function toggle(): void { WaffleState.notificationCenterOpen = !WaffleState.notificationCenterOpen }
+        function close(): void { WaffleState.notificationCenterOpen = false }
+        function open(): void { WaffleState.notificationCenterOpen = true }
     }
 
     IpcHandler {
         target: "wwidgets"
-        function toggle(): void { GlobalStates.waffleWidgetsOpen = !GlobalStates.waffleWidgetsOpen }
-        function close(): void { GlobalStates.waffleWidgetsOpen = false }
-        function open(): void { GlobalStates.waffleWidgetsOpen = true }
+        function toggle(): void { WaffleState.widgetsOpen = !WaffleState.widgetsOpen }
+        function close(): void { WaffleState.widgetsOpen = false }
+        function open(): void { WaffleState.widgetsOpen = true }
     }
 
     component CriticalPanelLoader: LazyLoader {

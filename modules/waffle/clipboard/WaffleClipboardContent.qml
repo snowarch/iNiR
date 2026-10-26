@@ -10,6 +10,7 @@ import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
 import qs.modules.waffle.looks
+import qs.modules.waffle.state
 
 Item {
     id: root
@@ -83,12 +84,12 @@ Item {
     function copyEntry(entry: string) {
         lastCopiedEntry = entry
         Cliphist.copy(entry)
-        GlobalStates.waffleClipboardOpen = false
+        WaffleState.clipboardOpen = false
     }
 
     function copyPinnedText(text: string) {
         Quickshell.clipboardText = text
-        GlobalStates.waffleClipboardOpen = false
+        WaffleState.clipboardOpen = false
     }
 
     function activateRow(row) {
@@ -111,7 +112,7 @@ Item {
         // (the async refresh would miss because the panel closes below)
         filteredClipboardModel.clear()
         totalCount = 0
-        GlobalStates.waffleClipboardOpen = false
+        WaffleState.clipboardOpen = false
     }
 
     function cancelClear() {
@@ -140,7 +141,7 @@ Item {
         target: Cliphist
         function onEntriesChanged() {
             // Only update model if clipboard panel is open to avoid lag
-            if (!GlobalStates.waffleClipboardOpen) return
+            if (!WaffleState.clipboardOpen) return
             root.updateFilteredModel()
             Qt.callLater(() => searchInput.forceActiveFocus())
             // The refresh started on open is asynchronous: these entries land
@@ -151,14 +152,14 @@ Item {
             }
         }
         function onPinnedChanged() {
-            if (GlobalStates.waffleClipboardOpen) root.updateFilteredModel()
+            if (WaffleState.clipboardOpen) root.updateFilteredModel()
         }
     }
 
     Connections {
-        target: GlobalStates
-        function onWaffleClipboardOpenChanged() {
-            if (GlobalStates.waffleClipboardOpen) {
+        target: WaffleState
+        function onClipboardOpenChanged() {
+            if (WaffleState.clipboardOpen) {
                 root.searchText = ""
                 root.showClearConfirmation = false
                 root.pendingViewReset = true

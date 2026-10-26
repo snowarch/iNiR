@@ -93,10 +93,8 @@ Singleton {
         GlobalStates.tilingOverlayOsdOpen = false
         GlobalStates.settingsOverlayOpen = false
         GlobalStates.searchOpen = false
-        GlobalStates.waffleActionCenterOpen = false
-        GlobalStates.waffleNotificationCenterOpen = false
-        GlobalStates.waffleWidgetsOpen = false
-        GlobalStates.waffleTaskViewOpen = false
+        const familyClose = GlobalStates.familyVerb("dev", "close")
+        if (familyClose) familyClose()
         GlobalStates.sidebarRightRequestedWidget = ""
         requestedWaffleStartView = "start"
         LauncherSearch.query = ""
@@ -151,11 +149,11 @@ Singleton {
             LauncherSearch.query = entry.view === "search" ? "a" : ""
             GlobalStates.searchOpen = true
             break
-        case "waffle-action-center": GlobalStates.waffleActionCenterOpen = true; break
-        case "waffle-notification-center": GlobalStates.waffleNotificationCenterOpen = true; break
-        case "waffle-widgets": GlobalStates.waffleWidgetsOpen = true; break
-        case "waffle-taskview": GlobalStates.waffleTaskViewOpen = true; break
-        default: currentDestination = ""; return "error:unsupported-surface"
+        default: {
+            // A family's own surface: its verb `dev.open` opens it and says so.
+            const familyOpen = GlobalStates.familyVerb("dev", "open")
+            if (!familyOpen || familyOpen(entry.surface) !== true) { currentDestination = ""; return "error:unsupported-surface" }
+        }
         }
         return "ok:" + destination
     }

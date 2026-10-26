@@ -129,12 +129,7 @@ Scope {
                 || GlobalStates.oskOpen
                 || GlobalStates.tilingOverlayPickerOpen
                 || GlobalStates.searchOpen
-                || GlobalStates.waffleActionCenterOpen
-                || GlobalStates.waffleNotificationCenterOpen
-                || GlobalStates.waffleWidgetsOpen
-                || GlobalStates.waffleAltSwitcherOpen
-                || GlobalStates.waffleClipboardOpen
-                || GlobalStates.waffleTaskViewOpen
+                || GlobalStates.familyPanelsOpen !== 0
                 || GlobalStates.widgetEditMode
                 || GlobalStates.shellLayoutEditMode
             readonly property bool suppressed: edgeSidebarOpen

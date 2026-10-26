@@ -8,6 +8,7 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.waffle.looks
+import qs.modules.waffle.state
 
 Scope {
     id: root
@@ -60,7 +61,7 @@ Scope {
                 id: panelWindow
                 required property var modelData
                 screen: modelData
-                visible: (Notifications.popupList.length > 0) && !GlobalStates.screenLocked && !GlobalStates.waffleNotificationCenterOpen && !(GameMode.active && GameMode.suppressNotifications)
+                visible: (Notifications.popupList.length > 0) && !GlobalStates.screenLocked && !WaffleState.notificationCenterOpen && !(GameMode.active && GameMode.suppressNotifications)
 
                 WlrLayershell.namespace: "quickshell:wNotificationPopup"
                 WlrLayershell.layer: WlrLayer.Overlay

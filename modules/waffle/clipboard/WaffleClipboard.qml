@@ -10,20 +10,21 @@ import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
 import qs.modules.waffle.looks
+import qs.modules.waffle.state
 
 Scope {
     id: root
 
     Connections {
-        target: GlobalStates
-        function onWaffleClipboardOpenChanged() {
-            if (GlobalStates.waffleClipboardOpen) panelLoader.active = true
+        target: WaffleState
+        function onClipboardOpenChanged() {
+            if (WaffleState.clipboardOpen) panelLoader.active = true
         }
     }
 
     Loader {
         id: panelLoader
-        active: GlobalStates.waffleClipboardOpen
+        active: WaffleState.clipboardOpen
         sourceComponent: PanelWindow {
             id: panelWindow
             exclusiveZone: 0
@@ -40,9 +41,9 @@ Scope {
             }
 
             Connections {
-                target: GlobalStates
-                function onWaffleClipboardOpenChanged() {
-                    if (!GlobalStates.waffleClipboardOpen) content.close()
+                target: WaffleState
+                function onClipboardOpenChanged() {
+                    if (!WaffleState.clipboardOpen) content.close()
                 }
             }
 
@@ -54,7 +55,7 @@ Scope {
                     const outside = (localPos.x < 0 || localPos.x > content.width
                             || localPos.y < 0 || localPos.y > content.height)
                     if (outside) {
-                        GlobalStates.waffleClipboardOpen = false
+                        WaffleState.clipboardOpen = false
                     }
                 }
             }
@@ -64,7 +65,7 @@ Scope {
                 anchors.centerIn: parent
                 anchors.verticalCenterOffset: (Config.options.waffles?.bar?.bottom ?? true) ? -30 : 30
                 onClosed: {
-                    GlobalStates.waffleClipboardOpen = false
+                    WaffleState.clipboardOpen = false
                     panelLoader.active = false
                 }
             }

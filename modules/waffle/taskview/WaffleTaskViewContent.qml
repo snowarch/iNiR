@@ -8,6 +8,7 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.waffle.looks
+import qs.modules.waffle.state
 
 Item {
     id: root
@@ -117,7 +118,7 @@ Item {
 
     function switchToWorkspace(idx: int): void {
         NiriService.switchToWorkspace(idx)
-        GlobalStates.waffleTaskViewOpen = false
+        WaffleState.taskViewOpen = false
     }
 
     function moveWindowToWorkspace(windowId: int, targetIdx: int): void {
@@ -242,9 +243,9 @@ Item {
     }
     
     Connections {
-        target: GlobalStates
-        function onWaffleTaskViewOpenChanged(): void {
-            if (GlobalStates.waffleTaskViewOpen) {
+        target: WaffleState
+        function onTaskViewOpenChanged(): void {
+            if (WaffleState.taskViewOpen) {
                 root.refreshCache()
             }
         }
@@ -254,7 +255,7 @@ Item {
         target: NiriService
         function onWindowsChanged(): void {
             // Only refresh if window count changed (window closed/opened), not on focus change
-            if (GlobalStates.waffleTaskViewOpen) {
+            if (WaffleState.taskViewOpen) {
                 const currentCount = (NiriService.windows ?? []).length
                 const cachedCount = root.cachedWindowItems.length
                 if (currentCount !== cachedCount) {
@@ -265,7 +266,7 @@ Item {
     }
     
     Component.onCompleted: {
-        if (GlobalStates.waffleTaskViewOpen) {
+        if (WaffleState.taskViewOpen) {
             refreshCache()
         }
     }
@@ -317,8 +318,8 @@ Item {
         return windows[focusedWindowIndex]
     }
 
-    opacity: GlobalStates.waffleTaskViewOpen ? 1 : 0
-    scale: GlobalStates.waffleTaskViewOpen ? 1 : 0.96
+    opacity: WaffleState.taskViewOpen ? 1 : 0
+    scale: WaffleState.taskViewOpen ? 1 : 0.96
     
     Behavior on opacity { 
         NumberAnimation { 
@@ -379,7 +380,7 @@ Item {
             const win = filteredWindowItems[idx]
             if (win) {
                 NiriService.focusWindow(win.window.id)
-                GlobalStates.waffleTaskViewOpen = false
+                WaffleState.taskViewOpen = false
                 return
             }
         }
@@ -388,7 +389,7 @@ Item {
         const focusedWin = getFocusedWindow()
         if (focusedWin) {
             NiriService.focusWindow(focusedWin.window.id)
-            GlobalStates.waffleTaskViewOpen = false
+            WaffleState.taskViewOpen = false
         } else {
             const ws = cachedWorkspaces[selectedSlot]
             if (ws) switchToWorkspace(ws.idx)
@@ -398,7 +399,7 @@ Item {
         if (searchQuery.length > 0) {
             searchQuery = ""
         } else {
-            GlobalStates.waffleTaskViewOpen = false
+            WaffleState.taskViewOpen = false
         }
     }
     

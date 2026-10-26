@@ -6,6 +6,7 @@ import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.waffle.looks
 import Quickshell.Services.Pipewire
+import qs.modules.waffle.state
 
 BarButton {
     id: root
@@ -17,9 +18,9 @@ BarButton {
         return src === "niri" || tgt === "niri";
     })
 
-    checked: GlobalStates.waffleActionCenterOpen
+    checked: WaffleState.actionCenterOpen
     onClicked: {
-        GlobalStates.waffleActionCenterOpen = !GlobalStates.waffleActionCenterOpen;
+        WaffleState.actionCenterOpen = !WaffleState.actionCenterOpen;
     }
 
     contentItem: Item {

@@ -4,6 +4,7 @@ import Quickshell.Wayland
 import qs.services
 import qs
 import qs.modules.common
+import qs.modules.waffle.state
 
 Scope {
     id: root
@@ -13,22 +14,22 @@ Scope {
         Config.options?.waffles?.behavior?.allowMultiplePanels ?? false
 
     function enforceExclusivity(): void {
-        if (!root.allowMultiplePanels && GlobalStates.waffleNotificationCenterOpen) {
+        if (!root.allowMultiplePanels && WaffleState.notificationCenterOpen) {
             GlobalStates.searchOpen = false
-            GlobalStates.waffleActionCenterOpen = false
+            WaffleState.actionCenterOpen = false
         }
     }
 
     Component.onCompleted: {
-        root.panelMapped = GlobalStates.waffleNotificationCenterOpen
+        root.panelMapped = WaffleState.notificationCenterOpen
         Notifications.ensureInitialized()
         root.enforceExclusivity()
     }
 
     Connections {
-        target: GlobalStates
-        function onWaffleNotificationCenterOpenChanged() {
-            if (GlobalStates.waffleNotificationCenterOpen)
+        target: WaffleState
+        function onNotificationCenterOpenChanged() {
+            if (WaffleState.notificationCenterOpen)
                 root.panelMapped = true
             root.enforceExclusivity()
         }
@@ -43,7 +44,7 @@ Scope {
 
         MouseArea {
             anchors.fill: parent
-            onClicked: GlobalStates.waffleNotificationCenterOpen = false
+            onClicked: WaffleState.notificationCenterOpen = false
         }
     }
 
@@ -69,10 +70,10 @@ Scope {
         NotificationCenterContent {
             id: content
             anchors.fill: parent
-            presented: GlobalStates.waffleNotificationCenterOpen
+            presented: WaffleState.notificationCenterOpen
             panelRightAligned: true
             onClosed: {
-                if (!GlobalStates.waffleNotificationCenterOpen)
+                if (!WaffleState.notificationCenterOpen)
                     root.panelMapped = false
             }
         }

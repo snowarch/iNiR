@@ -6,20 +6,21 @@ import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.waffle.state
 
 Scope {
     id: root
 
     Connections {
-        target: GlobalStates
-        function onWaffleWidgetsOpenChanged() {
-            if (GlobalStates.waffleWidgetsOpen) panelLoader.active = true
+        target: WaffleState
+        function onWidgetsOpenChanged() {
+            if (WaffleState.widgetsOpen) panelLoader.active = true
         }
     }
 
     // Click-outside-to-close overlay
     LazyLoader {
-        active: GlobalStates.waffleWidgetsOpen
+        active: WaffleState.widgetsOpen
         component: PanelWindow {
             anchors { top: true; bottom: true; left: true; right: true }
             WlrLayershell.namespace: "quickshell:wWidgetsBg"
@@ -27,14 +28,14 @@ Scope {
             color: "transparent"
             MouseArea {
                 anchors.fill: parent
-                onClicked: GlobalStates.waffleWidgetsOpen = false
+                onClicked: WaffleState.widgetsOpen = false
             }
         }
     }
 
     Loader {
         id: panelLoader
-        active: GlobalStates.waffleWidgetsOpen
+        active: WaffleState.widgetsOpen
         sourceComponent: PanelWindow {
             id: panelWindow
             exclusiveZone: 0
@@ -53,9 +54,9 @@ Scope {
             implicitHeight: content.implicitHeight
 
             Connections {
-                target: GlobalStates
-                function onWaffleWidgetsOpenChanged() {
-                    if (!GlobalStates.waffleWidgetsOpen) content.close()
+                target: WaffleState
+                function onWidgetsOpenChanged() {
+                    if (!WaffleState.widgetsOpen) content.close()
                 }
             }
 
@@ -64,7 +65,7 @@ Scope {
                 anchors.fill: parent
 
                 onClosed: {
-                    GlobalStates.waffleWidgetsOpen = false
+                    WaffleState.widgetsOpen = false
                     panelLoader.active = false
                 }
             }

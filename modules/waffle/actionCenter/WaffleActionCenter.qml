@@ -4,6 +4,7 @@ import Quickshell.Wayland
 import qs.services
 import qs
 import qs.modules.common
+import qs.modules.waffle.state
 
 Scope {
     id: root
@@ -13,21 +14,21 @@ Scope {
         Config.options?.waffles?.behavior?.allowMultiplePanels ?? false
 
     function enforceExclusivity(): void {
-        if (!root.allowMultiplePanels && GlobalStates.waffleActionCenterOpen) {
+        if (!root.allowMultiplePanels && WaffleState.actionCenterOpen) {
             GlobalStates.searchOpen = false
-            GlobalStates.waffleNotificationCenterOpen = false
+            WaffleState.notificationCenterOpen = false
         }
     }
 
     Component.onCompleted: {
-        root.panelMapped = GlobalStates.waffleActionCenterOpen
+        root.panelMapped = WaffleState.actionCenterOpen
         root.enforceExclusivity()
     }
 
     Connections {
-        target: GlobalStates
-        function onWaffleActionCenterOpenChanged() {
-            if (GlobalStates.waffleActionCenterOpen)
+        target: WaffleState
+        function onActionCenterOpenChanged() {
+            if (WaffleState.actionCenterOpen)
                 root.panelMapped = true
             root.enforceExclusivity()
         }
@@ -42,7 +43,7 @@ Scope {
 
         MouseArea {
             anchors.fill: parent
-            onClicked: GlobalStates.waffleActionCenterOpen = false
+            onClicked: WaffleState.actionCenterOpen = false
         }
     }
 
@@ -68,10 +69,10 @@ Scope {
         ActionCenterContent {
             id: content
             anchors.fill: parent
-            presented: GlobalStates.waffleActionCenterOpen
+            presented: WaffleState.actionCenterOpen
             panelRightAligned: true
             onClosed: {
-                if (!GlobalStates.waffleActionCenterOpen)
+                if (!WaffleState.actionCenterOpen)
                     root.panelMapped = false
             }
         }

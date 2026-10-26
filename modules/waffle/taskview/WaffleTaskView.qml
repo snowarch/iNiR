@@ -10,6 +10,7 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.waffle.looks
+import qs.modules.waffle.state
 
 Scope {
     id: root
@@ -18,14 +19,14 @@ Scope {
     // No need to clear on TaskView close - improves performance on re-open
 
     function openTaskView(): void {
-        if (GlobalStates.waffleTaskViewOpen) return
+        if (WaffleState.taskViewOpen) return
         // Open INSTANTLY - previews load progressively in background
-        GlobalStates.waffleTaskViewOpen = true
+        WaffleState.taskViewOpen = true
     }
 
     Loader {
         id: panelLoader
-        active: GlobalStates.waffleTaskViewOpen
+        active: WaffleState.taskViewOpen
         sourceComponent: PanelWindow {
             id: panelWindow
             exclusiveZone: 0
@@ -67,7 +68,7 @@ Scope {
                 z: -1  // Below everything so workspace clicks work
                 onClicked: mouse => {
                     if (content.isDragging) return
-                    GlobalStates.waffleTaskViewOpen = false
+                    WaffleState.taskViewOpen = false
                 }
             }
 
@@ -169,9 +170,9 @@ Scope {
                 id: content
                 anchors.centerIn: blurStrip
                 focus: true
-                onClosed: GlobalStates.waffleTaskViewOpen = false
+                onClosed: WaffleState.taskViewOpen = false
                 
-                Keys.onEscapePressed: GlobalStates.waffleTaskViewOpen = false
+                Keys.onEscapePressed: WaffleState.taskViewOpen = false
             }
         }
     }

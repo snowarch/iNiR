@@ -39,6 +39,7 @@ import qs
 import qs.modules.common
 import qs.services
 import qs.services.deferred
+import qs.modules.waffle.state
 
 Item {
     id: root
@@ -111,13 +112,13 @@ Item {
 
     // === Deferred panels ===
     OnDemandPanelLoader { identifier: "wStartMenu"; open: GlobalStates.searchOpen; retainAfterUse: true; component: WaffleStartMenu {} }
-    OnDemandPanelLoader { identifier: "wActionCenter"; open: GlobalStates.waffleActionCenterOpen; retainAfterUse: true; component: WaffleActionCenter {} }
-    OnDemandPanelLoader { identifier: "wNotificationCenter"; open: GlobalStates.waffleNotificationCenterOpen; component: WaffleNotificationCenter {} }
-    OnDemandPanelLoader { identifier: "wWidgets"; open: GlobalStates.waffleWidgetsOpen && (Config.options?.waffles?.modules?.widgets ?? true); component: WaffleWidgets {} }
+    OnDemandPanelLoader { identifier: "wActionCenter"; open: WaffleState.actionCenterOpen; retainAfterUse: true; component: WaffleActionCenter {} }
+    OnDemandPanelLoader { identifier: "wNotificationCenter"; open: WaffleState.notificationCenterOpen; component: WaffleNotificationCenter {} }
+    OnDemandPanelLoader { identifier: "wWidgets"; open: WaffleState.widgetsOpen && (Config.options?.waffles?.modules?.widgets ?? true); component: WaffleWidgets {} }
     DeferredPanelLoader { identifier: "wLock"; component: Lock {} }
     DeferredPanelLoader { identifier: "wPolkit"; component: Polkit {} }
     OnDemandPanelLoader { identifier: "wSessionScreen"; open: GlobalStates.sessionOpen; component: SessionScreen {} }
-    OnDemandPanelLoader { identifier: "wTaskView"; open: GlobalStates.waffleTaskViewOpen; component: WaffleTaskViewModule.WaffleTaskView {} }
+    OnDemandPanelLoader { identifier: "wTaskView"; open: WaffleState.taskViewOpen; component: WaffleTaskViewModule.WaffleTaskView {} }
 
     // Shared modules that work with waffle
     DeferredPanelLoader { identifier: "iiBootGreeting"; component: BootGreeting {} }

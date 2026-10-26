@@ -7,6 +7,7 @@ import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.waffle.looks
 import qs.modules.waffle.actionCenter
+import qs.modules.waffle.state
 
 FooterRectangle {
 
@@ -42,7 +43,7 @@ FooterRectangle {
         anchors.rightMargin: Looks.dp(12)
 
         onClicked: {
-            GlobalStates.waffleActionCenterOpen = false;
+            WaffleState.actionCenterOpen = false;
             Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"]);
         }
 

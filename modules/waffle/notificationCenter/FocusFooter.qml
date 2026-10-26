@@ -8,6 +8,7 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.waffle.looks
+import qs.modules.waffle.state
 
 FooterRectangle {
     Layout.fillWidth: true
@@ -67,7 +68,7 @@ FooterRectangle {
                 } else {
                     TimerService.togglePomodoro();
                     // Close notification center instead of toggling sidebar
-                    GlobalStates.waffleNotificationCenterOpen = false;
+                    WaffleState.notificationCenterOpen = false;
                 }
             }
         }

@@ -10,6 +10,7 @@ import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
 import qs.modules.waffle.looks
+import qs.modules.waffle.state
 
 MouseArea {
     id: root
@@ -301,7 +302,7 @@ MouseArea {
         textFormat: root.expanded ? Text.RichText : Text.StyledText
         onLinkActivated: link => {
             Qt.openUrlExternally(link);
-            GlobalStates.waffleNotificationCenterOpen = false;
+            WaffleState.notificationCenterOpen = false;
         }
     }
 

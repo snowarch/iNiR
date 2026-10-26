@@ -9,6 +9,7 @@ import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.waffle.looks
+import qs.modules.waffle.state
 
 Scope {
     id: root
@@ -175,7 +176,7 @@ Scope {
         onTriggered: {
             root.rebuildSnapshot()
             Qt.callLater(function() {
-                if (!GlobalStates.waffleAltSwitcherOpen)
+                if (!WaffleState.altSwitcherOpen)
                     root.itemSnapshot = []
             })
         }
@@ -206,7 +207,7 @@ Scope {
         if (itemSnapshot.length === 0) return
         if (root.getPreset() === "skew")
             currentIndex = itemSnapshot.length > 1 ? 1 : 0
-        GlobalStates.waffleAltSwitcherOpen = true
+        WaffleState.altSwitcherOpen = true
         if (root.getPreset() === "skew") {
             root.cardVisible = false
             cardShowTimer.restart()
@@ -223,7 +224,7 @@ Scope {
 
     function closeSwitcher() {
         autoHideTimer.stop()
-        GlobalStates.waffleAltSwitcherOpen = false
+        WaffleState.altSwitcherOpen = false
         root.cardVisible = false
         quickSwitchDone = false  // Reset for next session
         // The window unmaps right here (the fade already ran in the content), so drop the delegates
@@ -235,16 +236,16 @@ Scope {
         id: cardShowTimer
         interval: 30
         repeat: false
-        onTriggered: root.cardVisible = GlobalStates.waffleAltSwitcherOpen && root.getPreset() === "skew"
+        onTriggered: root.cardVisible = WaffleState.altSwitcherOpen && root.getPreset() === "skew"
     }
 
     Timer {
         id: focusTimer
         interval: 30
-        running: GlobalStates.waffleAltSwitcherOpen
+        running: WaffleState.altSwitcherOpen
         repeat: true
         onTriggered: {
-            if (GlobalStates.waffleAltSwitcherOpen)
+            if (WaffleState.altSwitcherOpen)
                 keyHandler.forceActiveFocus()
         }
     }
@@ -297,7 +298,7 @@ Scope {
         interval: 800  // Reset after 800ms of inactivity
         repeat: false
         onTriggered: {
-            if (!GlobalStates.waffleAltSwitcherOpen) {
+            if (!WaffleState.altSwitcherOpen) {
                 root.quickSwitchDone = false
                 root.noUiSnapshot = []
                 root.noUiIndex = 0
@@ -309,7 +310,7 @@ Scope {
     Connections {
         target: NiriService
         function onWindowsChanged() {
-            if (!GlobalStates.waffleAltSwitcherOpen || !root.itemSnapshot.length) return
+            if (!WaffleState.altSwitcherOpen || !root.itemSnapshot.length) return
 
             const wins = NiriService.windows || []
             if (!wins.length) {
@@ -339,7 +340,7 @@ Scope {
         PanelWindow {
             required property var modelData
             screen: modelData
-            visible: GlobalStates.waffleAltSwitcherOpen && !root.getShowOverview()
+            visible: WaffleState.altSwitcherOpen && !root.getShowOverview()
             exclusionMode: ExclusionMode.Ignore
             color: "transparent"
             WlrLayershell.namespace: "quickshell:wAltSwitcherScrim"
@@ -362,7 +363,7 @@ Scope {
     // Main panel window
     PanelWindow {
         id: panelWindow
-        visible: GlobalStates.waffleAltSwitcherOpen
+        visible: WaffleState.altSwitcherOpen
         exclusionMode: ExclusionMode.Ignore
         color: "transparent"
         WlrLayershell.namespace: "quickshell:wAltSwitcher"
@@ -373,7 +374,7 @@ Scope {
         FocusScope {
             id: keyHandler
             anchors.fill: parent
-            focus: GlobalStates.waffleAltSwitcherOpen
+            focus: WaffleState.altSwitcherOpen
 
             Keys.onReleased: event => {
                 if (root.getPreset() === "skew" && event.key === Qt.Key_Alt) {
@@ -448,7 +449,7 @@ Scope {
         target: "waffleAltSwitcher"
 
         function open(): void {
-            if (!GlobalStates.waffleAltSwitcherOpen) {
+            if (!WaffleState.altSwitcherOpen) {
                 root.openSwitcher()
             }
         }
@@ -458,7 +459,7 @@ Scope {
         }
 
         function toggle(): void {
-            if (GlobalStates.waffleAltSwitcherOpen) {
+            if (WaffleState.altSwitcherOpen) {
                 root.closeSwitcher()
             } else {
                 root.openSwitcher()
@@ -492,7 +493,7 @@ Scope {
             }
 
             if (root.getPreset() === "skew") {
-                if (!GlobalStates.waffleAltSwitcherOpen) {
+                if (!WaffleState.altSwitcherOpen) {
                     root.openSwitcher()
                     return
                 }
@@ -500,7 +501,7 @@ Scope {
                 return
             }
 
-            if (!GlobalStates.waffleAltSwitcherOpen) {
+            if (!WaffleState.altSwitcherOpen) {
                 root.rebuildSnapshot()
                 if (root.itemSnapshot.length === 0) return
                 
@@ -547,7 +548,7 @@ Scope {
             }
 
             if (root.getPreset() === "skew") {
-                if (!GlobalStates.waffleAltSwitcherOpen) {
+                if (!WaffleState.altSwitcherOpen) {
                     root.openSwitcher()
                     return
                 }
@@ -555,7 +556,7 @@ Scope {
                 return
             }
 
-            if (!GlobalStates.waffleAltSwitcherOpen) {
+            if (!WaffleState.altSwitcherOpen) {
                 root.openSwitcher()
             }
             root.previousItem()

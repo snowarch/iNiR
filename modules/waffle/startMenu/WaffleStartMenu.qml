@@ -7,6 +7,7 @@ import qs.services.deferred
 import qs
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.waffle.state
 
 Scope {
     id: root
@@ -18,8 +19,8 @@ Scope {
         function onSearchOpenChanged() {
             if (GlobalStates.searchOpen) {
                 if (!root.allowMultiplePanels) {
-                    GlobalStates.waffleActionCenterOpen = false
-                    GlobalStates.waffleNotificationCenterOpen = false
+                    WaffleState.actionCenterOpen = false
+                    WaffleState.notificationCenterOpen = false
                 }
                 panelLoader.active = true
             }

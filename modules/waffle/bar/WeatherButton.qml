@@ -5,6 +5,7 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.waffle.looks
+import qs.modules.waffle.state
 
 BarButton {
     id: root
@@ -17,7 +18,7 @@ BarButton {
 
     onClicked: {
         Weather.getData()
-        GlobalStates.waffleWidgetsOpen = !GlobalStates.waffleWidgetsOpen
+        WaffleState.widgetsOpen = !WaffleState.widgetsOpen
     }
 
     contentItem: RowLayout {

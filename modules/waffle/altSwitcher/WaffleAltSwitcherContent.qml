@@ -12,6 +12,7 @@ import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.waffle.looks
+import qs.modules.waffle.state
 
 Item {
     id: root
@@ -91,7 +92,7 @@ Item {
             return
         }
 
-        if (GlobalStates.waffleAltSwitcherOpen) {
+        if (WaffleState.altSwitcherOpen) {
             root.prepareForOpen()
             return
         }
@@ -493,7 +494,7 @@ Item {
                             id: liveShot
                             anchors.fill: parent
                             windowId: skewSlice.modelData?.id ?? -1
-                            active: GlobalStates.waffleAltSwitcherOpen
+                            active: WaffleState.altSwitcherOpen
                             live: skewSlice.ListView.isCurrentItem
                         }
 

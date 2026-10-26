@@ -12,6 +12,7 @@ import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.waffle.looks
 import qs.modules.waffle.bar
+import qs.modules.waffle.state
 
 Item {
     id: root
@@ -305,7 +306,7 @@ Item {
                     id: liveShot
                     anchors.fill: windowPreview
                     windowId: previewArea.windowId > 0 ? previewArea.windowId : -1
-                    active: GlobalStates.waffleTaskViewOpen
+                    active: WaffleState.taskViewOpen
                 }
 
                 // Listen for preview updates
@@ -447,7 +448,7 @@ Item {
                         root.focusRequested(root.workspaceSlot)
                         NiriService.focusWindow(root.windowData?.id)
                         if (Config.options?.waffles?.taskView?.closeOnSelect) {
-                            GlobalStates.waffleTaskViewOpen = false
+                            WaffleState.taskViewOpen = false
                         }
                     }
                 }
@@ -455,7 +456,7 @@ Item {
                 onDoubleClicked: mouse => {
                     if (mouse.button === Qt.LeftButton) {
                         NiriService.focusWindow(root.windowData?.id)
-                        GlobalStates.waffleTaskViewOpen = false
+                        WaffleState.taskViewOpen = false
                     }
                 }
             }
@@ -524,7 +525,7 @@ Item {
                     action: () => {
                         contextMenu.active = false
                         NiriService.focusWindow(root.windowData?.id)
-                        GlobalStates.waffleTaskViewOpen = false
+                        WaffleState.taskViewOpen = false
                     }
                 },
                 { type: "separator" },

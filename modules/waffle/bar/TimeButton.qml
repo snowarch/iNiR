@@ -5,6 +5,7 @@ import qs
 import qs.services
 import qs.modules.common
 import qs.modules.waffle.looks
+import qs.modules.waffle.state
 
 BarButton {
     id: root
@@ -14,9 +15,9 @@ BarButton {
     leftPadding: Looks.scaledBar(12, panelScreen)
     rightPadding: Looks.scaledBar(12, panelScreen)
 
-    checked: GlobalStates.waffleNotificationCenterOpen
+    checked: WaffleState.notificationCenterOpen
     onClicked: {
-        GlobalStates.waffleNotificationCenterOpen = !GlobalStates.waffleNotificationCenterOpen;
+        WaffleState.notificationCenterOpen = !WaffleState.notificationCenterOpen;
     }
 
     contentItem: Item {

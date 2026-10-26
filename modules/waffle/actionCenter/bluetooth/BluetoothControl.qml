@@ -12,6 +12,7 @@ import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.waffle.looks
 import qs.modules.waffle.actionCenter
+import qs.modules.waffle.state
 
 Item {
     id: root
@@ -111,7 +112,7 @@ Item {
                 }
                 text: Translation.tr("More Bluetooth settings")
                 onClicked: {
-                    GlobalStates.waffleActionCenterOpen = false
+                    WaffleState.actionCenterOpen = false
                     AppLauncher.launch("bluetooth")
                 }
             }

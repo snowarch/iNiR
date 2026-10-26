@@ -144,7 +144,7 @@ QuickToggleModel {
         interval: 5000
         repeat: true
         triggeredOnStart: true
-        running: root.available && (GlobalStates.sidebarRightOpen || GlobalStates.waffleActionCenterOpen)
+        running: root.available && (GlobalStates.sidebarRightOpen || GlobalStates.familyQuickSettingsOpen)
         onTriggered: root.refreshStatus()
     }
 

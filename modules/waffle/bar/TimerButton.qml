@@ -5,6 +5,7 @@ import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.waffle.looks
+import qs.modules.waffle.state
 
 BarButton {
     id: root
@@ -58,7 +59,7 @@ BarButton {
     }
 
     altAction: () => {
-        GlobalStates.waffleWidgetsOpen = true
+        WaffleState.widgetsOpen = true
         if (Persistent?.states?.sidebar?.bottomGroup) {
             Persistent.states.sidebar.bottomGroup.tab = 3
         }

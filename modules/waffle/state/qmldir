@@ -1,0 +1,2 @@
+module qs.modules.waffle.state
+singleton WaffleState 1.0 WaffleState.qml
