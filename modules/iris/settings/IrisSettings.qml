@@ -131,7 +131,7 @@ Item {
         const left = side("left"), right = side("right"), top = side("top"), bottom = side("bottom")
         return { x: left, y: top, width: Math.max(0, root.width - left - right), height: Math.max(0, root.height - top - bottom) }
     }
-    // The clusters the areas are kept in, named for a layout that prints them (Folio's ruler, Console's grid).
+    // The clusters the areas are kept in, named for a layout that prints them (Folio's ruler).
     readonly property var clusterNames: ["Look", "Desktop", "Tools", "System", "More"]
     // Every area's notes (IrisOptions.notesBySection), taken when Settings has opened and after each config change.
     property var notes: ({})
@@ -232,7 +232,7 @@ Item {
         const ids = new Set(root.matches.map(spec => spec.section))
         return ids
     }
-    // A layout that draws an area's rows on its own pages (Folio, Deck, Console) gets nothing from here but a search or
+    // A layout that draws an area's rows on its own pages (Folio, Pocket, Drawer) gets nothing from here but a search or
     // a shared page: the engine reads no area for it, so a turn costs it nothing.
     readonly property bool layoutRows: (root.scene?.drawsRows ?? false) && !root.searching && root.advancedPage < 0
     readonly property var entries: {
@@ -316,7 +316,7 @@ Item {
     // the ones already there.
     property bool fedAll: false
     readonly property var fedGroups: {
-        // A layout that draws an area's rows itself (Console) only takes the engine's for a search or a page.
+        // A layout that draws an area's rows itself only takes the engine's for a search or a page.
         if ((root.scene?.drawsRows ?? false) && !root.searching && root.advancedPage < 0) return []
         if (root.searching || root.landingPath.length > 0) return root.shownGroups
         const key = root.keyNow()
@@ -1144,9 +1144,9 @@ Item {
                             }
                             Keys.onReturnPressed: root.openFirstResult()
                             // The field holds the keys while Settings is open: with nothing typed, ↑ ↓ walk the areas from here too.
-                            // An empty field hands the arrows to the page: a console layout walks from its head into its rows.
-                            Keys.onUpPressed: event => { if (text.length > 0) event.accepted = false; else if (root.scene?.takeKey) { root.forceActiveFocus(); root.scene.takeKey(event) } else root.stepSection(-1) }
-                            Keys.onDownPressed: event => { if (text.length > 0) event.accepted = false; else if (root.scene?.takeKey) { root.forceActiveFocus(); root.scene.takeKey(event) } else root.stepSection(1) }
+                            // An empty field hands the arrows to the areas.
+                            Keys.onUpPressed: event => { if (text.length > 0) event.accepted = false; else root.stepSection(-1) }
+                            Keys.onDownPressed: event => { if (text.length > 0) event.accepted = false; else root.stepSection(1) }
                             Timer { id: searchDelay; interval: 160; onTriggered: root.query = searchField.text }
                             IrisText {
                                 anchors.verticalCenter: parent.verticalCenter

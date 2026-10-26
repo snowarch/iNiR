@@ -14,7 +14,6 @@ QtObject {
     readonly property var options: Config.options?.iris ?? ({})
     readonly property var appearance: root.options?.appearance ?? ({})
 
-    readonly property bool island: true
 
     // --- Recompose: one clock for structural change -------------------------
     // An option that changes what a surface is *made of* (the Island's
@@ -48,7 +47,6 @@ QtObject {
     property var structure: root.structuralSource
     property real recomposeValue: 1
     readonly property real recompose: root.recomposeValue
-    readonly property bool recomposing: root.recomposeValue < 0.999
     function structuralValue(path: string, fallback: var): var {
         const value = root.structure?.[path]
         return value === undefined || value === null ? fallback : value
@@ -116,9 +114,6 @@ QtObject {
         const value = Number(hue)
         return (((isNaN(value) ? fallback : value) % 360) + 360) % 360 / 360
     }
-    function hueOf(name: string, fallback: int): real {
-        return root.wrapHue(root.theme?.[name], fallback)
-    }
     // `theme` is rebuilt on every Config write; the tweaks reach consumers through a string that only
     // changes when one of their values does, so a write elsewhere re-evaluates nothing downstream.
     readonly property var tweakNames: ["text", "fill", "lines", "contrast", "shadow", "shape", "melt", "press",
@@ -175,15 +170,10 @@ QtObject {
     }
     readonly property int radius: Math.round(Math.max(16, Math.min(40, Number(root.appearance?.expandedRadius ?? 28))) * root.density)
     readonly property int radiusSmall: root.fieldChamfer ? 0 : Math.max(4, Math.round(root.radius * 0.58))
-    readonly property int radiusTiny: root.fieldChamfer ? 0 : Math.max(3, Math.round(root.radius * 0.36))
     // A capsule's (or a disc's) corner: half its side, or square inside a chamfered Design, where a pill or a dot under
     // the pointer would be the one round thing among cut plates.
     function capsule(side: real): real { return root.fieldChamfer ? 0 : side / 2 }
-    readonly property int gap: Math.max(4, Math.round(8 * root.density))
-    readonly property int gapLarge: Math.max(8, Math.round(14 * root.density))
     readonly property int spaceSmall: Math.max(4, Math.round(6 * root.density))
-    readonly property int spaceMedium: Math.max(6, Math.round(10 * root.density))
-    readonly property int spaceLarge: Math.max(10, Math.round(16 * root.density))
 
     readonly property var presets: ({
         iris: { fill: 1.0, shape: 1.0, textStrong: 0.82, textSecondary: 0.62, textTertiary: 0.40,
@@ -273,7 +263,6 @@ QtObject {
     readonly property string fontRead: root.fontMain
     readonly property string fontLabel: root.fontMono
 
-    readonly property color canvas: Appearance.colors.colLayer0Base
     // iRiS is dark by construction. The light scheme turns its material and ink over; Ink sits between them, washi
     // and sumi, softer than white. Auto follows the system (dark or light); each scheme is tuned on its own.
     readonly property string schemeChoice: String(root.appearance?.scheme ?? "auto")
@@ -330,10 +319,9 @@ QtObject {
         return root.lookAt(root.placeOf(item)) ? root.look : "apple"
     }
     // Synth: an instrument panel. A switch is a key that sinks and lights its LED, a level a fader over ticks, a choice
-    // a row of keys; each kind keeps its colour: orange is on and the one act, blue a level, green a meter.
+    // a row of keys; each kind keeps its colour: orange is on and the one act, blue a level.
     readonly property color synthOn: "#ff5b00" // iris-literal: Synth's orange
     readonly property color synthLevel: "#0096ff" // iris-literal: Synth's blue
-    readonly property color synthMeter: "#00c46a" // iris-literal: Synth's green
     readonly property color synthKey: ColorUtils.mix(root.text, root.surfaceOpaque, root.light ? 0.12 : 0.15)
     readonly property color synthKeyEdge: ColorUtils.mix("#000000", root.surfaceOpaque, root.light ? 0.2 : 0.5)
     readonly property color synthCap: root.light ? "#ffffff" : "#ecebe6" // iris-literal: a fader's cap, a chosen key
@@ -423,7 +411,6 @@ QtObject {
     }
     readonly property color surfaceOpaque: root.role("surface", "#000000")
     readonly property color darkSurfaceOpaque: Qt.color(root.washiDark?.materials?.[root.materialName] ?? "#000000")
-    readonly property bool plainBlack: root.materialName === "black"
     readonly property color surfaceHighOpaque: root.role("surfaceHigh", "#1c1c1e")
     readonly property color surfaceHighestOpaque: root.role("surfaceHighest", "#2c2c2e")
     readonly property real tintAmount: Math.max(0, Math.min(1, Number(root.appearance?.tint ?? 0) / 100))
@@ -463,7 +450,6 @@ QtObject {
     readonly property bool appsSurfaceReady: true
     readonly property color appsSurface: root.surfaceOpaque
     readonly property color bodyTint: root.glassy ? ColorUtils.applyAlpha(root.surfaceOpaque, root.glassTint) : root.bodySurface
-    readonly property color bodyFill: root.glassy ? Qt.color("transparent") : root.bodySurface
     readonly property color bodyScrim: root.bodyTint
     // iris-literal: the field paints every body with its own soft edge; an opaque chassis on top drew a harder, stair-stepped one. Not 0: a transparent ClippingRectangle stops painting.
     readonly property color bodyClip: Qt.rgba(0, 0, 0, 0.004)
@@ -653,7 +639,6 @@ QtObject {
     readonly property color litLayer: root.light ? ColorUtils.mix(root.surfaceOpaque, Qt.color(root.washiLight?.materials?.black ?? "#ffffff"), root.ink ? 0.45 : 0.25) : root.fillInk
     // On paper a group is a faint well of the ink, the same step the solid ramp takes (washi darkens, it never greys);
     // at night a faint lift of the ink. Sheer over glass and over a textured material (Afterglow, Light leak).
-    readonly property bool paperWhite: root.light && root.surfaceOpaque.hslLightness > 0.93
     readonly property color surfaceHigh: root.glassy || root.textured
         ? ColorUtils.applyAlpha(root.light ? root.text : root.fillInk, root.fillAlpha(root.light ? 0.06 : 0.07))
         : root.tinted(root.surfaceHighOpaque, 0.16)
@@ -790,7 +775,6 @@ QtObject {
         return width > 0 ? Math.round(width * root.density) : fallback
     }
     readonly property int lightContour: Math.max(4, Math.round(6 * root.density))
-    readonly property int lightJoinContour: root.lightContour + Math.round(Math.min(root.fuseDeep, 30 * root.density) / 3)
     readonly property int lightReach: Math.round(92 * root.density * root.tweak("lightReach", 0.5, 3))
     function aura(light: color): color { return ColorUtils.applyAlpha(light, root.auraStrength * light.a) }
     function auraFading(light: color): color { return ColorUtils.applyAlpha(light, root.auraStrength * light.a * 0.35) }
@@ -855,9 +839,6 @@ QtObject {
         : root.liftOver(root.line(root.ruleOf(Qt.color(root.preset.hairline))), root.surfaceOpaque)
     readonly property color hairlineStrong: root.glassy ? ColorUtils.applyAlpha(root.text, Math.min(0.45, 0.14 * root.tweak("lines", 0, 2)))
         : root.liftOver(root.line(root.ruleOf(Qt.color(root.preset.hairlineStrong))), root.surfaceOpaque)
-    readonly property color selection: root.accentContainer
-    readonly property color selectionHover: root.tintFillHover(root.accent)
-    readonly property color selectionText: root.inkOnAccentContainer
     readonly property color scrim: Appearance.colors.colScrim
 
     function fillAlpha(level: real): real { return Math.min(0.5, level * root.preset.fill * root.tweak("fill", 0.3, 2)) }
@@ -984,7 +965,6 @@ QtObject {
     readonly property real shadowThrough: root.glassy ? 0.4 : 1
     readonly property real shadowLight: root.ink ? 0.5 : root.light ? 0.55 : 1
     readonly property color shadow: root.glowing(Math.min(0.9, 0.55 * root.tweak("shadow", 0, 1.6)) * root.shadowThrough * root.shadowLight)
-    readonly property color material: ColorUtils.applyAlpha(root.surfaceHigh, 0.68)
     readonly property color onMedia: "#ffffff"
     readonly property color onMediaSecondary: ColorUtils.applyAlpha(root.onMedia, 0.72)
     // The visualizer's one look (Now Playing › Visualizer): its drawing, how many bands, and whose colour.
@@ -1217,13 +1197,6 @@ QtObject {
     readonly property color plateWhiteTop: root.toned("#f8f8fb")
     readonly property color plateWhiteBase: root.toned("#e6e6ec")
 
-    readonly property real panelPadding: Math.round(24 * root.density)
-    readonly property real sectionGap: Math.round(24 * root.density)
-    readonly property real controlHeight: Math.round(38 * root.density)
-    readonly property real compactControlHeight: Math.round(32 * root.density)
-    readonly property real headerHeight: Math.round(54 * root.typeScale)
-    readonly property real accentRuleWidth: Math.round(24 * root.density)
-    readonly property real accentRuleHeight: Math.max(2, Math.round(3 * root.density))
 
     readonly property bool motionEnabled: (root.appearance?.motion ?? true) && Appearance.animationsEnabled
 

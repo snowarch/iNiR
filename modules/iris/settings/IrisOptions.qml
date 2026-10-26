@@ -1343,12 +1343,6 @@ QtObject {
         { label: "Current window", value: "window" }, { label: "Time", value: "time" }
     ].concat(IrisPieces.extras.filter(piece => piece.id !== "workspaces").map(piece => ({ label: piece.label, value: piece.id })))
     // Every area, in the order people reach for them: Look, Desktop, Tools, System, More (the clusters). `tip` is the one line a section opens on.
-    // An area in one short word, where its title does not fit (Console's keys, Deck's way back and on): the full title
-    // stays its accessible name.
-    readonly property var shortTitles: ({ general: "Home", appearance: "Style", colour: "Colour", wallpaper: "Wall", motion: "Motion", bar: "Island",
-        dock: "Dock", bubbles: "Bubbles", desktop: "Desktop", widgets: "Widgets", windows: "Windows", sidebars: "Panels", controlCenter: "Control",
-        spotlight: "Search", orbit: "Orbit", capture: "Capture", player: "Music", anime: "Anime", notifications: "Alerts",
-        sound: "Sound", display: "Display", keyboard: "Keys", battery: "Power", gaming: "Gaming", lock: "Lock", login: "Login", sources: "Sources", system: "Hub" })
     readonly property var sections: [
         // Home is General (10-25, he: two pages, the useful one not where Settings opens): what he pinned over the shell's own.
         { id: "general", cluster: -1, title: "Home", subtitle: "What you change every day", icon: "home", get tint() { return IrisStyle.identity.gray }, tip: "Settings that shape the whole shell, whichever surface shows them." },
@@ -1817,7 +1811,7 @@ QtObject {
             own.map((spec, at) => ({ spec: spec, at: at })).sort((a, b) => rank(a.spec) - rank(b.spec) || lookRank(a.spec) - lookRank(b.spec) || a.at - b.at).forEach(item => out.push(item.spec))
         }
         // A row's key is what it is, not where it falls: keyed by index, one row more or less above shifted every key
-        // and every page rebuilt all its rows on a write (Console's tiles went blank while they came back, 10-25).
+        // and every page rebuilt all its rows on a write (tiles went blank while they came back, 10-25).
         const seen = {}
         return out.map(spec => {
             const what = String(spec.path ?? (spec.niri !== undefined ? spec.niri + ":" + spec.key : spec.label ?? spec.kind))
