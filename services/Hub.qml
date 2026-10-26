@@ -7,13 +7,13 @@ import Quickshell.Io
 import qs.modules.common
 
 // The community hub (github.com/snowarch/inir-hub) as every family's Hub page sees it.
-// scripts/inir-hub.py owns the catalogue, downloads, checksums and installs; this service runs it,
+// `inir hub` (inir-cli) owns the catalogue, downloads, checksums and installs; this service runs it,
 // keeps its last answer, queues actions one at a time and tells the registries that load each
 // kind to look again. Nothing here touches the network on its own: a page asks with refresh().
 Singleton {
     id: root
 
-    readonly property string script: Quickshell.shellPath("scripts/inir-hub.py")
+    readonly property string launcher: Quickshell.shellPath("scripts/inir")
 
     property var items: []
     property var sources: []
@@ -149,7 +149,7 @@ Singleton {
             root.refreshCached()
             return
         }
-        statusProcess.command = ["python3", root.script, fetchNow ? "sync" : "status", "--json"]
+        statusProcess.command = [root.launcher, "hub", fetchNow ? "sync" : "status", "--json"]
         statusProcess.running = true
     }
     // The first look of a session: cached when fresh, so opening a page costs no download.
@@ -227,7 +227,7 @@ Singleton {
             return
         root._current = root._queue[0]
         root._queue = root._queue.slice(1)
-        actionProcess.command = ["python3", root.script, root._current.verb, root._current.id, "--json"]
+        actionProcess.command = [root.launcher, "hub", root._current.verb, root._current.id, "--json"]
         actionProcess.running = true
     }
     function _finish(job: var, reply: var): void {
@@ -279,7 +279,7 @@ Singleton {
             root._refreshSoon.restart()
             return
         }
-        statusProcess.command = ["python3", root.script, "status", "--cached", "--json"]
+        statusProcess.command = [root.launcher, "hub", "status", "--cached", "--json"]
         statusProcess.running = true
     }
 
@@ -340,6 +340,8 @@ Singleton {
 
     Process {
         id: actionProcess
+        // It reads the catalogue again itself; no `hub changed` call back into this shell.
+        environment: ({ INIR_HUB_FROM_SHELL: "1" })
         stdout: StdioCollector {
             id: actionOut
             onStreamFinished: {

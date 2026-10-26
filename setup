@@ -2640,7 +2640,7 @@ run_update() {
             fi
             repair_update_owned_state true
             # The binary has its own releases: an up-to-date shell still gets a newer one.
-            install_inir_cli_binary || tui_warn "Could not fetch the inir binary; the bash launcher keeps working"
+            install_inir_cli_binary || tui_warn "Could not fetch the inir binary; the Hub needs it (inir update tries again)"
             return 0
         else
             # Local repo ahead of installed - create snapshot
@@ -2839,7 +2839,7 @@ run_update() {
     repair_update_owned_state false
 
     _step_phase_header 4 "Finalizing"
-    install_inir_cli_binary || tui_warn "Could not fetch the inir binary; the bash launcher keeps working"
+    install_inir_cli_binary || tui_warn "Could not fetch the inir binary; the Hub needs it (inir update tries again)"
     if has_usable_systemd_user_manager; then
         if inir_user_service_is_masked; then
             tui_warn "User inir.service is masked; leaving it unchanged (restore with: inir service install && inir service enable)"

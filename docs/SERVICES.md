@@ -120,7 +120,7 @@ New targets go in [IPC](IPC.md).
 |---|---|---|
 | `AppLauncher`, `AppSearch` | Default apps; desktop entry search | |
 | `AppCatalog` | Curated catalogue with multi-distro installs | `appCatalog` |
-| `Hub` | Community hub, installs through `scripts/inir-hub.py` | `hub` |
+| `Hub` | Community hub, installs through `inir hub` (inir-cli) | `hub` |
 | `LauncherSearch` (deferred) | Overview search with prefix routing | |
 | `GlobalActions` | Registry of keyboard-driven actions | `globalActions` |
 | `PackageSearch` (deferred) | Package search: pacman with AUR, or XBPS | `packageSearch` |

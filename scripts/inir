@@ -3760,21 +3760,13 @@ USAGE
     printf 'Saved in %s. Niri picks it up now.\n' "$file"
 }
 
-# The community hub: scripts/inir-hub.py reads the catalogue and installs, with or without the shell
-# running; a running shell is told afterwards so its registries and Hub pages read again. Verbs the
-# client does not know go to the shell's `hub` IPC target.
+# The community hub lives in the inir binary (inir-cli): it reads the catalogue and installs, with or
+# without the shell running, and tells a running shell afterwards. Here only the verbs that talk to the
+# shell (open, the hub IPC target) and a clear answer when the binary is missing.
 run_hub_command() {
     local verb="${1:-}"
     resolve_config_dir
-    local client="$config_dir/scripts/inir-hub.py"
     case "$verb" in
-        ""|-h|--help|help)
-            python3 "$client" --help
-            printf '\n%s\n%s\n%s\n' \
-                "  open [id]                 the Hub page in your family's Settings, at one item if given" \
-                "  sources                   where the catalogue comes from (hub.sources in config adds more)" \
-                "  refresh | changed <kind>  ask the running shell to read the hub again"
-            ;;
         open)
             if [[ -n "${2:-}" ]]; then
                 require_qs
@@ -3782,17 +3774,11 @@ run_hub_command() {
             fi
             run_ipc_target_command settingsNav open hub
             ;;
-        sources)
-            python3 "$client" status "${@:2}"
-            ;;
-        status|sync|list|search|info|install|update|remove|--json)
-            local code=0
-            python3 "$client" "$@" || code=$?
-            if [[ $code -eq 0 && " install update remove " == *" ${verb} "* ]]; then
-                require_qs
-                "$qs_bin" -p "$config_dir" ipc call hub changed all >/dev/null 2>&1 || true
-            fi
-            return $code
+        ""|-h|--help|help|status|sources|sync|list|search|info|install|update|remove|validate|bumps|new|build|preview|--json)
+            local msg="inir hub needs the inir binary; inir update fetches it"
+            [[ " $* " == *" --json "* ]] && printf '{"ok":false,"error":"%s","code":1}\n' "$msg"
+            printf 'inir hub: %s\n' "$msg" >&2
+            return 1
             ;;
         *)
             run_ipc_target_command hub "$@"

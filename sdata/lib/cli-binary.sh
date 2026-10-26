@@ -1,11 +1,11 @@
 # shellcheck shell=bash
 # The inir binary (snowarch/inir-cli) next to the bash launcher, as ADR-0006 describes: scripts/inir
-# hands over to ${XDG_DATA_HOME:-~/.local/share}/inir/cli/inir when it is there. Opt-in with
-# INIR_FETCH_CLI=1 until the releases are public; INIR_CLI_RELEASES points at another release
-# directory (a mirror, or file:// in the bench). A failed or unverified download keeps the old copy.
+# hands over to ${XDG_DATA_HOME:-~/.local/share}/inir/cli/inir when it is there. The Hub lives in it, so
+# every install and update fetches it; INIR_FETCH_CLI=0 skips that, INIR_CLI_RELEASES points at another
+# release directory (a mirror, or file:// in the bench). A failed or unverified download keeps the old copy.
 
 install_inir_cli_binary() {
-  [[ "${INIR_FETCH_CLI:-0}" == 1 ]] || return 0
+  [[ "${INIR_FETCH_CLI:-1}" == 1 ]] || return 0
   local arch
   case "$(uname -m)" in
     x86_64) arch=amd64 ;;
