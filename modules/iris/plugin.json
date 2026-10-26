@@ -53,5 +53,11 @@
   },
   "flags": {
     "lockSurfaceSync": true
+  },
+  "customWidget": {
+    "face": "widgets/templates/IrisCompact.qml",
+    "slots": [
+      "island.desktop"
+    ]
   }
 }

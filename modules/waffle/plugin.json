@@ -19,5 +19,8 @@
   "settingsFrom": {
     "family": "ii",
     "when": "waffles.settings.useMaterialStyle"
+  },
+  "customWidget": {
+    "face": "widgets/templates/WaffleCard.qml"
   }
 }

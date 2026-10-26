@@ -11,7 +11,7 @@ Item {
     readonly property var entry: CustomWidgets.ready
         ? (CustomWidgets.widgets.find(widget => widget.id === root.widgetId) ?? null)
         : null
-    readonly property string sourcePath: String(root.entry?.irisQmlPath ?? "")
+    readonly property string sourcePath: String(root.entry?.faces?.iris?.path ?? "")
 
     implicitWidth: moduleLoader.item?.implicitWidth ?? 0
     implicitHeight: moduleLoader.item?.implicitHeight ?? 0

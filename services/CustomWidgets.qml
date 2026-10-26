@@ -92,11 +92,15 @@ Singleton {
                 if (warnings.length > 0)
                     console.warn("[CustomWidgets]", warnings.join("; "));
                 const qmlFile = m.main || (entry.id.charAt(0).toUpperCase() + entry.id.slice(1) + ".qml");
-                const iris = m.iris && typeof m.iris === "object" ? m.iris : {};
-                const irisFile = typeof iris.main === "string" ? iris.main.trim() : "";
-                const waffle = m.waffle && typeof m.waffle === "object" ? m.waffle : {};
-                const waffleFile = typeof waffle.main === "string" ? waffle.main.trim() : "";
                 const load = entry.load || entry.dir;
+                // A face per family, under the family's id: { main, slots }.
+                const faces = {};
+                for (const key of Object.keys(m)) {
+                    const face = m[key];
+                    const file = face && typeof face === "object" && typeof face.main === "string" ? face.main.trim() : "";
+                    if (file.length > 0)
+                        faces[key] = { path: `file://${load}/${file}`, slots: Array.isArray(face.slots) ? face.slots : [] };
+                }
                 result.push({
                     id: entry.id,
                     name: m.name || entry.id,
@@ -106,9 +110,7 @@ Singleton {
                     description: m.description || "",
                     category: m.category || "",
                     qmlPath: `file://${load}/${qmlFile}`,
-                    irisQmlPath: irisFile.length > 0 ? `file://${load}/${irisFile}` : "",
-                    irisSlots: Array.isArray(iris.slots) ? iris.slots : [],
-                    waffleQmlPath: waffleFile.length > 0 ? `file://${load}/${waffleFile}` : "",
+                    faces: faces,
                     dirPath: entry.dir,
                     configKeys: m.configKeys || {},
                     resizableAxes: m.resizableAxes || {},
@@ -204,7 +206,37 @@ Singleton {
     // Create a new widget from template
     function create(name: string): void {
         if (!name || name.length === 0) return;
+        const pascal = name.charAt(0).toUpperCase() + name.slice(1).replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+        // Each installed plugin that offers a face for custom widgets hands its template over (plugin.json `customWidget`).
+        const faces = {};
+        const templates = [];
+        for (const id of Object.keys(Plugins.manifests).sort()) {
+            const offer = Plugins.manifests[id]?.customWidget;
+            const template = Plugins.path(id, String(offer?.face ?? ""));
+            if (template.length === 0) continue;
+            faces[id] = Object.assign({ main: template.split("/").pop() }, Array.isArray(offer.slots) ? { slots: offer.slots } : {});
+            templates.push(template);
+        }
+        const manifest = Object.assign({
+            name: pascal,
+            icon: "widgets",
+            version: "1.0",
+            author: "",
+            description: "Custom desktop widget",
+            category: "custom",
+            main: `${pascal}.qml`
+        }, faces, {
+            defaultConfig: { placementStrategy: "free", widgetScale: 100, widgetOpacity: 100, colorMode: "auto", dim: 0, x: 200, y: 200 },
+            configKeys: {
+                label: { type: "string", default: pascal, label: "Widget label" },
+                showIcon: { type: "bool", default: true, label: "Show icon" }
+            },
+            resizableAxes: { uniform: "widgetScale" },
+            defaultSize: { width: 200, height: 80 }
+        });
         _createProcess.widgetName = name;
+        _createProcess.manifest = JSON.stringify(manifest, null, 4);
+        _createProcess.templates = templates;
         _createProcess.running = true;
     }
 
@@ -231,43 +263,16 @@ Singleton {
         id: _createProcess
         property string widgetName: ""
         property string _pascalName: widgetName.charAt(0).toUpperCase() + widgetName.slice(1).replace(/-([a-z])/g, (_, c) => c.toUpperCase())
+        property string manifest: ""
+        property var templates: []
         running: false
+        // The manifest and the templates' paths come in as arguments, never inside the script.
         command: ["bash", "-c", `
             dir="${root.widgetsDir}/${_createProcess.widgetName}"
             mkdir -p "$dir"
-            cat > "$dir/widget.json" << 'MANIFEST'
-{
-    "name": "${_createProcess._pascalName}",
-    "icon": "widgets",
-    "version": "1.0",
-    "author": "",
-    "description": "Custom desktop widget",
-    "category": "custom",
-    "main": "${_createProcess._pascalName}.qml",
-    "iris": {
-        "main": "IrisCompact.qml",
-        "slots": ["island.desktop"]
-    },
-    "waffle": {
-        "main": "WaffleCard.qml"
-    },
-    "defaultConfig": {
-        "placementStrategy": "free",
-        "widgetScale": 100,
-        "widgetOpacity": 100,
-        "colorMode": "auto",
-        "dim": 0,
-        "x": 200,
-        "y": 200
-    },
-    "configKeys": {
-        "label": { "type": "string", "default": "${_createProcess._pascalName}", "label": "Widget label" },
-        "showIcon": { "type": "bool", "default": true, "label": "Show icon" }
-    },
-    "resizableAxes": { "uniform": "widgetScale" },
-    "defaultSize": { "width": 200, "height": 80 }
-}
-MANIFEST
+            printf '%s\\n' "$1" > "$dir/widget.json"
+            shift
+            for template in "$@"; do cp "$template" "$dir/"; done
             cat > "$dir/${_createProcess._pascalName}.qml" << 'QML'
 // ${_createProcess._pascalName} — custom iNiR desktop widget
 // Full SDK reference: defaults/widgets/WIDGET-SDK.md
@@ -371,64 +376,8 @@ AbstractBackgroundWidget {
     //   root.colText adapts to wallpaper brightness automatically
 }
 QML
-            cat > "$dir/IrisCompact.qml" << 'IRIS_QML'
-import QtQuick
-import QtQuick.Layouts
-import qs.services
-import qs.modules.iris.style
-import qs.modules.iris.components
-
-Item {
-    id: root
-    property string irisSlot: ""
-    property var targetScreen
-    implicitWidth: compactRow.implicitWidth
-    implicitHeight: Math.round(28 * IrisStyle.density)
-
-    RowLayout {
-        id: compactRow
-        anchors.centerIn: parent
-        spacing: IrisStyle.spaceSmall
-
-        IrisMark { implicitSize: Math.round(14 * IrisStyle.density) }
-        IrisText {
-            text: DateTime.timeDisplay
-            role: IrisText.Meta
-            font.family: IrisStyle.fontNumbers
-            color: IrisStyle.text
-        }
-    }
-}
-IRIS_QML
-            cat > "$dir/WaffleCard.qml" << 'WAFFLE_QML'
-import QtQuick
-import QtQuick.Layouts
-import qs.services
-import qs.modules.waffle.looks
-
-// A card in Waffle's Widgets panel: Looks tokens and W* primitives, sizes through Looks.dp().
-Item {
-    id: root
-    property string waffleSlot: ""
-    implicitHeight: row.implicitHeight + Looks.dp(32)
-
-    RowLayout {
-        id: row
-        anchors.fill: parent
-        anchors.margins: Looks.dp(16)
-        spacing: Looks.dp(12)
-        FluentIcon { icon: "apps"; implicitSize: Looks.dp(24); color: Looks.colors.accent }
-        WText {
-            Layout.fillWidth: true
-            text: DateTime.time
-            font.pixelSize: Looks.font.pixelSize.xlarger
-            font.weight: Font.DemiBold
-        }
-    }
-}
-WAFFLE_QML
             echo "done"
-        `]
+        `, "bash", _createProcess.manifest].concat(_createProcess.templates)
         stdout: StdioCollector {
             onStreamFinished: root.reload()
         }

@@ -721,7 +721,7 @@ WBarAttachedPanelContent {
             // user's own; each loads on its own, so one that fails leaves no gap and takes nothing else down.
             Repeater {
                 model: CustomWidgets.ready && (Config.options?.waffles?.widgetsPanel?.showCustom ?? true)
-                    ? CustomWidgets.widgets.filter(widget => String(widget.waffleQmlPath ?? "").length > 0) : []
+                    ? CustomWidgets.widgets.filter(widget => String(widget.faces?.waffle?.path ?? "").length > 0) : []
 
                 delegate: ColumnLayout {
                     id: customCard
@@ -740,7 +740,7 @@ WBarAttachedPanelContent {
                             id: customFace
                             anchors.left: parent.left
                             anchors.right: parent.right
-                            source: customCard.modelData.waffleQmlPath
+                            source: customCard.modelData.faces?.waffle?.path ?? ""
                             onLoaded: {
                                 if (item.hasOwnProperty("waffleSlot"))
                                     item.waffleSlot = "widgets.panel"

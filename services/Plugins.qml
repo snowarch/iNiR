@@ -36,6 +36,11 @@ Singleton {
         return file.length > 0 ? Qt.resolvedUrl(`../${manifest.provides}/${file}`).toString() : ""
     }
     function flag(id: string, name: string): bool { return Boolean(root.manifests[id]?.flags?.[name]) }
+    // A file of a plugin on disk, for what is copied rather than loaded (a template).
+    function path(id: string, file: string): string {
+        const manifest = root.manifests[id]
+        return manifest && file.length > 0 ? Quickshell.shellPath(`${manifest.provides}/${file}`) : ""
+    }
 
     function _take(folder: string, raw: string): void {
         let manifest = null

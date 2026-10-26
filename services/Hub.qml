@@ -206,7 +206,7 @@ Singleton {
         if (family === "iris" && Array.from(Config.options?.iris?.bar?.rightModules ?? []).includes("custom:" + id))
             return true
         if (family === "waffle")
-            return Boolean(CustomWidgets.widgets.find(widget => widget.id === id)?.waffleQmlPath)
+            return Boolean(CustomWidgets.widgets.find(widget => widget.id === id)?.faces?.waffle)
         return Boolean(CustomWidgets.getConfigValue(id, "enable", false))
     }
 

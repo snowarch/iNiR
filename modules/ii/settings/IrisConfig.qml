@@ -249,7 +249,7 @@ ContentPage {
                     }
                     Repeater {
                         model: CustomWidgets.ready
-                            ? CustomWidgets.widgets.filter(widget => String(widget.irisQmlPath ?? "").length > 0)
+                            ? CustomWidgets.widgets.filter(widget => String(widget.faces?.iris?.path ?? "").length > 0)
                             : []
                         RowLayout {
                             required property var modelData
@@ -305,7 +305,7 @@ ContentPage {
                     StyledText {
                         Layout.fillWidth: true
                         visible: CustomWidgets.ready
-                            && CustomWidgets.widgets.filter(widget => String(widget.irisQmlPath ?? "").length > 0).length === 0
+                            && CustomWidgets.widgets.filter(widget => String(widget.faces?.iris?.path ?? "").length > 0).length === 0
                         text: Translation.tr("No custom iRiS modules installed. `inir customWidgets create my-widget` now scaffolds one.")
                         color: Appearance.colors.colSubtext
                         font.pixelSize: Appearance.font.pixelSize.smaller
