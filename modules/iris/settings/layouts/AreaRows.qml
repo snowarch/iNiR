@@ -108,11 +108,27 @@ ColumnLayout {
     // Weighed a beat later, never inside a binding: a block that finishes as the page turns visible fed the binding back.
     property bool whole: false
     function weigh(): void {
+        // One more block while what is built stays within reach. Heights are guessed from the rows: a block is laid out
+        // only in the frame after it is built (read 0 there). Inline: a queued weigh can land on a page being destroyed.
+        if (!rows.streams || rows.reach === Infinity) {
+            rows.builtUpTo = Math.max(rows.builtUpTo, rows.blocks.length)
+        } else if (rows.builtUpTo < rows.blocks.length) {
+            let below = 0
+            for (let i = 0; i < rows.builtUpTo; i++) below += (48 + 56 * (rows.blocks[i].rows?.length ?? 0)) * rows.d
+            const last = blockRepeater.itemAt(Math.min(rows.builtUpTo, blockRepeater.count) - 1)
+            if ((last?.status === Loader.Ready || last?.status === Loader.Error) && below <= rows.reach) rows.builtUpTo++
+        }
+        const upTo = Math.min(rows.builtUpTo, blockRepeater.count)
         let built = blockRepeater.count >= rows.blocks.length
-        for (let i = 0; built && i < blockRepeater.count; i++) built = blockRepeater.itemAt(i)?.status === Loader.Ready
+        for (let i = 0; built && i < upTo; i++) built = blockRepeater.itemAt(i)?.status === Loader.Ready
         rows.whole = built
     }
     onBlocksChanged: Qt.callLater(rows.weigh)
+    // How far down (in rows' own y) the page builds: a block past it waits until the page scrolls near, one at a time.
+    // Folio sets it (a jump built every row of the area, ~1.5x Classic's folded groups); the rest build them all.
+    property real reach: Infinity
+    property int builtUpTo: 1
+    onReachChanged: Qt.callLater(rows.weigh)
     // Home opens on the welcome, as Classic's does.
     Loader {
         active: rows.section === "general" && rows.welcome
@@ -132,6 +148,8 @@ ColumnLayout {
             required property var modelData
             required property int index
             Layout.fillWidth: true
+            active: slot.index < rows.builtUpTo
+            visible: slot.active
             asynchronous: slot.index > 0 && rows.streams
             onStatusChanged: if (rows) Qt.callLater(rows.weigh)
             sourceComponent: ColumnLayout {

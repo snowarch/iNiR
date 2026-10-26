@@ -217,6 +217,7 @@ Item {
                     host: page.host
                     voice: "folio"
                     live: page.live
+                    reach: flick.contentY + flick.height * 1.5
                     groupFill: "transparent"
                     reading: page.reading
                     onReveal: row => page.reveal(row)
@@ -250,8 +251,20 @@ Item {
         const lower = wanted.toLowerCase()
         const target = rows.targets().find(entry => entry.key === wanted || entry.key.toLowerCase() === lower
             || Translation.tr(entry.key).toLowerCase() === lower)
-        if (target) page.glideTo(target.item.mapToItem(flick.contentItem, 0, 0).y - page.u(8))
+        if (target) {
+            page.waiting = ""
+            page.glideTo(target.item.mapToItem(flick.contentItem, 0, 0).y - page.u(8))
+        } else if (rows.builtUpTo < rows.blocks.length) {
+            // A group still waiting below the fold is built first (with the rest), then shown.
+            page.waiting = wanted
+            rows.builtUpTo = rows.blocks.length
+        } else {
+            page.waiting = ""
+        }
     }
+    property string waiting: ""
+    onWholeChanged: if (page.whole && page.waiting.length > 0) showSoon.restart()
+    Timer { id: showSoon; interval: 120; onTriggered: if (page.waiting.length > 0) page.showGroup(page.waiting) }
     function reveal(row: Item): void { page.glideTo(row.mapToItem(flick.contentItem, 0, 0).y - flick.height * 0.3) }
     function glideTo(y: real): void {
         const to = Math.max(0, Math.min(Math.max(0, flick.contentHeight - flick.height), y))
