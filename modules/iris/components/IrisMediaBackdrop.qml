@@ -24,6 +24,8 @@ Item {
         anchors.margins: -root.overscan
         source: skin.active ? "" : root.source
         sourceSize: Qt.size(160, 160)
+        // Its own texture: a mipmapped cover of the same size elsewhere shared it and flipped its filtering.
+        cache: false
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         visible: false

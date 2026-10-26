@@ -52,7 +52,8 @@ Item {
             source: root.stillUrl
             fillMode: root.fillMode
             asynchronous: root.asynchronous
-            cache: true
+            // A copy an effect samples keeps its own texture: shared with a mipmapped view it flipped its filtering.
+            cache: !root.provideTexture
             sourceSize: root.decodeSize
             // Shown shrunk it needs mipmaps to stay sharp; a texture an effect samples must not have them.
             mipmap: !root.provideTexture
