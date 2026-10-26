@@ -713,8 +713,6 @@ ColumnLayout {
                                     }
                                 }
                             }
-                            HoverHandler { cursorShape: Qt.PointingHandCursor }
-                            TapHandler { onTapped: root.widget._setOutputValue("iris.material", swatch.modelData.value) }
                             Accessible.role: Accessible.RadioButton
                             Accessible.name: swatch.modelData.label
                             Accessible.checked: swatch.chosen
@@ -729,6 +727,9 @@ ColumnLayout {
                             fontSizeMode: Text.HorizontalFit
                             minimumPixelSize: Math.round(9 * IrisStyle.typeScale)
                         }
+                        // The swatch and its name are one key (a tap on the name did nothing).
+                        HoverHandler { cursorShape: Qt.PointingHandCursor }
+                        TapHandler { onTapped: root.widget._setOutputValue("iris.material", swatch.modelData.value) }
                     }
                 }
             }
