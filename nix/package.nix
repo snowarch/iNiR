@@ -19,10 +19,24 @@ let
   # InnerTube and browser-cookie extraction must share one closed Python
   # environment; putting the yt-dlp executable in PATH does not expose its
   # module or SecretStorage backend to this interpreter on Nix.
-  pythonRuntime = pkgs.python3.withPackages (ps: [
-    ps.ytmusicapi
-    ps.yt-dlp
-    ps.secretstorage
+  pythonRuntime = pkgs.python3.withPackages (ps: with ps; [
+    # sdata/uv/requirements.in, which setup installs into a venv elsewhere.
+    click
+    kde-material-you-colors
+    loguru
+    material-color-utilities
+    materialyoucolor
+    numpy
+    opencv4
+    pillow
+    psutil
+    pycairo
+    pygobject3
+    secretstorage
+    tqdm
+    websockets
+    yt-dlp
+    ytmusicapi
   ]);
 
   runtimeDeps =
@@ -59,6 +73,7 @@ let
       wireplumber
       yt-dlp
     ]
+    ++ optionalTop "adw-gtk3"
     ++ optionalTop "brightnessctl"
     ++ optionalTop "cava"
     ++ optionalTop "ddcutil"
@@ -158,7 +173,7 @@ pkgs.stdenvNoCC.mkDerivation {
     # The source tree intentionally targets Arch, where helpers live under
     # /usr/bin. NixOS does not provide that layout. Patch only the packaged
     # copy and keep shebang lines intact.
-    find "$runtime/modules" "$runtime/services" "$runtime/defaults" "$runtime/scripts" \
+    find "$runtime" \
       -type f \( -name '*.qml' -o -name '*.js' -o -name '*.sh' -o -name '*.py' \) \
       -exec sed -i '1!s#/usr/bin/##g' {} +
 
@@ -167,6 +182,7 @@ pkgs.stdenvNoCC.mkDerivation {
       --prefix QML2_IMPORT_PATH : "${lib.makeSearchPath "lib/qt-6/qml" qmlDeps}" \
       --prefix QT_PLUGIN_PATH : "${lib.makeSearchPath "lib/qt-6/plugins" qmlDeps}" \
       ${materialSymbolsWrapperArg}
+      --set-default INIR_VENV "${pythonRuntime}" \
       --set-default INIR_SYSTEM_RUNTIME_DIR "$runtime" \
       --set-default INIR_FALLBACK_SYSTEM_RUNTIME_DIR "$runtime"
 

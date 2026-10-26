@@ -5,7 +5,7 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
   };
 
-  outputs = { nixpkgs, ... }:
+  outputs = { self, nixpkgs, ... }:
     let
       lib = nixpkgs.lib;
       systems = [
@@ -42,6 +42,18 @@
       # Conventional alias most Home Manager setups look for.
       homeManagerModules.default = homeModule;
       homeManagerModules.inir = homeModule;
+
+      overlays.default = final: _prev: {
+        inir = final.callPackage ./nix/package.nix { pkgs = final; };
+        inir-mascot = final.callPackage ./nix/mascot-package.nix { pkgs = final; };
+      };
+
+      templates.default = {
+        path = ./nix/template;
+        description = "A NixOS system with Niri and iNiR";
+      };
+
+      checks = forAllSystems (pkgs: { inir = self.packages.${pkgs.stdenv.hostPlatform.system}.inir; });
 
       formatter = forAllSystems (pkgs: pkgs.nixpkgs-fmt);
     };
