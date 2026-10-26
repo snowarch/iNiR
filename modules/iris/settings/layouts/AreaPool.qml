@@ -144,14 +144,23 @@ Item {
             readonly property bool onScreen: !pool.hidden && (page.area === pool.leaving
                 || page.area === pool.shown)
             anchors.fill: parent
-            asynchronous: !pool.settled
+            // Sync only once the component compiled: going sync mid-compile makes Qt reload it without the props (no `area`).
+            readonly property bool poolSettled: pool.settled
+            onPoolSettledChanged: page.syncOnceCompiled()
+            onProgressChanged: page.syncOnceCompiled()
+            function syncOnceCompiled(): void {
+                if (pool.settled && page.progress >= 1 && page.asynchronous) page.asynchronous = false
+            }
             visible: page.onScreen && page.status === Loader.Ready
             enabled: page.area === pool.shown && !pool.turning
             z: page.area === pool.shown ? 1 : 0
             // Only the pages moving are drawn as one texture each, and only while they move.
             layer.enabled: pool.turning && page.visible
             layer.smooth: true
-            Component.onCompleted: page.setSource(pool.urlFor(page.area), Object.assign({ area: page.area }, pool.propsFor(page.area)))
+            Component.onCompleted: {
+                page.asynchronous = !pool.settled
+                page.setSource(pool.urlFor(page.area), Object.assign({ area: page.area }, pool.propsFor(page.area)))
+            }
             onStatusChanged: if (page.status === Loader.Ready && page.area === pool.current) pool.settle()
             Connections {
                 target: page.item
