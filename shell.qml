@@ -798,18 +798,32 @@ ShellRoot {
             required property string modelData
             readonly property bool chosen: Config.ready && Plugins.ready && !root._familyPanelsSuspended
                 && (Config.options?.panelFamily ?? "ii") === family.modelData
+            readonly property bool panelsWanted: family.chosen && GlobalStates.deferredPanelsReady
+            // A part gets its source the first time it's wanted and keeps it: a LazyLoader compiles its source as soon
+            // as it has one (every family's parts compiled before the first frame), and dropping the source would delete
+            // the component under a load still running. Going back to a family is instant.
+            property bool criticalUsed: false
+            property bool panelsUsed: false
+            onChosenChanged: if (family.chosen) family.criticalUsed = true
+            onPanelsWantedChanged: if (family.panelsWanted) family.panelsUsed = true
+            Component.onCompleted: {
+                family.criticalUsed = family.criticalUsed || family.chosen
+                family.panelsUsed = family.panelsUsed || family.panelsWanted
+            }
 
+            // loading reads the source too: neither runtime starts a load asked for before its component came
             LazyLoader {
-                loading: family.chosen
-                activeAsync: family.chosen
-                source: Plugins.part(family.modelData, "critical")
+                id: criticalParts
+                source: family.criticalUsed ? Plugins.part(family.modelData, "critical") : ""
+                loading: family.chosen && criticalParts.source !== ""
+                activeAsync: family.chosen && criticalParts.source !== ""
             }
 
             LazyLoader {
-                readonly property bool enabled: family.chosen && GlobalStates.deferredPanelsReady
-                loading: enabled
-                activeAsync: enabled
-                source: Plugins.part(family.modelData, "panels")
+                id: panelParts
+                source: family.panelsUsed ? Plugins.part(family.modelData, "panels") : ""
+                loading: family.panelsWanted && panelParts.source !== ""
+                activeAsync: family.panelsWanted && panelParts.source !== ""
             }
         }
     }
@@ -914,6 +928,8 @@ ShellRoot {
             return
         }
 
+        root._warmFamily(targetFamily)
+
         // Keep old and new layer-shell trees out of the same Wayland dispatch.
         if (!(Config.options?.familyTransitionAnimation ?? true)) {
             _transitionInProgress = true
@@ -928,6 +944,17 @@ ShellRoot {
         GlobalStates.familyTransitionTarget = targetFamily
         GlobalStates.familyTransitionDirection = direction
         GlobalStates.familyTransitionActive = true
+    }
+
+    // The target's parts compile in the loader thread while the old family leaves, and the swap waits for them: its
+    // loaders would compile them on the GUI thread, a stall on a family not used yet this session.
+    property var _familyWarm: []
+    property int _familyWarmWaits: 0
+    readonly property bool _familyWarming: root._familyWarm.some(component => component.status === Component.Loading)
+    function _warmFamily(family: string): void {
+        root._familyWarmWaits = 0
+        root._familyWarm = ["critical", "panels"].map(part => Plugins.part(family, part)).filter(url => url !== "")
+            .map(url => Qt.createComponent(url, Component.Asynchronous))
     }
 
     function _restartIntoFamily(targetFamily: string): void {
@@ -996,8 +1023,15 @@ ShellRoot {
         interval: 120
         repeat: false
         onTriggered: {
+            if (root._familyWarming && root._familyWarmWaits++ < 100) {
+                familyLoadSettleTimer.interval = 50
+                familyLoadSettleTimer.restart()
+                return
+            }
+            familyLoadSettleTimer.interval = 120
             const directSwap = !root._transitionUsesOverlay
             root._familyPanelsSuspended = false
+            root._familyWarm = []
             root._familySwapTarget = ""
             if (directSwap) {
                 root._transitionInProgress = false
