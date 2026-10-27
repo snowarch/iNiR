@@ -134,7 +134,8 @@ restart_shell_and_verify() {
     local timeout="${1:-30}" since out deadline
     command -v systemctl >/dev/null 2>&1 && systemctl --user cat inir.service >/dev/null 2>&1 || return 2
     since=$(date +%s)
-    systemctl --user restart inir.service >/dev/null 2>&1 || return 2
+    # --no-block: the unit is Type=dbus, so a shell that never loads would hold restart until its start timeout
+    systemctl --user restart --no-block inir.service >/dev/null 2>&1 || return 2
     command -v journalctl >/dev/null 2>&1 || return 2
     deadline=$((SECONDS + timeout))
     while (( SECONDS < deadline )); do
