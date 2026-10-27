@@ -9,3 +9,13 @@ WInterfacePage 1.0 WInterfacePage.qml
 WModulesPage 1.0 WModulesPage.qml
 WWaffleStylePage 1.0 WWaffleStylePage.qml
 WAboutPage 1.0 WAboutPage.qml
+WAiPage 1.0 WAiPage.qml
+WAutostartPage 1.0 WAutostartPage.qml
+WEffectsPage 1.0 WEffectsPage.qml
+WGowallPage 1.0 WGowallPage.qml
+WHubPage 1.0 WHubPage.qml
+WMascotPage 1.0 WMascotPage.qml
+WMonitorVisibilityPage 1.0 WMonitorVisibilityPage.qml
+WShellLayoutPage 1.0 WShellLayoutPage.qml
+WShortcutsPage 1.0 WShortcutsPage.qml
+WWorkspaceStripPage 1.0 WWorkspaceStripPage.qml

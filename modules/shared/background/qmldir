@@ -1,3 +1,4 @@
 module qs.modules.shared.background
 Backdrop 1.0 Backdrop.qml
 Background 1.0 Background.qml
+WebWallpaperHost 1.0 WebWallpaperHost.qml
