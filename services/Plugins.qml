@@ -76,8 +76,8 @@ Singleton {
     }
 
     // The folder model answers only once the shell is up, and Config waits on this before its first read (1.3 s at
-    // login): HubScan.qml, the scanner index `inir hub` writes for what it linked, names every plugin folder already,
-    // so their plugin.json are read here at once; the model below follows later installs.
+    // login): plugins.list, which `inir hub` rewrites on every link, names every plugin folder already, so their
+    // plugin.json are read here at once; the model below follows later installs.
     FileView {
         id: probe
         preload: false
@@ -91,11 +91,8 @@ Singleton {
     }
     Component.onCompleted: {
         const found = new Set()
-        for (const index of ["HubScan.qml"])
-            for (const line of root._readNow(index).split("\n")) {
-                const m = /^import qs\.modules\.([A-Za-z0-9_]+)/.exec(line) // V4 has no matchAll
-                if (m) found.add(m[1])
-            }
+        for (const line of root._readNow("plugins.list").split("\n"))
+            if (/^[A-Za-z0-9_]+$/.test(line.trim())) found.add(line.trim())
         for (const folder of found) {
             const raw = root._readNow(`modules/${folder}/plugin.json`)
             if (raw.length > 0) root._take(folder, raw)
