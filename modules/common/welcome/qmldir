@@ -1,0 +1,14 @@
+singleton WelcomeHost 1.0 WelcomeHost.qml
+WelcomeActionButton 1.0 WelcomeActionButton.qml
+WelcomeChoiceRow 1.0 WelcomeChoiceRow.qml
+WelcomeFeaturesPage 1.0 WelcomeFeaturesPage.qml
+WelcomeFill 1.0 WelcomeFill.qml
+WelcomeIntroPage 1.0 WelcomeIntroPage.qml
+WelcomeKey 1.0 WelcomeKey.qml
+WelcomeLayoutPage 1.0 WelcomeLayoutPage.qml
+WelcomeListAction 1.0 WelcomeListAction.qml
+WelcomeMetric 1.0 WelcomeMetric.qml
+WelcomeReadyPage 1.0 WelcomeReadyPage.qml
+WelcomeSegmentedControl 1.0 WelcomeSegmentedControl.qml
+WelcomeText 1.0 WelcomeText.qml
+WelcomeThemePage 1.0 WelcomeThemePage.qml
