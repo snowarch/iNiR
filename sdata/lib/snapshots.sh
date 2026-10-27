@@ -130,9 +130,10 @@ show_snapshots() {
 ###############################################################################
 # Restore snapshot
 ###############################################################################
-# keep_repo=true leaves the checkout where it is: an automatic rollback must not reset someone's clone.
+# auto=true is the update undoing itself: the checkout stays where it is (never reset someone's clone)
+# and the caller restarts the shell and checks it loaded.
 restore_snapshot() {
-    local snapshot_id="$1" keep_repo="${2:-false}"
+    local snapshot_id="$1" auto="${2:-false}"
     local snapshot_dir="${SNAPSHOTS_DIR}/${snapshot_id}"
     local installed_strategy
     installed_strategy=$(get_installed_update_strategy)
@@ -217,7 +218,7 @@ restore_snapshot() {
     fi
     
     # Checkout git to that commit (stay on branch if possible)
-    if [[ "$keep_repo" != true && -n "$commit_before" && "$commit_before" != "unknown" ]]; then
+    if [[ "$auto" != true && -n "$commit_before" && "$commit_before" != "unknown" ]]; then
         log_info "Checking out commit ${commit_before}..."
         # Try to find a branch containing this commit to avoid detached HEAD
         local branch=$(git -C "$REPO_ROOT" branch --contains "$commit_before" 2>/dev/null | grep -v "HEAD detached" | head -1 | sed 's/^[* ]*//')
@@ -232,7 +233,8 @@ restore_snapshot() {
     # Update version tracking
     local version=$(jq -r '.version_before // "unknown"' "$meta" 2>/dev/null || echo "unknown")
     set_installed_version "$version" "$commit_before" "rollback"
-    
+    [[ "$auto" == true ]] && return 0
+
     # Restart shell (only if we have access to the session)
     if [[ -n "$NIRI_SOCKET" ]] || [[ -n "$WAYLAND_DISPLAY" ]]; then
         log_info "Restarting shell..."
@@ -252,7 +254,8 @@ restore_snapshot() {
     fi
 }
 
-# The snapshot this update took before pulling (its commit_after is the checkout now), restored in place.
+# The snapshot this update took before pulling (its commit_after is the checkout now), restored in place
+# and the shell restarted on it: 0 only when the old version loaded again.
 restore_update_snapshot() {
     local head snap after
     head=$(git -C "$REPO_ROOT" rev-parse HEAD 2>/dev/null) || return 1
@@ -260,7 +263,8 @@ restore_update_snapshot() {
         [[ "$(jq -r '.reason' "${SNAPSHOTS_DIR}/${snap}/snapshot.json" 2>/dev/null)" == update ]] || continue
         after=$(jq -r '.commit_after' "${SNAPSHOTS_DIR}/${snap}/snapshot.json" 2>/dev/null)
         [[ "$(git -C "$REPO_ROOT" rev-parse -q --verify "${after}^{commit}" 2>/dev/null)" == "$head" ]] || return 1
-        restore_snapshot "$snap" true
+        restore_snapshot "$snap" true || return 1
+        restart_shell_and_verify 30 >/dev/null
         return
     done
     return 1
