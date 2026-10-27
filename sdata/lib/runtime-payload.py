@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -149,7 +150,8 @@ class Payload:
         if subdir is None:
             self.retire_checkout(target)
         # protect rules go first: rsync takes the first rule that matches, and modules/ is included below
-        protect = ['--filter=P /' + link for link in self.hub_links(target)] if subdir is None else []
+        protect = ['--filter=P /' + re.sub(r'([*?\[\\])', r'\\\1', link)
+                   for link in self.hub_links(target)] if subdir is None else []
         args = ['rsync', '-a', *protect, *self.filters(subdir or '')]
         if delete:
             args += ['--delete']
