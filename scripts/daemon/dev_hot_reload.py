@@ -144,7 +144,8 @@ def main():
     wd_dirs = {}
 
     def add_tree(top):
-        for current, subdirs, _ in os.walk(top):
+        # the families are linked into modules/ from inir-hub
+        for current, subdirs, _ in os.walk(top, followlinks=True):
             subdirs[:] = [d for d in subdirs if not SKIP.search(os.path.join(current, d))]
             wd = libc.inotify_add_watch(fd, current.encode(), IN_CLOSE_WRITE | IN_MOVED_TO | IN_CREATE)
             if wd >= 0:
