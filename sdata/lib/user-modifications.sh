@@ -109,6 +109,7 @@ detect_user_additions() {
     } | while IFS= read -r file; do
         local rel_path="${file#$target_dir/}"
         [[ "$rel_path" == .* ]] && continue
+        [[ "$rel_path" == HubScan.qml ]] && continue  # inir hub's index, rewritten by it
         grep -qxF "$rel_path" "$manifest_paths" && continue
         # Shipped but deliberately not installed (runtime exclusions, repo-link
         # targets that are the checkout itself) — ours, not the user's.

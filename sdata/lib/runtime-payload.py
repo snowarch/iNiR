@@ -128,6 +128,17 @@ class Payload:
         shutil.move(str(git), str(dest))
         print(f"Moved the installed copy's old .git to {dest}; updates now come from {self.root}")
 
+    def hub_links(self, target):
+        """Links under modules/ the payload never put there (`inir hub` plugins): --delete leaves them."""
+        links = []
+        for base, dirs, files in os.walk(Path(target) / 'modules'):
+            for name in dirs + files:
+                path = Path(base) / name
+                rel = path.relative_to(target)
+                if path.is_symlink() and not (self.root / rel).exists():
+                    links.append(rel.as_posix())
+        return links
+
     def sync(self, target, *, subdir=None, delete=False, out_format=None):
         # Validate before writing; rsync preserves safe relative links, never dereferences them.
         list(self.paths())
@@ -137,7 +148,9 @@ class Payload:
             raise ValueError('destination must be a separate installed directory')
         if subdir is None:
             self.retire_checkout(target)
-        args = ['rsync', '-a', *self.filters(subdir or '')]
+        # protect rules go first: rsync takes the first rule that matches, and modules/ is included below
+        protect = ['--filter=P /' + link for link in self.hub_links(target)] if subdir is None else []
+        args = ['rsync', '-a', *protect, *self.filters(subdir or '')]
         if delete:
             args += ['--delete']
         if out_format:

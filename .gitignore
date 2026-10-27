@@ -214,3 +214,6 @@ assets/fonts/.uuid
 # local tooling, never shipped
 /dev
 /GNUmakefile
+
+# written in the runtime by inir hub
+/HubScan.qml
