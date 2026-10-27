@@ -15,7 +15,8 @@ Singleton {
 
     property var manifests: ({})
     property int _read: 0
-    readonly property bool ready: folders.status === FolderListModel.Ready && root._read >= folders.count
+    property bool _seeded: false
+    readonly property bool ready: root._seeded || (folders.status === FolderListModel.Ready && root._read >= folders.count)
     readonly property var families: Object.keys(root.manifests).filter(id => root.manifests[id].kind === "family").sort()
     readonly property string active: String(Config.options?.panelFamily ?? "ii")
 
@@ -70,6 +71,33 @@ Singleton {
             root.manifests = next
         }
         root._read++
+    }
+
+    // The folder model answers only once the shell is up, and Config waits on this before its first read (1.3 s at
+    // login): the scanner indexes name every plugin folder already (PluginScan.qml for the tree, HubScan.qml for what
+    // `inir hub` linked), so their plugin.json are read here at once; the model below follows later installs.
+    FileView {
+        id: probe
+        preload: false
+        blockAllReads: true
+        printErrors: false
+    }
+    function _readNow(file: string): string {
+        probe.path = Quickshell.shellPath(file)
+        probe.reload()
+        return String(probe.text() ?? "")
+    }
+    Component.onCompleted: {
+        const found = new Set()
+        for (const index of ["PluginScan.qml", "HubScan.qml"])
+            for (const m of root._readNow(index).matchAll(/^import qs\.modules\.([A-Za-z0-9_]+)/gm)) found.add(m[1])
+        for (const folder of found) {
+            const raw = root._readNow(`modules/${folder}/plugin.json`)
+            if (raw.length > 0) root._take(folder, raw)
+        }
+        probe.path = ""
+        root._read = 0
+        root._seeded = Object.keys(root.manifests).length > 0
     }
 
     FolderListModel {
