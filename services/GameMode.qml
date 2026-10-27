@@ -244,6 +244,8 @@ Singleton {
     FileView {
         id: stateReader
         path: root._stateFile
+        // No file yet is the usual case, handled in onLoadFailed.
+        printErrors: false
 
         onLoaded: {
             const content = stateReader.text()
