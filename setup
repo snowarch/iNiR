@@ -3036,6 +3036,7 @@ run_update() {
     _write_update_status "success"
 
     # Restart shell (only if we have access to the session)
+    local not_loaded=""
     if [[ -n "$NIRI_SOCKET" ]] || [[ -n "$WAYLAND_DISPLAY" ]]; then
         _step_phase_start 7 "Restarting shell"
         if inir_user_service_is_masked; then
@@ -3044,14 +3045,16 @@ run_update() {
             restart_shell_and_verify 30
             case $? in
                 0) _step_phase_done "Shell restarted on the new version" ;;
-                1) _step_phase_done "The shell did not load the new version"
+                1) _step_phase_fail "The shell did not load the new version"
                    # the old shell reads this when it starts again and shows it on its update indicator
                    _report_update_failure 24 "The new version did not load, so iNiR went back to the one you had. inir update tries again"
                    if [[ "$src_real" != "$tgt_real" ]] && restore_update_snapshot; then
                        tui_warn "Went back to the version you had; your checkout keeps the new one for the next try"
+                       not_loaded="iNiR went back to the version you had. inir update tries again."
                    else
                        _report_update_failure 24 "The new version did not load. Run: ./setup rollback"
                        tui_warn "Run './setup rollback' to go back to the previous version"
+                       not_loaded="Run ./setup rollback to go back to the version you had."
                    fi ;;
                 *) _step_phase_done "Shell restart requested; 'inir logs' shows how it went" ;;
             esac
@@ -3076,6 +3079,10 @@ run_update() {
     show_session_impact_notices
 
     echo ""
+    if [[ -n "$not_loaded" ]]; then
+        tui_alert "error" "Update not applied" "The new version did not load. ${not_loaded}"
+        return 24
+    fi
     show_update_completion "$repo_ver" "$repo_commit"
 }
 
