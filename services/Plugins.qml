@@ -90,7 +90,10 @@ Singleton {
     Component.onCompleted: {
         const found = new Set()
         for (const index of ["PluginScan.qml", "HubScan.qml"])
-            for (const m of root._readNow(index).matchAll(/^import qs\.modules\.([A-Za-z0-9_]+)/gm)) found.add(m[1])
+            for (const line of root._readNow(index).split("\n")) {
+                const m = /^import qs\.modules\.([A-Za-z0-9_]+)/.exec(line) // V4 has no matchAll
+                if (m) found.add(m[1])
+            }
         for (const folder of found) {
             const raw = root._readNow(`modules/${folder}/plugin.json`)
             if (raw.length > 0) root._take(folder, raw)
