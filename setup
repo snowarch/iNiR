@@ -110,6 +110,7 @@ source ./sdata/lib/snapshots.sh
 source ./sdata/lib/uninstall.sh
 source ./sdata/lib/user-modifications.sh
 source ./sdata/lib/cli-binary.sh
+source ./sdata/lib/hub-plugins.sh
 
 prevent_sudo_or_root
 
@@ -2695,6 +2696,23 @@ run_update() {
         fi
     fi
 
+    # The base carries no family (sdata/lib/hub-plugins.sh): the binary and every plugin this person has are in
+    # hand before anything is synced, or nothing changes.
+    local hub_plugins=() hub_runtime="${XDG_CONFIG_HOME}/quickshell/inir" needed cli_fetched=false
+    [[ ! -f "$hub_runtime/shell.qml" && -f "${XDG_CONFIG_HOME}/quickshell/ii/shell.qml" ]] && hub_runtime="${XDG_CONFIG_HOME}/quickshell/ii"
+    if [[ "$(realpath "$REPO_ROOT")" != "$(realpath "$hub_runtime" 2>/dev/null)" ]]; then
+        tui_info "Fetching your families from the hub..."
+        install_inir_cli_binary && cli_fetched=true
+        # shellcheck disable=SC2086
+        if ! needed="$(hub_plugins_needed "$hub_runtime" "$REPO_ROOT")" || ! hub_fetch_plugins "$(get_repo_version)" $needed; then
+            _report_update_failure 25 "Could not get your families from the hub, so nothing changed. inir update tries again"
+            tui_error "Could not get your families from the hub, so nothing changed. inir update tries again once online"
+            return 25
+        fi
+        mapfile -t hub_plugins <<<"$needed"
+        [[ -n "${hub_plugins[0]:-}" ]] || hub_plugins=()
+    fi
+
     # Sync files
     local repo_ver=$(get_repo_version)
     local repo_commit=$(get_repo_commit)
@@ -2798,6 +2816,14 @@ run_update() {
     # Remove orphan files left from previous versions
     cleanup_orphans "$II_TARGET" "${II_TARGET}/.inir-manifest" || return 1
 
+    # Already in the cache: this only fails on a full disk or something sitting at a plugin's path
+    if ((${#hub_plugins[@]})) && ! hub_install_plugins "${hub_plugins[@]}"; then
+        _report_update_failure 25 "Your families could not be installed, so iNiR went back to the version you had"
+        tui_error "Your families could not be installed; going back to the version you had"
+        restore_update_snapshot >/dev/null || tui_warn "Run './setup rollback' to go back to the previous version"
+        return 25
+    fi
+
     # Fix runtime command permissions without turning test modules into executables.
     find "$II_TARGET/scripts" \( -name "*.sh" -o -name "*.fish" -o \( -name "*.py" ! -name "test-*.py" \) \) -exec chmod +x {} \; 2>/dev/null || true
     [[ -f "${II_TARGET}/setup" ]] && chmod +x "${II_TARGET}/setup"
@@ -2884,7 +2910,7 @@ run_update() {
     repair_update_owned_state false
 
     _step_phase_header 4 "Finalizing"
-    install_inir_cli_binary || tui_warn "Could not fetch the inir binary; the Hub needs it (inir update tries again)"
+    $cli_fetched || install_inir_cli_binary || tui_warn "Could not fetch the inir binary; the Hub needs it (inir update tries again)"
     if has_usable_systemd_user_manager; then
         if inir_user_service_is_masked; then
             tui_warn "User inir.service is masked; leaving it unchanged (restore with: inir service install && inir service enable)"

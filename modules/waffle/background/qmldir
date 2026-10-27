@@ -1,4 +1,0 @@
-module qs.modules.waffle.background
-WaffleBackground 1.0 WaffleBackground.qml
-WaffleBackgroundClock 1.0 WaffleBackgroundClock.qml
-WaffleShellEditHud 1.0 WaffleShellEditHud.qml

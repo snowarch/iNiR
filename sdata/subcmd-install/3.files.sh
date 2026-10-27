@@ -198,6 +198,17 @@ case "${SKIP_QUICKSHELL}" in
       fi
     fi
 
+    # The base carries no family: the binary brings them from the hub (sdata/lib/hub-plugins.sh)
+    install_inir_cli_binary || log_warning "Could not fetch the inir binary; the Hub needs it"
+    # shellcheck disable=SC2086
+    if hub_needed="$(hub_plugins_needed "$II_TARGET" "$II_SOURCE" all-families)" \
+        && hub_fetch_plugins "$(get_repo_version)" $hub_needed && hub_install_plugins $hub_needed; then
+      log_success "Families installed from the hub"
+    else
+      log_error "Could not install the families from the hub, so the shell has nothing to show. Run ./setup install again once online"
+      return 1
+    fi
+
     # Determine supervisor path once; the shared reconciler owns the service file.
     if [[ "$(inir_supervisor)" == systemd ]]; then
       _use_systemd=true
@@ -1116,7 +1127,6 @@ if [[ -n "${II_TARGET}" && -d "${II_TARGET}" ]]; then
   log_success "Version tracking configured"
 fi
 
-install_inir_cli_binary || log_warning "Could not fetch the inir binary; the Hub needs it (inir update tries again)"
 
 #####################################################################################
 # Final status checks

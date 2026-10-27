@@ -1,9 +1,0 @@
-module qs.modules.waffle.actionCenter
-singleton ActionCenterContext 1.0 ActionCenterContext.qml
-WaffleActionCenter 1.0 WaffleActionCenter.qml
-ActionCenterContent 1.0 ActionCenterContent.qml
-ExpandableChoiceButton 1.0 ExpandableChoiceButton.qml
-HeaderRow 1.0 HeaderRow.qml
-MediaPaneContent 1.0 MediaPaneContent.qml
-SectionText 1.0 SectionText.qml
-ToggleItem 1.0 ToggleItem.qml

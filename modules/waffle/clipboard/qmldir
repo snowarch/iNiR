@@ -1,4 +1,0 @@
-module qs.modules.waffle.clipboard
-WaffleClipboard 1.0 WaffleClipboard.qml
-WaffleClipboardContent 1.0 WaffleClipboardContent.qml
-WaffleClipboardItem 1.0 WaffleClipboardItem.qml

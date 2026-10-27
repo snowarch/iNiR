@@ -1,6 +1,0 @@
-module qs.modules.waffle.altSwitcher
-
-WaffleAltSwitcher 1.0 WaffleAltSwitcher.qml
-WaffleAltSwitcherContent 1.0 WaffleAltSwitcherContent.qml
-WaffleAltSwitcherTile 1.0 WaffleAltSwitcherTile.qml
-WaffleAltSwitcherThumbnail 1.0 WaffleAltSwitcherThumbnail.qml

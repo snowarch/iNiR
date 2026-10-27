@@ -1,5 +1,0 @@
-module qs.modules.waffle.taskview
-WaffleTaskView 1.0 WaffleTaskView.qml
-WaffleTaskViewContent 1.0 WaffleTaskViewContent.qml
-WorkspaceThumbnail 1.0 WorkspaceThumbnail.qml
-WindowThumbnail 1.0 WindowThumbnail.qml

@@ -126,10 +126,7 @@
     "scripts/colors/vscode_themegen/vscode_themegen",
     "scripts/colors/opencode_themegen/opencode_themegen",
     "scripts/colors/system24_themegen/system24_themegen",
-    "scripts/colors/zed_themegen/zed_themegen",
-    "modules/iris/DESIGN.md",
-    "modules/iris/DECISIONS.md",
-    "modules/iris/SYSTEM.md"
+    "scripts/colors/zed_themegen/zed_themegen"
   ],
   "excludedDirectorySuffixes": {
     "assets/images/mascot": [
