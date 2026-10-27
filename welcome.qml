@@ -45,6 +45,7 @@ Scope {
     readonly property var familyWelcome: familyWelcomeLoader.item
     readonly property var familyLook: root.familyWelcome
     readonly property bool customSteps: (root.familyWelcome?.pages?.length ?? 0) === 3
+    property var _familyEntered: ({})
 
     // Onboarding follows the selected family, independently of ii's Global Style.
     readonly property color welcomeSurfaceRaised: root.familyLook?.welcomeSurfaceRaised ?? Appearance.m3colors.m3surfaceContainer
@@ -595,8 +596,12 @@ Scope {
                 root.applyPerformancePreset(root.selectedPerformancePreset)
             }
         }
-        if (typeof root.familyWelcome?.entered === "function")
+        // once per family and step in a run: switching families and back must not reapply its defaults
+        const entry = `${root.family}:${root.currentStep}`
+        if (typeof root.familyWelcome?.entered === "function" && !root._familyEntered[entry]) {
+            root._familyEntered[entry] = true
             root.familyWelcome.entered(root.currentStep)
+        }
     }
 
     // ─── Entry/exit animation state (gate pattern) ───
