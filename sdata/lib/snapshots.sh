@@ -50,6 +50,10 @@ create_snapshot() {
     if [[ -f "${XDG_CONFIG_HOME}/niri/config.kdl" ]]; then
         cp "${XDG_CONFIG_HOME}/niri/config.kdl" "${snapshot_dir}/niri-config.kdl"
     fi
+    # migrations and the update edit the split files too
+    if [[ -d "${XDG_CONFIG_HOME}/niri/config.d" ]]; then
+        cp -a "${XDG_CONFIG_HOME}/niri/config.d" "${snapshot_dir}/niri-config.d"
+    fi
     
     # Copy migrations state
     if [[ -f "${INIR_CONFIG_DIR}/migrations.json" ]]; then
@@ -126,8 +130,9 @@ show_snapshots() {
 ###############################################################################
 # Restore snapshot
 ###############################################################################
+# keep_repo=true leaves the checkout where it is: an automatic rollback must not reset someone's clone.
 restore_snapshot() {
-    local snapshot_id="$1"
+    local snapshot_id="$1" keep_repo="${2:-false}"
     local snapshot_dir="${SNAPSHOTS_DIR}/${snapshot_id}"
     local installed_strategy
     installed_strategy=$(get_installed_update_strategy)
@@ -175,6 +180,12 @@ restore_snapshot() {
         rsync -a --delete "${snapshot_dir}/ii/" "${XDG_CONFIG_HOME}/quickshell/inir/"
     fi
     
+    # ~/.local/bin/inir is a copy of the runtime's own launcher: it goes back with it
+    local bin_launcher="${XDG_BIN_HOME:-$HOME/.local/bin}/inir"
+    if [[ -f "$bin_launcher" && ! -L "$bin_launcher" && -f "$runtime_launcher" ]]; then
+        install -m 0755 "$runtime_launcher" "$bin_launcher"
+    fi
+
     # Restore user config
     if [[ -f "${snapshot_dir}/config.json" ]]; then
         log_info "Restoring user config..."
@@ -186,6 +197,10 @@ restore_snapshot() {
     if [[ -f "${snapshot_dir}/niri-config.kdl" ]]; then
         log_info "Restoring niri config..."
         cp "${snapshot_dir}/niri-config.kdl" "${XDG_CONFIG_HOME}/niri/config.kdl"
+    fi
+    if [[ -d "${snapshot_dir}/niri-config.d" ]]; then
+        mkdir -p "${XDG_CONFIG_HOME}/niri/config.d"
+        cp -a "${snapshot_dir}/niri-config.d/." "${XDG_CONFIG_HOME}/niri/config.d/"
     fi
     
     # Restore migrations state
@@ -202,7 +217,7 @@ restore_snapshot() {
     fi
     
     # Checkout git to that commit (stay on branch if possible)
-    if [[ -n "$commit_before" && "$commit_before" != "unknown" ]]; then
+    if [[ "$keep_repo" != true && -n "$commit_before" && "$commit_before" != "unknown" ]]; then
         log_info "Checking out commit ${commit_before}..."
         # Try to find a branch containing this commit to avoid detached HEAD
         local branch=$(git -C "$REPO_ROOT" branch --contains "$commit_before" 2>/dev/null | grep -v "HEAD detached" | head -1 | sed 's/^[* ]*//')
@@ -235,6 +250,20 @@ restore_snapshot() {
         tui_info "Run: inir start (in your Niri session)"
         tui_success "Snapshot restored"
     fi
+}
+
+# The snapshot this update took before pulling (its commit_after is the checkout now), restored in place.
+restore_update_snapshot() {
+    local head snap after
+    head=$(git -C "$REPO_ROOT" rev-parse HEAD 2>/dev/null) || return 1
+    for snap in $(list_snapshots); do
+        [[ "$(jq -r '.reason' "${SNAPSHOTS_DIR}/${snap}/snapshot.json" 2>/dev/null)" == update ]] || continue
+        after=$(jq -r '.commit_after' "${SNAPSHOTS_DIR}/${snap}/snapshot.json" 2>/dev/null)
+        [[ "$(git -C "$REPO_ROOT" rev-parse -q --verify "${after}^{commit}" 2>/dev/null)" == "$head" ]] || return 1
+        restore_snapshot "$snap" true
+        return
+    done
+    return 1
 }
 
 ###############################################################################

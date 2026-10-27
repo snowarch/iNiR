@@ -128,7 +128,7 @@ cleanup_old_backups() {
 #####################################################################################
 
 # Restart inir.service and confirm from its own log that the new files loaded: 0 loaded, 1 failed (errors printed), 2 not confirmed.
-# Quickshell 0.3 logs "Configuration Loaded", or "Failed to load configuration" followed by "error in …" / "caused by …" lines.
+# Quickshell 0.3 and qs-rs log "Configuration Loaded", or "Failed to load configuration" followed by why.
 # The service owns the shell: it is never killed by hand or started twice (KillMode=process keeps this script alive).
 restart_shell_and_verify() {
     local timeout="${1:-30}" since out deadline
@@ -140,10 +140,17 @@ restart_shell_and_verify() {
     while (( SECONDS < deadline )); do
         out=$(journalctl --user -u inir.service --since "@${since}" -o cat --no-pager 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g')
         if grep -q "Failed to load configuration" <<<"$out"; then
-            grep -E "(error in|caused by) " <<<"$out" | sed 's/^[[:space:]]*[A-Z]*:[[:space:]]*/  /' | head -5
+            sleep 1
+            journalctl --user -u inir.service --since "@${since}" -o cat --no-pager 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g' \
+                | sed -n '/Failed to load configuration/,$p' | sed '1d; s/^[[:space:]]*[A-Z]*:[[:space:]]*/  /' | head -5
             return 1
         fi
         grep -q "Configuration Loaded" <<<"$out" && return 0
+        # a runtime that dies before it loads anything (a crash, a missing library) leaves the unit failed
+        if systemctl --user is-failed --quiet inir.service; then
+            tail -n 5 <<<"$out" | sed 's/^[[:space:]]*[A-Z]*:[[:space:]]*/  /'
+            return 1
+        fi
         sleep 1
     done
     return 2

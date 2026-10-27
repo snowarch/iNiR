@@ -403,11 +403,12 @@ EOF
 # Executable of the running inir shell (Quickshell or qs-rs), so the windows and commands inir
 # starts run on the same runtime as the shell.
 running_shell_qs() {
-    local run="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/quickshell" link pid exe
+    local run="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/quickshell" link pid exe comm
     for link in "$run"/by-pid/*; do
         pid="${link##*/}"
         [[ -e "$run/by-shell/inir/$(basename "$(readlink "$link")")" ]] || continue
-        [[ "$(cat "/proc/$pid/comm" 2>/dev/null)" == qs ]] || continue
+        comm="$(cat "/proc/$pid/comm" 2>/dev/null)"
+        [[ "$comm" == qs || "$comm" == inir-shell ]] || continue
         exe="$(readlink "/proc/$pid/exe" 2>/dev/null)" || continue
         exe="${exe% (deleted)}"
         [[ -x "$exe" ]] && { printf '%s\n' "$exe"; return 0; }

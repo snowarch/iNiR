@@ -2366,6 +2366,49 @@ refresh_sddm_theme_on_update() {
     fi
 }
 
+# Packages the new version needs, installed the way this run allows: asked, pkexec, or a hint.
+_update_dependencies() {
+    _step_phase_header 5 "Checking dependencies"
+    check_dependencies
+    if [[ ${#doctor_missing_deps[@]} -gt 0 ]]; then
+        tui_warn "Missing packages detected: ${doctor_missing_deps[*]}"
+        if [[ "${SKIP_ALLDEPS:-false}" == true || "$(read_installed_version_field '.dependencies' setup)" == user ]]; then
+            tui_info "--skip-deps: packages are yours to manage, so none are installed"
+        elif $ask; then
+            # Interactive mode: offer to install
+            if tui_confirm "Install missing packages now?"; then
+                detect_distro
+                SKIP_SYSUPDATE=true
+                ONLY_MISSING_DEPS="${doctor_missing_deps[*]}"
+                if source ./sdata/subcmd-install/1.deps-router.sh; then
+                    tui_success "Dependencies installed"
+                else
+                    tui_warn "Some packages could not be installed; the update continues and 'inir doctor' retries them"
+                fi
+            else
+                tui_info "Skipped dependency installation"
+            fi
+        elif can_elevate; then
+            # Non-interactive mode but can elevate (pkexec available) — install via graphical auth
+            tui_info "Installing missing packages via graphical authentication..."
+            detect_distro
+            SKIP_SYSUPDATE=true
+            ONLY_MISSING_DEPS="${doctor_missing_deps[*]}"
+            USE_ELEVATE=true  # Signal deps-router to use elevate() instead of sudo
+            if source ./sdata/subcmd-install/1.deps-router.sh; then
+                tui_success "Dependencies installed"
+            else
+                tui_warn "Some packages could not be installed; the update continues and 'inir doctor' retries them"
+            fi
+        else
+            # No way to elevate — just inform
+            tui_info "Run './setup doctor' to install missing packages"
+        fi
+    else
+        tui_success "All required commands available"
+    fi
+}
+
 run_update() {
     # Short-circuit to the simulated walkthrough — no git pull, no rsync,
     # no migrations, no shell restart. Useful for previewing the new TUI
@@ -2639,6 +2682,8 @@ run_update() {
                 fi
             fi
             repair_update_owned_state true
+            # a past update whose packages failed is finished here, not only by doctor
+            _update_dependencies
             # The binary has its own releases: an up-to-date shell still gets a newer one.
             install_inir_cli_binary || tui_warn "Could not fetch the inir binary; the Hub needs it (inir update tries again)"
             return 0
@@ -2912,46 +2957,7 @@ run_update() {
     #     [[ $new_plugins -gt 0 ]] && tui_success "Installed $new_plugins default WebApp plugin(s)"
     # fi
 
-    # Post-update: check for missing dependencies and offer to install them
-    _step_phase_header 5 "Checking dependencies"
-    check_dependencies
-    if [[ ${#doctor_missing_deps[@]} -gt 0 ]]; then
-        tui_warn "Missing packages detected: ${doctor_missing_deps[*]}"
-        if [[ "${SKIP_ALLDEPS:-false}" == true || "$(read_installed_version_field '.dependencies' setup)" == user ]]; then
-            tui_info "--skip-deps: packages are yours to manage, so none are installed"
-        elif $ask; then
-            # Interactive mode: offer to install
-            if tui_confirm "Install missing packages now?"; then
-                detect_distro
-                SKIP_SYSUPDATE=true
-                ONLY_MISSING_DEPS="${doctor_missing_deps[*]}"
-                if source ./sdata/subcmd-install/1.deps-router.sh; then
-                    tui_success "Dependencies installed"
-                else
-                    tui_warn "Some packages could not be installed; the update continues and 'inir doctor' retries them"
-                fi
-            else
-                tui_info "Skipped dependency installation"
-            fi
-        elif can_elevate; then
-            # Non-interactive mode but can elevate (pkexec available) — install via graphical auth
-            tui_info "Installing missing packages via graphical authentication..."
-            detect_distro
-            SKIP_SYSUPDATE=true
-            ONLY_MISSING_DEPS="${doctor_missing_deps[*]}"
-            USE_ELEVATE=true  # Signal deps-router to use elevate() instead of sudo
-            if source ./sdata/subcmd-install/1.deps-router.sh; then
-                tui_success "Dependencies installed"
-            else
-                tui_warn "Some packages could not be installed; the update continues and 'inir doctor' retries them"
-            fi
-        else
-            # No way to elevate — just inform
-            tui_info "Run './setup doctor' to install missing packages"
-        fi
-    else
-        tui_success "All required commands available"
-    fi
+    _update_dependencies
 
     # Run after dependency repair so newly installed providers get supervised
     # during the same update.
@@ -3039,7 +3045,14 @@ run_update() {
             case $? in
                 0) _step_phase_done "Shell restarted on the new version" ;;
                 1) _step_phase_done "The shell did not load the new version"
-                   tui_warn "Run './setup rollback' to go back to the previous version" ;;
+                   # the old shell reads this when it starts again and shows it on its update indicator
+                   _report_update_failure 24 "The new version did not load, so iNiR went back to the one you had. inir update tries again"
+                   if [[ "$src_real" != "$tgt_real" ]] && restore_update_snapshot; then
+                       tui_warn "Went back to the version you had; your checkout keeps the new one for the next try"
+                   else
+                       _report_update_failure 24 "The new version did not load. Run: ./setup rollback"
+                       tui_warn "Run './setup rollback' to go back to the previous version"
+                   fi ;;
                 *) _step_phase_done "Shell restart requested; 'inir logs' shows how it went" ;;
             esac
         elif [[ -x "${II_TARGET}/scripts/inir" ]]; then
