@@ -26,3 +26,5 @@ WidgetBlank 1.0 WidgetBlank.qml
 WidgetInputMask 1.0 WidgetInputMask.qml
 singleton DesktopWidgetOptions 1.0 DesktopWidgetOptions.qml
 WidgetOptionList 1.0 WidgetOptionList.qml
+# a plugin reads it by module: its own relative import would climb out of the store
+OrganicEdgeConfig 1.0 OrganicEdgeConfig.js

@@ -36,6 +36,8 @@ Singleton {
         // root: folder breaks that folder's qmldir for every later import of it.
         return file.length > 0 ? Qt.resolvedUrl(`../${manifest.provides}/${file}`).toString() : ""
     }
+    // A file of the base for a plugin to load by URL: a plugin's own `../` climbs out of wherever it is installed.
+    function baseUrl(file: string): string { return Qt.resolvedUrl(`../${file}`).toString() }
     function flag(id: string, name: string): bool { return Boolean(root.manifests[id]?.flags?.[name]) }
     // A setting the base honours for a plugin, read where the plugin keeps it (`settings`: { slot: { key, fallback } }):
     // its fallback when unset or empty, `otherwise` when the plugin keeps none.
