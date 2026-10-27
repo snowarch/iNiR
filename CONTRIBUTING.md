@@ -71,7 +71,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for a detailed breakdown. Key directories
 |-----------|-----------------|
 | `modules/` | UI components (30+ subdirs) |
 | `modules/common/` | Shared infrastructure — **high risk, be careful** |
-| `modules/waffle/` | Windows 11-style panel family |
+| `modules/<family>/` | Material, Waffle and iRiS: plugins from [inir-hub](https://github.com/snowarch/inir-hub), linked in; their code is contributed there |
 | `services/` | 70+ runtime singletons |
 | `scripts/` | CLI launcher, theming pipeline, helpers |
 | `sdata/` | Install/update lifecycle, migrations |
@@ -188,7 +188,6 @@ These files have hundreds of consumers — prefer add-only changes:
 - `modules/common/Config.qml` — all config read/write
 - `GlobalStates.qml` — panel visibility state
 - `services/Translation.qml` — all i18n strings
-- `modules/waffle/looks/Looks.qml` — all waffle modules
 
 ## Sync Groups
 

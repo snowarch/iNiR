@@ -39,7 +39,6 @@
 - [Services](SERVICES)
 - [Modules](MODULES)
 - [Architecture](ARCHITECTURE_OVERVIEW)
-- [Project map](PROJECT_MAP)
 - [Runtime](RUNTIME)
 - [Theming architecture](THEMING_ARCHITECTURE)
 - [Theming targets](THEMING_TARGETS)

@@ -1,286 +1,104 @@
 # iNiR Architecture
 
-> A complete desktop shell built on [Quickshell](https://quickshell.org/) for the [Niri](https://github.com/YaLTeR/niri) Wayland compositor.
+A desktop shell for the [Niri](https://github.com/YaLTeR/niri) Wayland compositor, written in QML. This repo is the
+base: the services, the kit, the surfaces every look shares, setup and update. The looks themselves (Material,
+Waffle, iRiS), their Designs, themes and widgets are plugins from [inir-hub](https://github.com/snowarch/inir-hub).
 
-**Version**: 2.33.0 · **Stack**: QML (Quickshell), Bash, Python, Go
+## The pieces
 
-Originally forked from [end-4/dots-hyprland](https://github.com/end-4/dots-hyprland) (illogical-impulse). iNiR is built and tested for Niri; legacy Hyprland compatibility paths remain in the tree but are not the primary supported/tested target.
+| Piece | Job |
+|---|---|
+| iNiR (this repo) | The base, in QML, plus setup and update |
+| [inir-hub](https://github.com/snowarch/inir-hub) | Every plugin: the three families, Designs, themes, widgets, web apps ([inir.space/hub](https://inir.space/hub)) |
+| [qs-rs](https://github.com/snowarch/qs-rs) | Quickshell rewritten in Rust; iNiR runs on stock Quickshell today |
+| [inir-accel](https://github.com/snowarch/inir-accel) | Rust stand-ins for the Python and Go helpers the shell spawns |
+| [inir-cli](https://github.com/snowarch/inir-cli) | The `inir` command, `inir hub` included |
 
----
+## How a start goes
 
-## Entry Point
+1. `shell.qml` (a `ShellRoot`) sets the Qt policy and starts the startup-critical singletons and IPC routers.
+2. `Config.ready` applies the theme and picks the family (`panelFamily`).
+3. That family's `critical` part draws the first frame (bar, background, dock).
+4. After that frame, `GlobalStates.deferredPanelsReady` loads its `panels` part; heavy surfaces load on demand
+   (`PanelLoader`, `DeferredPanelLoader`, `OnDemandPanelLoader`, gated by `enabledPanels`).
+5. Background services start staggered after the first paint.
 
-`shell.qml` → `ShellRoot` (Quickshell-specific root, not Item/Window).
+## Plugins
 
-Startup flow:
-1. Environment pragmas configure Qt/Quickshell policy.
-2. Startup-critical singletons and shell-wide IPC routers are materialized.
-3. `Config.ready` applies the current theme/icon theme and selects one family.
-4. The family's **critical host** renders first-frame surfaces (background/bar/dock for ii; bar/background/backdrop for Waffle; background/bar for iRiS).
-5. After the shell entry frame, `GlobalStates.deferredPanelsReady` enables the family wrapper and its full `Shell*PanelsImpl.qml` tree.
-6. Interaction-heavy panels use deferred/on-demand loaders, while background services are staggered after first paint.
-
-## Panel Families
-
-Three mutually exclusive UI families, switchable at runtime (`Super+Shift+W`):
-
-| | **Material ii** | **Waffle** | **iRiS** |
-|---|---|---|---|
-| Active when | `panelFamily === "ii"` | `panelFamily === "waffle"` | `panelFamily === "iris"` |
-| Visual tokens | `Appearance.*` | `Looks.*` | `IrisStyle.*` |
-| Global styles | material, cards, aurora, inir, angel, regalia, zzz, cookie, editorial | Waffle keeps its Fluent layout/tokens while `Looks` adapts shared global-style color/material semantics | iRiS owns its own presets and shareable full Themes through `IrisStyle` |
-| Bar | Top (or vertical; bar.appearanceStyle selects classic/islands/scenic/frame, pill, or m3) | Bottom (Win11 taskbar) | Island on any edge, or a full-width zoned bar |
-| App launcher | Overview | StartMenu with search | IrisPalette |
-| Right panel | SidebarRight | ActionCenter + NotificationCenter | IrisControlCenter |
-| Panels | ii (iiBar, iiDock, iiSidebarLeft, ...) | w (wBar, wStartMenu, wActionCenter, ... + shared ii panels) | iris (irisBar, irisBackground, irisPalette, irisControlCenter, ...) |
-
-Families are plugins: each folder under `modules/` with a `plugin.json` is one, and `services/Plugins.qml` lists
-them with the files each hands the base by name (`parts`). `shell.qml` never names a family; for the chosen one it
-loads the `critical` part first and the heavier `panels` part after `deferredPanelsReady`. Shared surfaces ask the
-same way for what a family draws on them (`Plugins.part(Plugins.active, "lockSurface")`, a widget face):
+A plugin is a folder with a `plugin.json`. A fresh install brings the three families from the hub, an update the
+plugins you already have; each goes into `~/.local/share/inir/plugins/<id>` and link each at its `provides` path (a family at `modules/<id>`);
+`services/Plugins.qml` lists them and hands out their files by name (a part the family doesn't declare comes
+back empty, and the base falls back):
 
 ```text
-shell.qml -> Plugins.part(family, "critical")    e.g. modules/iris/critical/ShellIrisCriticalPanels.qml
-shell.qml -> Plugins.part(family, "panels")      e.g. modules/iris/ShellIrisPanelsImpl.qml
+shell.qml        -> Plugins.part(family, "critical")      first frame
+shell.qml        -> Plugins.part(family, "panels")        everything else
+settings.qml     -> Plugins.part(family, "settingsApp")   its Settings window (iRiS keeps Settings in the shell)
+welcome.qml      -> Plugins.part(family, "welcome")       its own steps in the first-run wizard
+shared surfaces  -> Plugins.part(family, "lockSurface")   what a family draws on a shared surface
 ```
 
-Settings belongs to a family too. `settingsApp` is its window (`settings.qml` loads it), `settingsHost` lives in the
-shell while that Settings is in use (Material: page names and the overlay). A family with no window keeps Settings
-inside its panels (iRiS), and `settingsFrom` lets one wear another's while a key of its own says so (Waffle with
-`waffles.settings.useMaterialStyle`). `GlobalStates.openSettingsAt(key)` picks the place.
+The base never names a family. What it honours for one is declared in that family's `plugin.json` (panels, settings
+slots, flags, its config subtree) or answered by the family's verbs (`GlobalStates.familyVerb`). A family may use
+`modules/shared`, `modules/common` and `services`; nothing uses a family. Each family's config subtree (`iris.*`,
+`waffles.*`) ships with it and is kept untouched while it is not installed.
 
-Inside the implementation roots, `PanelLoader`, `DeferredPanelLoader`, and `OnDemandPanelLoader` choose whether a surface should be resident. For example:
-```qml
-PanelLoader {
-    identifier: "iiBackdrop"
-    extraCondition: Config.options?.background?.backdrop?.enable ?? false
-    source: "../background/Backdrop.qml"
-}
-```
-The loader contract is always based on `Config.ready`, `enabledPanels`, family/feature conditions, and the appropriate startup/open-state gate.
+## Where code goes
 
-Global-style detection is centralized in `Appearance.qml`. Use its semantic style flags/tokens instead of reproducing a local priority chain. The current style ids are `material`, `cards`, `aurora`, `inir`, `angel`, `regalia`, `zzz`, `cookie`, and `editorial`. Some capabilities deliberately overlap (for example Angel inherits Aurora's glass/blur capability), so exact-style decisions must use the specific `Appearance.*Everywhere` flag rather than an assumed order.
+| Folder | What |
+|---|---|
+| `shell.qml`, `settings.qml`, `welcome.qml` | Entries: compose the shell, the Settings window, the first-run wizard |
+| `services/` | UI-less state (audio, network, Niri, media, notifications, wallpapers, theme); `deferred/` after the first frame |
+| `modules/common/` | The kit: `Config`, `Appearance`, widgets, functions, the wizard's pages |
+| `modules/shared/` | Surfaces more than one family loads: background and desktop widgets, lock, overview, clipboard, region selector, session screen, overlay, OSK |
+| `scripts/` | What runs on your machine: the `inir` launcher, colour generation and app theming, media and capture helpers |
+| `sdata/`, `setup` | Install, update, uninstall, migrations, doctor |
+| `defaults/`, `dots/` | The fresh-install config and the app configs setup offers |
+| `translations/` | Every visible string, one catalogue per language |
+| `docs/` | User docs, published at [inir.space/docs](https://inir.space/docs) |
 
-## Directory Structure
+A new look, Design, theme or widget is a plugin in inir-hub, never a folder here.
 
-```
-shell.qml                     # Root entry — startup, IPC routers, critical/deferred family gates
-GlobalStates.qml              # Runtime UI state (panel open/closed booleans)
-FamilyTransitionOverlay.qml   # Animated family switch
-settings.qml                  # Settings window: loads the active family's `settingsApp` part
-welcome.qml                   # First-run wizard
-killDialog.qml                # Process kill confirmation
+## Config
 
-modules/                      # UI: one folder per family, plus what they share
-├── common/                   # Shared kit: Config, Appearance (Material tokens and the palette), widgets, functions
-├── shared/                   # Surfaces more than one family loads: wallpaper and desktop widgets (background),
-│                             #   lock, overview, clipboard, region selector, session screen, overlay, OSK...
-├── ii/                       # Material family
-│   ├── ShellIiPanelsImpl.qml # Deferred/on-demand Material composition
-│   ├── critical/             # First-frame background/bar/dock
-│   ├── bar/ barM3/ pill/ verticalBar/ dock/ sidebar/ sidebarLeft/ sidebarRight/ controlPanel/ dashboard/
-│   ├── notificationPopup/ onScreenDisplay/ equalizer/
-│   └── settings/             # The Settings app: Material's pages and the page registry
-├── waffle/                   # Windows 11 family
-│   ├── ShellWafflePanelsImpl.qml
-│   ├── critical/
-│   ├── bar/ startMenu/ actionCenter/ notificationCenter/ ...
-│   ├── looks/Looks.qml       # Waffle visual tokens
-│   └── settings/             # Waffle Settings
-└── iris/                     # iRiS family
-    ├── ShellIrisPanelsImpl.qml
-    ├── critical/
-    ├── style/IrisStyle.qml   # iRiS visual tokens; IrisDesign.qml loads a Design
-    ├── bar/ field/ frame/ dock/ control/ palette/ orbit/ lock/ ...
-    ├── designs/              # Designs (iris, airisu)
-    └── settings/             # iRiS Settings
+- Schema: `modules/common/Config.qml` (a `JsonAdapter`), plus each family's own subtree from its `plugin.json`.
+- Your file: `~/.config/inir/config.json`, only the keys you changed. `defaults/config.json` is the fresh-install profile.
+- Read `Config.options.path.to.key`; write only with `Config.setNestedValue("path.to.key", value)`.
+- A new key: schema, its readers, its Settings row in each family that shows it, and `defaults/config.json` when a
+  fresh install needs a value. Setup never overwrites your config.
 
-services/                     # Runtime singletons (+ services/deferred/)
-├── qmldir                    # Service module registration
-├── Audio.qml                 # PipeWire volume, mute, per-app mixer
-├── NiriService.qml           # Niri compositor IPC
-├── CompositorService.qml     # Compositor detection (Niri vs Hyprland)
-├── Network.qml               # NetworkManager integration
-├── Weather.qml               # Weather polling + privacy-aware location
-├── BluetoothStatus.qml       # BlueZ device management
-├── Translation.qml           # i18n string lookup
-├── DevNavigation.qml         # Session-only semantic UI navigation + dev IPC
-└── [more services]
+## IPC
 
-scripts/                      # Shell/fish/python helpers
-├── inir                      # CLI launcher (bash, IPC + lifecycle commands)
-├── colors/                   # Color generation pipeline
-│   ├── applycolor.sh         # Orchestrator
-│   ├── generate_colors_material.py  # Material You color generation + template rendering
-│   ├── modules/              # Per-app theming (terminals, GTK, etc.)
-│   └── lib/                  # Shared infrastructure
-└── [more scripts]
+`IpcHandler { target: "name" }` in QML, called as `inir <target> <function> [args]`. Every function declares its
+return type. `docs/IPC.md` is the reference.
 
-sdata/                        # Install/update lifecycle
-├── lib/                      # Shared bash libraries
-├── migrations/               # Numbered scripts
-├── subcmd-install/           # Install phases
-└── subcmd-uninstall/         # Uninstall phases
+## Colours
 
-defaults/                     # Shipped defaults
-├── config.json               # Default config
-├── niri/                     # Niri config templates
-└── [GTK, KDE, fuzzel, etc.]
+Wallpaper -> `scripts/colors/generate_colors_material.py` -> `colors.json` -> `MaterialThemeLoader` -> each family's
+tokens (`Appearance`, `Looks`, `IrisStyle`). `scripts/colors/applycolor.sh` themes the apps listed in
+`scripts/colors/targets/`.
 
-translations/                 # i18n strings (17 locales)
-distro/arch/                  # Arch PKGBUILDs (dependency manifests)
-assets/                       # Icons, wallpapers, systemd unit, desktop entry
-docs/                         # User documentation
-```
-
-A family may use `modules/shared`, `modules/common` and `services`; nothing else may use a family, apart from the
-entry files that compose the shell. A check follows every reference and fails on a new crossing; the few that existed
-when the folders were drawn only shrink.
-
-## Config System
-
-| Aspect | Details |
-|--------|---------|
-| Schema | `modules/common/Config.qml` — JsonAdapter |
-| Defaults | `defaults/config.json` |
-| User file | `~/.config/inir/config.json` (canonical); legacy real directories remain readable and migrated installs expose `~/.config/illogical-impulse` as a compatibility alias |
-| Read | `Config.options.path.to.key` — schema-declared properties are typed QML properties with defaults |
-| Write | `Config.setNestedValue("path.to.key", value)` — writes + fires `configChanged()` signal |
-| Ready gate | `Config.ready` — true after JSON loaded (or created if missing) |
-| Hot-reload | `watchChanges: true` — external edits auto-apply |
-| Debounce | 50ms for both reads and writes |
-
-**Sync rule**: when adding a new config key, update together:
-1. `modules/common/Config.qml` — schema definition and runtime fallback
-2. Consumer(s) — read/write the key
-3. Settings UI in every family that owns the behavior, when user-facing
-4. `defaults/config.json` when the shipped fresh-install profile needs an explicit value/structure
-
-## Key Singletons
-
-| Singleton | Dependents | Domain |
-|-----------|-----------|--------|
-| `Config` | shell-wide | All config read/write |
-| `Appearance` | ii/shared UI | All ii module visuals |
-| `Translation` | shell-wide | All i18n strings |
-| `GlobalStates` | panel loaders | Panel visibility state |
-| `DevNavigation` | shell + navigable surfaces | Development-only semantic UI traversal |
-| `Looks` | waffle modules | Waffle visual tokens |
-| `NiriService` | compositor modules | Niri IPC, workspaces, windows |
-| `Audio` | medium | PipeWire volume, mute, per-app mixer |
-| `CompositorService` | medium | Compositor detection (Niri/Hyprland) |
-| `Weather` | medium | Weather polling + privacy-aware location |
-| `Network` | medium | NetworkManager integration |
-| `Wallpapers` | medium | Wallpaper management + theming pipeline |
-| `DesktopItems` | background | Desktop item persistence + undo (desktop-items.json) |
-| `DesktopWidgetLayout` | background | Per-output widget layout (`background.widgets.outputOverrides`) |
-| `LyricsService` | media | Synchronized lyrics for media controls |
-
-All three wallpaper pickers (grid, coverflow, launcher) apply through
-`Wallpapers.applySelectionTarget()`, so the owning wallpaper engine and theming
-pipeline behave identically for each. The launcher's live preview goes through
-`Wallpapers.previewWallpaper()`: static images are offered to `AwwwBackend`,
-while the same transient path is exposed to the internal background renderer
-for videos, GIFs, parallax, or systems without awww. Neither path writes config
-or regenerates colours, and cancelling resynchronizes the configured wallpaper.
-No picker draws the desktop wallpaper directly.
-
-`modules/shared/background/Background.qml` is the per-output desktop surface: it renders
-the wallpaper and hosts the desktop widgets and desktop items. `DesktopWidgetLayout`
-maps each widget instance to its output through `Config.options.background.widgets.outputOverrides`
-plus `screenList`/`layerOrder`; `DesktopItems` persists icons to
-`Directories.stateUserPath/desktop-items.json` (schema v1) with an undo tombstone,
-and `modules/shared/background/desktopItems/` provides the icon delegate, drop coordinator
-and image-choice surfaces. Layout editing runs through the shell-wide
-`ShellEditSession` service and `modules/common/widgets/ShellLayoutEditorWindow.qml`.
-
-These are **stability boundaries** — prefer add-only changes, verify all dependents before reshaping.
-
-## IPC System
-
-Handlers registered via `IpcHandler { target: "name" }` in QML.
-
-Called externally: `inir <target> <function> [args]`
-
-The always-instantiated `dev` target provides session-only semantic navigation
-for lazy UI. Its functions are:
-- `list()` — returns all registered destinations as JSON
-- `open(destination)` — navigates to a named surface/view
-- `close()` — closes all navigable surfaces
-- `current()` — returns the current destination or `"closed"`
-
-All functions must declare return types (`string`, `int`, `bool`, `real`, `color`, `void`).
-
-Full reference: [docs/IPC.md](docs/IPC.md).
-
-## Theming Pipeline
-
-Colors flow: wallpaper image → `generate_colors_material.py` (materialyoucolor) → `colors.json` → `MaterialThemeLoader` → `Appearance` tokens → UI.
-
-Theme generation is orchestrated by `scripts/colors/applycolor.sh`. Enabled external targets are discovered from `scripts/colors/targets/*.json`, resolved to modules under `scripts/colors/modules/`, and run with bounded parallelism. Current target groups cover terminals, GTK/KDE, editors (including Zed), Chrome/Chromium, Spicetify, SDDM, Steam, Pear Desktop and Cava. The manifests are the inventory; do not duplicate a frozen app list in code.
-
-## Distribution
+## Install and update
 
 ```bash
-git clone https://github.com/snowarch/inir.git
-cd inir
-./setup                  # Interactive TUI installer
-./setup install -y       # Fully automated
-./setup update           # Pull + sync + migrate + restart
-./setup doctor           # Diagnose + auto-fix
-./setup rollback         # Restore previous snapshot
+git clone https://github.com/snowarch/inir.git && cd inir
+./setup install          # interactive; -y for no questions
+./setup update           # snapshot, pull, plugins, sync, migrations, restart
+./setup rollback         # back to a snapshot
 ```
 
-Install topology is tracked in `version.json`:
-- **repo-copy**: normal `./setup install`; the checkout is the update source and the runtime payload is synchronized to `~/.config/quickshell/inir/`.
-- **repo-link**: development topology where the runtime resolves to the checkout itself; repo/setup owns updates without copying a second runtime tree.
-- **package-managed**: packaged/`make install`/Nix-style payload under a system prefix; the package manager owns payload updates.
+The checkout is the update source; the runtime is synced to `~/.config/quickshell/inir/`. Update fetches the
+plugins you have before touching anything, so a missing one stops it with the old shell intact. Migrations
+(`sdata/migrations/`) are numbered and append-only.
 
-The canonical user config is `~/.config/inir/config.json`. Migration `019-config-dir-rename-compat` preserves older installs by moving/merging legacy state and creating `~/.config/illogical-impulse -> ~/.config/inir`; the resolver still honors an older real legacy directory when it exists.
-
-### Multi-Distro Support
-
-| Distro | Strategy |
-|--------|----------|
-| **Arch** | pacman + AUR helper for fonts |
-| **Fedora** | dnf + COPR repos (quickshell, niri) |
-| **Debian/Ubuntu** | apt + compile from source (niri, quickshell) |
-| **Generic** | Guidance-only dependency checking |
-
-### Migrations
-
-Location: `sdata/migrations/` — numbered scripts (check `ls sdata/migrations/`
-for the current maximum).
-- Append-only — never rename, reorder, or delete existing migrations
-- Idempotent — may run again if state is lost
-- Next number: check `ls sdata/migrations/` and use highest + 1
-
-## Daily Development
+## Running it
 
 ```bash
-inir run                    # Launch the shell
-inir restart                # Graceful restart
-inir logs | tail -50        # Check for errors
-inir status                 # Installation/repository diagnostic summary
-inir doctor                 # Auto-diagnose + fix
-inir settings               # Open settings GUI
-
-# IPC calls
-inir <target> <function> [args...]
-inir overview toggle
-inir audio volumeUp
+inir restart             # the shell runs as inir.service; never a bare `qs`
+inir logs | tail -50
+inir doctor
 ```
 
-Never run raw `qs kill -c inir` / `qs -c inir` by hand — iNiR runs under
-`inir.service` (systemd --user); a bare `qs` invocation kills or duplicates
-the live session outside systemd's supervision. `inir restart` is the only
-correct way to force a restart.
-
-## Known Harmless Warnings
-
-These log messages are safe to ignore:
-- `Failed to create DBusObjectManagerInterface for "org.bluez"` — no Bluetooth adapter
-- `failed to register listener: ...PolicyKit1...` — another polkit agent running
-- `QSGPlainTexture: Mipmap settings changed` — Qt cosmetic
-- `Cannot open: file:///...coverart/...` — missing album art cache
-- `$HYPRLAND_INSTANCE_SIGNATURE is unset` — expected when running on Niri
+Harmless warnings: `DBusObjectManagerInterface for "org.bluez"` (no Bluetooth adapter), `failed to register
+listener ... PolicyKit1` (another polkit agent), `QSGPlainTexture: Mipmap settings changed`, a missing cover-art
+cache file, `$HYPRLAND_INSTANCE_SIGNATURE is unset` on Niri.

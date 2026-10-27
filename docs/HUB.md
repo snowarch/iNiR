@@ -2,6 +2,9 @@
 
 The Hub has widgets, colour themes, iRiS themes and web apps made by people who use iNiR. You install them with one click and remove them just as cleanly. The catalogue lives in [snowarch/inir-hub](https://github.com/snowarch/inir-hub), and anyone can add to it with a pull request.
 
+The three families come from the Hub too. Setup installs them and `inir update` keeps them current, so this page is
+about the extras.
+
 ## Open the Hub
 
 - Material: **Settings › Hub**

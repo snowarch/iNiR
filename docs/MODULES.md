@@ -6,7 +6,7 @@ Modules are the UI. They render and orchestrate, and they read state from `servi
 
 | Folder | Holds |
 |---|---|
-| `modules/ii/` | Material (ii): bar, vertical bar, dock, sidebars, dashboard, control panel, notification popups, OSD, settings |
+| `modules/ii/` | Material (ii), a plugin from [inir-hub](https://github.com/snowarch/inir-hub) like the other two: bar, vertical bar, dock, sidebars, dashboard, control panel, notification popups, OSD, settings |
 | `modules/waffle/` | Waffle: taskbar, start menu, action center, notification center, task view, widgets, `looks/` tokens, settings |
 | `modules/iris/` | iRiS: bar, field, frame, dock, control, studio, settings, style. See [iRiS](IRIS.md) |
 | `modules/shared/` | Surfaces that two or more families load: background, overview, clipboard, lock, mascot and more |
@@ -72,7 +72,8 @@ The ii bar reads `bar.layout`, which has five zones: `left`, `centerLeft`, `cent
 
 ## Contributor rules
 
-1. Read [Architecture Overview](ARCHITECTURE_OVERVIEW.md) and find the family that owns the module.
+1. Read [Architecture Overview](ARCHITECTURE_OVERVIEW.md) and find the family that owns the module. A family's code
+   lives in inir-hub (`families/<id>`); the shell links it in at `modules/<id>`.
 2. Use `Appearance.*` in ii and shared code, `Looks.*` in Waffle, and `IrisStyle.*` in iRiS.
 3. Put first-frame surfaces in a `critical/` host. Everything else goes in the family's `Shell*PanelsImpl.qml`. Shell-wide IPC routers stay in `shell.qml`.
 4. Register shared widgets in `modules/common/widgets/qmldir`.
