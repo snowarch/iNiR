@@ -135,6 +135,8 @@ restart_shell_and_verify() {
     command -v systemctl >/dev/null 2>&1 && systemctl --user cat inir.service >/dev/null 2>&1 || return 2
     since=$(date +%s)
     # --no-block: the unit is Type=dbus, so a shell that never loads would hold restart until its start timeout
+    # a crash loop just before (the version being rolled back) leaves the start limit hit
+    systemctl --user reset-failed inir.service >/dev/null 2>&1 || true
     systemctl --user restart --no-block inir.service >/dev/null 2>&1 || return 2
     command -v journalctl >/dev/null 2>&1 || return 2
     deadline=$((SECONDS + timeout))
