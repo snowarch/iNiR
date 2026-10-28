@@ -10,9 +10,9 @@ iNiR is built for Niri. Hyprland is not supported, so anything that only worked 
 
 **Brightness.** Laptop screens work through the backlight. External monitors need `ddcutil` and DDC/CI switched on in the monitor's own menu. DDC/CI is slow, so brightness changes on external monitors can lag.
 
-**Audio.** iNiR needs PipeWire. PulseAudio-only setups do not work. Volume protection can be too strict after suspend. Turn it off in Settings › System › Audio.
+**Audio.** iNiR needs PipeWire. PulseAudio-only setups do not work. Volume protection can be too strict after suspend. Turn it off in Settings › System › Audio (Waffle: General › Audio › Volume protection; iRiS: Sound & Feedback › Volume › Ear protection).
 
-**Weather and location.** Weather comes from Open-Meteo and needs no key. It refreshes every 10 minutes by default. Change that in Settings › Services › Weather. GPS is off by default. When you turn on "Use GPS location", it needs geoclue.
+**Weather and location.** Weather comes from Open-Meteo and needs no key. It refreshes every 10 minutes by default. Change that in Settings › Services › Weather (Waffle: Waffle Style › Weather; iRiS: Sources › Weather). GPS is off by default. When you turn on "Use GPS location", it needs geoclue.
 
 ## AI
 
@@ -27,8 +27,8 @@ Clipboard history needs `cliphist`. It keeps the latest 400 entries. Image entri
 
 ## Screenshots and recording
 
-- OCR needs Tesseract. The installer adds English, Spanish, Russian, Japanese, Chinese (Simplified and Traditional) and their vertical variants. Pick the language in Settings › Tools › Snipping. Auto follows your system language.
-- Recording needs `wf-recorder`. Record with sound uses the audio set in Settings › Tools › Recording. It defaults to system audio, not your microphone.
+- OCR needs Tesseract. The installer adds English, Spanish, Russian, Japanese, Chinese (Simplified and Traditional) and their vertical variants. Pick the language in Settings › Tools › Snipping (iRiS: Screenshots & Recording › Read text). Auto follows your system language.
+- Recording needs `wf-recorder`. Record with sound uses the audio set in Settings › Tools › Recording (Waffle: Interface › Screen Recording; iRiS: Screenshots & Recording › Recording). It defaults to system audio, not your microphone.
 - Google Lens search (Super+Shift+A) sends the picture to Google. Do not use it if that matters to you.
 
 ## Theming
@@ -38,7 +38,7 @@ Clipboard history needs `cliphist`. It keeps the latest 400 entries. Image entri
 - Firefox and its forks (LibreWolf, Floorp, Waterfox, Zen) read the new colours when they start.
 - Chromium browsers (Chrome, Chromium, ungoogled-chromium, Brave, Helium, Thorium) repaint a few seconds after a wallpaper change. The first time, iNiR asks for your password once, to set up their policy folders.
 - Vivaldi, Edge and Opera are not themed.
-- Terminal colours are set in Settings › Themes › Advanced › Terminal Colors. That covers alacritty, btop, foot, ghostty, kitty, konsole, lazygit, starship, wezterm and yazi. Other terminals need their colours set by hand.
+- Terminal colours are set in Settings › Themes › Advanced › Terminal Colors (Waffle: Themes › Terminal Colors; iRiS: Style › App colours). That covers alacritty, btop, foot, ghostty, kitty, konsole, lazygit, starship, wezterm and yazi. Other terminals need their colours set by hand.
 
 ## Overview and windows
 
@@ -53,11 +53,11 @@ Clipboard history needs `cliphist`. It keeps the latest 400 entries. Image entri
 
 ## Language
 
-Language follows your system locale. Change it in Settings › System › Locale › UI Language.
+Language follows your system locale. Change it in Settings › System › Locale › UI Language (Waffle: General › Time & Language; iRiS: Home › Language).
 
 ## Performance
 
-Low power effects, in Settings › Effects, turns off visual effects such as blur and animations. Use it on slow hardware or on battery.
+Low power effects, in Settings › Effects (Waffle: Effects › Motion and power; iRiS: Home › Performance › Low power), turns off visual effects such as blur and animations. Use it on slow hardware or on battery.
 
 ## Display server
 

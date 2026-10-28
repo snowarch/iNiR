@@ -6,7 +6,7 @@ Control volume, choose what drives the visualisers, and see what is playing.
 
 - **Volume up and down** and **Mute** use the Volume keys. **Mic mute** uses the Mic Mute key. They work on the lock screen too.
 - The on-screen display shows volume and brightness changes.
-- **Per-app volume**: the right sidebar (Material) has a volume mixer. Waffle's volume control has a **Volume mixer** button and a list of the apps making sound.
+- **Per-app volume**: the right sidebar (Material) has a volume mixer. Waffle's volume control has a **Volume mixer** button and a list of the apps making sound. iRiS lists them in **iRiS Settings › Sound & Feedback › Apps playing**.
 
 ## Visualiser sources
 
@@ -22,7 +22,7 @@ A toggle in the right sidebar turns EasyEffects on or off.
 
 ## Media players
 
-Any player that speaks MPRIS shows up, such as Spotify, Firefox, mpv or VLC. Controls appear in the bar, the media controls popup and the right sidebar (Material), and in the media pane of the action centre (Waffle).
+Any player that speaks MPRIS shows up, such as Spotify, Firefox, mpv or VLC. Controls appear in the bar, the media controls popup and the right sidebar (Material), and in the media pane of the action centre (Waffle). In iRiS they play on the Island, and **iRiS Settings › Now Playing** sets how.
 
 When several players are running, iNiR shows:
 
