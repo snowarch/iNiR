@@ -121,10 +121,10 @@
    }
   ],
   "made": {
-   "base": "9ff05b70",
-   "ii": "5714f9f",
-   "iris": "5714f9f",
-   "waffle": "5714f9f"
+   "base": "15462f1f",
+   "ii": "5284e8e",
+   "iris": "9919b69",
+   "waffle": "5284e8e"
   },
   "spec": "{\"alt\": \"Settings in each family\", \"choose\": {\"label\": \"Family\", \"options\": [{\"after\": [[\"ipc\", \"settings\", \"toggle\"]], \"family\": \"ii\", \"key\": \"material\", \"label\": \"Material\", \"steps\": [[\"ipc\", \"settings\", \"open\"], [\"wait\", 3000]]}, {\"after\": [[\"ipc\", \"settings\", \"toggle\"]], \"family\": \"waffle\", \"key\": \"waffle\", \"label\": \"Waffle\", \"steps\": [[\"ipc\", \"settings\", \"open\"], [\"wait\", 3000]]}, {\"after\": [[\"ipc\", \"iris\", \"settingsClose\"]], \"family\": \"iris\", \"key\": \"iris\", \"label\": \"iRiS\", \"steps\": [[\"ipc\", \"iris\", \"settings\", \"appearance\"], [\"wait\", 5000]]}]}}"
  }

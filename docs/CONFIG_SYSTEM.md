@@ -29,16 +29,16 @@ Press **Ctrl+F** in any family and type. Search matches option names, descriptio
 
 ## What you changed
 
-A setting your config file holds with a value other than a fresh install's shows a reset button: beside the control in Material and Waffle, on the dot
-by its label in iRiS. The button's space stays even when there is nothing to reset, so the control never moves. A
-reset happens at once, and the "Reset <setting>" notice has **Undo**. iRiS's **Restore defaults** for a page or group
-offers Undo too.
+A setting your config file holds with a value other than a fresh install's shows a reset button: beside the control in
+Material and Waffle, on the dot by its label in iRiS. The button's space stays even when there is nothing to reset, so
+the control never moves. A reset happens at once, and the "Reset <setting>" notice has **Undo**. iRiS's **Restore
+defaults** for a page or group offers Undo too.
 
 The **Changed** chip in the search bar counts every setting you changed and lists them with their page and section.
 Click one to go to its row.
 
-From a terminal, `inir ipc factory changed` prints those settings as `path = value`,
-and `inir ipc factory reset <path>` puts one back.
+From a terminal, `inir ipc factory changed` prints those settings as `path = value`, and `inir ipc factory reset
+<path>` puts one back.
 
 ## Easy and Advanced mode
 
