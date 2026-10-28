@@ -71,7 +71,7 @@ Built-in presets skip the wallpaper step and set colours directly. See [Theming 
 | `modules/common/` | Config, Appearance, Directories, shared widgets | High |
 | `services/` | System integration singletons | High |
 | `scripts/inir` | The launcher; it hands commands to the `inir` binary when one is installed | High |
-| `setup`, `sdata/` | Install, update, migrations, distro data | High |
+| `setup`, `sdata/` | Install, update, distro data | High |
 | `modules/shared/` | Surfaces that two or more families load | Normal |
 | `modules/<family>/` | The installed families, linked in from the Hub | Normal |
 | `defaults/`, `dots/` | Shipped config, Niri config, app configs | Medium |

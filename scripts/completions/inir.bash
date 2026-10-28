@@ -10,7 +10,7 @@ _inir_completions() {
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
     # Top-level CLI commands
-    local cli_commands="bind install start stop run restart kill logs terminal browser close-window ipc settings settings-window repair path setup service doctor migrate status update rollback my-changes uninstall config info backup version theme hub help completions"
+    local cli_commands="bind install start stop run restart kill logs terminal browser close-window ipc settings settings-window repair path setup service doctor status update rollback my-changes uninstall config info backup version theme hub help completions"
 
     # Source IPC registry for target/function completion
     local script_dir inir_bin

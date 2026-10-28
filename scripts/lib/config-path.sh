@@ -52,6 +52,3 @@ inir_installed_marker_file() {
     printf '%s/installed_true\n' "$(inir_config_dir)"
 }
 
-inir_migrations_state_file() {
-    printf '%s/migrations.json\n' "$(inir_config_dir)"
-}

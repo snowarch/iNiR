@@ -212,7 +212,7 @@ Right sidebar:
 
 - **GUI settings**: configure everything without touching files
 - **GameMode**: auto-disables effects for fullscreen apps
-- **Auto-updates**: `inir update` with rollback, migrations, and user change preservation
+- **Auto-updates**: `inir update` with rollback and user change preservation
 - **Lock screen** and **session screen** (logout/reboot/shutdown/suspend)
 - **Polkit agent**, **on-screen keyboard**, **autostart manager** backed by niri's own startup file
 - **Kira**: pixel-art cat girl who wanders the screen edges, reacts to what you do, and has a chaos mode. Opt-in, separate ~32 MiB art pack under `./setup` › Extras
@@ -260,7 +260,7 @@ inir run                        # launch the shell
 inir settings                   # open settings GUI
 inir logs                       # check runtime logs
 inir doctor                     # auto-diagnose and fix
-inir update                     # pull + migrate + restart
+inir update                     # pull + sync + restart
 ```
 
 Other ways in, if `./setup install` isn't what you want:
@@ -309,7 +309,7 @@ Everything user-facing lives at [inir.space/docs](https://inir.space/docs/).
 | Page | What's in it |
 |---|---|
 | [Install](https://inir.space/docs/install/) | Getting it running |
-| [Setup](https://inir.space/docs/setup/) | Updates, migrations, rollback |
+| [Setup](https://inir.space/docs/setup/) | Updates, rollback |
 | [Keybinds](https://inir.space/docs/keybinds/) | Every shortcut |
 | [IPC](https://inir.space/docs/ipc/) | Targets you can bind or script |
 | [Packages](https://inir.space/docs/packages/) | Every dependency and why it's there |

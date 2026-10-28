@@ -50,7 +50,7 @@ create_snapshot() {
     if [[ -f "${XDG_CONFIG_HOME}/niri/config.kdl" ]]; then
         cp "${XDG_CONFIG_HOME}/niri/config.kdl" "${snapshot_dir}/niri-config.kdl"
     fi
-    # migrations and the update edit the split files too
+    # the update edits the split files too
     if [[ -d "${XDG_CONFIG_HOME}/niri/config.d" ]]; then
         cp -a "${XDG_CONFIG_HOME}/niri/config.d" "${snapshot_dir}/niri-config.d"
     fi
@@ -58,10 +58,6 @@ create_snapshot() {
     # which qs-rs and inir-accel versions are switched on (sdata/lib/prebuilt.sh)
     prebuilt_links >"${snapshot_dir}/prebuilt-links"
 
-    # Copy migrations state
-    if [[ -f "${INIR_CONFIG_DIR}/migrations.json" ]]; then
-        cp "${INIR_CONFIG_DIR}/migrations.json" "${snapshot_dir}/"
-    fi
 
     # Copy managed desktop-item state. It lives in XDG state, not the config
     # tree, so include it explicitly in snapshots and restores.
@@ -209,11 +205,6 @@ restore_snapshot() {
     
     prebuilt_restore_links "${snapshot_dir}/prebuilt-links"
 
-    # Restore migrations state
-    if [[ -f "${snapshot_dir}/migrations.json" ]]; then
-        mkdir -p "${INIR_CONFIG_DIR}"
-        cp "${snapshot_dir}/migrations.json" "${INIR_CONFIG_DIR}/"
-    fi
 
     if [[ -f "${snapshot_dir}/desktop-items.json" ]]; then
         log_info "Restoring managed desktop items..."

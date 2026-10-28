@@ -334,7 +334,7 @@ case "${SKIP_NIRI}" in
     [[ -f "$NIRI_BINDS_CFG" ]] && NIRI_BINDS_TARGET="$NIRI_BINDS_CFG"
 
     if [[ -f "$NIRI_CFG" ]]; then
-      # No polkit agent is spawned: the shell is the agent (migration 044 retires the line older setups wrote).
+      # No polkit agent is spawned: the shell is the agent (v2.33 already dropped the line older setups wrote).
 
       if [[ "${INSTALL_FIRSTRUN}" == true && "${OS_SPECIFIC_ID:-}" == "cachyos" ]] \
           && command -v niri-focused-booster >/dev/null 2>&1 \
@@ -697,12 +697,6 @@ if command -v jq >/dev/null 2>&1 \
 fi
 
 #####################################################################################
-# Apply required migrations automatically
-#####################################################################################
-if [[ "${SKIP_MIGRATIONS}" != "true" ]]; then
-  run_migrations_auto
-fi
-
 repair_legacy_quickshell_malloc_environment || true
 
 #####################################################################################
@@ -1206,7 +1200,6 @@ EOF
     echo -e "${STY_BLUE}│${STY_RST}"
     echo -e "${STY_BLUE}│${STY_RST}  ${STY_GREEN}✓${STY_RST} Quickshell inir synced to ~/.config/quickshell/inir/"
     echo -e "${STY_BLUE}│${STY_RST}  ${STY_GREEN}✓${STY_RST} Missing keybinds added to Niri config (if any)"
-    echo -e "${STY_BLUE}│${STY_RST}  ${STY_GREEN}✓${STY_RST} Config migrations applied"
     echo -e "${STY_BLUE}│${STY_RST}"
     echo -e "${STY_BLUE}└──────────────────────────────${STY_RST}"
     echo ""

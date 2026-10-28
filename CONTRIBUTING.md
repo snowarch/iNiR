@@ -74,7 +74,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for a detailed breakdown. Key directories
 | `modules/<family>/` | Material, Waffle and iRiS: plugins from [inir-hub](https://github.com/snowarch/inir-hub), linked in; their code is contributed there |
 | `services/` | 70+ runtime singletons |
 | `scripts/` | CLI launcher, theming pipeline, helpers |
-| `sdata/` | Install/update lifecycle, migrations |
+| `sdata/` | Install/update lifecycle |
 | `defaults/` | Shipped default config and app configs |
 | `translations/` | i18n strings (15+ languages) |
 
@@ -201,15 +201,9 @@ Always update these together:
 | IPC targets | The `///` comment above the `IpcHandler` and each function (the IPC page is built from them) |
 | Dependencies | `docs/PACKAGES.md` |
 
-## Migrations
+## Config changes
 
-When a config or data format changes between versions:
-
-- Add a new script at `sdata/migrations/NNN-descriptive-name.sh`
-- Use the next sequential number (check `sdata/migrations/` for the latest)
-- Migrations are **sourced**, not executed: no top-level `exit` or `set -e`
-- Migrations must be idempotent (safe to run twice)
-- Never rename, reorder, or delete existing migrations
+There are no migrations. When a key or file changes, read the old one as a fallback, or have the update set it right in place (`repair_update_owned_state` in `setup`): safe to run on every update, and only on what iNiR wrote.
 
 ## Translations
 

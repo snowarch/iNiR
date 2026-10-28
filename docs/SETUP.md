@@ -8,7 +8,7 @@ These commands keep an installed iNiR healthy. Run them in a terminal. `inir upd
 inir update
 ```
 
-The update checks for new changes, takes a snapshot so you can roll back, pulls the changes, copies the new shell files and restarts the shell. Your settings are not overwritten. It also installs what the shell needs and is missing, such as plasma-integration, a colour emoji font and the shell's fonts. It asks first, since that needs your password. With `--skip-deps`, or when you manage the packages yourself, it leaves them to you. When a release needs a change to your config, the update migrates it and keeps a backup. Required migrations run on their own. Optional ones are offered to you.
+The update checks for new changes, takes a snapshot so you can roll back, pulls the changes, copies the new shell files and restarts the shell. Your settings are not overwritten. It also installs what the shell needs and is missing, such as plasma-integration, a colour emoji font and the shell's fonts. It asks first, since that needs your password. With `--skip-deps`, or when you manage the packages yourself, it leaves them to you. What an older version left in your config that no longer fits, the update sets right on its own, after the snapshot.
 
 `inir update` in a terminal, or the update notification, brings everything: the base, the families your config uses
 from the hub, the prebuilt runtime and the `inir` command. Your config and edits stay, and a version that won't load is
@@ -49,14 +49,6 @@ the release pins, and nothing compiles on your machine. On ARM the shell runs on
 - While Material's Web Apps tab is on, setup and the update also get **Qt WebEngine** for qs-rs (about 110 MB, once,
   always the one for the qs-rs you have). `inir webengine` gets it at any time and restarts the shell. On Quickshell
   it comes from your distribution's Qt 6 WebEngine package instead.
-
-## Migrations
-
-```bash
-./setup migrate
-```
-
-Lists the changes that are pending. You pick which optional ones to apply. Each one shows what it will change and makes a backup first.
 
 ## Repair
 

@@ -53,7 +53,7 @@ the shell runs on Quickshell and the next update tries again.
 1. `inir update`, or the update notification, fetches the new base.
 2. It fetches the families you use, the runtime, inir-accel and the `inir` command, and checks each download before it
    changes anything. A missing piece stops the update with your shell untouched.
-3. It copies the new shell, links your families back in and runs the migrations your config needs. Your settings and
+3. It copies the new shell, links your families back in and sets right what an older version left in your config. Your settings and
    your own files stay.
 4. It restarts the shell and checks it loads. If it doesn't, the update goes back to the shell you had and says so.
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # iNiR setup - installer and maintenance entrypoint
-# Commands: install, update, status, migrate, doctor, rollback, my-changes, uninstall (or TUI if no args)
+# Commands: install, update, status, doctor, rollback, my-changes, uninstall (or TUI if no args)
 
 resolve_bootstrap_repo_root() {
     local script_dir="$1"
@@ -68,29 +68,6 @@ cleanup() {
     exit 130
 }
 
-###############################################################################
-# Migrate
-###############################################################################
-run_migrate() {
-    echo ""
-    tui_title "iNiR Migrations"
-    echo ""
-
-    sync_launcher_from_repo
-
-    # Always apply REQUIRED migrations first
-    run_migrations_auto
-
-    local pending=$(count_pending_migrations 2>/dev/null || echo "0")
-    if [[ "$pending" -gt 0 ]]; then
-        tui_warn "$pending pending migration(s)"
-        run_migrations_interactive
-    else
-        tui_success "No pending migrations"
-    fi
-
-    show_session_impact_notices
-}
 trap cleanup INT
 trap 'type _tui_kill_spinner &>/dev/null && _tui_kill_spinner 2>/dev/null || true; rm -rf /tmp/buildyay /tmp/buildparu 2>/dev/null' EXIT TERM
 
@@ -102,7 +79,6 @@ source ./sdata/lib/package-installers.sh
 source ./sdata/lib/dist-determine.sh
 source ./sdata/lib/conflicts.sh
 source ./sdata/lib/versioning.sh
-source ./sdata/lib/migrations.sh
 source ./sdata/lib/robust-update.sh
 source ./sdata/lib/extras.sh
 source ./sdata/lib/doctor.sh
@@ -348,6 +324,9 @@ ensure_user_inir_service_enabled() {
 repair_update_owned_state() {
     local include_repo_integration="${1:-true}"
 
+    repair_v2_leftovers || tui_warn "Could not set right what v2 left in your config"
+    [[ "${INIR_V2_LEFTOVERS_REPAIRED:-0}" -gt 0 ]] && tui_success "Set right what v2 left in your config"
+
     if ! repair_legacy_quickshell_malloc_environment; then
         tui_warn "Could not clean legacy Quickshell allocator environment"
     elif [[ "${INIR_LEGACY_MALLOC_ENV_REPAIRED:-0}" -gt 0 ]]; then
@@ -543,7 +522,7 @@ show_help() {
     show_setup_context_card "Setup Overview"
 
     tui_section_start "What setup owns"
-    tui_list_item "Install flow, runtime sync, migrations, snapshots, and service refresh"
+    tui_list_item "Install flow, runtime sync, snapshots, and service refresh"
     tui_list_item "Repo-aware updates for repo-link and repo-copy installs"
     tui_list_item "Health diagnostics and safe automatic fixes"
     tui_section_end
@@ -559,7 +538,6 @@ show_help() {
     tui_section_end
 
     tui_section_start "Recovery and history"
-    tui_list_item "migrate     Review/apply config migrations"
     tui_list_item "backup      Create a manual snapshot"
     tui_list_item "rollback    Restore a previous snapshot"
     tui_list_item "my-changes  View or restore preserved user modifications"
@@ -638,11 +616,6 @@ show_version_info() {
         tui_status_line "Available:" "$repo_ver ($repo_commit)" ""
     fi
 
-    # Check for pending migrations
-    local pending=$(count_pending_migrations 2>/dev/null || echo "0")
-    if [[ "$pending" -gt 0 ]]; then
-        tui_status_line "Migrations:" "$pending pending" "warn"
-    fi
 
     # Shell running status (resolve symlinks so qs -p matches the running instance)
     if [[ -n "$runtime_dir" && -f "$runtime_dir/shell.qml" ]]; then
@@ -693,7 +666,6 @@ tui_menu() {
             "${ICON_DOT}|Extras|Install optional extras (iNiR-Walls / SDDM / YAMIS icons)" \
             "${ICON_INFO}|Info|System and shell details dashboard" \
             "${ICON_DOT}|Logs|View recent runtime logs" \
-            "${ICON_DOT}|Migrate|Review and apply config migrations" \
             "${ICON_DOT}|Backup|Create a manual snapshot" \
             "${ICON_DOT}|Rollback|Restore a previous snapshot" \
             "${ICON_DOT}|My Changes|View your preserved modifications" \
@@ -716,7 +688,6 @@ tui_menu() {
         Extras) run_extras ;;
         Config) run_config ;;
         Info) show_info; read -rp "Press Enter to continue..." ;;
-        Migrate) run_migrate ;;
         Doctor) run_doctor ;;
         Backup) run_backup ;;
         Rollback) run_rollback ;;
@@ -1108,14 +1079,6 @@ show_status() {
         tui_check_warn "Not running in Niri session"
     fi
 
-    # Pending migrations
-    local pending=$(count_pending_migrations 2>/dev/null || echo "0")
-    if [[ "$pending" -gt 0 ]]; then
-        tui_check_warn "$pending pending migration(s)"
-        tui_info "Run './setup migrate' to review"
-    else
-        tui_check_ok "No pending migrations"
-    fi
 
     if [[ "$runtime_state" == "clean" || "$runtime_state" == "externally managed" ]]; then
         tui_check_ok "Runtime payload state: ${runtime_state}"
@@ -1269,12 +1232,6 @@ show_info() {
         tui_check_warn "Runtime payload missing"
     fi
 
-    local pending=$(count_pending_migrations 2>/dev/null || echo "0")
-    if [[ "$pending" -gt 0 ]]; then
-        tui_check_warn "$pending pending migration(s)"
-    else
-        tui_check_ok "No pending migrations"
-    fi
 
     local snapshot_count=$(list_snapshots 2>/dev/null | wc -l)
     tui_check_ok "$snapshot_count snapshot(s) available"
@@ -2188,7 +2145,7 @@ _step_phase_header() {
 }
 
 # Simulated update: same step pacing and visuals as the real flow, but with
-# sleeps in place of git pull / rsync / migrations / makepkg. Writes the same
+# sleeps in place of git pull / rsync / makepkg. Writes the same
 # progress markers so ShellUpdates resume logic can be exercised end-to-end
 # without touching the user's installation. Triggered by `setup update --simulate`.
 run_update_simulated() {
@@ -2217,9 +2174,9 @@ run_update_simulated() {
     tui_success "Synced 1247 files (12 modified, 3 added)"
 
     # Step 3 — fast atomic op: animated spinner
-    _step_phase_start 3 "Running migrations"
+    _step_phase_start 3 "Checking your setup"
     sleep 1
-    _step_phase_done "All migrations up to date (0 pending)"
+    _step_phase_done "Your setup is current"
 
     # Step 4 — verbose op: header + simulated service-refresh lines
     _step_phase_header 4 "Finalizing"
@@ -2433,7 +2390,7 @@ run_webengine() {
 
 run_update() {
     # Short-circuit to the simulated walkthrough — no git pull, no rsync,
-    # no migrations, no shell restart. Useful for previewing the new TUI
+    # no shell restart. Useful for previewing the new TUI
     # visuals or exercising the resume-from-status-file logic.
     if [[ "${INIR_SIMULATE_UPDATE:-}" == "1" ]]; then
         run_update_simulated
@@ -2484,18 +2441,6 @@ run_update() {
             tui_info "Update the shell payload with your package manager."
         fi
 
-        local pending=$(count_pending_migrations 2>/dev/null || echo "0")
-        if [[ "$pending" -gt 0 ]]; then
-            echo ""
-            run_migrations_auto
-            pending=$(count_pending_migrations 2>/dev/null || echo "0")
-            if [[ "$pending" -gt 0 ]]; then
-                tui_warn "$pending optional migration(s) available"
-                if $ask && tui_confirm "Review and apply now?"; then
-                    run_migrations_interactive
-                fi
-            fi
-        fi
 
         repair_update_owned_state false
 
@@ -2528,7 +2473,7 @@ run_update() {
     fi
 
     # After a git pull, the setup script re-execs itself so that updated library
-    # code (doctor, migrations, etc.) is loaded fresh. _II_POST_PULL signals that
+    # code (doctor, etc.) is loaded fresh. _II_POST_PULL signals that
     # we already pulled and should skip straight to the sync phase.
     # Values: "1" = re-exec after pull, "local" = --local flag (skip pull entirely)
     if [[ "${_II_POST_PULL:-}" == "1" ]]; then
@@ -2596,7 +2541,7 @@ run_update() {
             _step_phase_done "Pulled changes from origin/${tracked_branch}"
 
             # Re-exec to pick up updated library code from the pull.
-            # Without this, functions sourced at startup (doctor, migrations, etc.)
+            # Without this, functions sourced at startup (doctor, etc.)
             # would still be the OLD versions in memory.
             _reexec_update_after_repo_change
         elif [[ "$update_rc" -eq 3 ]]; then
@@ -2691,18 +2636,6 @@ run_update() {
             fi
             _write_update_status "success"
 
-            local pending=$(count_pending_migrations)
-            if [[ "$pending" -gt 0 ]]; then
-                echo ""
-                run_migrations_auto
-                pending=$(count_pending_migrations)
-                if [[ "$pending" -gt 0 ]]; then
-                    tui_warn "$pending optional migration(s) available"
-                    if $ask && tui_confirm "Apply migrations now?"; then
-                        run_migrations_interactive
-                    fi
-                fi
-            fi
             repair_update_owned_state true
             # a past update whose packages failed is finished here, not only by doctor
             _update_dependencies
@@ -2922,21 +2855,7 @@ run_update() {
         tui_success "Vesktop themes updated"
     fi
 
-    # Migrations
-    _step_phase_header 3 "Running migrations"
-    local pending=$(count_pending_migrations)
-    if [[ "$pending" -gt 0 ]]; then
-        echo ""
-        # Always apply REQUIRED migrations automatically, then offer optional migrations.
-        run_migrations_auto
-        pending=$(count_pending_migrations)
-        if [[ "$pending" -gt 0 ]]; then
-            tui_warn "$pending optional migration(s) available"
-            if $ask && tui_confirm "Review and apply?"; then
-                run_migrations_interactive
-            fi
-        fi
-    fi
+    _step_phase_header 3 "Checking your setup"
 
     repair_update_owned_state false
 
@@ -3071,7 +2990,6 @@ run_update() {
         tui_info "Or run: inir restart"
     fi
 
-    show_session_impact_notices
 
     echo ""
     if [[ -n "$not_loaded" ]]; then
@@ -3102,7 +3020,7 @@ COMMAND=""
 SUBCMD_ARGS=()
 while [[ $# -gt 0 ]]; do
     case $1 in
-        install|reinstall|update|provider|migrate|doctor|rollback|my-changes|uninstall|status|config|theme|info|backup|logs|extras)
+        install|reinstall|update|provider|doctor|rollback|my-changes|uninstall|status|config|theme|info|backup|logs|extras)
             COMMAND="$1"; shift
             SUBCMD_ARGS=("$@")
             break
@@ -3211,14 +3129,13 @@ case "$COMMAND" in
                 --local) export _II_POST_PULL=local ;;
                 --realign) export INIR_REALIGN_REMOTE=1 ;;
                 --simulate|--dry-run) export INIR_SIMULATE_UPDATE=1 ;;
-                # Exported: survives the re-exec into the pulled setup and reaches migrations (pkg_sudo).
+                # Exported: survives the re-exec into the pulled setup and reaches the package steps (pkg_sudo).
                 --skip-deps) export SKIP_ALLDEPS=true ;;
             esac
         done
         hand_to_inir_cli update "${SUBCMD_ARGS[@]}"
         run_update
         ;;
-    migrate) run_migrate ;;
     webengine) run_webengine ;;
     doctor)
         # With the inir binary installed, a plain doctor is its job: it checks in Go and

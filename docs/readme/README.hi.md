@@ -247,7 +247,7 @@ inir run                        # launch the shell
 inir settings                   # open settings GUI
 inir logs                       # check runtime logs
 inir doctor                     # auto-diagnose and fix
-inir update                     # pull + migrate + restart
+inir update                     # pull + sync + restart
 ```
 
 **समर्थित डिस्ट्रो:** Arch; यह fork XBPS के साथ Void Linux glibc + runit के लिए भी validated automated install path देता है। Void के लिए [VOID.md](../VOID.md) और पैकेजों के लिए [PACKAGES.md](../PACKAGES.md) देखें।

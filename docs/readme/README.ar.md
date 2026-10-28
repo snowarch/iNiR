@@ -259,7 +259,7 @@ inir run                        # launch the shell
 inir settings                   # open settings GUI
 inir logs                       # check runtime logs
 inir doctor                     # auto-diagnose and fix
-inir update                     # pull + migrate + restart
+inir update                     # pull + sync + restart
 ```
 
 </div>

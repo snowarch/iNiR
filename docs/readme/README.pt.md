@@ -247,7 +247,7 @@ inir run                        # launch the shell
 inir settings                   # open settings GUI
 inir logs                       # check runtime logs
 inir doctor                     # auto-diagnose and fix
-inir update                     # pull + migrate + restart
+inir update                     # pull + sync + restart
 ```
 
 **Distros suportadas:** Arch; este fork também adiciona um caminho automatizado e validado para Void Linux glibc + runit via XBPS. Veja [VOID.md](../VOID.md) para Void e [PACKAGES.md](../PACKAGES.md) para pacotes.

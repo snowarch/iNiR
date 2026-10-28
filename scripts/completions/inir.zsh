@@ -47,7 +47,6 @@ _inir() {
         'setup:Run setup directly'
         'service:Manage systemd service'
         'doctor:Health checks'
-        'migrate:Run migrations'
         'status:Shell status'
         'update:Update shell'
         'rollback:Rollback update'

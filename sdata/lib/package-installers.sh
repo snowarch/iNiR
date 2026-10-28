@@ -141,7 +141,7 @@ power_profiles_enable() {
 
 # Use elevate() when USE_ELEVATE is set (graphical mode), otherwise use sudo
 pkg_sudo() {
-  # --skip-deps means the user owns their packages: no step installs any, migrations included.
+  # --skip-deps means the user owns their packages: no step installs any.
   if [[ "${SKIP_ALLDEPS:-false}" == "true" ]] && pkg_command_installs "$@"; then
     echo -e "${STY_YELLOW:-}  Skipped with --skip-deps: $*${STY_RST:-}" >&2
     return 1

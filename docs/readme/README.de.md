@@ -216,7 +216,7 @@ Rechte Sidebar:
 
 - **Grafische Einstellungen**: alles einstellbar, ohne Dateien anzufassen
 - **GameMode**: schaltet Effekte bei Vollbild-Apps automatisch ab
-- **Updates**: `inir update` mit Rollback, Migrationen und Erhalt deiner Änderungen
+- **Updates**: `inir update` mit Rollback und Erhalt deiner Änderungen
 - **Sperrbildschirm** und **Sitzungsbildschirm** (Abmelden/Neustart/Herunterfahren/Ruhezustand)
 - **Polkit-Agent**, **Bildschirmtastatur**, **Autostart-Verwaltung** auf Basis von Niris eigener Startdatei
 - **Kira**: ein Pixel-Art-Katzenmädchen, das über die Bildschirmränder läuft, auf dich reagiert und einen Chaosmodus hat. Optional, mit separatem Grafikpaket von ~32 MiB unter `./setup` › Extras
@@ -247,7 +247,7 @@ inir run                        # launch the shell
 inir settings                   # open settings GUI
 inir logs                       # check runtime logs
 inir doctor                     # auto-diagnose and fix
-inir update                     # pull + migrate + restart
+inir update                     # pull + sync + restart
 ```
 
 **Unterstützte Distributionen:** Arch; dieser Fork unterstützt zusätzlich einen getesteten automatisierten Void-Linux-glibc+runit-Pfad über XBPS. Siehe [VOID.md](../VOID.md) für Void und [PACKAGES.md](../PACKAGES.md) für Paketdetails.
@@ -293,7 +293,7 @@ Alles für Nutzer steht auf [inir.space/docs](https://inir.space/docs/) (auf Eng
 | Seite | Inhalt |
 |---|---|
 | [Install](https://inir.space/docs/install/) | Zum Laufen bringen |
-| [Setup](https://inir.space/docs/setup/) | Updates, Migrationen, Rollback |
+| [Setup](https://inir.space/docs/setup/) | Updates, Rollback |
 | [Keybinds](https://inir.space/docs/keybinds/) | Alle Tastenkürzel |
 | [IPC](https://inir.space/docs/ipc/) | Befehle für Tastenkürzel und Skripte |
 | [Packages](https://inir.space/docs/packages/) | Jede Abhängigkeit und warum sie da ist |

@@ -61,7 +61,7 @@ Surfaces in `modules/shared/` keep their `ii` IDs: `iiOverview`, `iiOverlay`, `i
 
 The ii bar reads `bar.layout`, which has five zones: `left`, `centerLeft`, `center`, `centerRight` and `right`. `workspaces` stays in the centre. The bar page is `modules/ii/settings/BarConfig.qml`.
 
-`modulesLayout`, `edgeModulesLayout` and `modulesPlacement` are deprecated. `Config.qml` keeps them only so old files still load. Migration `028-bar-modular-layout` is disabled, because the bar falls back to its built-in layout and existing configs need no rewrite.
+`modulesLayout`, `edgeModulesLayout` and `modulesPlacement` are deprecated. `Config.qml` keeps them only so old files still load. Nothing rewrites them: the bar falls back to its built-in layout, so existing configs keep working.
 
 ## Notable behaviour
 

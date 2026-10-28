@@ -57,7 +57,7 @@ Do not start Quickshell by hand. That bypasses the launcher's ownership and can 
 
 ## Config loading
 
-1. `Config.qml` reads `Directories.shellConfigPath`, which is `~/.config/illogical-impulse/config.json`. Migration 019 makes that path a link to `~/.config/inir/`, where the installer writes the file.
+1. `Config.qml` reads `Directories.shellConfigPath`, which is `~/.config/illogical-impulse/config.json`. Since v2 that path is a link to `~/.config/inir/`, where the installer writes the file.
 2. A `JsonAdapter` parses the file. Schema properties bind to the values, with fallbacks.
 3. `Config.ready` turns true, and everything waiting on config starts.
 

@@ -247,7 +247,7 @@ inir run                        # launch the shell
 inir settings                   # open settings GUI
 inir logs                       # check runtime logs
 inir doctor                     # auto-diagnose and fix
-inir update                     # pull + migrate + restart
+inir update                     # pull + sync + restart
 ```
 
 **지원 배포판:** Arch. 이 fork는 XBPS 기반 Void Linux glibc + runit용 자동화·검증 설치 경로도 제공합니다. Void는 [VOID.md](../VOID.md), 패키지는 [PACKAGES.md](../PACKAGES.md)를 참조하세요.

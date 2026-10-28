@@ -387,6 +387,55 @@ repair_legacy_niri_shell_startup() {
   done
 }
 
+# What v2 installs still carry, set right on every update and safe to repeat: the clipboard watcher on the
+# deleted clipboard-store.py, borders that made self-drawn windows opaque, Waffle's own hide-city switch, and
+# (only on the first update off v2, while its migrations.json is still there) the clock faded at Dimming 70.
+repair_v2_leftovers() {
+  INIR_V2_LEFTOVERS_REPAIRED=0
+  local niri="${XDG_CONFIG_HOME:-$HOME/.config}/niri" conf state file rules line tmp
+  declare -F inir_config_file >/dev/null || source "${REPO_ROOT}/scripts/lib/config-path.sh"
+  conf="$(inir_config_file)"
+  state="$(inir_config_dir)/migrations.json"
+
+  file="$niri/config.d/50-startup.kdl"
+  if [[ -f "$file" ]] && grep -q 'scripts/clipboard-store\.py' "$file"; then
+    sed -i 's|scripts/clipboard-store\.py|scripts/lib/accel-run clipboard-store|g' "$file" || return 1
+    ((INIR_V2_LEFTOVERS_REPAIRED++)) || true
+  fi
+
+  rules="$niri/config.d/30-window-rules.kdl"
+  if [[ -f "$rules" ]] && ! grep -Eqs '^[[:space:]]*draw-border-with-background[[:space:]]' "$niri/config.kdl" "$niri"/config.d/*.kdl; then
+    # the first window-rule with no match or exclude: the one every window takes
+    line="$(awk '
+      /^[[:space:]]*\/\// { next }
+      /^[[:space:]]*window-rule[[:space:]]*\{[[:space:]]*$/ { start = NR; scoped = 0; next }
+      start && /^[[:space:]]*(match|exclude)[[:space:]]/ { scoped = 1 }
+      start && /^[[:space:]]*\}[[:space:]]*$/ { if (!scoped) { print start; exit } start = 0 }
+    ' "$rules")"
+    if [[ -n "$line" ]]; then
+      sed -i "${line}a\\    draw-border-with-background false" "$rules" || return 1
+      ((INIR_V2_LEFTOVERS_REPAIRED++)) || true
+    fi
+  fi
+
+  if [[ -f "$conf" ]] && command -v jq >/dev/null 2>&1; then
+    tmp="${conf}.inir-repair.$$"
+    if jq -e '.waffles.widgetsPanel | has("weatherHideLocation")' "$conf" >/dev/null 2>&1; then
+      jq '(.waffles.widgetsPanel.weatherHideLocation == true) as $hidden
+          | .bar.weather.hideLocation = ((.bar.weather.hideLocation // false) or $hidden)
+          | del(.waffles.widgetsPanel.weatherHideLocation)' "$conf" >"$tmp" && mv "$tmp" "$conf" || { rm -f "$tmp"; return 1; }
+      ((INIR_V2_LEFTOVERS_REPAIRED++)) || true
+    fi
+    if [[ -f "$state" ]] && ! grep -q '046-desktop-clock-full-strength' "$state" \
+        && jq -e '.background.widgets.clock.dim == 70' "$conf" >/dev/null 2>&1; then
+      jq '.background.widgets.clock.dim = 0' "$conf" >"$tmp" && mv "$tmp" "$conf" || { rm -f "$tmp"; return 1; }
+      ((INIR_V2_LEFTOVERS_REPAIRED++)) || true
+    fi
+  fi
+  rm -f "$state"
+  return 0
+}
+
 sync_user_desktop_integration_from_repo() {
   INIR_DESKTOP_INTEGRATION_CHANGED=0
 

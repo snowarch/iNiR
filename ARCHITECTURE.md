@@ -52,7 +52,7 @@ slots, flags, its config subtree) or answered by the family's verbs (`GlobalStat
 | `modules/common/` | The kit: `Config`, `Appearance`, widgets, functions, the wizard's pages |
 | `modules/shared/` | Surfaces more than one family loads: background and desktop widgets, lock, overview, clipboard, region selector, session screen, overlay, OSK |
 | `scripts/` | What runs on your machine: the `inir` launcher, colour generation and app theming, media and capture helpers |
-| `sdata/`, `setup` | Install, update, uninstall, migrations, doctor |
+| `sdata/`, `setup` | Install, update, uninstall, doctor |
 | `defaults/`, `dots/` | The fresh-install config and the app configs setup offers |
 | `translations/` | Every visible string, one catalogue per language |
 | `docs/` | User docs, published at [inir.space/docs](https://inir.space/docs) |
@@ -84,13 +84,13 @@ tokens (`Appearance`, `Looks`, `IrisStyle`). `scripts/colors/applycolor.sh` them
 ```bash
 git clone https://github.com/snowarch/inir.git && cd inir
 ./setup install          # interactive; -y for no questions
-./setup update           # snapshot, pull, plugins, sync, migrations, restart
+./setup update           # snapshot, pull, plugins, sync, restart
 ./setup rollback         # back to a snapshot
 ```
 
 The checkout is the update source; the runtime is synced to `~/.config/quickshell/inir/`. Update fetches the
-plugins you have before touching anything, so a missing one stops it with the old shell intact. Migrations
-(`sdata/migrations/`) are numbered and append-only.
+plugins you have before touching anything, so a missing one stops it with the old shell intact. There are no
+migrations: what an older version left in a config, the update sets right in place.
 
 ## Running it
 

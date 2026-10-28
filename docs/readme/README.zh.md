@@ -247,7 +247,7 @@ inir run                        # launch the shell
 inir settings                   # open settings GUI
 inir logs                       # check runtime logs
 inir doctor                     # auto-diagnose and fix
-inir update                     # pull + migrate + restart
+inir update                     # pull + sync + restart
 ```
 
 **支持的发行版：** Arch；此 fork 还增加了经验证的 Void Linux glibc + runit 自动安装路径，并使用 XBPS。Void 说明见 [VOID.md](../VOID.md)，软件包详情见 [PACKAGES.md](../PACKAGES.md)。
