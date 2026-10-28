@@ -29,6 +29,9 @@ Some things are easier to change where they sit.
   **Settings › Widgets › Edit Mode** arranges the desktop widgets, with a grid to snap to.
 - Waffle: **Waffle Settings › Shell Layout** places the taskbar.
 
+While you drag anything (a widget, a window in the overview, a row in a Settings editor), **Esc** puts it back where
+it was and saves nothing. Long lists scroll by themselves when you hold a row near their top or bottom edge.
+
 Shortcuts to apps, files and links live on the desktop too: [Desktop items](DESKTOP_ITEMS.md).
 
 ## The whole look
