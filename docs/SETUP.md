@@ -69,7 +69,7 @@ It also checks that qs-rs starts on its own Qt (if it doesn't, the shell moves t
 that password prompts get answered (by the shell, or by your own agent), and that inir-accel's helpers match what is installed.
 It checks plasma-integration, a colour emoji font, `niri-session` (not on Void), a power profiles daemon and the fonts
 the shell and each installed family use, and tries to install the missing ones. On Debian and Ubuntu it also checks the
-Cairo and GObject headers the Python packages build against, installs them and rebuilds the Python environment. With
+Cairo, GObject and D-Bus headers the Python packages build against, installs them and rebuilds the Python environment. With
 the Web Apps tab on, it gets Qt WebEngine if it is missing.
 
 If you also want a restart and a check of the logs, run `inir repair`.
