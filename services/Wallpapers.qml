@@ -587,6 +587,10 @@ Singleton {
     property alias directory: folderModel.folder
     readonly property string effectiveDirectory: FileUtils.trimFileProtocol(folderModel.folder.toString())
     property url defaultFolder: Qt.resolvedUrl(Directories.wallpapersPath)
+    // Qt lists the working directory for a folder that isn't there: the model starts on the shipped wallpapers and
+    // moves to the person's folder once setDirectory finds it
+    onDefaultFolderChanged: root.setDirectory(root.defaultFolder)
+    Component.onCompleted: root.setDirectory(root.defaultFolder)
     property alias folderModel: folderModel
     property bool _folderModelTransitioning: false
     readonly property bool folderModelReady: !root._folderModelTransitioning
@@ -713,9 +717,17 @@ Singleton {
             folderModelTransitionTimer.restart()
     }
 
+    property bool _atStart: true
+
     function _setFolderModelDirectory(path: url): void {
         root._beginFolderModelTransition()
         root.directory = path
+        if (root._atStart) {
+            // Back never returns to the folder the model started on
+            folderModel.folderHistory = [folderModel.folder]
+            folderModel.currentFolderHistoryIndex = 0
+            root._atStart = false
+        }
         root._scheduleFolderModelTransitionEnd()
     }
 
@@ -1204,6 +1216,7 @@ Singleton {
             if (exitCode === 0) {
                 root._setFolderModelDirectory(Qt.resolvedUrl(FileUtils.parentDirectory(validateDirProc.nicePath)))
             } else {
+                root._atStart = false
                 root._scheduleFolderModelTransitionEnd()
             }
         }
@@ -1231,7 +1244,7 @@ Singleton {
 
     FolderListModelWithHistory {
         id: folderModel
-        folder: Qt.resolvedUrl(root.defaultFolder)
+        folder: Qt.resolvedUrl(Quickshell.shellPath("assets/wallpapers"))
         caseSensitive: false
         nameFilters: {
             const query = root.searchQuery.trim().toLowerCase()
