@@ -6,7 +6,8 @@ provider_power-profiles() {
   power_profiles_wanted || return 0
   local flags="--needed"
   ${ask:-true} || flags="$flags --noconfirm"
-  pkg_sudo pacman -S $flags power-profiles-daemon && power_profiles_enable power-profiles-daemon.service
+  command -v powerprofilesctl &>/dev/null || pkg_sudo pacman -S $flags power-profiles-daemon || return 1
+  power_profiles_enable power-profiles-daemon.service
 }
 
 provider_aur-helper() {

@@ -25,9 +25,10 @@ tui_info "Architecture: ${ARCH}"
 #####################################################################################
 if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
   tui_info "Installing missing dependencies only..."
-  # not a package: the recipe picks what this machine takes and turns it on
+  # not a package: the recipe picks what this machine takes and turns it on, once apt's lists are fresh
+  _deb_power_profiles=false
   if [[ " $ONLY_MISSING_DEPS " == *" power-profiles "* ]]; then
-    provider_power-profiles || log_warning "power-profiles-daemon could not be installed; the profile buttons stay off"
+    _deb_power_profiles=true
     ONLY_MISSING_DEPS="$(tr ' ' '\n' <<<"$ONLY_MISSING_DEPS" | grep -vx power-profiles | xargs)"
   fi
 
@@ -68,6 +69,9 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
   # Candidates come from the package index; an empty or stale one makes every package look
   # unavailable. Refreshing the index is not a system upgrade, so SKIP_SYSUPDATE does not apply.
   v sudo apt update
+  if $_deb_power_profiles; then
+    provider_power-profiles || log_warning "power-profiles-daemon could not be installed; the profile buttons stay off"
+  fi
 
   for cmd in "${_deb_miss_cmds[@]}"; do
     case "$cmd" in

@@ -393,8 +393,7 @@ install_github_binary() {
 
 provider_power-profiles() {
   power_profiles_wanted || return 0
-  pkg_sudo apt-get install -y power-profiles-daemon \
-    || { pkg_sudo apt-get update -qq && pkg_sudo apt-get install -y power-profiles-daemon; } || return 1
+  command -v powerprofilesctl &>/dev/null || pkg_sudo apt-get install -y power-profiles-daemon || return 1
   power_profiles_enable power-profiles-daemon.service
 }
 

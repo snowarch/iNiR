@@ -113,14 +113,23 @@ pkg_command_installs() {
   return 1
 }
 
-# power_profiles_wanted: the profile buttons need a power profiles daemon; true only where none is installed and
+# power_profiles_wanted: the profile buttons need a power profiles daemon; true where none is on the system bus and
 # nothing else manages power (TLP, tuned and auto-cpufreq conflict with it, so a machine with one keeps it)
 power_profiles_wanted() {
   local m
-  for m in powerprofilesctl tuned-adm tlp auto-cpufreq system76-power; do
+  for m in tuned-adm tlp auto-cpufreq system76-power; do
     command -v "$m" &>/dev/null && return 1
   done
-  return 0
+  ! power_profiles_on_bus
+}
+
+# power_profiles_on_bus: the name Quickshell asks for is owned or startable; without gdbus, an installed daemon counts
+power_profiles_on_bus() {
+  command -v gdbus &>/dev/null || { command -v powerprofilesctl &>/dev/null; return; }
+  local m
+  for m in ListNames ListActivatableNames; do
+    gdbus call --system --dest org.freedesktop.DBus --object-path /org/freedesktop/DBus --method "org.freedesktop.DBus.$m"
+  done 2>/dev/null | grep -q "'org.freedesktop.UPower.PowerProfiles'"
 }
 
 # power_profiles_enable UNIT...: on right after the install: Arch enables nothing it installs, and Quickshell asks
