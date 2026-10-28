@@ -972,7 +972,11 @@ ShellRoot {
             readonly property string criticalSource: criticalParts.source
             readonly property string panelsSource: panelParts.source
             readonly property bool up: panelParts.item !== null
-            onCriticalSourceChanged: family.checkPart(family.criticalSource)
+            onCriticalSourceChanged: {
+                if (family.criticalSource !== "")
+                    console.info(`[Plugins] family ${family.modelData} loading`)
+                family.checkPart(family.criticalSource)
+            }
             onPanelsSourceChanged: family.checkPart(family.panelsSource)
             onUpChanged: if (family.up) console.info(`[Plugins] family ${family.modelData} loaded`)
             Component.onCompleted: {

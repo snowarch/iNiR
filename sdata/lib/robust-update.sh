@@ -129,8 +129,9 @@ cleanup_old_backups() {
 
 # Restart inir.service and confirm from its own log that the new files loaded: 0 loaded, 1 failed (errors printed), 2 not confirmed.
 # Quickshell 0.3 and qs-rs log "Configuration Loaded", or "Failed to load configuration" followed by why; then the
-# base logs "[Plugins] family <id> loaded" once the family's panels are up, or "failed to load" when a part doesn't
-# compile (a shell without panels). A base from before that line (a rollback to v2.33) is taken as loaded.
+# base logs "[Plugins] family <id> loading", then "loaded" once the family's panels are up or "failed to load" when a
+# part doesn't compile (a shell without panels). A base that never says "loading" (a rollback to v2.33) is taken as
+# loaded 15 s after the configuration; one that does is waited for, however slow its panels are.
 # The service owns the shell: it is never killed by hand or started twice (KillMode=process keeps this script alive).
 restart_shell_and_verify() {
     local timeout="${1:-30}" since out deadline loaded_at=0
@@ -155,7 +156,7 @@ restart_shell_and_verify() {
             return 1
         fi
         grep -q "\[Plugins\] family .* loaded" <<<"$out" && return 0
-        if grep -q "Configuration Loaded" <<<"$out"; then
+        if grep -q "Configuration Loaded" <<<"$out" && ! grep -q "\[Plugins\] family .* loading" <<<"$out"; then
             (( loaded_at )) || loaded_at=$SECONDS
             (( SECONDS - loaded_at >= 15 )) && return 0
         fi
