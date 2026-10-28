@@ -96,16 +96,6 @@ mcp/
 .github/copilot-instructions.md
 .github/instructions/
 
-# ── Go theme-generator binaries (built on demand) ────────────
-/vscode_themegen
-/opencode_themegen
-/system24_themegen
-/zed_themegen
-/scripts/colors/vscode_themegen/vscode_themegen
-/scripts/colors/opencode_themegen/opencode_themegen
-/scripts/colors/system24_themegen/system24_themegen
-/scripts/colors/zed_themegen/zed_themegen
-
 # ── Python ────────────────────────────────────────────────────
 __pycache__/
 *.pyc
