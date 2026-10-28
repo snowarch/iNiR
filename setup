@@ -2409,6 +2409,10 @@ _update_dependencies() {
     else
         tui_success "All required commands available"
     fi
+    # the fonts the shell and its families ask for: doctor's own repair, into ~/.local/share/fonts
+    if [[ "${SKIP_ALLDEPS:-false}" != true && "$(read_installed_version_field '.dependencies' setup)" != user ]]; then
+        check_fonts || true
+    fi
 }
 
 # setup webengine: Qt WebEngine for the Web Apps tab, now (the tab offers it while it is missing). qs-rs gets its

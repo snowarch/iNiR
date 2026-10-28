@@ -270,6 +270,8 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
     [ocr-chi-sim]="tesseract-ocr-chi_sim"
     [ocr-chi-tra]="tesseract-ocr-chi_tra"
     [font-jetbrains-mono-nerd]="nerd-fonts-ttf"
+    [plasma-integration]="plasma-integration"
+    [font-noto-color-emoji]="noto-fonts-emoji"
   )
 
   _miss_installflags=(-S)

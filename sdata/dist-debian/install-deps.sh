@@ -49,6 +49,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
     [ocr-jpn]="tesseract-ocr-jpn" [ocr-jpn-vert]="tesseract-ocr-jpn-vert"
     [ocr-chi-sim]="tesseract-ocr-chi-sim" [ocr-chi-sim-vert]="tesseract-ocr-chi-sim-vert"
     [ocr-chi-tra]="tesseract-ocr-chi-tra" [ocr-chi-tra-vert]="tesseract-ocr-chi-tra-vert"
+    [plasma-integration]="plasma-integration" [font-noto-color-emoji]="fonts-noto-color-emoji"
   )
 
   _deb_miss_cmds=()

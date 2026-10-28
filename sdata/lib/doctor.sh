@@ -204,6 +204,25 @@ check_dependencies() {
         missing_cmds+=("lsp-plugins-lv2")
     fi
 
+    # Not commands either: Qt apps take the theme's colors through plasma-integration's platform theme, and emoji
+    # need a color font (the Qt theming and font steps say why). Here an update installs them.
+    local qt_plugins qt_theme_found=false
+    for qt_plugins in "$(qtpaths6 --plugin-dir 2>/dev/null || qtpaths --plugin-dir 2>/dev/null || true)" \
+            /usr/lib/qt6/plugins /usr/lib64/qt6/plugins /usr/lib/x86_64-linux-gnu/qt6/plugins; do
+        if [[ -n "$qt_plugins" && -f "$qt_plugins/platformthemes/KDEPlasmaPlatformTheme6.so" ]]; then
+            qt_theme_found=true
+            break
+        fi
+    done
+    if [[ "$qt_theme_found" != true ]]; then
+        missing+=("plasma-integration")
+        missing_cmds+=("plasma-integration")
+    fi
+    if command -v fc-list &>/dev/null && ! fc-list : family 2>/dev/null | grep -qi 'Noto Color Emoji'; then
+        missing+=("Noto Color Emoji")
+        missing_cmds+=("font-noto-color-emoji")
+    fi
+
     # Tesseract itself can be installed while the language data iNiR exposes in
     # Settings is absent. Treat those models as first-class dependencies so an
     # existing install can be repaired instead of failing every OCR attempt.

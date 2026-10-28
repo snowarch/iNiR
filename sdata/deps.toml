@@ -452,7 +452,7 @@ name = "fonts"
 group = "fonts"
 arch = ["fontconfig", "noto-fonts-emoji", "ttf-dejavu", "ttf-liberation", "ttf-roboto", "glib2",
         "adw-gtk-theme", "capitaine-cursors", "ttf-material-symbols-variable", "ttf-jetbrains-mono-nerd"]
-fedora = ["fontconfig", "dejavu-fonts-all", "liberation-fonts", "google-noto-emoji-fonts",
+fedora = ["fontconfig", "dejavu-fonts-all", "liberation-fonts", "google-noto-color-emoji-fonts",
           "jetbrains-mono-fonts-all", "glib2"]
 debian = ["fontconfig", "fonts-dejavu", "fonts-liberation", "fonts-noto-color-emoji", "fonts-jetbrains-mono"]
 void = ["curl", "unzip", "fontconfig", "dejavu-fonts-ttf", "twemoji", "nerd-fonts-ttf", "noto-fonts-emoji"]

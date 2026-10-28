@@ -56,6 +56,8 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
     [kirigami]="kirigami"
     [kdialog]="kdialog"
     [millennium]="millennium-bin"
+    [plasma-integration]="plasma-integration"
+    [font-noto-color-emoji]="noto-fonts-emoji"
     [missioncenter]="mission-center"
     # Commands whose Arch package has another name
     [awww-daemon]="awww"
