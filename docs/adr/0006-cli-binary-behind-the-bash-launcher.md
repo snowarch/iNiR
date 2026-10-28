@@ -33,18 +33,17 @@ IPC call, which drops from about 210 ms to 70 ms on the same machine.
 How the binary gets there is separate from the hand-over, and every one of
 these needs the `snowarch/inir-cli` repo with tagged releases first:
 
-1. Packages install it at `/usr/lib/inir/inir`: `inir-cli-bin` in the AUR,
-   deb and rpm built with nfpm for COPR and a PPA, and the Nix package.
+1. A system package can put it at `/usr/local/lib/inir/inir` or
+   `/usr/lib/inir/inir`; the launcher looks there too.
 2. `setup install` and `setup update` fetch the release for the machine's
    architecture into `~/.local/share/inir/cli/inir`, check its sha256 against
-   the release's checksums file and keep the old one if anything fails. Opt-in
-   first (`INIR_FETCH_CLI=1`), the default once the bench has run every distro
-   with the binary in place.
-3. `uninstall` removes the user copy; packages remove their own.
+   the release's checksums file and keep the old one if anything fails.
+   `INIR_FETCH_CLI=0` skips it.
+3. `uninstall` removes the user copy.
 
 A test holds the hand-over to these rules, and
 `inir-cli`'s `test/parity.sh` checks that every call gives the same output and
 exit code through the bash launcher alone, through the binary, and through the
 launcher with the binary installed.
 
-Status: accepted for the hand-over; delivery waits for the repo and releases.
+Status: accepted; setup and update fetch the binary from its releases.
