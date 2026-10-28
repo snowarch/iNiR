@@ -45,11 +45,14 @@ Item {
             }
         }
 
-        onClicked: popup.visible ? popup.close() : popup.open()
+        // Opens on press; a press that just closed it (outside the popup) only closes.
+        downAction: () => { if (popup.visible) popup.close(); else if (Date.now() - popup.closedAt > 250) popup.open() }
     }
 
     Popup {
         id: popup
+        property double closedAt: 0
+        onClosed: popup.closedAt = Date.now()
         y: -height - 4
         width: Math.min(300, themeButton.width)
         height: Math.min(280, themeList.contentHeight + searchField.height + 24 + (root.mode === "dock" ? 40 : 0))

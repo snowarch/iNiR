@@ -599,7 +599,7 @@ ColumnLayout {
                                 MouseArea {
                                     anchors.fill: parent
                                     anchors.margins: -4
-                                    onClicked: addMenu.popup()
+                                    onPressed: { if (addMenu.visible) addMenu.close(); else if (Date.now() - addMenu.closedAt > 250) addMenu.popup() }
                                     cursorShape: Qt.PointingHandCursor
                                 }
                             }
@@ -607,6 +607,8 @@ ColumnLayout {
 
                         Menu {
                             id: addMenu
+                            property double closedAt: 0
+                            onClosed: addMenu.closedAt = Date.now()
                             Repeater {
                                 model: root._zones
                                 delegate: MenuItem {

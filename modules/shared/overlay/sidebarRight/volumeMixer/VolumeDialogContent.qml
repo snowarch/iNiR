@@ -82,11 +82,14 @@ ColumnLayout {
             }
         }
 
-        onClicked: devicePopup.visible ? devicePopup.close() : devicePopup.open()
+        // Opens on press; a press that just closed it (outside the popup) only closes.
+        downAction: () => { if (devicePopup.visible) devicePopup.close(); else if (Date.now() - devicePopup.closedAt > 250) devicePopup.open() }
     }
 
     Popup {
         id: devicePopup
+        property double closedAt: 0
+        onClosed: devicePopup.closedAt = Date.now()
         y: deviceButton.y + deviceButton.height + 4
         width: deviceButton.width
         height: Math.min(250, deviceList.contentHeight + 16)
