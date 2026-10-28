@@ -9,11 +9,13 @@
 				"INSTALL",
 				"SETUP",
 				"KEYBINDS",
+				"COMMANDS",
 				"LIMITATIONS"
 			],
 			"labels": {
 				"index": "Home",
 				"SETUP": "Setup and updates",
+				"COMMANDS": "The inir command",
 				"LIMITATIONS": "Known limitations"
 			}
 		},
