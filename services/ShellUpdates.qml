@@ -258,6 +258,44 @@ Singleton {
         root.isChecking = true
         root.lastError = ""
         fetchProc.running = true
+        hubCheck.running = true
+    }
+
+    // Families, themes and widgets carry their own versions in the hub: the base can be current while they are not.
+    property var hubPending: []
+    readonly property string lastNotifiedHub: Config.options?.shellUpdates?.lastNotifiedHub ?? ""
+    readonly property real lastNotifiedHubAt: Number(Config.options?.shellUpdates?.lastNotifiedHubAt ?? 0)
+
+    Process {
+        id: hubCheck
+        command: [Quickshell.shellPath("scripts/inir"), "hub", "status", "--json"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                let items = []
+                try {
+                    items = JSON.parse(text).items ?? []
+                } catch (e) {
+                    return
+                }
+                root.hubPending = items.filter(item => item.update === true && item.compatible === true)
+                root.maybeNotifyHub()
+            }
+        }
+    }
+
+    // A base update brings the hub's too, so its notice covers both.
+    function maybeNotifyHub(): void {
+        if (root.hubPending.length === 0 || root.hasUpdate || root.managedExternally) return
+        const key = root.hubPending.map(item => item.id + "@" + item.version).sort().join(" ")
+        const now = Date.now()
+        if (key === root.lastNotifiedHub
+                && (root.remindDays <= 0 || now - root.lastNotifiedHubAt < root.remindDays * 86400000)) return
+        const names = root.hubPending.map(item => item.name || item.id).join(", ")
+        root.postUpdateNotice("New in the iNiR Hub", names + ". Run `inir update`, or update them in Settings › Hub.")
+        Config.setNestedValues({
+            "shellUpdates.lastNotifiedHub": key,
+            "shellUpdates.lastNotifiedHubAt": now
+        })
     }
 
     // Fetch detailed info for the overlay (commit log, changelog, local mods)

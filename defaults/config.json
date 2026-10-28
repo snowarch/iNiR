@@ -2385,6 +2385,8 @@
         "lastNotifiedCommit": "",
         "remindDays": 3,
         "lastNotifiedAt": 0,
+        "lastNotifiedHub": "",
+        "lastNotifiedHubAt": 0,
         "openTerminalOnUpdate": true
     },
     "updates": {

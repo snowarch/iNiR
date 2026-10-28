@@ -4070,6 +4070,9 @@ Singleton {
                 // then stays quiet until the next upstream commit.
                 property int remindDays: 3
                 property real lastNotifiedAt: 0
+                // The hub's pending versions last told, and when (ShellUpdates.maybeNotifyHub).
+                property string lastNotifiedHub: ""
+                property real lastNotifiedHubAt: 0
                 // When true, performUpdate() launches setup in a terminal window so the
                 // user sees the full TUI output (progress bars, success/warn/error lines)
                 // instead of just the bar pill X/N indicator. Auto-closes on success,

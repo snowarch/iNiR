@@ -2293,6 +2293,49 @@ refresh_sddm_theme_on_update() {
 }
 
 # Packages the new version needs, installed the way this run allows: asked, pkexec, or a hint.
+# The base may not move while a family, theme or widget does: each has its own version in the hub. Shell code the
+# new copy won't load goes back to the one it replaced.
+_update_hub_plugins() {
+    local cli="${XDG_DATA_HOME:-$HOME/.local/share}/inir/cli/inir" plugins="${XDG_DATA_HOME:-$HOME/.local/share}/inir/plugins"
+    local state="${XDG_STATE_HOME:-$HOME/.local/state}/inir/hub" pending id kind name names=() code=() keep verified
+    [[ -x "$cli" ]] || return 0
+    pending="$("$cli" hub status --max-age 0 --json 2>/dev/null | python3 -c '
+import json, sys
+for i in json.loads(sys.stdin.read() or "{}").get("items") or []:
+    if i.get("update") and i.get("compatible"):
+        print(i.get("id", ""), i.get("kind", ""), i.get("name") or i.get("id", ""), sep="\t")
+' 2>/dev/null)" || return 0
+    [[ -n "$pending" ]] || return 0
+    while IFS=$'\t' read -r id kind name; do
+        names+=("$name")
+        [[ "$kind" == family || "$kind" == component || "$kind" == design ]] && code+=("$id")
+    done <<<"$pending"
+    keep="$(mktemp -d)" || return 1
+    for id in "${code[@]}"; do [[ -d "$plugins/$id" ]] && cp -a "$plugins/$id" "$keep/$id"; done
+    [[ -f "$state/installed.json" ]] && cp -a "$state/installed.json" "$keep/"
+    if ! "$cli" hub update >/dev/null 2>&1; then
+        tui_warn "Could not update ${names[*]} from the hub; inir update tries again"
+        rm -rf "$keep"; return 1
+    fi
+    tui_success "Updated from the hub: ${names[*]}"
+    if ((${#code[@]})) && [[ -n "${NIRI_SOCKET:-}${WAYLAND_DISPLAY:-}" ]]; then
+        if ! inir_user_service_is_masked && has_usable_systemd_user_manager && systemctl --user cat inir.service >/dev/null 2>&1; then
+            restart_shell_and_verify 30; verified=$?
+            if ((verified == 1)); then
+                for id in "${code[@]}"; do [[ -d "$keep/$id" ]] && rm -rf "${plugins:?}/$id" && cp -a "$keep/$id" "$plugins/$id"; done
+                [[ -f "$keep/installed.json" ]] && cp -a "$keep/installed.json" "$state/installed.json"
+                restart_shell_and_verify 30 || true
+                _report_update_failure 24 "The new ${names[*]} did not load, so iNiR went back to the one you had. inir update tries again"
+                tui_warn "The new ${names[*]} did not load; went back to the one you had"
+            fi
+        elif [[ -x "${II_TARGET}/scripts/inir" ]]; then
+            nohup bash "${II_TARGET}/scripts/inir" restart -c "${II_TARGET}" >/dev/null 2>&1 &
+            disown
+        fi
+    fi
+    rm -rf "$keep"
+}
+
 _update_dependencies() {
     _step_phase_header 5 "Checking dependencies"
     check_dependencies
@@ -2657,6 +2700,7 @@ run_update() {
             _update_dependencies
             # The binary has its own releases: an up-to-date shell still gets a newer one.
             install_inir_cli_binary || tui_warn "Could not fetch the inir binary; the Hub needs it (inir update tries again)"
+            _update_hub_plugins || true
             return 0
         else
             # Local repo ahead of installed - create snapshot
@@ -2963,6 +3007,8 @@ run_update() {
     ensure-ytmusic-js-runtime || tui_warn "YT Music needs Deno; run 'inir doctor' once online"
     # after the venv: accel hooks its python3
     prebuilt_activate
+    # themes, widgets and web apps: the families came with the base, before the sync
+    _update_hub_plugins || true
 
     # Signal success to the shell UI before restart
     _write_update_status "success"
