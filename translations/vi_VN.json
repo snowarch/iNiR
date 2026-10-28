@@ -9916,5 +9916,13 @@
   "Web apps need Qt WebEngine": "Ứng dụng web cần Qt WebEngine",
   "A one-time download of about 110 MB. The shell restarts when it is in.": "Tải xuống một lần, khoảng 110 MB. Shell sẽ khởi động lại khi tải xong.",
   "The download did not finish. Check your connection and try again.": "Tải xuống chưa hoàn tất. Hãy kiểm tra kết nối và thử lại.",
-  "Could not install it. Run inir webengine in a terminal to see why.": "Không thể cài đặt. Hãy chạy inir webengine trong terminal để xem lý do."
+  "Could not install it. Run inir webengine in a terminal to see why.": "Không thể cài đặt. Hãy chạy inir webengine trong terminal để xem lý do.",
+  "An iNiR update is ready": "Đã có bản cập nhật iNiR",
+  "Your settings and edits stay as they are. Update from “What changed”, or run `inir update`.": "Cài đặt và chỉnh sửa của bạn được giữ nguyên. Cập nhật từ “Có gì thay đổi” hoặc chạy `inir update`.",
+  "iNiR %1 is ready": "iNiR %1 đã sẵn sàng",
+  "iNiR's history changed upstream. The update keeps your local changes and moves you over by itself: update from “What changed”, or run `inir update`.": "Lịch sử của iNiR đã thay đổi ở upstream. Bản cập nhật giữ lại các thay đổi cục bộ của bạn và tự chuyển đổi: cập nhật từ “Có gì thay đổi” hoặc chạy `inir update`.",
+  "Hub updates ready": "Đã có cập nhật trong Hub",
+  "%1. Update them in Settings › Hub, or run `inir update`.": "%1. Cập nhật trong Cài đặt › Hub hoặc chạy `inir update`.",
+  "Can't check for iNiR updates": "Không thể kiểm tra cập nhật iNiR",
+  "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "Máy chủ iNiR không phản hồi ba lần liên tiếp. Hãy kiểm tra kết nối hoặc chạy `inir doctor`."
 }

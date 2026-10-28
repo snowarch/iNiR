@@ -9916,5 +9916,13 @@
   "Web apps need Qt WebEngine": "Web アプリには Qt WebEngine が必要です",
   "A one-time download of about 110 MB. The shell restarts when it is in.": "約 110 MB の一度きりのダウンロードです。完了するとシェルが再起動します。",
   "The download did not finish. Check your connection and try again.": "ダウンロードが完了しませんでした。接続を確認してもう一度お試しください。",
-  "Could not install it. Run inir webengine in a terminal to see why.": "インストールできませんでした。ターミナルで inir webengine を実行して理由を確認してください。"
+  "Could not install it. Run inir webengine in a terminal to see why.": "インストールできませんでした。ターミナルで inir webengine を実行して理由を確認してください。",
+  "An iNiR update is ready": "iNiR のアップデートを利用できます",
+  "Your settings and edits stay as they are. Update from “What changed”, or run `inir update`.": "設定と編集内容はそのまま残ります。「変更点」から更新するか、`inir update` を実行してください。",
+  "iNiR %1 is ready": "iNiR %1 を利用できます",
+  "iNiR's history changed upstream. The update keeps your local changes and moves you over by itself: update from “What changed”, or run `inir update`.": "iNiR の履歴がアップストリームで変更されました。アップデートはローカルの変更を保持したまま自動で移行します。「変更点」から更新するか、`inir update` を実行してください。",
+  "Hub updates ready": "ハブのアップデートがあります",
+  "%1. Update them in Settings › Hub, or run `inir update`.": "%1。設定 › ハブで更新するか、`inir update` を実行してください。",
+  "Can't check for iNiR updates": "iNiR のアップデートを確認できません",
+  "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "iNiR のサーバーが 3 回続けて応答しませんでした。接続を確認するか、`inir doctor` を実行してください。"
 }

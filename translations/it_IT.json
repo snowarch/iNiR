@@ -9916,5 +9916,13 @@
   "Web apps need Qt WebEngine": "Le app web richiedono Qt WebEngine",
   "A one-time download of about 110 MB. The shell restarts when it is in.": "Un download una tantum di circa 110 MB. La shell si riavvia quando è completato.",
   "The download did not finish. Check your connection and try again.": "Il download non è stato completato. Controlla la connessione e riprova.",
-  "Could not install it. Run inir webengine in a terminal to see why.": "Impossibile installarlo. Esegui inir webengine in un terminale per vedere il motivo."
+  "Could not install it. Run inir webengine in a terminal to see why.": "Impossibile installarlo. Esegui inir webengine in un terminale per vedere il motivo.",
+  "An iNiR update is ready": "Un aggiornamento di iNiR è pronto",
+  "Your settings and edits stay as they are. Update from “What changed”, or run `inir update`.": "Le tue impostazioni e modifiche restano come sono. Aggiorna da “Novità” o esegui `inir update`.",
+  "iNiR %1 is ready": "iNiR %1 è pronto",
+  "iNiR's history changed upstream. The update keeps your local changes and moves you over by itself: update from “What changed”, or run `inir update`.": "La cronologia di iNiR è cambiata a monte. L'aggiornamento mantiene le tue modifiche locali e fa il passaggio da solo: aggiorna da “Novità” o esegui `inir update`.",
+  "Hub updates ready": "Aggiornamenti dell'Hub pronti",
+  "%1. Update them in Settings › Hub, or run `inir update`.": "%1. Aggiornali in Impostazioni › Hub o esegui `inir update`.",
+  "Can't check for iNiR updates": "Impossibile controllare gli aggiornamenti di iNiR",
+  "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "Il server di iNiR non ha risposto tre volte di fila. Controlla la connessione o esegui `inir doctor`."
 }

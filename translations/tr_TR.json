@@ -9916,5 +9916,13 @@
   "Web apps need Qt WebEngine": "Web uygulamaları Qt WebEngine gerektirir",
   "A one-time download of about 110 MB. The shell restarts when it is in.": "Yaklaşık 110 MB'lık tek seferlik bir indirme. Bittiğinde kabuk yeniden başlar.",
   "The download did not finish. Check your connection and try again.": "İndirme tamamlanmadı. Bağlantınızı kontrol edip yeniden deneyin.",
-  "Could not install it. Run inir webengine in a terminal to see why.": "Kurulamadı. Nedenini görmek için bir terminalde inir webengine komutunu çalıştırın."
+  "Could not install it. Run inir webengine in a terminal to see why.": "Kurulamadı. Nedenini görmek için bir terminalde inir webengine komutunu çalıştırın.",
+  "An iNiR update is ready": "Bir iNiR güncellemesi hazır",
+  "Your settings and edits stay as they are. Update from “What changed”, or run `inir update`.": "Ayarların ve düzenlemelerin olduğu gibi kalır. “Neler değişti” üzerinden güncelle ya da `inir update` çalıştır.",
+  "iNiR %1 is ready": "iNiR %1 hazır",
+  "iNiR's history changed upstream. The update keeps your local changes and moves you over by itself: update from “What changed”, or run `inir update`.": "iNiR'in geçmişi upstream'de değişti. Güncelleme yerel değişikliklerini korur ve geçişi kendisi yapar: “Neler değişti” üzerinden güncelle ya da `inir update` çalıştır.",
+  "Hub updates ready": "Hub güncellemeleri hazır",
+  "%1. Update them in Settings › Hub, or run `inir update`.": "%1. Bunları Ayarlar › Hub içinden güncelle ya da `inir update` çalıştır.",
+  "Can't check for iNiR updates": "iNiR güncellemeleri denetlenemiyor",
+  "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "iNiR sunucusu üst üste üç kez yanıt vermedi. Bağlantını denetle ya da `inir doctor` çalıştır."
 }

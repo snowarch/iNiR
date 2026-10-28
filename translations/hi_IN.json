@@ -9916,5 +9916,13 @@
   "Web apps need Qt WebEngine": "वेब ऐप्स को Qt WebEngine चाहिए",
   "A one-time download of about 110 MB. The shell restarts when it is in.": "लगभग 110 MB का एक बार का डाउनलोड। पूरा होने पर शेल फिर से शुरू होगा।",
   "The download did not finish. Check your connection and try again.": "डाउनलोड पूरा नहीं हुआ। अपना कनेक्शन जाँचें और फिर से कोशिश करें।",
-  "Could not install it. Run inir webengine in a terminal to see why.": "इसे इंस्टॉल नहीं किया जा सका। कारण देखने के लिए टर्मिनल में inir webengine चलाएँ।"
+  "Could not install it. Run inir webengine in a terminal to see why.": "इसे इंस्टॉल नहीं किया जा सका। कारण देखने के लिए टर्मिनल में inir webengine चलाएँ।",
+  "An iNiR update is ready": "iNiR अपडेट तैयार है",
+  "Your settings and edits stay as they are. Update from “What changed”, or run `inir update`.": "आपकी सेटिंग्स और बदलाव जैसे हैं वैसे ही रहेंगे। “क्या बदला” से अपडेट करें या `inir update` चलाएँ।",
+  "iNiR %1 is ready": "iNiR %1 तैयार है",
+  "iNiR's history changed upstream. The update keeps your local changes and moves you over by itself: update from “What changed”, or run `inir update`.": "iNiR का इतिहास upstream में बदल गया है। अपडेट आपके लोकल बदलाव रखता है और अपने आप आपको नए संस्करण पर ले जाता है: “क्या बदला” से अपडेट करें या `inir update` चलाएँ।",
+  "Hub updates ready": "हब अपडेट तैयार हैं",
+  "%1. Update them in Settings › Hub, or run `inir update`.": "%1. इन्हें सेटिंग्स › हब में अपडेट करें या `inir update` चलाएँ।",
+  "Can't check for iNiR updates": "iNiR अपडेट जाँचे नहीं जा सके",
+  "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "iNiR का सर्वर लगातार तीन बार जवाब नहीं दे पाया। अपना कनेक्शन जाँचें या `inir doctor` चलाएँ।"
 }

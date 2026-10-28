@@ -9916,5 +9916,13 @@
   "Web apps need Qt WebEngine": "网页应用需要 Qt WebEngine",
   "A one-time download of about 110 MB. The shell restarts when it is in.": "一次性下载约 110 MB。完成后 shell 会重新启动。",
   "The download did not finish. Check your connection and try again.": "下载未完成。请检查网络连接后重试。",
-  "Could not install it. Run inir webengine in a terminal to see why.": "无法安装。请在终端中运行 inir webengine 查看原因。"
+  "Could not install it. Run inir webengine in a terminal to see why.": "无法安装。请在终端中运行 inir webengine 查看原因。",
+  "An iNiR update is ready": "iNiR 更新已就绪",
+  "Your settings and edits stay as they are. Update from “What changed”, or run `inir update`.": "你的设置和修改会保持不变。可在“更新内容”中更新，或运行 `inir update`。",
+  "iNiR %1 is ready": "iNiR %1 已就绪",
+  "iNiR's history changed upstream. The update keeps your local changes and moves you over by itself: update from “What changed”, or run `inir update`.": "iNiR 的上游历史已更改。更新会保留你的本地修改并自动完成迁移：可在“更新内容”中更新，或运行 `inir update`。",
+  "Hub updates ready": "中心更新已就绪",
+  "%1. Update them in Settings › Hub, or run `inir update`.": "%1。可在 设置 › 中心 中更新，或运行 `inir update`。",
+  "Can't check for iNiR updates": "无法检查 iNiR 更新",
+  "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "iNiR 服务器连续三次未响应。请检查网络连接，或运行 `inir doctor`。"
 }

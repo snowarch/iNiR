@@ -9916,5 +9916,13 @@
   "Web apps need Qt WebEngine": "Вебзастосункам потрібен Qt WebEngine",
   "A one-time download of about 110 MB. The shell restarts when it is in.": "Одноразове завантаження приблизно 110 МБ. Оболонка перезапуститься, щойно воно завершиться.",
   "The download did not finish. Check your connection and try again.": "Завантаження не завершилося. Перевірте з'єднання та спробуйте ще раз.",
-  "Could not install it. Run inir webengine in a terminal to see why.": "Не вдалося встановити. Запустіть inir webengine у терміналі, щоб побачити причину."
+  "Could not install it. Run inir webengine in a terminal to see why.": "Не вдалося встановити. Запустіть inir webengine у терміналі, щоб побачити причину.",
+  "An iNiR update is ready": "Оновлення iNiR готове",
+  "Your settings and edits stay as they are. Update from “What changed”, or run `inir update`.": "Ваші параметри та зміни залишаться без змін. Оновіть через «Що змінилося» або виконайте `inir update`.",
+  "iNiR %1 is ready": "iNiR %1 готовий",
+  "iNiR's history changed upstream. The update keeps your local changes and moves you over by itself: update from “What changed”, or run `inir update`.": "Історія iNiR змінилася в основному репозиторії. Оновлення збереже ваші локальні зміни й саме виконає перехід: оновіть через «Що змінилося» або виконайте `inir update`.",
+  "Hub updates ready": "Оновлення в Хабі готові",
+  "%1. Update them in Settings › Hub, or run `inir update`.": "%1. Оновіть їх у Параметри › Хаб або виконайте `inir update`.",
+  "Can't check for iNiR updates": "Не вдається перевірити оновлення iNiR",
+  "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "Сервер iNiR не відповів тричі поспіль. Перевірте з'єднання або виконайте `inir doctor`."
 }

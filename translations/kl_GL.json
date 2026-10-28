@@ -9916,5 +9916,13 @@
   "Web apps need Qt WebEngine": "Web apps-it Qt WebEngine pisariaqartippaat",
   "A one-time download of about 110 MB. The shell restarts when it is in.": "Ataasiarluni aaneq missaa 110 MB. Iligaangat shell aallarteqqittarpoq.",
   "The download did not finish. Check your connection and try again.": "Aaneq naammassineqanngilaq. Attaveqaatit misissoruk misileeqqillutillu.",
-  "Could not install it. Run inir webengine in a terminal to see why.": "Ikkunneqarsinnaanngilaq. Sooq pinersoq takuniarlugu terminal-imi inir webengine aallartiguk."
+  "Could not install it. Run inir webengine in a terminal to see why.": "Ikkunneqarsinnaanngilaq. Sooq pinersoq takuniarlugu terminal-imi inir webengine aallartiguk.",
+  "An iNiR update is ready": "iNiR-ip nutarterneqarnera piareerpoq",
+  "Your settings and edits stay as they are. Update from “What changed”, or run `inir update`.": "Inissititernerit allanngortitatillu allanngunngillat. “Suut allanngorpat”-mit nutarterit imaluunniit `inir update` aallartiguk.",
+  "iNiR %1 is ready": "iNiR %1 piareerpoq",
+  "iNiR's history changed upstream. The update keeps your local changes and moves you over by itself: update from “What changed”, or run `inir update`.": "iNiR-ip oqaluttuassartaa upstream-imi allanngorpoq. Nutarterineq allanngortitatit nunaminiittut paarisarpai nammineerlunilu nuussilluni: “Suut allanngorpat”-mit nutarterit imaluunniit `inir update` aallartiguk.",
+  "Hub updates ready": "Hub-imi nutarterineqarsinnaasut piareerput",
+  "%1. Update them in Settings › Hub, or run `inir update`.": "%1. Inissititernerit › Hub-imi nutarterikkit imaluunniit `inir update` aallartiguk.",
+  "Can't check for iNiR updates": "iNiR-ip nutarterneqarsinnaanera misissorneqarsinnaanngilaq",
+  "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "iNiR-ip serveria pingasoriarluni akissuteqanngilaq. Attaveqaatit misissoruk imaluunniit `inir doctor` aallartiguk."
 }

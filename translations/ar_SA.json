@@ -9916,5 +9916,13 @@
   "Web apps need Qt WebEngine": "تحتاج تطبيقات الويب إلى Qt WebEngine",
   "A one-time download of about 110 MB. The shell restarts when it is in.": "تنزيل لمرة واحدة بحجم 110 ميغابايت تقريبًا. تُعاد تشغيل الواجهة عند اكتماله.",
   "The download did not finish. Check your connection and try again.": "لم يكتمل التنزيل. تحقق من اتصالك وحاول مرة أخرى.",
-  "Could not install it. Run inir webengine in a terminal to see why.": "تعذّر تثبيته. شغّل inir webengine في الطرفية لمعرفة السبب."
+  "Could not install it. Run inir webengine in a terminal to see why.": "تعذّر تثبيته. شغّل inir webengine في الطرفية لمعرفة السبب.",
+  "An iNiR update is ready": "تحديث iNiR جاهز",
+  "Your settings and edits stay as they are. Update from “What changed”, or run `inir update`.": "تبقى إعداداتك وتعديلاتك كما هي. حدّث من «ما الجديد» أو شغّل `inir update`.",
+  "iNiR %1 is ready": "iNiR %1 جاهز",
+  "iNiR's history changed upstream. The update keeps your local changes and moves you over by itself: update from “What changed”, or run `inir update`.": "تغيّر سجل iNiR في المصدر. يحتفظ التحديث بتغييراتك المحلية وينقلك تلقائيًا: حدّث من «ما الجديد» أو شغّل `inir update`.",
+  "Hub updates ready": "تحديثات المركز جاهزة",
+  "%1. Update them in Settings › Hub, or run `inir update`.": "%1. حدّثها من الإعدادات › المركز أو شغّل `inir update`.",
+  "Can't check for iNiR updates": "تعذّر التحقق من تحديثات iNiR",
+  "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "لم يستجب خادم iNiR ثلاث مرات متتالية. تحقّق من اتصالك أو شغّل `inir doctor`."
 }

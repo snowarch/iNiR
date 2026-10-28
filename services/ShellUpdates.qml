@@ -204,7 +204,7 @@ Singleton {
         if (!hasUpdate || !available || !initialUpdateCheckDone || isDismissed) return
         if (remoteCommit.length === 0) return
         if (root.simulated) {
-            root.postUpdateNotice("iNiR Update Available (simulated)", "3 commits behind.")
+            root.postUpdateNotice(Translation.tr("An iNiR update is ready") + " (simulated)", Translation.tr("Your settings and edits stay as they are. Update from “What changed”, or run `inir update`."))
             return
         }
         const now = Date.now()
@@ -214,11 +214,10 @@ Singleton {
         }
 
         const version = root.remoteVersion.length > 0 ? (" v" + root.remoteVersion) : ""
-        const commits = root.repoDiverged
-            ? "Repository history changed upstream. iNiR will preserve local work and recover clean published checkouts automatically."
-            : (root.commitsBehind > 0 ? (root.commitsBehind + " commits behind") : "New version available")
-        root.postUpdateNotice("iNiR Update Available" + version,
-            commits + ". Run `inir update`, or open it from the shell's own updater.")
+        root.postUpdateNotice(version.length > 0 ? Translation.tr("iNiR %1 is ready").arg(version.trim()) : Translation.tr("An iNiR update is ready"),
+            root.repoDiverged
+                ? Translation.tr("iNiR's history changed upstream. The update keeps your local changes and moves you over by itself: update from “What changed”, or run `inir update`.")
+                : Translation.tr("Your settings and edits stay as they are. Update from “What changed”, or run `inir update`."))
         Config.setNestedValues({
             "shellUpdates.lastNotifiedCommit": remoteCommit,
             "shellUpdates.lastNotifiedAt": now
@@ -291,7 +290,7 @@ Singleton {
         if (key === root.lastNotifiedHub
                 && (root.remindDays <= 0 || now - root.lastNotifiedHubAt < root.remindDays * 86400000)) return
         const names = root.hubPending.map(item => item.name || item.id).join(", ")
-        root.postUpdateNotice("New in the iNiR Hub", names + ". Run `inir update`, or update them in Settings › Hub.")
+        root.postUpdateNotice(Translation.tr("Hub updates ready"), Translation.tr("%1. Update them in Settings › Hub, or run `inir update`.").arg(names))
         Config.setNestedValues({
             "shellUpdates.lastNotifiedHub": key,
             "shellUpdates.lastNotifiedHubAt": now
@@ -946,8 +945,8 @@ Singleton {
                 // Notify after 3 consecutive failures (persistent problem)
                 if (root.consecutiveFetchErrors >= 3 && !root.fetchErrorNotificationShown) {
                     root.fetchErrorNotificationShown = true
-                    const title = "iNiR Update Check Failed"
-                    const body = "Cannot reach remote repository. Check your internet connection or run './setup doctor'."
+                    const title = Translation.tr("Can't check for iNiR updates")
+                    const body = Translation.tr("iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.")
                     Notifications.send(title, body, "low", 8000)
                     print("[ShellUpdates] Notification sent: Persistent fetch errors")
                 }

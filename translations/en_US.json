@@ -9916,5 +9916,13 @@
   "Web apps need Qt WebEngine": "Web apps need Qt WebEngine",
   "A one-time download of about 110 MB. The shell restarts when it is in.": "A one-time download of about 110 MB. The shell restarts when it is in.",
   "The download did not finish. Check your connection and try again.": "The download did not finish. Check your connection and try again.",
-  "Could not install it. Run inir webengine in a terminal to see why.": "Could not install it. Run inir webengine in a terminal to see why."
+  "Could not install it. Run inir webengine in a terminal to see why.": "Could not install it. Run inir webengine in a terminal to see why.",
+  "An iNiR update is ready": "An iNiR update is ready",
+  "Your settings and edits stay as they are. Update from “What changed”, or run `inir update`.": "Your settings and edits stay as they are. Update from “What changed”, or run `inir update`.",
+  "iNiR %1 is ready": "iNiR %1 is ready",
+  "iNiR's history changed upstream. The update keeps your local changes and moves you over by itself: update from “What changed”, or run `inir update`.": "iNiR's history changed upstream. The update keeps your local changes and moves you over by itself: update from “What changed”, or run `inir update`.",
+  "Hub updates ready": "Hub updates ready",
+  "%1. Update them in Settings › Hub, or run `inir update`.": "%1. Update them in Settings › Hub, or run `inir update`.",
+  "Can't check for iNiR updates": "Can't check for iNiR updates",
+  "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`."
 }

@@ -9916,5 +9916,13 @@
   "Web apps need Qt WebEngine": "Aplikasi web memerlukan Qt WebEngine",
   "A one-time download of about 110 MB. The shell restarts when it is in.": "Unduhan sekali sekitar 110 MB. Shell dimulai ulang setelah selesai.",
   "The download did not finish. Check your connection and try again.": "Unduhan tidak selesai. Periksa koneksi Anda lalu coba lagi.",
-  "Could not install it. Run inir webengine in a terminal to see why.": "Tidak dapat memasangnya. Jalankan inir webengine di terminal untuk melihat penyebabnya."
+  "Could not install it. Run inir webengine in a terminal to see why.": "Tidak dapat memasangnya. Jalankan inir webengine di terminal untuk melihat penyebabnya.",
+  "An iNiR update is ready": "Pembaruan iNiR sudah siap",
+  "Your settings and edits stay as they are. Update from “What changed”, or run `inir update`.": "Pengaturan dan perubahan Anda tetap seperti semula. Perbarui dari “Yang berubah” atau jalankan `inir update`.",
+  "iNiR %1 is ready": "iNiR %1 sudah siap",
+  "iNiR's history changed upstream. The update keeps your local changes and moves you over by itself: update from “What changed”, or run `inir update`.": "Riwayat iNiR berubah di upstream. Pembaruan menyimpan perubahan lokal Anda dan memindahkan Anda dengan sendirinya: perbarui dari “Yang berubah” atau jalankan `inir update`.",
+  "Hub updates ready": "Pembaruan Hub siap",
+  "%1. Update them in Settings › Hub, or run `inir update`.": "%1. Perbarui di Pengaturan › Hub atau jalankan `inir update`.",
+  "Can't check for iNiR updates": "Tidak dapat memeriksa pembaruan iNiR",
+  "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "Server iNiR tidak menjawab tiga kali berturut-turut. Periksa koneksi Anda atau jalankan `inir doctor`."
 }
