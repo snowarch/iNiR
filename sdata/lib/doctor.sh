@@ -148,6 +148,7 @@ check_dependencies() {
         debian|ubuntu)
             pkg-config --exists cairo 2>/dev/null || { missing+=("Cairo headers"); missing_cmds+=("cairo-headers"); }
             pkg-config --exists girepository-2.0 2>/dev/null || { missing+=("GObject headers"); missing_cmds+=("gi-headers"); }
+            pkg-config --exists dbus-1 2>/dev/null || { missing+=("D-Bus headers"); missing_cmds+=("dbus-headers"); }
             ;;
     esac
 
