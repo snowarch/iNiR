@@ -2,7 +2,6 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 STATE_DIR="$XDG_STATE_HOME/quickshell"
 LOG_FILE="$STATE_DIR/user/generated/system24_themegen.log"
@@ -29,12 +28,12 @@ log() {
 }
 
 main() {
-  local python_cmd="python3"
-  if [[ -x "$REPO_ROOT/.venv/bin/python3" ]]; then
-    python_cmd="$REPO_ROOT/.venv/bin/python3"
+  source "$SCRIPT_DIR/../lib/accel.sh"
+  if [[ ! -x "$INIR_ACCEL" ]]; then
+    log "inir-accel is missing. Run: inir update"
+    exit 0
   fi
-  log "running Python generator: $python_cmd"
-  exec "$python_cmd" "$SCRIPT_DIR/system24_palette.py" "$@" >> "$LOG_FILE" 2>&1
+  exec "$INIR_ACCEL" system24-themegen "$@" >> "$LOG_FILE" 2>&1
 }
 
 main "$@"

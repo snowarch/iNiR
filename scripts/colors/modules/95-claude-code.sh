@@ -10,7 +10,7 @@ GENERATED_DIR="$STATE_DIR/user/generated"
 TERMINAL_FILE="$GENERATED_DIR/terminal.json"
 PALETTE_FILE="$GENERATED_DIR/palette.json"
 WRITTEN_FILE="$GENERATED_DIR/claude-code-theme.files"
-GENERATOR="$SCRIPT_DIR/claude_code_theme.py"
+source "$SCRIPT_DIR/../lib/accel.sh"
 
 take_back() {
   [[ -f "$WRITTEN_FILE" ]] || return 0
@@ -33,8 +33,8 @@ if [[ ! -d "$CLAUDE_DIR" ]] && ! command -v claude >/dev/null 2>&1; then
 fi
 [[ -s "$TERMINAL_FILE" && -s "$PALETTE_FILE" ]] || { log_module "no terminal palette yet, skipping"; exit 0; }
 
-python="$(venv_python)"
-result="$("$python" "$GENERATOR" --terminal "$TERMINAL_FILE" --palette "$PALETTE_FILE" --mode "$(theme_mode)" --out-dir "$THEMES_DIR")"
+[[ -x "$INIR_ACCEL" ]] || { log_module "inir-accel is missing. Run: inir update"; exit 0; }
+result="$("$INIR_ACCEL" claude-code-theme --terminal "$TERMINAL_FILE" --palette "$PALETTE_FILE" --mode "$(theme_mode)" --out-dir "$THEMES_DIR")"
 printf '%s\n' inir.json inir-soft.json inir-monokai.json inir-monokai-soft.json > "$WRITTEN_FILE"
 [[ "$result" == changed:* ]] && log_module "$result"
 exit 0

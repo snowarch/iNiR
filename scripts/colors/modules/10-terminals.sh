@@ -177,9 +177,12 @@ apply_terminal_configs() {
 
   local colors_file="$APP_PALETTE_FILE"
   [[ -f "$colors_file" ]] || colors_file="$PALETTE_FILE"
-  local python_cmd
-  python_cmd=$(venv_python)
-  "$python_cmd" "$SCRIPT_DIR/generate_terminal_configs.py" --scss "$SCSS_FILE" --colors "$colors_file" --terminal-json "$TERMINAL_FILE" --terminals "${enabled_terminals[@]}" >> "$STATE_DIR/user/generated/terminal_colors.log" 2>&1
+  source "$SCRIPT_DIR/../lib/accel.sh"
+  if [[ ! -x "$INIR_ACCEL" ]]; then
+    echo "inir-accel is missing. Run: inir update" >> "$STATE_DIR/user/generated/terminal_colors.log"
+    return 0
+  fi
+  "$INIR_ACCEL" terminals --scss "$SCSS_FILE" --colors "$colors_file" --terminal-json "$TERMINAL_FILE" --terminals "${enabled_terminals[@]}" >> "$STATE_DIR/user/generated/terminal_colors.log" 2>&1
   reload_terminal_colors "${enabled_terminals[@]}" >> "$STATE_DIR/user/generated/terminal_colors.log" 2>&1 &
 }
 
