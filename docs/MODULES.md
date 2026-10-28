@@ -10,7 +10,7 @@ Modules are the UI. They render and orchestrate, and they read state from `servi
 | `modules/waffle/` | Waffle: taskbar, start menu, action center, notification center, task view, widgets, `looks/` tokens, settings |
 | `modules/iris/` | iRiS: bar, field, frame, dock, control, studio, settings, style. See [iRiS](IRIS.md) |
 | `modules/shared/` | Surfaces that two or more families load: background, overview, clipboard, lock, mascot and more |
-| `modules/common/` | The kit: `Config.qml`, `Appearance.qml`, `Directories.qml`, `ThemePresets.qml`, and `widgets/` (about 190 widgets, listed in `widgets/qmldir`) |
+| `modules/common/` | The kit: `Config.qml` and its schema `ConfigOptions.qml`, `Appearance.qml`, `Directories.qml`, `ThemePresets.qml`, and `widgets/` (about 190 widgets, listed in `widgets/qmldir`) |
 
 ## How panels load
 

@@ -42,7 +42,7 @@ The full timeline is in [Runtime and Boot](RUNTIME.md).
 About 100 singletons in `services/` own compositor IPC, audio, network, notifications, theming and content. See
 [Services Catalogue](SERVICES.md).
 
-- Schema: `modules/common/Config.qml`, plus each family's part. Defaults: `defaults/config.json`.
+- Schema: `modules/common/ConfigOptions.qml` (`Config.qml` reads and writes it), plus each family's part. Defaults: `defaults/config.json`.
 - Your file: `~/.config/inir/config.json`.
 - Write with `Config.setNestedValue("section.key", value)`. Read with `Config.options?.section?.key ?? fallback`.
 - Transient state (what is open, the lock, the family transition) lives in `GlobalStates.qml` and is never saved.
