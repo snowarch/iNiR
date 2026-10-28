@@ -61,7 +61,6 @@ depends=(
   curl
   ripgrep
   jq
-  go
   python
   rsync
   git

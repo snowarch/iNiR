@@ -119,11 +119,7 @@
     "sdata/dist-arch/inir-screencapture/pkg",
     "sdata/dist-arch/inir-screencapture/src",
     "sdata/dist-arch/inir-toolkit/pkg",
-    "sdata/dist-arch/inir-toolkit/src",
-    "scripts/colors/vscode_themegen/vscode_themegen",
-    "scripts/colors/opencode_themegen/opencode_themegen",
-    "scripts/colors/system24_themegen/system24_themegen",
-    "scripts/colors/zed_themegen/zed_themegen"
+    "sdata/dist-arch/inir-toolkit/src"
   ],
   "excludedDirectorySuffixes": {
     "assets/images/mascot": [

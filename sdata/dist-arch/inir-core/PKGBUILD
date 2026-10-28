@@ -11,9 +11,6 @@ depends=(
   # Wallpaper daemon
   awww
 
-  # Colors are computed by washi, compiled on the machine
-  go
-  
   # Basic utilities
   coreutils
   cliphist

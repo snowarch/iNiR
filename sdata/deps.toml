@@ -209,7 +209,7 @@ void = "plasma-browser-integration"
 name = "base-tools"
 group = "core"
 arch = ["coreutils", "curl", "ripgrep", "jq", "python", "xdg-user-dirs", "xdg-utils", "rsync", "git",
-        "wl-clipboard", "libnotify", "pacman-contrib", "wlsunset", "go"]
+        "wl-clipboard", "libnotify", "pacman-contrib", "wlsunset"]
 fedora = ["coreutils", "curl", "ripgrep", "jq", "xdg-user-dirs", "rsync", "git", "unzip", "wl-clipboard",
           "libnotify", "wlsunset"]
 debian = ["coreutils", "curl", "ripgrep", "jq", "xdg-user-dirs", "rsync", "git", "wl-clipboard",
@@ -332,12 +332,6 @@ void = ["upower", "wtype", "python3-evdev", "python3-Pillow", "fprintd", "cmake"
 name = "ydotool"
 group = "toolkit"
 void = { build = "ydotool" }
-
-[[dep]]
-name = "go"
-group = "toolkit"
-fedora = "golang"
-debian = "golang-go"
 
 [[dep]]
 name = "backlight"

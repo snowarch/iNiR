@@ -9,7 +9,6 @@ APP_PALETTE_FILE="$STATE_DIR/user/generated/app-palette.json"
 PALETTE_FILE="$STATE_DIR/user/generated/palette.json"
 TERMINAL_FILE="$STATE_DIR/user/generated/terminal.json"
 LEGACY_COLORS_FILE="$STATE_DIR/user/generated/colors.json"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 VSCODE_THEMEGEN_BIN="$STATE_DIR/user/generated/bin/inir-vscode-themegen"
 OPENCODE_THEMEGEN_BIN="$STATE_DIR/user/generated/bin/inir-opencode-themegen"
 NEOVIM_CONFIG_DIR="$XDG_CONFIG_HOME/nvim"
@@ -18,23 +17,12 @@ NEOVIM_THEME_FILE="$NEOVIM_PLUGIN_DIR/neovim.lua"
 NEOVIM_OMARCHY_OVERRIDE_FILE="$NEOVIM_PLUGIN_DIR/zz-inir-omarchy.lua"
 NEOVIM_THEMEGEN="$SCRIPT_DIR/neovim_themegen.sh"
 
+# inir-accel's generators, linked into user/generated/bin by sdata/lib/prebuilt.sh
 ensure_vscode_themegen() {
-  command -v go &>/dev/null || return 1
-  mkdir -p "$STATE_DIR/user/generated/bin"
-  # a link is inir-accel's hook (sdata/lib/prebuilt.sh): never built over
-  if [[ ! -L "$VSCODE_THEMEGEN_BIN" ]] && [[ ! -x "$VSCODE_THEMEGEN_BIN" || "$REPO_ROOT/go.mod" -nt "$VSCODE_THEMEGEN_BIN" || "$SCRIPT_DIR/vscode_themegen/main.go" -nt "$VSCODE_THEMEGEN_BIN" || "$SCRIPT_DIR/themegencommon/common.go" -nt "$VSCODE_THEMEGEN_BIN" ]]; then
-    (cd "$REPO_ROOT" && go build -o "$VSCODE_THEMEGEN_BIN" ./scripts/colors/vscode_themegen) >/dev/null 2>&1 || return 1
-  fi
   [[ -x "$VSCODE_THEMEGEN_BIN" ]]
 }
 
 ensure_opencode_themegen() {
-  command -v go &>/dev/null || return 1
-  mkdir -p "$STATE_DIR/user/generated/bin"
-  # a link is inir-accel's hook (sdata/lib/prebuilt.sh): never built over
-  if [[ ! -L "$OPENCODE_THEMEGEN_BIN" ]] && [[ ! -x "$OPENCODE_THEMEGEN_BIN" || "$REPO_ROOT/go.mod" -nt "$OPENCODE_THEMEGEN_BIN" || "$SCRIPT_DIR/opencode_themegen/main.go" -nt "$OPENCODE_THEMEGEN_BIN" || "$SCRIPT_DIR/themegencommon/common.go" -nt "$OPENCODE_THEMEGEN_BIN" ]]; then
-    (cd "$REPO_ROOT" && go build -o "$OPENCODE_THEMEGEN_BIN" ./scripts/colors/opencode_themegen) >/dev/null 2>&1 || return 1
-  fi
   [[ -x "$OPENCODE_THEMEGEN_BIN" ]]
 }
 

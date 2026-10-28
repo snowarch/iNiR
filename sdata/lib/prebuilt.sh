@@ -124,11 +124,12 @@ prebuilt_activate() {
     return 0
 }
 
-_PREBUILT_GO=(inir-washi inir-opencode-themegen inir-vscode-themegen)
+_PREBUILT_GO=(inir-washi inir-opencode-themegen inir-vscode-themegen inir-zed-themegen)
 
-# prebuilt_accel_hooks: what inir-accel proved byte for byte runs on it: those Go helpers in user/generated/bin
-# and the venv's python3, which hands every script it doesn't own to python3.real (as activate-accelerators.sh
-# install does on a dev machine). Without accel/current it puts the originals back.
+# prebuilt_accel_hooks: what inir-accel proved byte for byte runs on it: the helpers v2.33 compiled from Go in
+# user/generated/bin (a compiled one kept as *.go.bak) and the venv's python3, which hands every script it doesn't
+# own to python3.real (as activate-accelerators.sh install does on a dev machine). Without accel/current it puts the
+# originals back.
 prebuilt_accel_hooks() {
     local bin state gen venv go real
     bin="$(_prebuilt_home)/accel/current/inir-accel"

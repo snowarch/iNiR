@@ -347,7 +347,6 @@ DEBIAN_TOOLKIT_PKGS=(
   python3-evdev
   python3-pil
   python3-cairo
-  golang-go
   libgirepository-2.0-dev
   brightnessctl
   ddcutil

@@ -37,6 +37,7 @@ iNiR is now a base with plugins: Material, Waffle and iRiS come from the iNiR Hu
 - A live wallpaper pauses under a maximized window, and a web wallpaper runs on every monitor.
 - Debian builds niri from its v26.04 tag, with its session files.
 - The docs live at inir.space/docs.
+- Nothing compiles Go on your machine anymore, so `go` left the dependencies: inir-accel solves the iRiS palette and writes the VSCode, OpenCode and Zed themes.
 
 ### Fixed
 - Void: a login no longer hangs when D-Bus starts elogind before its own service does.

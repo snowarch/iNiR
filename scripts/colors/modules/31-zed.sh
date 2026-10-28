@@ -11,54 +11,11 @@ TERMINAL_FILE="$STATE_DIR/user/generated/terminal.json"
 LEGACY_COLORS_FILE="$STATE_DIR/user/generated/colors.json"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 ZED_THEMEGEN_BIN="$STATE_DIR/user/generated/bin/inir-zed-themegen"
-ZED_THEMEGEN_SRC="$SCRIPT_DIR/zed_themegen/main.go"
 ZED_OUTPUT_FILE="$HOME/.config/zed/themes/ii-theme.json"
 ZED_TEMPLATE_FILE="$REPO_ROOT/dots/.config/matugen/templates/zed-colors.json"
 ZED_THEMEGEN_LOG="$STATE_DIR/user/generated/code_editor_themes.log"
 ZED_LOCK_FILE="$STATE_DIR/user/generated/.zed-themegen.lock"
 ZED_INPUT_SIG_FILE="$STATE_DIR/user/generated/.zed-themegen-input.sig"
-
-resolve_go_bin() {
-  if command -v go &>/dev/null; then
-    command -v go
-    return 0
-  fi
-  if [[ -x /usr/bin/go ]]; then
-    printf '%s\n' /usr/bin/go
-    return 0
-  fi
-  return 1
-}
-
-needs_rebuild() {
-  [[ ! -x "$ZED_THEMEGEN_BIN" ]] && return 0
-  for src in "$ZED_THEMEGEN_SRC" "$REPO_ROOT/scripts/colors/themegencommon/common.go" "$REPO_ROOT/go.mod"; do
-    [[ -f "$src" && "$src" -nt "$ZED_THEMEGEN_BIN" ]] && return 0
-  done
-  return 1
-}
-
-ensure_zed_themegen() {
-  local go_bin="$1"
-  [[ -f "$ZED_THEMEGEN_SRC" ]] || return 1
-  mkdir -p "$STATE_DIR/user/generated/bin"
-  if [[ -x "$ZED_THEMEGEN_BIN" ]] && ! needs_rebuild; then
-    return 0
-  fi
-
-  local tmp_bin="$STATE_DIR/user/generated/bin/.inir-zed-themegen.$$"
-  if "$go_bin" build -o "$tmp_bin" "$ZED_THEMEGEN_SRC" >> "$ZED_THEMEGEN_LOG" 2>&1; then
-    mv -f "$tmp_bin" "$ZED_THEMEGEN_BIN" >> "$ZED_THEMEGEN_LOG" 2>&1 || {
-      rm -f "$tmp_bin"
-      return 1
-    }
-    chmod +x "$ZED_THEMEGEN_BIN" >> "$ZED_THEMEGEN_LOG" 2>&1 || true
-    return 0
-  fi
-
-  rm -f "$tmp_bin"
-  return 1
-}
 
 with_zed_lock() {
   if ! command -v flock >/dev/null 2>&1; then
@@ -86,30 +43,15 @@ run_zed_themegen() {
     --template "$ZED_TEMPLATE_FILE"
   )
 
-  local go_bin
-  go_bin="$(resolve_go_bin || true)"
-
-  # Always try to rebuild if Go is available (handles source changes)
-  if [[ -n "$go_bin" ]]; then
-    ensure_zed_themegen "$go_bin" || true
-  fi
-
-  if [[ -x "$ZED_THEMEGEN_BIN" ]]; then
-    "$ZED_THEMEGEN_BIN" "${args[@]}" >> "$ZED_THEMEGEN_LOG" 2>&1 && return 0
-  fi
-
-  if [[ -z "$go_bin" ]]; then
-    return 1
-  fi
-
-  # Binary missing or failed — run directly so theme updates still apply.
-  "$go_bin" run "$ZED_THEMEGEN_SRC" "${args[@]}" >> "$ZED_THEMEGEN_LOG" 2>&1
+  # inir-accel's generator, linked into user/generated/bin by sdata/lib/prebuilt.sh
+  [[ -x "$ZED_THEMEGEN_BIN" ]] || return 1
+  "$ZED_THEMEGEN_BIN" "${args[@]}" >> "$ZED_THEMEGEN_LOG" 2>&1
 }
 
 build_input_signature() {
   local colors_file="$1"
   {
-    for file in "$SCSS_FILE" "$colors_file" "$TERMINAL_FILE" "$ZED_TEMPLATE_FILE" "$ZED_THEMEGEN_SRC"; do
+    for file in "$SCSS_FILE" "$colors_file" "$TERMINAL_FILE" "$ZED_TEMPLATE_FILE" "$ZED_THEMEGEN_BIN"; do
       if [[ -f "$file" ]]; then
         cksum "$file"
       else
