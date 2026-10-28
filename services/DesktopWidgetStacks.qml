@@ -524,35 +524,49 @@ Singleton {
         })
     }
 
+    /// iRiS widget stacks: several desktop widgets sharing one place, one page shown at a time. Service:
+    /// `services/DesktopWidgetStacks.qml`. Applies while the widgets wear the iRiS design.
     IpcHandler {
         target: "widgetStacks"
 
+        /// Returns JSON: whether stacks are live, each stack's id, pages in order, rotation, interval, the size
+        /// classes all its pages share and the page shown on each output
         function status(): string { return root.describe() }
+        /// Stack two or more iRiS widgets joined with `+` (`weather+monthCalendar`); the first one's place and size
+        /// become the stack's
         function create(widgets: string): string {
             const id = root.create(widgets.split("+").map(name => name.trim()).filter(name => name.length > 0))
             return id.length > 0 ? id : "needs two or more iRiS widgets on the desktop that are not in a stack"
         }
+        /// Add a widget as the last page
         function add(stack: string, widget: string): string {
             return root.add(stack, widget) ? "added" : "not added"
         }
+        /// Take a widget out; it stays where the stack is and the layout moves it beside. A stack left with one page
+        /// dissolves
         function remove(widget: string): string {
             return root.remove(widget) ? "left the stack" : "not in a stack"
         }
+        /// Split the stack back into single widgets
         function dissolve(stack: string): string {
             return root.dissolve(stack) ? "dissolved" : "no such stack"
         }
+        /// Show a page: a widget name, `next` or `previous`
         function page(stack: string, to: string): string {
             const output = String(GlobalStates.focusedScreen?.name ?? Quickshell.screens[0]?.name ?? "")
             if (to === "next" || to === "previous")
                 return root.step(output, stack, to === "next" ? 1 : -1) ? root.shownKey(output, stack) : "no such stack"
             return root.show(output, stack, to) ? to : "not a page of that stack"
         }
+        /// Move a page earlier (`-1`) or later (`1`) in the order
         function move(stack: string, widget: string, delta: int): string {
             return root.move(stack, widget, delta) ? "moved" : "not moved"
         }
+        /// `on` or `off`: the stack turns its own pages
         function rotate(stack: string, mode: string): string {
             return root.setRotate(stack, mode === "on") ? "rotation " + mode : "no such stack"
         }
+        /// Seconds between turns (5 to 3600)
         function interval(stack: string, seconds: int): string {
             return root.setSeconds(stack, seconds) ? seconds + " s" : "no such stack"
         }

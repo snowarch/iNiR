@@ -355,20 +355,26 @@ ShellRoot {
     // per-bar handler collided and Quickshell dropped one with a warning. All
     // three bars only toggle GlobalStates.barOpen, so a single shared handler is
     // family-agnostic and serves the horizontal bar, vertical bar and any family's bar.
+    /// Top bar visibility.
     IpcHandler {
         target: "bar"
+        /// How wide the song title gets in Material's bar, 120 to 640 px (the window title gives way); empty to read
+        /// it
         function mediaWidth(px: string): string {
             const value = parseInt(px)
             if (value >= 120 && value <= 640) Config.setNestedValue("bar.media.maxWidth", value)
             else if (px.length > 0) return "Use a width from 120 to 640 px"
             return String(value >= 120 && value <= 640 ? value : (Config.options?.bar?.media?.maxWidth ?? 220))
         }
+        /// Show/hide bar
         function toggle(): void {
             GlobalStates.barOpen = !GlobalStates.barOpen
         }
+        /// Hide bar
         function close(): void {
             GlobalStates.barOpen = false
         }
+        /// Show bar
         function open(): void {
             GlobalStates.barOpen = true
         }
@@ -376,19 +382,33 @@ ShellRoot {
 
     // Shared OSD entrypoint. Family OSDs observe GlobalStates, so the command
     // remains available even while a family-specific visual tree is deferred.
+    /// On-screen volume indicator.
     IpcHandler {
         target: "osdVolume"
+        /// Show volume OSD
         function trigger(): void { GlobalStates.osdVolumeOpen = true }
+        /// Hide volume OSD
         function hide(): void { GlobalStates.osdVolumeOpen = false }
+        /// Toggle volume OSD
         function toggle(): void { GlobalStates.osdVolumeOpen = !GlobalStates.osdVolumeOpen }
     }
 
+    /// On-screen feedback for any family. The active family's OSD or Island decides where it is drawn.
+    ///
+    /// ```kdl
+    /// Mod+Shift+K { spawn "inir" "osd" "keyboard"; }
+    /// ```
     IpcHandler {
         target: "osd"
+        /// Show the volume level
         function volume(): void { GlobalStates.osdVolumeOpen = true }
+        /// Show the brightness level
         function brightness(): void { GlobalStates.osdBrightnessOpen = true }
+        /// Show the microphone level
         function mic(): void { GlobalStates.osdMicOpen = true }
+        /// Show the keyboard layout
         function keyboard(): void { GlobalStates.osdKeyboardLayoutOpen = true }
+        /// Show now playing with a transport action: `play`, `pause`, `next` or `previous`
         function media(action: string): string {
             const normalized = action.length === 0 ? "play" : action
             if (!["play", "pause", "next", "previous"].includes(normalized))
@@ -396,6 +416,7 @@ ShellRoot {
             GlobalStates.showMediaAction(normalized)
             return normalized
         }
+        /// Hide whatever is showing
         function hide(): void {
             GlobalStates.osdVolumeOpen = false
             GlobalStates.osdBrightnessOpen = false
@@ -408,23 +429,29 @@ ShellRoot {
     // Keep the SDK command available without paying for widget discovery at
     // startup. The singleton is instantiated only when this IPC is actually
     // used (or a Settings/bar consumer requests it).
+    /// Custom widget management. Create, list, reload, and remove user-installed widgets from
+    /// `~/.config/inir/widgets/`.
     IpcHandler {
         target: "customWidgets"
+        /// Re-scan widgets directory and reload all custom widgets
         function reload(): string {
             CustomWidgets.reload()
             return "Reloading custom widgets..."
         }
+        /// List all discovered custom widgets (JSON output)
         function list(): string {
             return JSON.stringify(CustomWidgets.widgets.map(w => ({
                 id: w.id, name: w.name, version: w.version,
                 valid: w.valid, path: w.dirPath
             })), null, 2)
         }
+        /// Create a new widget scaffold in the widgets directory
         function create(name: string): string {
             if (!name || name.length === 0) return "Usage: inir customWidgets create <name>"
             CustomWidgets.create(name)
             return `Creating widget "${name}" in ${CustomWidgets.widgetsDir}/${name}/...`
         }
+        /// Remove a custom widget by ID
         function remove(widgetId: string): string {
             if (!widgetId || widgetId.length === 0) return "Usage: inir customWidgets remove <id>"
             CustomWidgets.remove(widgetId)
@@ -434,31 +461,48 @@ ShellRoot {
 
     // ii interaction routers stay resident with the root so commands remain
     // available while the heavier family panel tree is deferred.
+    /// Quick settings panel. Toggles, sliders, and system controls without opening full settings.
     IpcHandler {
         target: "controlPanel"
+        /// Open/close control panel
         function toggle(): void { GlobalStates.controlPanelOpen = !GlobalStates.controlPanelOpen }
+        /// Close control panel
         function close(): void { GlobalStates.controlPanelOpen = false }
+        /// Open control panel
         function open(): void { GlobalStates.controlPanelOpen = true }
     }
 
+    /// Centered welcome hub panel (ii family): greeting, clock, notifications, media, weather, calendar, todo, system
+    /// usage and GitHub activity.
     IpcHandler {
         target: "dashboard"
+        /// Open/close dashboard
         function toggle(): void { GlobalStates.dashboardOpen = !GlobalStates.dashboardOpen }
+        /// Close dashboard
         function close(): void { GlobalStates.dashboardOpen = false }
+        /// Open dashboard
         function open(): void { GlobalStates.dashboardOpen = true }
     }
 
+    /// Left sidebar: AI chat and apps in Material; the customizable Focus panel in iRiS. In iRiS, `open`, `close` and
+    /// `toggle` use the family-owned panel; AI detach and expanded-layout actions apply to Material.
     IpcHandler {
         target: "sidebarLeft"
+        /// Open/close left sidebar
         function toggle(): void { GlobalStates.toggleSidebarLeft("") }
+        /// Hide left sidebar
         function close(): void { GlobalStates.closeSidebarLeft() }
+        /// Show left sidebar
         function open(): void { GlobalStates.openSidebarLeft("") }
+        /// Open the sidebar in its wide Ctrl+O layout
         function expand(): void {
             GlobalStates.aiChatDetached = false
             GlobalStates.openSidebarLeft("")
             GlobalStates.sidebarLeftExpanded = true
         }
+        /// Return the sidebar to its normal width
         function compact(): void { GlobalStates.sidebarLeftExpanded = false }
+        /// Return open, expanded and detached state as JSON
         function status(): string {
             return JSON.stringify({
                 open: GlobalStates.sidebarLeftOpen,
@@ -466,11 +510,13 @@ ShellRoot {
                 detached: GlobalStates.aiChatDetached,
             })
         }
+        /// Move AI chat into its Ctrl+P standalone window
         function detach(): void {
             GlobalStates.sidebarLeftOpen = false
             GlobalStates.sidebarLeftExpanded = false
             GlobalStates.aiChatDetached = true
         }
+        /// Return AI chat from the standalone window to the sidebar
         function attach(): void {
             GlobalStates.aiChatDetached = false
             GlobalStates.sidebarLeftExpanded = false
@@ -478,46 +524,63 @@ ShellRoot {
         }
     }
 
+    /// Right sidebar: quick toggles, notepad and settings in Material; the customizable Today panel in iRiS.
     IpcHandler {
         target: "sidebarRight"
+        /// Open/close right sidebar
         function toggle(): void { GlobalStates.toggleSidebarRight("") }
+        /// Hide right sidebar
         function close(): void { GlobalStates.closeSidebarRight() }
+        /// Show right sidebar
         function open(): void { GlobalStates.openSidebarRight("") }
     }
 
+    /// Floating media controls panel.
     IpcHandler {
         target: "mediaControls"
+        /// Open/close media controls
         function toggle(): void {
             GlobalStates.mediaControlsOpen = !GlobalStates.mediaControlsOpen
             if (GlobalStates.mediaControlsOpen) Notifications.timeoutAll()
         }
+        /// Hide media controls
         function close(): void { GlobalStates.mediaControlsOpen = false }
+        /// Show media controls
         function open(): void {
             GlobalStates.mediaControlsOpen = true
             Notifications.timeoutAll()
         }
     }
 
+    /// Waffle start menu / search.
     IpcHandler {
         target: "search"
+        /// Open/close start menu
         function toggle(): void { GlobalStates.searchOpen = !GlobalStates.searchOpen }
+        /// Close start menu
         function close(): void { GlobalStates.searchOpen = false }
+        /// Open start menu
         function open(): void { GlobalStates.searchOpen = true }
     }
 
     // Shared verbs: the active family answers first (GlobalStates.familyVerbs), Material's behaviour otherwise.
+    /// Compatibility entry point for task navigation. On Waffle it opens the Waffle Task View; on ii/Niri it routes
+    /// to Orbit.
     IpcHandler {
         target: "taskview"
+        /// Open/close the active family's task navigator
         function toggle(): void {
             const verb = GlobalStates.familyVerb("taskview", "toggle")
             if (verb) verb()
             else if (CompositorService.isNiri) GlobalStates.toggleOrbit("")
         }
+        /// Close the active family's task navigator
         function close(): void {
             const verb = GlobalStates.familyVerb("taskview", "close")
             if (verb) verb()
             else if (GlobalStates.overviewMode === "orbit") GlobalStates.closeOverview()
         }
+        /// Open the active family's task navigator
         function open(): void {
             const verb = GlobalStates.familyVerb("taskview", "open")
             if (verb) verb()
@@ -525,6 +588,11 @@ ShellRoot {
         }
     }
 
+    /// Niri-only session navigator. On ii it presents nearby workspaces and readable window previews, with MRU Trail
+    /// navigation and temporary Stash parking. On iRiS it is the Island growing into one strip per workspace, with a
+    /// search that lights up the windows that match; `stage`, `orbital`, `studio` and `toggleView` are ii's and do
+    /// nothing there, `pocket` and `find` open Orbit, and `next` and `previous` move Niri to the workspace below or
+    /// above.
     IpcHandler {
         target: "orbit"
         function _family(name: string): bool {
@@ -532,20 +600,31 @@ ShellRoot {
             if (verb) verb()
             return verb !== null
         }
+        /// Open/close Orbit
         function toggle(): void { if (!_family("toggle") && CompositorService.isNiri) GlobalStates.toggleOrbit("") }
+        /// Close Orbit if it is active
         function close(): void { if (!_family("close") && GlobalStates.overviewMode === "orbit") GlobalStates.closeOverview() }
+        /// Open Orbit on the focused output
         function open(): void { if (!_family("open") && CompositorService.isNiri) GlobalStates.openOrbit("") }
+        /// Open Orbit directly into Pocket
         function pocket(): void { if (!_family("pocket") && CompositorService.isNiri) GlobalStates.openOrbitPocket("") }
+        /// Open Orbit directly into the live Studio editor
         function studio(): void { if (!_family("studio") && CompositorService.isNiri) GlobalStates.openOrbitStudio("") }
+        /// Open Orbit Focus Lens and filter session windows by app or title
         function find(query: string): void {
             const verb = GlobalStates.familyVerb("orbit", "find")
             if (verb) verb(query)
             else if (CompositorService.isNiri) GlobalStates.openOrbitLens("", query)
         }
+        /// Open Orbit in the classic Stage view for this session
         function stage(): void { if (!_family("stage") && CompositorService.isNiri) GlobalStates.openOrbitView("", "stage") }
+        /// Open Orbit in the Orbital workspace view for this session
         function orbital(): void { if (!_family("orbital") && CompositorService.isNiri) GlobalStates.openOrbitView("", "orbital") }
+        /// Switch Niri to the next workspace while Orbit stays open
         function next(): void { if (!_family("next") && CompositorService.isNiri) GlobalStates.orbitNavigateRequested(1) }
+        /// Switch Niri to the previous workspace while Orbit stays open
         function previous(): void { if (!_family("previous") && CompositorService.isNiri) GlobalStates.orbitNavigateRequested(-1) }
+        /// Print the effective Orbit runtime state used by diagnostics and visual audits
         function status(): string {
             const verb = GlobalStates.familyVerb("orbit", "status")
             if (verb) return verb()
@@ -566,6 +645,7 @@ ShellRoot {
                 }
             }))
         }
+        /// Switch the open Orbit session between Stage and Orbital
         function toggleView(): void {
             if (_family("toggleView") || !CompositorService.isNiri) return
             if (GlobalStates.overviewOpen && GlobalStates.overviewMode === "orbit")
@@ -576,24 +656,34 @@ ShellRoot {
     }
 
     // IPC for settings: inside the shell or its own window, as the Settings in use allows (GlobalStates).
+    /// Open or toggle the settings window. GUI config so you don't have to edit JSON by hand.
+    ///
+    /// ```kdl
+    /// Super+Comma { spawn "inir" "settings"; }
+    /// ```
     IpcHandler {
         target: "settings"
+        /// Open the settings window
         function open(): void {
             GlobalStates.openSettings()
         }
+        /// Toggle settings in the active host (overlay or window)
         function toggle(): void {
             GlobalStates.toggleSettings()
         }
+        /// Switch to overlay mode and open Settings
         function openOverlay(): void {
             Config.setNestedValue("settingsUi.overlayMode", true)
             GlobalStates.settingsOverlayOpen = true
         }
+        /// Switch to overlay mode, open Settings and keep the page, or jump to a page by its number
         function openOverlayAt(index: int): void {
             if (index >= 0)
                 GlobalStates.settingsOverlayRequestedPage = index
             Config.setNestedValue("settingsUi.overlayMode", true)
             GlobalStates.settingsOverlayOpen = true
         }
+        /// Switch to standalone Window mode and open page `index`
         function openWindowAt(index: int): void {
             const args = ["/usr/bin/env"]
             if (index >= 0)
@@ -603,6 +693,7 @@ ShellRoot {
             Config.setNestedValue("settingsUi.overlayMode", false)
             GlobalStates.settingsOverlayOpen = false
         }
+        /// Switch overlay chrome while preserving page `index`
         function setOverlayStyle(style: string, index: int): void {
             if (index >= 0)
                 GlobalStates.settingsOverlayRequestedPage = index
@@ -620,15 +711,24 @@ ShellRoot {
     // and silently dropped one — the caller then hit whichever survived. Routing
     // through GlobalStates keeps the target valid no matter which chrome, or
     // none, is loaded.
+    /// Navigate the settings overlay to a specific page (same as clicking the nav rail). `inir settings` toggles the
+    /// current Settings host; use the `settings` IPC target above when you need explicit open/toggle semantics.
+    ///
+    /// ```sh
+    /// inir ipc settingsNav page 5
+    /// ```
     IpcHandler {
         target: "settingsNav"
+        /// Open the overlay and jump to a page by its number
         function page(index: int): void {
             GlobalStates.openSettingsPage(index)
         }
+        /// Open a page at its named section; for example `inir settingsNav section 28 sidebars`
         function section(index: int, name: string): void {
             GlobalStates.openSettingsPage(index, name)
         }
         // A page by its key ("hub", "themes"…) in the family's own Settings.
+        /// Open a page by its name in the family's own Settings, for example `inir settingsNav open hub`
         function open(key: string): string {
             const keys = GlobalStates.settingsPageKeys
             if (keys.length > 0 && keys.indexOf(key) < 0)
@@ -636,7 +736,9 @@ ShellRoot {
             GlobalStates.openSettingsAt(key, "")
             return key
         }
+        /// Number of settings pages
         function count(): int { return GlobalStates.settingsPageKeys.length }
+        /// Current page index, or `-1` when no page is open
         function current(): int { return GlobalStates.settingsOverlayCurrentPage }
     }
 
@@ -687,16 +789,28 @@ ShellRoot {
     // race — sometimes the handler belonging to the family being torn down.
     // The four below were byte-identical in both files; only overview differs,
     // so it branches here instead of existing twice.
+    /// On-screen keyboard.
     IpcHandler {
         target: "osk"
+        /// Show/hide on-screen keyboard
         function toggle(): void { GlobalStates.oskOpen = !GlobalStates.oskOpen }
+        /// Hide on-screen keyboard
         function close(): void { GlobalStates.oskOpen = false }
+        /// Show on-screen keyboard
         function open(): void { GlobalStates.oskOpen = true }
     }
 
+    /// Floating tools (Super+G): notes, images, crosshair, recorder, resources and other pinnable desktop tools.
+    ///
+    /// ```kdl
+    /// Super+G { spawn "inir" "overlay" "toggle"; }
+    /// ```
     IpcHandler {
         target: "overlay"
+        /// Open/close Floating tools
         function toggle(): void { GlobalStates.overlayOpen = !GlobalStates.overlayOpen }
+        /// Show or hide one floating tool by id (`crosshair`, `fpsLimiter`, `floatingImage`, `recorder`, `resources`,
+        /// `notes`, `discord`, `volumeMixer`, `notifications`, `gamePerformance`): `on`, `off` or `toggle`
         function tool(identifier: string, action: string): string {
             const state = Persistent.states.overlay
             if (!state || typeof state[identifier] !== "object") return "Unknown tool"
@@ -708,32 +822,56 @@ ShellRoot {
         }
     }
 
+    /// Power menu. Logout, suspend, reboot, shutdown. The "I'm done for today" buttons.
+    ///
+    /// ```kdl
+    /// Super+Shift+E { spawn "inir" "session" "toggle"; }
+    /// ```
     IpcHandler {
         target: "session"
+        /// Open/close session menu
         function toggle(): void { GlobalStates.sessionOpen = !GlobalStates.sessionOpen }
+        /// Hide session screen
         function close(): void { GlobalStates.sessionOpen = false }
+        /// Show session screen
         function open(): void { GlobalStates.sessionOpen = true }
     }
 
+    /// Keyboard shortcuts reference. For when you forget what you just configured five minutes ago.
+    ///
+    /// ```kdl
+    /// Super+Slash { spawn "inir" "cheatsheet" "toggle"; }
+    /// ```
     IpcHandler {
         target: "cheatsheet"
+        /// Open/close cheatsheet
         function toggle(): void { GlobalStates.cheatsheetOpen = !GlobalStates.cheatsheetOpen }
+        /// Hide cheatsheet overlay
         function close(): void { GlobalStates.cheatsheetOpen = false }
+        /// Show cheatsheet overlay
         function open(): void { GlobalStates.cheatsheetOpen = true }
     }
 
+    /// Clipboard history panel. Because Ctrl+V only remembers one thing, and that's not enough for power users.
+    ///
+    /// ```kdl
+    /// Super+V repeat=false { spawn "inir" "clipboard" "toggle"; }
+    /// ```
     IpcHandler {
         target: "clipboard"
+        /// Open panel
         function open(): void {
             const verb = GlobalStates.familyVerb("clipboard", "open")
             if (verb) verb()
             else GlobalStates.clipboardOpen = true
         }
+        /// Close panel
         function close(): void {
             const verb = GlobalStates.familyVerb("clipboard", "close")
             if (verb) verb()
             else GlobalStates.clipboardOpen = false
         }
+        /// Open/close panel
         function toggle(): void {
             const verb = GlobalStates.familyVerb("clipboard", "toggle")
             if (verb) verb()
@@ -741,6 +879,11 @@ ShellRoot {
         }
     }
 
+    /// Toggle the workspace overview panel. The one with all your windows looking tiny and organized.
+    ///
+    /// ```kdl
+    /// Mod+Space { spawn "inir" "overview" "toggle"; }
+    /// ```
     IpcHandler {
         target: "overview"
         function _family(name: string): bool {
@@ -753,24 +896,29 @@ ShellRoot {
                 && (Config.options?.bar?.appearanceStyle ?? "classic") === "pill"
                 && (Config.options?.bar?.pill?.superSpaceLauncher ?? "overview") === "pill"
         }
+        /// Open/close overview
         function toggle(): void {
             if (_family("toggle")) return
             if (_usePillLauncher()) { GlobalStates.pillSurfaceCommand("toggle", "launcher"); return }
             GlobalStates.overviewSearchPrefix = ""
             GlobalStates.toggleOverview("")
         }
+        /// Close overview
         function close(): void {
             if (_family("close")) return
             if (_usePillLauncher()) { GlobalStates.pillSurfaceCommand("close", "launcher"); return }
             GlobalStates.overviewOpen = false
         }
+        /// Open overview
         function open(): void {
             if (_family("open")) return
             if (_usePillLauncher()) { GlobalStates.pillSurfaceCommand("open", "launcher"); return }
             GlobalStates.overviewSearchPrefix = ""
             GlobalStates.openOverview("")
         }
+        /// Clear the super-key release interrupt flag
         function toggleReleaseInterrupt(): void { GlobalStates.superReleaseMightTrigger = false }
+        /// Open clipboard search, or close if already open
         function clipboardToggle(): void {
             if (_family("clipboardToggle")) return
             const prefix = Config.options?.search?.prefix?.clipboard ?? ";"
@@ -781,6 +929,7 @@ ShellRoot {
                 GlobalStates.openOverview("")
             }
         }
+        /// Open overview in action search mode
         function actionOpen(): void {
             if (_family("actionOpen")) return
             const prefix = Config.options?.search?.prefix?.action ?? "/"
@@ -1071,9 +1220,18 @@ ShellRoot {
         }
     }
 
+    /// Switch between the three shell families: Material ii (default), Waffle (Windows 11-like), and iRiS (the Island
+    /// family).
+    ///
+    /// ```kdl
+    /// Mod+Shift+W { spawn "inir" "panelFamily" "cycle"; }
+    /// ```
     IpcHandler {
         target: "panelFamily"
+        /// Switch to the next family in the switch list (`familyCycle`, in its order; all three by default, set in
+        /// any family's Settings)
         function cycle(): void { root.cyclePanelFamily() }
+        /// Set specific family ("ii", "waffle", or "iris")
         function set(family: string): void { root.setPanelFamily(family) }
     }
 }

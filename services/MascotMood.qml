@@ -48,9 +48,13 @@ Singleton {
         }
     }
 
+    /// Session-long mood state that flavors the mascot's idle lines (needs `mascot.personality.enabled`). The mood
+    /// re-rolls on a jittered interval and starts from the time of day.
     IpcHandler {
         target: "mascotMood"
+        /// Force a mood: `neutral`, `sleepy`, `hyper`, `snarky` or `contemplative`
         function set(mood: string): void { root.setMood(mood) }
+        /// Print the current mood
         function current(): string { return root.currentMood }
     }
 }

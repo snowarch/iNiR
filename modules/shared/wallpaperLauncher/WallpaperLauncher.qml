@@ -61,11 +61,24 @@ PanelWindow {
         onTriggered: root.closing = false
     }
 
+    /// Navigation and apply controls for the compact wallpaper launcher.
+    ///
+    /// Open the launcher before calling its controls:
+    ///
+    /// ```bash
+    /// inir wallpaperSelector openLauncher static
+    /// inir wallpaperLauncher next
+    /// inir wallpaperLauncher applyCurrent
+    /// ```
     IpcHandler {
         target: "wallpaperLauncher"
+        /// Select the next wallpaper
         function next(): void { content.moveSelection(1) }
+        /// Select the previous wallpaper
         function previous(): void { content.moveSelection(-1) }
+        /// Apply the selected wallpaper and keep the launcher open
         function applyCurrent(): void { content.activateCurrent() }
+        /// Return launcher mode, index, count, path, target and monitor as JSON
         function status(): string { return content.statusJson() }
     }
 

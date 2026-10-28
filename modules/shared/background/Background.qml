@@ -98,9 +98,21 @@ Scope {
 
     readonly property var _everyKeys: ({ plate: "showBackground", outline: "showBorder", strength: "backgroundOpacity", ink: "colorMode", lock: "locked" })
 
+    /// Desktop background and widget controls.
+    ///
+    /// The mutating diagnostic functions require the supervised shell to be loaded with `INIR_REGION_DEBUG=1`. They
+    /// snapshot the clock's relevant config on first use; always finish a diagnostic run with `clockDebugRestore`
+    /// before removing the environment flag.
+    ///
+    /// ```kdl
+    /// Super+W { spawn "inir" "background" "toggleEditMode"; }
+    /// ```
     IpcHandler {
         target: "background"
         enabled: backgroundScope.family.length === 0 || (Config.options?.panelFamily ?? "ii") === backgroundScope.family
+        /// Put every desktop widget on `iris`, `material`, `individual`, `instrument` or `readout`; `undo` brings
+        /// back the design and each widget's own look from before; `status` reports the design, how many widgets keep
+        /// their own look and whether an undo is available.
         function widgetDesign(name: string): string {
             if (name === "status")
                 return DesktopWidgetDesign.current + " · " + DesktopWidgetDesign.exceptionCount + " own looks"
@@ -109,6 +121,9 @@ Scope {
             return DesktopWidgetDesign.apply(name)
         }
 
+        /// iRiS: `status` reports the shared widget material and how many widgets chose their own material or surface
+        /// opacity in Look; `match` puts them back on the shared ones; `toggle`, `clear` and `glass` take every
+        /// widget's plate away or bring it back (returns the material now).
         function widgetMaterial(action: string): string {
             if (action === "match") return DesktopWidgetDesign.matchSurfaces()
             if (action === "toggle" || action === "clear" || action === "glass") {
@@ -124,6 +139,8 @@ Scope {
         }
 
         // Every widget's plate, outline, ink or lock at once (Material, iNstrument, Readout; a face's surface is widgetMaterial).
+        /// Every Material, iNstrument and Readout widget at once: `plate on|off` (the background), `outline on|off`,
+        /// `strength 0-100` (the background's strength), `ink auto|light|dark`, `lock on|off`.
         function everyWidget(part: string, value: string): string {
             const key = backgroundScope._everyKeys[part]
             if (!key)
@@ -143,10 +160,14 @@ Scope {
             return part + " " + value + " on " + DesktopWidgetOptions.setEvery(key, next) + " widgets"
         }
 
+        /// Each of those as the value every widget on the desktop shares, or `mixed`.
         function everyWidgetStatus(): string {
             return Object.keys(backgroundScope._everyKeys).map(name => name + " " + (DesktopWidgetOptions.everyState(backgroundScope._everyKeys[name]) || "none")).join(" · ")
         }
 
+        /// While arranging (iRiS), find a widget from the bar: the words to look for, `open` for an empty field,
+        /// `next`/`previous` to move the selection, `take` to add or show the selected widget, `close`. Ctrl+F opens
+        /// it
         function widgetSearch(query: string): string {
             if ((Config.options?.panelFamily ?? "ii") !== "iris")
                 return "the widget search is part of the iRiS widget bar"
@@ -166,11 +187,13 @@ Scope {
             return "searching: " + GlobalStates.widgetSearchText
         }
 
+        /// Toggle widget edit mode (drag, resize, configure desktop widgets)
         function toggleEditMode(): string {
             GlobalStates.setWidgetEditMode(!GlobalStates.widgetEditMode)
             return GlobalStates.widgetEditMode ? "edit mode on" : "edit mode off"
         }
 
+        /// Enter edit mode if needed and toggle the widget manager on the focused output
         function toggleWidgetManager(): string {
             // The shelf is the library now: arranging opens with it out, and this finds a widget on it.
             if (!GlobalStates.widgetEditMode) GlobalStates.setWidgetEditMode(true)
@@ -178,25 +201,32 @@ Scope {
             return "widget shelf search"
         }
 
+        /// Set widget edit mode explicitly
         function setEditMode(enabled: bool): string {
             GlobalStates.setWidgetEditMode(enabled)
             return GlobalStates.widgetEditMode ? "edit mode on" : "edit mode off"
         }
 
         // Desktops: the factory ones and the ones saved, by id; wearing one is an ordinary change (Undo takes it back).
+        /// The desktops you can wear (factory first, then saved) as JSON, and which one is worn
         function presets(): string {
             return JSON.stringify(DesktopPresets.factory.concat(DesktopPresets.presets)
                 .map(preset => ({ id: preset.id, name: preset.name })).concat([{ worn: DesktopPresets.wornId() }]))
         }
+        /// Wear a desktop by id (`factory:glance`, `factory:dashboard`, `factory:focus`, `factory:listening`,
+        /// `factory:bare`, or a saved one)
         function wearPreset(id: string): string {
             if (!DesktopPresets.find(id)) return "no desktop " + id
             DesktopPresets.wear(id)
             return "wearing " + DesktopPresets.find(id).name
         }
+        /// Save this desktop under a name (empty = "Desktop N") and print its id
         function savePreset(name: string): string {
             return DesktopPresets.save(name)
         }
         // A widget's size class (small, medium, large) on every screen it is out on, in the family drawing it.
+        /// Set a widget's size class (`small`, `medium`, `large`) in the family drawing it; every family keeps that
+        /// size, and neighbours it now covers move aside while arranging
         function sizeWidget(widgetName: string, size: string): string {
             const out = []
             for (const output of Object.keys(backgroundScope.widgetCanvases)) {
@@ -213,6 +243,7 @@ Scope {
             return out.length > 0 ? widgetName + " " + size + " on " + out.join(", ") : "no " + widgetName + " that takes " + size
         }
         // Where every widget sits, per screen: [{ output, widget, x, y, w, h }].
+        /// Where every desktop widget sits on each screen, as JSON
         function widgetRects(): string {
             const out = []
             for (const output of Object.keys(backgroundScope.widgetCanvases)) {
@@ -226,6 +257,7 @@ Scope {
         }
         // The options the widget's Options page shows now (what Settings has for it), with their values:
         // [{ key, kind, label, value, choices?, min?, max? }].
+        /// The options a widget's Options page shows now, with their values, as JSON
         function widgetOptions(widgetName: string): string {
             return JSON.stringify(DesktopWidgetOptions.widgetRows
                 .filter(spec => spec.widget === widgetName && !spec.widgetEnable && (!spec.showIf || spec.showIf()))
@@ -234,6 +266,8 @@ Scope {
                         : spec.choices ?? []).map(pick => pick.value) : undefined, min: spec.min, max: spec.max })))
         }
         // Writes one option the way its row does; the value is JSON (true, 12, "pill"). Returns what it reads back.
+        /// Write one of a widget's options the way its row does (value as JSON: `true`, `12`, `"pill"`) and print
+        /// what it reads back
         function widgetOptionSet(widgetName: string, key: string, value: string): string {
             const spec = DesktopWidgetOptions.widgetRows.find(row => row.widget === widgetName && row.key === key)
             if (!spec)
@@ -243,8 +277,8 @@ Scope {
             DesktopWidgetOptions.write(spec, next)
             return JSON.stringify(DesktopWidgetOptions.read(spec))
         }
-        // How every face fits its size: text over other text, past the plate, hugging its edge or cut short.
-        // [{ output, widget, size, issues: [...] }], only widgets with something wrong.
+        /// How each desktop widget's text fits its size, as JSON: text over other text, past the plate, hugging its
+        /// edge or cut short. Only widgets with something wrong: `[{ output, widget, size, issues }]`
         function widgetFit(): string {
             const out = []
             for (const output of Object.keys(backgroundScope.widgetCanvases)) {
@@ -295,6 +329,8 @@ Scope {
             return JSON.stringify(out)
         }
 
+        /// Report the active selection, physical panel insets, full desktop work area and panel-aware zone work area
+        /// for each output
         function editState(): string {
             return JSON.stringify({
                 active: GlobalStates.widgetEditMode,
@@ -320,32 +356,40 @@ Scope {
             })
         }
 
+        /// Apply an Organic Edge scene by name without changing enabled displays
         function applyOrganicEdgePreset(name: string): string {
             return backgroundScope.applyOrganicEdgeNamedPreset(OrganicEdgeConfig.presets, name, "scene")
         }
 
+        /// Apply only an Organic Edge topology/geometry preset
         function applyOrganicEdgeComposition(name: string): string {
             return backgroundScope.applyOrganicEdgeNamedPreset(OrganicEdgeConfig.compositionPresets, name, "composition")
         }
 
+        /// Apply only an Organic Edge material/light preset
         function applyOrganicEdgeMaterial(name: string): string {
             return backgroundScope.applyOrganicEdgeNamedPreset(OrganicEdgeConfig.materialPresets, name, "material")
         }
 
+        /// Apply only an Organic Edge music-response preset
         function applyOrganicEdgeResponse(name: string): string {
             return backgroundScope.applyOrganicEdgeNamedPreset(OrganicEdgeConfig.responsePresets, name, "response")
         }
 
+        /// Report each Organic Edge output, selected edges, frame, audio subscription and shader status
         function organicEdgeState(): string {
             return JSON.stringify(Object.values(backgroundScope.organicEdgeHosts)
                 .map(host => host.diagnostics()))
         }
 
+        /// Enable or disable the independent Organic Edge screen field
         function setOrganicEdgeEnabled(enabled: bool): string {
             Config.setNestedValue("background.edgeWidgets.organic.enable", enabled)
             return enabled ? "Organic edge enabled" : "Organic edge disabled"
         }
 
+        /// Show a page of the selected widget's quick controls: widget, look or arrange (and stack, for a widget in a
+        /// stack; options, every option Settings has, where the widget draws its Material face)
         function quickControlsPage(page: string): string {
             const key = GlobalStates.selectedDesktopWidget
             const [output, name] = key.split("::")
@@ -364,6 +408,7 @@ Scope {
             return JSON.stringify({ widget: key, page: target })
         }
 
+        /// Report where the selected widget's toolbar and quick-controls sheet sit, as JSON
         function quickControlsGeometry(): string {
             const [output, name] = GlobalStates.selectedDesktopWidget.split("::")
             const widget = (backgroundScope.widgetCanvases[output]?._loadedDesktopWidgets() ?? [])
@@ -371,6 +416,7 @@ Scope {
             return widget ? widget.editControlsGeometryReport : "{}"
         }
 
+        /// Save one desktop widget, as it renders now, to a PNG (offscreen: works while windows cover the desktop).
         function widgetSnapshot(widgetName: string, path: string): string {
             const target = String(path ?? "").trim()
             if (!target.endsWith(".png")) return "give a path ending in .png"
@@ -387,6 +433,8 @@ Scope {
             return "no loaded widget named " + widgetName
         }
 
+        /// Report what each desktop widget reads under itself (brightness, spread, light or dark backdrop) and the
+        /// ink and accent it chose
         function legibilityState(): string {
             const out = []
             for (const output of Object.keys(backgroundScope.widgetCanvases)) {
@@ -416,10 +464,12 @@ Scope {
             return JSON.stringify(out)
         }
 
+        /// Report desktop-item persistence, availability, item count, validation errors and undo state
         function desktopItemsState(): string {
             return DesktopItems.diagnostics()
         }
 
+        /// Select a desktop widget and optionally open its quick controls
         function focusWidget(widgetName: string, openControls: bool): string {
             const name = String(widgetName ?? "").trim()
             if (name.length === 0)
@@ -474,6 +524,8 @@ Scope {
 
         // Carries a widget to x,y on the focused output the way a drop does (magnets, grid, never on top of another).
         // `probe` only reports where it would land and the guides it would draw.
+        /// Move a widget on the focused screen to x, y as a drop would place it: lined up with the widgets around and
+        /// off any it would cover. With `probe` true it only reports where it would land, as JSON
         function arrangeWidget(widgetName: string, x: real, y: real, probe: bool): string {
             const screen = GlobalStates.focusedScreen ?? Quickshell.screens[0]
             const canvas = backgroundScope.widgetCanvases[screen?.name ?? ""]
@@ -487,6 +539,7 @@ Scope {
                 size: { width: Math.round(item.width), height: Math.round(item.height) }, guides: plan.guides })
         }
 
+        /// Move a desktop widget to the top of the persistent layer order
         function promoteWidget(widgetName: string): string {
             const name = String(widgetName ?? "").trim()
             if (name.length === 0)
@@ -501,11 +554,13 @@ Scope {
             })
         }
 
+        /// Reset desktop widgets to their built-in stacking order
         function resetLayerOrder(): string {
             Config.setNestedValue("background.widgets.layerOrder", [])
             return "widget layer order reset"
         }
 
+        /// Enable or disable a built-in desktop widget
         function setWidgetEnabled(widgetName: string, enabled: bool): string {
             if (!DesktopWidgetRegistry.has(widgetName))
                 return "unknown widget: " + widgetName;
@@ -513,6 +568,7 @@ Scope {
             return widgetName + (enabled ? " enabled" : " disabled");
         }
 
+        /// Report clock palette, renderer and quick-control geometry diagnostics
         function clockDebugState(): string {
             return JSON.stringify({
                 enabled: Quickshell.env("INIR_REGION_DEBUG") === "1",
@@ -536,6 +592,7 @@ Scope {
             });
         }
 
+        /// Temporarily select a diagnostic clock mode
         function clockDebugSetMode(style: string, adaptToWallpaper: bool): string {
             if (Quickshell.env("INIR_REGION_DEBUG") !== "1")
                 return "clock diagnostics disabled; load with INIR_REGION_DEBUG=1";
@@ -558,6 +615,7 @@ Scope {
             return style + (adaptToWallpaper ? " adaptive" : " static");
         }
 
+        /// Inject a temporary wallpaper-region sample
         function clockDebugSetRegion(color: string, brightness: real, spread: real): string {
             if (Quickshell.env("INIR_REGION_DEBUG") !== "1")
                 return "clock diagnostics disabled; load with INIR_REGION_DEBUG=1";
@@ -571,6 +629,7 @@ Scope {
             return "region injected";
         }
 
+        /// Probe quick-control geometry at a hypothetical clock position without moving the widget
         function clockDebugSetLayout(x: int, y: int, quickControlsOpen: bool): string {
             if (Quickshell.env("INIR_REGION_DEBUG") !== "1")
                 return "clock diagnostics disabled; load with INIR_REGION_DEBUG=1";
@@ -586,6 +645,7 @@ Scope {
             return "layout probe requested";
         }
 
+        /// Restore the config captured by clock diagnostics
         function clockDebugRestore(): string {
             backgroundScope.clockDebugRegionActive = false;
             backgroundScope.clockDebugQuickControlsOpen = false;

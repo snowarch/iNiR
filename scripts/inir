@@ -133,6 +133,7 @@ EOF
         _usage_print_targets "  Shared:" "shared"
         _usage_print_targets "  ii panel family:" "ii"
         _usage_print_targets "  waffle panel family:" "waffle"
+        _usage_print_targets "  iRiS panel family:" "iris"
         printf '\n  Run '\''inir <target> --help'\'' for available functions.\n\n'
     else
         cat <<'EOF'

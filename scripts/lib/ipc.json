@@ -5,6 +5,7 @@
    "name": "ai",
    "family": "shared",
    "description": "Shared multi-provider AI service. It supports Gemini, OpenAI-compatible chat and Responses APIs, Mistral and Anthropic; live provider catalogs are normalized into capability-aware model records. Catalog visibility is separate from execution readiness, so public model lists remain browseable without pretending an API key exists. OpenCode Zen and Go resolve their current model lists and per-model API routes dynamically. Normal shell tools use typed actions and approval cards, while arbitrary commands are isolated in Advanced mode.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -61,6 +62,7 @@
    "name": "altSwitcher",
    "family": "shared",
    "description": "Alt+Tab window switcher. Works across workspaces, unlike some other implementations we won't name.",
+   "notes": "Fresh installs give Alt+Tab to Niri's Recent Windows. `inir altSwitcher opens inir` hands it to iNiR's\nswitcher with a marked block at the end of `~/.config/niri/config.d/90-user-extra.kdl`; `opens niri` removes\nthat block. Your own binds are left as they are. The same choice is in Settings, next to the switcher's\noptions.\n\n```kdl\nAlt+Tab { spawn \"inir\" \"altSwitcher\" \"next\"; }\nAlt+Shift+Tab { spawn \"inir\" \"altSwitcher\" \"previous\"; }\n```",
    "example": "Alt+Tab { spawn \"inir\" \"altSwitcher\" \"next\"; }\nAlt+Shift+Tab { spawn \"inir\" \"altSwitcher\" \"previous\"; }",
    "functions": [
     {
@@ -111,6 +113,7 @@
    "name": "appCatalog",
    "family": "shared",
    "description": "App catalog service. Browse, search, and install curated applications.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -147,6 +150,7 @@
    "name": "audio",
    "family": "shared",
    "description": "Volume and mute control.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -188,14 +192,15 @@
   },
   {
    "name": "autostart",
-   "family": "waffle",
+   "family": "shared",
    "description": "Niri login autostart manager. Reads and writes the managed section of `~/.config/niri/config.d/50-startup.kdl` (delimited by `// >>> inir-managed-autostart >>>` / `// <<< inir-managed-autostart <<<`). Base iNiR lines and any hand-written `spawn-at-startup` lines outside the markers are preserved verbatim; toggling an entry comments the line out instead of deleting it. Safe no-op on non-Niri compositors (the page shows a guard instead).",
+   "notes": "The Settings UI (ii: AutostartConfig, waffle: WAutostartPage) is the primary interface; these IPC calls exist\nfor scripts/keybinds. Apps the user already launches via hand-written lines outside the markers are detected\nand shown as \"External\" (read-only) in the list.",
    "example": "",
    "functions": [
     {
      "name": "status",
      "args": [],
-     "description": "Return `niri\\",
+     "description": "Return `niri|<path>|<managedCount>|<externalCount>|<state>`",
      "values": []
     },
     {
@@ -234,6 +239,7 @@
    "name": "background",
    "family": "shared",
    "description": "Desktop background and widget controls.",
+   "notes": "The mutating diagnostic functions require the supervised shell to be loaded with `INIR_REGION_DEBUG=1`. They\nsnapshot the clock's relevant config on first use; always finish a diagnostic run with `clockDebugRestore`\nbefore removing the environment flag.\n\n```kdl\nSuper+W { spawn \"inir\" \"background\" \"toggleEditMode\"; }\n```",
    "example": "Super+W { spawn \"inir\" \"background\" \"toggleEditMode\"; }",
    "functions": [
     {
@@ -272,7 +278,7 @@
       "part",
       "value"
      ],
-     "description": "Every Material, iNstrument and Readout widget at once: `plate on\\",
+     "description": "Every Material, iNstrument and Readout widget at once: `plate on|off` (the background), `outline on|off`, `strength 0-100` (the background's strength), `ink auto|light|dark`, `lock on|off`.",
      "values": []
     },
     {
@@ -379,7 +385,7 @@
     {
      "name": "widgetFit",
      "args": [],
-     "description": "",
+     "description": "How each desktop widget's text fits its size, as JSON: text over other text, past the plate, hugging its edge or cut short. Only widgets with something wrong: `[{ output, widget, size, issues }]`",
      "values": []
     },
     {
@@ -526,7 +532,7 @@
       "style",
       "adaptToWallpaper"
      ],
-     "description": "cookie adaptToWallpaper`",
+     "description": "Temporarily select a diagnostic clock mode",
      "values": []
     },
     {
@@ -561,6 +567,7 @@
    "name": "bar",
    "family": "shared",
    "description": "Top bar visibility.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -595,6 +602,7 @@
    "name": "battery",
    "family": "shared",
    "description": "The laptop battery as every family shows it. `simulate` lets you see the battery surfaces on a machine without one.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -620,6 +628,7 @@
    "name": "bluetooth",
    "family": "shared",
    "description": "The Bluetooth adapter as every family shows it. `simulate` lets you see the Bluetooth surfaces without the hardware.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -647,6 +656,7 @@
    "name": "brightness",
    "family": "shared",
    "description": "Display brightness control.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -684,13 +694,13 @@
     {
      "name": "sleepBegin",
      "args": [],
-     "description": "",
+     "description": "Turn every output off for sleep, keeping the level each one had",
      "values": []
     },
     {
      "name": "restoreAfterWake",
      "args": [],
-     "description": "",
+     "description": "Turn the outputs back on after sleep, each at its last level",
      "values": []
     }
    ]
@@ -699,6 +709,7 @@
    "name": "cheatsheet",
    "family": "shared",
    "description": "Keyboard shortcuts reference. For when you forget what you just configured five minutes ago.",
+   "notes": "```kdl\nSuper+Slash { spawn \"inir\" \"cheatsheet\" \"toggle\"; }\n```",
    "example": "Super+Slash { spawn \"inir\" \"cheatsheet\" \"toggle\"; }",
    "functions": [
     {
@@ -725,6 +736,7 @@
    "name": "clipboard",
    "family": "shared",
    "description": "Clipboard history panel. Because Ctrl+V only remembers one thing, and that's not enough for power users.",
+   "notes": "```kdl\nSuper+V repeat=false { spawn \"inir\" \"clipboard\" \"toggle\"; }\n```",
    "example": "Super+V repeat=false { spawn \"inir\" \"clipboard\" \"toggle\"; }",
    "functions": [
     {
@@ -751,6 +763,7 @@
    "name": "cliphistService",
    "family": "shared",
    "description": "Clipboard history service. The backend that makes clipboard panel work. You probably don't need to call this directly.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -765,6 +778,7 @@
    "name": "closeConfirm",
    "family": "shared",
    "description": "Close window confirmation dialog. Shows a prompt before closing the focused window. Useful if you're the type who accidentally closes things and then regrets it.",
+   "notes": "```kdl\nMod+Q repeat=false allow-inhibiting=false { spawn \"inir\" \"close-window\"; }\n```\n\nBy default, confirmation is disabled (closes immediately). Enable it in settings or config:\n\n```json\n\"closeConfirm\": {\n  \"enabled\": true\n}\n```",
    "example": "Mod+Q repeat=false allow-inhibiting=false { spawn \"inir\" \"close-window\"; }",
    "functions": [
     {
@@ -794,6 +808,7 @@
    "name": "colorMode",
    "family": "shared",
    "description": "The system's light or dark mode, the one the shell and your apps share. With iRiS keeping a scheme (Dark, Ink or Light), `set` moves that scheme too.",
+   "notes": "```kdl\nMod+Alt+L { spawn \"inir\" \"colorMode\" \"set\" \"toggle\"; }\n```",
    "example": "Mod+Alt+L { spawn \"inir\" \"colorMode\" \"set\" \"toggle\"; }",
    "functions": [
     {
@@ -820,6 +835,7 @@
    "name": "connections",
    "family": "shared",
    "description": "Short notices when something is plugged in, connected, unplugged or lost: networks, the internet, Bluetooth devices, USB devices by name (mice, keyboards, controllers, cameras, phones), the charger, the sound output, displays, and drives and memory cards with their name and size. Each family shows them its own way: a pill under the bar in Material, a panel in Waffle, the Island in iRiS. Settings has a switch for each kind.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -848,19 +864,19 @@
     {
      "name": "enable",
      "args": [],
-     "description": "",
+     "description": "Turn connection notices on",
      "values": []
     },
     {
      "name": "disable",
      "args": [],
-     "description": "",
+     "description": "Turn connection notices off",
      "values": []
     },
     {
      "name": "toggle",
      "args": [],
-     "description": "",
+     "description": "Turn connection notices on or off",
      "values": []
     }
    ]
@@ -869,6 +885,7 @@
    "name": "controlPanel",
    "family": "shared",
    "description": "Quick settings panel. Toggles, sliders, and system controls without opening full settings.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -895,6 +912,7 @@
    "name": "coverflowSelector",
    "family": "shared",
    "description": "Wallpaper coverflow (3D card) picker.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -919,8 +937,9 @@
   },
   {
    "name": "customWidgets",
-   "family": "waffle",
+   "family": "shared",
    "description": "Custom widget management. Create, list, reload, and remove user-installed widgets from `~/.config/inir/widgets/`.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -957,6 +976,7 @@
    "name": "dashboard",
    "family": "shared",
    "description": "Centered welcome hub panel (ii family): greeting, clock, notifications, media, weather, calendar, todo, system usage and GitHub activity.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -983,6 +1003,7 @@
    "name": "dev",
    "family": "shared",
    "description": "Development navigation for loading lazy surfaces and internal views without automating pointer or keyboard input. Destination identifiers are stable and returned as JSON by `list`.",
+   "notes": "```bash\ninir dev list | jq -r '.[].id'\ninir dev open sidebar-left/anime-schedule\ninir dev close\ninir dev audit\ninir dev audit sidebar-left/ai settings/ai\ninir dev audit --all --all-families\ninir dev meter 2500; sleep 3; inir dev metered\n```\n\n`inir dev audit` selects destinations related to changed area-specific files in the current worktree.\nDestination arguments select an exact scope, while `--all` requests every safe destination and\n`--all-families` includes both ii and waffle. Each visited destination is closed again and new QML warnings or\nerrors are attributed to the destination that triggered them. Destructive actions such as locking, recording,\npower commands, and wallpaper mutation are excluded.",
    "example": "",
    "functions": [
     {
@@ -1037,6 +1058,7 @@
    "name": "equalizer",
    "family": "ii",
    "description": "Open the ii-family EasyEffects output equalizer. The integration is optional and disabled until you enable it. Run `inir settings`, then go to **Modules → Optional → EasyEffects Equalizer** and enable the switch. While it is disabled the IPC target is intentionally not constructed. On a fresh empty EasyEffects output pipeline, iNiR bootstraps a neutral 10-band `iNiR Equalizer` preset. Existing non-empty effect chains are never replaced automatically.",
+   "notes": "```kdl\nCtrl+Alt+F { spawn \"inir\" \"equalizer\" \"toggle\"; }\n```",
    "example": "Ctrl+Alt+F { spawn \"inir\" \"equalizer\" \"toggle\"; }",
    "functions": [
     {
@@ -1104,6 +1126,7 @@
    "name": "gamemode",
    "family": "shared",
    "description": "Performance mode for gaming. Auto-detects fullscreen apps and disables animations/effects. Can also be toggled manually for those stubborn games that don't go fullscreen properly.",
+   "notes": "```kdl\nSuper+F12 { spawn \"inir\" \"gamemode\" \"toggle\"; }\n```",
    "example": "Super+F12 { spawn \"inir\" \"gamemode\" \"toggle\"; }",
    "functions": [
     {
@@ -1136,6 +1159,7 @@
    "name": "globalActions",
    "family": "shared",
    "description": "Command palette / action registry. Search and execute shell actions from scripts or keybinds.",
+   "notes": "Categories: `system`, `appearance`, `tools`, `media`, `settings`, `custom`.\n\n```kdl\nSuper+Slash { spawn \"inir\" \"globalActions\" \"open\"; }\nSuper+M { spawn \"inir\" \"globalActions\" \"run\" \"toggle-mute\"; }\n```",
    "example": "Super+Slash { spawn \"inir\" \"globalActions\" \"open\"; }\nSuper+M { spawn \"inir\" \"globalActions\" \"run\" \"toggle-mute\"; }",
    "functions": [
     {
@@ -1152,8 +1176,10 @@
       "actionId",
       "args"
      ],
-     "description": "",
-     "values": []
+     "description": "Execute an action by ID with its arguments as one string (e.g. `install-package` with `vim`)",
+     "values": [
+      "vim"
+     ]
     },
     {
      "name": "list",
@@ -1183,6 +1209,7 @@
    "name": "globalStyle",
    "family": "shared",
    "description": "The Global Style every Material surface and desktop widget follows: material, cards, aurora, inir, angel, regalia, zzz, cookie or editorial.",
+   "notes": "```kdl\nMod+Alt+S { spawn \"inir\" \"globalStyle\" \"set\" \"aurora\"; }\n```",
    "example": "Mod+Alt+S { spawn \"inir\" \"globalStyle\" \"set\" \"aurora\"; }",
    "functions": [
     {
@@ -1211,6 +1238,7 @@
    "name": "hub",
    "family": "shared",
    "description": "The community hub (widgets, colour themes, iRiS themes, web apps from [inir-hub](https://github.com/snowarch/inir-hub)) as the running shell sees it. `inir hub list|search|info|install|update|remove|sync` works with or without the shell running and tells it afterwards; these functions queue the same actions inside the shell, so its Hub page shows them happening. All families.",
+   "notes": "```sh\ninir hub install countdown\ninir hub open\n```",
    "example": "",
    "functions": [
     {
@@ -1224,7 +1252,7 @@
      "args": [
       "id"
      ],
-     "description": "",
+     "description": "Queue an install",
      "values": []
     },
     {
@@ -1232,7 +1260,7 @@
      "args": [
       "id"
      ],
-     "description": "",
+     "description": "Queue a removal (only things the hub installed)",
      "values": []
     },
     {
@@ -1240,15 +1268,17 @@
      "args": [
       "id"
      ],
-     "description": "",
-     "values": []
+     "description": "Queue an update; `all` (or nothing) updates everything that has one",
+     "values": [
+      "all"
+     ]
     },
     {
      "name": "use",
      "args": [
       "id"
      ],
-     "description": "",
+     "description": "Put an installed item to use here: a widget on the Island (iRiS) or the desktop, a colour theme applied",
      "values": []
     },
     {
@@ -1256,7 +1286,7 @@
      "args": [
       "id"
      ],
-     "description": "",
+     "description": "Open that item's page in the Hub page (`inir hub open <id>` also opens Settings there)",
      "values": []
     },
     {
@@ -1270,15 +1300,22 @@
      "args": [
       "kind"
      ],
-     "description": "",
-     "values": []
+     "description": "Something was installed outside the shell: reload `widget`, `theme`, `iris-theme`, `webapp` or `all`",
+     "values": [
+      "widget",
+      "theme",
+      "iris-theme",
+      "webapp",
+      "all"
+     ]
     }
    ]
   },
   {
    "name": "iris",
-   "family": "shared",
+   "family": "iris",
    "description": "iRiS bar and Island design. Available while the iRiS bar is enabled.",
+   "notes": "```bash\ninir iris open\ninir iris page desktop\ninir iris toggle\ninir iris dock toggle\ninir iris card toggle\ninir iris bubble right top-right\ninir iris appBubble kitty top-right\ninir iris pin right\ninir iris status\ninir iris close\n```",
    "example": "",
    "functions": [
     {
@@ -1314,8 +1351,12 @@
      "args": [
       "action"
      ],
-     "description": "",
-     "values": []
+     "description": "`open`, `close` or `toggle` the Island's Shelf page (open on another page counts as closed)",
+     "values": [
+      "open",
+      "close",
+      "toggle"
+     ]
     },
     {
      "name": "toggle",
@@ -1404,7 +1445,7 @@
       "slot",
       "place"
      ],
-     "description": "Place an Island bubble (`left`, `right`, `utility`) or an extra bubble (`weather`, `notifications`, `controls`, `sound`, `mic`, `tools`, `media`, `visualizer`, `tray`): a zone (`top-left`, `top-right`, `left`, `right`, `bottom-left`, `bottom-right`), `edge:<top",
+     "description": "Place an Island bubble (`left`, `right`, `utility`) or an extra bubble (`weather`, `notifications`, `controls`, `sound`, `mic`, `tools`, `media`, `visualizer`, `tray`): a zone (`top-left`, `top-right`, `left`, `right`, `bottom-left`, `bottom-right`), `edge:<top|bottom|left|right>` with an optional `:<fraction>` along that edge (e.g. `edge:top:0.3`), `x,y` fractions of the output, `island` (slots) or `off` (extras)",
      "values": [
       "left",
       "right",
@@ -1421,7 +1462,10 @@
       "top-left",
       "top-right",
       "bottom-left",
-      "bottom-right"
+      "bottom-right",
+      "edge:",
+      "island",
+      "off"
      ]
     },
     {
@@ -1954,12 +1998,20 @@
      "args": [
       "action"
      ],
-     "description": "Arrange the Control Center in place (drag controls, resize them from a corner, add or take them out): `edit`, `done`, `toggle`, `undo`, `tab:<controls\\",
+     "description": "Arrange the Control Center in place (drag controls, resize them from a corner, add or take them out): `edit`, `done`, `toggle`, `undo`, `tab:<controls|layouts|panel>` to open the side library on that page, `expand:<display|system|devices|network|bluetooth|none>` to open the Control Center with that expansion unfolded, or a layout (`iris`, `discs`, `compact`, `glance`, `studio`, `everything`)",
      "values": [
       "edit",
       "done",
       "toggle",
-      "undo"
+      "undo",
+      "tab:",
+      "expand:",
+      "iris",
+      "discs",
+      "compact",
+      "glance",
+      "studio",
+      "everything"
      ]
     },
     {
@@ -2125,8 +2177,9 @@
   },
   {
    "name": "irisDev",
-   "family": "shared",
+   "family": "iris",
    "description": "Simulated hands for measuring iRiS (present while iRiS is the family).",
+   "notes": "```bash\ninir irisDev dragSim extra-clock 8; inir dev meter 2400; sleep 3; inir dev metered\n```",
    "example": "",
    "functions": [
     {
@@ -2167,6 +2220,7 @@
    "name": "keyboard",
    "family": "shared",
    "description": "Keyboard layout switching (Niri only). Cycles through configured keyboard layouts and queries layout info.",
+   "notes": "```kdl\nMod+Alt+K { spawn \"inir\" \"keyboard\" \"switchLayout\"; }\n```",
    "example": "Mod+Alt+K { spawn \"inir\" \"keyboard\" \"switchLayout\"; }",
    "functions": [
     {
@@ -2199,6 +2253,7 @@
    "name": "livePins",
    "family": "shared",
    "description": "Live snips: a part of a window kept on screen, streamed, even when the window is on another workspace (qs-rs on niri).",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -2251,7 +2306,7 @@
       "id",
       "place"
      ],
-     "description": "island>`",
+     "description": "Where the pin lives",
      "values": []
     },
     {
@@ -2260,7 +2315,7 @@
       "id",
       "on"
      ],
-     "description": "false>`",
+     "description": "Above the windows, or on the desktop",
      "values": []
     },
     {
@@ -2296,6 +2351,7 @@
    "name": "lock",
    "family": "shared",
    "description": "Lock screen. For when you need to pretend you're working.",
+   "notes": "```kdl\nSuper+Alt+L allow-when-locked=true { spawn \"inir\" \"lock\" \"activate\"; }\n```",
    "example": "Super+Alt+L allow-when-locked=true { spawn \"inir\" \"lock\" \"activate\"; }",
    "functions": [
     {
@@ -2334,6 +2390,7 @@
    "name": "loginScreen",
    "family": "shared",
    "description": "The login screen you see after starting the computer. It wears your wallpaper and colours.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -2378,6 +2435,7 @@
    "name": "mascot",
    "family": "shared",
    "description": "Playful mascot companion (needs `mascot.enable` and the companion switch in Settings › Mascot). She peeks from screen edges and reacts to events; every reaction and its pose is configurable in the dedicated Mascot settings page. Never appears over fullscreen apps, game mode, the lock screen or the session screen.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -2490,6 +2548,7 @@
    "name": "mascotMood",
    "family": "shared",
    "description": "Session-long mood state that flavors the mascot's idle lines (needs `mascot.personality.enabled`). The mood re-rolls on a jittered interval and starts from the time of day.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -2518,6 +2577,7 @@
    "name": "mediaControls",
    "family": "shared",
    "description": "Floating media controls panel.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -2544,6 +2604,7 @@
    "name": "memory",
    "family": "shared",
    "description": "Memory pressure monitoring for JSGCHeap accumulation (Qt V4 memfd leak). Notifies user when memory is high, lets them decide when to restart.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -2582,6 +2643,7 @@
    "name": "minimize",
    "family": "shared",
    "description": "Window minimization (Niri workaround - moves windows to hidden workspace).",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -2620,6 +2682,7 @@
    "name": "mpris",
    "family": "shared",
    "description": "Media player control. Automatically detects and uses YtMusic controls when active, otherwise uses the active MPRIS player.",
+   "notes": "```kdl\nCtrl+Mod+Space { spawn \"inir\" \"mpris\" \"playPause\"; }\nMod+Alt+N { spawn \"inir\" \"mpris\" \"next\"; }\nMod+Alt+P { spawn \"inir\" \"mpris\" \"previous\"; }\n```",
    "example": "Ctrl+Mod+Space { spawn \"inir\" \"mpris\" \"playPause\"; }\nMod+Alt+N { spawn \"inir\" \"mpris\" \"next\"; }\nMod+Alt+P { spawn \"inir\" \"mpris\" \"previous\"; }",
    "functions": [
     {
@@ -2665,6 +2728,7 @@
    "name": "network",
    "family": "shared",
    "description": "Whether the shell can reach the internet, as NetworkManager sees it. Surfaces that show online content (wallpaper sources, news, anime, weather, calendars, lyrics) read this to say why they are empty instead of failing quietly.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -2712,6 +2776,7 @@
    "name": "niriAnimations",
    "family": "shared",
    "description": "Presets for Niri's own window, workspace and overview animations. Applying one rewrites the animations in `config.d/60-animations.kdl` and keeps `off` and `slowdown` as they were. The same picker lives in Settings in every family. Your own presets go in `~/.config/inir/niri-animation-presets.json` as `{\"presets\": [...]}`, in the same shape as `defaults/niri-animation-presets.json`; one with a shipped id replaces it.",
+   "notes": "```kdl\nSuper+Alt+A { spawn \"inir\" \"niriAnimations\" \"apply\" \"snappy\"; }\n```",
    "example": "Super+Alt+A { spawn \"inir\" \"niriAnimations\" \"apply\" \"snappy\"; }",
    "functions": [
     {
@@ -2747,6 +2812,7 @@
    "name": "notifications",
    "family": "shared",
    "description": "Notification management.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -2781,6 +2847,7 @@
    "name": "orbit",
    "family": "shared",
    "description": "Niri-only session navigator. On ii it presents nearby workspaces and readable window previews, with MRU Trail navigation and temporary Stash parking. On iRiS it is the Island growing into one strip per workspace, with a search that lights up the windows that match; `stage`, `orbital`, `studio` and `toggleView` are ii's and do nothing there, `pocket` and `find` open Orbit, and `next` and `previous` move Niri to the workspace below or above.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -2863,6 +2930,7 @@
    "name": "osd",
    "family": "shared",
    "description": "On-screen feedback for any family. The active family's OSD or Island decides where it is drawn.",
+   "notes": "```kdl\nMod+Shift+K { spawn \"inir\" \"osd\" \"keyboard\"; }\n```",
    "example": "Mod+Shift+K { spawn \"inir\" \"osd\" \"keyboard\"; }",
    "functions": [
     {
@@ -2914,6 +2982,7 @@
    "name": "osdVolume",
    "family": "shared",
    "description": "On-screen volume indicator.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -2940,6 +3009,7 @@
    "name": "osk",
    "family": "shared",
    "description": "On-screen keyboard.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -2966,6 +3036,7 @@
    "name": "overlay",
    "family": "shared",
    "description": "Floating tools (Super+G): notes, images, crosshair, recorder, resources and other pinnable desktop tools.",
+   "notes": "```kdl\nSuper+G { spawn \"inir\" \"overlay\" \"toggle\"; }\n```",
    "example": "Super+G { spawn \"inir\" \"overlay\" \"toggle\"; }",
    "functions": [
     {
@@ -3003,6 +3074,7 @@
    "name": "overview",
    "family": "shared",
    "description": "Toggle the workspace overview panel. The one with all your windows looking tiny and organized.",
+   "notes": "```kdl\nMod+Space { spawn \"inir\" \"overview\" \"toggle\"; }\n```",
    "example": "Mod+Space { spawn \"inir\" \"overview\" \"toggle\"; }",
    "functions": [
     {
@@ -3047,6 +3119,7 @@
    "name": "packageSearch",
    "family": "shared",
    "description": "Package search service. Searches pacman/AUR or XBPS repositories and installed packages.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -3069,6 +3142,7 @@
    "name": "panelFamily",
    "family": "shared",
    "description": "Switch between the three shell families: Material ii (default), Waffle (Windows 11-like), and iRiS (the Island family).",
+   "notes": "```kdl\nMod+Shift+W { spawn \"inir\" \"panelFamily\" \"cycle\"; }\n```",
    "example": "Mod+Shift+W { spawn \"inir\" \"panelFamily\" \"cycle\"; }",
    "functions": [
     {
@@ -3091,6 +3165,7 @@
    "name": "pill",
    "family": "ii",
    "description": "The pill bar's morphing surfaces (only registered while Bar appearance is set to Pill). Valid surface names: `power`, `media`, `battery`, `calendar`, `link`, `mixer`, `sysmon`, `clipboard`, `glance`, `launcher`, `recorder`.",
+   "notes": "```kdl\nSuper+V repeat=false { spawn \"inir\" \"pill\" \"toggle\" \"clipboard\"; }\n```",
    "example": "Super+V repeat=false { spawn \"inir\" \"pill\" \"toggle\" \"clipboard\"; }",
    "functions": [
     {
@@ -3127,6 +3202,7 @@
    "name": "privacy",
    "family": "shared",
    "description": "Who is using the microphone, the camera or the screen (PipeWire links, V4L2, niri screencasts). `simulate` lets you see the marks without one.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -3149,8 +3225,9 @@
   },
   {
    "name": "recordingOsd",
-   "family": "waffle",
+   "family": "shared",
    "description": "Screen recording floating pill OSD. Shows elapsed time and stop button during active recording.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -3177,6 +3254,7 @@
    "name": "region",
    "family": "shared",
    "description": "Region selection tools. Screenshots, OCR, recording. Draw a box, get stuff done.",
+   "notes": "```kdl\nSuper+Shift+S { spawn \"inir\" \"region\" \"screenshot\"; }\nSuper+Shift+X { spawn \"inir\" \"region\" \"ocr\"; }\nSuper+Shift+A { spawn \"inir\" \"region\" \"search\"; }\nCtrl+Shift+S { spawn \"inir\" \"region\" \"menu\"; }\n```",
    "example": "Super+Shift+S { spawn \"inir\" \"region\" \"screenshot\"; }\nSuper+Shift+X { spawn \"inir\" \"region\" \"ocr\"; }\nSuper+Shift+A { spawn \"inir\" \"region\" \"search\"; }\nCtrl+Shift+S { spawn \"inir\" \"region\" \"menu\"; }",
    "functions": [
     {
@@ -3243,8 +3321,9 @@
   },
   {
    "name": "search",
-   "family": "waffle",
+   "family": "shared",
    "description": "Waffle start menu / search.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -3271,6 +3350,7 @@
    "name": "session",
    "family": "shared",
    "description": "Power menu. Logout, suspend, reboot, shutdown. The \"I'm done for today\" buttons.",
+   "notes": "```kdl\nSuper+Shift+E { spawn \"inir\" \"session\" \"toggle\"; }\n```",
    "example": "Super+Shift+E { spawn \"inir\" \"session\" \"toggle\"; }",
    "functions": [
     {
@@ -3297,6 +3377,7 @@
    "name": "settings",
    "family": "shared",
    "description": "Open or toggle the settings window. GUI config so you don't have to edit JSON by hand.",
+   "notes": "```kdl\nSuper+Comma { spawn \"inir\" \"settings\"; }\n```",
    "example": "Super+Comma { spawn \"inir\" \"settings\"; }",
    "functions": [
     {
@@ -3322,10 +3403,8 @@
      "args": [
       "index"
      ],
-     "description": "Switch to overlay mode, open Settings and preserve/jump to page `index`",
-     "values": [
-      "index"
-     ]
+     "description": "Switch to overlay mode, open Settings and keep the page, or jump to a page by its number",
+     "values": []
     },
     {
      "name": "openWindowAt",
@@ -3354,6 +3433,7 @@
    "name": "settingsNav",
    "family": "shared",
    "description": "Navigate the settings overlay to a specific page (same as clicking the nav rail). `inir settings` toggles the current Settings host; use the `settings` IPC target above when you need explicit open/toggle semantics.",
+   "notes": "```sh\ninir ipc settingsNav page 5\n```",
    "example": "",
    "functions": [
     {
@@ -3361,7 +3441,7 @@
      "args": [
       "index"
      ],
-     "description": "",
+     "description": "Open the overlay and jump to a page by its number",
      "values": []
     },
     {
@@ -3370,7 +3450,7 @@
       "index",
       "name"
      ],
-     "description": "",
+     "description": "Open a page at its named section; for example `inir settingsNav section 28 sidebars`",
      "values": []
     },
     {
@@ -3378,7 +3458,7 @@
      "args": [
       "key"
      ],
-     "description": "",
+     "description": "Open a page by its name in the family's own Settings, for example `inir settingsNav open hub`",
      "values": []
     },
     {
@@ -3399,6 +3479,7 @@
    "name": "shellLayout",
    "family": "shared",
    "description": "Dedicated persistent-shell layout editing and diagnostics. It is independent from desktop widget edit mode. It moves the ii bar and dock, swaps semantic ii sidebars between physical edges, resizes sidebar roles, and moves the Waffle taskbar through validated operations over canonical Config keys.",
+   "notes": "```bash\ninir shellLayout open\ninir shellLayout lift featureSidebar\ninir shellLayout preview right\ninir shellLayout place right   # prepares the occupied-edge swap\ninir shellLayout place right   # confirms and commits it\ninir shellLayout setProperty featureSidebar sizeMode fit\ninir shellLayout reset featureSidebar\ninir shellLayout close\n```\n\n```kdl\nSuper+W { spawn \"inir\" \"shellLayout\" \"toggle\"; }\n```",
    "example": "Super+W { spawn \"inir\" \"shellLayout\" \"toggle\"; }",
    "functions": [
     {
@@ -3537,6 +3618,7 @@
    "name": "shellUpdate",
    "family": "shared",
    "description": "Shell update checker. Monitors the git repo for new commits and shows an update overlay.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -3604,6 +3686,7 @@
    "name": "sidebarLeft",
    "family": "shared",
    "description": "Left sidebar: AI chat and apps in Material; the customizable Focus panel in iRiS. In iRiS, `open`, `close` and `toggle` use the family-owned panel; AI detach and expanded-layout actions apply to Material.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -3660,6 +3743,7 @@
    "name": "sidebarRight",
    "family": "shared",
    "description": "Right sidebar: quick toggles, notepad and settings in Material; the customizable Today panel in iRiS.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -3686,6 +3770,7 @@
    "name": "taskview",
    "family": "shared",
    "description": "Compatibility entry point for task navigation. On Waffle it opens the Waffle Task View; on ii/Niri it routes to Orbit.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -3712,6 +3797,7 @@
    "name": "tiling",
    "family": "shared",
    "description": "Tiling layout overlay. Pick or cycle through tiling presets for the current workspace.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -3756,6 +3842,7 @@
    "name": "timer",
    "family": "shared",
    "description": "The pomodoro, countdown and stopwatch every family shows (iRiS draws them as Live Activities in the Island).",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -3796,6 +3883,7 @@
    "name": "voiceSearch",
    "family": "shared",
    "description": "Provider-neutral voice input for web search and AI dictation. Auto prefers local whisper.cpp, then connected Groq, Gemini and OpenAI speech backends. Keys stay in the system keyring and are passed to adapters through the process environment.",
+   "notes": "```kdl\nSuper+Shift+V { spawn \"inir\" \"voiceSearch\" \"toggle\"; }\n```",
    "example": "Super+Shift+V { spawn \"inir\" \"voiceSearch\" \"toggle\"; }",
    "functions": [
     {
@@ -3834,6 +3922,7 @@
    "name": "vpn",
    "family": "shared",
    "description": "NetworkManager VPN profiles (OpenVPN, WireGuard, anything with an NM plugin) and Tailscale, as the VPN piece and its card show them.",
+   "notes": "```kdl\nSuper+Alt+V { spawn \"inir\" \"vpn\" \"toggle\"; }\n```",
    "example": "Super+Alt+V { spawn \"inir\" \"vpn\" \"toggle\"; }",
    "functions": [
     {
@@ -3892,6 +3981,7 @@
    "name": "wactionCenter",
    "family": "waffle",
    "description": "Waffle action center (quick settings).",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -3918,6 +4008,7 @@
    "name": "waffleAltSwitcher",
    "family": "waffle",
    "description": "Waffle Alt+Tab window switcher. Separate from the ii `altSwitcher`, supports quick-switch (first tab switches instantly, second opens UI) and no-visual-UI mode.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -3956,6 +4047,7 @@
    "name": "wallpaperLauncher",
    "family": "shared",
    "description": "Navigation and apply controls for the compact wallpaper launcher.",
+   "notes": "Open the launcher before calling its controls:\n\n```bash\ninir wallpaperSelector openLauncher static\ninir wallpaperLauncher next\ninir wallpaperLauncher applyCurrent\n```",
    "example": "",
    "functions": [
     {
@@ -3988,6 +4080,7 @@
    "name": "wallpaperSelector",
    "family": "shared",
    "description": "Wallpaper picker with grid, coverflow and compact launcher styles.",
+   "notes": "```kdl\nCtrl+Alt+T { spawn \"inir\" \"wallpaperSelector\" \"toggle\"; }\nCtrl+Alt+L { spawn \"inir\" \"wallpaperSelector\" \"browse\" \"live\" \"-\"; }\nCtrl+Alt+A { spawn \"inir\" \"wallpaperSelector\" \"openLauncher\" \"animated\"; }\n```",
    "example": "Ctrl+Alt+T { spawn \"inir\" \"wallpaperSelector\" \"toggle\"; }\nCtrl+Alt+L { spawn \"inir\" \"wallpaperSelector\" \"browse\" \"live\" \"-\"; }\nCtrl+Alt+A { spawn \"inir\" \"wallpaperSelector\" \"openLauncher\" \"animated\"; }",
    "functions": [
     {
@@ -4139,6 +4232,7 @@
    "name": "wbar",
    "family": "waffle",
    "description": "Waffle taskbar visibility.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -4163,8 +4257,9 @@
   },
   {
    "name": "widgetStacks",
-   "family": "waffle",
+   "family": "shared",
    "description": "iRiS widget stacks: several desktop widgets sharing one place, one page shown at a time. Service: `services/DesktopWidgetStacks.qml`. Applies while the widgets wear the iRiS design.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -4255,8 +4350,9 @@
   },
   {
    "name": "widgetpower",
-   "family": "waffle",
+   "family": "shared",
    "description": "Desktop-widget power management (pauses widget rendering on game mode, fullscreen, present windows, or edit mode). Service: `services/WidgetPowerManager.qml`.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -4271,6 +4367,7 @@
    "name": "wnotificationCenter",
    "family": "waffle",
    "description": "Waffle notification center.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -4297,6 +4394,7 @@
    "name": "workspaceStrip",
    "family": "shared",
    "description": "Workspace edge strip. Shows a compact per-workspace rail and expands it for switching without opening the full overview.",
+   "notes": "```kdl\nSuper+Tab { spawn \"inir\" \"workspaceStrip\" \"toggle\"; }\n```",
    "example": "Super+Tab { spawn \"inir\" \"workspaceStrip\" \"toggle\"; }",
    "functions": [
     {
@@ -4329,6 +4427,7 @@
    "name": "wwidgets",
    "family": "waffle",
    "description": "Waffle widgets panel.",
+   "notes": "",
    "example": "",
    "functions": [
     {
@@ -4355,6 +4454,7 @@
    "name": "ytmusic",
    "family": "shared",
    "description": "Direct YtMusic player control. Use these if you want to control YtMusic specifically, regardless of what other players are active.",
+   "notes": "```kdl\nMod+M+Space { spawn \"inir\" \"ytmusic\" \"playPause\"; }\n```",
    "example": "Mod+M+Space { spawn \"inir\" \"ytmusic\" \"playPause\"; }",
    "functions": [
     {
@@ -4387,6 +4487,7 @@
    "name": "zoom",
    "family": "shared",
    "description": "Screen zoom. Accessibility feature, or for reading tiny UI without pretending your monitor is the problem.",
+   "notes": "",
    "example": "",
    "functions": [
     {

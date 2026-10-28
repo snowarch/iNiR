@@ -633,13 +633,16 @@ Singleton {
         }
     }
 
+    /// Screen zoom. Accessibility feature, or for reading tiny UI without pretending your monitor is the problem.
     IpcHandler {
 		target: "zoom"
 
+		/// Increase compositor zoom
 		function zoomIn(): void {
             screenZoom = Math.min(screenZoom + 0.4, 3.0)
         }
 
+        /// Decrease compositor zoom
         function zoomOut(): void {
             screenZoom = Math.max(screenZoom - 0.4, 1)
         }

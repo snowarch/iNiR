@@ -82,12 +82,17 @@ Singleton {
         return ""
     }
     readonly property var castApps: root.unique(root.casts.map(cast => root.castViewer(cast)))
+    /// Who is using the microphone, the camera or the screen (PipeWire links, V4L2, niri screencasts). `simulate`
+    /// lets you see the marks without one.
     IpcHandler {
         target: "privacy"
+        /// Print the apps using the mic and camera and every screencast with who watches it, as JSON
         function status(): string {
             return JSON.stringify({ mic: root.micApps, camera: root.cameraApps,
                 screen: root.casts.map(cast => ({ by: root.castViewer(cast), target: root.castTarget(cast), kind: cast.kind })) })
         }
+        /// Pretend an app uses something until the shell restarts: `"mic Discord"`, `"camera Zoom"`, `"cast OBS"`, or
+        /// `off`. For testing
         function simulate(spec: string): string {
             const words = String(spec ?? "").trim().split(/\s+/)
             const kind = words[0] ?? ""

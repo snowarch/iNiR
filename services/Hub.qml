@@ -359,21 +359,34 @@ Singleton {
         }
     }
 
+    /// The community hub (widgets, colour themes, iRiS themes, web apps from
+    /// [inir-hub](https://github.com/snowarch/inir-hub)) as the running shell sees it. `inir hub
+    /// list|search|info|install|update|remove|sync` works with or without the shell running and tells it afterwards;
+    /// these functions queue the same actions inside the shell, so its Hub page shows them happening. All families.
+    ///
+    /// ```sh
+    /// inir hub install countdown
+    /// inir hub open
+    /// ```
     IpcHandler {
         target: "hub"
 
+        /// Read every source again now
         function refresh(): string {
             root.refresh(true)
             return "fetching"
         }
+        /// Queue an install
         function install(id: string): string {
             root.install(id)
             return `queued ${id}`
         }
+        /// Queue a removal (only things the hub installed)
         function remove(id: string): string {
             root.remove(id)
             return `queued ${id}`
         }
+        /// Queue an update; `all` (or nothing) updates everything that has one
         function update(id: string): string {
             if (id.length === 0 || id === "all")
                 root.updateAll()
@@ -383,6 +396,7 @@ Singleton {
         }
         // Put an installed item to use in the family on screen: a widget on the Island or the
         // desktop, a colour theme applied. iRiS themes apply with `inir iris theme apply:<id>`.
+        /// Put an installed item to use here: a widget on the Island (iRiS) or the desktop, a colour theme applied
         function use(id: string): string {
             const item = root.find(id)
             if (!item || !item.installed)
@@ -400,12 +414,14 @@ Singleton {
             return `${id} is in the left sidebar`
         }
         // Open one item's page in the Hub page that shows next (or is showing).
+        /// Open that item's page in the Hub page (`inir hub open <id>` also opens Settings there)
         function openItem(id: string): string {
             root.requestedId = id
             root.ensureLoaded()
             return id
         }
         // The shell's view: what it lists, what is installed, what is running.
+        /// JSON: loaded, item count, installed ids, updates, what is running, failures, last error
         function status(): string {
             return JSON.stringify({ loaded: root.loaded, items: root.items.length,
                 installed: root.items.filter(item => item.installed).map(item => item.id),
@@ -413,6 +429,7 @@ Singleton {
         }
         // A change made outside the shell (the inir hub command): read the catalogue again and
         // let the registries reload.
+        /// Something was installed outside the shell: reload `widget`, `theme`, `iris-theme`, `webapp` or `all`
         function changed(kind: string): string {
             const every = kind.length === 0 || kind === "all"
             if (every || kind === "widget")

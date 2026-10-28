@@ -346,21 +346,31 @@ Singleton {
         root.happened(event)
     }
 
+    /// Short notices when something is plugged in, connected, unplugged or lost: networks, the internet, Bluetooth
+    /// devices, USB devices by name (mice, keyboards, controllers, cameras, phones), the charger, the sound output,
+    /// displays, and drives and memory cards with their name and size. Each family shows them its own way: a pill
+    /// under the bar in Material, a panel in Waffle, the Island in iRiS. Settings has a switch for each kind.
     IpcHandler {
         target: "connections"
 
+        /// Show how a notice looks without plugging anything: `network`, `internet`, `bluetooth`, `usb`, `power`,
+        /// `audio`, `displays` or `drives`
         function sample(kind: string): string {
             if (!root.kinds.includes(kind)) return "unknown kind: " + root.kinds.join(", ")
             root.sample(kind)
             return kind
         }
+        /// Print which kinds are on as JSON, and whether udev is there to watch USB devices and drives
         function status(): string {
             const state = { enabled: root.enabled, udev: root.udevAvailable }
             root.kinds.forEach(kind => state[kind] = root.allows(kind))
             return JSON.stringify(state)
         }
+        /// Turn connection notices on
         function enable(): void { Config.setNestedValue("osd.connections.enable", true) }
+        /// Turn connection notices off
         function disable(): void { Config.setNestedValue("osd.connections.enable", false) }
+        /// Turn connection notices on or off
         function toggle(): void { Config.setNestedValue("osd.connections.enable", !root.enabled) }
     }
 }

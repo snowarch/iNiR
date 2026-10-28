@@ -159,9 +159,21 @@ Scope {
     onRouteToVisualIiChanged: root.resetSession()
     onRouteToVisualWaffleChanged: root.resetSession()
 
+    /// Alt+Tab window switcher. Works across workspaces, unlike some other implementations we won't name.
+    ///
+    /// Fresh installs give Alt+Tab to Niri's Recent Windows. `inir altSwitcher opens inir` hands it to iNiR's
+    /// switcher with a marked block at the end of `~/.config/niri/config.d/90-user-extra.kdl`; `opens niri` removes
+    /// that block. Your own binds are left as they are. The same choice is in Settings, next to the switcher's
+    /// options.
+    ///
+    /// ```kdl
+    /// Alt+Tab { spawn "inir" "altSwitcher" "next"; }
+    /// Alt+Shift+Tab { spawn "inir" "altSwitcher" "previous"; }
+    /// ```
     IpcHandler {
         target: "altSwitcher"
 
+        /// Which switcher Alt+Tab opens: `inir`, `niri` (Niri's own Recent Windows) or `status`
         function opens(which: string): string {
             if (which === "inir" || which === "niri") {
                 NiriKeybinds.setAltTabSource(which)
@@ -171,6 +183,7 @@ Scope {
             return NiriKeybinds.altTabSource || "reading, ask again"
         }
 
+        /// Open switcher
         function open(): void {
             if (root.routeToVisualWaffle) {
                 root.routeToWaffle("open")
@@ -183,6 +196,7 @@ Scope {
             root.step(1)
         }
 
+        /// Close switcher
         function close(): void {
             if (root.routeToVisualWaffle) {
                 root.routeToWaffle("close")
@@ -195,6 +209,7 @@ Scope {
             root.resetSession()
         }
 
+        /// Toggle switcher
         function toggle(): void {
             if (root.routeToVisualWaffle) {
                 root.routeToWaffle("toggle")
@@ -207,6 +222,7 @@ Scope {
             root.step(1)
         }
 
+        /// Focus next window
         function next(): void {
             if (root.routeToVisualWaffle) {
                 root.routeToWaffle("next")
@@ -219,6 +235,7 @@ Scope {
             root.step(1)
         }
 
+        /// Focus previous window
         function previous(): void {
             if (root.routeToVisualWaffle) {
                 root.routeToWaffle("previous")

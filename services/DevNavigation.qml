@@ -192,13 +192,38 @@ Singleton {
             String(Quickshell.processId)]
     }
 
+    /// Development navigation for loading lazy surfaces and internal views without automating pointer or keyboard
+    /// input. Destination identifiers are stable and returned as JSON by `list`.
+    ///
+    /// ```bash
+    /// inir dev list | jq -r '.[].id'
+    /// inir dev open sidebar-left/anime-schedule
+    /// inir dev close
+    /// inir dev audit
+    /// inir dev audit sidebar-left/ai settings/ai
+    /// inir dev audit --all --all-families
+    /// inir dev meter 2500; sleep 3; inir dev metered
+    /// ```
+    ///
+    /// `inir dev audit` selects destinations related to changed area-specific files in the current worktree.
+    /// Destination arguments select an exact scope, while `--all` requests every safe destination and
+    /// `--all-families` includes both ii and waffle. Each visited destination is closed again and new QML warnings or
+    /// errors are attributed to the destination that triggered them. Destructive actions such as locking, recording,
+    /// power commands, and wallpaper mutation are excluded.
     IpcHandler {
         target: "dev"
+        /// Return the destination inventory as JSON
         function list(): string { return JSON.stringify(root.destinations) }
+        /// Open a destination by semantic identifier
         function open(destination: string): string { return root.request(destination) }
+        /// Close development-opened surfaces and clear the request
         function close(): void { root.closeAll() }
+        /// Reload the shell's QML the way an edit does (soft: windows are kept). In a git checkout
+        /// `scripts/daemon/dev_hot_reload.py` calls it for the files Quickshell does not watch itself
         function reload(): string { Qt.callLater(() => Quickshell.reload(false)); return "reloading" }
+        /// Return the current destination or `closed`
         function current(): string { return root.currentDestination.length > 0 ? root.currentDestination : "closed" }
+        /// Measure frame gaps for the given milliseconds (250–20000, default 2500)
         function meter(ms: string): string {
             const span = Math.max(250, Math.min(20000, Number(ms) || 2500))
             root.meterGaps = []
@@ -207,6 +232,7 @@ Singleton {
             meter.restart()
             return "measuring:" + span
         }
+        /// Return the last measurement as JSON: frames, mean, p95, worst, frames over 20 and 50 ms
         function metered(): string { return JSON.stringify(root.meterResult) }
     }
 }

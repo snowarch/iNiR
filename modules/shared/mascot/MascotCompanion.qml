@@ -958,11 +958,17 @@ Scope {
         onTriggered: root._checkSystemChaos()
     }
 
+    /// Playful mascot companion (needs `mascot.enable` and the companion switch in Settings › Mascot). She peeks from
+    /// screen edges and reacts to events; every reaction and its pose is configurable in the dedicated Mascot
+    /// settings page. Never appears over fullscreen apps, game mode, the lock screen or the session screen.
     IpcHandler {
         target: "mascot"
 
+        /// Ask her to peek from a random edge with a random pose
         function poke(): void { root.poke() }
         // Runtime-safe personality diagnostics. Deliberately omits app/window names.
+        /// Return JSON diagnostics for mood, configured/effective voice, companion state and non-sensitive Screen
+        /// Time counters
         function status(): string {
             return JSON.stringify({
                 enabled: root.companionEnabled,
@@ -996,6 +1002,7 @@ Scope {
             })
         }
         // Set the idle conversational register; "adaptive" follows MascotMood.
+        /// Set the idle voice register to `adaptive`, `casual`, `dry`, `composed` or `chaotic`
         function setVoice(mode: string): string {
             const valid = ["adaptive", "casual", "dry", "composed", "chaotic"]
             if (!valid.includes(mode))
@@ -1004,13 +1011,20 @@ Scope {
             return mode
         }
         // Chaos mode: run across the desktop and mess with widgets/panels
+        /// Chaos mode: she runs across the desktop and bonks a widget, wrecks one onto the floor, hurls one to a new
+        /// spot, rampages through several, kicks the bar/dock, or ground-slams so everything rattles. Needs
+        /// `mascot.chaos.enable`; widgets only keep new positions with `mascot.chaos.allowRearrange`
         function romp(): void { root.startRomp("romp") }
         // Chase game: she hunts your mouse clicks — click her to catch her
+        /// Chase game: she hunts your mouse, every click is a spot she pounces on; click *her* to catch her and win
         function chase(): void { root.startRomp("chase") }
         // Hide-and-seek: she tucks into a spot — click her before the
         // timeout to find her, otherwise she wins by default
+        /// Hide-and-seek: she tucks into a spot on the desktop. Click her before the 20s timeout to find her,
+        /// otherwise she wins by default
         function hideSeek(): void { root.startRomp("hide") }
         // Undo the chaos: every displaced widget returns home
+        /// Undo the chaos: every displaced widget returns to its pre-chaos position
         function tidy(): void {
             MascotChaos.tidy()
             const t = root._manifest.chaos?.tidy ?? ({})
@@ -1018,17 +1032,25 @@ Scope {
                 root.line = Translation.tr(root._pickFrom(t.lines ?? ["You saw nothing."]))
         }
         // Named "appear" because "show" collides with the `qs ipc show` subcommand
+        /// Show a specific catalog pose from `left`, `right`, `top` or `bottom`
         function appear(pose: string, edge: string): void { if (root.show(pose, edge)) root._useOriginalPose = true }
+        /// Show near the triggering widget (`battery`, `media`, `update`, `network`, `dnd`). Requires
+        /// `mascot.companion.contextualPlacement` to be enabled for event reactions; this IPC call bypasses that
+        /// check for testing.
         function appearContextual(pose: string, sourceWidget: string): void {
             // Testable entry: skip reactTo cooldown (it's an explicit IPC call)
             root._contextualSource = sourceWidget
             root.show(pose, root.panelEdge)
         }
         // Easter eggs need a fixed line instead of the random _lineFor pick
+        /// Show a specific pose saying an exact line (used by the bar widget easter eggs)
         function appearWithLine(pose: string, edge: string, line: string): void {
             if (root.show(pose, edge)) root.line = line
         }
+        /// Dismiss the peek or active chaos, cancel follow-ups, tidy widgets and pause automatic visits for 30
+        /// minutes
         function hide(): void { root.dismiss(30) }
+        /// Dismiss Kira and pause automatic visits for 1–480 minutes
         function snooze(minutes: int): void { root.dismiss(Math.max(1, minutes)) }
     }
 

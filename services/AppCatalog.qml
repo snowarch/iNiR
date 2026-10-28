@@ -392,24 +392,29 @@ Singleton {
 
     // ─── IPC ───────────────────────────────────────────────────────
 
+    /// App catalog service. Browse, search, and install curated applications.
     IpcHandler {
         target: "appCatalog"
 
+        /// Refresh the installed-state cache
         function refresh(): string {
             root.refresh()
             return "refreshing installed status"
         }
 
+        /// Filter catalog entries by query
         function search(query: string): string {
             root.searchQuery = query
             return "filter set to: " + query
         }
 
+        /// Install app by catalog ID
         function install(id: string): string {
             const ok = root.installApp(id)
             return ok ? "installing " + id : "failed to install " + id
         }
 
+        /// List catalog apps with install status and descriptions
         function list(): string {
             return root.catalog.map(a => {
                 const installed = root.isInstalled(a.id) ? " [installed]" : ""

@@ -385,9 +385,15 @@ Scope {
         }
     }
 
+    /// Lock screen. For when you need to pretend you're working.
+    ///
+    /// ```kdl
+    /// Super+Alt+L allow-when-locked=true { spawn "inir" "lock" "activate"; }
+    /// ```
     IpcHandler {
         target: "lock"
 
+        /// Lock the screen
         function activate(): void {
             if (Config.options?.lock?.useHyprlock ?? false) {
                 Quickshell.execDetached(["/usr/bin/bash", "-lc", "/usr/bin/pidof hyprlock || /usr/bin/hyprlock"]);
@@ -398,6 +404,7 @@ Scope {
             lockActivateDelay.restart();
         }
 
+        /// Suspend handshake: activate immediately and wait until the compositor confirms the session lock is secure
         function prepareSleep(): string {
             if (CompositorService.isHyprland && (Config.options?.lock?.useHyprlock ?? false)) {
                 Quickshell.execDetached(["/usr/bin/bash", "-lc", "/usr/bin/pidof hyprlock || /usr/bin/hyprlock"]);
@@ -413,11 +420,13 @@ Scope {
             return lock.secure ? "secure" : "locking";
         }
 
+        /// Cancel lock and mark screen unlocked
         function deactivate(): void {
             lockActivateDelay.stop();
             GlobalStates.screenLocked = false;
         }
 
+        /// Return lock state (`secure`, `locked`, `activating`, or `unlocked`)
         function status(): string {
             if (lock.secure)
                 return "secure";
@@ -428,6 +437,7 @@ Scope {
             return "unlocked";
         }
 
+        /// Refocus the lock screen input
         function focus(): void {
             // swayidle calls this after logind resumes. Besides restoring lock
             // focus, broadcast the lifecycle event so persistent layer-shell

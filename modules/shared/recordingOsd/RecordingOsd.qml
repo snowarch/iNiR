@@ -597,19 +597,23 @@ Scope {
         }
     }
 
+    /// Screen recording floating pill OSD. Shows elapsed time and stop button during active recording.
     IpcHandler {
         target: "recordingOsd"
 
+        /// Stop the current recording (if active)
         function toggle(): void {
             if (RecorderStatus.isRecording)
                 root.stopRecording()
         }
 
+        /// Reveal the recording OSD pill
         function show(): void {
             root.collapsed = false
             root.revealed = true
         }
 
+        /// Collapse/hide the recording OSD pill
         function hide(): void {
             root.collapsed = true
             if (root.autoHide)

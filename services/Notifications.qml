@@ -778,21 +778,26 @@ Singleton {
         }
     }
 
+    /// Notification management.
     IpcHandler {
         target: "notifications"
 
+        /// Send test notifications
         function test(): void {
             root.sendTestNotifications()
         }
 
+        /// Dismiss all notifications
         function clearAll(): void {
             root.discardAllNotifications()
         }
 
+        /// Toggle Do Not Disturb mode
         function toggleSilent(): void {
             root.silent = !root.silent
         }
 
+        /// Press a button on the newest notification that has it, as a click would (e.g. `open` on a new iNiR notice)
         function invokeAction(identifier: string): string {
             const notif = root.list.slice().reverse().find(n => (n.actions ?? []).some(a => a.identifier === identifier))
             if (!notif) return "No notification offers " + identifier

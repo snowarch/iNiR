@@ -36,25 +36,35 @@ Scope {
         WindowPreviewService.captureForTaskView()
     }
 
+    /// Workspace edge strip. Shows a compact per-workspace rail and expands it for switching without opening the full
+    /// overview.
+    ///
+    /// ```kdl
+    /// Super+Tab { spawn "inir" "workspaceStrip" "toggle"; }
+    /// ```
     IpcHandler {
         target: "workspaceStrip"
 
+        /// Keep the strip expanded
         function open(): string {
             root.ipcOpen = true
             root.refreshCachedPreviews()
             return "open"
         }
+        /// Return the strip to hover/peek mode
         function close(): string {
             root.ipcOpen = false
             root.closeRequested()
             return "closed"
         }
+        /// Toggle forced expansion
         function toggle(): string {
             root.ipcOpen = !root.ipcOpen
             if (root.ipcOpen) root.refreshCachedPreviews()
             else root.closeRequested()
             return root.ipcOpen ? "open" : "closed"
         }
+        /// Return strip state (`open` or `auto`)
         function status(): string {
             return root.ipcOpen ? "open" : "auto"
         }

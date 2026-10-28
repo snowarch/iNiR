@@ -171,8 +171,15 @@ Singleton {
 
     readonly property var globalStyles: ["material", "cards", "aurora", "inir", "angel", "regalia", "zzz", "cookie", "editorial"]
 
+    /// The Global Style every Material surface and desktop widget follows: material, cards, aurora, inir, angel,
+    /// regalia, zzz, cookie or editorial.
+    ///
+    /// ```kdl
+    /// Mod+Alt+S { spawn "inir" "globalStyle" "set" "aurora"; }
+    /// ```
     IpcHandler {
         target: "globalStyle"
+        /// Switch to a style by name, with its bar corner and card defaults
         function set(style: string): string {
             const id = String(style ?? "").trim().toLowerCase()
             if (!root.globalStyles.includes(id))
@@ -180,12 +187,21 @@ Singleton {
             root.setGlobalStyle(id)
             return id
         }
+        /// Return the active style
         function get(): string { return Config.options?.appearance?.globalStyle ?? "material" }
+        /// List the styles
         function list(): string { return root.globalStyles.join(", ") }
     }
 
+    /// The system's light or dark mode, the one the shell and your apps share. With iRiS keeping a scheme (Dark, Ink
+    /// or Light), `set` moves that scheme too.
+    ///
+    /// ```kdl
+    /// Mod+Alt+L { spawn "inir" "colorMode" "set" "toggle"; }
+    /// ```
     IpcHandler {
         target: "colorMode"
+        /// `dark`, `light` or `toggle`
         function set(mode: string): string {
             const wanted = String(mode ?? "").trim().toLowerCase()
             if (wanted === "toggle") { Appearance.toggleDarkMode(); return "toggled" }
@@ -194,6 +210,7 @@ Singleton {
             else if (Appearance.m3colors.darkmode !== (wanted === "dark")) Appearance.toggleDarkMode()
             return wanted
         }
+        /// JSON: the mode in use, the colour theme, the saved choice, whether the wallpaper decides and iRiS's scheme
         function get(): string {
             return JSON.stringify({
                 mode: Appearance.m3colors.darkmode ? "dark" : "light",

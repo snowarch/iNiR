@@ -50,9 +50,13 @@ Singleton {
     property real timeToEmpty: !simulating ? UPower.displayDevice.timeToEmpty : onBattery ? Math.round(percentage * 18000) : 0
     property real timeToFull: !simulating ? UPower.displayDevice.timeToFull : isCharging ? Math.round((1 - percentage) * 7200) : 0
 
+    /// The laptop battery as every family shows it. `simulate` lets you see the battery surfaces on a machine without
+    /// one.
     IpcHandler {
         target: "battery"
 
+        /// Print the level and whether it is charging, discharging or plugged in, marked `(simulated)` while
+        /// simulating
         function status(): string {
             if (!root.available)
                 return "no battery"
@@ -61,6 +65,8 @@ Singleton {
         }
 
         // "14", "14 charging", "full" or "off"; a level alone is discharging.
+        /// Pretend the battery is at a level and state until the shell restarts: `14`, `"14 charging"`, `full` or
+        /// `off`. Never suspends the machine. For testing
         function simulate(spec: string): string {
             const words = String(spec ?? "").trim().toLowerCase().split(/[\s:]+/).filter(w => w.length > 0)
             if (words.length === 0 || words[0] === "off") {

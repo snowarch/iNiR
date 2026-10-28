@@ -469,8 +469,10 @@ Singleton {
             Quickshell.execDetached(["/usr/bin/bash", Directories.scriptsPath + "/colors/apply-targets.sh", "sddm"])
         }
     }
+    /// The login screen you see after starting the computer. It wears your wallpaper and colours.
     IpcHandler {
         target: "loginScreen"
+        /// `auto` (iRiS while you use iRiS, Classic otherwise), `classic` or `iris`
         function set(look: string): string {
             const looks = ["auto", "classic"].concat(Plugins.loginScreens)
             if (looks.indexOf(look) < 0) return "unknown look: " + look + " (" + looks.join(", ") + ")"
@@ -478,11 +480,14 @@ Singleton {
             return look
         }
         // The composed login's layout: cover (the picture as a cover), frame (hung in a mat), lens (the time as a lens).
+        /// How the iRiS login is composed: `cover` (your picture sharp, the clock in a corner), `frame` (the picture
+        /// hung in a mat) or `lens` (the time cut out of the picture)
         function style(name: string): string {
             if (["cover", "frame", "lens"].indexOf(name) < 0) return "unknown style: " + name + " (cover, frame or lens)"
             Config.setNestedValue("lock.loginStyle", name)
             return name
         }
+        /// Print the choice and the look it gives (e.g. `auto (iris, lens)`), or `not installed`
         function status(): string {
             if (!root.loginScreenInstalled) return "not installed"
             const look = String(Config.options?.lock?.loginScreen ?? "auto")
@@ -490,6 +495,7 @@ Singleton {
             const shown = Plugins.loginScreens.includes(worn) ? worn + ", " + String(Config.options?.lock?.loginStyle ?? "lens") : "classic"
             return look === "auto" ? "auto (" + shown + ")" : shown
         }
+        /// Copy the current colours, wallpaper and style to the login screen now
         function sync(): void { loginScreenSync.restart() }
     }
 

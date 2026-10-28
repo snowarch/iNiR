@@ -104,31 +104,44 @@ Singleton {
     ]
 
     // ── IPC ─────────────────────────────────────────────────────────────
+    /// Command palette / action registry. Search and execute shell actions from scripts or keybinds.
+    ///
+    /// Categories: `system`, `appearance`, `tools`, `media`, `settings`, `custom`.
+    ///
+    /// ```kdl
+    /// Super+Slash { spawn "inir" "globalActions" "open"; }
+    /// Super+M { spawn "inir" "globalActions" "run" "toggle-mute"; }
+    /// ```
     IpcHandler {
         target: "globalActions"
 
+        /// Execute action by ID (e.g. `toggle-mute`, `install-package vim`)
         function run(actionId: string): string {
             if (root.runById(actionId, ""))
                 return "ok"
             return "error: action not found: " + actionId
         }
 
+        /// Execute an action by ID with its arguments as one string (e.g. `install-package` with `vim`)
         function runWithArgs(actionId: string, args: string): string {
             if (root.runById(actionId, args ?? ""))
                 return "ok"
             return "error: action not found: " + actionId
         }
 
+        /// List all actions, optionally filtered by category
         function list(category: string): string {
             const actions = root.listByCategory(category ?? "all")
             return actions.map(a => `${a.id}\t${a.category}\t${a.name}`).join("\n")
         }
 
+        /// Fuzzy search actions by name/description/keywords
         function search(query: string): string {
             const results = root.fuzzyQuery(query ?? "")
             return results.map(a => `${a.id}\t${a.category}\t${a.name}`).join("\n")
         }
 
+        /// Open the overview in action mode
         function open(): void {
             root.runLauncher(["overview", "actionOpen"])
         }

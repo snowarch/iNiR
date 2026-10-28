@@ -377,23 +377,37 @@ Singleton {
 
     // ── IPC (scripts / keybinds) ────────────────────────────────
 
+    /// Niri login autostart manager. Reads and writes the managed section of `~/.config/niri/config.d/50-startup.kdl`
+    /// (delimited by `// >>> inir-managed-autostart >>>` / `// <<< inir-managed-autostart <<<`). Base iNiR lines and
+    /// any hand-written `spawn-at-startup` lines outside the markers are preserved verbatim; toggling an entry
+    /// comments the line out instead of deleting it. Safe no-op on non-Niri compositors (the page shows a guard
+    /// instead).
+    ///
+    /// The Settings UI (ii: AutostartConfig, waffle: WAutostartPage) is the primary interface; these IPC calls exist
+    /// for scripts/keybinds. Apps the user already launches via hand-written lines outside the markers are detected
+    /// and shown as "External" (read-only) in the list.
     IpcHandler {
         target: "autostart"
+        /// Return `niri|<path>|<managedCount>|<externalCount>|<state>`
         function status(): string {
             return `${root.isNiri ? "niri" : "other"}|${root.startupFilePath}|${root.entries.length}|${root.externalLines.length}|${root.status}`
         }
+        /// Append a managed `spawn-sh-at-startup` shell line
         function addCommand(cmd: string): string {
             root.addCommand(cmd)
             return "ok"
         }
+        /// Append a managed `gtk-launch <desktopId>` entry
         function addApp(desktopId: string): string {
             root.addApp(desktopId)
             return "ok"
         }
+        /// Remove the last managed entry
         function removeLast(): string {
             if (root.entries.length > 0) root.removeEntry(root.entries.length - 1)
             return "ok"
         }
+        /// Force re-read the startup file
         function reload(): string {
             root.reload()
             return "ok"

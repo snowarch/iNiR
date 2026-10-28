@@ -39,10 +39,17 @@ Singleton {
 
     signal responseFinished()
 
+    /// Shared multi-provider AI service. It supports Gemini, OpenAI-compatible chat and Responses APIs, Mistral and
+    /// Anthropic; live provider catalogs are normalized into capability-aware model records. Catalog visibility is
+    /// separate from execution readiness, so public model lists remain browseable without pretending an API key
+    /// exists. OpenCode Zen and Go resolve their current model lists and per-model API routes dynamically. Normal
+    /// shell tools use typed actions and approval cards, while arbitrary commands are isolated in Advanced mode.
     IpcHandler {
         target: "ai"
 
+        /// Force-load models, provider catalogs and API keys
         function ensureInitialized(): void { root.ensureInitialized() }
+        /// Dump current AI, catalog and tool state as JSON
         function diagnose(): string {
             const policy = (Config.options?.policies?.ai ?? 0)
             const model = root.models?.[root.currentModelId]
@@ -76,11 +83,13 @@ Singleton {
             })
         }
 
+        /// Refresh every live provider model catalog
         function refreshCatalog(): void {
             root.ensureInitialized()
             AiProviderCatalog.refreshAll()
         }
 
+        /// Search up to 100 normalized live model records
         function catalog(query: string): string {
             root.ensureInitialized()
             const normalizedQuery = String(query ?? "").trim().toLowerCase()
@@ -105,6 +114,7 @@ Singleton {
             })))
         }
 
+        /// Return provider health, key state and live model counts
         function providers(): string {
             root.ensureInitialized()
             return JSON.stringify(AiProviderCatalog.providers.map(provider => ({
@@ -116,6 +126,7 @@ Singleton {
             })))
         }
 
+        /// Send a message or compatibility `/command` to AI chat
         function run(inputText: string): void {
             const text = (inputText ?? "").trim()
             if (text.length === 0) return
@@ -201,6 +212,7 @@ Singleton {
             }
         }
 
+        /// Run an AI command and return the last response
         function runGet(inputText: string): string {
             root._lastInterfaceMessage = null
             run(inputText)

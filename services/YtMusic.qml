@@ -2252,13 +2252,21 @@ print("")
         }
     }
     
+    /// Direct YtMusic player control. Use these if you want to control YtMusic specifically, regardless of what other
+    /// players are active.
+    ///
+    /// ```kdl
+    /// Mod+M+Space { spawn "inir" "ytmusic" "playPause"; }
+    /// ```
     IpcHandler {
         target: "ytmusic"
 
+        /// Toggle YtMusic play/pause
         function playPause(): void {
             root.togglePlaying()
         }
         
+        /// Play next track in YtMusic
         function next(): void {
             if (!root.canGoNext)
                 return
@@ -2267,6 +2275,7 @@ print("")
                 GlobalStates.showMediaAction("next")
         }
         
+        /// Play previous track in YtMusic
         function previous(): void {
             if (!root.currentVideoId)
                 return
@@ -2275,6 +2284,7 @@ print("")
                 GlobalStates.showMediaAction("previous")
         }
         
+        /// Stop YtMusic playback
         function stop(): void {
             root.stop()
         }

@@ -755,21 +755,26 @@ Singleton {
 
     // External trigger points
 
+    /// Display brightness control.
     IpcHandler {
         target: "brightness"
 
+        /// Increase brightness
         function increment(): void {
             root.increaseBrightness();
         }
 
+        /// Decrease brightness
         function decrement(): void {
             root.decreaseBrightness();
         }
 
+        /// Re-read every output's level from the hardware (after the monitor's own buttons moved it)
         function refresh(): void {
             root.monitors.forEach(m => m.refresh())
         }
 
+        /// Set the focused output's brightness, the same path as the sliders; prints the result
         function set(percent: string): string {
             const value = Number(percent)
             const monitor = root._focusedMonitor()
@@ -779,14 +784,18 @@ Singleton {
             return root.describe(monitor)
         }
 
+        /// Each output: how it is driven (DDC bus or backlight), the shell's level and the last hardware level
+        /// written (`-1` until the first write)
         function status(): string {
             return root.monitors.map(m => root.describe(m)).join("\n")
         }
 
+        /// Turn every output off for sleep, keeping the level each one had
         function sleepBegin(): void {
             root.sleepBegin();
         }
 
+        /// Turn the outputs back on after sleep, each at its last level
         function restoreAfterWake(): void {
             root.restoreAfterWake();
         }

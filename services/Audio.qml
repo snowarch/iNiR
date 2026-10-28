@@ -486,25 +486,32 @@ Singleton {
     }
 
     // IPC handlers for external control (keybinds, etc.)
+    /// Volume and mute control.
     IpcHandler {
         target: "audio"
 
+        /// Increase volume
         function volumeUp(): void {
             root.incrementVolume();
         }
 
+        /// Decrease volume
         function volumeDown(): void {
             root.decrementVolume();
         }
 
+        /// Toggle speaker mute
         function mute(): void {
             root.toggleMute();
         }
 
+        /// Play a shell event sound (e.g. `notification`, `batteryLow`, `timerDone`), honoring the user's per-event
+        /// override
         function playEvent(event: string): void {
             root.playEvent(event);
         }
 
+        /// Toggle microphone mute
         function micMute(): void {
             root.toggleMicMute();
         }

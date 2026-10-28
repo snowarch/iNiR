@@ -130,11 +130,21 @@ Singleton {
     readonly property string _stateFile: Quickshell.env("HOME") + "/.local/state/quickshell/user/gamemode_active"
 
     // IPC handler for external control
+    /// Performance mode for gaming. Auto-detects fullscreen apps and disables animations/effects. Can also be toggled
+    /// manually for those stubborn games that don't go fullscreen properly.
+    ///
+    /// ```kdl
+    /// Super+F12 { spawn "inir" "gamemode" "toggle"; }
+    /// ```
     IpcHandler {
         target: "gamemode"
+        /// Toggle gamemode on/off
         function toggle(): void { root.toggle() }
+        /// Force enable gamemode
         function activate(): void { root.activate() }
+        /// Force disable gamemode
         function deactivate(): void { root.deactivate() }
+        /// Print current gamemode state (e.g. `active (manual)`, `inactive (off)`)
         function status(): string {
             const state = root.active ? "active" : "inactive";
             const detail = root._manualActive ? "manual" : root.autoActivated ? "auto" : "off";

@@ -290,21 +290,26 @@ Singleton {
     Component.onCompleted: recoverPersistentState()
     
     // IPC handler for external control
+    /// Window minimization (Niri workaround - moves windows to hidden workspace).
     IpcHandler {
         target: "minimize"
         
+        /// Minimize focused window
         function minimize(): void {
             root.minimize();
         }
 
+        /// Minimize a window by Niri window ID
         function minimizeId(windowId: int): void {
             root.minimize(windowId);
         }
         
+        /// Restore a minimized window by ID
         function restore(windowId: int): void {
             root.restore(windowId);
         }
 
+        /// Restore a minimized window to the workspace it came from
         function restoreOriginal(windowId: int): void {
             root.restoreOriginal(windowId);
         }

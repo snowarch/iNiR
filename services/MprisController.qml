@@ -1565,15 +1565,25 @@ Singleton {
 		return root.faviconArtUrl(player);
 	}
 
+	/// Media player control. Automatically detects and uses YtMusic controls when active, otherwise uses the active
+	/// MPRIS player.
+	///
+	/// ```kdl
+	/// Ctrl+Mod+Space { spawn "inir" "mpris" "playPause"; }
+	/// Mod+Alt+N { spawn "inir" "mpris" "next"; }
+	/// Mod+Alt+P { spawn "inir" "mpris" "previous"; }
+	/// ```
 	IpcHandler {
 		target: "mpris"
 
+		/// Pause all players
 		function pauseAll(): void {
 			for (const player of Mpris.players.values) {
 				if (player.canPause) player.pause();
 			}
 		}
 
+		/// Toggle play/pause (uses YtMusic if active)
 		function playPause(): void {
 			const wasPlaying = root.isPlaying
 			if (root.isYtMusicActive && YtMusic.currentVideoId) {
@@ -1585,12 +1595,15 @@ Singleton {
 				GlobalStates.showMediaAction(wasPlaying ? "pause" : "play");
 			}
 		}
+		/// Previous track (uses YtMusic if active)
 		function previous(): void {
 			root.previous();
 		}
+		/// Next track (uses YtMusic if active)
 		function next(): void {
 			root.next();
 		}
+		/// Hand the controls to another player: `next`, `prev`, or part of its name (`spotify`, `firefox`)
 		function select(which: string): string {
 			const list = (root.displayPlayers?.length ?? 0) > 0 ? root.displayPlayers : root.players;
 			if (list.length === 0) return "no players";

@@ -429,19 +429,40 @@ Singleton {
         }
     }
 
+    /// Dedicated persistent-shell layout editing and diagnostics. It is independent from desktop widget edit mode. It
+    /// moves the ii bar and dock, swaps semantic ii sidebars between physical edges, resizes sidebar roles, and moves
+    /// the Waffle taskbar through validated operations over canonical Config keys.
+    ///
+    /// ```bash
+    /// inir shellLayout open
+    /// inir shellLayout lift featureSidebar
+    /// inir shellLayout preview right
+    /// inir shellLayout place right   # prepares the occupied-edge swap
+    /// inir shellLayout place right   # confirms and commits it
+    /// inir shellLayout setProperty featureSidebar sizeMode fit
+    /// inir shellLayout reset featureSidebar
+    /// inir shellLayout close
+    /// ```
+    ///
+    /// ```kdl
+    /// Super+W { spawn "inir" "shellLayout" "toggle"; }
+    /// ```
     IpcHandler {
         target: "shellLayout"
 
+        /// Enter or leave shell edit mode
         function toggle(): string {
             root.toggle()
             return root.active ? "edit mode on" : "edit mode off"
         }
 
+        /// Enter shell edit mode on the focused output
         function open(): string {
             root.enter("")
             return "edit mode on"
         }
 
+        /// Enter shell edit mode on a named output
         function openOn(outputName: string): string {
             root.enter(outputName)
             return root.targetOutputName.length > 0
@@ -449,45 +470,53 @@ Singleton {
                 : "edit mode on"
         }
 
+        /// Leave shell edit mode and clear transient selection
         function close(): string {
             root.exit()
             return "edit mode off"
         }
 
+        /// Select a surface for deterministic editing or diagnostics
         function select(surfaceId: string): string {
             return root.selectSurface(surfaceId)
                 ? "selected: " + surfaceId
                 : root.statusMessage
         }
 
+        /// Select and lift a surface for placement
         function lift(surfaceId: string): string {
             return root.beginLift(surfaceId)
                 ? "moving: " + surfaceId
                 : root.statusMessage
         }
 
+        /// Preview a legal slot without writing Config
         function preview(slot: string): string {
             return root.previewPlacement(slot)
                 ? "preview: " + slot
                 : root.statusMessage
         }
 
+        /// Commit the lifted surface to a validated slot; occupied sidebar edges require the same call twice
         function place(slot: string): string {
             return root.commitPlacement(slot)
                 ? "placed: " + slot
                 : root.statusMessage
         }
 
+        /// Cancel the current lift, preview, confirmation or gesture
         function cancel(): string {
             return root.cancelPending() ? "move canceled" : "nothing to cancel"
         }
 
+        /// Lift a surface and start a pointer-style drag
         function dragStart(surfaceId: string): string {
             return root.beginDrag(surfaceId)
                 ? "dragging: " + surfaceId
                 : root.statusMessage
         }
 
+        /// Feed screen coordinates to the active drag; previews the nearest legal edge
         function dragUpdate(x: real, y: real): string {
             root.updateDrag(x, y)
             return JSON.stringify({
@@ -497,6 +526,8 @@ Singleton {
             })
         }
 
+        /// Drop the dragged surface: commits the previewed edge (occupied sidebar edges swap directly) or cancels in
+        /// the center
         function dragEnd(): string {
             if (root.endDrag())
                 return "dropped: " + root.selectedSurfaceId
@@ -504,6 +535,7 @@ Singleton {
                 ? root.statusMessage : "drop canceled"
         }
 
+        /// Restore one surface to its default placement and supported dimensions
         function reset(surfaceId: string): string {
             const targetId = String(surfaceId ?? "").length > 0
                 ? String(surfaceId) : root.selectedSurfaceId
@@ -512,6 +544,7 @@ Singleton {
                 : root.statusMessage
         }
 
+        /// Set a supported surface property (`sizeMode`, sidebar `height`, sidebar `thickness`, or dock `thickness`)
         function setProperty(surfaceId: string, key: string, value: string): string {
             const result = ShellLayoutController.setProperty(
                 surfaceId, key, value, root.targetOutputName)
@@ -523,10 +556,12 @@ Singleton {
             return JSON.stringify(result)
         }
 
+        /// Apply editor Escape priority: cancel pending work, then leave edit mode
         function handleEscape(): string {
             return root.handleEscape() ? "handled" : "inactive"
         }
 
+        /// Return edit-session, host diagnostics and active-family surface descriptors as JSON
         function status(): string {
             return JSON.stringify({
                 session: {
@@ -547,6 +582,7 @@ Singleton {
             }, null, 2)
         }
 
+        /// Validate a surface and slot combination without changing Config
         function validate(surfaceId: string, slot: string): string {
             return JSON.stringify(ShellLayoutController.validatePlacement(
                 surfaceId, slot, root.targetOutputName), null, 2)

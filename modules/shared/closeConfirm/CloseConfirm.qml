@@ -60,9 +60,24 @@ Scope {
         return true;
     }
 
+    /// Close window confirmation dialog. Shows a prompt before closing the focused window. Useful if you're the type
+    /// who accidentally closes things and then regrets it.
+    ///
+    /// ```kdl
+    /// Mod+Q repeat=false allow-inhibiting=false { spawn "inir" "close-window"; }
+    /// ```
+    ///
+    /// By default, confirmation is disabled (closes immediately). Enable it in settings or config:
+    ///
+    /// ```json
+    /// "closeConfirm": {
+    ///   "enabled": true
+    /// }
+    /// ```
     IpcHandler {
         target: "closeConfirm"
 
+        /// Show close confirmation for focused window
         function trigger(): void {
             if (!root._acceptTrigger())
                 return;
@@ -76,6 +91,7 @@ Scope {
             }
         }
 
+        /// Close or confirm the exact window captured by `inir close-window`
         function triggerWindow(windowId: int, appId: string): void {
             if (windowId <= 0 || !root._acceptTrigger())
                 return;
@@ -85,6 +101,7 @@ Scope {
             });
         }
 
+        /// Dismiss the dialog without closing
         function close(): void {
             root.dialogVisible = false;
             root.targetWindow = null;

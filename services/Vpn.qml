@@ -369,24 +369,39 @@ Singleton {
         onExited: exitCode => { if (exitCode !== 0 && exitCode !== 1) root.tailscaleInstalled = false }
     }
 
+    /// NetworkManager VPN profiles (OpenVPN, WireGuard, anything with an NM plugin) and Tailscale, as the VPN piece
+    /// and its card show them.
+    ///
+    /// ```kdl
+    /// Super+Alt+V { spawn "inir" "vpn" "toggle"; }
+    /// ```
     IpcHandler {
         target: "vpn"
+        /// Print the state as JSON: connected, through what, Tailscale's state, its devices and how many are online,
+        /// your profiles
         function status(): string {
             return JSON.stringify({ connected: root.connected, through: root.activeName, details: root.details,
                 tailscale: root.tailscaleInstalled ? root.tailscaleState : "", devices: root.tailscaleDevices.length,
                 online: root.tailscaleOnline, profiles: root.profiles.map(entry => entry.name + (entry.active ? " (on)" : "")) })
         }
+        /// Turn every active VPN off, or connect Tailscale (else your first profile) when none is on
         function toggle(): string { root.toggle(); return root.connected ? "disconnecting" : "connecting" }
+        /// `on`, `off` or `toggle` the card's details: addresses, name, account, exit node, devices and live traffic
         function details(state: string): string {
             root.setDetails(state === "toggle" ? !root.details : state === "on")
             return state === "toggle" ? (!root.details ? "on" : "off") : state
         }
+        /// Read profiles and Tailscale again
         function refresh(): void { root.refresh() }
+        /// Add a WireGuard `.conf` or OpenVPN `.ovpn` file as a NetworkManager profile; with no path, open the file
+        /// chooser (*Import a file…* in the card)
         function importFile(path: string): string {
             if (String(path ?? "").length === 0) { root.chooseProfileFile(); return "choosing" }
             root.importProfile(path)
             return "importing " + path
         }
+        /// Create a VPN in NetworkManager's connection editor: `wireguard`, or `vpn` for the installed plugins
+        /// (OpenVPN, L2TP…); `nmtui` in your terminal when the editor is not installed
         function add(kind: string): string {
             if (!root.canCreate) return root.missingEditorText
             root.newProfile(kind)

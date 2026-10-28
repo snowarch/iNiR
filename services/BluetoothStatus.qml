@@ -25,15 +25,20 @@ Singleton {
         : Bluetooth.defaultAdapter?.devices.values.filter(device => device.connected).length ?? 0
     readonly property bool connected: root.simulated.length > 0 ? root._simulatedCount > 0 : Bluetooth.devices.values.some(d => d.connected)
 
+    /// The Bluetooth adapter as every family shows it. `simulate` lets you see the Bluetooth surfaces without the
+    /// hardware.
     IpcHandler {
         target: "bluetooth"
 
+        /// Print `on`, `off`, `no adapter` or how many devices are connected, marked `(simulated)` while simulating
         function status(): string {
             const state = !root.available ? "no adapter" : !root.enabled ? "off"
                 : root.activeDeviceCount > 0 ? `${root.activeDeviceCount} connected` : "on"
             return state + (root.simulated.length > 0 ? " (simulated)" : "")
         }
         // "off", "on", a count of connected devices ("2"), "none" (no adapter) or "clear".
+        /// Pretend the adapter is `off`, `on`, has a number of connected devices (`2`) or is missing (`none`) until
+        /// `clear` or a restart. For testing
         function simulate(state: string): string {
             const s = String(state ?? "").trim().toLowerCase()
             root.simulated = ["off", "on", "none"].includes(s) || /^\d+$/.test(s) ? s : ""

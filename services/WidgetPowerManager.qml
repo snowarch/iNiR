@@ -109,9 +109,13 @@ Singleton {
     // IPC HANDLER
     // ══════════════════════════════════════════════════════════════════════
 
+    /// Desktop-widget power management (pauses widget rendering on game mode, fullscreen, present windows, or edit
+    /// mode). Service: `services/WidgetPowerManager.qml`.
     IpcHandler {
         target: "widgetpower"
 
+        /// Returns JSON: `enabled`, `widgetsActive`, `pauseReason`, and the active `triggers` (gameMode, fullscreen,
+        /// windowsPresent, editMode)
         function status(): string {
             const outputs = {};
             const screens = Quickshell.screens ?? [];

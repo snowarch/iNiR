@@ -210,19 +210,30 @@ Singleton {
         onFileChanged: refreshDebounce.restart()
     }
 
+    /// Presets for Niri's own window, workspace and overview animations. Applying one rewrites the animations in
+    /// `config.d/60-animations.kdl` and keeps `off` and `slowdown` as they were. The same picker lives in Settings in
+    /// every family. Your own presets go in `~/.config/inir/niri-animation-presets.json` as `{"presets": [...]}`, in
+    /// the same shape as `defaults/niri-animation-presets.json`; one with a shipped id replaces it.
+    ///
+    /// ```kdl
+    /// Super+Alt+A { spawn "inir" "niriAnimations" "apply" "snappy"; }
+    /// ```
     IpcHandler {
         target: "niriAnimations"
 
+        /// List the presets; `*` marks the one your config matches
         function list(): string {
             root.ensure()
             if (!root.loaded) return "loading, ask again"
             return root.presets.map(p => (p.id === root.activeId ? "* " : "  ") + p.id + "  " + p.name + " · " + p.description).join("\n")
         }
+        /// Print the preset your config matches, or `custom` after hand edits
         function active(): string {
             root.ensure()
             if (!root.loaded) return "loading"
             return root.activeId.length > 0 ? root.activeId : "custom"
         }
+        /// Apply a preset: `snappy`, `niri`, `material`, `bouncy`, `gentle`, `instant` or one of yours
         function apply(id: string): string {
             return root.apply(id) ? "applying " + id : "unknown or busy: " + id
         }

@@ -18,16 +18,27 @@ import Quickshell.Services.Notifications
  * The actual repo location is stored in version.json during installation.
  */
 Singleton {
+    /// Shell update checker. Monitors the git repo for new commits and shows an update overlay.
     IpcHandler {
         target: "shellUpdate"
+        /// Open/close update overlay
         function toggle(): void { root.overlayOpen ? root.closeOverlay() : root.openOverlay() }
+        /// Open update overlay
         function open(): void { root.openOverlay() }
+        /// Close update overlay
         function close(): void { root.closeOverlay() }
+        /// Check for updates now
         function check(): void { root.check() }
+        /// Run the update
         function performUpdate(): void { root.performUpdate() }
+        /// Dismiss update notification
         function dismiss(): void { root.dismiss() }
+        /// Un-dismiss update notification
         function undismiss(): void { root.undismiss() }
+        /// Dump update state as JSON
         function diagnose(): string { return root.getDiagnostics() }
+        /// `on` fakes a pending update to see the bubble, card and notification, `off` clears it; git and config are
+        /// untouched and Update only plays a pretend run in the terminal. For testing
         function simulate(state: string): string { return root.simulate(state) }
     }
     id: root

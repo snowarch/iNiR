@@ -1341,21 +1341,30 @@ Singleton {
         }
     }
 
+    /// Keyboard layout switching (Niri only). Cycles through configured keyboard layouts and queries layout info.
+    ///
+    /// ```kdl
+    /// Mod+Alt+K { spawn "inir" "keyboard" "switchLayout"; }
+    /// ```
     IpcHandler {
         target: "keyboard"
 
+        /// Switch to next keyboard layout
         function switchLayout(): void {
             NiriService.switchLayout()
         }
 
+        /// Switch to previous keyboard layout
         function switchLayoutPrevious(): void {
             NiriService.switchLayoutPrevious()
         }
 
+        /// Get the current layout name
         function getCurrentLayout(): string {
             return NiriService.getCurrentKeyboardLayoutName()
         }
 
+        /// Get all configured layout names (JSON array)
         function getLayouts(): string {
             return JSON.stringify(NiriService.keyboardLayoutNames)
         }

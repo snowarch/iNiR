@@ -456,9 +456,14 @@ Singleton {
         onExited: root.update()
     }
 
+    /// Whether the shell can reach the internet, as NetworkManager sees it. Surfaces that show online content
+    /// (wallpaper sources, news, anime, weather, calendars, lyrics) read this to say why they are empty instead of
+    /// failing quietly.
     IpcHandler {
         target: "network"
 
+        /// Print the state as JSON: `online`, `connectivity` (`full`, `limited`, `portal`, `none`, `unknown`),
+        /// connection name
         function status(): string {
             return JSON.stringify({
                 online: root.online,
@@ -470,15 +475,20 @@ Singleton {
                 name: root.networkName
             });
         }
+        /// Ask NetworkManager to check connectivity again, for example after signing in to a captive portal
         function check(): void {
             connectivityCheck.running = true;
         }
+        /// Pretend the connectivity is `none`, `limited`, `portal` or `full` until the shell restarts; any other
+        /// value clears it. For testing
         function simulate(state: string): string {
             const s = (state ?? "").trim();
             root.simulatedConnectivity = ["full", "limited", "portal", "none"].includes(s) ? s : "";
             return root.effectiveConnectivity;
         }
         // "wifi 40", "searching", "connecting", "radio off", "ethernet", "none" (no adapter) or "off".
+        /// Pretend the link is `"wifi 40"` (a signal strength), `searching`, `connecting`, `"radio off"`, `ethernet`
+        /// or `none` (no adapter) until `off` or a restart. For testing
         function simulateLink(spec: string): string {
             const words = String(spec ?? "").trim().toLowerCase().split(/\s+/).filter(w => w.length > 0);
             const kind = words[0] ?? "off";

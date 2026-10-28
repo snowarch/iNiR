@@ -146,13 +146,19 @@ Singleton {
         onLoadFailed: root.ready = true
     }
 
+    /// Live snips: a part of a window kept on screen, streamed, even when the window is on another workspace (qs-rs
+    /// on niri).
     IpcHandler {
         target: "livePins"
+        /// Every pin as JSON, with `live` when its window is open
         function list(): string { return JSON.stringify(root.pins.map(pin => Object.assign({}, pin, { live: root.windowOf(pin.id) !== null }))) }
+        /// Whether this shell can stream windows
         function supported(): bool { return root.supported }
         // Opens the framer: pick a window, drag over the part to keep.
+        /// Pick a window and drag over the part to keep
         function frame(): void { root.frame() }
         // Window `windowId`, rectangle x y w h in its logical pixels; returns the new pin's id or "".
+        /// Pin that rectangle of the window (its logical pixels); prints the pin's id
         function pin(windowId: int, x: int, y: int, w: int, h: int): string {
             if (!root.supported) return ""
             const win = (NiriService.windows ?? []).find(item => item.id === windowId)
@@ -160,16 +166,23 @@ Singleton {
             const made = root.pinWindow(windowId, Qt.rect(x, y, w, h), String(ws?.output ?? ""), 80, 120, w)
             return made?.id ?? ""
         }
+        /// Remove a pin
         function remove(id: string): void { root.remove(id) }
+        /// Remove every pin
         function clear(): void { root.pins = []; root._save() }
+        /// Where the pin lives
         function place(id: string, place: string): string {
             if (!["desktop", "island"].includes(place) || !root.find(id)) return ""
             root.update(id, { place: place })
             return place
         }
+        /// Above the windows, or on the desktop
         function onTop(id: string, on: bool): bool { root.update(id, { onTop: on }); return on }
+        /// Move a pin
         function move(id: string, x: int, y: int): void { root.update(id, { x: x, y: y }) }
+        /// Resize a pin; its height follows the crop
         function resize(id: string, width: int): void { root.update(id, { width: Math.max(root.minWidth, Math.min(root.maxWidth, width)) }) }
+        /// Go to its window, or open the app again
         function activate(id: string): bool { return root.activate(id) }
     }
 }

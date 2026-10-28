@@ -166,21 +166,33 @@ Scope {
         root._openLauncher(mode, "")
     }
 
+    /// Wallpaper picker with grid, coverflow and compact launcher styles.
+    ///
+    /// ```kdl
+    /// Ctrl+Alt+T { spawn "inir" "wallpaperSelector" "toggle"; }
+    /// Ctrl+Alt+L { spawn "inir" "wallpaperSelector" "browse" "live" "-"; }
+    /// Ctrl+Alt+A { spawn "inir" "wallpaperSelector" "openLauncher" "animated"; }
+    /// ```
     IpcHandler {
         target: "wallpaperSelector"
+        /// Open/close wallpaper selector
         function toggle(): void { root.toggle() }
+        /// Open wallpaper selector
         function open(): void {
             if (!GlobalStates.wallpaperSelectorOpen
                     && !GlobalStates.wallpaperLauncherOpen
                     && !GlobalStates.coverflowSelectorOpen)
                 root.toggle()
         }
+        /// Close wallpaper selector
         function close(): void {
             GlobalStates.wallpaperSelectorOpen = false
             GlobalStates.wallpaperLauncherOpen = false
             GlobalStates.coverflowSelectorOpen = false
         }
+        /// Open the compact launcher in `static` or `animated` mode
         function openLauncher(mode: string): void { root.openLauncher(mode) }
+        /// Open wallpaper selector on a specific monitor
         function toggleOnMonitor(monitorName: string): void {
             if ((Config.options?.wallpaperSelector?.style ?? "grid") === "launcher") {
                 root._openLauncher("", monitorName)
@@ -192,8 +204,13 @@ Scope {
             }
             root.toggle()
         }
+        /// Pick a random wallpaper from the current folder
         function random(): void { Wallpapers.randomFromCurrentFolder() }
+        /// Next wallpaper as the desktop menu does it: from the current wallpaper's folder, or the shuffle's own
+        /// folder; prints the file
         function next(): string { return Wallpapers.nextWallpaper() || "no wallpaper in " + Wallpapers.shuffleFolder }
+        /// A new wallpaper from the folder every few minutes: `on`, `off`, a number of minutes (turns it on) or
+        /// `status`
         function shuffle(value: string): string {
             const minutes = parseInt(value)
             if (value === "on" || value === "off")
@@ -206,9 +223,15 @@ Scope {
             const every = minutes >= 1 ? minutes : Wallpapers.autoWallpaperInterval
             return enabled ? `on, every ${every} min, from ${Wallpapers.shuffleFolder} (${Wallpapers.shuffleCount} wallpapers)` : "off"
         }
+        /// Apply a wallpaper (picture, GIF or video) by path, the same way the picker does
         function set(path: string): void { Wallpapers.select(path) }
+        /// Show a wallpaper on the desktop without applying it: no config write, no recoloring
         function preview(path: string): void { Wallpapers.previewWallpaper(path, "") }
+        /// Drop the preview and go back to the applied wallpaper
         function cancelPreview(): void { Wallpapers.cancelWallpaperPreview() }
+        /// Open the picker on a source — `library`, `favorites`, `wallhaven`, `konachan`, `yandere` or `live` (anime
+        /// live wallpapers) — with a search, a folder to open (`~/Videos`), or `-` for none. Sources are an iRiS
+        /// feature; other families just open the picker
         function browse(source: string, query: string): void {
             GlobalStates.wallpaperSelectorSource = ["library", "favorites", "wallhaven", "konachan", "yandere", "live"].includes(source) ? source : "library"
             GlobalStates.wallpaperSelectorQuery = query === "-" ? "" : query
@@ -216,6 +239,8 @@ Scope {
             if (!GlobalStates.wallpaperLauncherOpen && !GlobalStates.coverflowSelectorOpen)
                 root.toggle()
         }
+        /// Heart a wallpaper or take the heart back: a file, or `-` for the one on the focused screen. Prints `added`
+        /// or `removed` and the path; favourites are a source of the iRiS picker
         function favorite(path: string): string {
             const file = FileUtils.trimFileProtocol(path === "-" || path === "" ? Wallpapers.desktopWallpaperPath(root.focusedMonitorName) : path)
             if (file.length === 0) return "No wallpaper to favourite"
@@ -223,7 +248,10 @@ Scope {
             return Wallpapers.toggleFavorite({ key: file, path: file, title: name.replace(/\.[^.]+$/, ""), video: Wallpapers.isVideoFile(file) })
                 ? "added " + file : "removed " + file
         }
+        /// JSON list of the hearted wallpapers: files, or the page of a web one not downloaded yet
         function favorites(): string { return JSON.stringify(Wallpapers.favorites.map(entry => entry.web && !entry.path ? entry.page || entry.file : entry.path)) }
+        /// Show only one kind of wallpaper in the library: `all`, `still`, `live` (videos) or `gif`. iRiS only; the
+        /// filter also sits beside the search field whenever the folder holds more than one kind
         function kind(name: string): string {
             if (!["all", "still", "live", "gif"].includes(name))
                 return "Unknown kind: all, still, live or gif"
@@ -231,11 +259,14 @@ Scope {
             GlobalStates.wallpaperSelectorKind = name
             return name
         }
+        /// Move the picker's selection by that many wallpapers, as the arrow keys do (negative goes back); the
+        /// desktop preview follows. iRiS only, while the picker is open
         function move(step: int): string {
             if (!GlobalStates.wallpaperSelectorOpen && !GlobalStates.coverflowSelectorOpen) return "The picker is closed"
             GlobalStates.wallpaperSelectorMoveRequested(step)
             return "moved " + step
         }
+        /// Return picker style, open surface, target monitor and selection target as JSON
         function status(): string {
             return JSON.stringify({
                 style: Config.options?.wallpaperSelector?.style ?? "grid",
@@ -261,13 +292,17 @@ Scope {
         return out
     }
 
+    /// Wallpaper coverflow (3D card) picker.
     IpcHandler {
         target: "coverflowSelector"
+        /// Open/close coverflow selector
         function toggle(): void { root.toggleCoverflow() }
+        /// Open coverflow selector
         function open(): void {
             if (!GlobalStates.coverflowSelectorOpen)
                 root.toggleCoverflow()
         }
+        /// Close coverflow selector
         function close(): void { GlobalStates.coverflowSelectorOpen = false }
     }
 

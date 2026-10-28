@@ -309,14 +309,17 @@ Singleton {
         }
     }
 
+    /// Package search service. Searches pacman/AUR or XBPS repositories and installed packages.
     IpcHandler {
         target: "packageSearch"
 
+        /// Start a package search
         function search(query: string): string {
             root.search(query)
             return "searching: " + query
         }
 
+        /// Print current search results
         function results(): string {
             return root.results.map(p =>
                 `${p.repo}/${p.name} ${p.version}${p.installed ? " [installed]" : ""}\t${p.description}`

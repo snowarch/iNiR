@@ -308,23 +308,29 @@ Singleton {
         }
     }
 
+    /// The pomodoro, countdown and stopwatch every family shows (iRiS draws them as Live Activities in the Island).
     IpcHandler {
         id: timerIpc
         target: "timer"
+        /// Print each timer's state and what is left, as JSON
         function status(): string {
             return JSON.stringify({ pomodoro: root.pomodoroRunning ? (root.pomodoroPaused ? "paused" : "running") : "off",
                 pomodoroLeft: root.pomodoroSecondsLeft, countdown: root.countdownRunning ? (root.countdownPaused ? "paused" : "running") : "off",
                 countdownLeft: root.countdownSecondsLeft, stopwatch: root.stopwatchRunning ? (root.stopwatchPaused ? "paused" : "running") : "off" })
         }
         // A number of seconds sets the duration first; then it starts, or pauses/resumes one that runs.
+        /// Set the countdown to that many seconds and start it; on a running one, pause or resume
         function countdown(seconds: string): string {
             const value = parseInt(seconds)
             if (!isNaN(value) && value > 0 && !root.countdownRunning) root.setCountdownDuration(value)
             root.toggleCountdown()
             return timerIpc.status()
         }
+        /// Start the pomodoro, or pause/resume it
         function pomodoro(): string { root.togglePomodoro(); return timerIpc.status() }
+        /// Start the stopwatch, or pause/resume it
         function stopwatch(): string { root.toggleStopwatch(); return timerIpc.status() }
+        /// Stop every running timer
         function stop(): string {
             if (root.pomodoroRunning) root.stopPomodoro()
             if (root.countdownRunning) root.stopCountdown()

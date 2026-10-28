@@ -323,9 +323,12 @@ Singleton {
         }
     }
 
+    /// Clipboard history service. The backend that makes clipboard panel work. You probably don't need to call this
+    /// directly.
     IpcHandler {
         target: "cliphistService"
 
+        /// Refresh clipboard history
         function update(): void {
             root.refresh()
         }
