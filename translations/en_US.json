@@ -9924,5 +9924,8 @@
   "Hub updates ready": "Hub updates ready",
   "%1. Update them in Settings › Hub, or run `inir update`.": "%1. Update them in Settings › Hub, or run `inir update`.",
   "Can't check for iNiR updates": "Can't check for iNiR updates",
-  "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`."
+  "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.",
+  "Removed from clipboard history": "Removed from clipboard history",
+  "Removed %1 from autostart": "Removed %1 from autostart",
+  "Removed a mascot": "Removed a mascot"
 }

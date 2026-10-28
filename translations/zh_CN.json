@@ -9924,5 +9924,8 @@
   "Hub updates ready": "中心更新已就绪",
   "%1. Update them in Settings › Hub, or run `inir update`.": "%1。可在 设置 › 中心 中更新，或运行 `inir update`。",
   "Can't check for iNiR updates": "无法检查 iNiR 更新",
-  "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "iNiR 服务器连续三次未响应。请检查网络连接，或运行 `inir doctor`。"
+  "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "iNiR 服务器连续三次未响应。请检查网络连接，或运行 `inir doctor`。",
+  "Removed from clipboard history": "已从剪贴板历史中移除",
+  "Removed %1 from autostart": "已从自动启动中移除 %1",
+  "Removed a mascot": "已移除吉祥物"
 }

@@ -9924,5 +9924,8 @@
   "Hub updates ready": "Mises à jour du Hub prêtes",
   "%1. Update them in Settings › Hub, or run `inir update`.": "%1. Mettez-les à jour dans Paramètres › Hub ou lancez `inir update`.",
   "Can't check for iNiR updates": "Impossible de vérifier les mises à jour d'iNiR",
-  "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "Le serveur d'iNiR n'a pas répondu trois fois de suite. Vérifiez votre connexion ou lancez `inir doctor`."
+  "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "Le serveur d'iNiR n'a pas répondu trois fois de suite. Vérifiez votre connexion ou lancez `inir doctor`.",
+  "Removed from clipboard history": "Retiré de l'historique du presse-papiers",
+  "Removed %1 from autostart": "%1 retiré du démarrage automatique",
+  "Removed a mascot": "Mascotte retirée"
 }

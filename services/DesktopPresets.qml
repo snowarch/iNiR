@@ -118,9 +118,16 @@ Singleton {
     function remove(id: string): void {
         const preset = root.find(id)
         if (!preset) return
+        const at = root.presets.indexOf(preset)
         root.presets = root.presets.filter(entry => entry.id !== id)
         root.write()
-        DesktopEditHistory.say(Translation.tr("Removed %1").arg(preset.name))
+        Undo.offer(Translation.tr("Removed %1").arg(preset.name), () => {
+            if (root.find(id)) return
+            const back = root.presets.slice()
+            back.splice(Math.min(at, back.length), 0, preset)
+            root.presets = back
+            root.write()
+        })
     }
     // The one the desktop wears now, if any: the same snapshot, value for value.
     function wornId(): string {

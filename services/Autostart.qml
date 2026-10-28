@@ -306,9 +306,16 @@ Singleton {
     function removeEntry(index): void {
         const entries = root.entries.slice()
         if (index >= 0 && index < entries.length) {
-            entries.splice(index, 1)
+            const gone = entries.splice(index, 1)[0]
             root.entries = entries
             _write()
+            const name = gone.type === "app" ? (DesktopEntries.byId(gone.desktopId)?.name ?? gone.desktopId) : gone.command
+            Undo.offer(Translation.tr("Removed %1 from autostart").arg(name), () => {
+                const back = root.entries.slice()
+                back.splice(Math.min(index, back.length), 0, gone)
+                root.entries = back
+                _write()
+            })
         }
     }
 

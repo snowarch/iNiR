@@ -170,10 +170,17 @@ Singleton {
     function removeEvent(id) {
         const index = root.list.findIndex(e => e.id === id)
         if (index !== -1) {
-            root.list.splice(index, 1)
+            const gone = root.list.splice(index, 1)[0]
             root.list = root.list
             root.eventRemoved(id)
             root.saveToFile()
+            Undo.offer(Translation.tr("Removed %1").arg(gone.title), () => {
+                if (root.list.some(e => e.id === gone.id)) return
+                root.list.splice(Math.min(index, root.list.length), 0, gone)
+                root.list = root.list
+                root.eventAdded(gone)
+                root.saveToFile()
+            })
             return true
         }
         return false

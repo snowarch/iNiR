@@ -1830,7 +1830,13 @@ Singleton {
 
     function deleteChat(chatName) {
         if (!chatName || chatName.trim().length === 0) return;
-        chatFileOps.exec(["/usr/bin/rm", "-f", "--", chatPathForName(chatName)]);
+        const path = chatPathForName(chatName);
+        // Held in the runtime dir while its Undo notice is up.
+        const held = `${Quickshell.env("XDG_RUNTIME_DIR") || "/tmp"}/inir-undo/chat-${Date.now()}.json`;
+        chatFileOps.exec(["/usr/bin/bash", "-c", 'mkdir -p -- "${2%/*}" && mv -- "$1" "$2"', "hold", path, held]);
+        Undo.offer(Translation.tr("Removed %1").arg(chatName.trim()),
+            () => chatFileOps.exec(["/usr/bin/mv", "-n", "--", held, path]),
+            () => Quickshell.execDetached(["/usr/bin/rm", "-f", "--", held]));
     }
 
     function renameChat(oldName, newName) {

@@ -139,8 +139,26 @@ Singleton {
         }
     }
 
+    // Copied aside first (the runtime dir, gone at logout), so Undo can store it back.
     function deleteEntry(entry) {
-        deleteProc.deleteEntry(entry);
+        keepProc.entry = entry
+        keepProc.exec(["bash", "-c", 'd="${XDG_RUNTIME_DIR:-/tmp}/inir-undo"; mkdir -p "$d" && f="$(mktemp -p "$d" clip-XXXXXX)" '
+            + '&& printf "%s\n" "$1" | "$2" decode > "$f" && echo "$f"', "keep", String(entry), root.cliphistBinary])
+    }
+
+    Process {
+        id: keepProc
+        property string entry: ""
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const kept = (text ?? "").trim()
+                deleteProc.deleteEntry(keepProc.entry)
+                if (kept.length === 0) return
+                Undo.offer(Translation.tr("Removed from clipboard history"),
+                    () => Quickshell.execDetached(["bash", "-c", '"$2" store < "$1"; rm -f -- "$1"', "restore", kept, root.cliphistBinary]),
+                    () => Quickshell.execDetached(["rm", "-f", "--", kept]))
+            }
+        }
     }
 
     Process {

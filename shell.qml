@@ -59,6 +59,8 @@ ShellRoot {
     // Tier 4: T+1500ms (background features - updates, sync, content services)
     property var _shellUpdatesService
     property var _autostartService
+    // `inir undo` answers only once the singleton exists, before anything was removed.
+    property var _undoService
     // The community hub answers `inir hub …` from any family; it does nothing until asked.
     property var _hubService
     property var _niriAnimationPresetsService
@@ -80,6 +82,7 @@ ShellRoot {
     function _ensureLateFamilyServices(): void {
         root._shellUpdatesService = ShellUpdates
         root._autostartService = Autostart
+        root._undoService = Undo
         root._hubService = Hub
         root._niriAnimationPresetsService = NiriAnimationPresets
         if (!Plugins.flag(Plugins.active, "lazyServices")) {

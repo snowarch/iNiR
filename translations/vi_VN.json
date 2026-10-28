@@ -9924,5 +9924,8 @@
   "Hub updates ready": "Đã có cập nhật trong Hub",
   "%1. Update them in Settings › Hub, or run `inir update`.": "%1. Cập nhật trong Cài đặt › Hub hoặc chạy `inir update`.",
   "Can't check for iNiR updates": "Không thể kiểm tra cập nhật iNiR",
-  "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "Máy chủ iNiR không phản hồi ba lần liên tiếp. Hãy kiểm tra kết nối hoặc chạy `inir doctor`."
+  "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "Máy chủ iNiR không phản hồi ba lần liên tiếp. Hãy kiểm tra kết nối hoặc chạy `inir doctor`.",
+  "Removed from clipboard history": "Đã xóa khỏi lịch sử bảng nhớ tạm",
+  "Removed %1 from autostart": "Đã xóa %1 khỏi tự khởi động",
+  "Removed a mascot": "Đã xóa linh vật"
 }

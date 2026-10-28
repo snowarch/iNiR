@@ -69,8 +69,14 @@ Singleton {
         if (root.timezones.length <= 1 || index < 0 || index >= root.timezones.length)
             return;
         const updated = root.timezones.slice();
-        updated.splice(index, 1);
+        const gone = updated.splice(index, 1)[0];
         Config.setNestedValue("background.widgets.worldClock.timezones", updated);
+        Undo.offer(Translation.tr("Removed %1").arg(String(gone).split("/").pop().replace(/_/g, " ")), () => {
+            const back = root.timezones.slice();
+            if (back.includes(gone)) return;
+            back.splice(Math.min(index, back.length), 0, gone);
+            Config.setNestedValue("background.widgets.worldClock.timezones", back);
+        });
     }
 
     readonly property string ampmToken: {

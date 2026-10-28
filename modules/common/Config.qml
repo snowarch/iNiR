@@ -232,9 +232,22 @@ Singleton {
         return id;
     }
 
+    function _putMascotInstance(id: string, value: var): void {
+        const data = root._cloneObject(root.mascotInstances ?? {});
+        data[id] = value;
+        root.mascotInstances = data;
+        root._mascotSnapshotForInject = data;
+        root._pendingMascotInject = true;
+        fileWriteTimer.restart();
+        root._bumpRevision();
+        root.configChanged();
+    }
+
     function removeMascotInstance(id: string): void {
         if (!id || !root.mascotInstances || !(id in root.mascotInstances)) return;
         const data = root._cloneObject(root.mascotInstances);
+        const gone = data[id];
+        Undo.offer(Translation.tr("Removed a mascot"), () => root._putMascotInstance(id, gone));
         delete data[id];
         root.mascotInstances = data;
         root._mascotSnapshotForInject = data;

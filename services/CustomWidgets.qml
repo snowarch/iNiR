@@ -388,10 +388,25 @@ QML
         id: _removeProcess
         property string widgetId: ""
         running: false
-        command: ["bash", "-c", `rm -rf "${root.widgetsDir}/${_removeProcess.widgetId}" && echo "removed"`]
+        // Held aside in the runtime dir until the Undo notice is gone.
+        command: ["bash", "-c", 'd="${XDG_RUNTIME_DIR:-/tmp}/inir-undo"; mkdir -p "$d" && h="$(mktemp -d -p "$d" widget-XXXXXX)" '
+            + '&& mv -- "$1/$2" "$h/" && echo "$h"', "remove", root.widgetsDir, _removeProcess.widgetId]
         stdout: StdioCollector {
-            onStreamFinished: root.reload()
+            onStreamFinished: {
+                root.reload()
+                const held = (text ?? "").trim()
+                const id = _removeProcess.widgetId
+                if (held.length === 0) return
+                Undo.offer(Translation.tr("Removed %1").arg(id),
+                    () => _restoreProcess.exec(["bash", "-c", 'mv -- "$1/$2" "$3/" && rmdir -- "$1"', "restore", held, id, root.widgetsDir]),
+                    () => Quickshell.execDetached(["rm", "-rf", "--", held]))
+            }
         }
+    }
+
+    Process {
+        id: _restoreProcess
+        onExited: root.reload()
     }
 
     // Path to shipped example widget

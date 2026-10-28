@@ -86,6 +86,9 @@ Singleton {
         root._pendingRemoveCombo = keyCombo
         removeBindProcess.command = ["/usr/bin/python3", root.niriConfigScript, "remove-bind", keyCombo]
         removeBindProcess.running = true
+        const gone = root.allBinds.find(bind => bind.keyCombo === keyCombo)
+        if (gone && String(gone.actionRaw ?? "").length > 0)
+            Undo.offer(Translation.tr("Removed %1").arg(keyCombo), () => root.setBind(keyCombo, gone.actionRaw, gone.optionsStr ?? ""))
     }
 
     // Niri's config is the truth (a managed block in 90-user-extra.kdl, niri-config.py);

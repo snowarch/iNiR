@@ -78,9 +78,15 @@ Singleton {
 
     function deleteItem(index) {
         if (index >= 0 && index < list.length) {
-            list.splice(index, 1)
+            const gone = list.splice(index, 1)[0]
             root.list = list.slice(0)
             _persistAll()
+            Undo.offer(Translation.tr("Removed %1").arg(gone.content ?? ""), () => {
+                const back = root.list.slice(0)
+                back.splice(Math.min(index, back.length), 0, gone)
+                root.list = back
+                _persistAll()
+            })
         }
     }
 

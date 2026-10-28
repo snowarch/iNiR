@@ -260,8 +260,18 @@ Singleton {
     }
 
     function removeSource(sourceId: string): void {
-        const updated = (Config.options?.calendar?.externalSync?.sources ?? []).filter(s => s.id !== sourceId)
+        const sources = Config.options?.calendar?.externalSync?.sources ?? []
+        const at = sources.findIndex(s => s.id === sourceId)
+        const gone = sources[at]
+        const updated = sources.filter(s => s.id !== sourceId)
         Config.setNestedValue("calendar.externalSync.sources", updated)
+        if (gone) Undo.offer(Translation.tr("Removed %1").arg(gone.name ?? gone.url ?? ""), () => {
+            const back = [...(Config.options?.calendar?.externalSync?.sources ?? [])]
+            if (back.some(s => s.id === gone.id)) return
+            back.splice(Math.min(at, back.length), 0, gone)
+            Config.setNestedValue("calendar.externalSync.sources", back)
+            root.refreshSource(gone.id)
+        })
         // Clean cached events from this source
         root.events = root.events.filter(e => e.sourceId !== sourceId)
         root.eventsUpdated()

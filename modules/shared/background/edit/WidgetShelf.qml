@@ -592,7 +592,6 @@ Item {
             id: presetRow
             readonly property real plateWidth: Math.round(root.pictureHeight * 16 / 9)
             readonly property string worn: { Config.revision; return DesktopPresets.wornId() }
-            property string confirming: ""
             contentWidth: presetContent.width
             contentHeight: height
             flickableDirection: Flickable.HorizontalFlick
@@ -659,7 +658,6 @@ Item {
                         id: preset
                         required property var modelData
                         readonly property bool worn: presetRow.worn === preset.modelData.id
-                        readonly property bool confirming: presetRow.confirming === preset.modelData.id
                         readonly property bool factory: DesktopPresets.isFactory(preset.modelData.id)
                         width: presetRow.plateWidth
                         height: presetRow.height
@@ -712,7 +710,7 @@ Item {
                                 cursorShape: Qt.PointingHandCursor
                                 Accessible.role: Accessible.Button
                                 Accessible.name: Translation.tr("Wear %1").arg(preset.modelData.name)
-                                onClicked: { presetRow.confirming = ""; DesktopPresets.wear(preset.modelData.id) }
+                                onClicked: DesktopPresets.wear(preset.modelData.id)
                             }
                             // Worn: a check where a widget shows it is out.
                             Rectangle {
@@ -736,7 +734,7 @@ Item {
                             // Rename and remove, at the corner while the pointer is over it; remove asks once.
                             Row {
                                 id: keys
-                                readonly property bool shown: !preset.factory && (wearArea.containsMouse || renameKey.hovered || removeKey.hovered || preset.confirming)
+                                readonly property bool shown: !preset.factory && (wearArea.containsMouse || renameKey.hovered || removeKey.hovered)
                                 anchors.right: parent.right
                                 anchors.top: parent.top
                                 anchors.margins: Math.round(6 * root.d)
@@ -752,13 +750,9 @@ Item {
                                 }
                                 CornerKey {
                                     id: removeKey
-                                    glyph: preset.confirming ? "delete_forever" : "delete"
-                                    name: preset.confirming ? Translation.tr("Remove %1").arg(preset.modelData.name) : Translation.tr("Remove")
-                                    warn: preset.confirming
-                                    onActivated: {
-                                        if (preset.confirming) { presetRow.confirming = ""; DesktopPresets.remove(preset.modelData.id) }
-                                        else presetRow.confirming = preset.modelData.id
-                                    }
+                                    glyph: "delete"
+                                    name: Translation.tr("Remove %1").arg(preset.modelData.name)
+                                    onActivated: DesktopPresets.remove(preset.modelData.id)
                                 }
                             }
                         }
@@ -768,7 +762,7 @@ Item {
                             y: root.pictureHeight + root.nameGap
                             width: Math.min(implicitWidth, parent.width)
                             visible: root.naming !== preset.modelData.id
-                            text: preset.confirming ? Translation.tr("Remove?") : preset.modelData.name
+                            text: preset.modelData.name
                             color: preset.worn ? root.face.ink : root.face.subtext
                             font.family: root.face.fontMain
                             font.pixelSize: root.face.typeMeta

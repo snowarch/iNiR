@@ -9924,5 +9924,8 @@
   "Hub updates ready": "Hub güncellemeleri hazır",
   "%1. Update them in Settings › Hub, or run `inir update`.": "%1. Bunları Ayarlar › Hub içinden güncelle ya da `inir update` çalıştır.",
   "Can't check for iNiR updates": "iNiR güncellemeleri denetlenemiyor",
-  "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "iNiR sunucusu üst üste üç kez yanıt vermedi. Bağlantını denetle ya da `inir doctor` çalıştır."
+  "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "iNiR sunucusu üst üste üç kez yanıt vermedi. Bağlantını denetle ya da `inir doctor` çalıştır.",
+  "Removed from clipboard history": "Pano geçmişinden kaldırıldı",
+  "Removed %1 from autostart": "%1 otomatik başlatmadan kaldırıldı",
+  "Removed a mascot": "Maskot kaldırıldı"
 }

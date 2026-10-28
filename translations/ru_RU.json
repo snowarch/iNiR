@@ -9924,5 +9924,8 @@
   "Hub updates ready": "Обновления в Хабе готовы",
   "%1. Update them in Settings › Hub, or run `inir update`.": "%1. Обновите их в Настройки › Хаб или выполните `inir update`.",
   "Can't check for iNiR updates": "Не удаётся проверить обновления iNiR",
-  "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "Сервер iNiR не ответил три раза подряд. Проверьте подключение или выполните `inir doctor`."
+  "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "Сервер iNiR не ответил три раза подряд. Проверьте подключение или выполните `inir doctor`.",
+  "Removed from clipboard history": "Удалено из истории буфера обмена",
+  "Removed %1 from autostart": "%1 удалено из автозапуска",
+  "Removed a mascot": "Маскот удалён"
 }

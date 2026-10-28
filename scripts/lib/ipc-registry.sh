@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Generated from the /// comments on each QML IpcHandler; edit those, then run the IPC registry generator.
-# Targets: 78
+# Targets: 79
 
 declare -gA IPC_TARGET_DESC=(
   [ai]="Shared multi-provider AI service. It supports Gemini, OpenAI-compatible chat and Responses APIs, Mistral and Anthropic; live provider catalogs are normalized into capability-aware model records. Catalog visibility is separate from execution readiness, so public model lists remain browseable without pretending an API key exists. OpenCode Zen and Go resolve their current model lists and per-model API routes dynamically. Normal shell tools use typed actions and approval cards, while arbitrary commands are isolated in Advanced mode."
@@ -67,6 +67,7 @@ declare -gA IPC_TARGET_DESC=(
   [taskview]="Compatibility entry point for task navigation. On Waffle it opens the Waffle Task View; on ii/Niri it routes to Orbit."
   [tiling]="Tiling layout overlay. Pick or cycle through tiling presets for the current workspace."
   [timer]="The pomodoro, countdown and stopwatch every family shows (iRiS draws them as Live Activities in the Island)."
+  [undo]="Takes back the last removal (a clock, a preset, a clipboard entry, an autostart entry...) while its notice is up."
   [voiceSearch]="Provider-neutral voice input for web search and AI dictation. Auto prefers local whisper.cpp, then connected Groq, Gemini and OpenAI speech backends. Keys stay in the system keyring and are passed to adapters through the process environment."
   [vpn]="NetworkManager VPN profiles (OpenVPN, WireGuard, anything with an NM plugin) and Tailscale, as the VPN piece and its card show them."
   [wactionCenter]="Waffle action center (quick settings)."
@@ -148,6 +149,7 @@ declare -gA IPC_TARGET_FAMILY=(
   [taskview]="shared"
   [tiling]="shared"
   [timer]="shared"
+  [undo]="shared"
   [voiceSearch]="shared"
   [vpn]="shared"
   [wactionCenter]="waffle"
@@ -229,6 +231,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [taskview]="toggle close open"
   [tiling]="toggle open hide cycle showOsd promote"
   [timer]="status countdown pomodoro stopwatch stop"
+  [undo]="undo status"
   [voiceSearch]="start stop toggle refresh status"
   [vpn]="status toggle details refresh importFile add"
   [wactionCenter]="toggle close open"
@@ -649,6 +652,8 @@ declare -gA IPC_FUNCTION_DESC=(
   ["timer:pomodoro"]="Start the pomodoro, or pause/resume it"
   ["timer:stopwatch"]="Start the stopwatch, or pause/resume it"
   ["timer:stop"]="Stop every running timer"
+  ["undo:undo"]="Undo the last removal; returns what came back, or \"nothing to undo\"."
+  ["undo:status"]="What \`undo\` would take back right now, or \"\" when nothing."
   ["voiceSearch:start"]="Start recording for voice web search"
   ["voiceSearch:stop"]="Stop the active recording or transcription"
   ["voiceSearch:toggle"]="Toggle recording"
@@ -1036,8 +1041,8 @@ Ctrl+Alt+A { spawn "inir" "wallpaperSelector" "openLauncher" "animated"; }'
   [ytmusic]='Mod+M+Space { spawn "inir" "ytmusic" "playPause"; }'
 )
 
-IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode connections controlPanel coverflowSelector customWidgets dashboard dev equalizer gamemode globalActions globalStyle hub iris irisDev keyboard livePins lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily pill privacy recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling timer voiceSearch vpn wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetStacks widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
-IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio autostart background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode connections controlPanel coverflowSelector customWidgets dashboard dev gamemode globalActions globalStyle hub keyboard livePins lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily privacy recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling timer voiceSearch vpn wallpaperLauncher wallpaperSelector widgetStacks widgetpower workspaceStrip ytmusic zoom)
+IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode connections controlPanel coverflowSelector customWidgets dashboard dev equalizer gamemode globalActions globalStyle hub iris irisDev keyboard livePins lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily pill privacy recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling timer undo voiceSearch vpn wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetStacks widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
+IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio autostart background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode connections controlPanel coverflowSelector customWidgets dashboard dev gamemode globalActions globalStyle hub keyboard livePins lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily privacy recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling timer undo voiceSearch vpn wallpaperLauncher wallpaperSelector widgetStacks widgetpower workspaceStrip ytmusic zoom)
 IPC_II_TARGETS=(equalizer pill)
 IPC_WAFFLE_TARGETS=(wactionCenter waffleAltSwitcher wbar wnotificationCenter wwidgets)
 IPC_IRIS_TARGETS=(iris irisDev)

@@ -9924,5 +9924,8 @@
   "Hub updates ready": "허브 업데이트 준비 완료",
   "%1. Update them in Settings › Hub, or run `inir update`.": "%1. 설정 › 허브에서 업데이트하거나 `inir update`를 실행하세요.",
   "Can't check for iNiR updates": "iNiR 업데이트를 확인할 수 없습니다",
-  "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "iNiR 서버가 세 번 연속 응답하지 않았습니다. 연결을 확인하거나 `inir doctor`를 실행하세요."
+  "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "iNiR 서버가 세 번 연속 응답하지 않았습니다. 연결을 확인하거나 `inir doctor`를 실행하세요.",
+  "Removed from clipboard history": "클립보드 기록에서 삭제했습니다",
+  "Removed %1 from autostart": "자동 시작에서 %1을(를) 삭제했습니다",
+  "Removed a mascot": "마스코트를 삭제했습니다"
 }
