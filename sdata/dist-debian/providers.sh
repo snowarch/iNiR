@@ -643,7 +643,8 @@ _niri_session_files() {
     && sudo install -Dm644 "$1/resources/niri.desktop" /usr/local/share/wayland-sessions/niri.desktop \
     && sudo install -Dm644 "$1/resources/niri-portals.conf" /usr/local/share/xdg-desktop-portal/niri-portals.conf \
     && sudo install -Dm644 "$1/resources/niri.service" /etc/systemd/user/niri.service \
-    && sudo install -Dm644 "$1/resources/niri-shutdown.target" /etc/systemd/user/niri-shutdown.target
+    && sudo install -Dm644 "$1/resources/niri-shutdown.target" /etc/systemd/user/niri-shutdown.target \
+    && { systemctl --user daemon-reload 2>/dev/null || true; }
 }
 
 provider_niri() {
