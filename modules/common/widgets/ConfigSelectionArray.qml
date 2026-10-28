@@ -28,6 +28,7 @@ Flow {
         },
     ]
     property var currentValue: null
+    property string configPath: ""
     readonly property bool hovered: _hoverHandler.hovered
 
     signal selected(var newValue)
@@ -140,5 +141,10 @@ Flow {
                 root.selected(modelData.value);
             }
         }
+    }
+
+    ConfigResetKey {
+        path: root.configPath
+        label: ""
     }
 }

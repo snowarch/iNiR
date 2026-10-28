@@ -13,6 +13,7 @@ import QtQuick.Layouts
 RowLayout {
     id: root
     property string text: ""
+    property string configPath: ""
     property string icon
     property string value: "00:00" // Format: "HH:mm"
     property bool hovered: timeRow.hovered
@@ -130,5 +131,10 @@ RowLayout {
             visible: timeMouseArea.containsMouse
             text: Translation.tr("Click/scroll to adjust. Left=hours, Right=minutes")
         }
+    }
+
+    ConfigResetKey {
+        path: root.configPath
+        label: root.text
     }
 }

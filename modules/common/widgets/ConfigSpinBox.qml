@@ -9,6 +9,7 @@ RowLayout {
     property string icon
     // Optional wrapping subtext under the label
     property string description: ""
+    property string configPath: ""
     property alias value: spinBoxWidget.value
     property alias stepSize: spinBoxWidget.stepSize
     property alias from: spinBoxWidget.from
@@ -122,6 +123,10 @@ RowLayout {
         }
     }
 
+    ConfigResetKey {
+        path: root.configPath
+        label: root.text
+    }
     StyledSpinBox {
         id: spinBoxWidget
         Layout.fillWidth: false

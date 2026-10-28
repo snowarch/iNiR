@@ -11,6 +11,8 @@ RippleButton {
     property bool autoToggle: true
     // Optional wrapping subtext under the label ("what does this do?")
     property string description: ""
+    // The setting this row writes: a value changed from a fresh install shows a key that puts it back.
+    property string configPath: ""
     // Integración con buscador global de Settings
     property bool enableSettingsSearch: true
     property int settingsSearchOptionId: -1
@@ -123,6 +125,10 @@ RippleButton {
                 opacity: root.enabled ? 0.9 : 0.4
                 wrapMode: Text.Wrap
             }
+        }
+        ConfigResetKey {
+            path: root.configPath
+            label: root.text
         }
         StyledSwitch {
             id: switchWidget
