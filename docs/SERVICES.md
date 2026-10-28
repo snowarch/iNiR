@@ -145,6 +145,7 @@ IpcHandler {
 | Service | Purpose | IPC |
 |---|---|---|
 | `TimerService` | Countdown, Pomodoro and stopwatch | `timer` |
+| `Undo` | The way back for the last removal, offered on a notice | `undo` |
 | `Updates` | Package updates: `checkupdates` on Arch, `xbps-install -nu` on Void | |
 | `ShellUpdates` | iNiR updates from git: commits behind the remote | `shellUpdate` |
 | `Translation` | Strings from the 18 catalogues in `translations/` | |

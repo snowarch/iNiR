@@ -25,6 +25,16 @@ The history keeps notifications across restarts. In the Material right sidebar, 
 
 Notifications are grouped by app. Each group shows how many there are, whether any is critical, and the latest time.
 
+## Undo
+
+Removing something never asks "are you sure". It goes at once, and a notice with **Undo** brings it back. The notice
+uses your notification style, and `inir undo` does the same from a terminal. This covers world clocks, desktop
+presets, clipboard entries, autostart entries, calendar events and sources, custom widgets, mascots, keybinds (iRiS
+Shortcuts, Material's Cheatsheet settings), AI chats and todo tasks.
+
+Clearing the whole clipboard history and forgetting a Wi-Fi network or a Bluetooth device still ask first: those
+can't come back.
+
 ## Blocking an app
 
 **Settings › Quick › Filters › App filters** blocks an app's notifications. They are dropped and never reach the history.

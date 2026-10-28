@@ -32,4 +32,4 @@ The link stays in your settings on your machine. Requests go straight to the cal
 ## Troubleshooting
 
 - **No events**: check the error under the source. Usual causes are a wrong or expired link, no internet, or a link that needs a login.
-- **Remove a source** to drop its events from the calendar.
+- **Remove a source** to drop its events from the calendar. **Undo** on the notice that follows brings it back.

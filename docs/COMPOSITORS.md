@@ -17,7 +17,7 @@ Use **Settings › Compositor**. It has these areas:
 
 ## Change keybinds
 
-**Settings › Shortcuts** lists every keybind by category. Use **Add keybind** to add one: a key combination, an action and optional options. Each existing row can be edited or removed.
+**Settings › Shortcuts** lists every keybind by category. Use **Add keybind** to add one: a key combination, an action and optional options. Each existing row can be edited or removed, and **Undo** on the notice brings a removed one back.
 
 ## Where Niri settings live
 
