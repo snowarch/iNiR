@@ -75,6 +75,7 @@ function setup_systemd_services(){
         || { [[ "${ask:-true}" == true ]] && tui_confirm "Enable Void session services (dbus, elogind, polkitd, turnstiled)?" "yes"; }; then
       if elevate sh -c 'ln -sfn /etc/sv/dbus /var/service/dbus && ln -sfn /etc/sv/elogind /var/service/elogind && ln -sfn /etc/sv/polkitd /var/service/polkitd && ln -sfn /etc/sv/turnstiled /var/service/turnstiled'; then
         log_success "Void session services enabled"
+        ensure_void_elogind_mounts || log_warning "Could not add elogind's boot mounts: a login can hang when D-Bus starts elogind first"
       else
         log_warning "Could not enable all Void session services"
         return 1

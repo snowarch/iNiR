@@ -653,6 +653,26 @@ inir_supervisor() {
   fi
 }
 
+# elogind's runit service mounts /run/user before starting it, but D-Bus can start elogind first: that later mount
+# hides every /run/user/<uid> and logins hang on turnstile. Mounted at stage 1, the order stops mattering.
+ensure_void_elogind_mounts() {
+  [[ "${OS_GROUP_ID:-}" == void && -d /etc/runit/core-services && -e /etc/sv/elogind ]] || return 0
+  local target=/etc/runit/core-services/90-inir-elogind.sh tmp rc
+  tmp=$(mktemp) || return 1
+  cat >"$tmp" <<'EOF'
+# iNiR: the mounts elogind's runit service makes, done before any service can start elogind through D-Bus
+mkdir -p /sys/fs/cgroup/elogind
+mountpoint -q /sys/fs/cgroup/elogind || mount -t cgroup -o none,name=elogind cgroup /sys/fs/cgroup/elogind
+for _inir_d in /run/systemd /run/user; do
+  mountpoint -q "$_inir_d" || { mkdir -p "$_inir_d" && mount -t tmpfs -o nosuid,nodev,noexec,mode=0755 none "$_inir_d"; }
+done
+unset _inir_d
+EOF
+  if cmp -s "$tmp" "$target"; then rm -f "$tmp"; return 0; fi
+  elevate install -Dm644 "$tmp" "$target"; rc=$?
+  rm -f "$tmp"; return $rc
+}
+
 configure_void_ydotool_uinput() {
   [[ "${OS_GROUP_ID:-}" == void && "${INSTALL_TOOLKIT:-true}" == true ]] || return 0
   command -v ydotoold >/dev/null 2>&1 || return 0

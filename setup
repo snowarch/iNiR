@@ -3047,6 +3047,9 @@ run_update() {
         tui_error "Could not configure the ydotool provider"
         return 1
     fi
+    if [[ "${OS_GROUP_ID:-}" == void ]] && ! ensure_void_elogind_mounts; then
+        tui_warn "Could not add elogind's boot mounts: a login can hang when D-Bus starts elogind first"
+    fi
     if ! reconcile_inir_supervisor >/dev/null; then
         tui_error "Could not reconcile the iNiR supervisor"
         return 1
