@@ -9912,5 +9912,9 @@
   "Copied pictures": "Ảnh đã sao chép",
   "Pictures you copy go on the shelf too.": "Ảnh bạn sao chép cũng được đưa lên kệ.",
   "Clear on logout": "Xóa khi đăng xuất",
-  "What isn't pinned leaves when you log in again.": "Những mục chưa ghim sẽ biến mất ở lần đăng nhập sau."
+  "What isn't pinned leaves when you log in again.": "Những mục chưa ghim sẽ biến mất ở lần đăng nhập sau.",
+  "Web apps need Qt WebEngine": "Ứng dụng web cần Qt WebEngine",
+  "A one-time download of about 110 MB. The shell restarts when it is in.": "Tải xuống một lần, khoảng 110 MB. Shell sẽ khởi động lại khi tải xong.",
+  "The download did not finish. Check your connection and try again.": "Tải xuống chưa hoàn tất. Hãy kiểm tra kết nối và thử lại.",
+  "Install your distribution's Qt WebEngine package (qt6-webengine), then restart the shell.": "Cài gói Qt WebEngine của bản phân phối (qt6-webengine), rồi khởi động lại shell."
 }

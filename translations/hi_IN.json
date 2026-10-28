@@ -9912,5 +9912,9 @@
   "Copied pictures": "कॉपी की गई तस्वीरें",
   "Pictures you copy go on the shelf too.": "आप जो तस्वीरें कॉपी करते हैं, वे भी शेल्फ़ पर आती हैं।",
   "Clear on logout": "लॉग आउट पर खाली करें",
-  "What isn't pinned leaves when you log in again.": "जो पिन नहीं है, वह अगली बार लॉग इन करने पर हट जाता है।"
+  "What isn't pinned leaves when you log in again.": "जो पिन नहीं है, वह अगली बार लॉग इन करने पर हट जाता है।",
+  "Web apps need Qt WebEngine": "वेब ऐप्स को Qt WebEngine चाहिए",
+  "A one-time download of about 110 MB. The shell restarts when it is in.": "लगभग 110 MB का एक बार का डाउनलोड। पूरा होने पर शेल फिर से शुरू होगा।",
+  "The download did not finish. Check your connection and try again.": "डाउनलोड पूरा नहीं हुआ। अपना कनेक्शन जाँचें और फिर से कोशिश करें।",
+  "Install your distribution's Qt WebEngine package (qt6-webengine), then restart the shell.": "अपने डिस्ट्रीब्यूशन का Qt WebEngine पैकेज (qt6-webengine) इंस्टॉल करें, फिर शेल को फिर से शुरू करें।"
 }

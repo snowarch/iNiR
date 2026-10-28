@@ -9912,5 +9912,9 @@
   "Copied pictures": "Скопированные картинки",
   "Pictures you copy go on the shelf too.": "Картинки, которые вы копируете, тоже попадают на полку.",
   "Clear on logout": "Очищать при выходе",
-  "What isn't pinned leaves when you log in again.": "Незакреплённое исчезает при следующем входе."
+  "What isn't pinned leaves when you log in again.": "Незакреплённое исчезает при следующем входе.",
+  "Web apps need Qt WebEngine": "Веб-приложениям нужен Qt WebEngine",
+  "A one-time download of about 110 MB. The shell restarts when it is in.": "Однократная загрузка примерно 110 МБ. Оболочка перезапустится, когда она завершится.",
+  "The download did not finish. Check your connection and try again.": "Загрузка не завершилась. Проверьте подключение и попробуйте снова.",
+  "Install your distribution's Qt WebEngine package (qt6-webengine), then restart the shell.": "Установите пакет Qt WebEngine из вашего дистрибутива (qt6-webengine), затем перезапустите оболочку."
 }

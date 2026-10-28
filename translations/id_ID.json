@@ -9912,5 +9912,9 @@
   "Copied pictures": "Gambar yang disalin",
   "Pictures you copy go on the shelf too.": "Gambar yang kamu salin juga masuk ke rak.",
   "Clear on logout": "Kosongkan saat keluar",
-  "What isn't pinned leaves when you log in again.": "Yang tidak disematkan hilang saat kamu masuk lagi."
+  "What isn't pinned leaves when you log in again.": "Yang tidak disematkan hilang saat kamu masuk lagi.",
+  "Web apps need Qt WebEngine": "Aplikasi web memerlukan Qt WebEngine",
+  "A one-time download of about 110 MB. The shell restarts when it is in.": "Unduhan sekali sekitar 110 MB. Shell dimulai ulang setelah selesai.",
+  "The download did not finish. Check your connection and try again.": "Unduhan tidak selesai. Periksa koneksi Anda lalu coba lagi.",
+  "Install your distribution's Qt WebEngine package (qt6-webengine), then restart the shell.": "Pasang paket Qt WebEngine dari distribusi Anda (qt6-webengine), lalu mulai ulang shell."
 }

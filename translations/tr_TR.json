@@ -9912,5 +9912,9 @@
   "Copied pictures": "Kopyalanan resimler",
   "Pictures you copy go on the shelf too.": "Kopyaladığın resimler de rafa gelir.",
   "Clear on logout": "Oturum kapanınca temizle",
-  "What isn't pinned leaves when you log in again.": "Sabitlenmemiş olanlar bir sonraki girişte gider."
+  "What isn't pinned leaves when you log in again.": "Sabitlenmemiş olanlar bir sonraki girişte gider.",
+  "Web apps need Qt WebEngine": "Web uygulamaları Qt WebEngine gerektirir",
+  "A one-time download of about 110 MB. The shell restarts when it is in.": "Yaklaşık 110 MB'lık tek seferlik bir indirme. Bittiğinde kabuk yeniden başlar.",
+  "The download did not finish. Check your connection and try again.": "İndirme tamamlanmadı. Bağlantınızı kontrol edip yeniden deneyin.",
+  "Install your distribution's Qt WebEngine package (qt6-webengine), then restart the shell.": "Dağıtımınızın Qt WebEngine paketini (qt6-webengine) kurun, ardından kabuğu yeniden başlatın."
 }

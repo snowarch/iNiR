@@ -9912,5 +9912,9 @@
   "Copied pictures": "תמונות שהועתקו",
   "Pictures you copy go on the shelf too.": "גם תמונות שאתה מעתיק עולות למדף.",
   "Clear on logout": "ריקון ביציאה",
-  "What isn't pinned leaves when you log in again.": "מה שלא מוצמד נעלם בכניסה הבאה."
+  "What isn't pinned leaves when you log in again.": "מה שלא מוצמד נעלם בכניסה הבאה.",
+  "Web apps need Qt WebEngine": "אפליקציות רשת צריכות את Qt WebEngine",
+  "A one-time download of about 110 MB. The shell restarts when it is in.": "הורדה חד־פעמית של כ־110 MB. המעטפת תופעל מחדש כשההורדה תסתיים.",
+  "The download did not finish. Check your connection and try again.": "ההורדה לא הסתיימה. בדקו את החיבור ונסו שוב.",
+  "Install your distribution's Qt WebEngine package (qt6-webengine), then restart the shell.": "התקינו את חבילת Qt WebEngine של ההפצה שלכם (qt6-webengine), ואז הפעילו מחדש את המעטפת."
 }

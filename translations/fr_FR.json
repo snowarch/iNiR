@@ -9912,5 +9912,9 @@
   "Copied pictures": "Images copiées",
   "Pictures you copy go on the shelf too.": "Les images que vous copiez vont aussi sur l'étagère.",
   "Clear on logout": "Vider à la déconnexion",
-  "What isn't pinned leaves when you log in again.": "Ce qui n'est pas épinglé part à la prochaine connexion."
+  "What isn't pinned leaves when you log in again.": "Ce qui n'est pas épinglé part à la prochaine connexion.",
+  "Web apps need Qt WebEngine": "Les applications web nécessitent Qt WebEngine",
+  "A one-time download of about 110 MB. The shell restarts when it is in.": "Un téléchargement unique d'environ 110 Mo. Le shell redémarre une fois terminé.",
+  "The download did not finish. Check your connection and try again.": "Le téléchargement n'a pas abouti. Vérifiez votre connexion et réessayez.",
+  "Install your distribution's Qt WebEngine package (qt6-webengine), then restart the shell.": "Installez le paquet Qt WebEngine de votre distribution (qt6-webengine), puis redémarrez le shell."
 }
