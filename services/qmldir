@@ -87,3 +87,4 @@ singleton WindowPreviewService 1.0 WindowPreviewService.qml
 singleton WorldClock 1.0 WorldClock.qml
 singleton YtMusic 1.0 YtMusic.qml
 singleton Undo 1.0 Undo.qml
+singleton ConfigFactory 1.0 ConfigFactory.qml
