@@ -14,8 +14,8 @@ Singleton {
 
     readonly property string filePath: `${Directories.stateUserPath}/live-pins.json`
     // `niriWindowId` and `sourceRect` exist only on qs-rs; elsewhere nothing offers or draws a pin.
-    readonly property bool supported: CompositorService.isNiri && typeof Quickshell.hasVersion === "function"
-        && Quickshell.hasVersion(0, 3, ["niri-window-capture", "screencopy-source-rect"])
+    readonly property bool supported: CompositorService.isNiri
+        && SystemInfo.runtimeHas(["niri-window-capture", "screencopy-source-rect"])
     readonly property int minWidth: 120
     readonly property int maxWidth: 960
 

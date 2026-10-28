@@ -664,7 +664,7 @@ Singleton {
     }
     // qs-rs samples the screen in process (mean Rec. 709 luma of one capture, the number
     // `grim | magick -colorspace Gray` gives); Quickshell keeps the grim pipeline.
-    readonly property bool inProcessLightness: Quickshell.hasVersion(0, 3, ["screencopy-luminance"])
+    readonly property bool inProcessLightness: SystemInfo.runtimeHas(["screencopy-luminance"])
     function applyLightness(screen: var, lightness: real): void {
         if (isNaN(lightness) || lightness < 0) return;
         root.getMonitorForScreen(screen)?.setBrightnessMultiplier(root.brightnessMultiplierForLightness(lightness));

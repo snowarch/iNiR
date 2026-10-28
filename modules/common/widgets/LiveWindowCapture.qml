@@ -20,8 +20,8 @@ Item {
     readonly property bool streaming: capture.item?.streaming ?? false
 
     // The view sets a property only qs-rs has, so it lives in its own file and is compiled only where it exists.
-    readonly property bool supported: CompositorService.isNiri && typeof Quickshell.hasVersion === "function"
-        && Quickshell.hasVersion(0, 3, ["niri-window-capture"])
+    readonly property bool supported: CompositorService.isNiri
+        && SystemInfo.runtimeHas(["niri-window-capture"])
     // A game gets the GPU to itself: the still stays.
     readonly property bool wanted: root.supported && root.active && root.windowId >= 0 && !GameMode.active
     property bool settled: false

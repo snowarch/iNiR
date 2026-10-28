@@ -30,6 +30,13 @@ Singleton {
     property string desktopEnvironment: String(Quickshell.env("XDG_CURRENT_DESKTOP") ?? "").trim()
     property string windowingSystem: String(Quickshell.env("WAYLAND_DISPLAY") ?? "").trim().length > 0 ? "Wayland" : "X11"
 
+    // A feature of qs-rs (Quickshell.hasVersion's list). Quickshell takes any list for a release newer than the one
+    // asked, so on a later Quickshell every qs-rs feature would read as there.
+    function runtimeHas(features: var): bool {
+        return typeof Quickshell.hasVersion === "function" && Quickshell.hasVersion(0, 3, features)
+            && !Quickshell.hasVersion(0, 4)
+    }
+
     function refreshIdentity(): void {
         if (getUsername.running || getDisplayName.running)
             return
