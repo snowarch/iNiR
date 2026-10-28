@@ -247,7 +247,7 @@ Singleton {
         if (!id || !root.mascotInstances || !(id in root.mascotInstances)) return;
         const data = root._cloneObject(root.mascotInstances);
         const gone = data[id];
-        Undo.offer(Translation.tr("Removed a mascot"), () => root._putMascotInstance(id, gone));
+        Undo.offer(Translation.tr("Removed a mascot"), () => { if (!(id in (root.mascotInstances ?? {}))) root._putMascotInstance(id, gone) });
         delete data[id];
         root.mascotInstances = data;
         root._mascotSnapshotForInject = data;

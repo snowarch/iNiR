@@ -141,6 +141,8 @@ Singleton {
 
     // Copied aside first (the runtime dir, gone at logout), so Undo can store it back.
     function deleteEntry(entry) {
+        // A second delete while the first is still being copied aside goes without an Undo.
+        if (keepProc.running) { deleteProc.deleteEntry(entry); return }
         keepProc.entry = entry
         keepProc.exec(["bash", "-c", 'd="${XDG_RUNTIME_DIR:-/tmp}/inir-undo"; mkdir -p "$d" && f="$(mktemp -p "$d" clip-XXXXXX)" '
             + '&& printf "%s\n" "$1" | "$2" decode > "$f" && echo "$f"', "keep", String(entry), root.cliphistBinary])

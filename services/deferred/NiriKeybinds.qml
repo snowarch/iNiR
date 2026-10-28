@@ -79,6 +79,15 @@ Singleton {
     }
 
     function removeBind(keyCombo: string): void {
+        root._removeBind(keyCombo, true)
+    }
+
+    // A rename drops the old combo after saving the new one: nothing was removed, so no Undo.
+    function removeBindQuietly(keyCombo: string): void {
+        root._removeBind(keyCombo, false)
+    }
+
+    function _removeBind(keyCombo: string, offerUndo: bool): void {
         if (removeBindProcess.running) {
             console.warn("[NiriKeybinds] removeBind: process already running, ignoring")
             return
@@ -87,7 +96,7 @@ Singleton {
         removeBindProcess.command = ["/usr/bin/python3", root.niriConfigScript, "remove-bind", keyCombo]
         removeBindProcess.running = true
         const gone = root.allBinds.find(bind => bind.keyCombo === keyCombo)
-        if (gone && String(gone.actionRaw ?? "").length > 0)
+        if (offerUndo && gone && String(gone.actionRaw ?? "").length > 0)
             Undo.offer(Translation.tr("Removed %1").arg(keyCombo), () => root.setBind(keyCombo, gone.actionRaw, gone.optionsStr ?? ""))
     }
 

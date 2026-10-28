@@ -242,7 +242,7 @@ Singleton {
 
     // Delete a widget by removing its directory
     function remove(widgetId: string): void {
-        if (!widgetId || widgetId.length === 0) return;
+        if (!widgetId || widgetId.length === 0 || _removeProcess.running) return;
         _removeProcess.widgetId = widgetId;
         _removeProcess.running = true;
     }
