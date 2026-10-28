@@ -57,7 +57,7 @@ Turning Chrome or Firefox off gives their colours back.
 
 **Match the shell** makes the shell take the theme's accent, highlight and material too. It shows once a colour theme is picked.
 
-The colour theme itself, **Softer colours** and **A theme for each** (one by day, one at night) are in iRiS's **Customize › Material**. Which apps and terminals follow along is **iRiS Settings › Style › App colours**.
+The colour theme itself, **Softer colours** and **A theme for each** (one by day, one at night) are in **iRiS Settings › Colour**. Which apps and terminals follow along is **iRiS Settings › Colour › App colours**.
 
 ## Waffle
 

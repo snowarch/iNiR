@@ -8,7 +8,7 @@ These commands keep an installed iNiR healthy. Run them in a terminal. `inir upd
 inir update
 ```
 
-The update checks for new changes, takes a snapshot so you can roll back, pulls the changes, copies the new shell files and restarts the shell. Your settings are not overwritten. When a release needs a change to your config, the update migrates it and keeps a backup. Required migrations run on their own. Optional ones are offered to you.
+The update checks for new changes, takes a snapshot so you can roll back, pulls the changes, copies the new shell files and restarts the shell. Your settings are not overwritten. It also installs what the shell needs and is missing, such as plasma-integration, a colour emoji font and the shell's fonts, unless you installed with `--skip-deps`. When a release needs a change to your config, the update migrates it and keeps a backup. Required migrations run on their own. Optional ones are offered to you.
 
 If iNiR came from your distro's package manager, update the shell through that package manager instead.
 
@@ -45,7 +45,7 @@ inir doctor
 Checks the install and fixes what it can: missing folders, script permissions, Python packages and version tracking.
 It also checks that qs-rs starts on its own Qt (if it doesn't, the shell moves to Quickshell until the next update),
 that password prompts get answered (by the shell, or by your own agent), and that inir-accel's helpers match what is installed.
-It checks the fonts the shell and each installed family use, and tries to install the missing ones. With the Web Apps tab
+It checks plasma-integration, a colour emoji font, `niri-session` (not on Void) and the fonts the shell and each installed family use, and tries to install the missing ones. With the Web Apps tab
 on, it gets Qt WebEngine if it is missing.
 
 If you also want a restart and a check of the logs, run `inir repair`.

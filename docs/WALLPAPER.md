@@ -19,7 +19,7 @@ Settings › Wallpaper › Source › Shuffle wallpapers:
 
 **Wallpapers folder** on the same tab sets where the picker looks. It defaults to `~/Pictures/Wallpapers`.
 
-In iRiS: **iRiS Settings › Desktop › Wallpaper shuffle** (**Shuffle wallpapers**, **Every**, **From the folder** and **Colours follow**).
+In iRiS: **iRiS Settings › Wallpaper › Wallpaper shuffle** (**Shuffle wallpapers**, **Every**, **From the folder** and **Colours follow**).
 
 ## Monitors and scaling
 
@@ -27,7 +27,7 @@ In iRiS: **iRiS Settings › Desktop › Wallpaper shuffle** (**Shuffle wallpape
 - **Wallpaper scaling** (same tab): **Fill** crops the picture to the screen, **Fit** shows the whole picture with bars, and **Span** lays one picture across every screen. Stretch, Tile and Center are there too.
 - **Hide main wallpaper in fullscreen** (Screens › Fullscreen behavior) is on by default. The overview backdrop stays.
 - iNiR warns you when a picture is smaller than your monitor. **Hide wallpaper upscale notification** (Settings › Wallpaper › Notifications) turns that off.
-- Waffle: **Per-monitor wallpapers** and **Scaling** in **Waffle Settings › Background › Wallpaper**. iRiS: **A wallpaper per screen** and **Small wallpaper notice** in **iRiS Settings › Wallpaper › Library**, **Scaling** in **iRiS Settings › Desktop › Scaling**.
+- Waffle: **Per-monitor wallpapers** and **Scaling** in **Waffle Settings › Background › Wallpaper**. iRiS: **A wallpaper per screen** and **Small wallpaper notice** in **iRiS Settings › Wallpaper › Library**, **Scaling** in **iRiS Settings › Wallpaper › Scaling**.
 
 ## Transitions and renderer
 
@@ -40,7 +40,7 @@ Videos can be mp4, webm, mkv, avi or mov. Pictures can be jpg, png, webp, avif, 
 
 - **Play videos and GIFs as wallpaper** (Screens › Wallpaper scaling) is on by default. Off shows a still frame instead.
 - **Freeze videos and GIFs while on battery power** is on by default.
-- Waffle: **Waffle Settings › Background › Wallpaper Effects**. iRiS: **Animate on the desktop** in **iRiS Settings › Desktop › Live wallpapers**.
+- Waffle: **Waffle Settings › Background › Wallpaper Effects**. iRiS: **Animate on the desktop** in **iRiS Settings › Wallpaper › Live wallpapers**.
 - **Effects › Wallpaper effects**: **Enable wallpaper blur** is off by default. **Blur radius** (32) and **Thumbnail blur strength (%)** tune it, the second for videos.
 
 ## Backdrop
@@ -52,4 +52,4 @@ The backdrop is a separate, blurred layer that shows while the overview is open.
 - **Hide main wallpaper (show only backdrop)** is off by default.
 - **Aurora glass effect** gives glass panels colours from the wallpaper, like the sidebars.
 
-Waffle keeps them under **Waffle Settings › Background › Backdrop (Overview)**, iRiS under **iRiS Settings › Desktop › Overview backdrop**.
+Waffle keeps them under **Waffle Settings › Background › Backdrop (Overview)**, iRiS under **iRiS Settings › Wallpaper › Overview backdrop**.
