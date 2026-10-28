@@ -10,7 +10,7 @@ iNiR is built for Niri. Hyprland is not supported, so anything that only worked 
 
 **Brightness.** Laptop screens work through the backlight. External monitors need `ddcutil` and DDC/CI switched on in the monitor's own menu. DDC/CI is slow, so brightness changes on external monitors can lag.
 
-**Power profiles.** The Power Profile toggle (iRiS control grid, Waffle action center) needs a power profiles daemon: `power-profiles-daemon` or `tuned-ppd`. Without one the toggle shows as unavailable and the saved profile is not restored at start. Material's toggle in the right sidebar still shows Balanced and does nothing. Arch does not install one by default: `sudo pacman -S power-profiles-daemon && sudo systemctl enable --now power-profiles-daemon`.
+**Power profiles.** Setup and `inir update` install a power profiles daemon and turn it on: `power-profiles-daemon`, or `tuned-ppd` on Fedora. A machine where TLP, tuned, auto-cpufreq or system76-power manages power keeps that one, and there every family hides its profile controls or shows them as unavailable, and the saved profile is not restored at start. When nothing manages power, `inir doctor` lists the daemon as missing and installs it.
 
 **Audio.** iNiR needs PipeWire. PulseAudio-only setups do not work. Volume protection can be too strict after suspend. Turn it off in Settings › System › Audio (Waffle: General › Audio › Volume protection; iRiS: Sound & Feedback › Volume › Ear protection).
 
