@@ -32,7 +32,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
   # Doctor reports command IDs, never package names. Keep this explicit so an
   # unknown command can never leak into apt as if it were a Debian package.
   declare -A cmd_to_pkg=(
-    [qs]="quickshell" [niri]="niri" [nmcli]="network-manager" [wpctl]="wireplumber"
+    [qs]="quickshell" [niri]="niri" [nmcli]="network-manager" [wpctl]="wireplumber" [pw-dump]="pipewire-bin"
     [jq]="jq" [rsync]="rsync" [curl]="curl" [git]="git" [python3]="python3"
     [fish]="fish" [magick]="imagemagick" [grim]="grim" [cliphist]="cliphist"
     [wl-copy]="wl-clipboard" [wl-paste]="wl-clipboard"

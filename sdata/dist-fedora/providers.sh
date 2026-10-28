@@ -471,9 +471,9 @@ if ! fc-list | grep -qi "Geist"; then
   TEMP_DIR="/tmp/geist-font-$$"
   mkdir -p "$TEMP_DIR"
   if curl -fsSL --connect-timeout 10 --speed-limit 1024 --speed-time 30 -o "$TEMP_DIR/geist.zip" \
-    "https://github.com/vercel/geist-font/releases/latest/download/Geist.zip"; then
+    "https://github.com/vercel/geist-font/releases/download/v1.8.2/geist-font-v1.8.2.zip"; then
     unzip -o "$TEMP_DIR/geist.zip" -d "$TEMP_DIR" >/dev/null 2>&1
-    find "$TEMP_DIR" -name "*.ttf" -exec cp {} "$FONT_DIR/" \;
+    find "$TEMP_DIR" -path "*/ttf/*.ttf" -exec cp {} "$FONT_DIR/" \;
     log_success "Geist font installed"
   fi
   rm -rf "$TEMP_DIR"

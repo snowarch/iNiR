@@ -61,6 +61,7 @@ check_dependencies() {
         "niri:Niri"
         "nmcli:NetworkManager"
         "wpctl:WirePlumber"
+        "pw-dump:PipeWire tools"
         "jq:jq"
         "rsync:rsync"
         "curl:curl"

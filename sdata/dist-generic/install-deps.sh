@@ -57,6 +57,7 @@ check_cmd "slurp" "slurp"
 check_cmd "cliphist" "cliphist"
 check_cmd "pipewire" "PipeWire"
 check_cmd "wpctl" "WirePlumber"
+check_cmd "pw-dump" "PipeWire tools"
 
 echo ""
 

@@ -219,6 +219,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
     [niri]="niri"
     [nmcli]="NetworkManager"
     [wpctl]="wireplumber"
+    [pw-dump]="pipewire"
     [awww-daemon]="awww"
     [flock]="util-linux"
     [kwriteconfig6]="kf6-kconfig"

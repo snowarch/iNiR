@@ -373,9 +373,9 @@ install-geist-font(){
   mkdir -p "$font_dir" "$temp_dir"
 
   if curl -fsSL -o "$temp_dir/geist.zip" \
-    "https://github.com/vercel/geist-font/releases/latest/download/Geist.zip"; then
+    "https://github.com/vercel/geist-font/releases/download/v1.8.2/geist-font-v1.8.2.zip"; then
     unzip -o "$temp_dir/geist.zip" -d "$temp_dir" >/dev/null 2>&1
-    find "$temp_dir" -name "*.ttf" -exec cp {} "$font_dir/" \;
+    find "$temp_dir" -path "*/ttf/*.ttf" -exec cp {} "$font_dir/" \;
     fc-cache -f "$font_dir"
     log_success "Geist font installed"
   else

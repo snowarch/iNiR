@@ -23,6 +23,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
     [niri]="niri"
     [nmcli]="networkmanager"
     [wpctl]="wireplumber"
+    [pw-dump]="pipewire"
     [jq]="jq"
     [rsync]="rsync"
     [curl]="curl"

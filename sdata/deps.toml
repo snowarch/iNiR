@@ -273,7 +273,7 @@ void = ["base-devel", "pkg-config", "cairo-devel", "python3-devel", "glib-devel"
 name = "pipewire"
 group = "audio"
 arch = ["pipewire", "pipewire-pulse", "pipewire-alsa", "wireplumber"]
-fedora = ["pipewire", "pipewire-pulseaudio", "pipewire-alsa", "wireplumber"]
+fedora = ["pipewire", "pipewire-utils", "pipewire-pulseaudio", "pipewire-alsa", "wireplumber"]
 debian = ["pipewire", "pipewire-pulse", "pipewire-alsa", "wireplumber"]
 void = ["pipewire", "wireplumber", "alsa-pipewire", "libspa-bluetooth"]
 
