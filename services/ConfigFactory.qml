@@ -74,7 +74,10 @@ Singleton {
         return given !== undefined ? given : root._schemaValue(path)
     }
 
+    // Only what the person's file holds counts: a key an old install never wrote reads the schema's value, and that
+    // was never their choice even where the fresh-install profile picks another.
     function isChanged(path: string): bool {
+        if (root._at(Config._jsonMirror, path) === undefined) return false
         const factory = root.value(path)
         const current = root._at(Config.options, path)
         if (factory === undefined || current === undefined || root._isGroup(current)) return false
@@ -96,7 +99,7 @@ Singleton {
             () => Config.setNestedValue(path, before))
     }
 
-    // Every value that differs from a fresh install, as dotted paths: what the profile sets and what the file holds.
+    // Every value in the person's file that differs from a fresh install, as dotted paths.
     function changed(): var {
         const seen = new Set()
         const out = []
@@ -112,7 +115,6 @@ Singleton {
             }
         }
         if (!root._defaults) return out
-        walk(root._defaults, "")
         walk(Config._jsonMirror ?? {}, "")
         return out
     }
