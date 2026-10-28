@@ -9916,5 +9916,5 @@
   "Web apps need Qt WebEngine": "Web アプリには Qt WebEngine が必要です",
   "A one-time download of about 110 MB. The shell restarts when it is in.": "約 110 MB の一度きりのダウンロードです。完了するとシェルが再起動します。",
   "The download did not finish. Check your connection and try again.": "ダウンロードが完了しませんでした。接続を確認してもう一度お試しください。",
-  "Install your distribution's Qt WebEngine package (qt6-webengine), then restart the shell.": "ディストリビューションの Qt WebEngine パッケージ (qt6-webengine) をインストールしてから、シェルを再起動してください。"
+  "Could not install it. Run inir webengine in a terminal to see why.": "インストールできませんでした。ターミナルで inir webengine を実行して理由を確認してください。"
 }

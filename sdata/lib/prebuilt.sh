@@ -5,8 +5,8 @@
 # only ever from the pin. Fetched before anything is synced (a miss stops with nothing changed), switched on after.
 # A pin without a sha256 is not released yet and is skipped. INIR_PREBUILT_FROM=<dir or URL> serves the files
 # instead (VMs, a mirror); INIR_PREBUILT=0 skips it all. x86_64 only: elsewhere the shell keeps Quickshell.
-# An add-on ("with": the part it unpacks over, e.g. Qt WebEngine over qs-rs) comes only while its "when" config key is
-# true or INIR_PREBUILT_WANT names it.
+# An add-on ("with": the part it unpacks over, e.g. Qt WebEngine over qs-rs) has that part's version, so it lands in
+# the folder it was built for; it comes only while its "when" config key is true or INIR_PREBUILT_WANT names it.
 
 # the base's pins; a local INIR_PREBUILT_FROM (VMs, before the releases) may carry its own beside the files
 _prebuilt_pins() {
@@ -24,10 +24,11 @@ prebuilt_parts() {
     [[ "$(uname -m)" == x86_64 && "${INIR_PREBUILT:-1}" == 1 && -f "$(_prebuilt_pins)" ]] || return 0
     local config="${DOTS_CORE_CONFDIR:-${XDG_CONFIG_HOME:-$HOME/.config}/inir}/config.json"
     jq -r --arg want " ${INIR_PREBUILT_WANT:-} " --argjson cfg "$(jq -c . "$config" 2>/dev/null || echo '{}')" '
-        .parts | to_entries[] | select(.value.sha256 != "") | . as $p
+        .parts as $all | .parts | to_entries[] | select(.value.sha256 != "") | . as $p
         | select(($p.value.with // "") == "" or ($want | contains(" " + $p.key + " "))
             or (try ($cfg | getpath($p.value.when | split("."))) catch false) == true)
-        | [.key, .value.dest, .value.version, .value.file, .value.sha256, .value.repo, .value.with // ""] | @tsv' \
+        | [.key, .value.dest, (if (.value.with // "") == "" then .value.version else $all[.value.with].version end),
+            .value.file, .value.sha256, .value.repo, .value.with // ""] | @tsv' \
         "$(_prebuilt_pins)"
 }
 

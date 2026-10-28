@@ -22,7 +22,6 @@
       "with": "qs-rs",
       "when": "sidebar.plugins.enable",
       "title": "Qt WebEngine for the Web Apps tab",
-      "version": "0.1.0",
       "file": "qs-rs-webengine-0.1.0-x86_64.tar.gz",
       "sha256": ""
     }

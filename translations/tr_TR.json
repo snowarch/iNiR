@@ -9916,5 +9916,5 @@
   "Web apps need Qt WebEngine": "Web uygulamaları Qt WebEngine gerektirir",
   "A one-time download of about 110 MB. The shell restarts when it is in.": "Yaklaşık 110 MB'lık tek seferlik bir indirme. Bittiğinde kabuk yeniden başlar.",
   "The download did not finish. Check your connection and try again.": "İndirme tamamlanmadı. Bağlantınızı kontrol edip yeniden deneyin.",
-  "Install your distribution's Qt WebEngine package (qt6-webengine), then restart the shell.": "Dağıtımınızın Qt WebEngine paketini (qt6-webengine) kurun, ardından kabuğu yeniden başlatın."
+  "Could not install it. Run inir webengine in a terminal to see why.": "Kurulamadı. Nedenini görmek için bir terminalde inir webengine komutunu çalıştırın."
 }

@@ -9916,5 +9916,5 @@
   "Web apps need Qt WebEngine": "אפליקציות רשת צריכות את Qt WebEngine",
   "A one-time download of about 110 MB. The shell restarts when it is in.": "הורדה חד־פעמית של כ־110 MB. המעטפת תופעל מחדש כשההורדה תסתיים.",
   "The download did not finish. Check your connection and try again.": "ההורדה לא הסתיימה. בדקו את החיבור ונסו שוב.",
-  "Install your distribution's Qt WebEngine package (qt6-webengine), then restart the shell.": "התקינו את חבילת Qt WebEngine של ההפצה שלכם (qt6-webengine), ואז הפעילו מחדש את המעטפת."
+  "Could not install it. Run inir webengine in a terminal to see why.": "לא ניתן היה להתקין. הריצו inir webengine בטרמינל כדי לראות למה."
 }

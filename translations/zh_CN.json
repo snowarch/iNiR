@@ -9916,5 +9916,5 @@
   "Web apps need Qt WebEngine": "网页应用需要 Qt WebEngine",
   "A one-time download of about 110 MB. The shell restarts when it is in.": "一次性下载约 110 MB。完成后 shell 会重新启动。",
   "The download did not finish. Check your connection and try again.": "下载未完成。请检查网络连接后重试。",
-  "Install your distribution's Qt WebEngine package (qt6-webengine), then restart the shell.": "请安装发行版的 Qt WebEngine 软件包（qt6-webengine），然后重新启动 shell。"
+  "Could not install it. Run inir webengine in a terminal to see why.": "无法安装。请在终端中运行 inir webengine 查看原因。"
 }

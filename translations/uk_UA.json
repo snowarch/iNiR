@@ -9916,5 +9916,5 @@
   "Web apps need Qt WebEngine": "Вебзастосункам потрібен Qt WebEngine",
   "A one-time download of about 110 MB. The shell restarts when it is in.": "Одноразове завантаження приблизно 110 МБ. Оболонка перезапуститься, щойно воно завершиться.",
   "The download did not finish. Check your connection and try again.": "Завантаження не завершилося. Перевірте з'єднання та спробуйте ще раз.",
-  "Install your distribution's Qt WebEngine package (qt6-webengine), then restart the shell.": "Встановіть пакет Qt WebEngine зі свого дистрибутива (qt6-webengine), а потім перезапустіть оболонку."
+  "Could not install it. Run inir webengine in a terminal to see why.": "Не вдалося встановити. Запустіть inir webengine у терміналі, щоб побачити причину."
 }

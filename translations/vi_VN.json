@@ -9916,5 +9916,5 @@
   "Web apps need Qt WebEngine": "Ứng dụng web cần Qt WebEngine",
   "A one-time download of about 110 MB. The shell restarts when it is in.": "Tải xuống một lần, khoảng 110 MB. Shell sẽ khởi động lại khi tải xong.",
   "The download did not finish. Check your connection and try again.": "Tải xuống chưa hoàn tất. Hãy kiểm tra kết nối và thử lại.",
-  "Install your distribution's Qt WebEngine package (qt6-webengine), then restart the shell.": "Cài gói Qt WebEngine của bản phân phối (qt6-webengine), rồi khởi động lại shell."
+  "Could not install it. Run inir webengine in a terminal to see why.": "Không thể cài đặt. Hãy chạy inir webengine trong terminal để xem lý do."
 }

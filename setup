@@ -2417,10 +2417,10 @@ run_webengine() {
     local home ver rc=0
     home="$(_prebuilt_home)"
     if [[ ! -L "$home/runtime/current" ]]; then
-        tui_info "The shell runs on Quickshell, which takes Qt WebEngine from your system: install your distribution's qt6-webengine and restart the shell"
-        return 0
+        tui_error "The shell is not on iNiR's qs-rs, so it takes Qt WebEngine from your system: install your distribution's qt6-webengine and restart the shell"
+        return 1
     fi
-    ver="$(jq -r '.parts["qs-rs-webengine"] | select(.sha256 != "") | .version' "$(_prebuilt_pins)" 2>/dev/null)"
+    ver="$(jq -r '.parts as $p | $p["qs-rs-webengine"] | select(.sha256 != "") | $p[.with].version' "$(_prebuilt_pins)" 2>/dev/null)"
     if [[ -z "$ver" ]]; then
         tui_error "Qt WebEngine for qs-rs is not released yet"
         return 1
@@ -2434,9 +2434,16 @@ run_webengine() {
         return 25
     fi
     tui_success "Qt WebEngine is in; restarting the shell"
-    restart_shell_and_verify 30 || rc=$?
-    # without systemd the launcher restarts it its own way
-    ((rc != 2)) || bash "${REPO_ROOT}/scripts/inir" restart >/dev/null 2>&1 || rc=1
+    if has_usable_systemd_user_manager && systemctl --user cat inir.service >/dev/null 2>&1 && ! inir_user_service_is_masked; then
+        restart_shell_and_verify 30 || rc=$?
+        # as after an update: qs-rs that won't load goes back to Quickshell rather than leave no shell
+        if ((rc == 1)) && command -v qs >/dev/null 2>&1; then
+            prebuilt_runtime_off
+            restart_shell_and_verify 30 && rc=0 && tui_warn "qs-rs did not start here, so the shell runs on Quickshell; inir update tries qs-rs again"
+        fi
+    else
+        bash "${REPO_ROOT}/scripts/inir" restart >/dev/null 2>&1 || rc=1
+    fi
     ((rc != 1))
 }
 

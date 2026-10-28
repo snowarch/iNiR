@@ -9916,5 +9916,5 @@
   "Web apps need Qt WebEngine": "Le app web richiedono Qt WebEngine",
   "A one-time download of about 110 MB. The shell restarts when it is in.": "Un download una tantum di circa 110 MB. La shell si riavvia quando è completato.",
   "The download did not finish. Check your connection and try again.": "Il download non è stato completato. Controlla la connessione e riprova.",
-  "Install your distribution's Qt WebEngine package (qt6-webengine), then restart the shell.": "Installa il pacchetto Qt WebEngine della tua distribuzione (qt6-webengine), poi riavvia la shell."
+  "Could not install it. Run inir webengine in a terminal to see why.": "Impossibile installarlo. Esegui inir webengine in un terminale per vedere il motivo."
 }
