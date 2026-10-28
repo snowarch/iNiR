@@ -589,8 +589,15 @@ Singleton {
     property url defaultFolder: Qt.resolvedUrl(Directories.wallpapersPath)
     // Qt lists the working directory for a folder that isn't there: the model starts on the shipped wallpapers and
     // moves to the person's folder once setDirectory finds it
-    onDefaultFolderChanged: root.setDirectory(root.defaultFolder)
-    Component.onCompleted: root.setDirectory(root.defaultFolder)
+    onDefaultFolderChanged: defaultFolderMove.restart()
+    Component.onCompleted: defaultFolderMove.restart()
+
+    // one validateDirProc runs at a time: the start and Config's first load must not race it
+    Timer {
+        id: defaultFolderMove
+        interval: 50
+        onTriggered: root.setDirectory(root.defaultFolder)
+    }
     property alias folderModel: folderModel
     property bool _folderModelTransitioning: false
     readonly property bool folderModelReady: !root._folderModelTransitioning
