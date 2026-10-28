@@ -271,7 +271,8 @@ group = "core"
 fedora = ["gcc", "gcc-c++", "make", "meson", "ninja-build", "cmake", "pkg-config", "python3-devel",
           "dbus-devel", "cairo-devel", "cairo-gobject-devel", "gobject-introspection-devel", "gtk3-devel",
           "glib2-devel"]
-debian = ["build-essential", "cmake", "ninja-build", "pkg-config"]
+# pycairo and pygobject build in the venv: their headers come always, not only with the toolkit
+debian = ["build-essential", "cmake", "ninja-build", "pkg-config", "libcairo2-dev", "libgirepository-2.0-dev"]
 void = ["base-devel", "pkg-config", "cairo-devel", "python3-devel", "glib-devel", "gobject-introspection",
         "python3-gobject-devel", "libffi-devel"]
 
@@ -332,8 +333,7 @@ name = "input"
 group = "toolkit"
 arch = ["upower", "wtype", "ydotool", "python-evdev", "python-pillow", "fprintd"]
 fedora = ["upower", "wtype", "ydotool", "python3-evdev", "python3-pillow", "fprintd"]
-debian = ["upower", "wtype", "ydotool", "python3-evdev", "python3-pil", "python3-cairo", "fprintd",
-          "libgirepository-2.0-dev"]
+debian = ["upower", "wtype", "ydotool", "python3-evdev", "python3-pil", "python3-cairo", "fprintd"]
 void = ["upower", "wtype", "python3-evdev", "python3-Pillow", "fprintd", "cmake"]
 
 [[dep]]
