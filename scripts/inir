@@ -4082,6 +4082,18 @@ EOF
     elif [[ "$include_all_destinations" == true ]]; then
         select_all_destinations
     elif git -C "$launcher_root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+        # plugins linked into modules/ live in their own repo (families in inir-hub): their changes count at modules/<id>
+        changed_plugin_paths() {
+            local link real top prefix
+            for link in "$launcher_root"/modules/*; do
+                [[ -L "$link" ]] || continue
+                real="$(readlink -f "$link")"
+                top="$(git -C "$real" rev-parse --show-toplevel 2>/dev/null)" || continue
+                prefix="${real#"$top"/}"
+                { git -C "$top" diff --name-only -z HEAD -- "$prefix"; git -C "$top" ls-files --others --exclude-standard -z -- "$prefix"; } |
+                    while IFS= read -r -d '' path; do printf 'modules/%s/%s\0' "${link##*/}" "${path#"$prefix"/}"; done
+            done
+        }
         while IFS= read -r -d '' changed_path; do
             case "$changed_path" in
                 GlobalStates.qml|modules/*/plugin.json|shell.qml|settings.qml|defaults/config.json|modules/common/Config.qml|modules/common/Appearance.qml|modules/common/Looks.qml|modules/common/widgets/*)
@@ -4137,7 +4149,8 @@ EOF
                 services/Todo.qml) select_prefix "sidebar-right/todo"; select_prefix "dashboard" ;;
                 services/*) : ;;
             esac
-        done < <({ git -C "$launcher_root" diff --name-only -z HEAD; git -C "$launcher_root" ls-files --others --exclude-standard -z; } | sort -zu)
+        done < <({ git -C "$launcher_root" diff --name-only -z HEAD; git -C "$launcher_root" ls-files --others --exclude-standard -z
+                   changed_plugin_paths; } | sort -zu)
     fi
 
     if [[ ${#selected_ids[@]} -eq 0 ]]; then
@@ -4153,7 +4166,13 @@ EOF
     trap '"$qs_bin" -p "$config_dir" ipc call dev close >/dev/null 2>&1 || true; current_family="$(jq -r '\''.panelFamily // "ii"'\'' "$config_file" 2>/dev/null)"; if [[ "$current_family" != "$original_family" ]]; then "$qs_bin" -p "$config_dir" ipc call panelFamily set "$original_family" >/dev/null 2>&1 || true; fi' INT TERM
 
     local families=("$family")
-    $include_all_families && families=(ii waffle iris)
+    if $include_all_families; then
+        families=()
+        local manifest
+        for manifest in "$config_dir"/modules/*/plugin.json; do
+            [[ "$(jq -r '.kind // empty' "$manifest" 2>/dev/null)" == family ]] && families+=("$(basename "$(dirname "$manifest")")")
+        done
+    fi
     for family in "${families[@]}"; do
         if [[ "$(jq -r '.panelFamily // "ii"' "$config_file" 2>/dev/null)" != "$family" ]]; then
             response="$("$qs_bin" -p "$config_dir" ipc call panelFamily set "$family" 2>&1 || true)"
