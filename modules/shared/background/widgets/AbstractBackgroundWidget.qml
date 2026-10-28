@@ -2040,7 +2040,10 @@ AbstractWidget {
         fontPixelSize: Appearance.font.pixelSize.smaller
     }
 
-    onCanceled: root._clearStackDrop()
+    onCanceled: {
+        root._clearStackDrop()
+        if (root._arranging) DesktopArrange.cancel()
+    }
     onReleased: {
         if (GlobalStates.screenLocked || !root.dragMoved) return;
         if (root._dropKey.length > 0) {

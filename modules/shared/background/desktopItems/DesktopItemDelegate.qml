@@ -453,7 +453,7 @@ Item {
         drag.maximumX: Math.max(Number(root.workArea.left ?? 0), Number(root.workArea.right ?? root.canvasWidth) - root.width)
         drag.maximumY: Math.max(Number(root.workArea.top ?? 0), Number(root.workArea.bottom ?? root.canvasHeight) - root.height)
         drag.threshold: 8
-        enabled: !GlobalStates.screenLocked
+        enabled: !GlobalStates.screenLocked && !dragEscape.letGo
         onPressed: event => {
             if (event.button === Qt.LeftButton)
                 root.contextMenuCloseRequested()
@@ -496,5 +496,10 @@ Item {
     }
 
     readonly property bool _dragging: mouse.drag.active
+
+    DragEscape {
+        id: dragEscape
+        active: root._dragging
+    }
 
 }

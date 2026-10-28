@@ -1067,11 +1067,17 @@ Item {
                                         ? Appearance.colors.colPrimary : Appearance.colors.colLayer0Border
                                 }
 
+                                DragEscape {
+                                    id: windowEscape
+                                    active: windowMouse.dragging
+                                }
+
                                 MouseArea {
                                     id: windowMouse
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     preventStealing: true
+                                    enabled: !windowEscape.letGo
                                     acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
                                     cursorShape: dragging ? Qt.ClosedHandCursor : Qt.PointingHandCursor
                                     property real pressX: 0

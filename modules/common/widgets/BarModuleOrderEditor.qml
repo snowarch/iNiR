@@ -175,7 +175,8 @@ ColumnLayout {
             root._dropMove(root.dragInfo.zone, root.dragInfo.index, root.dragInfo.id, dstZone, root.dropIndex)
         root._endDrag()
     }
-    function _endDrag() { root.dragInfo = null; root.dropZone = ""; root.dropIndex = -1 }
+    property Item dragItem: null     // what follows the pointer
+    function _endDrag() { root.dragInfo = null; root.dragItem = null; root.dropZone = ""; root.dropIndex = -1 }
 
     // Floating layer the dragged row reparents into so it can follow the cursor
     // above every zone. Sits in a sibling overlay (not the layout flow) so its
@@ -186,6 +187,9 @@ ColumnLayout {
         z: 100
         clip: false
         Item { id: dragLayer; width: root.width; height: root.height }
+        // Esc puts the row back; held near the page's edge it scrolls the page
+        DragEscape { id: dragEscape; active: root.dragging }
+        DragAutoScroll { active: root.dragging; carried: root.dragItem }
     }
 
     // ─── Header ─────────────────────────────────────────────────────────
@@ -275,9 +279,13 @@ ColumnLayout {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: drag.active ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+            enabled: !dragEscape.letGo
             drag.target: rowRoot
             drag.axis: Drag.XAndYAxis
-            onPressed: root.dragInfo = { zone: rowRoot.zone, index: rowRoot.rowIndex, id: rowRoot.moduleId }
+            onPressed: {
+                root.dragInfo = { zone: rowRoot.zone, index: rowRoot.rowIndex, id: rowRoot.moduleId }
+                root.dragItem = rowRoot
+            }
             onReleased: {
                 if (rowRoot.Drag.target) rowRoot.Drag.drop()
                 else root._endDrag()
@@ -565,11 +573,13 @@ ColumnLayout {
                             hoverEnabled: true
                             cursorShape: drag.active ? Qt.ClosedHandCursor : Qt.OpenHandCursor
                             acceptedButtons: Qt.LeftButton | Qt.RightButton
+                            enabled: !dragEscape.letGo
                             drag.target: chip
                             drag.axis: Drag.XAndYAxis
                             onPressed: mouse => {
-                                if (mouse.button === Qt.LeftButton)
-                                    root.dragInfo = { zone: root.availableZone, index: -1, id: chip.moduleId }
+                                if (mouse.button !== Qt.LeftButton) return
+                                root.dragInfo = { zone: root.availableZone, index: -1, id: chip.moduleId }
+                                root.dragItem = chip
                             }
                             onReleased: mouse => {
                                 if (mouse.button !== Qt.LeftButton) return

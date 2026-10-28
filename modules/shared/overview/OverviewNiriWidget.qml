@@ -1314,11 +1314,17 @@ Item {
                             }
                         }
 
+                        DragEscape {
+                            id: windowEscape
+                            active: windowMouseArea.dragging
+                        }
+
                         MouseArea {
                             id: windowMouseArea
                             anchors.fill: parent
                             hoverEnabled: true
                             preventStealing: true
+                            enabled: !windowEscape.letGo
                             cursorShape: dragging ? Qt.ClosedHandCursor : Qt.OpenHandCursor
                             acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
                             property real pressX: 0

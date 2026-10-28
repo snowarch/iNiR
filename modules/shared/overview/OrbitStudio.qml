@@ -679,10 +679,15 @@ FocusScope {
                     DragHandler {
                         id: moveDrag
                         target: null
-                        enabled: !root.docked
+                        enabled: !root.docked && !moveEscape.letGo
                         acceptedButtons: Qt.LeftButton
                         onActiveChanged: if (active) root.moveStarted()
                         onTranslationChanged: if (active) root.moveRequested(translation.x, translation.y)
+                    }
+                    DragEscape {
+                        id: moveEscape
+                        active: moveDrag.active
+                        onCancel: root.moveRequested(0, 0)
                     }
 
                     RowLayout {
@@ -1844,9 +1849,15 @@ FocusScope {
         DragHandler {
             id: resizeDrag
             target: null
+            enabled: !resizeEscape.letGo
             acceptedButtons: Qt.LeftButton
             onActiveChanged: if (active) root.resizeStarted()
             onTranslationChanged: if (active) root.resizeRequested(translation.x, translation.y)
+        }
+        DragEscape {
+            id: resizeEscape
+            active: resizeDrag.active
+            onCancel: root.resizeRequested(0, 0)
         }
     }
 

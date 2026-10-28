@@ -33,6 +33,8 @@ DatePicker 1.0 DatePicker.qml
 DialogButton 1.0 DialogButton.qml
 DialogListItem 1.0 DialogListItem.qml
 DirectoryIcon 1.0 DirectoryIcon.qml
+DragAutoScroll 1.0 DragAutoScroll.qml
+DragEscape 1.0 DragEscape.qml
 DragManager 1.0 DragManager.qml
 EscalonadoShadow 1.0 EscalonadoShadow.qml
 FamilyPart 1.0 FamilyPart.qml

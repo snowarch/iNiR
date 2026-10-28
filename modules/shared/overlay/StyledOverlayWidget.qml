@@ -161,17 +161,34 @@ AbstractOverlayWidget {
     DragHandler {
         id: dragHandler
         acceptedButtons: Qt.LeftButton | Qt.RightButton
+        enabled: !dragEscape.letGo
         target: (root.draggable && !root.resizing) ? root : null
         onActiveChanged: { // Handle drag release
             if (!active) {
                 root.resizing = false;
-                root.savePosition();
+                if (root._putBack) {
+                    // Esc: back to the saved place and size
+                    root._putBack = false;
+                    root.x = root.persistentStateEntry.x;
+                    root.y = root.persistentStateEntry.y;
+                    contentContainer.implicitWidth = root.persistentStateEntry.width;
+                    contentContainer.implicitHeight = root.persistentStateEntry.height;
+                } else {
+                    root.savePosition();
+                }
             }
         }
         xAxis.minimum: 0
         xAxis.maximum: root.parent?.width - root.width
         yAxis.minimum: 0
         yAxis.maximum: root.parent?.height - root.height
+    }
+
+    property bool _putBack: false
+    DragEscape {
+        id: dragEscape
+        active: dragHandler.active
+        onCancel: root._putBack = true
     }
 
     function close() {

@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import qs.modules.common
+import qs.modules.common.widgets
 
 /*
  * Widget to be placed on a WidgetCanvas.
@@ -45,7 +46,7 @@ Item {
         // etc.), keep this MouseArea passive so children like TextEdit can receive
         // clicks and keyboard focus. Otherwise the drag MouseArea swallows the press and
         // sticky notes / future interactive widgets become un-typeable.
-        enabled: root.draggable
+        enabled: root.draggable && !dragEscape.letGo
         drag.target: root.draggable ? root : undefined
         drag.threshold: root.dragThreshold
         cursorShape: root.draggable && drag.active ? Qt.ClosedHandCursor
@@ -71,6 +72,11 @@ Item {
             root.canceled()
             root._dragSessionActive = false
         }
+    }
+
+    DragEscape {
+        id: dragEscape
+        active: root.isDragging
     }
 
     Behavior on x {
