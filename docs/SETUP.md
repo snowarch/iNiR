@@ -18,9 +18,10 @@ On x86_64, setup and `inir update` also download two parts built for you: **qs-r
 own Qt, and **inir-accel**, the native helpers. Each download is checked against the checksum the release pins, and
 nothing compiles on your machine.
 
-- If a download fails, the shell stays on Quickshell and the next `inir update` tries again.
-- If qs-rs doesn't start on your system, `inir doctor` moves the shell to Quickshell and says so. The next
-  `inir update` tries qs-rs again.
+- A download that fails stops the update before anything changes. On a fresh install the shell runs on Quickshell
+  instead, and the next `inir update` gets them.
+- If qs-rs doesn't start on your system, the update moves the shell to Quickshell and says so; `inir doctor` does the
+  same if it stops starting later. The next `inir update` tries qs-rs again.
 - The version before stays beside the new one, so a rollback brings both back.
 - `INIR_PREBUILT=0 inir update` skips the downloads and keeps the shell on Quickshell.
 
@@ -68,7 +69,7 @@ Shows the files you changed from the defaults. You can look at the differences, 
 
 Removes iNiR and asks before each shared file, such as your Niri config, GTK and Kvantum settings. Your iNiR settings are removed too, so copy them first if you want to keep them. Before it removes anything, it backs them up to `~/.local/share/inir-uninstall-backup-` followed by the date and time.
 
-The runtime and the helpers that iNiR downloaded go too.
+The runtime, the helpers and the `inir` command that iNiR downloaded go too, and so does the `inir` launcher.
 
 Packages are not removed. The command prints the commands to remove them, so you can run those yourself.
 
