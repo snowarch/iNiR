@@ -8,7 +8,7 @@
 | `prerelease` | Development. All changes land here first. |
 
 Every pull request targets `prerelease`. The maintainer tests `prerelease`
-on a real setup before merging it into `main` — nothing reaches users
+on a real setup before merging it into `main`: nothing reaches users
 without that pass.
 
 ## How to Contribute
@@ -37,13 +37,13 @@ inir restart                    # Restart the supervised shell service
 inir logs -f                    # Follow live logs while you test
 ```
 
-Do not run `qs kill -c inir` or a bare `qs -c inir` — the shell runs as a
+Do not run `qs kill -c inir` or a bare `qs -c inir`: the shell runs as a
 supervised systemd service, and raw quickshell commands leave it unmanaged.
 
 ## Commit Conventions
 
 - Subject `type(scope): what changed`, lowercase, no period, under 60 characters: `fix(bar): no crash when the weather widget is off`
-- Be specific — not "fix bug" or "update code"
+- Be specific: not "fix bug" or "update code"
 - One logical change per commit (one feature, one fix, one refactor)
 - Body (optional): the **why**, in three short lines at most. No measurements, no history, no list of what you touched
 
@@ -70,7 +70,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for a detailed breakdown. Key directories
 | Directory | What it contains |
 |-----------|-----------------|
 | `modules/` | UI components (30+ subdirs) |
-| `modules/common/` | Shared infrastructure — **high risk, be careful** |
+| `modules/common/` | Shared infrastructure: **high risk, be careful** |
 | `modules/<family>/` | Material, Waffle and iRiS: plugins from [inir-hub](https://github.com/snowarch/inir-hub), linked in; their code is contributed there |
 | `services/` | 70+ runtime singletons |
 | `scripts/` | CLI launcher, theming pipeline, helpers |
@@ -83,18 +83,18 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for a detailed breakdown. Key directories
 ### Config System
 
 ```qml
-// Reading — always available after Config.ready
+// Reading: always available after Config.ready
 Config.options.bar.autoHide.enable        // schema-declared, typed
-Config.options?.bar?.autoHide?.enable      // also fine — ?. is harmless
+Config.options?.bar?.autoHide?.enable      // also fine: ?. is harmless
 
-// Writing — ALWAYS setNestedValue, never direct assignment
+// Writing: ALWAYS setNestedValue, never direct assignment
 Config.setNestedValue("bar.autoHide.enable", true)    // persisted
 Config.options.bar.autoHide.enable = true              // NOT persisted
 ```
 
 **Adding a new config key** requires updating together:
-1. `modules/common/Config.qml` — schema definition
-2. `defaults/config.json` — default value
+1. `modules/common/ConfigOptions.qml`: schema definition
+2. `defaults/config.json`: default value
 3. Consumer(s)
 4. Settings UI in **both** families (ii and waffle) if user-facing
 
@@ -182,12 +182,12 @@ property string name: NiriService.focusedWindow?.title ?? ""
 
 ## High-Risk Areas
 
-These files have hundreds of consumers — prefer add-only changes:
+These files have hundreds of consumers: prefer add-only changes:
 
-- `modules/common/Appearance.qml` — all ii module visuals
-- `modules/common/Config.qml` — all config read/write
-- `GlobalStates.qml` — panel visibility state
-- `services/Translation.qml` — all i18n strings
+- `modules/common/Appearance.qml`: all ii module visuals
+- `modules/common/Config.qml`: all config read/write (the schema is `ConfigOptions.qml`)
+- `GlobalStates.qml`: panel visibility state
+- `services/Translation.qml`: all i18n strings
 
 ## Sync Groups
 
@@ -207,7 +207,7 @@ When a config or data format changes between versions:
 
 - Add a new script at `sdata/migrations/NNN-descriptive-name.sh`
 - Use the next sequential number (check `sdata/migrations/` for the latest)
-- Migrations are **sourced**, not executed — no top-level `exit` or `set -e`
+- Migrations are **sourced**, not executed: no top-level `exit` or `set -e`
 - Migrations must be idempotent (safe to run twice)
 - Never rename, reorder, or delete existing migrations
 
@@ -219,19 +219,19 @@ When a config or data format changes between versions:
 
 ## AI-Assisted Contributions
 
-Using AI tools to write code is fine — shipping their output untested is
+Using AI tools to write code is fine: shipping their output untested is
 not. Before opening a PR:
 
 - Run your change on a real iNiR setup and exercise the exact flow you
   touched. "It looks right" is not testing.
 - Describe in the PR what you ran and what you observed.
-- No invented APIs — every Quickshell/iNiR API you call must exist. Check
+- No invented APIs: every Quickshell/iNiR API you call must exist. Check
   existing code or the [Quickshell docs](https://quickshell.org/docs/).
 - No drive-by reformatting, file restructuring, or boilerplate comments
   around code you did not change.
 - Keep AI attributions (bot co-author trailers, "generated with" footers)
   out of commits and code.
-- Disclose AI usage in the PR template's checklist (which tool/model) —
+- Disclose AI usage in the PR template's checklist (which tool/model):
   it is not held against you; it tells the reviewer where to look.
 
 PRs with no evidence of real testing may be closed without detailed review.

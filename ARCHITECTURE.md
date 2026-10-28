@@ -61,7 +61,7 @@ A new look, Design, theme or widget is a plugin in inir-hub, never a folder here
 
 ## Config
 
-- Schema: `modules/common/Config.qml` (a `JsonAdapter`), plus each family's own subtree from its `plugin.json`.
+- Schema: `modules/common/ConfigOptions.qml` (a `JsonAdapter` that `Config.qml` fills from your file), plus each family's own subtree from its `plugin.json`.
 - Your file: `~/.config/inir/config.json`, only the keys you changed. `defaults/config.json` is the fresh-install profile.
 - Read `Config.options.path.to.key`; write only with `Config.setNestedValue("path.to.key", value)`.
 - A new key: schema, its readers, its Settings row in each family that shows it, and `defaults/config.json` when a
