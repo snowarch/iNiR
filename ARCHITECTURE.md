@@ -11,7 +11,7 @@ Waffle, iRiS), their Designs, themes and widgets are plugins from [inir-hub](htt
 | iNiR (this repo) | The base, in QML, plus setup and update |
 | [inir-hub](https://github.com/snowarch/inir-hub) | Every plugin: the three families, Designs, themes, widgets, web apps ([inir.space/hub](https://inir.space/hub)) |
 | [qs-rs](https://github.com/snowarch/qs-rs) | Quickshell rewritten in Rust; iNiR runs on stock Quickshell today |
-| [inir-accel](https://github.com/snowarch/inir-accel) | Rust stand-ins for the Python and Go helpers the shell spawns |
+| [inir-accel](https://github.com/snowarch/inir-accel) | The native helpers the shell spawns: the palette solver, the editor theme generators, faster stand-ins for Python ones |
 | [inir-cli](https://github.com/snowarch/inir-cli) | The `inir` command, `inir hub` included |
 
 ## How a start goes

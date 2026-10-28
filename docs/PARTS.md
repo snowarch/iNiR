@@ -13,7 +13,8 @@ this needs your attention. It is here for the curious, and for anyone who wants 
 - **Families** are the looks. Material, Waffle and iRiS are plugins from the Hub, and so are themes, widgets and web
   apps.
 - **The runtime** draws the shell. **qs-rs** does it, and Quickshell stays as the fallback.
-- **inir-accel** does the heavy work the shell asks for: colours from the wallpaper, thumbnails, region tools.
+- **inir-accel** does the heavy work the shell asks for: colours from the wallpaper, editor themes (VSCode, OpenCode, Zed),
+  thumbnails, region tools.
 - **The `inir` command** is what you type: `inir update`, `inir doctor`, `inir hub`, `inir bind`.
 - **inir.space** is where your machine fetches all of it: the Hub catalogue, the releases and these docs.
 
@@ -24,7 +25,7 @@ this needs your attention. It is here for the curious, and for anyone who wants 
 | The base | Services, config, the Settings core, IPC, setup, update, the welcome wizard, the plugin host | [snowarch/iNiR](https://github.com/snowarch/iNiR) |
 | Families and plugins | Material, Waffle, iRiS, colour themes, iRiS themes, widgets, web apps | [snowarch/inir-hub](https://github.com/snowarch/inir-hub) |
 | qs-rs | The runtime that loads the shell and draws it, Quickshell written again in Rust | [snowarch/qs-rs](https://github.com/snowarch/qs-rs) |
-| inir-accel | Native helpers: wallpaper colours, thumbnails, image work | [snowarch/inir-accel](https://github.com/snowarch/inir-accel) |
+| inir-accel | Native helpers: wallpaper colours, editor themes, thumbnails, image work | [snowarch/inir-accel](https://github.com/snowarch/inir-accel) |
 | inir-cli | The `inir` command | [snowarch/inir-cli](https://github.com/snowarch/inir-cli) |
 | inir.space | The site, these docs, the Hub catalogue and the release list | [snowarch/inir-site](https://github.com/snowarch/inir-site) |
 

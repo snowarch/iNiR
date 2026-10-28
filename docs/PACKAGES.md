@@ -10,7 +10,7 @@ On Arch, the installer uses the bundles in `sdata/dist-arch/`. Most packages com
 
 | Bundle | Covers |
 |---|---|
-| `inir-core` | Niri, awww, Go, portals, polkit, NetworkManager, nautilus, kitty, fish, gum, xwayland-satellite |
+| `inir-core` | Niri, awww, portals, polkit, NetworkManager, nautilus, kitty, fish, gum, xwayland-satellite |
 | `inir-quickshell` | Quickshell and the Qt 6 and KDE libraries it loads |
 | `inir-audio` | PipeWire with WirePlumber, playerctl, pavucontrol, cava, EasyEffects, mpv, yt-dlp, deno, socat |
 | `inir-screencapture` | grim, slurp, swappy, wf-recorder, ffmpeg, ImageMagick, Tesseract with its language data |
