@@ -44,7 +44,7 @@ this needs your attention. It is here for the curious, and for anyone who wants 
 | `~/.config/niri/config.d/` | Niri's settings, one file per area. Yours: `90-user-extra.kdl` |
 | `~/.local/state/quickshell/` | What the shell remembers: generated colours, notifications, update snapshots |
 
-Binaries arrive prebuilt (x86_64) and checked against the release's checksums; nothing compiles on your machine. The
+Binaries arrive prebuilt (qs-rs for x86_64, inir-accel for x86_64 and aarch64) and checked against the release's checksums; nothing compiles on your machine. The
 previous runtime and helpers stay beside the new ones, so a bad update can go back. When qs-rs can't start on a system,
 the shell runs on Quickshell and the next update tries again.
 

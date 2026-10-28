@@ -33,9 +33,9 @@ git clone https://github.com/snowarch/iNiR ~/iNiR-3 && cd ~/iNiR-3 && ./setup in
 
 ### The runtime and the helpers
 
-On x86_64, setup and `inir update` also download two parts built for you: **qs-rs**, which draws the shell, with its
-own Qt, and **inir-accel**, the native helpers. Each download is checked against the checksum the release pins, and
-nothing compiles on your machine.
+Setup and `inir update` also download two parts built for you: **qs-rs**, which draws the shell, with its own Qt (on
+x86_64), and **inir-accel**, the native helpers (on x86_64 and aarch64). Each download is checked against the checksum
+the release pins, and nothing compiles on your machine. On ARM the shell runs on Quickshell.
 
 - A download that fails stops the update before anything changes. On a fresh install the shell runs on Quickshell
   instead, and the next `inir update` gets them.
@@ -43,7 +43,7 @@ nothing compiles on your machine.
   same if it stops starting later. The next `inir update` tries qs-rs again.
 - The version before stays beside the new one, so a rollback brings both back.
 - `INIR_PREBUILT=0 inir update` skips the downloads and keeps the shell on Quickshell.
-- Without inir-accel (not x86_64, `INIR_PREBUILT=0` or a failed download) the shell still runs, and Material's colours
+- Without inir-accel (another architecture, `INIR_PREBUILT=0` or a failed download) the shell still runs, and Material's colours
   from the wallpaper and the app and terminal themes still work. iRiS keeps its default palette and the VSCode,
   OpenCode and Zed themes are skipped; an install updated from 2.33 keeps the ones it compiled back then.
 - While Material's Web Apps tab is on, setup and the update also get **Qt WebEngine** for qs-rs (about 110 MB, once,
