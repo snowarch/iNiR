@@ -69,6 +69,6 @@ iNiR runs on Wayland only. There is no X11 mode.
 
 1. Run `inir logs --issues`. It lists every warning and error since the shell started, grouped.
 2. Check this page.
-3. Note your versions: `niri --version` and `qs --version`.
+3. Note your versions (`niri --version` and `qs --version`) and what you changed: `inir ipc factory changed`.
 
 If it is still broken after that, report it. If you would rather ask someone first, the Discord is faster.
