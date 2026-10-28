@@ -21,7 +21,8 @@ NEOVIM_THEMEGEN="$SCRIPT_DIR/neovim_themegen.sh"
 ensure_vscode_themegen() {
   command -v go &>/dev/null || return 1
   mkdir -p "$STATE_DIR/user/generated/bin"
-  if [[ ! -x "$VSCODE_THEMEGEN_BIN" || "$REPO_ROOT/go.mod" -nt "$VSCODE_THEMEGEN_BIN" || "$SCRIPT_DIR/vscode_themegen/main.go" -nt "$VSCODE_THEMEGEN_BIN" || "$SCRIPT_DIR/themegencommon/common.go" -nt "$VSCODE_THEMEGEN_BIN" ]]; then
+  # a link is inir-accel's hook (sdata/lib/prebuilt.sh): never built over
+  if [[ ! -L "$VSCODE_THEMEGEN_BIN" ]] && [[ ! -x "$VSCODE_THEMEGEN_BIN" || "$REPO_ROOT/go.mod" -nt "$VSCODE_THEMEGEN_BIN" || "$SCRIPT_DIR/vscode_themegen/main.go" -nt "$VSCODE_THEMEGEN_BIN" || "$SCRIPT_DIR/themegencommon/common.go" -nt "$VSCODE_THEMEGEN_BIN" ]]; then
     (cd "$REPO_ROOT" && go build -o "$VSCODE_THEMEGEN_BIN" ./scripts/colors/vscode_themegen) >/dev/null 2>&1 || return 1
   fi
   [[ -x "$VSCODE_THEMEGEN_BIN" ]]
@@ -30,7 +31,8 @@ ensure_vscode_themegen() {
 ensure_opencode_themegen() {
   command -v go &>/dev/null || return 1
   mkdir -p "$STATE_DIR/user/generated/bin"
-  if [[ ! -x "$OPENCODE_THEMEGEN_BIN" || "$REPO_ROOT/go.mod" -nt "$OPENCODE_THEMEGEN_BIN" || "$SCRIPT_DIR/opencode_themegen/main.go" -nt "$OPENCODE_THEMEGEN_BIN" || "$SCRIPT_DIR/themegencommon/common.go" -nt "$OPENCODE_THEMEGEN_BIN" ]]; then
+  # a link is inir-accel's hook (sdata/lib/prebuilt.sh): never built over
+  if [[ ! -L "$OPENCODE_THEMEGEN_BIN" ]] && [[ ! -x "$OPENCODE_THEMEGEN_BIN" || "$REPO_ROOT/go.mod" -nt "$OPENCODE_THEMEGEN_BIN" || "$SCRIPT_DIR/opencode_themegen/main.go" -nt "$OPENCODE_THEMEGEN_BIN" || "$SCRIPT_DIR/themegencommon/common.go" -nt "$OPENCODE_THEMEGEN_BIN" ]]; then
     (cd "$REPO_ROOT" && go build -o "$OPENCODE_THEMEGEN_BIN" ./scripts/colors/opencode_themegen) >/dev/null 2>&1 || return 1
   fi
   [[ -x "$OPENCODE_THEMEGEN_BIN" ]]

@@ -9,6 +9,8 @@ bin_dir="${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/user/generated/bin"
 bin="$bin_dir/inir-washi"
 
 stale() {
+  # a link is inir-accel's hook (sdata/lib/prebuilt.sh): never built over
+  [[ -L "$bin" ]] && return 1
   [[ -x "$bin" ]] || return 0
   local src
   for src in "$here"/washi/*.go "$root/go.mod"; do

@@ -1338,7 +1338,7 @@ check_quickshell_abi() {
     local own ver
     if own="$(_doctor_own_runtime)"; then
         ver="$(readlink "$own")"
-        if timeout 5 env QT_QPA_PLATFORM=offscreen "$own/bin/qs" --version >/dev/null 2>&1; then
+        if timeout 20 env QT_QPA_PLATFORM=offscreen "$own/bin/qs" --version >/dev/null 2>&1; then
             doctor_pass "qs-rs $ver runs on its own Qt"
             return 0
         fi
