@@ -9927,5 +9927,7 @@
   "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "iNiR のサーバーが 3 回続けて応答しませんでした。接続を確認するか、`inir doctor` を実行してください。",
   "Removed from clipboard history": "クリップボード履歴から削除しました",
   "Removed %1 from autostart": "%1 を自動起動から削除しました",
-  "Removed a mascot": "マスコットを削除しました"
+  "Removed a mascot": "マスコットを削除しました",
+  "Changed %1": "変更済み %1",
+  "Settings that differ from a fresh install": "新規インストールと異なる設定"
 }

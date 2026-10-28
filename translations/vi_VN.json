@@ -9927,5 +9927,7 @@
   "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "Máy chủ iNiR không phản hồi ba lần liên tiếp. Hãy kiểm tra kết nối hoặc chạy `inir doctor`.",
   "Removed from clipboard history": "Đã xóa khỏi lịch sử bảng nhớ tạm",
   "Removed %1 from autostart": "Đã xóa %1 khỏi tự khởi động",
-  "Removed a mascot": "Đã xóa linh vật"
+  "Removed a mascot": "Đã xóa linh vật",
+  "Changed %1": "Đã đổi %1",
+  "Settings that differ from a fresh install": "Các cài đặt khác với bản cài mới"
 }

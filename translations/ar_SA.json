@@ -9927,5 +9927,7 @@
   "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "لم يستجب خادم iNiR ثلاث مرات متتالية. تحقّق من اتصالك أو شغّل `inir doctor`.",
   "Removed from clipboard history": "أُزيل من سجل الحافظة",
   "Removed %1 from autostart": "أُزيل %1 من التشغيل التلقائي",
-  "Removed a mascot": "أُزيلت التميمة"
+  "Removed a mascot": "أُزيلت التميمة",
+  "Changed %1": "المُغيَّرة %1",
+  "Settings that differ from a fresh install": "إعدادات تختلف عن التثبيت الجديد"
 }

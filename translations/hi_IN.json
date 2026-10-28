@@ -9927,5 +9927,7 @@
   "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "iNiR का सर्वर लगातार तीन बार जवाब नहीं दे पाया। अपना कनेक्शन जाँचें या `inir doctor` चलाएँ।",
   "Removed from clipboard history": "क्लिपबोर्ड इतिहास से हटाया गया",
   "Removed %1 from autostart": "%1 को ऑटोस्टार्ट से हटाया गया",
-  "Removed a mascot": "मैस्कॉट हटाया गया"
+  "Removed a mascot": "मैस्कॉट हटाया गया",
+  "Changed %1": "बदली गईं %1",
+  "Settings that differ from a fresh install": "नए इंस्टॉल से अलग सेटिंग्स"
 }

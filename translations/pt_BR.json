@@ -9927,5 +9927,7 @@
   "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "O servidor do iNiR não respondeu três vezes seguidas. Verifique sua conexão ou execute `inir doctor`.",
   "Removed from clipboard history": "Removido do histórico da área de transferência",
   "Removed %1 from autostart": "%1 removido da inicialização automática",
-  "Removed a mascot": "Mascote removido"
+  "Removed a mascot": "Mascote removido",
+  "Changed %1": "Alterados %1",
+  "Settings that differ from a fresh install": "Configurações diferentes de uma instalação nova"
 }
