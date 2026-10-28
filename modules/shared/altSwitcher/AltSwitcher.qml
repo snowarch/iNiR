@@ -103,6 +103,8 @@ Scope {
     readonly property bool effectiveEnableAnimation: root.altEnableAnimation && !isHighLoad
 
     property bool quickSwitchDone: false
+    // Tab moved the pick since it opened (the pick waits for the release, or the auto-hide delay).
+    property bool navigated: false
     property var noUiSnapshot: []
     property int noUiIndex: 0
 
@@ -448,7 +450,8 @@ Scope {
             Keys.onReleased: function (event) {
                 if (!GlobalStates.altSwitcherOpen)
                     return
-                if (root.skewStyle && event.key === Qt.Key_Alt) {
+                // Every style commits when the held modifier lets go; Esc leaves focus where it was.
+                if ([Qt.Key_Alt, Qt.Key_Meta, Qt.Key_Super_L, Qt.Key_Super_R, Qt.Key_Control].includes(event.key)) {
                     root.confirmCurrentSelection()
                     event.accepted = true
                 }
@@ -461,22 +464,22 @@ Scope {
                     GlobalStates.altSwitcherOpen = false
                     event.accepted = true
                 } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                    if (root.skewStyle)
-                        root.confirmCurrentSelection()
-                    else
-                        root.activateCurrent()
+                    root.confirmCurrentSelection()
                     event.accepted = true
                 } else if (event.key === Qt.Key_Tab) {
                     if (event.modifiers & Qt.ShiftModifier)
                         root.previousItem()
                     else
                         root.nextItem()
+                    root.picked()
                     event.accepted = true
                 } else if (event.key === Qt.Key_Right || event.key === Qt.Key_Down || event.key === Qt.Key_J) {
                     root.nextItem()
+                    root.picked()
                     event.accepted = true
                 } else if (event.key === Qt.Key_Left || event.key === Qt.Key_Up || event.key === Qt.Key_K) {
                     root.previousItem()
+                    root.picked()
                     event.accepted = true
                 } else if (event.key === Qt.Key_C || event.key === Qt.Key_Delete) {
                     if (root.skewStyle)
@@ -1733,12 +1736,14 @@ Scope {
             id: autoHideTimer
             interval: root.altAutoHideDelayMs
             repeat: false
-            onTriggered: GlobalStates.altSwitcherOpen = false
+            // A pick made with Tab and left alone commits, as the release would; one only opened just closes.
+            onTriggered: root.navigated ? root.confirmCurrentSelection() : (GlobalStates.altSwitcherOpen = false)
         }
 
         Connections {
             target: GlobalStates
             function onAltSwitcherOpenChanged() {
+                root.navigated = false
                 if (GlobalStates.altSwitcherOpen) {
                     root.showPanel()
                     root.maybeOpenOverview()
@@ -1829,7 +1834,9 @@ Scope {
                 listView.currentIndex = root.defaultSkewIndex()
             skewCardShowTimer.restart()
         } else {
-            rebuildSnapshot()
+            // Fresh and from the top before the first Tab moves: the async rebuild landed after it, on last time's list
+            rebuildSnapshotSync()
+            listView.currentIndex = 0
         }
         if (CompositorService.isNiri && root.skewStyle)
             Qt.callLater(() => WindowPreviewService.captureForTaskView())
@@ -1901,6 +1908,13 @@ Scope {
         const win = itemSnapshot[idx]
         if (win?.id !== undefined)
             NiriService.closeWindow(win.id)
+    }
+
+    function picked(): void {
+        if (root.skewStyle)
+            return
+        root.navigated = true
+        autoHideTimer.restart()
     }
 
     function confirmCurrentSelection() {
@@ -2043,8 +2057,7 @@ Scope {
 
         ensureOpen()
         nextItem()
-        activateCurrent()
-        autoHideTimer.restart()
+        root.picked()
     }
 
     function handlePrevious(): void {
@@ -2059,8 +2072,7 @@ Scope {
 
         ensureOpen()
         previousItem()
-        activateCurrent()
-        autoHideTimer.restart()
+        root.picked()
     }
 
     Connections {
