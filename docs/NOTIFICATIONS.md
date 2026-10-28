@@ -4,6 +4,8 @@ Your apps' notifications show as popups, then wait in the history. Do Not Distur
 
 ## Popups
 
+<!-- preview ii notifications -->
+
 - **Settings › Panels › Notifications** sets **Timeout (ms)**, 7000 by default. Normal popups close when it runs out.
 - Critical popups without their own timeout stay for 30 seconds. Material has no setting for that. iRiS has **Longest a banner stays**.
 - **Anchor** picks the corner, Top Right by default. In Waffle, use **Waffle Settings › Interface › Notifications › Popup position**, bottom right by default.

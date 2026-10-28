@@ -4,6 +4,8 @@ Settings is where you change how iNiR looks and behaves. Every option is in ther
 
 ## Open Settings
 
+<!-- preview families settings -->
+
 - **Super+,** opens Settings in any family.
 - **Material**: Settings opens over the desktop as a layer, or as its own window. Pick one under Settings › Modules › Settings UI › Overlay mode (live preview).
 - **Waffle**: Waffle Settings is always its own window.

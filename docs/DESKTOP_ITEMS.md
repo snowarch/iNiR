@@ -4,6 +4,8 @@ Desktop items are shortcuts on your desktop to apps, files, folders and web addr
 
 Click once to select a shortcut, and double click to open it. Material and iRiS have desktop items. Waffle does not.
 
+<!-- preview iris desktop -->
+
 ## Add a shortcut
 
 - Drag an app from Overview search or All Apps onto the desktop. iNiR launches the app the normal way and never runs a dropped `.desktop` file directly.

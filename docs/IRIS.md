@@ -4,6 +4,8 @@ iRiS is the Island family. One Island sits on a screen edge and grows into whate
 
 ## The Island
 
+<!-- preview iris island,page choose=edge,layout -->
+
 - It rests on the top, bottom, left or right edge: iRiS Settings › Island › Layout › Screen edge.
 - It opens into pages for music, activity, the shelf, the desktop and more.
 - Island layout (Settings › Island › Layout › Island layout):
@@ -14,6 +16,8 @@ iRiS is the Island family. One Island sits on a screen edge and grows into whate
 - Island shape (Settings › Island › Shape › Island shape): Auto, Round, Squircle or Square.
 
 ## Pieces and the Dock
+
+<!-- preview iris dock,pieces choose=dock -->
 
 Pieces are the small things around the Island: weather, notifications, sound, the microphone, timers, Now Playing, the tray, calendar, battery, network, vitals and more. Each piece has its own switch and a spot under Settings › Bubbles & Cards › Extra bubbles. The spots are the four corners, the left and right edges, or Free, which floats it on the desktop.
 

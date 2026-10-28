@@ -4,8 +4,10 @@ iNiR has three families, which are three looks for the same shell. They share yo
 
 ## The families
 
-- **Material (ii)**: the default. A bar along the top or any side, two sidebars, a dock and the overview. Its look comes from nine global styles, from plain Material to Angel and ZZZ, chosen in Settings › Themes › Global Style.
-- **Windows 11 (Waffle)**: a taskbar on the bottom edge, with a Start Menu, an Action Center and a Notification Center, laid out like Windows 11.
+<!-- preview families -->
+
+- **Material (ii)**: the default. A bar along the top or any side, two sidebars, a dock and the overview. Its look comes from nine global styles, from plain Material to Angel and ZZZ, chosen in Settings › Themes › Global Style. See [Material](MATERIAL.md).
+- **Windows 11 (Waffle)**: a taskbar on the bottom edge, with a Start Menu, an Action Center and a Notification Center, laid out like Windows 11. See [Waffle](WAFFLE.md).
 - **iRiS**: one Island on a screen edge that grows into whatever you open. Pieces such as weather, sound and notifications sit on it or float free, and the Dock can go on any edge. See [iRiS](IRIS.md).
 
 Each family is a plugin from the [Hub](HUB.md). A fresh install brings all three, and `inir update` keeps the ones

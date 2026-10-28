@@ -7,20 +7,27 @@
 - [Keybinds](KEYBINDS)
 - [Known limitations](LIMITATIONS)
 
-### Use
-- [Panel families](PANEL_FAMILIES)
-- [iRiS](IRIS)
+### Make it yours
+- [Make it yours](CUSTOMIZE)
 - [Settings](CONFIG_SYSTEM)
-- [Wallpaper](WALLPAPER)
+- [Panel families](PANEL_FAMILIES)
 - [Colours and themes](THEMING_PRESETS)
+- [Wallpaper](WALLPAPER)
+- [Desktop items](DESKTOP_ITEMS)
+- [Hub](HUB)
+
+### Families
+- [Material](MATERIAL)
+- [Waffle](WAFFLE)
+- [iRiS](IRIS)
 - [Editorial style](EDITORIAL_STYLE)
 - [Organic Edge](ORGANIC_EDGE)
+
+### Features
 - [Notifications](NOTIFICATIONS)
 - [Calendar](CALENDAR)
 - [Autostart](AUTOSTART)
 - [Audio and media](AUDIO_MEDIA)
-- [Desktop items](DESKTOP_ITEMS)
-- [Hub](HUB)
 - [Game performance](GAME_PERFORMANCE)
 - [Japanese OCR](JAPANESE_OCR)
 - [Vesktop](VESKTOP)
@@ -33,13 +40,14 @@
 - [Void capabilities](VOID_CAPABILITIES)
 - [NixOS](NIXOS)
 
-### For developers
+### Build on iNiR
+- [How iNiR fits together](PARTS)
 - [IPC reference](IPC)
 - [Global actions](GLOBAL_ACTIONS)
-- [Services](SERVICES)
-- [Modules](MODULES)
 - [Architecture](ARCHITECTURE_OVERVIEW)
 - [Runtime](RUNTIME)
+- [Services](SERVICES)
+- [Modules](MODULES)
 - [Theming architecture](THEMING_ARCHITECTURE)
 - [Theming targets](THEMING_TARGETS)
 - [Theming modules](THEMING_MODULES)
