@@ -4,7 +4,7 @@ iNiR is a desktop shell for the Niri compositor, built with Quickshell. It gives
 
 It comes in three looks, called families. Material ii is the default. Waffle is styled after Windows 11. iRiS puts one Island on a screen edge that turns into whatever you open. Press Super+Shift+W to switch between them.
 
-<!-- preview families -->
+<!-- preview shot=families -->
 
 ## Where to start
 

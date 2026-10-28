@@ -4,7 +4,7 @@ iNiR has three families, which are three looks for the same shell. They share yo
 
 ## The families
 
-<!-- preview families -->
+<!-- preview shot=families -->
 
 - **Material (ii)**: the default. A bar along the top or any side, two sidebars, a dock and the overview. Its look comes from nine global styles, from plain Material to Angel and ZZZ, chosen in Settings › Themes › Global Style. See [Material](MATERIAL.md).
 - **Windows 11 (Waffle)**: a taskbar on the bottom edge, with a Start Menu, an Action Center and a Notification Center, laid out like Windows 11. See [Waffle](WAFFLE.md).

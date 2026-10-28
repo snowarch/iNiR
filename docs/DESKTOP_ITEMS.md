@@ -4,7 +4,7 @@ Desktop items are shortcuts on your desktop to apps, files, folders and web addr
 
 Click once to select a shortcut, and double click to open it. Material and iRiS have desktop items. Waffle does not.
 
-<!-- preview iris desktop -->
+<!-- preview shot=desktop-items -->
 
 ## Add a shortcut
 

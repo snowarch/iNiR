@@ -3,7 +3,7 @@
 Everything in iNiR can be changed, and almost all of it from Settings. This page lists every way, from the easiest to
 the deepest. Start at the top. Most people never need to scroll past the first three.
 
-<!-- preview families settings -->
+<!-- preview shot=settings -->
 
 ## Settings
 

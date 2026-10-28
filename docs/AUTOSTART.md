@@ -14,7 +14,7 @@ Niri launches these, so they keep running if the shell restarts. The page only w
 
 ## Lock screen
 
-<!-- preview ii lock -->
+<!-- preview shot=lock -->
 
 - **Super+Alt+L** locks the session. Unlock with your password.
 - If the shell's lock screen does not appear within two seconds, swaylock or hyprlock takes over, whichever is installed.

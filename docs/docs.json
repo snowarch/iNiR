@@ -79,5 +79,235 @@
 				"ARCHITECTURE_OVERVIEW": "Architecture"
 			}
 		}
-	]
+	],
+	"shots": {
+		"families": {
+			"alt": "The same desktop in each family",
+			"choose": {
+				"label": "Family",
+				"options": [
+					{
+						"key": "material",
+						"label": "Material",
+						"family": "ii"
+					},
+					{
+						"key": "waffle",
+						"label": "Waffle",
+						"family": "waffle"
+					},
+					{
+						"key": "iris",
+						"label": "iRiS",
+						"family": "iris"
+					}
+				]
+			}
+		},
+		"settings": {
+			"alt": "Settings in each family",
+			"choose": {
+				"label": "Family",
+				"options": [
+					{
+						"key": "material",
+						"label": "Material",
+						"family": "ii",
+						"steps": [
+							[
+								"ipc",
+								"settings",
+								"open"
+							],
+							[
+								"wait",
+								3000
+							]
+						],
+						"after": [
+							[
+								"ipc",
+								"settings",
+								"toggle"
+							]
+						]
+					},
+					{
+						"key": "waffle",
+						"label": "Waffle",
+						"family": "waffle",
+						"steps": [
+							[
+								"ipc",
+								"settings",
+								"open"
+							],
+							[
+								"wait",
+								3000
+							]
+						],
+						"after": [
+							[
+								"ipc",
+								"settings",
+								"toggle"
+							]
+						]
+					},
+					{
+						"key": "iris",
+						"label": "iRiS",
+						"family": "iris",
+						"steps": [
+							[
+								"ipc",
+								"iris",
+								"settings",
+								"appearance"
+							],
+							[
+								"wait",
+								5000
+							]
+						],
+						"after": [
+							[
+								"ipc",
+								"iris",
+								"settingsClose"
+							]
+						]
+					}
+				]
+			}
+		},
+		"notifications": {
+			"family": "ii",
+			"alt": "Notifications in Material",
+			"choose": {
+				"label": "Show",
+				"options": [
+					{
+						"key": "popups",
+						"label": "Popups",
+						"steps": [
+							[
+								"ipc",
+								"notifications",
+								"test"
+							]
+						]
+					},
+					{
+						"key": "history",
+						"label": "History",
+						"steps": [
+							[
+								"ipc",
+								"sidebarRight",
+								"open"
+							]
+						],
+						"after": [
+							[
+								"ipc",
+								"sidebarRight",
+								"close"
+							]
+						]
+					}
+				]
+			},
+			"after": [
+				[
+					"ipc",
+					"notifications",
+					"clearAll"
+				]
+			]
+		},
+		"lock": {
+			"family": "ii",
+			"alt": "The lock screen",
+			"steps": [
+				[
+					"ipc",
+					"lock",
+					"activate"
+				]
+			],
+			"after": [
+				[
+					"ipc",
+					"lock",
+					"deactivate"
+				]
+			]
+		},
+		"desktop-items": {
+			"family": "iris",
+			"alt": "Shortcuts on the desktop",
+			"steps": [
+				[
+					"state",
+					"desktop-items.json",
+					{
+						"version": 1,
+						"items": {
+							"firefox": {
+								"kind": "application",
+								"target": "firefox",
+								"label": "Firefox",
+								"icon": "firefox",
+								"trusted": true,
+								"output": "winit",
+								"x": 1740,
+								"y": 110
+							},
+							"steam": {
+								"kind": "application",
+								"target": "steam",
+								"label": "Steam",
+								"icon": "steam",
+								"trusted": true,
+								"output": "winit",
+								"x": 1740,
+								"y": 230
+							},
+							"spotify": {
+								"kind": "application",
+								"target": "spotify",
+								"label": "Spotify",
+								"icon": "spotify",
+								"trusted": true,
+								"output": "winit",
+								"x": 1740,
+								"y": 350
+							},
+							"site": {
+								"kind": "url",
+								"target": "https://inir.space",
+								"label": "inir.space",
+								"customLabel": true,
+								"output": "winit",
+								"x": 1620,
+								"y": 110
+							},
+							"wall": {
+								"kind": "file",
+								"target": "$WALLPAPER",
+								"label": "Chrome waves.jpg",
+								"customLabel": true,
+								"output": "winit",
+								"x": 1620,
+								"y": 230
+							}
+						}
+					}
+				]
+			],
+			"alone": true
+		}
+	}
 }

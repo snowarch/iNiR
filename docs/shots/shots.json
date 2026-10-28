@@ -1,0 +1,131 @@
+{
+ "desktop-items": {
+  "alt": "Shortcuts on the desktop",
+  "label": "",
+  "width": 1600,
+  "height": 900,
+  "variants": [
+   {
+    "key": "",
+    "label": "",
+    "file": "desktop-items.webp",
+    "family": "iris"
+   }
+  ],
+  "made": {
+   "base": "e797f712",
+   "iris": "dd51930"
+  },
+  "spec": "{\"alone\": true, \"alt\": \"Shortcuts on the desktop\", \"family\": \"iris\", \"steps\": [[\"state\", \"desktop-items.json\", {\"items\": {\"firefox\": {\"icon\": \"firefox\", \"kind\": \"application\", \"label\": \"Firefox\", \"output\": \"winit\", \"target\": \"firefox\", \"trusted\": true, \"x\": 1740, \"y\": 110}, \"site\": {\"customLabel\": true, \"kind\": \"url\", \"label\": \"inir.space\", \"output\": \"winit\", \"target\": \"https://inir.space\", \"x\": 1620, \"y\": 110}, \"spotify\": {\"icon\": \"spotify\", \"kind\": \"application\", \"label\": \"Spotify\", \"output\": \"winit\", \"target\": \"spotify\", \"trusted\": true, \"x\": 1740, \"y\": 350}, \"steam\": {\"icon\": \"steam\", \"kind\": \"application\", \"label\": \"Steam\", \"output\": \"winit\", \"target\": \"steam\", \"trusted\": true, \"x\": 1740, \"y\": 230}, \"wall\": {\"customLabel\": true, \"kind\": \"file\", \"label\": \"Chrome waves.jpg\", \"output\": \"winit\", \"target\": \"$WALLPAPER\", \"x\": 1620, \"y\": 230}}, \"version\": 1}]]}"
+ },
+ "families": {
+  "alt": "The same desktop in each family",
+  "label": "Family",
+  "width": 1600,
+  "height": 900,
+  "variants": [
+   {
+    "key": "material",
+    "label": "Material",
+    "file": "families-material.webp",
+    "family": "ii"
+   },
+   {
+    "key": "waffle",
+    "label": "Waffle",
+    "file": "families-waffle.webp",
+    "family": "waffle"
+   },
+   {
+    "key": "iris",
+    "label": "iRiS",
+    "file": "families-iris.webp",
+    "family": "iris"
+   }
+  ],
+  "made": {
+   "base": "e797f712",
+   "ii": "56eb3c3",
+   "iris": "dd51930",
+   "waffle": "56eb3c3"
+  },
+  "spec": "{\"alt\": \"The same desktop in each family\", \"choose\": {\"label\": \"Family\", \"options\": [{\"family\": \"ii\", \"key\": \"material\", \"label\": \"Material\"}, {\"family\": \"waffle\", \"key\": \"waffle\", \"label\": \"Waffle\"}, {\"family\": \"iris\", \"key\": \"iris\", \"label\": \"iRiS\"}]}}"
+ },
+ "lock": {
+  "alt": "The lock screen",
+  "label": "",
+  "width": 1600,
+  "height": 900,
+  "variants": [
+   {
+    "key": "",
+    "label": "",
+    "file": "lock.webp",
+    "family": "ii"
+   }
+  ],
+  "made": {
+   "base": "e797f712",
+   "ii": "56eb3c3"
+  },
+  "spec": "{\"after\": [[\"ipc\", \"lock\", \"deactivate\"]], \"alt\": \"The lock screen\", \"family\": \"ii\", \"steps\": [[\"ipc\", \"lock\", \"activate\"]]}"
+ },
+ "notifications": {
+  "alt": "Notifications in Material",
+  "label": "Show",
+  "width": 1600,
+  "height": 900,
+  "variants": [
+   {
+    "key": "popups",
+    "label": "Popups",
+    "file": "notifications-popups.webp",
+    "family": "ii"
+   },
+   {
+    "key": "history",
+    "label": "History",
+    "file": "notifications-history.webp",
+    "family": "ii"
+   }
+  ],
+  "made": {
+   "base": "e797f712",
+   "ii": "56eb3c3"
+  },
+  "spec": "{\"after\": [[\"ipc\", \"notifications\", \"clearAll\"]], \"alt\": \"Notifications in Material\", \"choose\": {\"label\": \"Show\", \"options\": [{\"key\": \"popups\", \"label\": \"Popups\", \"steps\": [[\"ipc\", \"notifications\", \"test\"]]}, {\"after\": [[\"ipc\", \"sidebarRight\", \"close\"]], \"key\": \"history\", \"label\": \"History\", \"steps\": [[\"ipc\", \"sidebarRight\", \"open\"]]}]}, \"family\": \"ii\"}"
+ },
+ "settings": {
+  "alt": "Settings in each family",
+  "label": "Family",
+  "width": 1600,
+  "height": 900,
+  "variants": [
+   {
+    "key": "material",
+    "label": "Material",
+    "file": "settings-material.webp",
+    "family": "ii"
+   },
+   {
+    "key": "waffle",
+    "label": "Waffle",
+    "file": "settings-waffle.webp",
+    "family": "waffle"
+   },
+   {
+    "key": "iris",
+    "label": "iRiS",
+    "file": "settings-iris.webp",
+    "family": "iris"
+   }
+  ],
+  "made": {
+   "base": "e797f712",
+   "ii": "56eb3c3",
+   "iris": "dd51930",
+   "waffle": "56eb3c3"
+  },
+  "spec": "{\"alt\": \"Settings in each family\", \"choose\": {\"label\": \"Family\", \"options\": [{\"after\": [[\"ipc\", \"settings\", \"toggle\"]], \"family\": \"ii\", \"key\": \"material\", \"label\": \"Material\", \"steps\": [[\"ipc\", \"settings\", \"open\"], [\"wait\", 3000]]}, {\"after\": [[\"ipc\", \"settings\", \"toggle\"]], \"family\": \"waffle\", \"key\": \"waffle\", \"label\": \"Waffle\", \"steps\": [[\"ipc\", \"settings\", \"open\"], [\"wait\", 3000]]}, {\"after\": [[\"ipc\", \"iris\", \"settingsClose\"]], \"family\": \"iris\", \"key\": \"iris\", \"label\": \"iRiS\", \"steps\": [[\"ipc\", \"iris\", \"settings\", \"appearance\"], [\"wait\", 5000]]}]}}"
+ }
+}
