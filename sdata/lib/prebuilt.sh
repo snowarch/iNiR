@@ -4,7 +4,8 @@
 # lives comes from inir.space/releases/manifest.json, so hosting can move without touching installs, and the sha256
 # only ever from the pin. Fetched before anything is synced (a miss stops with nothing changed), switched on after.
 # A pin without a sha256 is not released yet and is skipped. INIR_PREBUILT_FROM=<dir or URL> serves the files
-# instead (VMs, a mirror); INIR_PREBUILT=0 skips it all. x86_64 only: elsewhere the shell keeps Quickshell.
+# instead (VMs, a mirror); INIR_PREBUILT=0 skips it all. A part is built for its "arch" (x86_64 when it names none):
+# aarch64 takes only inir-accel, so the shell keeps Quickshell there.
 # An add-on ("with": the part it unpacks over, e.g. Qt WebEngine over qs-rs) has that part's version, so it lands in
 # the folder it was built for; it comes only while its "when" config key is true or INIR_PREBUILT_WANT names it.
 
@@ -21,10 +22,12 @@ _prebuilt_home() { printf '%s' "${XDG_DATA_HOME:-$HOME/.local/share}/inir"; }
 
 # prebuilt_parts: one "part dest version file sha256 repo with" line (tab separated) per part this machine takes
 prebuilt_parts() {
-    [[ "$(uname -m)" == x86_64 && "${INIR_PREBUILT:-1}" == 1 && -f "$(_prebuilt_pins)" ]] || return 0
+    [[ "${INIR_PREBUILT:-1}" == 1 && -f "$(_prebuilt_pins)" ]] || return 0
     local config="${DOTS_CORE_CONFDIR:-${XDG_CONFIG_HOME:-$HOME/.config}/inir}/config.json"
-    jq -r --arg want " ${INIR_PREBUILT_WANT:-} " --argjson cfg "$(jq -c . "$config" 2>/dev/null || echo '{}')" '
-        .parts as $all | .parts | to_entries[] | select(.value.sha256 != "") | . as $p
+    jq -r --arg arch "$(uname -m)" --arg want " ${INIR_PREBUILT_WANT:-} " \
+        --argjson cfg "$(jq -c . "$config" 2>/dev/null || echo '{}')" '
+        .parts as $all | .parts | to_entries[] | select(.value.sha256 != "" and (.value.arch // "x86_64") == $arch)
+        | . as $p
         | select(($p.value.with // "") == "" or ($want | contains(" " + $p.key + " "))
             or (try ($cfg | getpath($p.value.when | split("."))) catch false) == true)
         | [.key, .value.dest, (if (.value.with // "") == "" then .value.version else $all[.value.with].version end),
@@ -119,7 +122,7 @@ prebuilt_activate() {
             old="${old##*/}"
             [[ "$old" == "$ver" || "$old" == "$prev" || "$old" == current ]] || rm -rf "${home:?}/$dest/$old"
         done
-        [[ "$part" == inir-accel ]] && prebuilt_accel_hooks
+        [[ "$dest" == accel ]] && prebuilt_accel_hooks
     done < <(prebuilt_parts)
     return 0
 }

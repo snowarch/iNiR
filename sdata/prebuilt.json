@@ -16,6 +16,14 @@
       "file": "inir-accel-0.1.0-x86_64.tar.gz",
       "sha256": ""
     },
+    "inir-accel-aarch64": {
+      "repo": "inir-accel",
+      "dest": "accel",
+      "arch": "aarch64",
+      "version": "0.1.0",
+      "file": "inir-accel-0.1.0-aarch64.tar.gz",
+      "sha256": ""
+    },
     "qs-rs-webengine": {
       "repo": "qs-rs",
       "dest": "runtime",
