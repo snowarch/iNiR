@@ -40,6 +40,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
   declare -A cmd_to_pkg=(
     [qs]="quickshell" [niri]="niri" [nmcli]="network-manager" [wpctl]="wireplumber" [pw-dump]="pipewire-bin"
     [jq]="jq" [rsync]="rsync" [curl]="curl" [git]="git" [python3]="python3"
+    [cairo-headers]="libcairo2-dev" [gi-headers]="libgirepository-2.0-dev"
     [fish]="fish" [magick]="imagemagick" [grim]="grim" [cliphist]="cliphist"
     [wl-copy]="wl-clipboard" [wl-paste]="wl-clipboard"
     [hyprpicker]="hyprpicker" [playerctl]="playerctl" [notify-send]="libnotify-bin"

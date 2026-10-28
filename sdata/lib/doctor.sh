@@ -143,6 +143,14 @@ check_dependencies() {
             ;;
     esac
 
+    # the venv builds pycairo and pygobject; Debian and Ubuntu ship their headers apart (Fedora and Void as packages above)
+    case "${OS_GROUP_ID:-unknown}" in
+        debian|ubuntu)
+            pkg-config --exists cairo 2>/dev/null || { missing+=("Cairo headers"); missing_cmds+=("cairo-headers"); }
+            pkg-config --exists girepository-2.0 2>/dev/null || { missing+=("GObject headers"); missing_cmds+=("gi-headers"); }
+            ;;
+    esac
+
     # Void's source provider is version-pinned, so an old binary is also a
     # repairable dependency rather than merely an available command.
     if [[ "${OS_GROUP_ID:-unknown}" == "void" ]]; then
