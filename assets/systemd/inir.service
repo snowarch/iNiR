@@ -25,7 +25,7 @@ BusName=org.kde.StatusNotifierWatcher
 # QT_LOGGING_RULES suppresses noisy Qt/KF warnings.
 Environment=QT_SCALE_FACTOR=1
 Environment=QT_SCALE_FACTOR_ROUNDING_POLICY=RoundPreferFloor
-Environment=QT_LOGGING_RULES=quickshell.dbus.properties=false;qt.qml.settings.warning=false;qt.core.qsettings.warning=false;kf.xmlgui=false;kf.coreaddons=false;kf.config.core=false;kf.iconthemes=false;qt.qpa.wayland.textinput.warning=false
+Environment=QT_LOGGING_RULES=quickshell.dbus.properties=false;quickshell.dbus.objectmanager.warning=false;qt.qml.settings.warning=false;qt.core.qsettings.warning=false;kf.xmlgui=false;kf.coreaddons=false;kf.config.core=false;kf.iconthemes=false;qt.qpa.wayland.textinput.warning=false
 
 ExecStart=/usr/bin/inir run --session
 SuccessExitStatus=143

@@ -1959,7 +1959,8 @@ apply_qt_runtime_env() {
 }
 
 apply_qt_logging_rules() {
-    local extra_rules="quickshell.dbus.properties=false;qt.qml.settings.warning=false;qt.core.qsettings.warning=false;kf.xmlgui=false;kf.coreaddons=false;kf.config.core=false;kf.iconthemes=false;qt.qpa.wayland.textinput.warning=false"
+    # Quickshell warns when BlueZ isn't running (no adapter) right before logging it as debug itself
+    local extra_rules="quickshell.dbus.properties=false;quickshell.dbus.objectmanager.warning=false;qt.qml.settings.warning=false;qt.core.qsettings.warning=false;kf.xmlgui=false;kf.coreaddons=false;kf.config.core=false;kf.iconthemes=false;qt.qpa.wayland.textinput.warning=false"
 
     if [[ -z "${QT_LOGGING_RULES:-}" ]]; then
         export QT_LOGGING_RULES="$extra_rules"
@@ -1967,7 +1968,7 @@ apply_qt_logging_rules() {
     fi
 
     case ";${QT_LOGGING_RULES};" in
-        *";qt.qpa.wayland.textinput.warning=false;"*)
+        *";quickshell.dbus.objectmanager.warning=false;"*)
             ;;
         *)
             export QT_LOGGING_RULES="${QT_LOGGING_RULES};${extra_rules}"
