@@ -10,7 +10,7 @@ It comes in three looks, called families. Material ii is the default. Waffle is 
 
 - [Install](INSTALL.md): install iNiR on your distro.
 - [Setup, updates and rollback](SETUP.md): keep iNiR up to date, repair it and remove it.
-- [Keybinds](KEYBINDS.md): every shortcut that ships with iNiR.
+- [Keybinds](https://inir.space/docs/keybinds/): every shortcut that ships with iNiR.
 - [Known limitations](LIMITATIONS.md): what does not work yet. Read it before you report a bug.
 
 Most things live in Settings, which opens with Super+comma. [Make it yours](CUSTOMIZE.md) lists every way to change

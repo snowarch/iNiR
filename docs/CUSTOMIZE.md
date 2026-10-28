@@ -66,7 +66,7 @@ The three families come from there too. See [Hub](HUB.md).
   Niri picks it up at once.
 
 The binds you write by hand go in `~/.config/niri/config.d/90-user-extra.kdl`. Updates never touch that file. Every
-shortcut that ships: [Keybinds](KEYBINDS.md).
+shortcut that ships: [Keybinds](https://inir.space/docs/keybinds/).
 
 ## Displays, input and windows
 
