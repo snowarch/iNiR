@@ -44,8 +44,10 @@ Scope {
                 exclusionMode: ExclusionMode.Ignore
                 exclusiveZone: implicitHeight
                 WlrLayershell.namespace: "quickshell:bar"
+                // Region re-reads its item only on x, y and size changes, not
+                // on transforms, so it must not follow the sliding content.
                 mask: Region {
-                    item: content
+                    item: contentArea
                 }
 
                 anchors {
@@ -61,7 +63,12 @@ Scope {
                 implicitWidth: content.implicitWidth
 
                 BackgroundEffect.blurRegion: Region {
-                    item: content.nativeBlurActive ? content : null
+                    item: content.nativeBlurActive ? contentArea : null
+                }
+
+                Item {
+                    id: contentArea
+                    anchors.fill: content
                 }
 
                 WaffleBarContent {
