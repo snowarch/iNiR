@@ -5,6 +5,55 @@ All notable changes to iNiR will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+iNiR is now a base with plugins: Material, Waffle and iRiS come from the iNiR Hub, the shell runs on its own prebuilt runtime, and one `inir update` brings all of it without compiling a single thing on your machine. Your config comes along, promise.
+
+### Added
+- **iNiR Hub**: Material, Waffle and iRiS install as plugins from inir.space/hub, next to community widgets, colour themes and web apps; `inir hub` lists, installs and removes them.
+- **Prebuilt runtime**: the shell runs on qs-rs, Quickshell rebuilt in Rust with its own Qt, and inir-accel takes over the shell's helpers; both arrive prebuilt and checked, and Quickshell stays as the fallback.
+- **The `inir` command**: `inir doctor`, `inir update`, `inir deps` and `inir hub` in one compiled command with shell completions; the old launcher stays as the fallback.
+- **Designs for iRiS**: a Design is another look over the same engine, picked in Settings › Appearance; AIRISU, the first one, is coloured lacquer with its own Island, lock, Spotlight, notifications, OSD, menus and widgets.
+- **Desktop edit mode**: arrange widgets on a card with magnets, guides and a shelf, save whole desktops and pick small, medium or large, in iRiS and in Material.
+- **New widgets**: lyrics, palette, photo, world clock and vitals, and every widget says something useful when it has nothing to show.
+- **Island**: three Island designs, six bubbles, and a shelf that keeps what you copy, capture and drop.
+- **Live window previews**: the overview, Orbit, the dock, Alt+Tab, taskbars and task view show the real windows moving instead of old stills.
+- **Live pins**: pin part of a window to the screen and it keeps updating.
+- **Wallpaper picker**: iRiS gets a new picker in three layouts with favourites, local folders and web sources, and Material's picker gets a skewed deck with a full screen preview.
+- **Light leak**: a third iRiS texture, faded film light.
+- **Web Apps tab**: Qt WebEngine is now a one-time download of about 110 MB, started from the tab itself.
+- **Picture-in-picture**: a PiP window from any browser floats on its own.
+- **NixOS**: a lean NixOS module with its Python environment and a niri config to start from.
+- **Fonts**: Geist, Geist Mono and Geist Pixel ship with iNiR, and Material sets its type in Google Sans Flex.
+
+### Changed
+- `inir update` brings the whole new iNiR: the base, the families from the Hub, the prebuilt runtime, inir-accel and the `inir` command. Your config and edits stay, and a version that won't load is rolled back to the one you had.
+- The update also installs what `inir doctor` now checks for: plasma-integration, a colour emoji font and the shell's fonts.
+- iRiS Settings is rebuilt: every option lives in it with a live scene beside each group, search reads what you mean, and it opens as Classic, Folio, Pocket or Drawer.
+- Under iRiS, Material's Settings pages keep only what iRiS Settings has no row for.
+- Notifications can arrive quietly, per app, from iRiS Settings, which also picks speakers, mic and each app's volume.
+- Only the family you use compiles at start, and the wallpaper shows up with the first frame.
+- The shell's process is `inir-shell`, out of reach of ananicy's `qs` rule.
+- A live wallpaper pauses under a maximized window, and a web wallpaper runs on every monitor.
+- Debian builds niri from its v26.04 tag, with its session files.
+- The docs live at inir.space/docs.
+
+### Fixed
+- Void: a login no longer hangs when D-Bus starts elogind before its own service does.
+- Debian: a niri built from source gets niri-session and its service, so the shell starts at login.
+- The iNiR block in `.bashrc` and `.zshrc` prints colours and starship only in interactive shells, so scripts stop getting escape codes.
+- Notifications, to-dos and events saved right as they load are no longer lost on Quickshell.
+- An edit to the config from outside wins over a save in flight.
+- A moved or deleted wallpaper is replaced instead of stared at.
+- Borders keep see-through windows see-through.
+- Brightness keys skip a monitor whose screen went away.
+- A fast drag on a volume slider no longer stalls it.
+- YouTube's skip brings you back to where you were.
+- The date picker follows `LC_ALL` over `LC_TIME`, as POSIX says.
+- Machines without Bluetooth no longer log a bluez warning.
+- A reinstall keeps your settings, niri config and dotfiles, and every download retries a dropped connection.
+- Python packages below their minimum version get upgraded by setup.
+
 ## [2.33.0] - 2026-10-08
 
 **iRiS 0.3**
