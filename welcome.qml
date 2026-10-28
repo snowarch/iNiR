@@ -44,7 +44,9 @@ Scope {
     // The chosen family's part `welcome`: its look tokens, and its own steps when it ships pages.
     readonly property var familyWelcome: familyWelcomeLoader.item
     readonly property var familyLook: root.familyWelcome
+    // the stack holds three middle steps: a family brings all three (pages and their texts) or none
     readonly property bool customSteps: (root.familyWelcome?.pages?.length ?? 0) === 3
+        && (root.familyWelcome?.steps?.length ?? 0) === 3
     property var _familyEntered: ({})
 
     // Onboarding follows the selected family, independently of ii's Global Style.
@@ -596,7 +598,13 @@ Scope {
                 root.applyPerformancePreset(root.selectedPerformancePreset)
             }
         }
-        // once per family and step in a run: switching families and back must not reapply its defaults
+        root._enterStep()
+    }
+    // a family picked mid-run enters the step on screen too
+    onFamilyWelcomeChanged: if (root.firstRunSetup) root._enterStep()
+
+    // once per family and step in a run: switching families and back must not reapply its defaults
+    function _enterStep(): void {
         const entry = `${root.family}:${root.currentStep}`
         if (typeof root.familyWelcome?.entered === "function" && !root._familyEntered[entry]) {
             root._familyEntered[entry] = true
@@ -634,7 +642,7 @@ Scope {
             headline: Translation.tr("Welcome to iNiR"),
             subtitle: Translation.tr("Pick the desktop you want to start with. The next steps adapt to it.")
         },
-        ...(root.familyWelcome?.steps ?? root.classicSteps),
+        ...(root.customSteps ? root.familyWelcome.steps : root.classicSteps),
         {
             icon: "celebration", title: Translation.tr("Ready"),
             headline: Translation.tr("You're all set"),

@@ -4090,7 +4090,8 @@ EOF
                 real="$(readlink -f "$link")"
                 top="$(git -C "$real" rev-parse --show-toplevel 2>/dev/null)" || continue
                 prefix="${real#"$top"/}"
-                { git -C "$top" diff --name-only -z HEAD -- "$prefix"; git -C "$top" ls-files --others --exclude-standard -z -- "$prefix"; } |
+                { git -C "$top" diff --name-only -z HEAD -- ":(literal)$prefix"
+                  git -C "$top" ls-files --others --exclude-standard -z -- ":(literal)$prefix"; } |
                     while IFS= read -r -d '' path; do printf 'modules/%s/%s\0' "${link##*/}" "${path#"$prefix"/}"; done
             done
         }
