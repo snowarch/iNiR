@@ -13,8 +13,8 @@
    }
   ],
   "made": {
-   "base": "e797f712",
-   "iris": "dd51930"
+   "base": "9ff05b70",
+   "iris": "5714f9f"
   },
   "spec": "{\"alone\": true, \"alt\": \"Shortcuts on the desktop\", \"family\": \"iris\", \"steps\": [[\"state\", \"desktop-items.json\", {\"items\": {\"firefox\": {\"icon\": \"firefox\", \"kind\": \"application\", \"label\": \"Firefox\", \"output\": \"winit\", \"target\": \"firefox\", \"trusted\": true, \"x\": 1740, \"y\": 110}, \"site\": {\"customLabel\": true, \"kind\": \"url\", \"label\": \"inir.space\", \"output\": \"winit\", \"target\": \"https://inir.space\", \"x\": 1620, \"y\": 110}, \"spotify\": {\"icon\": \"spotify\", \"kind\": \"application\", \"label\": \"Spotify\", \"output\": \"winit\", \"target\": \"spotify\", \"trusted\": true, \"x\": 1740, \"y\": 350}, \"steam\": {\"icon\": \"steam\", \"kind\": \"application\", \"label\": \"Steam\", \"output\": \"winit\", \"target\": \"steam\", \"trusted\": true, \"x\": 1740, \"y\": 230}, \"wall\": {\"customLabel\": true, \"kind\": \"file\", \"label\": \"Chrome waves.jpg\", \"output\": \"winit\", \"target\": \"$WALLPAPER\", \"x\": 1620, \"y\": 230}}, \"version\": 1}]]}"
  },
@@ -44,10 +44,10 @@
    }
   ],
   "made": {
-   "base": "e797f712",
-   "ii": "56eb3c3",
-   "iris": "dd51930",
-   "waffle": "56eb3c3"
+   "base": "9ff05b70",
+   "ii": "5714f9f",
+   "iris": "5714f9f",
+   "waffle": "5714f9f"
   },
   "spec": "{\"alt\": \"The same desktop in each family\", \"choose\": {\"label\": \"Family\", \"options\": [{\"family\": \"ii\", \"key\": \"material\", \"label\": \"Material\"}, {\"family\": \"waffle\", \"key\": \"waffle\", \"label\": \"Waffle\"}, {\"family\": \"iris\", \"key\": \"iris\", \"label\": \"iRiS\"}]}}"
  },
@@ -65,8 +65,8 @@
    }
   ],
   "made": {
-   "base": "e797f712",
-   "ii": "56eb3c3"
+   "base": "9ff05b70",
+   "ii": "5714f9f"
   },
   "spec": "{\"after\": [[\"ipc\", \"lock\", \"deactivate\"]], \"alt\": \"The lock screen\", \"family\": \"ii\", \"steps\": [[\"ipc\", \"lock\", \"activate\"]]}"
  },
@@ -90,8 +90,8 @@
    }
   ],
   "made": {
-   "base": "e797f712",
-   "ii": "56eb3c3"
+   "base": "9ff05b70",
+   "ii": "5714f9f"
   },
   "spec": "{\"after\": [[\"ipc\", \"notifications\", \"clearAll\"]], \"alt\": \"Notifications in Material\", \"choose\": {\"label\": \"Show\", \"options\": [{\"key\": \"popups\", \"label\": \"Popups\", \"steps\": [[\"ipc\", \"notifications\", \"test\"]]}, {\"after\": [[\"ipc\", \"sidebarRight\", \"close\"]], \"key\": \"history\", \"label\": \"History\", \"steps\": [[\"ipc\", \"sidebarRight\", \"open\"]]}]}, \"family\": \"ii\"}"
  },
@@ -121,10 +121,10 @@
    }
   ],
   "made": {
-   "base": "e797f712",
-   "ii": "56eb3c3",
-   "iris": "dd51930",
-   "waffle": "56eb3c3"
+   "base": "9ff05b70",
+   "ii": "5714f9f",
+   "iris": "5714f9f",
+   "waffle": "5714f9f"
   },
   "spec": "{\"alt\": \"Settings in each family\", \"choose\": {\"label\": \"Family\", \"options\": [{\"after\": [[\"ipc\", \"settings\", \"toggle\"]], \"family\": \"ii\", \"key\": \"material\", \"label\": \"Material\", \"steps\": [[\"ipc\", \"settings\", \"open\"], [\"wait\", 3000]]}, {\"after\": [[\"ipc\", \"settings\", \"toggle\"]], \"family\": \"waffle\", \"key\": \"waffle\", \"label\": \"Waffle\", \"steps\": [[\"ipc\", \"settings\", \"open\"], [\"wait\", 3000]]}, {\"after\": [[\"ipc\", \"iris\", \"settingsClose\"]], \"family\": \"iris\", \"key\": \"iris\", \"label\": \"iRiS\", \"steps\": [[\"ipc\", \"iris\", \"settings\", \"appearance\"], [\"wait\", 5000]]}]}}"
  }
