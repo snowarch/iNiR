@@ -711,10 +711,13 @@ if ! command -v niri &>/dev/null; then
       done
     }
     
-    NIRI_BUILD_DIR="/tmp/niri-build-$$"
-    
-    log_info "Cloning Niri..."
-    if git clone https://github.com/YaLTeR/niri.git "$NIRI_BUILD_DIR"; then
+    # on disk: Debian keeps /tmp in RAM and the release build outgrows it there. The release inir's config is written for.
+    NIRI_TAG=v26.04
+    NIRI_BUILD_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/inir/build/niri-$$"
+    mkdir -p "${NIRI_BUILD_DIR%/*}"
+
+    log_info "Cloning Niri ${NIRI_TAG}..."
+    if git clone -q --depth 1 --branch "$NIRI_TAG" https://github.com/YaLTeR/niri.git "$NIRI_BUILD_DIR"; then
       log_info "Building Niri (this may take a while)..."
       cd "$NIRI_BUILD_DIR"
       if cargo build --release; then
@@ -731,6 +734,7 @@ if ! command -v niri &>/dev/null; then
     else
       log_error "Failed to clone Niri repository"
     fi
+    command -v niri &>/dev/null || return 1
   fi
 else
   log_success "Niri already installed"
