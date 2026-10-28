@@ -35,16 +35,17 @@ this needs your attention. It is here for the curious, and for anyone who wants 
 | The folder you cloned, usually `~/inir` | The base. `inir update` pulls new versions into it |
 | `~/.config/quickshell/inir/` | The shell that runs: the base copied from your clone, with your families linked in |
 | `~/.local/share/inir/plugins/` | Installed families and other plugins from the Hub |
-| `~/.local/share/inir/runtime/` | qs-rs, with the Qt it was built against |
-| `~/.local/share/inir/accel/` | inir-accel |
+| `~/.local/share/inir/runtime/<version>/` | qs-rs, with the Qt it was built against. `current` points at the one in use |
+| `~/.local/share/inir/accel/<version>/` | inir-accel. `current` points at the one in use |
 | `~/.local/bin/inir` | What runs when you type `inir`: it starts the shell and hands every other command on |
 | `~/.local/share/inir/cli/inir` | The `inir` command itself |
 | `~/.config/inir/` | Your settings (`config.json`), your widgets, themes and web apps |
 | `~/.config/niri/config.d/` | Niri's settings, one file per area. Yours: `90-user-extra.kdl` |
 | `~/.local/state/quickshell/` | What the shell remembers: generated colours, notifications, update snapshots |
 
-Binaries arrive prebuilt and checked; nothing compiles on your machine. The previous runtime and helpers stay until
-the next good update, so a bad one can go back.
+Binaries arrive prebuilt (x86_64) and checked against the release's checksums; nothing compiles on your machine. The
+previous runtime and helpers stay beside the new ones, so a bad update can go back. When qs-rs can't start on a system,
+the shell runs on Quickshell and the next update tries again.
 
 ## How an update goes
 
