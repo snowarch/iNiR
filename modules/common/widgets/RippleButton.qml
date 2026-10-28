@@ -120,6 +120,12 @@ Button {
         easing.bezierCurve: Appearance?.animationCurves.standardDecel ?? [0, 0, 0, 1, 1, 1]
     }
 
+    // Space presses a focused button past the MouseArea: what a press does still runs, the click follows on release
+    Keys.onPressed: (event) => {
+        if (event.key === Qt.Key_Space && !event.isAutoRepeat && root.downAction)
+            root.downAction({ x: root.width / 2, y: root.height / 2, button: Qt.LeftButton, modifiers: event.modifiers })
+    }
+
     MouseArea {
         id: buttonMouseArea
         anchors.fill: parent
