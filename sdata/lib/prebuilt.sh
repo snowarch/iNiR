@@ -6,7 +6,15 @@
 # A pin without a sha256 is not released yet and is skipped. INIR_PREBUILT_FROM=<dir or URL> serves the files
 # instead (VMs, a mirror); INIR_PREBUILT=0 skips it all. x86_64 only: elsewhere the shell keeps Quickshell.
 
-_prebuilt_pins() { printf '%s' "${REPO_ROOT}/sdata/prebuilt.json"; }
+# the base's pins; a local INIR_PREBUILT_FROM (VMs, before the releases) may carry its own beside the files
+_prebuilt_pins() {
+    local from="${INIR_PREBUILT_FROM#file://}"
+    if [[ -n "${INIR_PREBUILT_FROM:-}" && -f "$from/prebuilt.json" ]]; then
+        printf '%s' "$from/prebuilt.json"
+    else
+        printf '%s' "${REPO_ROOT}/sdata/prebuilt.json"
+    fi
+}
 _prebuilt_home() { printf '%s' "${XDG_DATA_HOME:-$HOME/.local/share}/inir"; }
 
 # prebuilt_parts: one "part dest version file sha256 repo" line (tab separated) per part this machine takes
@@ -113,6 +121,24 @@ prebuilt_accel_hooks() {
         [[ -e "$venv/python3.real" ]] && ln -sfn "$bin" "$venv/python3"
     fi
     return 0
+}
+
+# prebuilt_accel_hooks_ok: the hooks match what is installed (doctor step 13): pointed at accel/current while it is
+# there, none left pointing at it once it went
+prebuilt_accel_hooks_ok() {
+    local bin state go
+    bin="$(_prebuilt_home)/accel/current/inir-accel"
+    state="${XDG_STATE_HOME:-$HOME/.local/state}/quickshell"
+    if [[ -x "$bin" ]]; then
+        [[ ! -d "$state/.venv/bin" || "$(readlink "$state/.venv/bin/python3")" == "$bin" ]] || return 1
+        for go in "${_PREBUILT_GO[@]}"; do
+            [[ "$(readlink "$state/user/generated/bin/$go")" == "$bin" ]] || return 1
+        done
+        return 0
+    fi
+    for go in .venv/bin/python3 "${_PREBUILT_GO[@]/#/user/generated/bin/}"; do
+        [[ "$(readlink "$state/$go")" != */accel/current/inir-accel ]] || return 1
+    done
 }
 
 # prebuilt_runtime_off: the shell back on Quickshell when qs-rs did not load (the launcher takes runtime/current

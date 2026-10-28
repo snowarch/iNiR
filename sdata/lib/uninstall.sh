@@ -41,7 +41,7 @@ declare -A INIR_ONLY_PATHS=(
     ["${XDG_DATA_HOME}/icons/hicolor/scalable/apps/inir.svg"]="iNiR launcher icon"
     ["${HOME}/.local/bin/sync-pixel-sddm.py"]="iNiR SDDM theme sync helper"
     ["${XDG_CONFIG_HOME}/environment.d/inir.conf"]="iNiR session environment"
-    ["${XDG_DATA_HOME:-$HOME/.local/share}/inir"]="iNiR data (OCR models, provider markers)"
+    ["${XDG_DATA_HOME:-$HOME/.local/share}/inir"]="iNiR data (qs-rs, inir-accel, the inir command, plugins, OCR models)"
 )
 
 # Shared configs - may be used by other apps or user customizations
@@ -515,6 +515,9 @@ uninstall_remove_inir_only() {
 
     tui_info "Removing iNiR-exclusive files..."
     echo ""
+
+    # the venv may stay (Quickshell shared resources): its python3 goes back to the real one before accel/ goes
+    rm -f "$(_prebuilt_home)/accel/current" && prebuilt_accel_hooks
 
     # Pre-count existing items for N/M progress display
     local total=0

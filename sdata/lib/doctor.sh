@@ -646,6 +646,12 @@ check_python_packages() {
         fi
     fi
     
+    # inir-accel answers the venv's python3 and the Go helpers: a venv made again loses it, one removed leaves a hook
+    if ! prebuilt_accel_hooks_ok; then
+        prebuilt_accel_hooks
+        doctor_fix "inir-accel hooks match what is installed again"
+    fi
+
     [[ ! -f "$req" ]] && { doctor_pass "Python (no requirements.txt)"; return; }
     
     # Versions count, not just names: a package installed below its floor in requirements.txt breaks the
@@ -1257,6 +1263,8 @@ _doctor_abi_detect() {
     _doctor_abi_msg=""
     _doctor_abi_buildtime=""
     _doctor_abi_runtime=""
+    # qs-rs from the pin carries the Qt it was built with (check_quickshell_abi)
+    _doctor_own_runtime >/dev/null && return 0
 
     if ! command -v qs >/dev/null 2>&1; then
         return 0
@@ -1309,7 +1317,37 @@ _doctor_abi_detect() {
     return 0
 }
 
+# runtime/current when setup put qs-rs there (sdata/lib/prebuilt.sh): the launcher starts it before any qs in PATH
+_doctor_own_runtime() {
+    local own
+    own="$(_prebuilt_home)/runtime/current"
+    [[ -L "$own" ]] && printf '%s\n' "$own"
+}
+
+# the qs the launcher starts when no shell runs (scripts/inir find_qs)
+_doctor_qs() {
+    local own
+    if own="$(_doctor_own_runtime)" && [[ -x "$own/bin/qs" ]]; then
+        printf '%s\n' "$own/bin/qs"
+    else
+        command -v qs
+    fi
+}
+
 check_quickshell_abi() {
+    local own ver
+    if own="$(_doctor_own_runtime)"; then
+        ver="$(readlink "$own")"
+        if timeout 5 env QT_QPA_PLATFORM=offscreen "$own/bin/qs" --version >/dev/null 2>&1; then
+            doctor_pass "qs-rs $ver runs on its own Qt"
+            return 0
+        fi
+        prebuilt_runtime_off
+        doctor_fix "qs-rs $ver does not start here, so the shell runs on Quickshell; inir update tries qs-rs again"
+        return 0
+    fi
+
+
     # Quickshell uses Qt private APIs — any Qt minor version bump (e.g. 6.10→6.11)
     # breaks ABI and requires rebuilding quickshell. This is the #1 cause of
     # "quickshell crashes on any UI interaction" after system updates.
@@ -1345,6 +1383,10 @@ check_polkit_agent() {
         return 0
     fi
 
+    if _doctor_own_runtime >/dev/null; then
+        doctor_pass "Password prompts: answered by the shell"
+        return 0
+    fi
     qs_bin="$(readlink -f "$(command -v qs 2>/dev/null)" 2>/dev/null || true)"
     # ldd reads ELF binaries only; a wrapper script (Nix) proves nothing either way.
     if [[ -z "$qs_bin" ]] || ! ldd "$qs_bin" >/dev/null 2>&1; then
@@ -1362,7 +1404,7 @@ check_polkit_agent() {
 
 check_quickshell_loads() {
     local target
-    local running_output
+    local running_output qs_bin
     target="$(doctor_runtime_dir)"
     if [[ -z "$target" ]]; then
         doctor_runtime_dir_or_fail "Quickshell"
@@ -1380,7 +1422,8 @@ check_quickshell_loads() {
     fi
     
     # If already running, just check it's responsive
-    running_output="$(qs -p "$target" list 2>/dev/null || true)"
+    qs_bin="$(_doctor_qs)"
+    running_output="$("$qs_bin" -p "$target" list 2>/dev/null || true)"
     if [[ -n "$running_output" && "$running_output" != No\ running\ instances* ]]; then
         doctor_pass "Quickshell running"
         return 0
@@ -1391,7 +1434,7 @@ check_quickshell_loads() {
     
     # Start in background and capture initial output
     local logfile="/tmp/qs-doctor-$$.log"
-    nohup qs -p "$target" >"$logfile" 2>&1 &
+    nohup "$qs_bin" -p "$target" >"$logfile" 2>&1 &
     local qs_pid=$!
     disown
     
@@ -1935,8 +1978,9 @@ run_doctor_with_fixes() {
     _doctor_run_step 14 $total_steps "Checking stale local quickshell" check_stale_local_quickshell
 
     # Step 15 pre-check: the CLI owns the rebuild for every install kind (`inir doctor --fix-abi`).
-    # It runs outside _doctor_run_step so the build and its prompts show live in the terminal.
-    if _doctor_wants 15 && ! _doctor_abi_detect; then
+    # It runs outside _doctor_run_step so the build and its prompts show live in the terminal; the binary asked
+    # already when it hands one step over (--report).
+    if _doctor_wants 15 && [[ -z "${INIR_DOCTOR_REPORT:-}" ]] && ! _doctor_abi_detect; then
         echo ""
         echo -e "  ${STY_YELLOW}Quickshell was built for another Qt version: $_doctor_abi_msg${STY_RST}"
         echo -e "  ${STY_FAINT}Quickshell uses Qt internals and asks to be rebuilt after every Qt update. Until then it can crash.${STY_RST}"
