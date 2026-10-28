@@ -43,6 +43,9 @@ nothing compiles on your machine.
   same if it stops starting later. The next `inir update` tries qs-rs again.
 - The version before stays beside the new one, so a rollback brings both back.
 - `INIR_PREBUILT=0 inir update` skips the downloads and keeps the shell on Quickshell.
+- Without inir-accel (not x86_64, `INIR_PREBUILT=0` or a failed download) the shell still runs, and Material's colours
+  from the wallpaper and the app and terminal themes still work. iRiS keeps its default palette and the VSCode,
+  OpenCode and Zed themes are skipped; an install updated from 2.33 keeps the ones it compiled back then.
 - While Material's Web Apps tab is on, setup and the update also get **Qt WebEngine** for qs-rs (about 110 MB, once,
   always the one for the qs-rs you have). `inir webengine` gets it at any time and restarts the shell. On Quickshell
   it comes from your distribution's Qt 6 WebEngine package instead.
