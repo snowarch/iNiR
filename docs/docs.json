@@ -1,0 +1,83 @@
+{
+	"id": "inir",
+	"edit": "https://github.com/snowarch/iNiR/edit/main/docs/",
+	"groups": [
+		{
+			"label": "Start",
+			"pages": [
+				"index",
+				"INSTALL",
+				"SETUP",
+				"KEYBINDS",
+				"LIMITATIONS"
+			],
+			"labels": {
+				"index": "Home",
+				"SETUP": "Setup and updates",
+				"LIMITATIONS": "Known limitations"
+			}
+		},
+		{
+			"label": "Make it yours",
+			"pages": [
+				"CUSTOMIZE",
+				"CONFIG_SYSTEM",
+				"PANEL_FAMILIES",
+				"THEMING_PRESETS",
+				"WALLPAPER",
+				"DESKTOP_ITEMS",
+				"HUB"
+			],
+			"labels": {
+				"CONFIG_SYSTEM": "Settings",
+				"PANEL_FAMILIES": "Panel families"
+			}
+		},
+		{
+			"label": "Families",
+			"pages": []
+		},
+		{
+			"label": "Features",
+			"pages": [
+				"NOTIFICATIONS",
+				"CALENDAR",
+				"AUTOSTART",
+				"AUDIO_MEDIA",
+				"GAME_PERFORMANCE",
+				"JAPANESE_OCR",
+				"VESKTOP"
+			]
+		},
+		{
+			"label": "System",
+			"pages": [
+				"PACKAGES",
+				"COMPOSITORS",
+				"OPTIMIZATION",
+				"VOID",
+				"VOID_CAPABILITIES",
+				"NIXOS"
+			]
+		},
+		{
+			"label": "Build on iNiR",
+			"pages": [
+				"PARTS",
+				"IPC",
+				"GLOBAL_ACTIONS",
+				"ARCHITECTURE_OVERVIEW",
+				"RUNTIME",
+				"SERVICES",
+				"MODULES",
+				"THEMING_ARCHITECTURE",
+				"THEMING_TARGETS",
+				"THEMING_MODULES"
+			],
+			"labels": {
+				"IPC": "IPC reference",
+				"ARCHITECTURE_OVERVIEW": "Architecture"
+			}
+		}
+	]
+}
