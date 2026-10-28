@@ -713,7 +713,6 @@ Item {
                                 Accessible.role: Accessible.Button
                                 Accessible.name: Translation.tr("Wear %1").arg(preset.modelData.name)
                                 onClicked: { presetRow.confirming = ""; DesktopPresets.wear(preset.modelData.id) }
-                                onDoubleClicked: if (!preset.factory) root.naming = preset.modelData.id
                             }
                             // Worn: a check where a widget shows it is out.
                             Rectangle {
