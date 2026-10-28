@@ -16,9 +16,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/wiki/INSTALL">Установка</a> &bull;
-  <a href="https://github.com/snowarch/inir/wiki/KEYBINDS">Горячие клавиши</a> &bull;
-  <a href="https://github.com/snowarch/inir/wiki/IPC">Справка по IPC</a> &bull;
+  <a href="https://inir.space/docs/install/">Установка</a> &bull;
+  <a href="https://inir.space/docs/keybinds/">Горячие клавиши</a> &bull;
+  <a href="https://inir.space/docs/ipc/">Справка по IPC</a> &bull;
   <a href="https://discord.gg/pAPTfAhZUJ">Discord</a> &bull;
   <a href="../../CONTRIBUTING.md">Участие</a>
 </p>
@@ -260,7 +260,7 @@ sudo make install       # system-wide instead of your home
 ./setup rollback        # undo the last update
 ```
 
-**Дистрибутивы:** основная цель — Arch. У Fedora и Debian/Ubuntu тоже есть автоматическая установка зависимостей, сначала из репозиториев дистрибутива; остальным подойдёт общее руководство в [списке пакетов](https://github.com/snowarch/inir/wiki/PACKAGES). iNiR нужен Qt 6.9 или новее: Ubuntu 26.04 LTS, Fedora 43, Debian testing и новее.
+**Дистрибутивы:** основная цель — Arch. У Fedora и Debian/Ubuntu тоже есть автоматическая установка зависимостей, сначала из репозиториев дистрибутива; остальным подойдёт общее руководство в [списке пакетов](https://inir.space/docs/packages/). iNiR нужен Qt 6.9 или новее: Ubuntu 26.04 LTS, Fedora 43, Debian testing и новее.
 
 ---
 
@@ -276,7 +276,7 @@ sudo make install       # system-wide instead of your home
 | <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>W</kbd> | Сменить семейство панелей |
 | <kbd>Super</kbd> + <kbd>/</kbd> | Шпаргалка, если забудете остальное |
 
-Полный список: [Горячие клавиши](https://github.com/snowarch/inir/wiki/KEYBINDS)
+Полный список: [Горячие клавиши](https://inir.space/docs/keybinds/)
 
 ---
 
@@ -288,16 +288,16 @@ sudo make install       # system-wide instead of your home
 
 ## Документация
 
-Всё для пользователей — в [Wiki](https://github.com/snowarch/inir/wiki) (на английском).
+Всё для пользователей — на [inir.space/docs](https://inir.space/docs/) (на английском).
 
 | Страница | Что там |
 |---|---|
-| [Install](https://github.com/snowarch/inir/wiki/INSTALL) | Как запустить |
-| [Setup](https://github.com/snowarch/inir/wiki/SETUP) | Обновления, миграции, откат |
-| [Keybinds](https://github.com/snowarch/inir/wiki/KEYBINDS) | Все горячие клавиши |
-| [IPC](https://github.com/snowarch/inir/wiki/IPC) | Команды для привязок и скриптов |
-| [Packages](https://github.com/snowarch/inir/wiki/PACKAGES) | Каждая зависимость и зачем она нужна |
-| [Limitations](https://github.com/snowarch/inir/wiki/LIMITATIONS) | Известные проблемы и как их обойти |
+| [Install](https://inir.space/docs/install/) | Как запустить |
+| [Setup](https://inir.space/docs/setup/) | Обновления, миграции, откат |
+| [Keybinds](https://inir.space/docs/keybinds/) | Все горячие клавиши |
+| [IPC](https://inir.space/docs/ipc/) | Команды для привязок и скриптов |
+| [Packages](https://inir.space/docs/packages/) | Каждая зависимость и зачем она нужна |
+| [Limitations](https://inir.space/docs/limitations/) | Известные проблемы и как их обойти |
 | [Architecture](../../ARCHITECTURE.md) | Как устроен код |
 
 ---
@@ -312,7 +312,7 @@ inir repair                     # doctor + restart + filtered log check
 ./setup rollback                # undo the last update
 ```
 
-Загляните в [Limitations](https://github.com/snowarch/inir/wiki/LIMITATIONS), прежде чем открывать issue. Если проще спросить человека, в Discord ответят быстрее.
+Загляните в [Limitations](https://inir.space/docs/limitations/), прежде чем открывать issue. Если проще спросить человека, в Discord ответят быстрее.
 
 ---
 

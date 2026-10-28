@@ -16,9 +16,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/wiki/INSTALL">Installa</a> &bull;
-  <a href="https://github.com/snowarch/inir/wiki/KEYBINDS">Scorciatoie</a> &bull;
-  <a href="https://github.com/snowarch/inir/wiki/IPC">Riferimento IPC</a> &bull;
+  <a href="https://inir.space/docs/install/">Installa</a> &bull;
+  <a href="https://inir.space/docs/keybinds/">Scorciatoie</a> &bull;
+  <a href="https://inir.space/docs/ipc/">Riferimento IPC</a> &bull;
   <a href="https://discord.gg/pAPTfAhZUJ">Discord</a> &bull;
   <a href="../../CONTRIBUTING.md">Contribuire</a>
 </p>
@@ -260,7 +260,7 @@ sudo make install       # system-wide instead of your home
 ./setup rollback        # undo the last update
 ```
 
-**Distribuzioni:** Arch è l'obiettivo principale. Anche Fedora e Debian/Ubuntu hanno un'installazione automatica delle dipendenze che usa prima i repository della distribuzione; le altre seguono la guida generale nella [lista dei pacchetti](https://github.com/snowarch/inir/wiki/PACKAGES). iNiR richiede Qt 6.9 o più recente: Ubuntu 26.04 LTS, Fedora 43 e Debian testing o successive.
+**Distribuzioni:** Arch è l'obiettivo principale. Anche Fedora e Debian/Ubuntu hanno un'installazione automatica delle dipendenze che usa prima i repository della distribuzione; le altre seguono la guida generale nella [lista dei pacchetti](https://inir.space/docs/packages/). iNiR richiede Qt 6.9 o più recente: Ubuntu 26.04 LTS, Fedora 43 e Debian testing o successive.
 
 ---
 
@@ -276,7 +276,7 @@ sudo make install       # system-wide instead of your home
 | <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>W</kbd> | Cambia famiglia di pannelli |
 | <kbd>Super</kbd> + <kbd>/</kbd> | Cheatsheet, nel caso dimentichi il resto |
 
-Elenco completo: [Scorciatoie](https://github.com/snowarch/inir/wiki/KEYBINDS)
+Elenco completo: [Scorciatoie](https://inir.space/docs/keybinds/)
 
 ---
 
@@ -288,16 +288,16 @@ Sono inclusi 3 sfondi. Per averne altri, guarda [iNiR-Walls](https://github.com/
 
 ## Documentazione
 
-Tutto quello che serve agli utenti è nella [Wiki](https://github.com/snowarch/inir/wiki) (in inglese).
+Tutto quello che serve agli utenti è su [inir.space/docs](https://inir.space/docs/) (in inglese).
 
 | Pagina | Contenuto |
 |---|---|
-| [Install](https://github.com/snowarch/inir/wiki/INSTALL) | Farlo partire |
-| [Setup](https://github.com/snowarch/inir/wiki/SETUP) | Aggiornamenti, migrazioni, rollback |
-| [Keybinds](https://github.com/snowarch/inir/wiki/KEYBINDS) | Tutte le scorciatoie |
-| [IPC](https://github.com/snowarch/inir/wiki/IPC) | Comandi per scorciatoie e script |
-| [Packages](https://github.com/snowarch/inir/wiki/PACKAGES) | Ogni dipendenza e perché c'è |
-| [Limitations](https://github.com/snowarch/inir/wiki/LIMITATIONS) | Cosa si sa che non va, e come aggirarlo |
+| [Install](https://inir.space/docs/install/) | Farlo partire |
+| [Setup](https://inir.space/docs/setup/) | Aggiornamenti, migrazioni, rollback |
+| [Keybinds](https://inir.space/docs/keybinds/) | Tutte le scorciatoie |
+| [IPC](https://inir.space/docs/ipc/) | Comandi per scorciatoie e script |
+| [Packages](https://inir.space/docs/packages/) | Ogni dipendenza e perché c'è |
+| [Limitations](https://inir.space/docs/limitations/) | Cosa si sa che non va, e come aggirarlo |
 | [Architecture](../../ARCHITECTURE.md) | Com'è organizzato il codice |
 
 ---
@@ -312,7 +312,7 @@ inir repair                     # doctor + restart + filtered log check
 ./setup rollback                # undo the last update
 ```
 
-Guarda [Limitations](https://github.com/snowarch/inir/wiki/LIMITATIONS) prima di aprire una issue. Se preferisci chiedere a qualcuno, sul Discord fai prima.
+Guarda [Limitations](https://inir.space/docs/limitations/) prima di aprire una issue. Se preferisci chiedere a qualcuno, sul Discord fai prima.
 
 ---
 

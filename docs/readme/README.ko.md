@@ -16,9 +16,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/wiki/INSTALL">설치</a> &bull;
-  <a href="https://github.com/snowarch/inir/wiki/KEYBINDS">단축키</a> &bull;
-  <a href="https://github.com/snowarch/inir/wiki/IPC">IPC 레퍼런스</a> &bull;
+  <a href="https://inir.space/docs/install/">설치</a> &bull;
+  <a href="https://inir.space/docs/keybinds/">단축키</a> &bull;
+  <a href="https://inir.space/docs/ipc/">IPC 레퍼런스</a> &bull;
   <a href="https://discord.gg/pAPTfAhZUJ">Discord</a> &bull;
   <a href="../../CONTRIBUTING.md">기여하기</a>
 </p>
@@ -260,7 +260,7 @@ sudo make install       # system-wide instead of your home
 ./setup rollback        # undo the last update
 ```
 
-**배포판:** Arch가 주 대상입니다. Fedora와 Debian/Ubuntu도 배포판 저장소를 먼저 쓰는 자동 의존성 설치가 있고, 그 밖의 배포판은 [패키지 목록](https://github.com/snowarch/inir/wiki/PACKAGES)의 일반 안내를 따르면 됩니다. iNiR는 Qt 6.9 이상이 필요합니다: Ubuntu 26.04 LTS, Fedora 43, Debian testing 이후.
+**배포판:** Arch가 주 대상입니다. Fedora와 Debian/Ubuntu도 배포판 저장소를 먼저 쓰는 자동 의존성 설치가 있고, 그 밖의 배포판은 [패키지 목록](https://inir.space/docs/packages/)의 일반 안내를 따르면 됩니다. iNiR는 Qt 6.9 이상이 필요합니다: Ubuntu 26.04 LTS, Fedora 43, Debian testing 이후.
 
 ---
 
@@ -276,7 +276,7 @@ sudo make install       # system-wide instead of your home
 | <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>W</kbd> | 패널 패밀리 전환 |
 | <kbd>Super</kbd> + <kbd>/</kbd> | 치트 시트, 나머지를 잊었을 때 |
 
-전체 목록: [단축키](https://github.com/snowarch/inir/wiki/KEYBINDS)
+전체 목록: [단축키](https://inir.space/docs/keybinds/)
 
 ---
 
@@ -288,16 +288,16 @@ sudo make install       # system-wide instead of your home
 
 ## 문서
 
-사용자용 내용은 모두 [Wiki](https://github.com/snowarch/inir/wiki)(영어)에 있습니다.
+사용자용 내용은 모두 [inir.space/docs](https://inir.space/docs/)(영어)에 있습니다.
 
 | 페이지 | 내용 |
 |---|---|
-| [Install](https://github.com/snowarch/inir/wiki/INSTALL) | 실행까지 |
-| [Setup](https://github.com/snowarch/inir/wiki/SETUP) | 업데이트, 마이그레이션, 롤백 |
-| [Keybinds](https://github.com/snowarch/inir/wiki/KEYBINDS) | 모든 단축키 |
-| [IPC](https://github.com/snowarch/inir/wiki/IPC) | 단축키나 스크립트에 쓰는 명령 |
-| [Packages](https://github.com/snowarch/inir/wiki/PACKAGES) | 모든 의존성과 필요한 이유 |
-| [Limitations](https://github.com/snowarch/inir/wiki/LIMITATIONS) | 알려진 문제와 해결 방법 |
+| [Install](https://inir.space/docs/install/) | 실행까지 |
+| [Setup](https://inir.space/docs/setup/) | 업데이트, 마이그레이션, 롤백 |
+| [Keybinds](https://inir.space/docs/keybinds/) | 모든 단축키 |
+| [IPC](https://inir.space/docs/ipc/) | 단축키나 스크립트에 쓰는 명령 |
+| [Packages](https://inir.space/docs/packages/) | 모든 의존성과 필요한 이유 |
+| [Limitations](https://inir.space/docs/limitations/) | 알려진 문제와 해결 방법 |
 | [Architecture](../../ARCHITECTURE.md) | 코드 구성 |
 
 ---
@@ -312,7 +312,7 @@ inir repair                     # doctor + restart + filtered log check
 ./setup rollback                # undo the last update
 ```
 
-이슈를 열기 전에 [Limitations](https://github.com/snowarch/inir/wiki/LIMITATIONS)를 확인하세요. 사람에게 묻고 싶다면 Discord가 더 빠릅니다.
+이슈를 열기 전에 [Limitations](https://inir.space/docs/limitations/)를 확인하세요. 사람에게 묻고 싶다면 Discord가 더 빠릅니다.
 
 ---
 

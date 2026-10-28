@@ -33,4 +33,7 @@ What works on Void Linux and how far it was checked. A capability counts as supp
 - The Void installer offers the same profiles as the Arch installer.
 - A missing optional profile does not block the base shell. Choosing a profile installs all of its providers.
 - WARP never starts a privileged service or creates an account from the shell. It reports a stopped daemon, and you register it yourself.
+- Install and update add `/etc/runit/core-services/90-inir-elogind.sh`, which mounts elogind's `/run/user` and
+  `/run/systemd` at boot. Without it, when D-Bus starts elogind before its own service does, the service mounts an
+  empty `/run/user` over it, hides your runtime directory, and the login hangs.
 - An XBPS package for iNiR is out of scope for now.

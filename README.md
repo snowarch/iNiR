@@ -16,9 +16,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/wiki/INSTALL">Install</a> &bull;
-  <a href="https://github.com/snowarch/inir/wiki/KEYBINDS">Keybinds</a> &bull;
-  <a href="https://github.com/snowarch/inir/wiki/IPC">IPC Reference</a> &bull;
+  <a href="https://inir.space/docs/install/">Install</a> &bull;
+  <a href="https://inir.space/docs/keybinds/">Keybinds</a> &bull;
+  <a href="https://inir.space/docs/ipc/">IPC Reference</a> &bull;
   <a href="https://discord.gg/pAPTfAhZUJ">Discord</a> &bull;
   <a href="CONTRIBUTING.md">Contributing</a>
 </p>
@@ -275,7 +275,7 @@ sudo make install       # system-wide instead of your home
 is also supported through XBPS. Fedora and Debian/Ubuntu
 retain their automated dependency paths with distro-repository-first fallbacks;
 other distributions use the generic guidance in the
-[package list](https://github.com/snowarch/inir/wiki/PACKAGES). iNiR needs Qt
+[package list](https://inir.space/docs/packages/). iNiR needs Qt
 6.9 or newer: Ubuntu 26.04 LTS, Fedora 43 and Debian testing or later.
 
 ---
@@ -292,7 +292,7 @@ other distributions use the generic guidance in the
 | <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>W</kbd> | Switch panel family |
 | <kbd>Super</kbd> + <kbd>/</kbd> | Cheatsheet, in case you forget the rest |
 
-Full list: [Keybinds](https://github.com/snowarch/inir/wiki/KEYBINDS)
+Full list: [Keybinds](https://inir.space/docs/keybinds/)
 
 ---
 
@@ -304,16 +304,16 @@ Full list: [Keybinds](https://github.com/snowarch/inir/wiki/KEYBINDS)
 
 ## Documentation
 
-Everything user-facing lives in the [Wiki](https://github.com/snowarch/inir/wiki).
+Everything user-facing lives at [inir.space/docs](https://inir.space/docs/).
 
 | Page | What's in it |
 |---|---|
-| [Install](https://github.com/snowarch/inir/wiki/INSTALL) | Getting it running |
-| [Setup](https://github.com/snowarch/inir/wiki/SETUP) | Updates, migrations, rollback |
-| [Keybinds](https://github.com/snowarch/inir/wiki/KEYBINDS) | Every shortcut |
-| [IPC](https://github.com/snowarch/inir/wiki/IPC) | Targets you can bind or script |
-| [Packages](https://github.com/snowarch/inir/wiki/PACKAGES) | Every dependency and why it's there |
-| [Limitations](https://github.com/snowarch/inir/wiki/LIMITATIONS) | What's known broken, and workarounds |
+| [Install](https://inir.space/docs/install/) | Getting it running |
+| [Setup](https://inir.space/docs/setup/) | Updates, migrations, rollback |
+| [Keybinds](https://inir.space/docs/keybinds/) | Every shortcut |
+| [IPC](https://inir.space/docs/ipc/) | Targets you can bind or script |
+| [Packages](https://inir.space/docs/packages/) | Every dependency and why it's there |
+| [Limitations](https://inir.space/docs/limitations/) | What's known broken, and workarounds |
 | [Void Linux](docs/VOID.md) | XBPS, runit/Turnstile, providers, validation and gotchas |
 | [Architecture](ARCHITECTURE.md) | How the code is put together |
 
@@ -329,7 +329,7 @@ inir repair                     # doctor + restart + filtered log check
 ./setup rollback                # undo the last update
 ```
 
-Check [Limitations](https://github.com/snowarch/inir/wiki/LIMITATIONS) before opening an issue. If you'd rather just ask someone, Discord is faster.
+Check [Limitations](https://inir.space/docs/limitations/) before opening an issue. If you'd rather just ask someone, Discord is faster.
 
 ---
 

@@ -16,9 +16,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/wiki/INSTALL">इंस्टॉल</a> &bull;
-  <a href="https://github.com/snowarch/inir/wiki/KEYBINDS">शॉर्टकट</a> &bull;
-  <a href="https://github.com/snowarch/inir/wiki/IPC">IPC संदर्भ</a> &bull;
+  <a href="https://inir.space/docs/install/">इंस्टॉल</a> &bull;
+  <a href="https://inir.space/docs/keybinds/">शॉर्टकट</a> &bull;
+  <a href="https://inir.space/docs/ipc/">IPC संदर्भ</a> &bull;
   <a href="https://discord.gg/pAPTfAhZUJ">Discord</a> &bull;
   <a href="../../CONTRIBUTING.md">योगदान</a>
 </p>
@@ -260,7 +260,7 @@ sudo make install       # system-wide instead of your home
 ./setup rollback        # undo the last update
 ```
 
-**डिस्ट्रो:** Arch मुख्य लक्ष्य है। Fedora और Debian/Ubuntu के लिए भी अपने-आप डिपेंडेंसी इंस्टॉल होती है, जो पहले डिस्ट्रो की रिपॉज़िटरी इस्तेमाल करती है; बाकी डिस्ट्रो [पैकेज सूची](https://github.com/snowarch/inir/wiki/PACKAGES) की सामान्य गाइड देखें। iNiR को Qt 6.9 या नया चाहिए: Ubuntu 26.04 LTS, Fedora 43 और Debian testing या उसके बाद।
+**डिस्ट्रो:** Arch मुख्य लक्ष्य है। Fedora और Debian/Ubuntu के लिए भी अपने-आप डिपेंडेंसी इंस्टॉल होती है, जो पहले डिस्ट्रो की रिपॉज़िटरी इस्तेमाल करती है; बाकी डिस्ट्रो [पैकेज सूची](https://inir.space/docs/packages/) की सामान्य गाइड देखें। iNiR को Qt 6.9 या नया चाहिए: Ubuntu 26.04 LTS, Fedora 43 और Debian testing या उसके बाद।
 
 ---
 
@@ -276,7 +276,7 @@ sudo make install       # system-wide instead of your home
 | <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>W</kbd> | पैनल फ़ैमिली बदलें |
 | <kbd>Super</kbd> + <kbd>/</kbd> | चीटशीट, अगर बाकी भूल जाएँ |
 
-पूरी सूची: [शॉर्टकट](https://github.com/snowarch/inir/wiki/KEYBINDS)
+पूरी सूची: [शॉर्टकट](https://inir.space/docs/keybinds/)
 
 ---
 
@@ -288,16 +288,16 @@ sudo make install       # system-wide instead of your home
 
 ## दस्तावेज़
 
-उपयोगकर्ताओं के लिए सब कुछ [Wiki](https://github.com/snowarch/inir/wiki) (अंग्रेज़ी में) पर है।
+उपयोगकर्ताओं के लिए सब कुछ [inir.space/docs](https://inir.space/docs/) (अंग्रेज़ी में) पर है।
 
 | पेज | क्या है |
 |---|---|
-| [Install](https://github.com/snowarch/inir/wiki/INSTALL) | चालू करना |
-| [Setup](https://github.com/snowarch/inir/wiki/SETUP) | अपडेट, माइग्रेशन, रोलबैक |
-| [Keybinds](https://github.com/snowarch/inir/wiki/KEYBINDS) | हर शॉर्टकट |
-| [IPC](https://github.com/snowarch/inir/wiki/IPC) | शॉर्टकट और स्क्रिप्ट के लिए कमांड |
-| [Packages](https://github.com/snowarch/inir/wiki/PACKAGES) | हर डिपेंडेंसी और वह क्यों है |
-| [Limitations](https://github.com/snowarch/inir/wiki/LIMITATIONS) | जानी-पहचानी खामियाँ और उनके उपाय |
+| [Install](https://inir.space/docs/install/) | चालू करना |
+| [Setup](https://inir.space/docs/setup/) | अपडेट, माइग्रेशन, रोलबैक |
+| [Keybinds](https://inir.space/docs/keybinds/) | हर शॉर्टकट |
+| [IPC](https://inir.space/docs/ipc/) | शॉर्टकट और स्क्रिप्ट के लिए कमांड |
+| [Packages](https://inir.space/docs/packages/) | हर डिपेंडेंसी और वह क्यों है |
+| [Limitations](https://inir.space/docs/limitations/) | जानी-पहचानी खामियाँ और उनके उपाय |
 | [Architecture](../../ARCHITECTURE.md) | कोड कैसे बना है |
 
 ---
@@ -312,7 +312,7 @@ inir repair                     # doctor + restart + filtered log check
 ./setup rollback                # undo the last update
 ```
 
-issue खोलने से पहले [Limitations](https://github.com/snowarch/inir/wiki/LIMITATIONS) देखें। किसी से सीधे पूछना हो तो Discord पर जल्दी जवाब मिलता है।
+issue खोलने से पहले [Limitations](https://inir.space/docs/limitations/) देखें। किसी से सीधे पूछना हो तो Discord पर जल्दी जवाब मिलता है।
 
 ---
 

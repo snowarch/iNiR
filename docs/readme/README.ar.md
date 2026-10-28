@@ -18,9 +18,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/wiki/INSTALL">التثبيت</a> &bull;
-  <a href="https://github.com/snowarch/inir/wiki/KEYBINDS">الاختصارات</a> &bull;
-  <a href="https://github.com/snowarch/inir/wiki/IPC">مرجع IPC</a> &bull;
+  <a href="https://inir.space/docs/install/">التثبيت</a> &bull;
+  <a href="https://inir.space/docs/keybinds/">الاختصارات</a> &bull;
+  <a href="https://inir.space/docs/ipc/">مرجع IPC</a> &bull;
   <a href="https://discord.gg/pAPTfAhZUJ">Discord</a> &bull;
   <a href="../../CONTRIBUTING.md">المساهمة</a>
 </p>
@@ -278,7 +278,7 @@ sudo make install       # system-wide instead of your home
 
 </div>
 
-**التوزيعات:** Arch هو الهدف الأساسي. لدى Fedora وDebian/Ubuntu أيضًا تثبيت تلقائي للاعتماديات يبدأ بمستودعات التوزيعة؛ أما التوزيعات الأخرى فتتبع الإرشادات العامة في [قائمة الحزم](https://github.com/snowarch/inir/wiki/PACKAGES). يحتاج iNiR إلى Qt 6.9 أو أحدث: Ubuntu 26.04 LTS وFedora 43 وDebian testing أو ما بعدها.
+**التوزيعات:** Arch هو الهدف الأساسي. لدى Fedora وDebian/Ubuntu أيضًا تثبيت تلقائي للاعتماديات يبدأ بمستودعات التوزيعة؛ أما التوزيعات الأخرى فتتبع الإرشادات العامة في [قائمة الحزم](https://inir.space/docs/packages/). يحتاج iNiR إلى Qt 6.9 أو أحدث: Ubuntu 26.04 LTS وFedora 43 وDebian testing أو ما بعدها.
 
 ---
 
@@ -294,7 +294,7 @@ sudo make install       # system-wide instead of your home
 | <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>W</kbd> | تبديل عائلة اللوحات |
 | <kbd>Super</kbd> + <kbd>/</kbd> | ورقة الاختصارات، إن نسيت الباقي |
 
-القائمة الكاملة: [الاختصارات](https://github.com/snowarch/inir/wiki/KEYBINDS)
+القائمة الكاملة: [الاختصارات](https://inir.space/docs/keybinds/)
 
 ---
 
@@ -306,16 +306,16 @@ sudo make install       # system-wide instead of your home
 
 ## التوثيق
 
-كل ما يخص المستخدمين موجود في [الويكي](https://github.com/snowarch/inir/wiki) (بالإنجليزية).
+كل ما يخص المستخدمين موجود في [inir.space/docs](https://inir.space/docs/) (بالإنجليزية).
 
 | الصفحة | المحتوى |
 |---|---|
-| [Install](https://github.com/snowarch/inir/wiki/INSTALL) | تشغيله |
-| [Setup](https://github.com/snowarch/inir/wiki/SETUP) | التحديثات والترحيل والتراجع |
-| [Keybinds](https://github.com/snowarch/inir/wiki/KEYBINDS) | كل الاختصارات |
-| [IPC](https://github.com/snowarch/inir/wiki/IPC) | أوامر للاختصارات والسكربتات |
-| [Packages](https://github.com/snowarch/inir/wiki/PACKAGES) | كل اعتمادية وسبب وجودها |
-| [Limitations](https://github.com/snowarch/inir/wiki/LIMITATIONS) | المشاكل المعروفة وطرق الالتفاف عليها |
+| [Install](https://inir.space/docs/install/) | تشغيله |
+| [Setup](https://inir.space/docs/setup/) | التحديثات والترحيل والتراجع |
+| [Keybinds](https://inir.space/docs/keybinds/) | كل الاختصارات |
+| [IPC](https://inir.space/docs/ipc/) | أوامر للاختصارات والسكربتات |
+| [Packages](https://inir.space/docs/packages/) | كل اعتمادية وسبب وجودها |
+| [Limitations](https://inir.space/docs/limitations/) | المشاكل المعروفة وطرق الالتفاف عليها |
 | [Architecture](../../ARCHITECTURE.md) | كيف نُظّم الكود |
 
 ---
@@ -334,7 +334,7 @@ inir repair                     # doctor + restart + filtered log check
 
 </div>
 
-راجع [Limitations](https://github.com/snowarch/inir/wiki/LIMITATIONS) قبل فتح issue. وإن فضّلت أن تسأل أحدًا، فـ Discord أسرع.
+راجع [Limitations](https://inir.space/docs/limitations/) قبل فتح issue. وإن فضّلت أن تسأل أحدًا، فـ Discord أسرع.
 
 ---
 

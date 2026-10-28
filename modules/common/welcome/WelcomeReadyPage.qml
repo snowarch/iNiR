@@ -326,13 +326,13 @@ Flickable {
             WelcomeActionButton {
                 materialIcon: "open_in_new"
                 label: Translation.tr("Troubleshoot")
-                onClicked: Qt.openUrlExternally("https://github.com/snowarch/inir/wiki/Troubleshooting")
+                onClicked: Qt.openUrlExternally("https://inir.space/docs/limitations/")
             }
 
             WelcomeActionButton {
                 materialIcon: "menu_book"
                 label: Translation.tr("Docs")
-                onClicked: Qt.openUrlExternally("https://github.com/snowarch/inir/wiki")
+                onClicked: Qt.openUrlExternally("https://inir.space/docs/")
             }
 
             WelcomeActionButton {

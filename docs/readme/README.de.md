@@ -16,9 +16,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/snowarch/inir/wiki/INSTALL">Installieren</a> &bull;
-  <a href="https://github.com/snowarch/inir/wiki/KEYBINDS">Tastenkürzel</a> &bull;
-  <a href="https://github.com/snowarch/inir/wiki/IPC">IPC-Referenz</a> &bull;
+  <a href="https://inir.space/docs/install/">Installieren</a> &bull;
+  <a href="https://inir.space/docs/keybinds/">Tastenkürzel</a> &bull;
+  <a href="https://inir.space/docs/ipc/">IPC-Referenz</a> &bull;
   <a href="https://discord.gg/pAPTfAhZUJ">Discord</a> &bull;
   <a href="../../CONTRIBUTING.md">Mitwirken</a>
 </p>
@@ -260,7 +260,7 @@ sudo make install       # system-wide instead of your home
 ./setup rollback        # undo the last update
 ```
 
-**Distributionen:** Arch ist das Hauptziel. Fedora und Debian/Ubuntu haben ebenfalls automatische Abhängigkeitspfade, die zuerst die Paketquellen der Distribution nutzen; andere Distributionen folgen der allgemeinen Anleitung in der [Paketliste](https://github.com/snowarch/inir/wiki/PACKAGES). iNiR braucht Qt 6.9 oder neuer: Ubuntu 26.04 LTS, Fedora 43 und Debian testing oder später.
+**Distributionen:** Arch ist das Hauptziel. Fedora und Debian/Ubuntu haben ebenfalls automatische Abhängigkeitspfade, die zuerst die Paketquellen der Distribution nutzen; andere Distributionen folgen der allgemeinen Anleitung in der [Paketliste](https://inir.space/docs/packages/). iNiR braucht Qt 6.9 oder neuer: Ubuntu 26.04 LTS, Fedora 43 und Debian testing oder später.
 
 ---
 
@@ -276,7 +276,7 @@ sudo make install       # system-wide instead of your home
 | <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>W</kbd> | Panel-Familie wechseln |
 | <kbd>Super</kbd> + <kbd>/</kbd> | Cheatsheet, falls du den Rest vergisst |
 
-Vollständige Liste: [Tastenkürzel](https://github.com/snowarch/inir/wiki/KEYBINDS)
+Vollständige Liste: [Tastenkürzel](https://inir.space/docs/keybinds/)
 
 ---
 
@@ -288,16 +288,16 @@ Vollständige Liste: [Tastenkürzel](https://github.com/snowarch/inir/wiki/KEYBI
 
 ## Dokumentation
 
-Alles für Nutzer steht im [Wiki](https://github.com/snowarch/inir/wiki) (auf Englisch).
+Alles für Nutzer steht auf [inir.space/docs](https://inir.space/docs/) (auf Englisch).
 
 | Seite | Inhalt |
 |---|---|
-| [Install](https://github.com/snowarch/inir/wiki/INSTALL) | Zum Laufen bringen |
-| [Setup](https://github.com/snowarch/inir/wiki/SETUP) | Updates, Migrationen, Rollback |
-| [Keybinds](https://github.com/snowarch/inir/wiki/KEYBINDS) | Alle Tastenkürzel |
-| [IPC](https://github.com/snowarch/inir/wiki/IPC) | Befehle für Tastenkürzel und Skripte |
-| [Packages](https://github.com/snowarch/inir/wiki/PACKAGES) | Jede Abhängigkeit und warum sie da ist |
-| [Limitations](https://github.com/snowarch/inir/wiki/LIMITATIONS) | Bekannte Probleme und wie man sie umgeht |
+| [Install](https://inir.space/docs/install/) | Zum Laufen bringen |
+| [Setup](https://inir.space/docs/setup/) | Updates, Migrationen, Rollback |
+| [Keybinds](https://inir.space/docs/keybinds/) | Alle Tastenkürzel |
+| [IPC](https://inir.space/docs/ipc/) | Befehle für Tastenkürzel und Skripte |
+| [Packages](https://inir.space/docs/packages/) | Jede Abhängigkeit und warum sie da ist |
+| [Limitations](https://inir.space/docs/limitations/) | Bekannte Probleme und wie man sie umgeht |
 | [Architecture](../../ARCHITECTURE.md) | Wie der Code aufgebaut ist |
 
 ---
@@ -312,7 +312,7 @@ inir repair                     # doctor + restart + filtered log check
 ./setup rollback                # undo the last update
 ```
 
-Schau in [Limitations](https://github.com/snowarch/inir/wiki/LIMITATIONS), bevor du ein Issue öffnest. Wenn du lieber jemanden fragst: Im Discord geht es schneller.
+Schau in [Limitations](https://inir.space/docs/limitations/), bevor du ein Issue öffnest. Wenn du lieber jemanden fragst: Im Discord geht es schneller.
 
 ---
 
