@@ -1,0 +1,20 @@
+{
+  "manifest": "https://inir.space/releases/manifest.json",
+  "fallback": "https://github.com/snowarch/{repo}/releases/download/v{version}/{file}",
+  "parts": {
+    "qs-rs": {
+      "repo": "qs-rs",
+      "dest": "runtime",
+      "version": "0.1.0",
+      "file": "qs-rs-0.1.0-x86_64.tar.gz",
+      "sha256": ""
+    },
+    "inir-accel": {
+      "repo": "inir-accel",
+      "dest": "accel",
+      "version": "0.1.0",
+      "file": "inir-accel-0.1.0-x86_64.tar.gz",
+      "sha256": ""
+    }
+  }
+}
