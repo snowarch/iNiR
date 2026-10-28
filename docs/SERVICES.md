@@ -16,7 +16,17 @@ Only a service with an `IpcHandler` answers `inir <target> <function>`. Some han
 grep -rl IpcHandler --include=*.qml . | xargs grep -oP 'target:\s*"\K[^"]+'
 ```
 
-New targets go in [IPC](IPC.md).
+A new target carries a `///` comment right above its `IpcHandler` (what it is for; a ```kdl block in it becomes its example) and one above each function. The [IPC](IPC.md) page, `inir help` and tab completion are built from those comments:
+
+```qml
+/// Volume and mute control.
+IpcHandler {
+    target: "audio"
+
+    /// Toggle speaker mute
+    function mute(): void { root.toggleMute() }
+}
+```
 
 ## Compositor and windows
 
