@@ -8,7 +8,7 @@ These commands keep an installed iNiR healthy. Run them in a terminal. `inir upd
 inir update
 ```
 
-The update checks for new changes, takes a snapshot so you can roll back, pulls the changes, copies the new shell files and restarts the shell. Your settings are not overwritten. It also installs what the shell needs and is missing, such as plasma-integration, a colour emoji font and the shell's fonts, unless you installed with `--skip-deps`. When a release needs a change to your config, the update migrates it and keeps a backup. Required migrations run on their own. Optional ones are offered to you.
+The update checks for new changes, takes a snapshot so you can roll back, pulls the changes, copies the new shell files and restarts the shell. Your settings are not overwritten. It also installs what the shell needs and is missing, such as plasma-integration, a colour emoji font and the shell's fonts. It asks first, since that needs your password. With `--skip-deps`, or when you manage the packages yourself, it leaves them to you. When a release needs a change to your config, the update migrates it and keeps a backup. Required migrations run on their own. Optional ones are offered to you.
 
 If iNiR came from your distro's package manager, update the shell through that package manager instead.
 

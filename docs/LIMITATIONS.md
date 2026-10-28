@@ -53,7 +53,7 @@ Clipboard history needs `cliphist`. It keeps the latest 400 entries. Image entri
 
 ## Language
 
-Language follows your system locale. Change it in Settings › System › Locale › UI Language (Waffle: General › Time & Language; iRiS: Home › Language).
+Language follows your system locale. Change it in Settings › System › Language › Interface Language (Waffle: General › Time & Language; iRiS: Home › Language).
 
 ## Performance
 
