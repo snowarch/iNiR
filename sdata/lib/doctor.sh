@@ -392,7 +392,25 @@ check_critical_files() {
     for file in "${critical[@]}"; do
         [[ ! -f "$target/$file" ]] && { doctor_fail "Missing: $file"; ((missing++)) || true; }
     done
-    
+
+    # families come from the hub: the one in use, and every plugin linked in, must reach its plugin.json
+    local family="ii" config="${DOTS_CORE_CONFDIR}/config.json" link
+    if [[ -f "$config" ]]; then
+        # no jq or a broken config: the family can't be told, so it isn't judged
+        command -v jq &>/dev/null \
+            && family="$(jq -r 'if (.panelFamily | type) == "string" and .panelFamily != "" then .panelFamily else "ii" end' \
+                "$config" 2>/dev/null)" || family=""
+    fi
+    if [[ -n "$family" && ! -f "$target/modules/$family/plugin.json" ]]; then
+        doctor_fail "Desktop family not installed: $family (run: inir hub install $family)"
+        ((missing++)) || true
+    fi
+    for link in "$target"/modules/*; do
+        [[ -L "$link" && ! -e "$link" ]] || continue
+        doctor_fail "Plugin link broken: modules/${link##*/} (run: inir hub install ${link##*/})"
+        ((missing++)) || true
+    done
+
     [[ $missing -eq 0 ]] && doctor_pass "Critical files present"
 }
 
