@@ -753,18 +753,26 @@ check_fonts() {
 
     local config_file="${DOTS_CORE_CONFDIR}/config.json"
     if [[ -f "$config_file" ]] && command -v jq &>/dev/null; then
-        local configured_font
+        local configured_font font_keys runtime manifest
+        # Material's fonts are the base config's; every other family names its setting and the font it falls back to
+        # in plugin.json (settings.font); one broken manifest costs only its own family
+        runtime="$(doctor_runtime_dir)"
+        font_keys="$(for manifest in ${runtime:+"$runtime"/modules/*/plugin.json}; do
+            jq -c '.settings.font? | select(type == "object" and (.key | type) == "string" and .key != "")' \
+                "$manifest" 2>/dev/null
+        done | jq -sc . 2>/dev/null)"
         while IFS= read -r configured_font; do
             [[ -n "$configured_font" ]] || continue
             case "${configured_font,,}" in
                 sans|sans-serif|serif|monospace|system-ui|auto) continue ;;
             esac
             _font_installed "$configured_font" || missing_configured+=("$configured_font")
-        done < <(jq -r '[
+        done < <(jq -r --argjson keys "${font_keys:-[]}" '[
             .appearance.typography.mainFont,
             .appearance.typography.titleFont,
             .appearance.typography.monospaceFont,
-            .waffles.theming.font.family
+            ($keys[] as $f | (try getpath($f.key | split(".")) catch null) as $v
+                | if ($v | type) == "string" and $v != "" then $v else $f.fallback end)
         ] | .[] | select(type == "string" and length > 0)' "$config_file" 2>/dev/null | sort -u)
     fi
 
