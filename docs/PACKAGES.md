@@ -2,6 +2,8 @@
 
 The installer installs everything listed here. Use it to see what a feature needs, or what is missing when something stops working.
 
+Some fonts come with iNiR itself, on every distro: Geist and Geist Mono (iRiS), Inter, Archivo, Google Sans Flex, Montserrat and Rubik. They live in `assets/fonts` and the shell links them into `~/.local/share/fonts/inir`, so no package is needed.
+
 ## Arch
 
 On Arch, the installer uses the bundles in `sdata/dist-arch/`. Most packages come from the official repositories.
