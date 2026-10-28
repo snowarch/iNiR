@@ -423,6 +423,9 @@ find_qs() {
     elif [[ -n "${INIR_QS_BIN:-}" && -x "$INIR_QS_BIN" ]]; then
         # Another Quickshell runtime for the shell (e.g. qs-rs), set by the service or the session.
         qs_bin="$INIR_QS_BIN"
+    elif [[ -x "${XDG_DATA_HOME:-$HOME/.local/share}/inir/runtime/current/bin/qs" ]]; then
+        # qs-rs with its own Qt, as setup installs it (sdata/lib/prebuilt.sh); Quickshell when it is not there
+        qs_bin="${XDG_DATA_HOME:-$HOME/.local/share}/inir/runtime/current/bin/qs"
     fi
     if [[ ! -x "$qs_bin" ]]; then
         qs_bin="$(command -v qs || true)"
@@ -1423,6 +1426,8 @@ check_qs_abi() {
     # See: https://github.com/snowarch/iNiR/issues/93
     local mismatch_detected=false
     local mismatch_msg=""
+    # a runtime with its own Qt (qt.conf beside it, setup's qs-rs) never meets the system's
+    [[ -f "$(dirname "$(readlink -f "$qs_bin" 2>/dev/null)")/qt.conf" ]] && return 0
 
     # A pass is cached on the mtimes of both binaries: the same pair needs neither `qs --version`
     # (a whole Qt start, ~200 ms on every boot) nor the strings scan.

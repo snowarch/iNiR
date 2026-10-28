@@ -55,6 +55,9 @@ create_snapshot() {
         cp -a "${XDG_CONFIG_HOME}/niri/config.d" "${snapshot_dir}/niri-config.d"
     fi
     
+    # which qs-rs and inir-accel versions are switched on (sdata/lib/prebuilt.sh)
+    prebuilt_links >"${snapshot_dir}/prebuilt-links"
+
     # Copy migrations state
     if [[ -f "${INIR_CONFIG_DIR}/migrations.json" ]]; then
         cp "${INIR_CONFIG_DIR}/migrations.json" "${snapshot_dir}/"
@@ -204,6 +207,8 @@ restore_snapshot() {
         cp -a "${snapshot_dir}/niri-config.d/." "${XDG_CONFIG_HOME}/niri/config.d/"
     fi
     
+    prebuilt_restore_links "${snapshot_dir}/prebuilt-links"
+
     # Restore migrations state
     if [[ -f "${snapshot_dir}/migrations.json" ]]; then
         mkdir -p "${INIR_CONFIG_DIR}"

@@ -111,6 +111,7 @@ source ./sdata/lib/uninstall.sh
 source ./sdata/lib/user-modifications.sh
 source ./sdata/lib/cli-binary.sh
 source ./sdata/lib/hub-plugins.sh
+source ./sdata/lib/prebuilt.sh
 
 prevent_sudo_or_root
 
@@ -2711,6 +2712,15 @@ run_update() {
         fi
         mapfile -t hub_plugins <<<"$needed"
         [[ -n "${hub_plugins[0]:-}" ]] || hub_plugins=()
+        # qs-rs and inir-accel the same way (sdata/lib/prebuilt.sh): unpacked beside the old ones, nothing switched yet
+        if [[ -n "$(prebuilt_parts)" ]]; then
+            tui_info "Fetching qs-rs and inir-accel..."
+            if ! prebuilt_fetch; then
+                _report_update_failure 25 "Could not get qs-rs and inir-accel, so nothing changed. inir update tries again"
+                tui_error "Could not get qs-rs and inir-accel, so nothing changed. inir update tries again once online"
+                return 25
+            fi
+        fi
     fi
 
     # Sync files
@@ -3057,6 +3067,8 @@ run_update() {
     _step_phase_header 6 "Python / YT runtime"
     install-python-packages
     ensure-ytmusic-js-runtime || tui_warn "YT Music needs Deno; run 'inir doctor' once online"
+    # after the venv: accel hooks its python3
+    prebuilt_activate
 
     # Signal success to the shell UI before restart
     _write_update_status "success"
@@ -3069,7 +3081,16 @@ run_update() {
             _step_phase_done "Shell restart skipped: inir.service is masked"
         elif has_usable_systemd_user_manager && systemctl --user cat inir.service >/dev/null 2>&1; then
             restart_shell_and_verify 30
-            case $? in
+            local verified=$?
+            # qs-rs that won't load on this machine: the same version on Quickshell before going back
+            if ((verified == 1)) && [[ -L "$(_prebuilt_home)/runtime/current" ]] && command -v qs >/dev/null 2>&1; then
+                prebuilt_runtime_off
+                restart_shell_and_verify 30 && {
+                    verified=0
+                    tui_warn "qs-rs did not start here, so the shell runs on Quickshell; inir update tries qs-rs again"
+                }
+            fi
+            case $verified in
                 0) _step_phase_done "Shell restarted on the new version" ;;
                 1) _step_phase_fail "The shell did not load the new version"
                    # the old shell reads this when it starts again and shows it on its update indicator

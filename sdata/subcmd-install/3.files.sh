@@ -258,6 +258,12 @@ case "${SKIP_QUICKSHELL}" in
     # Install Python packages now that requirements.txt is in place
     showfun install-python-packages
     v install-python-packages
+    # qs-rs and inir-accel prebuilt (sdata/lib/prebuilt.sh); without them the shell runs on Quickshell
+    if prebuilt_fetch; then
+      prebuilt_activate
+    else
+      log_warning "Could not get qs-rs and inir-accel; the shell runs on Quickshell until inir update gets them"
+    fi
     # YT Music is optional: without network or curl the install still finishes
     # and `inir doctor` installs Deno later.
     showfun ensure-ytmusic-js-runtime
