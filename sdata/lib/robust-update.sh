@@ -128,10 +128,12 @@ cleanup_old_backups() {
 #####################################################################################
 
 # Restart inir.service and confirm from its own log that the new files loaded: 0 loaded, 1 failed (errors printed), 2 not confirmed.
-# Quickshell 0.3 and qs-rs log "Configuration Loaded", or "Failed to load configuration" followed by why.
+# Quickshell 0.3 and qs-rs log "Configuration Loaded", or "Failed to load configuration" followed by why; then the
+# base logs "[Plugins] family <id> loaded" once the family's panels are up, or "failed to load" when a part doesn't
+# compile (a shell without panels). A base from before that line (a rollback to v2.33) is taken as loaded.
 # The service owns the shell: it is never killed by hand or started twice (KillMode=process keeps this script alive).
 restart_shell_and_verify() {
-    local timeout="${1:-30}" since out deadline
+    local timeout="${1:-30}" since out deadline loaded_at=0
     command -v systemctl >/dev/null 2>&1 && systemctl --user cat inir.service >/dev/null 2>&1 || return 2
     since=$(date +%s)
     # --no-block: the unit is Type=dbus, so a shell that never loads would hold restart until its start timeout
@@ -148,7 +150,15 @@ restart_shell_and_verify() {
                 | sed -n '/Failed to load configuration/,$p' | sed '1d; s/^[[:space:]]*[A-Z]*:[[:space:]]*/  /' | head -5
             return 1
         fi
-        grep -q "Configuration Loaded" <<<"$out" && return 0
+        if grep -q "\[Plugins\] family .* failed to load" <<<"$out"; then
+            grep -B3 "\[Plugins\] family .* failed to load" <<<"$out" | sed 's/^[[:space:]]*[A-Z]*:[[:space:]]*/  /' | head -5
+            return 1
+        fi
+        grep -q "\[Plugins\] family .* loaded" <<<"$out" && return 0
+        if grep -q "Configuration Loaded" <<<"$out"; then
+            (( loaded_at )) || loaded_at=$SECONDS
+            (( SECONDS - loaded_at >= 15 )) && return 0
+        fi
         # a runtime that dies before it loads anything (a crash, a missing library) leaves the unit failed
         if systemctl --user is-failed --quiet inir.service; then
             tail -n 5 <<<"$out" | sed 's/^[[:space:]]*[A-Z]*:[[:space:]]*/  /'

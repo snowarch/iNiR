@@ -3569,7 +3569,7 @@ Singleton {
     }
     
     function generateScssFromColors(c) {
-        // Generate SCSS format matching generate_colors_material.py output
+        // Generate SCSS format matching inir-accel material-colors output
         let scss = `$darkmode: ${c.darkmode};\n`;
         scss += `$transparent: ${c.transparent ?? false};\n`;
         

@@ -960,6 +960,21 @@ ShellRoot {
             property bool panelsUsed: false
             onChosenChanged: if (family.chosen) family.criticalUsed = true
             onPanelsWantedChanged: if (family.panelsWanted) family.panelsUsed = true
+            // A part that doesn't compile leaves the person without panels: the update reads these lines and rolls the
+            // family back (robust-update.sh, restart_shell_and_verify). The type loader compiles it once for both.
+            function checkPart(url: string) {
+                if (url === "") return
+                const part = Qt.createComponent(url, Component.PreferSynchronous)
+                if (part.status === Component.Error)
+                    console.error(`[Plugins] family ${family.modelData} failed to load: ${part.errorString().trim()}`)
+                part.destroy()
+            }
+            readonly property string criticalSource: criticalParts.source
+            readonly property string panelsSource: panelParts.source
+            readonly property bool up: panelParts.item !== null
+            onCriticalSourceChanged: family.checkPart(family.criticalSource)
+            onPanelsSourceChanged: family.checkPart(family.panelsSource)
+            onUpChanged: if (family.up) console.info(`[Plugins] family ${family.modelData} loaded`)
             Component.onCompleted: {
                 family.criticalUsed = family.criticalUsed || family.chosen
                 family.panelsUsed = family.panelsUsed || family.panelsWanted

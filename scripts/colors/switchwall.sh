@@ -646,6 +646,7 @@ switch() {
         fi
     else
         echo "[switchwall] Warning: colors.json generation failed, keeping previous JSON" >&2
+        [[ -x "$INIR_ACCEL" ]] || notify-send -a iNiR "Colours not updated" "inir-accel is missing. Run: inir update" 2>/dev/null || true
         rm -f "$_json_tmp"
         rm -f "$_palette_tmp"
         rm -f "$_app_palette_tmp"
