@@ -17,7 +17,8 @@ Each card says where the item shows up in your family and which permissions it a
 
 - **Add to desktop** (Material) and **Use** (iRiS) put a widget on your desktop.
 - **Apply** switches to a colour theme or an iRiS theme.
-- **Update** appears when a newer version is out. **Update all** does every one.
+- **Update** appears when a newer version is out. **Update all** does every one, and so does `inir update`. The
+  update check posts a notice when your items have new versions.
 - **Remove** is on the item's page. It deletes the item's files and nothing else.
 
 If a folder you made already has the item's name, the card says **Name taken**, and nothing is installed over your folder.

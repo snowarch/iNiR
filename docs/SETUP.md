@@ -14,6 +14,11 @@ The update checks for new changes, takes a snapshot so you can roll back, pulls 
 from the hub, the prebuilt runtime and the `inir` command. Your config and edits stay, and a version that won't load is
 rolled back. If it stops because the checkout has local changes or commits of its own, it prints the command to run.
 
+The hub moves on its own: when iNiR itself has nothing new, `inir update` still brings new versions of the families,
+themes, widgets and web apps you installed, and a family version that won't load goes back to the one you had. The
+update check also posts "New in the iNiR Hub: ..." when there are some: run `inir update`, or update them on the
+[Hub](HUB.md) page.
+
 If iNiR came from your distro's package manager, update the shell through that package manager instead.
 
 ### Coming from 2.33 without an update
