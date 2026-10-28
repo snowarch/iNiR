@@ -70,7 +70,8 @@ A new look, Design, theme or widget is a plugin in inir-hub, never a folder here
 ## IPC
 
 `IpcHandler { target: "name" }` in QML, called as `inir <target> <function> [args]`. Every function declares its
-return type. `docs/IPC.md` is the reference.
+return type. A `///` comment above the handler and above each function says what it does; the IPC page on
+inir.space, `inir help` and tab completion are built from those comments.
 
 ## Colours
 

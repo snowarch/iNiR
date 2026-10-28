@@ -198,7 +198,7 @@ Always update these together:
 | Config schema | `defaults/config.json` + consumer(s) |
 | A service | `services/qmldir` (if new) |
 | A shared widget | `modules/common/widgets/qmldir` (if new) |
-| IPC targets | `docs/IPC.md` |
+| IPC targets | The `///` comment above the `IpcHandler` and each function (the IPC page is built from them) |
 | Dependencies | `docs/PACKAGES.md` |
 
 ## Migrations
