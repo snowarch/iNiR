@@ -410,6 +410,7 @@ Singleton {
         path: Qt.resolvedUrl(root.filePath)
         watchChanges: true
         atomicWrites: true
+        printErrors: false
 
         onLoaded: {
             if (root._writeInFlight) {

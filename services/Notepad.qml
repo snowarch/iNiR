@@ -84,6 +84,7 @@ Singleton {
     FileView {
         id: tabsFileView
         path: Qt.resolvedUrl(root.tabsFilePath)
+        printErrors: false
 
         onLoaded: {
             if (root._saving) { root._saving = false; return }
@@ -116,6 +117,7 @@ Singleton {
     // genuinely missing/invalid (path assigned above).
     FileView {
         id: legacyFileView
+        printErrors: false
 
         onLoaded: {
             const content = legacyFileView.text()

@@ -727,9 +727,9 @@ tui_info "Configuring environment variables..."
 # Primary: environment {} block in Niri config.kdl (already installed)
 # Secondary: shell profile files for terminals outside Niri session (SSH, TTY, etc.)
 
-# Verify Niri config has the variable
-if grep -q "INIR_VENV" "${XDG_CONFIG_HOME}/niri/config.kdl" 2>/dev/null || \
-   grep -q "ILLOGICAL_IMPULSE_VIRTUAL_ENV" "${XDG_CONFIG_HOME}/niri/config.kdl" 2>/dev/null; then
+# Verify Niri config has the variable (the modular layout keeps it in config.d/40-environment.kdl)
+if grep -rqs -e "INIR_VENV" -e "ILLOGICAL_IMPULSE_VIRTUAL_ENV" \
+   "${XDG_CONFIG_HOME}/niri/config.kdl" "${XDG_CONFIG_HOME}/niri/config.d"; then
     log_success "Environment variable configured in Niri config"
 else
     log_warning "INIR_VENV not found in Niri config"

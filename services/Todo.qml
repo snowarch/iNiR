@@ -173,6 +173,7 @@ Singleton {
     FileView {
         id: todoFileView
         path: Qt.resolvedUrl(root.filePath)
+        printErrors: false
         onLoaded: {
             const fileContents = todoFileView.text()
             try {
@@ -210,6 +211,7 @@ Singleton {
         id: txtFileView
         path: Qt.resolvedUrl(root.txtFilePath)
         watchChanges: true
+        printErrors: false
         onFileChanged: {
             if (!root._startupLock) {
                 txtDebounce.restart()
@@ -218,6 +220,8 @@ Singleton {
         onLoadFailed: (error) => {
             if (error == FileViewError.FileNotFound) {
                 _log("[Todo] txt not found, will be created on next list change")
+            } else {
+                console.log("[Todo] Error loading txt:", error)
             }
         }
     }

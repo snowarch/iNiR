@@ -60,6 +60,7 @@ Singleton {
     FileView {
         id: persistentStatesFileView
         path: root.filePath
+        printErrors: false
 
         watchChanges: true
         onFileChanged: fileReloadTimer.restart()
