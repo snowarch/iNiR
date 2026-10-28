@@ -25,6 +25,11 @@ tui_info "Architecture: ${ARCH}"
 #####################################################################################
 if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
   tui_info "Installing missing dependencies only..."
+  # not a package: the recipe picks what this machine takes and turns it on
+  if [[ " $ONLY_MISSING_DEPS " == *" power-profiles "* ]]; then
+    provider_power-profiles || log_warning "power-profiles-daemon could not be installed; the profile buttons stay off"
+    ONLY_MISSING_DEPS="$(tr ' ' '\n' <<<"$ONLY_MISSING_DEPS" | grep -vx power-profiles | xargs)"
+  fi
 
   installflags=""
   $ask || installflags="-y"
@@ -538,6 +543,8 @@ provider_songrec
 provider_missioncenter
 
 provider_gowall
+
+provider_power-profiles || log_warning "power-profiles-daemon could not be installed; the profile buttons stay off"
 
 provider_darkly
 

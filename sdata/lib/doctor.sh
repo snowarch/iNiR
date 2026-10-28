@@ -133,6 +133,16 @@ check_dependencies() {
         fi
     done
 
+    # the profile buttons' daemon where nothing manages power yet; Void lists it above
+    case "${OS_GROUP_ID:-unknown}" in
+        arch|fedora|debian|ubuntu)
+            if power_profiles_wanted; then
+                missing+=("power-profiles-daemon")
+                missing_cmds+=("power-profiles")
+            fi
+            ;;
+    esac
+
     # Void's source provider is version-pinned, so an old binary is also a
     # repairable dependency rather than merely an available command.
     if [[ "${OS_GROUP_ID:-unknown}" == "void" ]]; then

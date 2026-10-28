@@ -270,6 +270,11 @@ install_github_binary() {
 
 # deps.toml recipe names.
 provider_awww() { install_awww_fedora "$@"; }
+# Fedora's own power profiles daemon is tuned-ppd: tuned behind the same bus names
+provider_power-profiles() {
+  power_profiles_wanted || return 0
+  pkg_sudo dnf install -y tuned-ppd && power_profiles_enable tuned.service tuned-ppd.service
+}
 provider_gowall() { install_gowall_fedora "$@"; }
 provider_missioncenter() { install_missioncenter_fedora "$@"; }
 provider_hyprpicker() { install_hyprpicker_fedora "$@"; }

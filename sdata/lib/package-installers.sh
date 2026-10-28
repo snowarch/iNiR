@@ -113,6 +113,23 @@ pkg_command_installs() {
   return 1
 }
 
+# power_profiles_wanted: the profile buttons need a power profiles daemon; true only where none is installed and
+# nothing else manages power (TLP, tuned and auto-cpufreq conflict with it, so a machine with one keeps it)
+power_profiles_wanted() {
+  local m
+  for m in powerprofilesctl tuned-adm tlp auto-cpufreq system76-power; do
+    command -v "$m" &>/dev/null && return 1
+  done
+  return 0
+}
+
+# power_profiles_enable UNIT...: on right after the install: Arch enables nothing it installs, and Quickshell asks
+# for a bus name only the running daemon owns
+power_profiles_enable() {
+  [[ -d /run/systemd/system ]] || return 0
+  pkg_sudo systemctl enable --now "$@"
+}
+
 # Use elevate() when USE_ELEVATE is set (graphical mode), otherwise use sudo
 pkg_sudo() {
   # --skip-deps means the user owns their packages: no step installs any, migrations included.

@@ -30,6 +30,11 @@ tui_info "Detected Fedora ${FEDORA_VERSION}"
 #####################################################################################
 if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
   tui_info "Installing missing dependencies only..."
+  # not a package: the recipe picks what this machine takes and turns it on
+  if [[ " $ONLY_MISSING_DEPS " == *" power-profiles "* ]]; then
+    provider_power-profiles || log_warning "power-profiles-daemon could not be installed; the profile buttons stay off"
+    ONLY_MISSING_DEPS="$(tr ' ' '\n' <<<"$ONLY_MISSING_DEPS" | grep -vx power-profiles | xargs)"
+  fi
 
   # Doctor reports command IDs, not package names. Keep this mapping exhaustive
   # for Fedora and never pass an unknown command ID directly to dnf.
@@ -422,6 +427,8 @@ tui_info "Installing packages from GitHub releases..."
 
 
 provider_cliphist
+
+provider_power-profiles || log_warning "power-profiles-daemon could not be installed; the profile buttons stay off"
 
 if ${INSTALL_TOOLKIT:-true}; then
   install_hyprpicker_fedora || log_warning "hyprpicker is still missing; the color picker stays off until it is installed"

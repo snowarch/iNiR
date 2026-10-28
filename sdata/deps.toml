@@ -128,6 +128,14 @@ group = "core"
 void = ["elogind", "dbus", "seatd", "turnstile", "power-profiles-daemon", "xorg-minimal"]
 
 [[dep]]
+name = "power-profiles"
+group = "core"
+# the profile buttons' daemon, only where nothing manages power yet (the recipe looks)
+arch = { build = "power-profiles" }
+fedora = { build = "power-profiles" }
+debian = { build = "power-profiles" }
+
+[[dep]]
 name = "login"
 group = "core"
 arch = "sddm"

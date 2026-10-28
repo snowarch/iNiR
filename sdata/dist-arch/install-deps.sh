@@ -16,6 +16,12 @@ fi
 #####################################################################################
 if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
   tui_info "Installing missing dependencies only..."
+  source "${REPO_ROOT}/sdata/dist-arch/providers.sh"
+  # not a package: the recipe picks what this machine takes and turns it on
+  if [[ " $ONLY_MISSING_DEPS " == *" power-profiles "* ]]; then
+    provider_power-profiles || log_warning "power-profiles-daemon could not be installed; the profile buttons stay off"
+    ONLY_MISSING_DEPS="$(tr ' ' '\n' <<<"$ONLY_MISSING_DEPS" | grep -vx power-profiles | xargs)"
+  fi
 
   # doctor reports command IDs; map them to Arch package names.
   declare -A cmd_to_pkg=(
@@ -134,6 +140,7 @@ esac
 #####################################################################################
 source "${REPO_ROOT}/sdata/dist-arch/providers.sh"
 v provider_aur-helper
+provider_power-profiles || log_warning "power-profiles-daemon could not be installed; the profile buttons stay off"
 
 # Set AUR helper
 if command -v yay >/dev/null 2>&1; then
