@@ -2294,8 +2294,10 @@ refresh_sddm_theme_on_update() {
 
 # Packages the new version needs, installed the way this run allows: asked, pkexec, or a hint.
 # The base may not move while a family, theme or widget does: each has its own version in the hub. Shell code the
-# new copy won't load goes back to the one it replaced.
+# new copy won't load goes back to the one it replaced (verified where systemd runs the shell). `data` leaves shell
+# code alone: a full update brought the families with the base and restarts once itself.
 _update_hub_plugins() {
+    local only="${1:-all}"
     local cli="${XDG_DATA_HOME:-$HOME/.local/share}/inir/cli/inir" plugins="${XDG_DATA_HOME:-$HOME/.local/share}/inir/plugins"
     local state="${XDG_STATE_HOME:-$HOME/.local/state}/inir/hub" pending id kind name names=() code=() keep verified
     [[ -x "$cli" ]] || return 0
@@ -2306,21 +2308,27 @@ for i in json.loads(sys.stdin.read() or "{}").get("items") or []:
         print(i.get("id", ""), i.get("kind", ""), i.get("name") or i.get("id", ""), sep="\t")
 ' 2>/dev/null)" || return 0
     [[ -n "$pending" ]] || return 0
+    local ids=()
     while IFS=$'\t' read -r id kind name; do
-        names+=("$name")
-        [[ "$kind" == family || "$kind" == component || "$kind" == design ]] && code+=("$id")
+        if [[ "$kind" == family || "$kind" == component || "$kind" == design ]]; then
+            [[ "$only" == data ]] && continue
+            code+=("$id")
+        fi
+        ids+=("$id"); names+=("$name")
     done <<<"$pending"
+    ((${#ids[@]})) || return 0
     keep="$(mktemp -d)" || return 1
     for id in "${code[@]}"; do [[ -d "$plugins/$id" ]] && cp -a "$plugins/$id" "$keep/$id"; done
     [[ -f "$state/installed.json" ]] && cp -a "$state/installed.json" "$keep/"
-    if ! "$cli" hub update >/dev/null 2>&1; then
+    if ! "$cli" hub update "${ids[@]}" >/dev/null 2>&1; then
         tui_warn "Could not update ${names[*]} from the hub; inir update tries again"
         rm -rf "$keep"; return 1
     fi
     tui_success "Updated from the hub: ${names[*]}"
-    if ((${#code[@]})) && [[ -n "${NIRI_SOCKET:-}${WAYLAND_DISPLAY:-}" ]]; then
-        if ! inir_user_service_is_masked && has_usable_systemd_user_manager && systemctl --user cat inir.service >/dev/null 2>&1; then
+    if ((${#code[@]})) && [[ -n "${NIRI_SOCKET:-}${WAYLAND_DISPLAY:-}" ]] && ! inir_user_service_is_masked; then
+        if has_usable_systemd_user_manager && systemctl --user cat inir.service >/dev/null 2>&1; then
             restart_shell_and_verify 30; verified=$?
+            ((verified == 2)) && tui_warn "Shell restart not confirmed; 'inir logs' shows how it went"
             if ((verified == 1)); then
                 for id in "${code[@]}"; do [[ -d "$keep/$id" ]] && rm -rf "${plugins:?}/$id" && cp -a "$keep/$id" "$plugins/$id"; done
                 [[ -f "$keep/installed.json" ]] && cp -a "$keep/installed.json" "$state/installed.json"
@@ -3008,7 +3016,7 @@ run_update() {
     # after the venv: accel hooks its python3
     prebuilt_activate
     # themes, widgets and web apps: the families came with the base, before the sync
-    _update_hub_plugins || true
+    _update_hub_plugins data || true
 
     # Signal success to the shell UI before restart
     _write_update_status "success"
