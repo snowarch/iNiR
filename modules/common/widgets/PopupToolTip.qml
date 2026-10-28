@@ -12,7 +12,12 @@ Item {
     property font font
     property bool extraVisibleCondition: true
     property bool alternativeVisibleCondition: false
-    property int delay: 16
+    // At rest; once a tooltip is up its neighbours skip it (ToolTipWarmth). 0 shows at once, always.
+    property int delay: ToolTipWarmth.coldDelay
+    readonly property int _wait: root.alternativeVisibleCondition || ToolTipWarmth.warm ? 0 : root.delay
+    property bool _shown: false
+    // One gone while up must still let the row cool down.
+    Component.onDestruction: if (root._shown) ToolTipWarmth.left()
     property real horizontalPadding: 10
     property real verticalPadding: 5
     property real horizontalMargin: horizontalPadding
@@ -21,6 +26,9 @@ Item {
     function setContentShown(shown: bool): void {
         if (root._content && root._content.shown !== undefined)
             root._content.shown = shown
+        if (shown) ToolTipWarmth.shown()
+        else if (root._shown) ToolTipWarmth.left()
+        root._shown = shown
     }
     
     function updateAnchor() {
@@ -86,7 +94,7 @@ Item {
             visible: true
             // A property, not a child: `data` below is bound and would drop it.
             readonly property Timer showDelay: Timer {
-                interval: root.delay
+                interval: root._wait
                 running: true
                 onTriggered: root.setContentShown(true)
             }
@@ -163,7 +171,7 @@ Item {
 
             // A property, not a child: `data` below is bound and would drop it.
             readonly property Timer showDelay: Timer {
-                interval: root.delay
+                interval: root._wait
                 running: true
                 onTriggered: root.setContentShown(true)
             }
