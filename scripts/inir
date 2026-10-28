@@ -148,7 +148,7 @@ Runtime:
   start, stop, run, restart, kill, terminal, browser, close-window, colorpicker
 
 Maintenance (delegates to setup):
-  install, reinstall, update, doctor, status, migrate, rollback, my-changes, uninstall
+  install, reinstall, update, doctor, status, migrate, rollback, my-changes, uninstall, webengine
   config, info, backup, logs, setup
 
 Other:
@@ -4820,7 +4820,7 @@ case "$command_name" in
         setup_dir="$(resolve_setup_dir)"
         run_setup_command "$setup_dir" "$command_name" "$@"
         ;;
-    migrate|status|update|reinstall|rollback|my-changes|uninstall|config|info|backup|logs)
+    migrate|status|update|reinstall|rollback|my-changes|uninstall|config|info|backup|logs|webengine)
         while [[ $# -gt 0 ]]; do
             case "$1" in
                 -c|--config)

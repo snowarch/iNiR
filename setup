@@ -2411,6 +2411,35 @@ _update_dependencies() {
     fi
 }
 
+# setup webengine: Qt WebEngine for the Web Apps tab, now (the tab offers it while it is missing). qs-rs gets its
+# add-on (sdata/lib/prebuilt.sh); Quickshell takes the system's.
+run_webengine() {
+    local home ver rc=0
+    home="$(_prebuilt_home)"
+    if [[ ! -L "$home/runtime/current" ]]; then
+        tui_info "The shell runs on Quickshell, which takes Qt WebEngine from your system: install your distribution's qt6-webengine and restart the shell"
+        return 0
+    fi
+    ver="$(jq -r '.parts["qs-rs-webengine"] | select(.sha256 != "") | .version' "$(_prebuilt_pins)" 2>/dev/null)"
+    if [[ -z "$ver" ]]; then
+        tui_error "Qt WebEngine for qs-rs is not released yet"
+        return 1
+    fi
+    if [[ "$(readlink "$home/runtime/current")" != "$ver" ]]; then
+        tui_error "Qt WebEngine comes with qs-rs $ver: run inir update first"
+        return 1
+    fi
+    if ! INIR_PREBUILT_WANT=qs-rs-webengine prebuilt_fetch; then
+        tui_error "Could not get Qt WebEngine; try again once online"
+        return 25
+    fi
+    tui_success "Qt WebEngine is in; restarting the shell"
+    restart_shell_and_verify 30 || rc=$?
+    # without systemd the launcher restarts it its own way
+    ((rc != 2)) || bash "${REPO_ROOT}/scripts/inir" restart >/dev/null 2>&1 || rc=1
+    ((rc != 1))
+}
+
 run_update() {
     # Short-circuit to the simulated walkthrough — no git pull, no rsync,
     # no migrations, no shell restart. Useful for previewing the new TUI
@@ -3271,6 +3300,7 @@ case "$COMMAND" in
         run_update
         ;;
     migrate) run_migrate ;;
+    webengine) run_webengine ;;
     doctor)
         # With the inir binary installed, a plain doctor is its job: it checks in Go and
         # comes back here for the steps to repair (--only=N, with INIR_CLI_DELEGATED set).

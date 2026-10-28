@@ -1349,7 +1349,16 @@ check_quickshell_abi() {
         ver="$(readlink "$own")"
         if timeout 20 env QT_QPA_PLATFORM=offscreen "$own/bin/qs" --version >/dev/null 2>&1; then
             doctor_pass "qs-rs $ver runs on its own Qt"
-            return 0
+            # an add-on that came to be wanted since the last update (Qt WebEngine once the Web Apps tab is on)
+            local addons
+            addons="$(prebuilt_pending_addons | paste -sd, - | sed 's/,/, /g')"
+            [[ -n "$addons" ]] || return 0
+            if prebuilt_fetch; then
+                doctor_fix "Got $addons"
+                return 0
+            fi
+            doctor_fail "Could not get $addons; inir doctor tries again once online"
+            return 1
         fi
         prebuilt_runtime_off
         doctor_fix "qs-rs $ver does not start here, so the shell runs on Quickshell; inir update tries qs-rs again"

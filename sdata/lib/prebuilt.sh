@@ -5,6 +5,8 @@
 # only ever from the pin. Fetched before anything is synced (a miss stops with nothing changed), switched on after.
 # A pin without a sha256 is not released yet and is skipped. INIR_PREBUILT_FROM=<dir or URL> serves the files
 # instead (VMs, a mirror); INIR_PREBUILT=0 skips it all. x86_64 only: elsewhere the shell keeps Quickshell.
+# An add-on ("with": the part it unpacks over, e.g. Qt WebEngine over qs-rs) comes only while its "when" config key is
+# true or INIR_PREBUILT_WANT names it.
 
 # the base's pins; a local INIR_PREBUILT_FROM (VMs, before the releases) may carry its own beside the files
 _prebuilt_pins() {
@@ -17,11 +19,43 @@ _prebuilt_pins() {
 }
 _prebuilt_home() { printf '%s' "${XDG_DATA_HOME:-$HOME/.local/share}/inir"; }
 
-# prebuilt_parts: one "part dest version file sha256 repo" line (tab separated) per part this machine takes
+# prebuilt_parts: one "part dest version file sha256 repo with" line (tab separated) per part this machine takes
 prebuilt_parts() {
     [[ "$(uname -m)" == x86_64 && "${INIR_PREBUILT:-1}" == 1 && -f "$(_prebuilt_pins)" ]] || return 0
-    jq -r '.parts | to_entries[] | select(.value.sha256 != "")
-        | [.key, .value.dest, .value.version, .value.file, .value.sha256, .value.repo] | @tsv' "$(_prebuilt_pins)"
+    local config="${DOTS_CORE_CONFDIR:-${XDG_CONFIG_HOME:-$HOME/.config}/inir}/config.json"
+    jq -r --arg want " ${INIR_PREBUILT_WANT:-} " --argjson cfg "$(jq -c . "$config" 2>/dev/null || echo '{}')" '
+        .parts | to_entries[] | select(.value.sha256 != "") | . as $p
+        | select(($p.value.with // "") == "" or ($want | contains(" " + $p.key + " "))
+            or (try ($cfg | getpath($p.value.when | split("."))) catch false) == true)
+        | [.key, .value.dest, .value.version, .value.file, .value.sha256, .value.repo, .value.with // ""] | @tsv' \
+        "$(_prebuilt_pins)"
+}
+
+# prebuilt_pending_addons: the titles of the add-ons this machine takes whose part is there and they are not
+prebuilt_pending_addons() {
+    local home part dest ver file sha repo with
+    home="$(_prebuilt_home)"
+    while IFS=$'\t' read -r part dest ver file sha repo with; do
+        [[ -n "$with" && -f "$home/$dest/$ver/.sha256" ]] || continue
+        [[ "$(cat "$home/$dest/$ver/.$part.sha256" 2>/dev/null)" != "$sha" ]] || continue
+        jq -r --arg p "$part" '.parts[$p].title // $p' "$(_prebuilt_pins)"
+    done < <(prebuilt_parts)
+}
+
+# _prebuilt_unpack TARBALL DIR SHA PART WITH: a part into DIR whole, beside the old one until it is complete; an add-on
+# over its part's DIR. The sha256 is written last, so a half-done unpack is fetched again.
+_prebuilt_unpack() {
+    local tarball=$1 dir=$2 sha=$3 part=$4 with=$5 x
+    if [[ -n "$with" ]]; then
+        x="${tarball%/*}/x"
+        mkdir -p "$x" && tar -xzf "$tarball" -C "$x" --strip-components=1 --no-same-owner \
+            && cp -a "$x/." "$dir/" && printf '%s\n' "$sha" >"$dir/.$part.sha256"
+        return
+    fi
+    rm -rf "$dir.new" && mkdir -p "$dir.new" \
+        && tar -xzf "$tarball" -C "$dir.new" --strip-components=1 --no-same-owner \
+        && printf '%s\n' "$sha" >"$dir.new/.sha256" \
+        && rm -rf "$dir" && mv "$dir.new" "$dir"
 }
 
 _prebuilt_manifest=""
@@ -45,19 +79,22 @@ _prebuilt_url() {
 
 # prebuilt_fetch: every pinned part unpacked at <dest>/<version>, its sha256 checked; fails on the first miss
 prebuilt_fetch() {
-    local home part dest ver file sha repo dir tmp url
+    local home part dest ver file sha repo with dir mark tmp url
     home="$(_prebuilt_home)"
-    while IFS=$'\t' read -r part dest ver file sha repo; do
+    while IFS=$'\t' read -r part dest ver file sha repo with; do
         dir="$home/$dest/$ver"
-        [[ "$(cat "$dir/.sha256" 2>/dev/null)" == "$sha" ]] && continue
+        mark="$dir/.sha256"
+        if [[ -n "$with" ]]; then
+            # over its part's folder, so that part comes first (the pins list it first)
+            [[ -f "$dir/.sha256" ]] || continue
+            mark="$dir/.$part.sha256"
+        fi
+        [[ "$(cat "$mark" 2>/dev/null)" == "$sha" ]] && continue
         url="$(_prebuilt_url "$part" "$ver" "$file" "$repo")"
         tmp="$(mktemp -d)" || return 1
         if curl -fsSL --retry 2 --max-time 900 -o "$tmp/$file" "$url" \
             && [[ "$(sha256sum "$tmp/$file" | cut -d' ' -f1)" == "$sha" ]] \
-            && rm -rf "$dir.new" && mkdir -p "$dir.new" \
-            && tar -xzf "$tmp/$file" -C "$dir.new" --strip-components=1 --no-same-owner \
-            && printf '%s\n' "$sha" >"$dir.new/.sha256" \
-            && rm -rf "$dir" && mv "$dir.new" "$dir"; then
+            && _prebuilt_unpack "$tmp/$file" "$dir" "$sha" "$part" "$with"; then
             rm -rf "$tmp"
         else
             rm -rf "$tmp" "$dir.new"
@@ -70,10 +107,10 @@ prebuilt_fetch() {
 # prebuilt_activate: each part's `current` link on its pinned version, accel's hooks, and of the older versions
 # only the one current pointed at before (what a rollback goes back to)
 prebuilt_activate() {
-    local home part dest ver file sha repo prev old
+    local home part dest ver file sha repo with prev old
     home="$(_prebuilt_home)"
-    while IFS=$'\t' read -r part dest ver file sha repo; do
-        [[ -f "$home/$dest/$ver/.sha256" ]] || continue
+    while IFS=$'\t' read -r part dest ver file sha repo with; do
+        [[ -z "$with" && -f "$home/$dest/$ver/.sha256" ]] || continue
         prev="$(readlink "$home/$dest/current" 2>/dev/null)"
         ln -sfn "$ver" "$home/$dest/current"
         for old in "$home/$dest"/*/; do
