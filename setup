@@ -128,27 +128,6 @@ if ! [ -t 0 ]; then
     quiet=true
 fi
 
-# DISABLED: webapps — requires quickshell-webengine rebuild, re-enable when ready
-# _build_install_qs_webengine() {
-#     local build_script="${REPO_ROOT}/scripts/quickshell-webengine/build-quickshell-webengine.sh"
-#     local pkgbuild_dir="${REPO_ROOT}/scripts/quickshell-webengine"
-#
-#     if pacman -Q quickshell &>/dev/null 2>&1 && ! pacman -Q quickshell-webengine-git &>/dev/null 2>&1; then
-#         tui_info "Removing stock quickshell (will be replaced by webengine build)..."
-#         pkg_sudo pacman -Rdd --noconfirm quickshell 2>/dev/null || true
-#     fi
-#
-#     if command -v makepkg >/dev/null 2>&1 && [[ -f "${pkgbuild_dir}/PKGBUILD" ]]; then
-#         tui_info "Building with PKGBUILD (Arch)..."
-#         (cd "$pkgbuild_dir" && makepkg -sif --noconfirm) && tui_success "quickshell-webengine installed!" || tui_warn "Build failed — see errors above"
-#     elif [[ -f "$build_script" ]]; then
-#         tui_info "Building with generic script..."
-#         bash "$build_script" --install && tui_success "quickshell-webengine installed!" || tui_warn "Build failed — see errors above"
-#     else
-#         tui_warn "No build method available"
-#     fi
-# }
-
 # Check privilege escalation availability
 _check_privilege_prereqs() {
   # Load the package installers to get access to privilege detection
@@ -1872,61 +1851,6 @@ run_install() {
         tui_task_skip 2 "skipped"
     fi
 
-    # DISABLED: webapps — requires quickshell-webengine rebuild, re-enable when ready
-    # # WebApp Plugins: check if quickshell has WebEngine support
-    # if [[ -d "${REPO_ROOT}/defaults/plugins" ]]; then
-    #     echo ""
-    #     tui_title "WebApp Plugins"
-    #     echo ""
-    #
-    #     local has_webengine=false
-    #     if pacman -Q qt6-webengine &>/dev/null 2>&1; then
-    #         has_webengine=true
-    #     elif dpkg -s qt6-webengine-dev &>/dev/null 2>&1; then
-    #         has_webengine=true
-    #     elif rpm -q qt6-qtwebengine-devel &>/dev/null 2>&1; then
-    #         has_webengine=true
-    #     fi
-    #
-    #     # Check if quickshell was compiled with our WebEngine patch
-    #     local qs_has_patch=false
-    #     if strings "$(which qs 2>/dev/null || echo /usr/bin/quickshell)" 2>/dev/null | grep -q "EnableQtWebEngineQuick" 2>/dev/null; then
-    #         qs_has_patch=true
-    #     fi
-    #
-    #     if $qs_has_patch; then
-    #         tui_success "Quickshell has WebEngine support"
-    #         tui_info "Enable Web Apps in Settings → Interface → Sidebars"
-    #     elif $has_webengine; then
-    #         tui_info "qt6-webengine is installed but quickshell needs to be recompiled"
-    #         tui_info "Web Apps (Discord, YouTube Music, etc.) require a patched quickshell"
-    #         if $ask; then
-    #             if tui_confirm "Build and install quickshell with WebEngine support?"; then
-    #                 echo ""
-    #                 _build_install_qs_webengine
-    #             fi
-    #         else
-    #             tui_info "Run: cd ${REPO_ROOT}/scripts/quickshell-webengine && makepkg -si"
-    #         fi
-    #     else
-    #         tui_info "WebApp plugins available (Discord, YouTube Music with adblock)"
-    #         tui_info "Requires: qt6-webengine + patched quickshell"
-    #         if $ask; then
-    #             if tui_confirm "Install qt6-webengine and build patched quickshell?"; then
-    #                 echo ""
-    #                 if command -v pacman >/dev/null 2>&1; then
-    #                     tui_info "Installing qt6-webengine..."
-    #                     pkg_sudo pacman -S --needed --noconfirm qt6-webengine || true
-    #                 fi
-    #                 _build_install_qs_webengine
-    #             fi
-    #         else
-    #             tui_info "To enable: pacman -S qt6-webengine"
-    #             tui_info "Then: cd ${REPO_ROOT}/scripts/quickshell-webengine && makepkg -si"
-    #         fi
-    #     fi
-    # fi
-
     # A targeted dependency/provider repair must not claim the current checkout
     # became the installed source. This path is also used by Doctor and the
     # provider idempotency checks from temporary worktrees.
@@ -3015,29 +2939,6 @@ run_update() {
         fi
     fi
 
-    # DISABLED: webapps — requires quickshell-webengine rebuild, re-enable when ready
-    # # Install default WebApp plugins for existing users
-    # if [[ -d "${REPO_ROOT}/defaults/plugins" ]]; then
-    #     local plugins_dir="${XDG_CONFIG_HOME}/illogical-impulse/plugins"
-    #     mkdir -p "$plugins_dir"
-    #     local new_plugins=0
-    #     for plugin_src in "${REPO_ROOT}/defaults/plugins"/*/; do
-    #         local pname=$(basename "$plugin_src")
-    #         local pdest="${plugins_dir}/${pname}"
-    #         if [[ ! -d "$pdest" ]]; then
-    #             cp -r "$plugin_src" "$pdest"
-    #             ((new_plugins++))
-    #         else
-    #             # Update userscripts only (don't overwrite user manifest/icon)
-    #             if [[ -d "${plugin_src}scripts" ]]; then
-    #                 mkdir -p "${pdest}/scripts"
-    #                 cp -r "${plugin_src}scripts/"* "${pdest}/scripts/" 2>/dev/null || true
-    #             fi
-    #         fi
-    #     done
-    #     [[ $new_plugins -gt 0 ]] && tui_success "Installed $new_plugins default WebApp plugin(s)"
-    # fi
-
     _update_dependencies
 
     # Run after dependency repair so newly installed providers get supervised
@@ -3054,61 +2955,6 @@ run_update() {
         tui_error "Could not reconcile the iNiR supervisor"
         return 1
     fi
-
-    # DISABLED: webapps — requires quickshell-webengine rebuild, re-enable when ready
-    # # WebApp plugins: check if quickshell has WebEngine support
-    # if [[ -d "${REPO_ROOT}/defaults/plugins" ]]; then
-    #     echo ""
-    #     tui_title "WebApp Plugins"
-    #     echo ""
-    #
-    #     local has_webengine=false
-    #     if pacman -Q qt6-webengine &>/dev/null 2>&1; then
-    #         has_webengine=true
-    #     elif dpkg -s qt6-webengine-dev &>/dev/null 2>&1; then
-    #         has_webengine=true
-    #     elif rpm -q qt6-qtwebengine-devel &>/dev/null 2>&1; then
-    #         has_webengine=true
-    #     fi
-    #
-    #     # Check if quickshell was compiled with our WebEngine patch
-    #     local qs_has_patch=false
-    #     if strings "$(which qs 2>/dev/null || echo /usr/bin/quickshell)" 2>/dev/null | grep -q "EnableQtWebEngineQuick" 2>/dev/null; then
-    #         qs_has_patch=true
-    #     fi
-    #
-    #     if $qs_has_patch; then
-    #         tui_success "Quickshell has WebEngine support"
-    #         tui_info "Enable Web Apps in Settings → Interface → Sidebars"
-    #     elif $has_webengine; then
-    #         tui_info "qt6-webengine is installed but quickshell needs to be recompiled"
-    #         tui_info "Web Apps (Discord, YouTube Music, etc.) require a patched quickshell"
-    #         if $ask; then
-    #             if tui_confirm "Build and install quickshell with WebEngine support?"; then
-    #                 echo ""
-    #                 _build_install_qs_webengine
-    #             fi
-    #         else
-    #             tui_info "Run: cd ${REPO_ROOT}/scripts/quickshell-webengine && makepkg -si"
-    #         fi
-    #     else
-    #         tui_info "WebApp plugins available (Discord, YouTube Music with adblock)"
-    #         tui_info "Requires: qt6-webengine + patched quickshell"
-    #         if $ask; then
-    #             if tui_confirm "Install qt6-webengine and build patched quickshell?"; then
-    #                 echo ""
-    #                 if command -v pacman >/dev/null 2>&1; then
-    #                     tui_info "Installing qt6-webengine..."
-    #                     pkg_sudo pacman -S --needed --noconfirm qt6-webengine || true
-    #                 fi
-    #                 _build_install_qs_webengine
-    #             fi
-    #         else
-    #             tui_info "To enable: pacman -S qt6-webengine"
-    #             tui_info "Then: cd ${REPO_ROOT}/scripts/quickshell-webengine && makepkg -si"
-    #         fi
-    #     fi
-    # fi
 
     # Keep update semantics identical to fresh install: the managed Python venv
     # owns ytmusicapi, and Deno is repaired as part of the YT playback runtime.

@@ -696,26 +696,6 @@ if command -v jq >/dev/null 2>&1 \
     && mv "${DOTS_CORE_CONFDIR}/config.json.tmp" "${DOTS_CORE_CONFDIR}/config.json"
 fi
 
-# DISABLED: WebApp plugins — requires quickshell-webengine rebuild, re-enable when ready
-# if [[ -d "defaults/plugins" ]]; then
-#   PLUGINS_DIR="${XDG_CONFIG_HOME}/illogical-impulse/plugins"
-#   v mkdir -p "$PLUGINS_DIR"
-#   for plugin_dir in defaults/plugins/*/; do
-#     plugin_name=$(basename "$plugin_dir")
-#     dest="${PLUGINS_DIR}/${plugin_name}"
-#     if [[ ! -d "$dest" ]]; then
-#       log_info "Installing default plugin: $plugin_name"
-#       v cp -r "$plugin_dir" "$dest"
-#     else
-#       # Update userscripts only (don't overwrite user's manifest/icon)
-#       if [[ -d "${plugin_dir}scripts" ]]; then
-#         v mkdir -p "${dest}/scripts"
-#         v cp -r "${plugin_dir}scripts/"* "${dest}/scripts/" 2>/dev/null || true
-#       fi
-#     fi
-#   done
-# fi
-
 #####################################################################################
 # Apply required migrations automatically
 #####################################################################################

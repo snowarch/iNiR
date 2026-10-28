@@ -99,7 +99,6 @@
     "scripts/test-detect-sensors.py",
     "scripts/test-runtime-payload.py",
     "scripts/lib/generate-ipc-registry.py",
-    "scripts/quickshell-webengine",
     "scripts/setup/_template.sh.example",
     "scripts/setup/README.md",
     "translations/tools",
