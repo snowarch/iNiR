@@ -24,6 +24,9 @@ nothing compiles on your machine.
   same if it stops starting later. The next `inir update` tries qs-rs again.
 - The version before stays beside the new one, so a rollback brings both back.
 - `INIR_PREBUILT=0 inir update` skips the downloads and keeps the shell on Quickshell.
+- While Material's Web Apps tab is on, setup and the update also get **Qt WebEngine** for qs-rs (about 110 MB, once,
+  always the one for the qs-rs you have). `inir webengine` gets it at any time and restarts the shell. On Quickshell
+  it comes from your distribution's Qt 6 WebEngine package instead.
 
 ## Migrations
 
@@ -42,6 +45,8 @@ inir doctor
 Checks the install and fixes what it can: missing folders, script permissions, Python packages and version tracking.
 It also checks that qs-rs starts on its own Qt (if it doesn't, the shell moves to Quickshell until the next update),
 that password prompts get answered (by the shell, or by your own agent), and that inir-accel's helpers match what is installed.
+It checks the fonts the shell and each installed family use, and tries to install the missing ones. With the Web Apps tab
+on, it gets Qt WebEngine if it is missing.
 
 If you also want a restart and a check of the logs, run `inir repair`.
 

@@ -62,5 +62,7 @@ These are not installed by default. Without them the feature stays hidden or say
 | `easyeffects` and `lsp-plugins-lv2` | 10-band equalizer | Settings › Modules › EasyEffects Equalizer |
 | `cava` | Bar audio spectrum | Settings › Bar › Audio spectrum |
 | `yt-dlp`, `mpv`, `socat`, `deno` | YTMusic playback | Left sidebar, YTMusic |
+| Qt WebEngine | Web apps in Material's left sidebar | On qs-rs, `inir webengine` downloads it; on Quickshell, `qt6-webengine` |
+| `qt6-webengine` and `layer-shell-qt` | Interactive web wallpaper | Settings › Wallpaper › Source |
 
 YTMusic needs yt-dlp 2025.11.12 or newer and Deno 2.3 or newer. `inir doctor` checks the Deno runtime.

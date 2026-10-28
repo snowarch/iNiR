@@ -28,7 +28,7 @@ Settings › Wallpaper › Source › Shuffle wallpapers:
 ## Transitions and renderer
 
 - **Settings › Wallpaper › Motion › Wallpaper transitions**: pick a **Transition style** such as Fade, Wipe, Grow, Dissolve or Glitch. **Random** picks one at random.
-- **Settings › Wallpaper › Source › Wallpaper renderer**: **Standard** is the default. **Interactive web** shows a local HTML file or a web page as the wallpaper, and needs Qt 6 WebEngine.
+- **Settings › Wallpaper › Source › Wallpaper renderer**: **Standard** is the default. **Interactive web** shows a local HTML file or a web page as the wallpaper. It runs on your system's Qt even when the shell runs on qs-rs, so it needs your distribution's Qt 6 WebEngine and LayerShellQt packages; `inir webengine` only covers the Web Apps tab.
 
 ## Videos and GIFs
 
