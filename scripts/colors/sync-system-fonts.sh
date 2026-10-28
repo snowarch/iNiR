@@ -29,7 +29,7 @@ bundled_fonts="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/assets/fonts"
 user_fonts="${XDG_DATA_HOME:-$HOME/.local/share}/fonts/inir"
 # An update that adds a face keeps the same link, so the bundled set itself decides when fontconfig rescans.
 fonts_stamp="$state_home/quickshell/user/generated/bundled-fonts.stamp"
-fonts_list="$(cd "$bundled_fonts" 2>/dev/null && find . -name '*.ttf' -o -name '*.otf' | sort | tr '\n' ' ')"
+fonts_list="$(cd "$bundled_fonts" 2>/dev/null && find . -name '*.ttf' -o -name '*.otf' | sort | tr '\n' ' ' || true)"
 if [[ -d "$bundled_fonts" ]]; then
     relink=0
     if [[ "$(readlink "$user_fonts" 2>/dev/null)" != "$bundled_fonts" ]]; then
@@ -49,7 +49,7 @@ if command -v gsettings >/dev/null 2>&1; then
     gsettings set org.gnome.desktop.interface monospace-font-name "$mono_font $font_size" || status=1
 fi
 
-gtk_font_before="$(grep -s '^gtk-font-name=' "$config_home/gtk-3.0/settings.ini")"
+gtk_font_before="$(grep -s '^gtk-font-name=' "$config_home/gtk-3.0/settings.ini" || true)"
 python3 - "$config_home" "$main_font" "$font_size" <<'PY' || status=1
 import os
 import re
