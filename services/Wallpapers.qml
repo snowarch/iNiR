@@ -254,9 +254,10 @@ Singleton {
             // what was set before the file came in leads
             root.recentWallpapers = root.recentWallpapers.concat(list.filter(entry => !root.recentWallpapers.includes(entry))).slice(0, root.recentWallpapersMost)
             loadedOnce = true
-            root._remember(root._mainWallpaperPathSetting)
+            // later: stock Quickshell forgets a write started inside its own load signal
+            Qt.callLater(() => root._remember(root._mainWallpaperPathSetting))
         }
-        onLoadFailed: { loadedOnce = true; setText(JSON.stringify(root.recentWallpapers)) }
+        onLoadFailed: { loadedOnce = true; Qt.callLater(() => _recentWallpapersFile.setText(JSON.stringify(root.recentWallpapers))) }
     }
 
     Timer {

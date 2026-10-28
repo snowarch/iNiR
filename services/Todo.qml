@@ -192,7 +192,8 @@ Singleton {
                 const parentDir = root.filePath.substring(0, root.filePath.lastIndexOf('/'))
                 Quickshell.execDetached(["/usr/bin/mkdir", "-p", parentDir])
                 root.list = []
-                todoFileView.setText(JSON.stringify(root.list))
+                // later: stock Quickshell forgets a write started inside its own load signal
+                Qt.callLater(() => todoFileView.setText(JSON.stringify(root.list)))
                 root._writeTxt()
                 startupUnlock.start()
             } else {

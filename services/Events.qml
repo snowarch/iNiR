@@ -55,7 +55,8 @@ Singleton {
                 Quickshell.execDetached(["/usr/bin/mkdir", "-p", parentDir])
                 root.list = []
                 root.nextId = 1
-                root.saveToFile()
+                // later: stock Quickshell forgets a write started inside its own load signal
+                Qt.callLater(root.saveToFile)
             } else {
                 console.log("[Events] Error loading file:", error)
                 root.list = []

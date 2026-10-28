@@ -843,7 +843,8 @@ Singleton {
                 const parentDir = root.filePath.substring(0, root.filePath.lastIndexOf('/'))
                 Quickshell.execDetached(["/usr/bin/mkdir", "-p", parentDir])
                 root.list = []
-                notifFileView.setText(stringifyList(root.list));
+                // later: stock Quickshell forgets a write started inside its own load signal
+                Qt.callLater(() => notifFileView.setText(stringifyList(root.list)))
             } else {
                 console.log("[Notifications] Error loading file: " + error)
             }

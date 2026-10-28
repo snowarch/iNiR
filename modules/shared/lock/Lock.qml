@@ -59,7 +59,8 @@ Scope {
         onLoaded: root.loadRecoveryState()
         onLoadFailed: {
             root._recoveryStateLoaded = true
-            root.writeRecoveryState(GlobalStates.screenLocked)
+            // later: stock Quickshell forgets a write started inside its own load signal
+            Qt.callLater(() => root.writeRecoveryState(GlobalStates.screenLocked))
         }
     }
 
