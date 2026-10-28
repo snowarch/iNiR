@@ -17,7 +17,7 @@ rolled back. If it stops because the checkout has local changes or commits of it
 The hub moves on its own: when iNiR itself has nothing new, `inir update` still brings new versions of the families,
 themes, widgets and web apps you installed. Where systemd runs the shell, a new family, component or Design that won't
 load goes back to the version you had; on Void the shell restarts on the new version without that check. The update
-check also posts "New in the iNiR Hub" when there are new versions: run `inir update`, or update them on the
+check also posts "Hub updates ready" when there are new versions: run `inir update`, or update them on the
 [Hub](HUB.md) page.
 
 If iNiR came from your distro's package manager, update the shell through that package manager instead.
