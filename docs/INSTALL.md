@@ -24,6 +24,11 @@ Void uses the same command. Run the first install without `-y`. Setup shows a sy
 
 See the [Void Linux guide](VOID.md) for the details.
 
+## Ubuntu 26.04
+
+Ubuntu 26.04 never had a working 2.33 install, so there is nothing to update: start with a fresh install
+(`git clone https://github.com/snowarch/iNiR && cd iNiR && ./setup install`) instead of `inir update`.
+
 ## Other distros by hand
 
 If your distro has no automated path, install the packages yourself, then skip setup's dependency step:

@@ -10,7 +10,20 @@ inir update
 
 The update checks for new changes, takes a snapshot so you can roll back, pulls the changes, copies the new shell files and restarts the shell. Your settings are not overwritten. It also installs what the shell needs and is missing, such as plasma-integration, a colour emoji font and the shell's fonts. It asks first, since that needs your password. With `--skip-deps`, or when you manage the packages yourself, it leaves them to you. When a release needs a change to your config, the update migrates it and keeps a backup. Required migrations run on their own. Optional ones are offered to you.
 
+`inir update` in a terminal, or the update notification, brings everything: the base, the families your config uses
+from the hub, the prebuilt runtime and the `inir` command. Your config and edits stay, and a version that won't load is
+rolled back. If it stops because the checkout has local changes or commits of its own, it prints the command to run.
+
 If iNiR came from your distro's package manager, update the shell through that package manager instead.
+
+### Coming from 2.33 without an update
+
+An install without `.git` (copied, not cloned), or one still on 2.33 after the first 3.x fix, gets a fresh clone and
+installs over itself. Your config is kept, and the line works in fish 3 or newer too:
+
+```bash
+git clone https://github.com/snowarch/iNiR ~/iNiR-3 && cd ~/iNiR-3 && ./setup install
+```
 
 ### The runtime and the helpers
 
