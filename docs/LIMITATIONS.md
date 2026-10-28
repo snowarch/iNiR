@@ -10,6 +10,8 @@ iNiR is built for Niri. Hyprland is not supported, so anything that only worked 
 
 **Brightness.** Laptop screens work through the backlight. External monitors need `ddcutil` and DDC/CI switched on in the monitor's own menu. DDC/CI is slow, so brightness changes on external monitors can lag.
 
+**Power profiles.** The Power Profile toggle (iRiS control grid, Waffle action center) needs a power profiles daemon: `power-profiles-daemon` or `tuned-ppd`. Without one the toggle shows as unavailable and the saved profile is not restored at start. Arch does not install one by default: `sudo pacman -S power-profiles-daemon && sudo systemctl enable --now power-profiles-daemon`.
+
 **Audio.** iNiR needs PipeWire. PulseAudio-only setups do not work. Volume protection can be too strict after suspend. Turn it off in Settings › System › Audio (Waffle: General › Audio › Volume protection; iRiS: Sound & Feedback › Volume › Ear protection).
 
 **Weather and location.** Weather comes from Open-Meteo and needs no key. It refreshes every 10 minutes by default. Change that in Settings › Services › Weather (Waffle: Waffle Style › Weather; iRiS: Sources › Weather). GPS is off by default. When you turn on "Use GPS location", it needs geoclue.

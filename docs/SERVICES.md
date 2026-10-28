@@ -72,7 +72,7 @@ IpcHandler {
 | `Idle` | swayidle timeouts. `idle.onBattery.enable` adds shorter ones | |
 | `Battery` | UPower: charge, state, charge limit | `battery` |
 | `Brightness` | `brightnessctl` for laptops, `ddcutil` for external monitors | `brightness` |
-| `PowerProfilePersistence` | Restores the power profile at startup | |
+| `PowerProfilePersistence` | Restores the power profile at startup, when a power profiles daemon is running | |
 | `GameMode` | Fullscreen detection, automatic or manual | `gamemode` |
 | `GamePerformanceService` | Focused game detection, optional MangoHud CSV | |
 | `ResourceUsage` | CPU, RAM, GPU, temperature, disk. Stops after `resources.autoStopDelay` | |
