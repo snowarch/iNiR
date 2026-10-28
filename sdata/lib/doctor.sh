@@ -1555,46 +1555,25 @@ check_matugen_colors() {
         if [[ -n "$wallpaper" && -f "$wallpaper" && -s "$wallpaper" ]]; then
             local template_dir="${XDG_CONFIG_HOME}/matugen"
 
-            local runtime_dir
-            runtime_dir="$(doctor_runtime_dir)"
-            local gen_material_script=""
-            if [[ -n "$runtime_dir" && -f "${runtime_dir}/scripts/colors/generate_colors_material.py" ]]; then
-                gen_material_script="${runtime_dir}/scripts/colors/generate_colors_material.py"
-            else
-                local repo_root
-                repo_root="$(doctor_repo_root || true)"
-                if [[ -n "$repo_root" && -f "${repo_root}/scripts/colors/generate_colors_material.py" ]]; then
-                    gen_material_script="${repo_root}/scripts/colors/generate_colors_material.py"
-                fi
-            fi
-
-            if [[ -n "$gen_material_script" ]]; then
-                local python_cmd=""
-                local venv_python="${XDG_STATE_HOME}/quickshell/.venv/bin/python3"
-                if [[ -x "$venv_python" ]]; then
-                    python_cmd="$venv_python"
-                elif command -v python3 &>/dev/null; then
-                    python_cmd="python3"
-                fi
-
-                if [[ -n "$python_cmd" ]]; then
-                    mkdir -p "$(dirname "$colors_json")"
-                    local _render_args=()
-                    [[ -d "$template_dir" && -f "$template_dir/templates.json" ]] && _render_args+=(--render-templates "$template_dir")
-                    "$python_cmd" "$gen_material_script" \
-                        --path "$wallpaper" \
-                        --mode dark \
-                        --json-output "$colors_json" \
-                        "${_render_args[@]}" \
-                        >/dev/null 2>&1 || true
-                fi
+            local accel
+            accel="$(prebuilt_accel_bin)"
+            if [[ -x "$accel" ]]; then
+                mkdir -p "$(dirname "$colors_json")"
+                local _render_args=()
+                [[ -d "$template_dir" && -f "$template_dir/templates.json" ]] && _render_args+=(--render-templates "$template_dir")
+                "$accel" material-colors \
+                    --path "$wallpaper" \
+                    --mode dark \
+                    --json-output "$colors_json" \
+                    "${_render_args[@]}" \
+                    >/dev/null 2>&1 || true
             fi
 
             if [[ -f "$colors_json" || -f "$colors_scss" ]]; then
                 doctor_fix "Regenerated theme colors from ${wallpaper_source}"
             else
                 doctor_fail "Theme colors regeneration failed"
-                echo -e "    ${STY_FAINT}Python color generation failed — check venv${STY_RST}"
+                echo -e "    ${STY_FAINT}inir-accel is missing or failed: run inir update${STY_RST}"
                 return 1
             fi
         else

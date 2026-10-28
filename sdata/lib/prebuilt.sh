@@ -19,6 +19,8 @@ _prebuilt_pins() {
     fi
 }
 _prebuilt_home() { printf '%s' "${XDG_DATA_HOME:-$HOME/.local/share}/inir"; }
+# the inir-accel the shell runs (scripts/lib/accel.sh: the same path, INIR_ACCEL first)
+prebuilt_accel_bin() { printf '%s' "${INIR_ACCEL:-$(_prebuilt_home)/accel/current/inir-accel}"; }
 
 # prebuilt_parts: one "part dest version file sha256 repo with" line (tab separated) per part this machine takes
 prebuilt_parts() {

@@ -1022,11 +1022,10 @@ if [[ "${INSTALL_FIRSTRUN}" == true && -n "${DEFAULT_WALLPAPER}" && -f "${DEFAUL
     fi
   fi
 
-  # Generate initial theme colors using unified Python pipeline
+  # Initial theme colors (inir-accel, fetched above)
   export INIR_VENV="${XDG_STATE_HOME}/quickshell/.venv"
   export ILLOGICAL_IMPULSE_VIRTUAL_ENV="${INIR_VENV}"
-  _init_python_cmd="${INIR_VENV}/bin/python3"
-  _init_gen_material="${II_TARGET}/scripts/colors/generate_colors_material.py"
+  _init_accel="$(prebuilt_accel_bin)"
   _init_template_dir="${XDG_CONFIG_HOME}/matugen"
   _init_scss_file="${XDG_STATE_HOME}/quickshell/user/generated/material_colors.scss"
   _init_json_file="${XDG_STATE_HOME}/quickshell/user/generated/colors.json"
@@ -1034,12 +1033,9 @@ if [[ "${INSTALL_FIRSTRUN}" == true && -n "${DEFAULT_WALLPAPER}" && -f "${DEFAUL
   _init_terminal_file="${XDG_STATE_HOME}/quickshell/user/generated/terminal.json"
   _init_meta_file="${XDG_STATE_HOME}/quickshell/user/generated/theme-meta.json"
 
-  _init_py=""
-  [[ -x "$_init_python_cmd" ]] && _init_py="$_init_python_cmd" || { command -v python3 &>/dev/null && _init_py="python3"; }
-
-  if [[ -n "$_init_py" && -f "$_init_gen_material" ]]; then
+  if [[ -x "$_init_accel" ]]; then
     tui_info "Generating theme colors from wallpaper..."
-    if "$_init_py" "$_init_gen_material" \
+    if "$_init_accel" material-colors \
         --path "${DEFAULT_WALLPAPER}" --mode dark \
         --termscheme "${II_TARGET}/scripts/colors/terminal/scheme-base.json" --blend_bg_fg \
         --json-output "$_init_json_file" \
@@ -1062,7 +1058,7 @@ if [[ "${INSTALL_FIRSTRUN}" == true && -n "${DEFAULT_WALLPAPER}" && -f "${DEFAUL
       log_warning "Color generation failed. Theme may not work correctly."
     fi
   else
-    log_warning "Python environment not available. GTK/Qt theming will not be applied."
+    log_warning "inir-accel is not installed, so no theme colors yet: run inir update."
   fi
 fi
 

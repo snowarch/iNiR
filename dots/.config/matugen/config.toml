@@ -1,6 +1,6 @@
 # iNiR theming template configuration
 #
-# Templates are rendered by generate_colors_material.py (--render-templates flag).
+# Templates are rendered by inir-accel material-colors (--render-templates flag).
 # The Python pipeline generates Material You colors AND renders all templates in
 # a single pass, replacing the previous split workflow.
 #

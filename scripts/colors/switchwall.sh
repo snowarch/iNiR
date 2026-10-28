@@ -607,8 +607,7 @@ switch() {
         _ii_venv="$HOME/.local/state/quickshell/.venv"
     fi
     source "$_ii_venv/bin/activate" 2>/dev/null || true
-    _ii_python="$_ii_venv/bin/python3"
-    [[ ! -x "$_ii_python" ]] && _ii_python="python3"
+    source "$SCRIPT_DIR/../lib/accel.sh"
 
     _scss_tmp="$STATE_DIR/user/generated/material_colors.scss.tmp"
     _json_tmp="$STATE_DIR/user/generated/colors.json.tmp"
@@ -624,7 +623,7 @@ switch() {
     force_dark_terminal="$cfg_force_dark_terminal"
 
     # 1) Generate authoritative shell/UI colors.json + render app templates.
-    if "$_ii_python" "$SCRIPT_DIR/generate_colors_material.py" "${generate_colors_material_args[@]}" \
+    if "$INIR_ACCEL" material-colors "${generate_colors_material_args[@]}" \
         --json-output "$_json_tmp" \
         --palette-output "$_palette_tmp" \
         --app-palette-output "$_app_palette_tmp" \
@@ -665,7 +664,7 @@ switch() {
         done
         _terminal_force_tmp="$STATE_DIR/user/generated/terminal.json.force.tmp"
 
-        scss_cmd=("$_ii_python" "$SCRIPT_DIR/generate_colors_material.py" "${scss_generate_args[@]}")
+        scss_cmd=("$INIR_ACCEL" material-colors "${scss_generate_args[@]}")
         scss_cmd+=(--terminal-output "$_terminal_force_tmp")
 
         if "${scss_cmd[@]}" > "$_scss_tmp" 2>/dev/null && [[ -s "$_scss_tmp" && -s "$_terminal_force_tmp" ]]; then
