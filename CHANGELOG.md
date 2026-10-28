@@ -16,7 +16,7 @@ iNiR is now a base with plugins: Material, Waffle and iRiS come from the iNiR Hu
 - **Designs for iRiS**: a Design is another look over the same engine, picked in Settings › Appearance; AIRISU, the first one, is coloured lacquer with its own Island, lock, Spotlight, notifications, OSD, menus and widgets.
 - **Desktop edit mode**: arrange widgets on a card with magnets, guides and a shelf, save whole desktops and pick small, medium or large, in iRiS and in Material.
 - **New widgets**: lyrics, palette, photo, world clock and vitals, and every widget says something useful when it has nothing to show.
-- **Island**: three Island designs, six bubbles, and a shelf that keeps what you copy, capture and drop.
+- **Island**: three Island designs, Halo, Ledger and Tiles, new bubbles for weather, sound, mic, tools and media, and a shelf that keeps what you copy, capture and drop.
 - **Live window previews**: the overview, Orbit, the dock, Alt+Tab, taskbars and task view show the real windows moving instead of old stills.
 - **Live pins**: pin part of a window to the screen and it keeps updating.
 - **Wallpaper picker**: iRiS gets a new picker in three layouts with favourites, local folders and web sources, and Material's picker gets a skewed deck with a full screen preview.
@@ -24,7 +24,7 @@ iNiR is now a base with plugins: Material, Waffle and iRiS come from the iNiR Hu
 - **Web Apps tab**: Qt WebEngine is now a one-time download of about 110 MB, started from the tab itself.
 - **Picture-in-picture**: a PiP window from any browser floats on its own.
 - **NixOS**: a lean NixOS module with its Python environment and a niri config to start from.
-- **Fonts**: Geist, Geist Mono and Geist Pixel ship with iNiR, and Material sets its type in Google Sans Flex.
+- **Fonts**: Geist and Geist Mono ship with iNiR, and Material sets its type in Google Sans Flex.
 
 ### Changed
 - `inir update` brings the whole new iNiR: the base, the families from the Hub, the prebuilt runtime, inir-accel and the `inir` command. Your config and edits stay, and a version that won't load is rolled back to the one you had.
