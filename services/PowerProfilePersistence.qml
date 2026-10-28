@@ -11,13 +11,13 @@ Singleton {
 
     property bool _initialized: false
     // Quickshell warns at the first touch of PowerProfiles when no daemon can start (Arch has none by default),
-    // so nothing here touches it until the system bus has one running or startable
+    // so nothing here touches it until the system bus has the name it starts running or startable
     property bool available: false
     onAvailableChanged: if (available && Config.ready) Qt.callLater(() => root._applyPreferredProfile())
 
     Process {
         running: true
-        command: ["sh", "-c", "command -v gdbus >/dev/null || exit 0; for m in ListNames ListActivatableNames; do gdbus call --system --dest org.freedesktop.DBus --object-path /org/freedesktop/DBus --method org.freedesktop.DBus.$m; done | grep -q PowerProfiles"]
+        command: ["sh", "-c", "command -v gdbus >/dev/null || exit 0; for m in ListNames ListActivatableNames; do gdbus call --system --dest org.freedesktop.DBus --object-path /org/freedesktop/DBus --method org.freedesktop.DBus.$m; done | grep -q \"'org.freedesktop.UPower.PowerProfiles'\""]
         onExited: code => root.available = code === 0
     }
 

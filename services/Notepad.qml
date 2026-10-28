@@ -126,7 +126,9 @@ Singleton {
             root._save()
         }
 
-        onLoadFailed: {
+        onLoadFailed: error => {
+            if (error !== FileViewError.FileNotFound)
+                console.log("[Notepad] Error loading legacy notepad:", error)
             // No legacy file either — fresh start
             const parentDir = root.tabsFilePath.substring(0, root.tabsFilePath.lastIndexOf('/'))
             Quickshell.execDetached(["/usr/bin/mkdir", "-p", parentDir])
