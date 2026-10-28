@@ -45,7 +45,7 @@ this needs your attention. It is here for the curious, and for anyone who wants 
 
 Binaries arrive prebuilt (x86_64) and checked against the release's checksums; nothing compiles on your machine. The
 previous runtime and helpers stay beside the new ones, so a bad update can go back. When qs-rs can't start on a system,
-the shell runs on Quickshell and the next update tries again.
+`inir doctor` moves the shell to Quickshell and the next update tries again.
 
 ## How an update goes
 

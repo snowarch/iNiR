@@ -18,8 +18,8 @@ On x86_64, setup and `inir update` also download two parts built for you: **qs-r
 own Qt, and **inir-accel**, the native helpers. Each download is checked against the checksum the release pins, and
 nothing compiles on your machine.
 
-- A download that fails stops the update before anything changes.
-- If qs-rs doesn't start on your system, the shell runs on Quickshell instead and the update says so. The next
+- If a download fails, the shell stays on Quickshell and the next `inir update` tries again.
+- If qs-rs doesn't start on your system, `inir doctor` moves the shell to Quickshell and says so. The next
   `inir update` tries qs-rs again.
 - The version before stays beside the new one, so a rollback brings both back.
 - `INIR_PREBUILT=0 inir update` skips the downloads and keeps the shell on Quickshell.
@@ -40,7 +40,7 @@ inir doctor
 
 Checks the install and fixes what it can: missing folders, script permissions, Python packages and version tracking.
 It also checks that qs-rs starts on its own Qt (if it doesn't, the shell moves to Quickshell until the next update),
-that the shell answers password prompts, and that inir-accel's helpers match what is installed.
+that password prompts get answered (by the shell, or by your own agent), and that inir-accel's helpers match what is installed.
 
 If you also want a restart and a check of the logs, run `inir repair`.
 
@@ -68,7 +68,7 @@ Shows the files you changed from the defaults. You can look at the differences, 
 
 Removes iNiR and asks before each shared file, such as your Niri config, GTK and Kvantum settings. Your iNiR settings are removed too, so copy them first if you want to keep them. Before it removes anything, it backs them up to `~/.local/share/inir-uninstall-backup-` followed by the date and time.
 
-The runtime, the helpers and the `inir` command that iNiR downloaded go too.
+The runtime and the helpers that iNiR downloaded go too.
 
 Packages are not removed. The command prints the commands to remove them, so you can run those yourself.
 
