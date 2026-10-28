@@ -10,14 +10,18 @@ Singleton {
 
     readonly property int coldDelay: 500
     property bool warm: false
+    property int _up: 0
 
     function shown(): void {
+        root._up++
         cooling.stop()
         root.warm = true
     }
 
+    // Cools only once the last one is gone.
     function left(): void {
-        if (root.warm) cooling.restart()
+        root._up = Math.max(0, root._up - 1)
+        if (root.warm && root._up === 0) cooling.restart()
     }
 
     Timer {
