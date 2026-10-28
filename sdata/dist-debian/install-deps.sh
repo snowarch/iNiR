@@ -66,7 +66,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
 
   for cmd in "${_deb_miss_cmds[@]}"; do
     case "$cmd" in
-      awww|awww-daemon|gowall|missioncenter|songrec|xwayland-satellite)
+      awww|awww-daemon|gowall|missioncenter|songrec|xwayland-satellite|niri-session)
         [[ " ${_deb_special_cmds[*]} " == *" ${cmd} "* ]] || _deb_special_cmds+=("$cmd")
         ;;
       checkupdates|go)
@@ -133,7 +133,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
   _deb_need_full_provider=false
   [[ ${#_deb_deferred[@]} -gt 0 ]] && _deb_need_full_provider=true
   for cmd in "${_deb_special_cmds[@]}"; do
-    case "$cmd" in awww|awww-daemon|songrec|xwayland-satellite|qs|niri) _deb_need_full_provider=true ;; esac
+    case "$cmd" in awww|awww-daemon|songrec|xwayland-satellite|qs|niri|niri-session) _deb_need_full_provider=true ;; esac
   done
   unset ONLY_MISSING_DEPS
   if $_deb_need_full_provider; then

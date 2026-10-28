@@ -34,7 +34,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
   # Doctor reports command IDs, not package names. Keep this mapping exhaustive
   # for Fedora and never pass an unknown command ID directly to dnf.
   declare -A cmd_to_pkg=(
-    [qs]="quickshell" [niri]="niri" [nmcli]="NetworkManager" [wpctl]="wireplumber" [pw-dump]="pipewire-utils"
+    [qs]="quickshell" [niri]="niri" [niri-session]="niri" [nmcli]="NetworkManager" [wpctl]="wireplumber" [pw-dump]="pipewire-utils"
     [jq]="jq" [rsync]="rsync" [curl]="curl" [git]="git" [python3]="python3"
     [fish]="fish" [magick]="ImageMagick" [grim]="grim" [cliphist]="cliphist"
     [wl-copy]="wl-clipboard" [wl-paste]="wl-clipboard"

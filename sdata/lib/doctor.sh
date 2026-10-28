@@ -112,6 +112,8 @@ check_dependencies() {
     if [[ "${OS_GROUP_ID:-unknown}" == "arch" ]]; then
         cmds+=("checkupdates:pacman-contrib")
     fi
+    # the login starts the shell through niri-session and niri.service; Void starts niri itself (docs/VOID.md)
+    [[ "${OS_GROUP_ID:-unknown}" == "void" ]] || cmds+=("niri-session:Niri session")
     if [[ "${OS_GROUP_ID:-unknown}" == "void" ]]; then
         cmds+=(
             "ydotool:ydotool"

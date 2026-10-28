@@ -636,7 +636,19 @@ if ! command -v eza &>/dev/null; then
 fi
 }
 
+# niri's session files where its docs put them for a build without a package: the login runs niri-session, which
+# starts niri.service, which starts inir.service
+_niri_session_files() {
+  sudo install -Dm755 "$1/resources/niri-session" /usr/local/bin/niri-session \
+    && sudo install -Dm644 "$1/resources/niri.desktop" /usr/local/share/wayland-sessions/niri.desktop \
+    && sudo install -Dm644 "$1/resources/niri-portals.conf" /usr/local/share/xdg-desktop-portal/niri-portals.conf \
+    && sudo install -Dm644 "$1/resources/niri.service" /etc/systemd/user/niri.service \
+    && sudo install -Dm644 "$1/resources/niri-shutdown.target" /etc/systemd/user/niri-shutdown.target
+}
+
 provider_niri() {
+# the release inir's config is written for
+local NIRI_TAG=v26.04
 if ! command -v niri &>/dev/null; then
   # Check for Ubuntu 25.10+ which has PPA available
   if $IS_UBUNTU && [[ "${UBUNTU_VERSION%%.*}" -ge 25 ]]; then
@@ -711,8 +723,7 @@ if ! command -v niri &>/dev/null; then
       done
     }
     
-    # on disk: Debian keeps /tmp in RAM and the release build outgrows it there. The release inir's config is written for.
-    NIRI_TAG=v26.04
+    # on disk: Debian keeps /tmp in RAM and the release build outgrows it there
     NIRI_BUILD_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/inir/build/niri-$$"
     mkdir -p "${NIRI_BUILD_DIR%/*}"
 
@@ -722,9 +733,8 @@ if ! command -v niri &>/dev/null; then
       cd "$NIRI_BUILD_DIR"
       if cargo build --release; then
         log_info "Installing Niri..."
-        sudo cp target/release/niri /usr/local/bin/
-        sudo cp resources/niri.desktop /usr/share/wayland-sessions/ 2>/dev/null || true
-        sudo cp resources/niri-portals.conf /usr/share/xdg-desktop-portal/ 2>/dev/null || true
+        sudo install -Dm755 target/release/niri /usr/local/bin/niri
+        _niri_session_files "$NIRI_BUILD_DIR" || log_error "Niri's session files did not install"
         log_success "Niri installed!"
       else
         log_error "Niri build failed!"
@@ -738,7 +748,16 @@ if ! command -v niri &>/dev/null; then
   fi
 else
   log_success "Niri already installed"
+  # a niri this provider built before 10-28 came without them: no session started the shell
+  if ! command -v niri-session &>/dev/null && [[ -d /run/systemd/system ]]; then
+    local niri_src="${XDG_CACHE_HOME:-$HOME/.cache}/inir/build/niri-session-$$"
+    mkdir -p "${niri_src%/*}"
+    git clone -q --depth 1 --branch "$NIRI_TAG" https://github.com/YaLTeR/niri.git "$niri_src" \
+      && _niri_session_files "$niri_src" && log_success "Niri's session files installed"
+    rm -rf "$niri_src"
+  fi
 fi
+command -v niri-session &>/dev/null || [[ ! -d /run/systemd/system ]] || return 1
 }
 
 provider_xwayland-satellite() {

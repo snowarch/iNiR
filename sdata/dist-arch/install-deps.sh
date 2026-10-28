@@ -21,6 +21,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
   declare -A cmd_to_pkg=(
     [qs]="quickshell"
     [niri]="niri"
+    [niri-session]="niri"
     [nmcli]="networkmanager"
     [wpctl]="wireplumber"
     [pw-dump]="pipewire"
