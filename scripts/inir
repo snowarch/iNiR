@@ -1350,7 +1350,7 @@ _inir_doctor_perf() {
             proc_note="audio visualizer helper"
         elif [[ "$proc_comm" == "nmcli" ]]; then
             proc_note="NetworkManager monitor"
-        elif [[ "$proc_cmd" == *"keyboard_lock_state_daemon.py"* ]]; then
+        elif [[ "$proc_cmd" == *"keyboard-lock-daemon"* || "$proc_cmd" == *"keyboard_lock_state_daemon.py"* ]]; then
             proc_note="keyboard lock daemon"
         elif [[ "$proc_comm" == "bash" ]]; then
             proc_note="shell helper"
@@ -2346,7 +2346,7 @@ cleanup_orphans() {
             _cmdline="$(tr '\0' ' ' < "/proc/$_pid/cmdline" 2>/dev/null || true)"
             _owned=false
             for _runtime_root in "$user_config_dir" "$system_config_dir" "$fallback_system_config_dir"; do
-                if [[ "$_cmdline" == *"$_runtime_root/scripts/daemon/keyboard_lock_state_daemon.py"* ]] \
+                if [[ "$_cmdline" == *"$_runtime_root/scripts/daemon/keyboard_lock_state_daemon.py"* || "$_cmdline" == *"inir-accel keyboard-lock-daemon"* ]] \
                         || { [[ "$_cmdline" == *"/swayidle -w"* ]] && [[ "$_cmdline" == *"$_runtime_root/scripts/inir"* ]]; }; then
                     _owned=true
                     break
@@ -2358,13 +2358,13 @@ cleanup_orphans() {
             [[ "$_cgroup" == *"inir.service"* ]] || continue
         fi
         kill "$_pid" 2>/dev/null || true
-    done < <(pgrep -f 'keyboard_lock_state_daemon\.py|nmcli monitor|/usr/bin/swayidle -w' 2>/dev/null || true)
+    done < <(pgrep -f 'keyboard_lock_state_daemon\.py|inir-accel keyboard-lock-daemon|nmcli monitor|/usr/bin/swayidle -w' 2>/dev/null || true)
 
     # Phase 6: Thumbnail generation uses a multiprocessing pool. Older runs
     # could outlive qs because KillMode=process intentionally preserves apps
     # launched from the shell. Limit cleanup to iNiR's own thumbnail commands
     # inside this service cgroup; never match arbitrary Python or user jobs.
-    local _thumb_pattern='scripts/thumbnails/(thumbgen-venv\.sh|thumbgen\.py|generate-thumbnails-magick\.sh)'
+    local _thumb_pattern='scripts/thumbnails/(thumbgen-venv\.sh|thumbgen\.py|generate-thumbnails-magick\.sh)|inir-accel thumbgen'
     local _thumb_pids=()
     while IFS= read -r _pid; do
         [[ -n "$_pid" ]] || continue

@@ -12,13 +12,13 @@
 spawn-at-startup "bash" "-c" "systemctl --user import-environment XDG_MENU_PREFIX && kbuildsycoca6"
 
 // Clipboard history: wl-paste watches the clipboard and cliphist stores it.
-// Text goes through clipboard-store.py, which strips browser markup: `--type
+// Text goes through inir-accel clipboard-store, which strips browser markup: `--type
 // text` is a generic name, so when a page offers only text/html (an image, or
 // rich content out of an editor like ChatGPT's), wl-paste matches that and the
 // raw <meta http-equiv=...> markup is what would land in the history. Asking
 // for text/plain instead would drop those entries entirely.
 // Access via iNiR's clipboard overlay (Mod+V).
-spawn-at-startup "bash" "-c" "wl-paste --no-newline --type text --watch ~/.config/quickshell/inir/scripts/clipboard-store.py &"
+spawn-at-startup "bash" "-c" "wl-paste --no-newline --type text --watch ~/.config/quickshell/inir/scripts/lib/accel-run clipboard-store &"
 spawn-at-startup "bash" "-c" "wl-paste --type image --watch ~/.config/quickshell/inir/scripts/clipboard-image-store.sh &"
 
 // Polkit: the iNiR shell is the authentication agent (its dialogs follow the

@@ -1029,7 +1029,7 @@
     {
      "name": "reload",
      "args": [],
-     "description": "Reload the shell's QML the way an edit does (soft: windows are kept). In a git checkout `scripts/daemon/dev_hot_reload.py` calls it for the files Quickshell does not watch itself",
+     "description": "Reload the shell's QML the way an edit does (soft: windows are kept). In a git checkout `inir-accel dev-hot-reload` calls it for the files Quickshell does not watch itself",
      "values": []
     },
     {

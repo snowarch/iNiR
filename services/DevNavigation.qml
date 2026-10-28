@@ -188,7 +188,7 @@ Singleton {
     }
     Process {
         running: Quickshell.watchFiles && root.checkout
-        command: ["python3", Quickshell.shellPath("scripts/daemon/dev_hot_reload.py"), Quickshell.shellDir,
+        command: [Quickshell.shellPath("scripts/lib/accel-run"), "dev-hot-reload", Quickshell.shellDir,
             String(Quickshell.processId)]
     }
 
@@ -219,7 +219,7 @@ Singleton {
         /// Close development-opened surfaces and clear the request
         function close(): void { root.closeAll() }
         /// Reload the shell's QML the way an edit does (soft: windows are kept). In a git checkout
-        /// `scripts/daemon/dev_hot_reload.py` calls it for the files Quickshell does not watch itself
+        /// `inir-accel dev-hot-reload` calls it for the files Quickshell does not watch itself
         function reload(): string { Qt.callLater(() => Quickshell.reload(false)); return "reloading" }
         /// Return the current destination or `closed`
         function current(): string { return root.currentDestination.length > 0 ? root.currentDestination : "closed" }

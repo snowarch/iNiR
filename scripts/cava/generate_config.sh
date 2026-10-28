@@ -42,10 +42,10 @@ get_default_monitor() {
 
 METHOD=$(get_audio_method)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-RESOLVER="$SCRIPT_DIR/resolve_audio_source.py"
+source "$SCRIPT_DIR/../lib/accel.sh"
 RESOLVED=""
-if [[ -f "$RESOLVER" ]]; then
-  RESOLVED=$(python3 "$RESOLVER" --desktop-entry "$DESKTOP_ENTRY" --blocked-apps-json "$BLOCKED_APPS_JSON" 2>/dev/null)
+if [[ -x "$INIR_ACCEL" ]]; then
+  RESOLVED=$("$INIR_ACCEL" resolve-audio-source --desktop-entry "$DESKTOP_ENTRY" --blocked-apps-json "$BLOCKED_APPS_JSON" 2>/dev/null)
   RESOLVE_STATUS=$?
   # Exit 3 means every live playback stream is excluded by the user's filter.
   # Propagate that state to CavaService instead of silently capturing the full

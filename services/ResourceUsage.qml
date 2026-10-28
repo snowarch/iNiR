@@ -87,7 +87,7 @@ Singleton {
 
     Process {
         id: detectGpuUsageSource
-        // Select the backend only for the device chosen by detect_sensors.py.
+        // Select the backend only for the device chosen by inir-accel detect-sensors.
         command: ["/usr/bin/bash", "-c", `
             if [ "$1" = "0x10de" ] && command -v nvidia-smi >/dev/null 2>&1; then
                 echo "nvidia-smi:$(command -v nvidia-smi)"
@@ -526,7 +526,7 @@ Singleton {
 
     Process {
         id: detectTempSensors
-        command: ["python3", Quickshell.shellPath("scripts/detect_sensors.py")]
+        command: [Quickshell.shellPath("scripts/lib/accel-run"), "detect-sensors"]
         stdout: SplitParser {
             onRead: line => {
                 const split = line.indexOf(":");

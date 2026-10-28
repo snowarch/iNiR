@@ -7,8 +7,7 @@ COLOR_MODULE_ID="cava"
 PALETTE_FILE="$STATE_DIR/user/generated/palette.json"
 COVER_COLORS_FILE="$STATE_DIR/user/generated/cover-colors.json"
 CAVA_ACTIVE_COVER_FILE="$STATE_DIR/user/generated/cava-active-cover.path"
-CAVA_EXTRACT_SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../cava" && pwd)/extract_cover_colors.py"
-CAVA_RESOLVE_SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../cava" && pwd)/resolve_audio_source.py"
+source "$SCRIPT_DIR/../lib/accel.sh"
 CAVA_CONFIG_DIR="$XDG_CONFIG_HOME/cava"
 CAVA_CONFIG="$CAVA_CONFIG_DIR/config"
 
@@ -35,16 +34,30 @@ cover_color() {
 # Boost saturation of a hex color by mixing toward its hue at full saturation
 saturate_hex() {
   local hex="$1" factor="${2:-1.4}"
-  python3 -c "
-import colorsys, sys
-h = '${hex}'.lstrip('#')
-r, g, b = int(h[0:2],16)/255, int(h[2:4],16)/255, int(h[4:6],16)/255
-hue, sat, val = colorsys.rgb_to_hsv(r, g, b)
-sat = min(1.0, sat * ${factor})
-val = min(1.0, val * 1.1)
-r2, g2, b2 = colorsys.hsv_to_rgb(hue, sat, val)
-print('#%02x%02x%02x' % (int(r2*255), int(g2*255), int(b2*255)))
-" 2>/dev/null || printf '%s\n' "$hex"
+  local h="$hex"
+  while [[ "$h" == \#* ]]; do h="${h#\#}"; done
+  [[ "$h" =~ ^[0-9A-Fa-f]{6} ]] || { printf '%s\n' "$hex"; return; }
+  # colorsys rgb_to_hsv / hsv_to_rgb, as the Python one-liner it replaces
+  awk -v r=$((16#${h:0:2})) -v g=$((16#${h:2:2})) -v b=$((16#${h:4:2})) -v f="$factor" 'BEGIN {
+    r /= 255; g /= 255; b /= 255
+    mx = r; if (g > mx) mx = g; if (b > mx) mx = b
+    mn = r; if (g < mn) mn = g; if (b < mn) mn = b
+    v = mx
+    if (mn == mx) { hue = 0; sat = 0 } else {
+      rg = mx - mn; sat = rg / mx
+      rc = (mx - r) / rg; gc = (mx - g) / rg; bc = (mx - b) / rg
+      if (r == mx) hue = bc - gc; else if (g == mx) hue = 2 + rc - bc; else hue = 4 + gc - rc
+      hue = hue / 6; hue = hue - int(hue); if (hue < 0) hue += 1
+    }
+    sat = sat * f; if (sat > 1) sat = 1
+    v = v * 1.1; if (v > 1) v = 1
+    if (sat == 0) { R = v; G = v; B = v } else {
+      i = int(hue * 6); fr = hue * 6 - i; p = v * (1 - sat); q = v * (1 - sat * fr); t = v * (1 - sat * (1 - fr)); i = i % 6
+      if (i == 0) { R = v; G = t; B = p } else if (i == 1) { R = q; G = v; B = p } else if (i == 2) { R = p; G = v; B = t }
+      else if (i == 3) { R = p; G = q; B = v } else if (i == 4) { R = t; G = p; B = v } else { R = v; G = p; B = q }
+    }
+    printf "#%02x%02x%02x\n", int(R * 255), int(G * 255), int(B * 255)
+  }'
 }
 
 # Build gradient from palette - uses bright, visible colors first
@@ -100,11 +113,11 @@ refresh_cover_colors() {
   local art_path
   art_path="$(find_cover_art_path || true)"
   [[ -n "$art_path" ]] || { log_module "No cover art path for extraction"; return 1; }
-  if [[ ! -x "$CAVA_EXTRACT_SCRIPT" && ! -f "$CAVA_EXTRACT_SCRIPT" ]]; then
-    log_module "extract_cover_colors.py missing"
+  if [[ ! -x "$INIR_ACCEL" ]]; then
+    log_module "inir-accel is missing. Run: inir update"
     return 1
   fi
-  if python3 "$CAVA_EXTRACT_SCRIPT" "$art_path" "$count" "$COVER_COLORS_FILE"; then
+  if "$INIR_ACCEL" extract-cover-colors "$art_path" "$count" "$COVER_COLORS_FILE"; then
     log_module "Extracted cover colors from $(basename "$art_path")"
     return 0
   fi
@@ -138,8 +151,8 @@ resolve_cava_input_source() {
   else
     method="pulse"
   fi
-  if [[ -f "$CAVA_RESOLVE_SCRIPT" ]]; then
-    source=$(python3 "$CAVA_RESOLVE_SCRIPT" 2>/dev/null || true)
+  if [[ -x "$INIR_ACCEL" ]]; then
+    source=$("$INIR_ACCEL" resolve-audio-source 2>/dev/null || true)
   fi
   if [[ -z "${source:-}" ]]; then
     if pactl list sink-inputs 2>/dev/null | grep -q "^Sink Input #"; then

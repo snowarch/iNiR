@@ -1,14 +1,8 @@
 #!/usr/bin/env bash
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-if [[ -n "${INIR_VENV:-}" ]]; then
-    _ii_venv="$(eval echo "$INIR_VENV")"
-elif [[ -n "${ILLOGICAL_IMPULSE_VIRTUAL_ENV:-}" ]]; then
-    _ii_venv="$(eval echo "$ILLOGICAL_IMPULSE_VIRTUAL_ENV")"
-else
-    _ii_venv="$HOME/.local/state/quickshell/.venv"
-fi
-source "$_ii_venv/bin/activate" 2>/dev/null || true
+source "$SCRIPT_DIR/../lib/accel.sh"
+[[ -x "$INIR_ACCEL" ]] || { echo "inir-accel is missing. Run: inir update" >&2; exit 127; }
 
 has_usable_systemd_user_manager() {
     [[ -S "${XDG_RUNTIME_DIR:-}/systemd/private" ]] &&
@@ -28,7 +22,7 @@ if [[ -z "${INIR_THUMBGEN_SCOPED:-}" ]] &&
         --property="Description=iNiR wallpaper thumbnails" \
         --setenv=INIR_THUMBGEN_SCOPED=1 \
         --setenv=GIO_USE_VFS=local \
-        -- "$_ii_venv/bin/python3" "$SCRIPT_DIR/thumbgen.py" "$@"
+        -- "$INIR_ACCEL" thumbgen "$@"
 fi
 
-exec env GIO_USE_VFS=local "$_ii_venv/bin/python3" "$SCRIPT_DIR/thumbgen.py" "$@"
+exec env GIO_USE_VFS=local "$INIR_ACCEL" thumbgen "$@"
