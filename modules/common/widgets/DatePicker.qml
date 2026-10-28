@@ -24,7 +24,7 @@ Item {
     }
 
     property var locale: {
-        const envLocale = Quickshell.env("LC_TIME") || Quickshell.env("LC_ALL") || Quickshell.env("LANG") || ""
+        const envLocale = Quickshell.env("LC_ALL") || Quickshell.env("LC_TIME") || Quickshell.env("LANG") || ""
         const cleaned = (envLocale.split(".")[0] ?? "").split("@")[0] ?? ""
         return cleaned ? Qt.locale(cleaned) : Qt.locale()
     }
