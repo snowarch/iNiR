@@ -6,6 +6,7 @@ singleton Config 1.0 Config.qml
 ConfigOptions 1.0 ConfigOptions.qml
 singleton Directories 1.0 Directories.qml
 singleton FamilyStyle 1.0 FamilyStyle.qml
+EdgeReveal 1.0 EdgeReveal.qml
 FamilyPartLoader 1.0 FamilyPartLoader.qml
 singleton Icons 1.0 Icons.qml
 singleton Images 1.0 Images.qml
