@@ -101,6 +101,8 @@ Rectangle {
         layer.effect: MultiEffect {
             source: blurredWallpaper
             anchors.fill: source
+            contrast: Appearance.aurora.backdropContrast
+            brightness: Appearance.aurora.backdropBrightness
             saturation: root.angelEverywhere && !root.forceNeutralMaterial
                 ? (Appearance.angel.blurSaturation * Appearance.angel.colorStrength)
                 : (Appearance.effectsEnabled ? root.saturationStrength : 0)

@@ -455,10 +455,11 @@ Singleton {
         readonly property color _inkPrimary: "#2b2622"      // Warm charcoal - main text
         readonly property color _inkSecondary: "#5c534a"    // Warm gray - secondary text
         readonly property color _inkMuted: "#8a7f73"        // Warm taupe - inactive/disabled
-        // Light glass is only as light as the wallpaper under it lets it be: over a black one the overlay alone shows
-        // (the sidebar went to L* 76 and its accent clock to 3.7:1, 10-29). An accent used as ink drops to the tone
-        // that reads 4.5:1 there, as M3's medium-contrast light scheme moves primary from tone 40 to 30.
-        readonly property color _glassFloor: ColorUtils.mix(colLayer0Base, "black", 1 - root.aurora.overlayTransparentize)
+        // Light glass is only as light as the wallpaper under it lets it be; its floor is the overlay over the pressed
+        // backdrop of a black one (aurora.backdropFloor). An accent used as ink drops to the tone that reads 4.5:1
+        // there (Fluent: no accent text on acrylic; M3's medium-contrast light scheme moves primary from tone 40 to 30).
+        readonly property color _glassFloor: ColorUtils.mix(colLayer0Base,
+            Qt.rgba(root.aurora.backdropFloor, root.aurora.backdropFloor, root.aurora.backdropFloor, 1), 1 - root.aurora.overlayTransparentize)
         readonly property real _glassInkTone: {
             const y = Math.max(0.0001, (ColorUtils.relativeLuminance(_glassFloor) + 0.05) / 4.5 - 0.05)
             return y <= 0.008856 ? y * 903.2963 : 116 * Math.pow(y, 1 / 3) - 16
@@ -1039,7 +1040,16 @@ Singleton {
         readonly property real layerTransparentize: (_cfg?.layer ?? 0.32) * _lightFactor
         // The blurred wallpaper under the glass, toned toward grey: a vivid wallpaper boosted 20 % turned every panel
         // into its colour (a hot pink sidebar on a pink wallpaper, 10-25).
-        readonly property real backdropSaturation: { Config.revision; return Math.max(0, Math.min(1, Config.options?.appearance?.aurora?.wallpaperColor ?? 0.55)) - 1 }
+        // Acrylic's luminosity layer, done with what MultiEffect has: the backdrop's tonal range is pressed into a band
+        // near the glass's own tone, so the glass keeps one tone over any wallpaper (light glass went mid grey over a
+        // dark one and dark glass vanished into it, 10-29). Saturation gives back the colour the press takes.
+        readonly property bool _tonedBackdrop: root.globalStyle === "aurora" && root.effectsEnabled
+        readonly property real backdropContrast: _tonedBackdrop ? (root._auroraLightMode ? -0.45 : -0.4) : 0
+        readonly property real backdropBrightness: _tonedBackdrop ? (root._auroraLightMode ? 0.2 : -0.15) : 0
+        readonly property real wallpaperColor: { Config.revision; return Math.max(0, Math.min(1, Config.options?.appearance?.aurora?.wallpaperColor ?? 0.55)) }
+        readonly property real backdropSaturation: wallpaperColor / (1 + backdropContrast) - 1
+        // The darkest the pressed backdrop gets (black under it).
+        readonly property real backdropFloor: Math.max(0, -0.5 * backdropContrast + backdropBrightness)
 
         readonly property color colInactiveControlSurface: ColorUtils.transparentize(
             root.colors.colLayer0Base, Math.max(0.12, subSurfaceTransparentize - 0.14))
