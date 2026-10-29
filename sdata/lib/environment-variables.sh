@@ -48,7 +48,7 @@ INIR_CONFIG_DIR_NEW="${XDG_CONFIG_HOME}/inir"
 INIR_CONFIG_DIR_LEGACY="${XDG_CONFIG_HOME}/illogical-impulse"
 
 resolve_inir_config_dir() {
-  if [[ -L "$INIR_CONFIG_DIR_LEGACY" && -d "$INIR_CONFIG_DIR_NEW" ]]; then
+  if [[ -L "$INIR_CONFIG_DIR_LEGACY" && "$INIR_CONFIG_DIR_LEGACY" -ef "$INIR_CONFIG_DIR_NEW" ]]; then
     printf '%s' "$INIR_CONFIG_DIR_NEW"
     return
   fi
@@ -76,7 +76,7 @@ ensure_config_dir_link() {
     [[ -e "$INIR_CONFIG_DIR_NEW" ]] && return 0
     mv -- "$INIR_CONFIG_DIR_LEGACY" "$INIR_CONFIG_DIR_NEW" || return 1
   elif [[ -e "$INIR_CONFIG_DIR_LEGACY" ]]; then
-    return 0
+    return 1
   fi
   mkdir -p -- "$INIR_CONFIG_DIR_NEW" && ln -s -- "$INIR_CONFIG_DIR_NEW" "$INIR_CONFIG_DIR_LEGACY"
 }
