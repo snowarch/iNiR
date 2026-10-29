@@ -22,10 +22,14 @@ SpinBox {
     readonly property color _face: Appearance.angelEverywhere ? Appearance.angel.colGlassCard : SettingsMaterialPreset.controlColor
     hoverEnabled: true
     editable: true
+    // the lowest value's word when it means something else than a number ("Auto" for -1, "Off" for 0)
+    property string specialValueText: ""
     textFromValue: function(value, locale) {
-        return String(value)
+        return value === root.from && root.specialValueText.length > 0 ? root.specialValueText : String(value)
     }
     valueFromText: function(text, locale) {
+        if (root.specialValueText.length > 0 && String(text).trim().toLowerCase() === root.specialValueText.toLowerCase())
+            return root.from
         const parsed = Number.parseInt(String(text).trim(), 10)
         return Number.isFinite(parsed) ? parsed : root.value
     }

@@ -14,6 +14,7 @@ Item {
     property alias stepSize: spinBoxWidget.stepSize
     property alias from: spinBoxWidget.from
     property alias to: spinBoxWidget.to
+    property alias specialValueText: spinBoxWidget.specialValueText
     // only a person's step or typing, never a bound value catching up
     signal valueModified()
     // Expose hover state for tooltips and other helpers

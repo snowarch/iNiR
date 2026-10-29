@@ -47,7 +47,8 @@ QtObject {
     readonly property int tilePaddingY: Math.round(12 * Appearance.fontSizeScale)
     readonly property int rowMinHeight: Math.round(56 * Appearance.fontSizeScale)
     readonly property int iconSize: Math.round(24 * Appearance.fontSizeScale)
-    readonly property color tileColor: Appearance.regaliaEverywhere ? Appearance.regalia.surfacePlate
+    // regalia's window is chassis1: its tiles step up one chassis, their controls one more
+    readonly property color tileColor: Appearance.regaliaEverywhere ? Appearance.regalia.chassis2
         : Appearance.editorialEverywhere ? Appearance.editorial.layer(1)
         : Appearance.zzzEverywhere ? Appearance.zzz.bg1
         : Appearance.cookieEverywhere ? Appearance.cookie.bg1
@@ -57,12 +58,11 @@ QtObject {
             root.dark ? 0.45 : 0.3)
         : root.dark ? Appearance.m3colors.m3surfaceContainer : Appearance.m3colors.m3surfaceContainerLowest
     // M3 state layers: on-surface at 8 % hovered, 10 % pressed
-    readonly property color tileHoverColor: Appearance.regaliaEverywhere ? Appearance.regalia.surfacePlateHover
-        : ColorUtils.mix(root.tileColor, Appearance.colors.colOnSurface, 0.92)
+    readonly property color tileHoverColor: ColorUtils.mix(root.tileColor, Appearance.colors.colOnSurface, 0.92)
     readonly property color tilePressColor: Appearance.regaliaEverywhere ? Appearance.regalia.pressPlate
         : ColorUtils.mix(root.tileColor, Appearance.colors.colOnSurface, 0.9)
     // a control resting inside a tile (button group, stepper, field)
-    readonly property color controlColor: Appearance.regaliaEverywhere ? Appearance.regalia.controlPlate
+    readonly property color controlColor: Appearance.regaliaEverywhere ? Appearance.regalia.chassis4
         : Appearance.zzzEverywhere ? Appearance.zzz.bg2
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2
         : root.glass ? ColorUtils.transparentize(Appearance.m3colors.m3surfaceContainerHighest, root.dark ? 0.35 : 0.2)
