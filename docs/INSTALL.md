@@ -22,7 +22,7 @@ If the login screen is black on a laptop with NVIDIA and integrated graphics, th
 
 ## Void Linux
 
-Void uses the same command. Run the first install without `-y`. Setup shows a system snapshot and the install plan, then asks before it changes networking or the login screen. A `-y` run leaves both alone. Graphics drivers come from your base system. Setup checks that the graphics stack works, but it does not install GPU drivers.
+Void uses the same command. Run the first install without `-y`. Setup shows a system snapshot and the install plan, then asks before it changes networking or the login screen. A `-y` run takes the default for both: NetworkManager replaces dhcpcd or wpa_supplicant (expect a short network blip) and SDDM becomes the login screen, unless another display manager is already enabled. Graphics drivers come from your base system. Setup checks that the graphics stack works, but it does not install GPU drivers.
 
 See the [Void Linux guide](VOID.md) for the details.
 
