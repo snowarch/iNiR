@@ -9929,5 +9929,7 @@
   "Removed %1 from autostart": "%1 removido da inicialização automática",
   "Removed a mascot": "Mascote removido",
   "Changed %1": "Alterados %1",
-  "Settings that differ from a fresh install": "Configurações diferentes de uma instalação nova"
+  "Settings that differ from a fresh install": "Configurações diferentes de uma instalação nova",
+  "Choose your effects": "Escolha seus efeitos",
+  "How much motion and blur the desktop uses.": "Quanto movimento e desfoque a área de trabalho usa."
 }

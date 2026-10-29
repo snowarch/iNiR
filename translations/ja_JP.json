@@ -9929,5 +9929,7 @@
   "Removed %1 from autostart": "%1 を自動起動から削除しました",
   "Removed a mascot": "マスコットを削除しました",
   "Changed %1": "変更済み %1",
-  "Settings that differ from a fresh install": "新規インストールと異なる設定"
+  "Settings that differ from a fresh install": "新規インストールと異なる設定",
+  "Choose your effects": "エフェクトを選ぶ",
+  "How much motion and blur the desktop uses.": "デスクトップで使う動きとぼかしの量。"
 }

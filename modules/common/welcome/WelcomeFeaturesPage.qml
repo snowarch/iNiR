@@ -48,6 +48,7 @@ Flickable {
         rowSpacing: 16
 
         ColumnLayout {
+            visible: root.welcomeProfiles
             Layout.fillWidth: true
             Layout.preferredWidth: featuresFlickable.width < 760
                 ? featuresFlickable.width : (featuresFlickable.width - (root.compact ? 22 : 30)) * 0.38
@@ -107,7 +108,8 @@ Flickable {
             Layout.preferredWidth: featuresFlickable.width < 760
                 ? featuresFlickable.width : (featuresFlickable.width - (root.compact ? 22 : 30)) * 0.62
             Layout.alignment: Qt.AlignTop
-            implicitHeight: Math.max(profileSummaryColumn.implicitHeight + 28, root.compact ? 300 : 330)
+            implicitHeight: root.welcomeProfiles ? Math.max(profileSummaryColumn.implicitHeight + 28, root.compact ? 300 : 330)
+                : profileSummaryColumn.implicitHeight + 28
             surfaceDialect: "material"
             elevation: 2
             outlined: false
@@ -120,6 +122,7 @@ Flickable {
                 spacing: 10
 
                 RowLayout {
+                    visible: root.welcomeProfiles
                     Layout.fillWidth: true
                     spacing: 8
                     MaterialCookie {
@@ -159,6 +162,7 @@ Flickable {
                 }
 
                 GridLayout {
+                    visible: root.welcomeProfiles
                     Layout.fillWidth: true
                     Layout.topMargin: 6
                     columns: 2
@@ -183,6 +187,7 @@ Flickable {
                 }
 
                 Rectangle {
+                    visible: root.welcomeProfiles
                     Layout.fillWidth: true
                     implicitHeight: 1
                     color: ColorUtils.applyAlpha(root.welcomeOutline, 0.34)

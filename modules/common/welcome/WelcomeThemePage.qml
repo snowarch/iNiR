@@ -31,6 +31,7 @@ Flickable {
         rowSpacing: 16
 
         ColumnLayout {
+            visible: root.welcomeStyles
             Layout.fillWidth: true
             Layout.preferredWidth: themeFlickable.width < 760
                 ? themeFlickable.width : (themeFlickable.width - (root.compact ? 20 : 28)) * 0.34
@@ -98,6 +99,7 @@ Flickable {
                 spacing: root.compact ? 9 : 12
 
                 RowLayout {
+                    visible: root.welcomeStyles
                     Layout.fillWidth: true
                     spacing: 8
                     MaterialCookie {

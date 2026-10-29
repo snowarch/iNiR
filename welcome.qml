@@ -102,6 +102,10 @@ Scope {
     readonly property color welcomeQuietFill: root.familyLook?.welcomeQuietFill ?? "transparent"
     readonly property bool welcomeChoiceMark: root.familyLook?.welcomeChoiceMark ?? true
     readonly property real welcomeIntroShare: root.familyLook?.welcomeIntroShare ?? 0.43
+    // a family with a single look shows no style presets on Appearance
+    readonly property bool welcomeStyles: root.familyWelcome?.welcomeStyles ?? true
+    // a family that shows none of the starting profiles' pieces keeps only Effects on that step
+    readonly property bool welcomeProfiles: root.familyWelcome?.welcomeProfiles ?? true
 
     readonly property string selectedProfile: Config.options?.welcomeWizard?.profile ?? "balanced"
     readonly property string selectedStylePreset: Config.options?.welcomeWizard?.stylePreset ?? "material"
@@ -585,11 +589,15 @@ Scope {
         Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "panelFamily", "set", id])
     }
 
-    onCurrentStepChanged: {
-        if (!root.firstRunSetup)
-            return
-        if (root.currentStep === 1) {
-            if (!root.customSteps && !root.initialProfileApplied) {
+    onCurrentStepChanged: if (root.firstRunSetup) root._enterStep(root.currentStep)
+    // a family picked mid-run enters the step on screen too
+    onFamilyWelcomeChanged: if (root.firstRunSetup) root._enterStep(root.currentStep)
+
+    // What arriving at a step sets (its recommended pick), once per family and step in a run: switching
+    // families and back must not reapply its defaults.
+    function _enterStep(step: int): void {
+        if (step === 1) {
+            if (!root.customSteps && root.welcomeProfiles && !root.initialProfileApplied) {
                 root.initialProfileApplied = true
                 root.applyProfile(root.selectedProfile)
             }
@@ -598,18 +606,18 @@ Scope {
                 root.applyPerformancePreset(root.selectedPerformancePreset)
             }
         }
-        root._enterStep()
-    }
-    // a family picked mid-run enters the step on screen too
-    onFamilyWelcomeChanged: if (root.firstRunSetup) root._enterStep()
-
-    // once per family and step in a run: switching families and back must not reapply its defaults
-    function _enterStep(): void {
-        const entry = `${root.family}:${root.currentStep}`
+        const entry = `${root.family}:${step}`
         if (typeof root.familyWelcome?.entered === "function" && !root._familyEntered[entry]) {
             root._familyEntered[entry] = true
-            root.familyWelcome.entered(root.currentStep)
+            root.familyWelcome.entered(step)
         }
+    }
+
+    // Skip lands where Continue would: every step not reached yet sets its recommended pick.
+    function skipRest(): void {
+        for (let step = root.currentStep + 1; step < root.totalSteps - 1; step++)
+            root._enterStep(step)
+        root.finish(true)
     }
 
     // ─── Entry/exit animation state (gate pattern) ───
@@ -636,13 +644,25 @@ Scope {
             subtitle: Translation.tr("Choose where the bar and dock go.")
         }
     ]
+    // The Layout step's placement rows; a family on the base steps brings its own.
+    readonly property var classicPlacementRows: [
+        { label: Translation.tr("Bar position"), key: "bar.bottom", fallback: false, options: [
+            { displayName: Translation.tr("Top"), icon: "vertical_align_top", value: false },
+            { displayName: Translation.tr("Bottom"), icon: "vertical_align_bottom", value: true }] },
+        { label: Translation.tr("Dock position"), key: "dock.position", fallback: "bottom", options: [
+            { displayName: Translation.tr("Bottom"), icon: "arrow_downward", value: "bottom" },
+            { displayName: Translation.tr("Left"), icon: "arrow_back", value: "left" },
+            { displayName: Translation.tr("Right"), icon: "arrow_forward", value: "right" }] }
+    ]
+    readonly property var placementRows: root.familyWelcome?.placementRows ?? root.classicPlacementRows
+
     readonly property var steps: [
         {
             icon: "waving_hand", title: Translation.tr("Welcome"),
             headline: Translation.tr("Welcome to iNiR"),
             subtitle: Translation.tr("Pick the desktop you want to start with. The next steps adapt to it.")
         },
-        ...(root.customSteps ? root.familyWelcome.steps : root.classicSteps),
+        ...((root.familyWelcome?.steps?.length ?? 0) === 3 ? root.familyWelcome.steps : root.classicSteps),
         {
             icon: "celebration", title: Translation.tr("Ready"),
             headline: Translation.tr("You're all set"),
@@ -863,7 +883,7 @@ Scope {
                                         color: root.welcomeOnSurface
                                     }
                                     WelcomeText {
-                                        text: Translation.tr("Setup")
+                                        text: Translation.tr("Step %1 of %2").arg(root.currentStep + 1).arg(root.totalSteps)
                                         font.pixelSize: root.welcomeFontMeta
                                         color: root.welcomeSecondaryText
                                     }
@@ -955,7 +975,7 @@ Scope {
                                 colBackground: "transparent"
                                 colBackgroundHover: root.welcomeSurfaceHigh
                                 colRipple: root.welcomeSurfaceHighest
-                                onClicked: root.finish(true)
+                                onClicked: root.skipRest()
 
                                 contentItem: RowLayout {
                                     id: skipContent

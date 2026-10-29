@@ -114,44 +114,27 @@ Flickable {
                     }
                 }
 
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 5
-                    WelcomeText {
-                        text: Translation.tr("Bar position")
-                        font.pixelSize: root.welcomeFontBody
-                        font.weight: Font.Medium
-                        color: root.welcomeOnSurface
-                    }
-                    WelcomeSegmentedControl {
-                        Layout.fillWidth: true
-                        currentValue: (Config.options?.bar?.bottom ?? false) ? "bottom" : "top"
-                        options: [
-                            { displayName: Translation.tr("Top"), icon: "vertical_align_top", value: "top" },
-                            { displayName: Translation.tr("Bottom"), icon: "vertical_align_bottom", value: "bottom" }
-                        ]
-                        onSelected: value => root.setProfileFeature("bar.bottom", value === "bottom")
-                    }
-                }
+                Repeater {
+                    model: root.placementRows.length
 
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 5
-                    WelcomeText {
-                        text: Translation.tr("Dock position")
-                        font.pixelSize: root.welcomeFontBody
-                        font.weight: Font.Medium
-                        color: root.welcomeOnSurface
-                    }
-                    WelcomeSegmentedControl {
+                    ColumnLayout {
+                        id: placementRow
+                        required property int index
+                        readonly property var row: root.placementRows[index]
                         Layout.fillWidth: true
-                        currentValue: Config.options?.dock?.position ?? "bottom"
-                        options: [
-                            { displayName: Translation.tr("Bottom"), icon: "arrow_downward", value: "bottom" },
-                            { displayName: Translation.tr("Left"), icon: "arrow_back", value: "left" },
-                            { displayName: Translation.tr("Right"), icon: "arrow_forward", value: "right" }
-                        ]
-                        onSelected: value => root.setProfileFeature("dock.position", value)
+                        spacing: 5
+                        WelcomeText {
+                            text: placementRow.row.label
+                            font.pixelSize: root.welcomeFontBody
+                            font.weight: Font.Medium
+                            color: root.welcomeOnSurface
+                        }
+                        WelcomeSegmentedControl {
+                            Layout.fillWidth: true
+                            currentValue: Config.getNestedValue(placementRow.row.key, placementRow.row.fallback)
+                            options: placementRow.row.options
+                            onSelected: value => root.setProfileFeature(placementRow.row.key, value)
+                        }
                     }
                 }
 
@@ -161,6 +144,7 @@ Flickable {
                 }
 
                 Rectangle {
+                    visible: !root.familyWelcome?.placementRows
                     Layout.fillWidth: true
                     implicitHeight: 1
                     color: ColorUtils.applyAlpha(root.welcomeOutline, 0.34)
@@ -168,7 +152,7 @@ Flickable {
 
                 ColumnLayout {
                     Layout.fillWidth: true
-                    visible: (Config.options?.panelFamily ?? "ii") === "ii"
+                    visible: !root.familyWelcome?.placementRows
                         && (Config.options?.bar?.appearanceStyle ?? "m3") === "m3"
                     spacing: 9
 
@@ -400,7 +384,7 @@ Flickable {
 
                 ColumnLayout {
                     Layout.fillWidth: true
-                    visible: (Config.options?.panelFamily ?? "ii") === "ii"
+                    visible: !root.familyWelcome?.placementRows
                         && (Config.options?.bar?.appearanceStyle ?? "m3") !== "m3"
                     spacing: 9
 

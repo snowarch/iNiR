@@ -111,12 +111,12 @@ Flickable {
 
                     Repeater {
                         model: [
-                            { icon: "tune", label: Translation.tr("Starting point"), value: root.familyWelcome?.startSummary ?? root.selectedProfileTitle },
-                            { icon: "palette", label: Translation.tr("Style"), value: root.familyWelcome?.styleSummary
-                                ?? (root.effectiveStylePreset === "custom" ? Translation.tr("Custom") : root.currentStylePreset.name) },
+                            root.welcomeProfiles ? { icon: "tune", label: Translation.tr("Starting point"), value: root.familyWelcome?.startSummary ?? root.selectedProfileTitle } : null,
+                            root.welcomeStyles ? { icon: "palette", label: Translation.tr("Style"), value: root.familyWelcome?.styleSummary
+                                ?? (root.effectiveStylePreset === "custom" ? Translation.tr("Custom") : root.currentStylePreset.name) } : null,
                             { icon: "dashboard", label: Translation.tr("Family"), value: root.familyTitle },
                             { icon: "speed", label: Translation.tr("Effects"), value: root.effectivePerformancePreset === "custom" ? Translation.tr("Custom") : root.currentPerformancePreset.name }
-                        ]
+                        ].filter(row => row !== null)
 
                         RowLayout {
                             required property var modelData

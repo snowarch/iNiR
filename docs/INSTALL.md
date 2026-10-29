@@ -16,6 +16,8 @@ Use `./setup install -y` to skip the questions.
 
 When it finishes, restart the computer. Logging out is not enough, because Niri's environment and your new groups only load at login. Then pick Niri at the login screen.
 
+The first start opens a short welcome: pick a family, then a few choices about how it looks and where things sit, each one landing on the desktop behind it as you click. **Skip setup** keeps the recommended pick for every step you didn't reach, so skipping never leaves you halfway. Everything there can be changed later in Settings.
+
 If the login screen is black on a laptop with NVIDIA and integrated graphics, the default X11 greeter may be starting on the GPU with no screens. Open `./setup`, choose Extras, and set up the Wayland login screen with Niri from there.
 
 ## Void Linux
