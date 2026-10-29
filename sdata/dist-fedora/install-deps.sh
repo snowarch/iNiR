@@ -290,7 +290,6 @@ FEDORA_TOOLKIT_PKGS=(
   upower
   wtype
   ydotool
-  python3-evdev
   python3-pillow
   brightnessctl
   ddcutil

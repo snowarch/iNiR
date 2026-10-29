@@ -26,7 +26,7 @@ What works on Void Linux and how far it was checked. A capability counts as supp
 | Shell desktop parity | XBPS `plasma-integration`, `kf6-syntax-highlighting` | VM. Rendered icons were not confirmed by eye |
 | Package search, install and remove | XBPS | VM. The password prompt was not automated |
 | Power and ABI repair | XBPS diagnostics | VM |
-| Super-tap (legacy, opt-in) | XBPS `python3-evdev` and helper | VM. Off by default |
+| Super-tap (legacy, opt-in) | `inir-accel super-overview-daemon` | VM. Off by default |
 
 ## Rules
 

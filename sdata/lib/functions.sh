@@ -392,7 +392,7 @@ repair_legacy_niri_shell_startup() {
 # (only on the first update off v2, while its migrations.json is still there) the clock faded at Dimming 70.
 repair_v2_leftovers() {
   INIR_V2_LEFTOVERS_REPAIRED=0
-  local niri="${XDG_CONFIG_HOME:-$HOME/.config}/niri" conf state file rules line tmp
+  local niri="${XDG_CONFIG_HOME:-$HOME/.config}/niri" conf state file rules line tmp accel
   declare -F inir_config_file >/dev/null || source "${REPO_ROOT}/scripts/lib/config-path.sh"
   conf="$(inir_config_file)"
   state="$(inir_config_dir)/migrations.json"
@@ -417,6 +417,18 @@ repair_v2_leftovers() {
       ((INIR_V2_LEFTOVERS_REPAIRED++)) || true
     fi
   fi
+
+  # the opt-in Super-tap daemon ran a python file from ~/.local/bin; inir-accel runs it now
+  accel="${XDG_DATA_HOME:-$HOME/.local/share}/inir/accel/current/inir-accel"
+  for file in "${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user/inir-super-overview.service" \
+      "${XDG_CONFIG_HOME:-$HOME/.config}/service/inir-super-overview/run"; do
+    if [[ -f "$file" ]] && grep -q 'inir_super_overview_daemon\.py' "$file"; then
+      sed -i "s|/usr/bin/env python3 .*inir_super_overview_daemon\.py'\\?|${accel} super-overview-daemon|" "$file" || return 1
+      rm -f "$HOME/.local/bin/inir_super_overview_daemon.py"
+      [[ "$file" == *.service ]] && { systemctl --user daemon-reload >/dev/null 2>&1 || true; }
+      ((INIR_V2_LEFTOVERS_REPAIRED++)) || true
+    fi
+  done
 
   if [[ -f "$conf" ]]; then
     # the state file is the only sign of a v2 clock; keep it until jq can run

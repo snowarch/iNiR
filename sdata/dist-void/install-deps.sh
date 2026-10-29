@@ -132,7 +132,6 @@ VOID_TOOLKIT_PACKAGES=(
   cmake
   upower
   wtype
-  python3-evdev
   python3-Pillow
   ImageMagick
   hyprpicker

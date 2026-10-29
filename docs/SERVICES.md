@@ -33,7 +33,7 @@ IpcHandler {
 | Service | Purpose | IPC |
 |---|---|---|
 | `NiriService` | Niri socket: outputs, workspaces, windows, layouts | `keyboard` |
-| `NiriKeybinds` | Niri keybinds, parsed by `scripts/parse_niri_keybinds.py` | |
+| `NiriKeybinds` | Niri keybinds, parsed by `inir-accel niri-keybinds` | |
 | `CompositorService` | Picks Niri or Hyprland from the socket environment | |
 | `HyprlandData`, `HyprlandKeybinds`, `HyprlandXkb` | Legacy Hyprland paths, not maintained | |
 | `ShellLayoutController` | Bar, dock and sidebar placement | |

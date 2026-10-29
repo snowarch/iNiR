@@ -233,27 +233,19 @@ function setup_systemd_services(){
 #####################################################################################
 function setup_super_daemon(){
   tui_info "Setting up Super-tap daemon..."
-  
-  local daemon_src="${REPO_ROOT}/scripts/daemon/inir_super_overview_daemon.py"
+
   local service_src="${REPO_ROOT}/scripts/systemd/inir-super-overview.service"
-  local daemon_dst="${HOME}/.local/bin/inir_super_overview_daemon.py"
+  local accel="${XDG_DATA_HOME:-${HOME}/.local/share}/inir/accel/current/inir-accel"
   local config_dir="${XDG_CONFIG_HOME:-${HOME}/.config}"
   local service_dst="${config_dir}/systemd/user/inir-super-overview.service"
   local service_wants="${config_dir}/systemd/user/default.target.wants/inir-super-overview.service"
   local runit_dir="${config_dir}/service/inir-super-overview"
   local runit_run="${runit_dir}/run"
-  local supervisor
-  
-  if [[ ! -f "$daemon_src" ]]; then
-    log_warning "Super-tap daemon not found in repo, skipping"
-    return 0
-  fi
-  
-  # Install daemon script
-  x mkdir -p "$(dirname "$daemon_dst")"
-  x cp "$daemon_src" "$daemon_dst"
-  x chmod +x "$daemon_dst"
-  
+  local supervisor accel_quoted
+
+  # the daemon was a python file copied here; inir-accel runs it now
+  rm -f "${HOME}/.local/bin/inir_super_overview_daemon.py"
+
   supervisor="$(inir_supervisor)"
   if [[ "$supervisor" == systemd ]]; then
     if [[ -f "$runit_run" ]] && grep -q '^# Managed by iNiR\.' "$runit_run"; then
@@ -261,25 +253,24 @@ function setup_super_daemon(){
       rm -rf "$runit_dir"
     fi
     x mkdir -p "$(dirname "$service_dst")"
-    x cp "$service_src" "$service_dst"
+    sed "s|@INIR_ACCEL@|${accel}|" "$service_src" > "$service_dst" || return 1
     v systemctl --user daemon-reload
     v systemctl --user enable inir-super-overview.service --now
   else
     rm -f "$service_dst" "$service_wants"
     x mkdir -p "$runit_dir"
-    local daemon_quoted
-    daemon_quoted="$(printf '%s' "$daemon_dst" | sed "s/'/'\\\\''/g")"
+    accel_quoted="$(printf '%s' "$accel" | sed "s/'/'\\\\''/g")"
     if [[ "$supervisor" == turnstile ]]; then
-      printf '#!/bin/sh\n# Managed by iNiR.\nexec chpst -e "$TURNSTILE_ENV_DIR" /usr/bin/env python3 '\''%s'\''\n' "$daemon_quoted" > "$runit_run"
+      printf '#!/bin/sh\n# Managed by iNiR.\nexec chpst -e "$TURNSTILE_ENV_DIR" '\''%s'\'' super-overview-daemon\n' "$accel_quoted" > "$runit_run"
     else
-      printf '#!/bin/sh\n# Managed by iNiR.\nexec /usr/bin/env python3 '\''%s'\''\n' "$daemon_quoted" > "$runit_run"
+      printf '#!/bin/sh\n# Managed by iNiR.\nexec '\''%s'\'' super-overview-daemon\n' "$accel_quoted" > "$runit_run"
     fi
     chmod +x "$runit_run"
     if command -v sv >/dev/null 2>&1 && sv status "$runit_dir" 2>/dev/null | grep -q '^run:'; then
       sv restart "$runit_dir" >/dev/null 2>&1 || return 1
     fi
   fi
-  
+
   log_success "Super-tap daemon installed (${supervisor})"
 }
 

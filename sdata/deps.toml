@@ -332,10 +332,10 @@ void = { pkg = "songrec", group = "audio" }
 [[dep]]
 name = "input"
 group = "toolkit"
-arch = ["upower", "wtype", "ydotool", "python-evdev", "python-pillow", "fprintd"]
-fedora = ["upower", "wtype", "ydotool", "python3-evdev", "python3-pillow", "fprintd"]
-debian = ["upower", "wtype", "ydotool", "python3-evdev", "python3-pil", "python3-cairo", "fprintd"]
-void = ["upower", "wtype", "python3-evdev", "python3-Pillow", "fprintd", "cmake"]
+arch = ["upower", "wtype", "ydotool", "python-pillow", "fprintd"]
+fedora = ["upower", "wtype", "ydotool", "python3-pillow", "fprintd"]
+debian = ["upower", "wtype", "ydotool", "python3-pil", "python3-cairo", "fprintd"]
+void = ["upower", "wtype", "python3-Pillow", "fprintd", "cmake"]
 
 [[dep]]
 name = "ydotool"

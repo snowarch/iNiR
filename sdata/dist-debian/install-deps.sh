@@ -358,7 +358,6 @@ DEBIAN_TOOLKIT_PKGS=(
   upower
   wtype
   ydotool
-  python3-evdev
   python3-pil
   python3-cairo
   brightnessctl

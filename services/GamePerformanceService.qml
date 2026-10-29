@@ -190,8 +190,7 @@ Singleton {
         if (root.telemetryAvailable) return "live"
         return root.mangoHudInstalled ? "logging-not-configured" : "mangohud-missing"
     }
-    readonly property string monitorScript: FileUtils.trimFileProtocol(
-        `${Directories.scriptPath}/game-performance-monitor.py`)
+    readonly property string monitorCommand: Quickshell.shellPath("scripts/lib/accel-run")
 
     function _validMetric(value: real): bool {
         return value >= 0 && isFinite(value)
@@ -621,7 +620,7 @@ Singleton {
         id: telemetryProcess
         command: {
             const result = [
-                "/usr/bin/python3", root.monitorScript,
+                root.monitorCommand, "game-performance-monitor",
                 "--pid", String(root.gamePid),
                 "--target-key", root._gameTargetKey,
                 "--target-app-id", root.gameAppId,

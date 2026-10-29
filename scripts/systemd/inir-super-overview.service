@@ -4,7 +4,7 @@ After=graphical-session.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/env python3 %h/.local/bin/inir_super_overview_daemon.py
+ExecStart=@INIR_ACCEL@ super-overview-daemon
 Restart=on-failure
 RestartSec=1
 

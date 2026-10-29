@@ -246,7 +246,7 @@ Singleton {
     Timer { id: usbSettle; interval: 700; onTriggered: usbRead.running = true }
     Process {
         id: usbRead
-        command: ["python3", Directories.scriptsPath + "/devices/usb-snapshot.py"]
+        command: [Directories.scriptsPath + "/lib/accel-run", "usb-snapshot"]
         stdout: StdioCollector {
             onStreamFinished: {
                 let list = []

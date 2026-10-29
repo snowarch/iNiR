@@ -138,7 +138,6 @@ depends=(
   blueman
   kconfig
   hyprpicker
-  python-evdev
   python-pillow
   translate-shell
 

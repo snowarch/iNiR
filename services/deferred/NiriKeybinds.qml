@@ -18,7 +18,7 @@ import qs.services
 Singleton {
     id: root
 
-    // ── Legacy cheatsheet model (parse_niri_keybinds.py) ──────────────────
+    // ── Legacy cheatsheet model (inir-accel niri-keybinds) ────────────────
     property var keybinds: ({
         children: defaultKeybinds
     })
@@ -37,7 +37,6 @@ Singleton {
     signal bindError(string message)
 
     // ── Script paths ──────────────────────────────────────────────────────
-    readonly property string parserScript: FileUtils.trimFileProtocol(Qt.resolvedUrl("../../scripts/parse_niri_keybinds.py"))
     readonly property string niriConfigScript: FileUtils.trimFileProtocol(Qt.resolvedUrl("../../scripts/niri-config.py"))
 
     // Internal: pending key combos tracked for signal emission
@@ -138,7 +137,7 @@ Singleton {
     // ── Legacy keybind parser (cheatsheet) ───────────────────────────────
     Process {
         id: keybindParser
-        command: ["/usr/bin/python3", root.parserScript]
+        command: [Quickshell.shellPath("scripts/lib/accel-run"), "niri-keybinds"]
 
         stdout: StdioCollector {
             id: keybindCollector

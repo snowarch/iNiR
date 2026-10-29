@@ -11,11 +11,11 @@ import qs.services
 
 /**
  * A service that provides access to Hyprland keybinds.
- * Uses the `get_keybinds.py` script to parse comments in config files in a certain format and convert to JSON.
+ * Uses `inir-accel hyprland-keybinds` to parse comments in config files in a certain format and convert to JSON.
  */
 Singleton {
     id: root
-    property string keybindParserPath: FileUtils.trimFileProtocol(`${Directories.scriptPath}/hyprland/get_keybinds.py`)
+    property string keybindParserPath: Quickshell.shellPath("scripts/lib/accel-run")
     property string defaultKeybindConfigPath: FileUtils.trimFileProtocol(`${Directories.config}/hypr/hyprland/keybinds.conf`)
     property string userKeybindConfigPath: FileUtils.trimFileProtocol(`${Directories.config}/hypr/custom/keybinds.conf`)
     property var defaultKeybinds: {"children": []}
@@ -42,7 +42,7 @@ Singleton {
     Process {
         id: getDefaultKeybinds
         running: false
-        command: [root.keybindParserPath, "--path", root.defaultKeybindConfigPath]
+        command: [root.keybindParserPath, "hyprland-keybinds", "--path", root.defaultKeybindConfigPath]
         
         stdout: SplitParser {
             onRead: data => {
@@ -58,7 +58,7 @@ Singleton {
     Process {
         id: getUserKeybinds
         running: false
-        command: [root.keybindParserPath, "--path", root.userKeybindConfigPath]
+        command: [root.keybindParserPath, "hyprland-keybinds", "--path", root.userKeybindConfigPath]
         
         stdout: SplitParser {
             onRead: data => {

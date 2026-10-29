@@ -88,7 +88,7 @@ Rectangle {
         if (kbd.xkbLayout.length === 0)
             return
         labelProc.running = false
-        labelProc.command = ["/usr/bin/env", "python3", Quickshell.shellPath("scripts/osk-layout-labels.py"), kbd.xkbLayout]
+        labelProc.command = [Quickshell.shellPath("scripts/lib/accel-run"), "osk-layout-labels", kbd.xkbLayout]
         labelProc.running = true
     }
 

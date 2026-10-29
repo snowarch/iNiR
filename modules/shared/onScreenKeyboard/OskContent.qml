@@ -53,7 +53,7 @@ Item {
         if (root.handMade || root.requestedLayout.length === 0)
             return
         labelProc.running = false
-        labelProc.command = ["/usr/bin/env", "python3", Quickshell.shellPath("scripts/osk-layout-labels.py"), root.requestedLayout]
+        labelProc.command = [Quickshell.shellPath("scripts/lib/accel-run"), "osk-layout-labels", root.requestedLayout]
         labelProc.running = true
     }
 
