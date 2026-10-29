@@ -21,6 +21,8 @@ Singleton {
     property string inirVersion: ""
     property bool loaded: false
     property bool loading: statusProcess.running
+    // an install from before the inir command (v2.33.0 not yet updated): the hub can't be read until it is
+    readonly property bool cliMissing: root.error.indexOf("needs the inir binary") >= 0
     property string error: ""
     property real checkedAt: 0
     // Offline the pages keep the last list they had and say so; back online they read it again.
@@ -301,6 +303,9 @@ Singleton {
                 }
                 if (!reply || reply.ok !== true) {
                     root.error = String(reply?.error ?? "Couldn't read the hub")
+                    // finished, with nothing: the pages show the error instead of reading forever
+                    root.checkedAt = Date.now()
+                    root.loaded = true
                     return
                 }
                 root.items = Array.from(reply.items ?? [])
