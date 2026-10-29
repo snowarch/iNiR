@@ -455,6 +455,17 @@ Singleton {
         readonly property color _inkPrimary: "#2b2622"      // Warm charcoal - main text
         readonly property color _inkSecondary: "#5c534a"    // Warm gray - secondary text
         readonly property color _inkMuted: "#8a7f73"        // Warm taupe - inactive/disabled
+        // Light glass is only as light as the wallpaper under it lets it be: over a black one the overlay alone shows
+        // (the sidebar went to L* 76 and its accent clock to 3.7:1, 10-29). An accent used as ink drops to the tone
+        // that reads 4.5:1 there, as M3's medium-contrast light scheme moves primary from tone 40 to 30.
+        readonly property color _glassFloor: ColorUtils.mix(colLayer0Base, "black", 1 - root.aurora.overlayTransparentize)
+        readonly property real _glassInkTone: {
+            const y = Math.max(0.0001, (ColorUtils.relativeLuminance(_glassFloor) + 0.05) / 4.5 - 0.05)
+            return y <= 0.008856 ? y * 903.2963 : 116 * Math.pow(y, 1 / 3) - 16
+        }
+        function _glassInk(accent: color): color {
+            return root._auroraLightMode && ColorUtils.toneOf(accent) > _glassInkTone ? ColorUtils.atTone(accent, _glassInkTone) : accent
+        }
 
         // Aurora Mode Contrast Boost Logic
         // If we are in Aurora Dark mode (glass), we CANNOT use dark variants for text.
@@ -474,8 +485,8 @@ Singleton {
             : (_needsHighContrast ? _baseOnSurface : (root._auroraLightMode ? _inkSecondary : _baseOnSurfaceVariant))
         property color colSubtext: ColorUtils.ensureReadable(
             ColorUtils.mix(_semanticSubtextBase, root.colSecondaryActionIcon, 0.84),
-            colLayer1Base,
-            5.5
+            root._auroraLightMode ? _glassFloor : colLayer1Base,
+            root._auroraLightMode ? 4.5 : 5.5
         )
             
         // Layer 0
@@ -552,7 +563,7 @@ Singleton {
         )
         // Primary
         property color colPrimary: root.editorialEverywhere ? root.editorial.accent
-            : root.regaliaEverywhere ? root.regalia.hardwarePrimary : root.zzzEverywhere ? root.zzz.accent : m3colors.m3primary
+            : root.regaliaEverywhere ? root.regalia.hardwarePrimary : root.zzzEverywhere ? root.zzz.accent : _glassInk(m3colors.m3primary)
         property color colOnPrimary: root.editorialEverywhere ? root.editorial.accentInk
             : root.regaliaEverywhere ? root.regalia.hardwarePrimaryInk : root.zzzEverywhere ? root.zzz.onAccent : m3colors.m3onPrimary
         property color colPrimaryHover: root.editorialEverywhere ? root.editorial.accentHover : root.regaliaEverywhere ? root.regalia.hardwarePrimaryHover : ColorUtils.mix(colors.colPrimary, colLayer1Hover, 0.87)
@@ -562,7 +573,7 @@ Singleton {
         property color colPrimaryContainerActive: root.editorialEverywhere ? root.editorial.selectionPressed : root.regaliaEverywhere ? root.regalia.primaryPlateActive : ColorUtils.mix(colors.colPrimaryContainer, colors.colOnPrimaryContainer, 0.8)
         property color colOnPrimaryContainer: root.editorialEverywhere ? root.editorial.fieldInk : root.regaliaEverywhere ? root.regalia.primaryPlateInk : root.cookieEverywhere ? root.cookie.onFace : root.zzzEverywhere ? root.zzz.onColor : m3colors.m3onPrimaryContainer
         // Secondary
-        property color colSecondary: root.editorialEverywhere ? root.editorial.accent : root.regaliaEverywhere ? root.regalia.hardwareSecondary : root.zzzEverywhere ? root.zzz.secondary : m3colors.m3secondary
+        property color colSecondary: root.editorialEverywhere ? root.editorial.accent : root.regaliaEverywhere ? root.regalia.hardwareSecondary : root.zzzEverywhere ? root.zzz.secondary : _glassInk(m3colors.m3secondary)
         property color colSecondaryHover: root.regaliaEverywhere ? root.regalia.hardwareSecondaryHover : ColorUtils.mix(colSecondary, colLayer1Hover, 0.85)
         property color colSecondaryActive: root.regaliaEverywhere ? root.regalia.hardwareSecondaryActive : ColorUtils.mix(colSecondary, colLayer1Active, 0.4)
         property color colOnSecondary: root.editorialEverywhere ? root.editorial.accentInk : root.regaliaEverywhere ? root.regalia.hardwareSecondaryInk : root.zzzEverywhere ? root.zzz.onSecondary : m3colors.m3onSecondary
