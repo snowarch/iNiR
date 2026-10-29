@@ -9988,5 +9988,9 @@
   "Personalization": "التخصيص",
   "Windows & layout": "النوافذ والتخطيط",
   "Keyboard & shortcuts": "لوحة المفاتيح والاختصارات",
-  "%1 monitors": "%1 شاشات"
+  "%1 monitors": "%1 شاشات",
+  "Families": "العائلات",
+  "The shell you're using": "الـ Shell الذي تستخدمه",
+  "Ready to use": "جاهز للاستخدام",
+  "A whole shell": "Shell كامل"
 }

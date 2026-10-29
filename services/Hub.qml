@@ -46,7 +46,8 @@ Singleton {
         { id: "widget", label: "Widgets", one: "Widget", icon: "widgets" },
         { id: "theme", label: "Colour themes", one: "Colour theme", icon: "palette" },
         { id: "iris-theme", label: "iRiS themes", one: "iRiS theme", icon: "style" },
-        { id: "webapp", label: "Web apps", one: "Web app", icon: "language" }
+        { id: "webapp", label: "Web apps", one: "Web app", icon: "language" },
+        { id: "family", label: "Families", one: "Family", icon: "dashboard" }
     ]
     readonly property var permissionText: ({
         process: "Runs commands on your computer",
@@ -90,7 +91,7 @@ Singleton {
     function matches(item: var, kind: string, query: string, installedOnly: bool): bool {
         if (kind.length > 0 && item.kind !== kind)
             return false
-        if (installedOnly && !item.installed)
+        if (installedOnly && !root.owned(item))
             return false
         const terms = String(query ?? "").toLowerCase().split(/\s+/).filter(term => term.length > 0)
         if (terms.length === 0)
@@ -100,7 +101,7 @@ Singleton {
         return terms.every(term => text.includes(term))
     }
     // The one state a card shows: "install" | "update" | "remove" while that runs, then
-    // "failed", "conflict", "incompatible", "update" (one is waiting), "installed" or "get".
+    // "failed", "active" or "present" (a family the shell has), "conflict", "incompatible", "update", "installed" or "get".
     function stateOf(item: var): string {
         if (!item)
             return "get"
@@ -109,6 +110,10 @@ Singleton {
             return running === "remove" ? "removing" : running === "update" ? "updating" : "installing"
         if (root.failures[item.id] !== undefined)
             return "failed"
+        // A family the shell already has (shipped inside inir, linked, or from the hub) is never a name clash: it is
+        // the one in use or one to switch to (10-29: all three read "Name taken", the one in use too).
+        if (item.kind === "family" && Plugins.families.includes(item.id))
+            return item.installed && item.update && item.compatible ? "update" : Plugins.active === item.id ? "active" : "present"
         if (item.installed)
             return item.update && item.compatible ? "update" : "installed"
         if (item.conflict)
@@ -118,6 +123,20 @@ Singleton {
         return "get"
     }
     // Families an item does something in, by name, for "Works in …".
+    // On this machine: installed from the hub, or a family the shell has.
+    function owned(item: var): bool {
+        return Boolean(item?.installed) || (item?.kind === "family" && Plugins.families.includes(item.id))
+    }
+    function useFamily(id: string): void {
+        Quickshell.execDetached([root.launcher, "panelFamily", "set", id])
+    }
+    // The line under a card's name, for the family whose page shows it.
+    function whereOf(item: var, family: string): string {
+        if (item?.kind === "family")
+            return Plugins.active === item.id ? Translation.tr("The shell you're using")
+                : Plugins.families.includes(item.id) ? Translation.tr("Ready to use") : Translation.tr("A whole shell")
+        return root.fits(item, family) ? root.whereText(item, family) : Translation.tr("For %1").arg(root.familyNames(item))
+    }
     function familyNames(item: var): string {
         const names = { material: "Material", iris: "iRiS", waffle: "Waffle" }
         return Array.from(item?.families ?? []).map(family => names[family] ?? family).join(" · ")

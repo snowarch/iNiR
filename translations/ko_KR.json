@@ -9988,5 +9988,9 @@
   "Personalization": "개인 설정",
   "Windows & layout": "창과 레이아웃",
   "Keyboard & shortcuts": "키보드와 단축키",
-  "%1 monitors": "모니터 %1개"
+  "%1 monitors": "모니터 %1개",
+  "Families": "계열",
+  "The shell you're using": "사용 중인 셸",
+  "Ready to use": "바로 사용 가능",
+  "A whole shell": "완전한 셸"
 }

@@ -9988,5 +9988,9 @@
   "Personalization": "Персонализация",
   "Windows & layout": "Окна и раскладка",
   "Keyboard & shortcuts": "Клавиатура и сочетания",
-  "%1 monitors": "Мониторов: %1"
+  "%1 monitors": "Мониторов: %1",
+  "Families": "Семейства",
+  "The shell you're using": "Shell, который вы используете",
+  "Ready to use": "Готово к использованию",
+  "A whole shell": "Целый Shell"
 }

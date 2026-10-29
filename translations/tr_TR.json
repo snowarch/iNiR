@@ -9988,5 +9988,9 @@
   "Personalization": "Kişiselleştirme",
   "Windows & layout": "Pencereler ve düzen",
   "Keyboard & shortcuts": "Klavye ve kısayollar",
-  "%1 monitors": "%1 monitör"
+  "%1 monitors": "%1 monitör",
+  "Families": "Aileler",
+  "The shell you're using": "Kullandığın kabuk",
+  "Ready to use": "Kullanıma hazır",
+  "A whole shell": "Eksiksiz bir kabuk"
 }

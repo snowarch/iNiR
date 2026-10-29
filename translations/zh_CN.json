@@ -9988,5 +9988,9 @@
   "Personalization": "个性化",
   "Windows & layout": "窗口和布局",
   "Keyboard & shortcuts": "键盘和快捷键",
-  "%1 monitors": "%1 个显示器"
+  "%1 monitors": "%1 个显示器",
+  "Families": "家族",
+  "The shell you're using": "正在使用的 Shell",
+  "Ready to use": "可直接使用",
+  "A whole shell": "完整的 Shell"
 }

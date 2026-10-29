@@ -9988,5 +9988,9 @@
   "Personalization": "Personalisasi",
   "Windows & layout": "Jendela & tata letak",
   "Keyboard & shortcuts": "Keyboard & pintasan",
-  "%1 monitors": "%1 monitor"
+  "%1 monitors": "%1 monitor",
+  "Families": "Keluarga",
+  "The shell you're using": "Shell yang sedang kamu pakai",
+  "Ready to use": "Siap dipakai",
+  "A whole shell": "Shell lengkap"
 }

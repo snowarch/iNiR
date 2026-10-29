@@ -9988,5 +9988,9 @@
   "Personalization": "Namminersorneq",
   "Windows & layout": "Igalaat aaqqissuussaanerallu",
   "Keyboard & shortcuts": "Tasteqarfik ingerlaannarsaatillu",
-  "%1 monitors": "Saqqummiutit %1"
+  "%1 monitors": "Saqqummiutit %1",
+  "Families": "Ilaqutariit",
+  "The shell you're using": "Shell atugarisat",
+  "Ready to use": "Atorneqarsinnaavoq",
+  "A whole shell": "Shell tamakkerlugu"
 }

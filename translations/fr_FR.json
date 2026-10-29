@@ -9988,5 +9988,9 @@
   "Personalization": "Personnalisation",
   "Windows & layout": "Fenêtres et disposition",
   "Keyboard & shortcuts": "Clavier et raccourcis",
-  "%1 monitors": "%1 écrans"
+  "%1 monitors": "%1 écrans",
+  "Families": "Familles",
+  "The shell you're using": "Le Shell que vous utilisez",
+  "Ready to use": "Prêt à l'emploi",
+  "A whole shell": "Un Shell complet"
 }

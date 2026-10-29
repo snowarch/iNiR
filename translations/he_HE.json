@@ -9988,5 +9988,9 @@
   "Personalization": "התאמה אישית",
   "Windows & layout": "חלונות ופריסה",
   "Keyboard & shortcuts": "מקלדת וקיצורים",
-  "%1 monitors": "%1 מסכים"
+  "%1 monitors": "%1 מסכים",
+  "Families": "משפחות",
+  "The shell you're using": "ה-Shell שבשימושך",
+  "Ready to use": "מוכן לשימוש",
+  "A whole shell": "Shell שלם"
 }

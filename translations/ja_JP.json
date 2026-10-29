@@ -9988,5 +9988,9 @@
   "Personalization": "個人用設定",
   "Windows & layout": "ウィンドウとレイアウト",
   "Keyboard & shortcuts": "キーボードとショートカット",
-  "%1 monitors": "モニター %1 台"
+  "%1 monitors": "モニター %1 台",
+  "Families": "ファミリー",
+  "The shell you're using": "使用中のシェル",
+  "Ready to use": "すぐに使えます",
+  "A whole shell": "シェル一式"
 }

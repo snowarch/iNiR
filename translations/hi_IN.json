@@ -9988,5 +9988,9 @@
   "Personalization": "वैयक्तिकरण",
   "Windows & layout": "विंडो और लेआउट",
   "Keyboard & shortcuts": "कीबोर्ड और शॉर्टकट",
-  "%1 monitors": "%1 मॉनिटर"
+  "%1 monitors": "%1 मॉनिटर",
+  "Families": "परिवार",
+  "The shell you're using": "आपका मौजूदा Shell",
+  "Ready to use": "उपयोग के लिए तैयार",
+  "A whole shell": "एक पूरा Shell"
 }
