@@ -18,6 +18,8 @@ for dir in "$XDG_BIN_HOME" "$XDG_CACHE_HOME" "$XDG_CONFIG_HOME" "$XDG_DATA_HOME"
   fi
 done
 
+ensure_config_dir_link || log_warning "Could not link ~/.config/illogical-impulse to ~/.config/inir"
+
 #####################################################################################
 # Reinstall after `setup uninstall`: its backup brings the settings and state back,
 # so this is not a first install (that would reset the user's niri and dotfiles).

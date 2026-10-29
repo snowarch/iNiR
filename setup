@@ -325,6 +325,7 @@ repair_update_owned_state() {
     local include_repo_integration="${1:-true}"
 
     repair_v2_leftovers || tui_warn "Could not set right what v2 left in your config"
+    ensure_config_dir_link || tui_warn "Could not link ~/.config/illogical-impulse to ~/.config/inir"
     [[ "${INIR_V2_LEFTOVERS_REPAIRED:-0}" -gt 0 ]] && tui_success "Set right what v2 left in your config"
 
     if ! repair_legacy_quickshell_malloc_environment; then

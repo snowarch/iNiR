@@ -66,6 +66,21 @@ resolve_inir_config_dir() {
   printf '%s' "$INIR_CONFIG_DIR_NEW"
 }
 
+# The shell reads ~/.config/illogical-impulse/config.json and setup writes ~/.config/inir: the old name is a link to
+# the new one. Set right on every run, never at the cost of a file: two real folders stay as they are (setup then
+# writes the old one, which is what the shell reads).
+ensure_config_dir_link() {
+  if [[ -L "$INIR_CONFIG_DIR_LEGACY" ]]; then
+    return 0
+  elif [[ -d "$INIR_CONFIG_DIR_LEGACY" ]]; then
+    [[ -e "$INIR_CONFIG_DIR_NEW" ]] && return 0
+    mv -- "$INIR_CONFIG_DIR_LEGACY" "$INIR_CONFIG_DIR_NEW" || return 1
+  elif [[ -e "$INIR_CONFIG_DIR_LEGACY" ]]; then
+    return 0
+  fi
+  mkdir -p -- "$INIR_CONFIG_DIR_NEW" && ln -s -- "$INIR_CONFIG_DIR_NEW" "$INIR_CONFIG_DIR_LEGACY"
+}
+
 DOTS_CORE_CONFDIR="${DOTS_CORE_CONFDIR:-$(resolve_inir_config_dir)}"
 INSTALLED_LISTFILE="${DOTS_CORE_CONFDIR}/installed_listfile"
 FIRSTRUN_FILE="${DOTS_CORE_CONFDIR}/installed_true"
