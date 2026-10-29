@@ -236,6 +236,8 @@ ColumnLayout {
                 Repeater {
                     id: tabRepeater
                     model: root.options
+                    onItemAdded: indicator.generation++
+                    onItemRemoved: indicator.generation++
                     delegate: RippleButton {
                         id: tab
                         required property var modelData
@@ -271,13 +273,13 @@ ColumnLayout {
 
             Rectangle {
                 id: indicator
+                // Options rebuilt with the same count (the language loading after start) replace every tab while
+                // count stays put, so a binding over itemAt kept the destroyed ones: no underline on a fresh start.
+                property int generation: 0
+                readonly property int currentAt: root.options.findIndex(option => String(option?.value ?? "") === String(root.currentValue))
                 readonly property Item target: {
-                    for (let i = 0; i < tabRepeater.count; ++i) {
-                        const t = tabRepeater.itemAt(i)
-                        if (t && t.current)
-                            return t
-                    }
-                    return null
+                    indicator.generation
+                    return indicator.currentAt >= 0 ? tabRepeater.itemAt(indicator.currentAt) : null
                 }
                 visible: target !== null
                 y: tabRow.height - height

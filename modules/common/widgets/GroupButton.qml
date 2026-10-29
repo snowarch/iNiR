@@ -69,7 +69,9 @@ Button {
             colBackgroundToggled) :
         (root.down ? colBackgroundActive : 
             root.hovered ? colBackgroundHover : 
-            colBackground)) : colBackground
+            colBackground)) : (root.toggled ? colBackgroundToggled : colBackground)
+    // Disabled, the chosen one keeps its fill and its ink and the group's dimming says it is off: dropped to the rest
+    // fill, its on-primary label went grey on grey (Bar › Corner style while the bar isn't Classic).
 
     onDownChanged: {
         if (root.down) {
