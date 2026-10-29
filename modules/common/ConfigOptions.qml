@@ -2,7 +2,7 @@ import QtQuick
 import Quickshell.Io
 
 // The config schema: every key and what the shell uses when the file doesn't say. Config.qml reads the file into
-// one of these; ConfigFactory keeps an untouched one to know what a fresh install has.
+// one of these.
 JsonAdapter {
     // Panel system
     property list<string> enabledPanels: ["iiBar", "iiBackground", "iiBackdrop", "iiCheatsheet", "iiControlPanel", "iiDock", "iiLock", "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard", "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners", "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiTilingOverlay", "iiVerticalBar", "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard", "iiShellUpdate", "iiDashboard", "iiMascotCompanion"]
