@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # What QML and config lines spawn: inir-accel by its one locator (accel.sh), or the fix when it is missing.
 source "$(dirname "${BASH_SOURCE[0]}")/accel.sh"
+# the shell it belongs to: niri-config reads its defaults/ from there
+export INIR_SHELL="${INIR_SHELL:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)}"
 [[ -x "$INIR_ACCEL" ]] || { echo "inir-accel is missing. Run: inir update" >&2; exit 127; }
 exec "$INIR_ACCEL" "$@"

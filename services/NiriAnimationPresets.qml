@@ -12,13 +12,13 @@ import qs.services
  * Niri animation presets. Shipped ones are read from the running iNiR
  * (defaults/niri-animation-presets.json), extra ones from
  * ~/.config/inir/niri-animation-presets.json. The truth is the animations block
- * of config.d/60-animations.kdl, which niri-config.py rewrites and matches back
+ * of config.d/60-animations.kdl, which inir-accel niri-config rewrites and matches back
  * to a preset ("" = custom).
  */
 Singleton {
     id: root
 
-    readonly property string script: Quickshell.shellPath("scripts/niri-config.py")
+    readonly property string accelRun: Quickshell.shellPath("scripts/lib/accel-run")
     readonly property string animationsFile: FileUtils.trimFileProtocol(`${Directories.config}/niri/config.d/60-animations.kdl`)
     readonly property string userPresetsFile: FileUtils.trimFileProtocol(`${Directories.shellConfig}/niri-animation-presets.json`)
 
@@ -54,7 +54,7 @@ Singleton {
         error = ""
         pendingId = id
         applying = true
-        applyProcess.command = ["python3", root.script, "apply-animation-preset", id]
+        applyProcess.command = [root.accelRun, "niri-config", "apply-animation-preset", id]
         applyProcess.running = true
         return true
     }
@@ -153,7 +153,7 @@ Singleton {
 
     Process {
         id: listProcess
-        command: ["python3", root.script, "get-animation-presets"]
+        command: [root.accelRun, "niri-config", "get-animation-presets"]
         stdout: StdioCollector {
             id: listOutput
             onStreamFinished: {

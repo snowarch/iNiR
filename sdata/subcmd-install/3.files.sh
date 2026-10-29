@@ -379,9 +379,10 @@ case "${SKIP_NIRI}" in
       # that request the core X cursor resolve it through ~/.icons/default, which
       # otherwise inherits Adwaita and shows a different pointer. sync-cursor reads
       # the theme from the niri KDL, so it runs once that config is in place.
-      if command -v python3 &>/dev/null && [[ -f "${REPO_ROOT}/scripts/niri-config.py" ]]; then
-        python3 "${REPO_ROOT}/scripts/niri-config.py" sync-cursor >/dev/null 2>&1 || true
+      if "${REPO_ROOT}/scripts/lib/accel-run" niri-config sync-cursor >/dev/null 2>&1; then
         log_success "Cursor theme synced for XWayland apps"
+      else
+        log_warning "Cursor theme not synced for XWayland apps (inir-accel missing or niri config unreadable)"
       fi
     fi
     ;;

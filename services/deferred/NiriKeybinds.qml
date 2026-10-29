@@ -4,7 +4,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import qs.modules.common.functions
 import qs.services
 
 /**
@@ -13,7 +12,7 @@ import qs.services
  * Falls back to defaults if parsing fails.
  *
  * Read/write support: setBind() and removeBind() write back
- * to the keybinds KDL file via niri-config.py.
+ * to the keybinds KDL file via inir-accel niri-config.
  */
 Singleton {
     id: root
@@ -27,7 +26,7 @@ Singleton {
     property string configPath: ""
     property string errorMessage: ""
 
-    // ── Enriched editor model (niri-config.py get-binds) ──────────────────
+    // ── Enriched editor model (inir-accel niri-config get-binds) ──────────────────
     property var allBinds: []
     property var enrichedCategories: []
 
@@ -37,7 +36,7 @@ Singleton {
     signal bindError(string message)
 
     // ── Script paths ──────────────────────────────────────────────────────
-    readonly property string niriConfigScript: FileUtils.trimFileProtocol(Qt.resolvedUrl("../../scripts/niri-config.py"))
+    readonly property string accelRun: Quickshell.shellPath("scripts/lib/accel-run")
 
     // Internal: pending key combos tracked for signal emission
     property string _pendingSetCombo: ""
@@ -57,7 +56,7 @@ Singleton {
             return false
         }
         root._pendingSetCombo = keyCombo
-        const args = ["/usr/bin/python3", root.niriConfigScript, "set-bind", keyCombo, action]
+        const args = [root.accelRun, "niri-config", "set-bind", keyCombo, action]
         if (options && options.length > 0)
             args.push("--options", options)
         setBindProcess.command = args
@@ -65,7 +64,7 @@ Singleton {
         return true
     }
 
-    // niri-config.py prints {"error", "detail"} JSON on a non-zero exit too.
+    // inir-accel niri-config prints {"error", "detail"} JSON on a non-zero exit too.
     function _failureText(output: string, fallback: string): string {
         try {
             const result = JSON.parse(output)
@@ -92,14 +91,14 @@ Singleton {
             return
         }
         root._pendingRemoveCombo = keyCombo
-        removeBindProcess.command = ["/usr/bin/python3", root.niriConfigScript, "remove-bind", keyCombo]
+        removeBindProcess.command = [root.accelRun, "niri-config", "remove-bind", keyCombo]
         removeBindProcess.running = true
         const gone = root.allBinds.find(bind => bind.keyCombo === keyCombo)
         if (offerUndo && gone && String(gone.actionRaw ?? "").length > 0)
             Undo.offer(Translation.tr("Removed %1").arg(keyCombo), () => root.setBind(keyCombo, gone.actionRaw, gone.optionsStr ?? ""))
     }
 
-    // Niri's config is the truth (a managed block in 90-user-extra.kdl, niri-config.py);
+    // Niri's config is the truth (a managed block in 90-user-extra.kdl, inir-accel niri-config);
     // "custom" is an Alt+Tab the person bound themselves.
     property string altTabSource: ""
     function refreshAltTab(): void {
@@ -109,12 +108,12 @@ Singleton {
         if (source !== "inir" && source !== "niri") return
         if (altTabWriter.running) return
         root.altTabSource = source
-        altTabWriter.command = ["/usr/bin/python3", root.niriConfigScript, "set-alt-tab", source]
+        altTabWriter.command = [root.accelRun, "niri-config", "set-alt-tab", source]
         altTabWriter.running = true
     }
     Process {
         id: altTabReader
-        command: ["/usr/bin/python3", root.niriConfigScript, "get-alt-tab"]
+        command: [root.accelRun, "niri-config", "get-alt-tab"]
         stdout: StdioCollector {
             onStreamFinished: {
                 try { root.altTabSource = JSON.parse(text).source ?? "" } catch (e) { root.altTabSource = "" }
@@ -176,10 +175,10 @@ Singleton {
         }
     }
 
-    // ── Enriched binds loader (niri-config.py get-binds) ─────────────────
+    // ── Enriched binds loader (inir-accel niri-config get-binds) ─────────────────
     Process {
         id: enrichedBindsLoader
-        command: ["/usr/bin/python3", root.niriConfigScript, "get-binds"]
+        command: [root.accelRun, "niri-config", "get-binds"]
         running: false
 
         stdout: StdioCollector {
@@ -206,7 +205,7 @@ Singleton {
                     console.warn("[NiriKeybinds] get-binds JSON parse error:", e)
                 }
             } else if (exitCode !== 0) {
-                console.warn("[NiriKeybinds] get-binds failed (exit", exitCode + "), niri-config.py may not support get-binds yet")
+                console.warn("[NiriKeybinds] get-binds failed (exit", exitCode + "), or inir-accel is missing")
             }
         }
     }

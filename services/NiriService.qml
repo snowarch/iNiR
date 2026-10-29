@@ -127,8 +127,8 @@ Singleton {
     Process {
         id: overviewHotCornersProcess
         command: [
-            "/usr/bin/python3",
-            Quickshell.shellPath("scripts/niri-config.py"),
+            Quickshell.shellPath("scripts/lib/accel-run"),
+            "niri-config",
             "get-hot-corners"
         ]
 

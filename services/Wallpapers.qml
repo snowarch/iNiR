@@ -203,8 +203,8 @@ Singleton {
                 return
             }
             backdropShadowSyncProcess.command = [
-                "/usr/bin/python3",
-                Quickshell.shellPath("scripts/niri-config.py"),
+                Quickshell.shellPath("scripts/lib/accel-run"),
+                "niri-config",
                 "sync-backdrop-overview-shadow",
                 root.backdropOnlyShadowOverrideWanted ? "on" : "off"
             ]
