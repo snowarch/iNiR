@@ -581,10 +581,10 @@ JsonAdapter {
 
     property JsonObject gameMode: JsonObject {
         property bool autoDetect: true
-        property bool disableAnimations: true
-        property bool disableEffects: true
+        property bool disableAnimations: false
+        property bool disableEffects: false
         property bool disableVisualizers: true
-        property bool disableNiriAnimations: true
+        property bool disableNiriAnimations: false
         property bool disableReloadToasts: true
         property bool disableDiscoverOverlay: true // Only where discover-overlay is installed
         property bool suppressNotifications: true // Hide notification popups during GameMode
@@ -1646,12 +1646,12 @@ JsonAdapter {
         property string videoPause: "covered" // when a live wallpaper stops decoding: "never", "fullscreen" or "covered" (tiled windows span the output)
         property bool hideWhenFullscreen: true
         property JsonObject effects: JsonObject {
-            property bool enableBlur: false
-            property int blurRadius: 32
+            property bool enableBlur: true
+            property int blurRadius: 22
             property int thumbnailBlurStrength: 50
             property bool enableAnimatedBlur: false // Enable blur for animated wallpapers (video/gif) - has performance impact
-            property int dim: 0 // 0-100 percentage (base overlay)
-            property int dynamicDim: 0 // Extra dim when there are windows on the current workspace (0-100)
+            property int dim: 30 // 0-100 percentage (base overlay)
+            property int dynamicDim: 20 // Extra dim when there are windows on the current workspace (0-100)
             property JsonObject ripple: JsonObject {
                 property bool enable: false
                 property bool charging: true
@@ -1732,7 +1732,7 @@ JsonAdapter {
             property bool enable: true
             // awww-native names plus shared internal QML/shader transitions.
             // Shader assets are transient overlays; awww remains the final static renderer.
-            property string type: "crossfade"
+            property string type: "random"
             property string direction: "right"
             property int duration: 800 // ms
             property list<var> bezier: [0.54, 0.0, 0.34, 0.99]
@@ -2143,7 +2143,7 @@ JsonAdapter {
         property int low: 20
         property int critical: 5
         property int full: 101
-        property bool automaticSuspend: true
+        property bool automaticSuspend: false
         property int suspend: 3
         property bool notifyFull: true
         property JsonObject chargeLimit: JsonObject {
@@ -2281,11 +2281,11 @@ JsonAdapter {
 
     property JsonObject light: JsonObject {
         property JsonObject night: JsonObject {
-            property bool automatic: true
+            property bool automatic: false
             property bool enabled: false // Manual night light state when automatic mode is disabled
             property string from: "19:00" // Format: "HH:mm", 24-hour time
             property string to: "06:30"   // Format: "HH:mm", 24-hour time
-            property int colorTemperature: 5000
+            property int colorTemperature: 6000
         }
         property JsonObject antiFlashbang: JsonObject {
             property bool enable: false
