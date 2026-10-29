@@ -347,7 +347,8 @@ run_rollback() {
         fi
         echo ""
         
-        if tui_confirm "Continue with rollback?" "no"; then
+        # under -y the pick above is the go-ahead
+        if ! $ask || tui_confirm "Continue with rollback?" "no"; then
             restore_snapshot "$snapshot_id"
         else
             echo "Cancelled."
