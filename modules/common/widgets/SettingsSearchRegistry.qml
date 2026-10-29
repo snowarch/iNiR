@@ -52,7 +52,7 @@ Singleton {
             revealTimer.stop()
             const y = card.mapToItem(page.contentItem, 0, 0).y
             page.contentY = Math.max(0, Math.min(y - 12, page.contentHeight - page.height))
-        } else if (++root._revealTries > 25) {
+        } else if (++root._revealTries > 60) {
             revealTimer.stop()
         }
     }
