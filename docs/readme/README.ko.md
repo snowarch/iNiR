@@ -216,7 +216,7 @@ Wayland → GPU
 
 - **GUI 설정**: 파일을 건드리지 않고 모든 걸 설정
 - **GameMode**: 전체 화면 앱에서 효과를 자동으로 끔
-- **자동 업데이트**: `inir update`, 롤백, 마이그레이션, 내 변경 사항 보존
+- **자동 업데이트**: `inir update`, 롤백, 내 변경 사항 보존
 - **잠금 화면**과 **세션 화면**(로그아웃/재부팅/종료/절전)
 - **Polkit 에이전트**, **화상 키보드**, niri 자체 시작 파일을 쓰는 **자동 시작 관리자**
 - **Kira**: 화면 가장자리를 돌아다니고, 여러분의 행동에 반응하고, 카오스 모드도 있는 픽셀 아트 고양이 소녀. 선택 사항이며, 약 32 MiB 아트 팩은 `./setup` › Extras에서 따로
@@ -293,7 +293,7 @@ sudo make install       # system-wide instead of your home
 | 페이지 | 내용 |
 |---|---|
 | [Install](https://inir.space/docs/install/) | 실행까지 |
-| [Setup](https://inir.space/docs/setup/) | 업데이트, 마이그레이션, 롤백 |
+| [Setup](https://inir.space/docs/setup/) | 업데이트, 롤백 |
 | [Keybinds](https://inir.space/docs/keybinds/) | 모든 단축키 |
 | [IPC](https://inir.space/docs/ipc/) | 단축키나 스크립트에 쓰는 명령 |
 | [Packages](https://inir.space/docs/packages/) | 모든 의존성과 필요한 이유 |

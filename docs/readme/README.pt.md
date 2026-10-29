@@ -216,7 +216,7 @@ Sidebar direita:
 
 - **Configurações gráficas**: ajuste tudo sem mexer em arquivos
 - **GameMode**: desliga efeitos sozinho com apps em tela cheia
-- **Atualizações**: `inir update` com rollback, migrações e preservação das suas mudanças
+- **Atualizações**: `inir update` com rollback e preservação das suas mudanças
 - **Tela de bloqueio** e **tela de sessão** (sair/reiniciar/desligar/suspender)
 - **Agente polkit**, **teclado na tela**, **gerenciador de inicialização** apoiado no próprio arquivo de startup do niri
 - **Kira**: uma garota-gato em pixel art que anda pelas bordas da tela, reage ao que você faz e tem um modo caos. Opcional, com um pacote de arte separado de ~32 MiB em `./setup` › Extras
@@ -293,7 +293,7 @@ Tudo o que é para usuários está em [inir.space/docs](https://inir.space/docs/
 | Página | O que tem |
 |---|---|
 | [Install](https://inir.space/docs/install/) | Colocar para rodar |
-| [Setup](https://inir.space/docs/setup/) | Atualizações, migrações, rollback |
+| [Setup](https://inir.space/docs/setup/) | Atualizações, rollback |
 | [Keybinds](https://inir.space/docs/keybinds/) | Todos os atalhos |
 | [IPC](https://inir.space/docs/ipc/) | Comandos para atalhos e scripts |
 | [Packages](https://inir.space/docs/packages/) | Cada dependência e por que ela está ali |

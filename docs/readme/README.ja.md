@@ -216,7 +216,7 @@ Wayland → GPU
 
 - **GUI 設定**：ファイルに触れずにすべて設定
 - **GameMode**：フルスクリーンアプリでエフェクトを自動オフ
-- **自動更新**：`inir update` はロールバック、マイグレーション、自分の変更の保持に対応
+- **自動更新**：`inir update` はロールバックと自分の変更の保持に対応
 - **ロック画面**と**セッション画面**（ログアウト/再起動/シャットダウン/サスペンド）
 - **Polkit エージェント**、**オンスクリーンキーボード**、niri 自身の起動ファイルを使う**自動起動マネージャー**
 - **Kira**：画面の端を歩き回り、あなたの操作に反応し、カオスモードもあるピクセルアートの猫娘。オプトインで、約 32 MiB のアートパックは `./setup` › Extras から別途
@@ -293,7 +293,7 @@ sudo make install       # system-wide instead of your home
 | ページ | 内容 |
 |---|---|
 | [Install](https://inir.space/docs/install/) | 動かすまで |
-| [Setup](https://inir.space/docs/setup/) | 更新、マイグレーション、ロールバック |
+| [Setup](https://inir.space/docs/setup/) | 更新、ロールバック |
 | [Keybinds](https://inir.space/docs/keybinds/) | すべてのショートカット |
 | [IPC](https://inir.space/docs/ipc/) | キーバインドやスクリプトで使えるコマンド |
 | [Packages](https://inir.space/docs/packages/) | 各依存関係とその理由 |

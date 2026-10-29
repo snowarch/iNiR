@@ -216,7 +216,7 @@ Wayland → GPU
 
 - **图形化设置**：不碰文件就能配置一切
 - **GameMode**：全屏应用时自动关闭特效
-- **自动更新**：`inir update`，支持回滚、迁移并保留你的改动
+- **自动更新**：`inir update`，支持回滚并保留你的改动
 - **锁屏**和**会话屏幕**（注销/重启/关机/挂起）
 - **Polkit 代理**、**屏幕键盘**、基于 niri 自身启动文件的**自启动管理**
 - **Kira**：一个像素风猫娘，会在屏幕边缘走来走去，对你的操作做出反应，还有混乱模式。可选，单独的约 32 MiB 美术包在 `./setup` › Extras 里
@@ -293,7 +293,7 @@ sudo make install       # system-wide instead of your home
 | 页面 | 内容 |
 |---|---|
 | [Install](https://inir.space/docs/install/) | 让它跑起来 |
-| [Setup](https://inir.space/docs/setup/) | 更新、迁移、回滚 |
+| [Setup](https://inir.space/docs/setup/) | 更新、回滚 |
 | [Keybinds](https://inir.space/docs/keybinds/) | 所有快捷键 |
 | [IPC](https://inir.space/docs/ipc/) | 可用于绑定或脚本的命令 |
 | [Packages](https://inir.space/docs/packages/) | 每个依赖以及为什么需要它 |

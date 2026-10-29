@@ -216,7 +216,7 @@ Sidebar derecha:
 
 - **Configuración gráfica**: todo se ajusta sin tocar archivos
 - **GameMode**: apaga efectos solo con apps en pantalla completa
-- **Actualizaciones**: `inir update` con rollback, migraciones y respeto por tus cambios
+- **Actualizaciones**: `inir update` con rollback y respeto por tus cambios
 - **Pantalla de bloqueo** y **pantalla de sesión** (cerrar sesión/reiniciar/apagar/suspender)
 - **Agente polkit**, **teclado en pantalla**, **gestor de autoinicio** sobre el propio archivo de arranque de niri
 - **Kira**: una chica gato en pixel art que recorre los bordes de la pantalla, reacciona a lo que haces y tiene un modo caos. Opcional, con un paquete de arte aparte de ~32 MiB en `./setup` › Extras
@@ -293,7 +293,7 @@ Todo lo que es para usuarios está en [inir.space/docs](https://inir.space/docs/
 | Página | Qué hay |
 |---|---|
 | [Install](https://inir.space/docs/install/) | Ponerlo en marcha |
-| [Setup](https://inir.space/docs/setup/) | Actualizaciones, migraciones, rollback |
+| [Setup](https://inir.space/docs/setup/) | Actualizaciones, rollback |
 | [Keybinds](https://inir.space/docs/keybinds/) | Todos los atajos |
 | [IPC](https://inir.space/docs/ipc/) | Comandos para atajos y scripts |
 | [Packages](https://inir.space/docs/packages/) | Cada dependencia y por qué está |

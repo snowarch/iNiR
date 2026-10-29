@@ -28,6 +28,7 @@ iNiR is now a base with plugins: Material, Waffle and iRiS come from the iNiR Hu
 
 ### Changed
 - `inir update` brings the whole new iNiR: the base, the families from the Hub, the prebuilt runtime, inir-accel and the `inir` command. Your config and edits stay, and a version that won't load is rolled back to the one you had.
+- Migrations are gone: the update itself sets right whatever an older iNiR left behind, so `inir migrate` and `./setup migrate` retired with them. Nobody will miss numbered shell scripts.
 - The update also installs what `inir doctor` now checks for: plasma-integration, a colour emoji font and the shell's fonts.
 - iRiS Settings is rebuilt: every option lives in it with a live scene beside each group, search reads what you mean, and it opens as Classic, Folio, Pocket or Drawer.
 - Under iRiS, Material's Settings pages keep only what iRiS Settings has no row for.
