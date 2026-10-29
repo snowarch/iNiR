@@ -30,6 +30,43 @@ Singleton {
         collapsibleSections = newList;
     }
 
+    // A search that names only a section scrolls to its card once the card has loaded (sections load in slices).
+    property var _revealPage: null
+    property int _revealTries: 0
+    Timer {
+        id: revealTimer
+        interval: 80
+        repeat: true
+        onTriggered: root._reveal()
+    }
+    function revealTask(pageItem): void {
+        root._revealPage = pageItem
+        root._revealTries = 0
+        revealTimer.restart()
+    }
+    function _reveal(): void {
+        const page = root._revealPage
+        const task = String(page?.activeSection ?? "")
+        const card = task.length > 0 && page?.contentItem ? root._findTask(page.contentItem, task) : null
+        if (card && card.height > 0) {
+            revealTimer.stop()
+            const y = card.mapToItem(page.contentItem, 0, 0).y
+            page.contentY = Math.max(0, Math.min(y - 12, page.contentHeight - page.height))
+        } else if (++root._revealTries > 25) {
+            revealTimer.stop()
+        }
+    }
+    function _findTask(item, task): var {
+        for (const child of item?.children ?? []) {
+            if (child.settingsTaskSection === task && child.visible)
+                return child
+            const found = root._findTask(child, task)
+            if (found)
+                return found
+        }
+        return null
+    }
+
     function activatePageSection(pageItem, section): bool {
         if (!pageItem || !section)
             return false

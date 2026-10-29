@@ -13,7 +13,8 @@ Loader {
     Layout.preferredHeight: requested && status === Loader.Ready && item ? item.implicitHeight : 0
 
     active: resident
-    asynchronous: false
+    // Every section of a page loads at once; in slices, so opening a long page never stalls.
+    asynchronous: true
     visible: requested && status === Loader.Ready
     enabled: visible
 
