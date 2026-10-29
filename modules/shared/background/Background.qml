@@ -1295,7 +1295,7 @@ Scope {
             onTriggered: bgRoot._blurTransitionFactor = 1
         }
 
-        readonly property bool focusBlurOn: (bgRoot.effectsOptions?.enableBlur ?? false) && (bgRoot.effectsOptions?.blurRadius ?? 0) > 0
+        readonly property bool focusBlurOn: (bgRoot.effectsOptions?.enableBlur ?? true) && (bgRoot.effectsOptions?.blurRadius ?? 0) > 0
         property real blurProgress: {
             return bgRoot.focusBlurOn ? focusPresenceProgress * _blurTransitionFactor : 0;
         }
@@ -1874,7 +1874,7 @@ Scope {
                         && (bgRoot.effectsOptions.blurRadius ?? 0) > 0
                         && (bgRoot.effectsOptions.thumbnailBlurStrength ?? 50) > 0
                     layer.effect: GaussianBlur {
-                        radius: Math.round((bgRoot.effectsOptions.blurRadius ?? 32) * Math.max(0, Math.min(1, (bgRoot.effectsOptions.thumbnailBlurStrength ?? 50) / 100)))
+                        radius: Math.round((bgRoot.effectsOptions.blurRadius ?? 22) * Math.max(0, Math.min(1, (bgRoot.effectsOptions.thumbnailBlurStrength ?? 50) / 100)))
                         // Cap samples — beyond ~33 the visual difference is imperceptible
                         // but the fragment shader cost grows linearly. See #159.
                         samples: Math.min(33, radius * 2 + 1)
@@ -1922,7 +1922,7 @@ Scope {
                         && (bgRoot.effectsOptions.blurRadius ?? 0) > 0
                         && (bgRoot.effectsOptions.thumbnailBlurStrength ?? 50) > 0
                     layer.effect: GaussianBlur {
-                        radius: Math.round((bgRoot.effectsOptions.blurRadius ?? 32) * Math.max(0, Math.min(1, (bgRoot.effectsOptions.thumbnailBlurStrength ?? 50) / 100)))
+                        radius: Math.round((bgRoot.effectsOptions.blurRadius ?? 22) * Math.max(0, Math.min(1, (bgRoot.effectsOptions.thumbnailBlurStrength ?? 50) / 100)))
                         // See #159 — cap samples to bound fragment shader cost
                         samples: Math.min(33, radius * 2 + 1)
                     }
@@ -1970,7 +1970,7 @@ Scope {
                         anchors.fill: parent
                         source: textureLoader.item ?? (bgRoot.wallpaperIsVideo ? videoWallpaper
                             : bgRoot.wallpaperIsGif ? gifWallpaper : wallpaper)
-                        radius: bgRoot.effectsOptions.blurRadius ?? 32
+                        radius: bgRoot.effectsOptions.blurRadius ?? 22
                         // See #159 — cap samples to bound fragment shader cost
                         samples: Math.min(33, radius * 2 + 1)
                         // A still wallpaper blurs once: any shell animation repaints this window, and without the

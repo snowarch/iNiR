@@ -1155,7 +1155,7 @@ _inir_doctor_perf() {
     cfg_path="$(inir_config_file)"
     monitor_gpu="(unknown)"
     if [[ -f "$cfg_path" ]] && command -v jq >/dev/null 2>&1; then
-        monitor_gpu="$(jq -r '.resources.monitorGpu // true' "$cfg_path" 2>/dev/null || echo '(unknown)')"
+        monitor_gpu="$(jq -r '.resources.monitorGpu | if . == null then true else . end' "$cfg_path" 2>/dev/null || echo '(unknown)')"
     fi
     sensor_lines="$(_inir_perf_detect_temp_paths)"
     if [[ -n "$sensor_lines" ]]; then
@@ -1384,8 +1384,8 @@ _inir_doctor_perf() {
         style="$(jq -r '.appearance.globalStyle // "material"' "$cfg_path" 2>/dev/null)"
         family="$(jq -r '.panelFamily // "ii"' "$cfg_path" 2>/dev/null)"
         animations="$(jq -r 'if (.performance.reduceAnimations // false) then false else true end' "$cfg_path" 2>/dev/null)"
-        effects_blur="$(jq -r '.background.effects.enableBlur // false' "$cfg_path" 2>/dev/null)"
-        compositor_blur="$(jq -r '.performance.compositorBlur // true' "$cfg_path" 2>/dev/null)"
+        effects_blur="$(jq -r '.background.effects.enableBlur | if . == null then true else . end' "$cfg_path" 2>/dev/null)"
+        compositor_blur="$(jq -r '.performance.compositorBlur | if . == null then true else . end' "$cfg_path" 2>/dev/null)"
         printf '  Config file:     %s\n' "$cfg_path"
         printf '  Style:           %s\n' "$style"
         printf '  Panel family:    %s\n' "$family"
@@ -1750,7 +1750,7 @@ apply_gpu_policy() {
         local _gpu_cfg
         _gpu_cfg="$(inir_config_file 2>/dev/null)"
         if [[ -n "$_gpu_cfg" && -f "$_gpu_cfg" ]]; then
-            monitor_gpu="$(jq -r '.resources.monitorGpu // true' "$_gpu_cfg" 2>/dev/null || true)"
+            monitor_gpu="$(jq -r '.resources.monitorGpu | if . == null then true else . end' "$_gpu_cfg" 2>/dev/null || true)"
             [[ -z "$monitor_gpu" ]] && monitor_gpu="true"
         fi
     fi
