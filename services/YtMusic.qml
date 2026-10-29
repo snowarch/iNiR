@@ -1127,13 +1127,13 @@ Singleton {
     Process {
         id: _rateLikeProc
         property string _videoId: ""
-        command: ["python3", Directories.scriptPath + "/ytmusic_rate.py", "like", _videoId]
+        command: [Directories.scriptPath + "/lib/accel-run", "ytmusic-rate", "like", _videoId]
     }
 
     Process {
         id: _rateUnlikeProc
         property string _videoId: ""
-        command: ["python3", Directories.scriptPath + "/ytmusic_rate.py", "unlike", _videoId]
+        command: [Directories.scriptPath + "/lib/accel-run", "ytmusic-rate", "unlike", _videoId]
     }
 
     // ── OAuth Setup ────────────────────────────────────────────────────
@@ -1169,7 +1169,7 @@ Singleton {
 
     Process {
         id: _oauthCheckProc
-        command: ["python3", Directories.scriptPath + "/ytmusic_rate.py", "check"]
+        command: [Directories.scriptPath + "/lib/accel-run", "ytmusic-rate", "check"]
         stdout: SplitParser {
             onRead: data => {
                 try {
@@ -1185,7 +1185,7 @@ Singleton {
         id: _oauthRequestProc
         property string _clientId: ""
         property string _clientSecret: ""
-        command: ["python3", Directories.scriptPath + "/ytmusic_rate.py", "setup-request", _clientId, _clientSecret]
+        command: [Directories.scriptPath + "/lib/accel-run", "ytmusic-rate", "setup-request", _clientId, _clientSecret]
         stdout: SplitParser {
             onRead: data => {
                 try {
@@ -1223,7 +1223,7 @@ Singleton {
         property string _clientId: ""
         property string _clientSecret: ""
         property string _deviceCode: ""
-        command: ["python3", Directories.scriptPath + "/ytmusic_rate.py", "setup-poll", _clientId, _clientSecret, _deviceCode]
+        command: [Directories.scriptPath + "/lib/accel-run", "ytmusic-rate", "setup-poll", _clientId, _clientSecret, _deviceCode]
         stdout: SplitParser {
             onRead: data => {
                 try {
@@ -1498,12 +1498,12 @@ Singleton {
     Process {
         id: _fetchLikedOAuthProc
         property var _items: []
-        command: ["python3", Directories.scriptPath + "/ytmusic_rate.py", "fetch-liked"]
+        command: [Directories.scriptPath + "/lib/accel-run", "ytmusic-rate", "fetch-liked"]
         stdout: SplitParser {
             onRead: data => {
                 try {
                     const r = JSON.parse(data)
-                    if (r._done || r._error) return
+                    if (!r.videoId) return
                     _fetchLikedOAuthProc._items.push(r)
                 } catch(e) {}
             }
