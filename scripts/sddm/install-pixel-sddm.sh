@@ -8,7 +8,7 @@ set -euo pipefail
 THEME_NAME="ii-pixel"
 THEME_SRC="${REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}/dots/sddm/pixel"
 THEME_DIR="/usr/share/sddm/themes/${THEME_NAME}"
-SYNC_SCRIPT="${REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}/scripts/sddm/sync-pixel-sddm.py"
+ACCEL_RUN="${REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}/scripts/lib/accel-run"
 # Use a high-priority drop-in name so SDDM's alphabetical merge picks our values
 # LAST and we win against KDE's kde_settings.conf or any other foreign drop-in.
 # Old name (legacy, pre-2.26): /etc/sddm.conf.d/inir-theme.conf — cleaned up below.
@@ -197,18 +197,8 @@ if [[ ! -f "${THEME_DIR}/assets/background.png" ]]; then
         log_ok "Default wallpaper set as background"
     else
         # Create a minimal 1x1 black PNG as placeholder
-        python3 -c "
-import struct, zlib
-def make_png():
-    sig = b'\x89PNG\r\n\x1a\n'
-    def chunk(t, d): return struct.pack('>I', len(d)) + t + d + struct.pack('>I', zlib.crc32(t + d) & 0xffffffff)
-    ihdr = chunk(b'IHDR', struct.pack('>IIBBBBB', 1, 1, 8, 2, 0, 0, 0))
-    idat = chunk(b'IDAT', zlib.compress(b'\x00\x14\x1b\x20'))
-    iend = chunk(b'IEND', b'')
-    return sig + ihdr + idat + iend
-import sys; sys.stdout.buffer.write(make_png())
-" > "${THEME_DIR}/assets/background.png"
-        log_warn "Placeholder background created — run sync-pixel-sddm.py to set wallpaper"
+        base64 -d <<<'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGMQkVYAAACWAFAcPXLAAAAAAElFTkSuQmCC' > "${THEME_DIR}/assets/background.png"
+        log_warn "Placeholder background created; the next wallpaper change sets the real one"
     fi
 fi
 
@@ -289,7 +279,10 @@ migrate_legacy_sddm_conf
 
 # Run initial color sync now that files are in place
 log_info "Running initial color sync..."
-if python3 "$SYNC_SCRIPT" 2>/dev/null; then
+# Under sudo the sync runs as the person: it reads their config and writes the theme dir they were given.
+sync_runner=()
+[[ -n "${SUDO_USER:-}" && "$EUID" -eq 0 ]] && sync_runner=(sudo -u "$SUDO_USER" -H)
+if "${sync_runner[@]}" "$ACCEL_RUN" sddm-sync 2>/dev/null; then
     log_ok "Colors synced from Material You palette"
 else
     log_warn "Color sync skipped (run after first wallpaper generation)"

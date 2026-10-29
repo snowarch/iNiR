@@ -1,5 +1,5 @@
 // What every iRiS login style shares: theme.conf, SDDM's accounts and sessions, signing in and its outcome.
-// A style owns the pixels; this owns the state. SDDM's Qt only: no Quickshell, no IrisStyle; sync-pixel-sddm.py
+// A style owns the pixels; this owns the state. SDDM's Qt only: no Quickshell, no IrisStyle; inir-accel sddm-sync
 // writes the values those would give.
 import QtQuick 2.15
 import SddmComponents 2.0

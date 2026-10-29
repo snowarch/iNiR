@@ -470,17 +470,14 @@ ensure_cdp_flag() {
 
 inject_css_cdp() {
   local css_file="$1"
-  local inject_script="$SCRIPT_DIR/pear-css-inject.py"
-  local py result
+  local result
 
   # Check if pear-desktop is running with CDP enabled
   if ! curl -s --connect-timeout 1 "http://127.0.0.1:${CDP_PORT}/json" >/dev/null 2>&1; then
     return 1
   fi
 
-  py="$(venv_python)"
-  [[ -f "$inject_script" ]] || return 1
-  result="$("$py" "$inject_script" "$css_file" --port "$CDP_PORT" 2>/dev/null)" || return 1
+  result="$("$SCRIPT_DIR/../lib/accel-run" pear-css-inject "$css_file" --port "$CDP_PORT" 2>/dev/null)" || return 1
   if [[ "$result" == "injected" ]]; then
     log_module "injected CSS via CDP (live update)"
   else

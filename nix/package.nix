@@ -34,7 +34,6 @@ let
     pygobject3
     secretstorage
     tqdm
-    websockets
     yt-dlp
   ]);
 

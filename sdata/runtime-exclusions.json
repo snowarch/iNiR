@@ -101,8 +101,6 @@
     "scripts/lib/generate-ipc-registry.py",
     "scripts/setup/_template.sh.example",
     "scripts/setup/README.md",
-    "translations/tools",
-    "translations/l10n",
     "assets/graphify-out",
     "assets/images/mascot/frames",
     "scripts/zzz-audit.sh",

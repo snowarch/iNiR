@@ -11,7 +11,7 @@ LoginSurface {
     readonly property real pad: root.px(20)
     readonly property real band: root.px(148)
     readonly property real inset: root.px(34)
-    // The Material palette the desktop wears, which sync-pixel-sddm.py writes for the Classic look too.
+    // The Material palette the desktop wears, which inir-accel sddm-sync writes for the Classic look too.
     readonly property color mat: root.core.cfg("surfaceColor", "#1b1b1f")
     readonly property color ink: root.core.cfg("onSurfaceColor", "#e6e1e5")
     readonly property color inkSoft: root.core.cfg("onSurfaceVariantColor", "#cac4d0")

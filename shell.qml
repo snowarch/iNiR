@@ -1140,9 +1140,11 @@ ShellRoot {
 
         root._familyRestartPending = true
         Quickshell.execDetached([
-            Quickshell.shellPath("scripts/switch-family-restart.py"),
+            Quickshell.shellPath("scripts/lib/accel-run"),
+            "switch-family",
             targetFamily,
-            JSON.stringify(basePanels)
+            JSON.stringify(basePanels),
+            Quickshell.shellPath("scripts/inir")
         ])
         familyRestartFallbackTimer.restart()
     }

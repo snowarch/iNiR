@@ -1,4 +1,4 @@
-// iNiR SDDM: picks the look theme.conf names. sync-pixel-sddm.py writes it from lock.loginScreen (Classic or
+// iNiR SDDM: picks the look theme.conf names. inir-accel sddm-sync writes it from lock.loginScreen (Classic or
 // iRiS) and lock.loginStyle (iRiS's Cover, Frame or Lens), so switching needs no root: this directory
 // belongs to the user who installed it.
 import QtQuick 2.15

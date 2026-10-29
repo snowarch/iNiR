@@ -30,5 +30,3 @@ tqdm
 # 2.1.0 is the first release built on materialyoucolor 3.x
 kde-material-you-colors>=2.1.0
 
-# Pear Desktop / YouTube Music live theme injection via CDP
-websockets>=13.0
