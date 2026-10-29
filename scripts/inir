@@ -3803,25 +3803,9 @@ run_theme_command() {
     local colors_dir="$setup_dir/scripts/colors"
 
     case "$action" in
-        list-targets)
-            exec python3 "$colors_dir/list-targets.py" list "$@"
-            ;;
-        inspect)
-            if [[ $# -lt 1 ]]; then
-                echo "Usage: inir theme inspect <target-id>" >&2
-                exit 1
-            fi
-            exec python3 "$colors_dir/list-targets.py" inspect "$@"
-            ;;
-        doctor)
-            exec python3 "$colors_dir/list-targets.py" doctor "$@"
-            ;;
-        scaffold)
-            if [[ $# -lt 1 ]]; then
-                echo "Usage: inir theme scaffold <target-id> [--label ... --category ... --inputs ...]" >&2
-                exit 1
-            fi
-            exec python3 "$colors_dir/list-targets.py" scaffold "$@"
+        list-targets|inspect|doctor|scaffold)
+            echo "inir theme $action needs the inir binary; inir update fetches it" >&2
+            exit 1
             ;;
         apply)
             if [[ $# -eq 0 ]]; then
