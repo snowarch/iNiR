@@ -8,7 +8,7 @@
 #   runtime_payload copy --root DIR --target DIR [--delete] [--out-format FMT]
 #   runtime_payload retire-checkout --root DIR --target DIR
 
-INIR_PAYLOAD_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+INIR_PAYLOAD_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 
 runtime_payload() (
   set -o pipefail

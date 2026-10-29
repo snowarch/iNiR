@@ -288,7 +288,7 @@ function install_dir__skip_existed(){
 #   inir_rc_block set NAME FILE   write block NAME, body on stdin
 #   inir_rc_block remove FILE     drop every iNiR block; FILE goes if nothing else is left
 #   inir_rc_block prune FILE      FILE goes only if it holds nothing but iNiR blocks
-# A profile that is a link (dotfile managers) is written where it points and stays a link.
+# A profile that is a link (dotfile managers) is written where it points and stays a link, emptied, never removed.
 _inir_rc_markers() {
   case "$1" in
     path) printf '%s\n%s\n' "# iNiR launcher PATH" "# end iNiR launcher PATH" ;;
@@ -340,6 +340,10 @@ _inir_rc_write() {
   mv -f -- "$tmp" "$real"
 }
 
+_inir_rc_drop() {
+  if [[ -L "$1" ]]; then : > "$2/empty" && _inir_rc_write "$1" "$2/empty"; else rm -f -- "$1"; fi
+}
+
 inir_rc_block() {
   local cmd="${1:-}" name file scratch text rest body start end
   case "$cmd" in
@@ -379,7 +383,7 @@ inir_rc_block() {
         elif ! cmp -s -- "$file" "$scratch/rest"; then
           text="$(<"$scratch/rest")"
           if [[ -z "${text//[[:space:]]/}" ]]; then
-            rm -f -- "$file" || rc=1
+            _inir_rc_drop "$file" "$scratch" || rc=1
           else
             printf '%s\n' "${text%"${text##*[![:space:]]}"}" > "$scratch/new" && _inir_rc_write "$file" "$scratch/new" || rc=1
           fi
@@ -391,7 +395,7 @@ inir_rc_block() {
         text="$(<"$file")"
         if [[ -n "${text//[[:space:]]/}" ]] && _inir_rc_strip "$file" "$scratch/rest" path env; then
           text="$(<"$scratch/rest")"
-          [[ -n "${text//[[:space:]]/}" ]] || rm -f -- "$file" || rc=1
+          [[ -n "${text//[[:space:]]/}" ]] || _inir_rc_drop "$file" "$scratch" || rc=1
         fi
       fi
       ;;
@@ -1343,7 +1347,7 @@ spawn-sh-at-startup "for agent in /usr/libexec/polkit-gnome-authentication-agent
 KDL
 ) ;;
     esac
-    tmp="$(mktemp)" || return 1
+    tmp="$(mktemp "$(dirname "$(realpath -m -- "$file")")/.inir-niri.XXXXXX")" || return 1
     # Whatever an earlier run wrote (any supervisor's block and comment, the old runsvdir and kbuildsycoca lines)
     # goes, then this supervisor's comment and block are appended.
     LC_ALL=C awk '
@@ -1366,9 +1370,12 @@ KDL
         for (i = 1; i <= NR; i++) if (!drop[i]) print line[i]
       }' "$file" > "$tmp" || { rm -f "$tmp"; return 1; }
     text="$(<"$tmp")"
-    rm -f "$tmp"
+    # the new text lands whole or not at all; a linked config stays a link
+    local real
+    real="$(realpath -m -- "$file")" || { rm -f "$tmp"; return 1; }
     printf '%s\n\n%s\n%s\n\n%s\n' "${text%"${text##*[![:space:]]}"}" "$comment" \
-      "// Do not add a compositor startup entry here or you'll get two shells." "$block" > "$file"
+      "// Do not add a compositor startup entry here or you'll get two shells." "$block" > "$tmp" \
+      && chmod "$(stat -c %a -- "$real")" "$tmp" && mv -f -- "$tmp" "$real" || { rm -f "$tmp"; return 1; }
   }
 
   [[ -f "$startup_target" ]] && update_inir_startup_supervisor "$startup_target" "$supervisor"
