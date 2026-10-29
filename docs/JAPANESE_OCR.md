@@ -4,7 +4,7 @@ iNiR can read Japanese from any part of your screen: games, manga, images, PDFs 
 
 ## Set it up
 
-1. Open **Settings › Tools › Snipping**.
+1. Open **Settings › Tools**.
 2. Under **Snipping & OCR**, set **Text language** to **Japanese** for horizontal text, or **Japanese (vertical)** for vertical manga and books. **Japanese + English** is there for mixed text.
 3. Under **Japanese study assistant**, press **Install Japanese dictionary (~37 MB)**. iNiR downloads and indexes the Jitendex dictionary for you. Lookups work offline after that.
 
@@ -27,7 +27,7 @@ Under **Japanese study assistant**, **More dictionary options** lets you import 
 
 ## Anki (optional)
 
-You don't need Anki for OCR or lookups. To add cards, open Anki Desktop with the AnkiConnect add-on enabled. **Settings › Tools › Snipping › Anki (optional)** shows whether Anki is missing, closed, running without AnkiConnect, or connected. **Install / check AnkiConnect** helps you set it up. **Show Anki actions in the study card** turns the card's Anki buttons on or off.
+You don't need Anki for OCR or lookups. To add cards, open Anki Desktop with the AnkiConnect add-on enabled. **Settings › Tools › Anki (optional)** shows whether Anki is missing, closed, running without AnkiConnect, or connected. **Install / check AnkiConnect** helps you set it up. **Show Anki actions in the study card** turns the card's Anki buttons on or off.
 
 **Advanced Anki settings** holds the endpoint, deck, note type and field names, for setups that are not the defaults.
 

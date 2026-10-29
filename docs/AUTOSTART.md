@@ -4,11 +4,11 @@ Choose the apps that start with iNiR, and what happens when you lock, reboot or 
 
 ## Apps and commands at login
 
-**Settings › Autostart** (Waffle: **Waffle Settings › Autostart**) has three tabs:
+**Settings › Autostart** (Waffle: **Waffle Settings › Autostart**) has three sections:
 
 - **Applications**: turn on the apps from your menu that should start at login.
-- **Commands**: add a command, such as `telegram-desktop --start-minimized`, to run at login.
-- **Guide**: how it works.
+- **Custom Commands**: add a command, such as `telegram-desktop --start-minimized`, to run at login.
+- **How autostart works**: what it does and where it writes.
 
 Niri launches these, so they keep running if the shell restarts. The page only works while niri is your compositor.
 
@@ -35,7 +35,7 @@ The lock screen's look (blur, clock, widgets) is further down the same page, und
 
 ## Idle and sleep
 
-Material: **Settings › Services › System › Idle & Sleep**. Each timeout is in seconds, and 0 means never.
+Material: **Settings › Services › Idle & Sleep**. Each timeout is in seconds, and 0 means never.
 
 - **Screen off**: 300 seconds by default.
 - **Lock screen**: 600 seconds by default.
