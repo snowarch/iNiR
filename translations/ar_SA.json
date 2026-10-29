@@ -1791,7 +1791,7 @@
   "Misc": "متنوعات",
   "Mission Center": "مركز البعثة",
   "Mist": "ضباب",
-  "Mod+T and Mod+Return use this terminal. Run './setup update' to apply keybind migration.": "يستخدم Mod+T وMod+Return هذه المحطة. قم بتشغيل \"./setup update\" لتطبيق ترحيل رابط المفاتيح.",
+  "Mod+T and Mod+Return use this terminal.": "يستخدم Mod+T وMod+Return هذه المحطة.",
   "Mode": "الوضع",
   "Model": "نموذج",
   "Model code": "رمز النموذج",

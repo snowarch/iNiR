@@ -1807,7 +1807,7 @@
   "Misc": "Varios",
   "Mission Center": "Centro de misión",
   "Mist": "Bruma",
-  "Mod+T and Mod+Return use this terminal. Run './setup update' to apply keybind migration.": "Mod+T y Mod+Return utilizan este terminal. Ejecuta './setup update' para aplicar la migración de combinación de teclas.",
+  "Mod+T and Mod+Return use this terminal.": "Mod+T y Mod+Return utilizan este terminal.",
   "Mode": "Modo",
   "Model": "Modelo",
   "Model code": "Código de modelo",

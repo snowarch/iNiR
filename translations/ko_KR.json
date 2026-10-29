@@ -1791,7 +1791,7 @@
   "Misc": "기타",
   "Mission Center": "미션 센터",
   "Mist": "안개",
-  "Mod+T and Mod+Return use this terminal. Run './setup update' to apply keybind migration.": "Mod+T 및 Mod+Return 이 터미널을 사용합니다. 키 바인딩 마이그레이션을 적용하려면 './setup update'를 실행하세요.",
+  "Mod+T and Mod+Return use this terminal.": "Mod+T 및 Mod+Return 이 터미널을 사용합니다.",
   "Mode": "모드",
   "Model": "모델",
   "Model code": "모델 코드",

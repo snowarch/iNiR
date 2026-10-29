@@ -1791,7 +1791,7 @@
   "Misc": "שונות",
   "Mission Center": "מרכז שליחות",
   "Mist": "ערפל",
-  "Mod+T and Mod+Return use this terminal. Run './setup update' to apply keybind migration.": "Mod+T ו-Mod+Return משתמשים במסוף זה. הפעל את './setup update' כדי להחיל העברת מפתחות.",
+  "Mod+T and Mod+Return use this terminal.": "Mod+T ו-Mod+Return משתמשים במסוף זה.",
   "Mode": "מצב",
   "Model": "דגם",
   "Model code": "קוד דגם",

@@ -1810,7 +1810,7 @@
   "Misc": "Misc",
   "Mission Center": "Mission Center",
   "Mist": "Mist",
-  "Mod+T and Mod+Return use this terminal. Run './setup update' to apply keybind migration.": "Mod+T and Mod+Return use this terminal. Run './setup update' to apply keybind migration.",
+  "Mod+T and Mod+Return use this terminal.": "Mod+T and Mod+Return use this terminal.",
   "Mode": "Mode",
   "Model": "Model",
   "Model code": "Model code",

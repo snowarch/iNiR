@@ -1792,7 +1792,7 @@
   "Misc": "Lain-lain",
   "Mission Center": "Pusat Misi",
   "Mist": "Kabut",
-  "Mod+T and Mod+Return use this terminal. Run './setup update' to apply keybind migration.": "Mod+T dan Mod+Return menggunakan terminal ini. Jalankan './setup update' untuk menerapkan migrasi pintasan tombol.",
+  "Mod+T and Mod+Return use this terminal.": "Mod+T dan Mod+Return menggunakan terminal ini.",
   "Mode": "Mode",
   "Model": "Model",
   "Model code": "Kode model",

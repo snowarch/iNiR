@@ -1791,7 +1791,7 @@
   "Misc": "Diversos",
   "Mission Center": "Centro Missionário",
   "Mist": "Névoa",
-  "Mod+T and Mod+Return use this terminal. Run './setup update' to apply keybind migration.": "Mod+T e Mod+Return usam este terminal. Execute './setup update' para aplicar a migração de atalhos de teclado.",
+  "Mod+T and Mod+Return use this terminal.": "Mod+T e Mod+Return usam este terminal.",
   "Mode": "Modo",
   "Model": "Modelo",
   "Model code": "Código do modelo",

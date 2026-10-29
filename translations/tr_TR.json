@@ -1777,7 +1777,7 @@
   "Misc": "Çeşitli",
   "Mission Center": "Görev Merkezi",
   "Mist": "Sis",
-  "Mod+T and Mod+Return use this terminal. Run './setup update' to apply keybind migration.": "Mod+T ve Mod+Return bu terminali kullanır. Tuş bağlama geçişini uygulamak için './setup update' komutunu çalıştırın.",
+  "Mod+T and Mod+Return use this terminal.": "Mod+T ve Mod+Return bu terminali kullanır.",
   "Mode": "Mod",
   "Model": "Model",
   "Model code": "Model kodu",

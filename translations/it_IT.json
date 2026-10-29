@@ -1791,7 +1791,7 @@
   "Misc": "Varie",
   "Mission Center": "Mission Center",
   "Mist": "Foschia",
-  "Mod+T and Mod+Return use this terminal. Run './setup update' to apply keybind migration.": "Mod+T e Mod+Return usano questo terminale. Esegui './setup update' per applicare la migrazione dei tasti.",
+  "Mod+T and Mod+Return use this terminal.": "Mod+T e Mod+Return usano questo terminale.",
   "Mode": "Modalità",
   "Model": "Modello",
   "Model code": "Codice modello",

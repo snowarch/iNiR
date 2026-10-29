@@ -1791,7 +1791,7 @@
   "Misc": "Linh tinh",
   "Mission Center": "Trung tâm truyền giáo",
   "Mist": "Sương mù",
-  "Mod+T and Mod+Return use this terminal. Run './setup update' to apply keybind migration.": "Mod+T và Mod+Return sử dụng thiết bị đầu cuối này. Chạy './setup update' để áp dụng di chuyển liên kết phím.",
+  "Mod+T and Mod+Return use this terminal.": "Mod+T và Mod+Return sử dụng thiết bị đầu cuối này.",
   "Mode": "Chế độ",
   "Model": "Người mẫu",
   "Model code": "Mã mẫu",

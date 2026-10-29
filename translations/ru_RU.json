@@ -1791,7 +1791,7 @@
   "Misc": "Разное",
   "Mission Center": "Миссионерский центр",
   "Mist": "Дымка",
-  "Mod+T and Mod+Return use this terminal. Run './setup update' to apply keybind migration.": "Mod+T и Mod+Return используют этот терминал. Запустите «./setup update», чтобы применить миграцию привязок клавиш.",
+  "Mod+T and Mod+Return use this terminal.": "Mod+T и Mod+Return используют этот терминал.",
   "Mode": "Режим",
   "Model": "Модель",
   "Model code": "Код модели",

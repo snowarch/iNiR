@@ -418,7 +418,9 @@ repair_v2_leftovers() {
     fi
   fi
 
-  if [[ -f "$conf" ]] && command -v jq >/dev/null 2>&1; then
+  if [[ -f "$conf" ]]; then
+    # the state file is the only sign of a v2 clock; keep it until jq can run
+    command -v jq >/dev/null 2>&1 || return 0
     tmp="${conf}.inir-repair.$$"
     if jq -e '.waffles.widgetsPanel | has("weatherHideLocation")' "$conf" >/dev/null 2>&1; then
       jq '(.waffles.widgetsPanel.weatherHideLocation == true) as $hidden

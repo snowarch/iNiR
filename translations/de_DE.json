@@ -1791,7 +1791,7 @@
   "Misc": "Sonstiges",
   "Mission Center": "Missionszentrum",
   "Mist": "Dunst",
-  "Mod+T and Mod+Return use this terminal. Run './setup update' to apply keybind migration.": "Mod+T und Mod+Return verwenden dieses Terminal. Führen Sie „./setup update“ aus, um die Tastenkombinationsmigration anzuwenden.",
+  "Mod+T and Mod+Return use this terminal.": "Mod+T und Mod+Return verwenden dieses Terminal.",
   "Mode": "Modus",
   "Model": "Modell",
   "Model code": "Modellcode",

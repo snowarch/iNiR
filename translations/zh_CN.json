@@ -1791,7 +1791,7 @@
   "Misc": "杂项",
   "Mission Center": "宣教中心",
   "Mist": "雾灰",
-  "Mod+T and Mod+Return use this terminal. Run './setup update' to apply keybind migration.": "Mod+T 和 Mod+Return 使用此终端。运行“./setup update”以应用键绑定迁移。",
+  "Mod+T and Mod+Return use this terminal.": "Mod+T 和 Mod+Return 使用此终端。",
   "Mode": "模式",
   "Model": "型号",
   "Model code": "型号代码",
