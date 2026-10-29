@@ -129,6 +129,31 @@ Button {
             root.downAction({ x: root.width / 2, y: root.height / 2, button: Qt.LeftButton, modifiers: event.modifiers })
     }
 
+    // Keyboard focus, M3's focus ring: 3 px of secondary 2 px outside the shape, only when focus came from the keyboard
+    // (a click never leaves one). Rows packed edge to edge (lists, nav rails) draw it inside (focusRingInward).
+    // Editorial, Regalia and a morphing Cookie draw focus on their own face.
+    property bool focusRingInward: false
+    // A host that keeps one stop for many buttons (a list) says which one wears the ring.
+    property bool focusRingShown: root.visualFocus
+    Rectangle {
+        readonly property real out: root.focusRingInward ? 0 : 5
+        readonly property bool cookie: Appearance.cookieEverywhere
+        visible: root.focusRingShown && !Appearance.editorialEverywhere && !Appearance.regaliaEverywhere
+            && !(cookie && root.cookieMorphing)
+        z: 2
+        x: -out
+        y: -out
+        width: root.width + 2 * out
+        height: root.height + 2 * out
+        color: "transparent"
+        border.width: 3
+        border.color: Appearance.colors.colSecondary
+        topLeftRadius: (cookie ? root._cookieRadius : root.buttonRadiusTop) + out
+        topRightRadius: topLeftRadius
+        bottomLeftRadius: (cookie ? root._cookieRadius : root.buttonRadiusBottom) + out
+        bottomRightRadius: bottomLeftRadius
+    }
+
     MouseArea {
         id: buttonMouseArea
         anchors.fill: parent

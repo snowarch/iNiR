@@ -131,6 +131,27 @@ Button {
 
     // MouseArea only for cursor shape and left-click handling
     property alias mouseArea: buttonMouseArea
+    // Keyboard focus, M3's focus ring (RippleButton has the recipe): 3 px of secondary 2 px outside the shape. A group
+    // that is one Tab stop says which of its buttons wears it.
+    property bool focusRingShown: root.visualFocus
+    Rectangle {
+        readonly property real out: 5
+        visible: root.focusRingShown && !Appearance.editorialEverywhere && !Appearance.regaliaEverywhere
+            && !(Appearance.cookieEverywhere && root.cookieMorphing)
+        z: 2
+        x: -out
+        y: -out
+        width: root.width + 2 * out
+        height: root.height + 2 * out
+        color: "transparent"
+        border.width: 3
+        border.color: Appearance.colors.colSecondary
+        topLeftRadius: root.leftRadius + out
+        bottomLeftRadius: root.leftRadius + out
+        topRightRadius: root.rightRadius + out
+        bottomRightRadius: root.rightRadius + out
+    }
+
     MouseArea {
         id: buttonMouseArea
         anchors.fill: parent

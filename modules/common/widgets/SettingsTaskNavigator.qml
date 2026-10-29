@@ -48,6 +48,13 @@ ColumnLayout {
         return ""
     }
 
+    function step(delta: int): void {
+        const values = root.options.map(option => String(option?.value ?? ""))
+        const next = values.indexOf(String(root.currentValue)) + delta
+        if (next >= 0 && next < values.length)
+            root.selected(values[next])
+    }
+
     function activateSearchSection(section): bool {
         const value = resolveSearchSection(section)
         if (!value.length)
@@ -216,6 +223,11 @@ ColumnLayout {
             boundsBehavior: Flickable.StopAtBounds
             clip: true
             interactive: contentWidth > width
+            // One Tab stop for the strip, on the open tab; ← → open the neighbour (M3 tabs, a stop per tab before).
+            activeFocusOnTab: true
+            Accessible.role: Accessible.PageTabList
+            Keys.onLeftPressed: root.step(-1)
+            Keys.onRightPressed: root.step(1)
 
             Row {
                 id: tabRow
@@ -236,6 +248,9 @@ ColumnLayout {
                         colBackgroundHover: SettingsMaterialPreset.tileHoverColor
                         colRipple: SettingsMaterialPreset.tilePressColor
                         pressScaleEnabled: false
+                        focusPolicy: Qt.NoFocus
+                        focusRingInward: true
+                        focusRingShown: tabFlick.activeFocus && tab.current
                         onClicked: root.selected(modelData.value)
                         Accessible.role: Accessible.PageTab
                         Accessible.name: modelData.displayName

@@ -32,6 +32,21 @@ Flow {
 
     signal selected(var newValue)
 
+    // One Tab stop for the whole choice, on the chosen option (a stop per option made Bar appearance six); ← → pick
+    // the neighbour.
+    activeFocusOnTab: true
+    Accessible.role: Accessible.Grouping
+    readonly property int chosenIndex: root.options.findIndex(option => option?.value == root.currentValue)
+    function step(delta: int): void {
+        const next = root.chosenIndex + delta
+        if (root.chosenIndex >= 0 && next >= 0 && next < root.options.length)
+            root.selected(root.options[next].value)
+        else if (root.chosenIndex < 0 && root.options.length > 0)
+            root.selected(root.options[0].value)
+    }
+    Keys.onLeftPressed: root.step(-1)
+    Keys.onRightPressed: root.step(1)
+
     HoverHandler {
         id: _hoverHandler
     }
@@ -135,6 +150,8 @@ Flow {
             buttonPreviewKind: modelData.previewKind || ""
             buttonText: modelData.displayName
             opacity: modelData?.dimmed === true ? 0.45 : 1
+            focusPolicy: Qt.NoFocus
+            focusRingShown: root.activeFocus && (paletteButton.toggled || (root.chosenIndex < 0 && paletteButton.index === 0))
             toggled: (root.currentValue != null && root.currentValue == modelData.value) ?? false
             onClicked: {
                 root.selected(modelData.value);

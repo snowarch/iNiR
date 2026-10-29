@@ -36,6 +36,20 @@ SpinBox {
 
     opacity: root.enabled ? 1 : 0.4
 
+    Rectangle {
+        readonly property real out: 5
+        visible: root.visualFocus && !Appearance.editorialEverywhere && !Appearance.regaliaEverywhere
+        z: 2
+        x: -out
+        y: -out
+        width: root.width + 2 * out
+        height: root.height + 2 * out
+        radius: root.radius + out
+        color: "transparent"
+        border.width: 3
+        border.color: Appearance.colors.colSecondary
+    }
+
     background: Rectangle {
         color: Appearance.regaliaEverywhere ? "transparent"
             : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
@@ -59,12 +73,16 @@ SpinBox {
         Behavior on border.color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve } }
     }
 
-    contentItem: Item {
+    // Keyboard focus lands in the number with it selected, so typing replaces it (it landed on an empty Item: digits
+    // went nowhere); the pill wears M3's focus ring.
+    contentItem: FocusScope {
         implicitHeight: root.baseHeight
         implicitWidth: Math.max(labelText.implicitWidth, 40)
 
         StyledTextInput {
             id: labelText
+            focus: true
+            onActiveFocusChanged: if (activeFocus && root.visualFocus) selectAll()
             anchors.centerIn: parent
             text: root.displayText
             color: Appearance.regaliaEverywhere ? Appearance.regalia.onColor : Appearance.colors.colOnSurface

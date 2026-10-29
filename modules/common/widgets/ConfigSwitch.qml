@@ -15,6 +15,7 @@ RippleButton {
     property bool enableSettingsSearch: true
     property int settingsSearchOptionId: -1
     signal toggledByUser(bool checked)
+    focusRingInward: true
 
     // One setting, one tile (SettingsMaterialPreset.layoutTiles rounds its outer corners).
     readonly property string settingsTileRole: "tile"
@@ -142,6 +143,8 @@ RippleButton {
         }
         StyledSwitch {
             id: switchWidget
+            // The row is the one Tab stop and Space toggles it; the switch inside was a second stop for the same thing.
+            focusPolicy: Qt.NoFocus
             down: root.down
             scale: 1
             Layout.fillWidth: false
