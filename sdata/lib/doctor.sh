@@ -649,10 +649,10 @@ check_helpers() {
         doctor_pass "yt-dlp OK"
     elif install-ytdlp >/dev/null 2>&1 && [[ -x "$(ytdlp_dir)/yt-dlp" ]]; then
         doctor_fix "Installed current yt-dlp for YT Music"
-    elif command -v yt-dlp >/dev/null 2>&1; then
-        doctor_pass "yt-dlp OK (the distro's)"
+    elif ! ytdlp_build >/dev/null && command -v yt-dlp >/dev/null 2>&1; then
+        doctor_pass "yt-dlp OK (the distro's: no upstream build for this machine)"
     else
-        doctor_fail "yt-dlp unavailable for YT Music"
+        doctor_fail "yt-dlp missing for YT Music (inir doctor installs it once online)"
     fi
 
     local deno_bin

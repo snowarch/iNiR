@@ -192,6 +192,7 @@ FEDORA_CORE_PKGS=(
   curl
   ripgrep
   jq
+  python3
   xdg-user-dirs
   rsync
   git

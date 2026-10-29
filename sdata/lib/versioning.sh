@@ -242,22 +242,6 @@ read_installed_version_field() {
             printf '%s' "$value"
             return
         fi
-    elif [[ -n "$version_file" ]] && command -v python3 &>/dev/null; then
-        # Without jq (setup installed with --skip-deps), read `.a // .b` with python.
-        local value
-        value=$(python3 -c '
-import json, sys
-data = json.load(open(sys.argv[1]))
-for key in sys.argv[2].split("//"):
-    value = data.get(key.strip().lstrip("."))
-    if value not in (None, ""):
-        print(value, end="")
-        break
-' "$version_file" "$expr" 2>/dev/null || true)
-        if [[ -n "$value" ]]; then
-            printf '%s' "$value"
-            return
-        fi
     fi
 
     printf '%s' "$default"

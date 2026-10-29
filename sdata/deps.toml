@@ -218,11 +218,11 @@ name = "base-tools"
 group = "core"
 arch = ["coreutils", "curl", "ripgrep", "jq", "python", "unzip", "xdg-user-dirs", "xdg-utils", "rsync", "git",
         "wl-clipboard", "libnotify", "pacman-contrib", "wlsunset"]
-fedora = ["coreutils", "curl", "ripgrep", "jq", "xdg-user-dirs", "rsync", "git", "unzip", "wl-clipboard",
+fedora = ["coreutils", "curl", "ripgrep", "jq", "python3", "xdg-user-dirs", "rsync", "git", "unzip", "wl-clipboard",
           "libnotify", "wlsunset"]
-debian = ["coreutils", "curl", "ripgrep", "jq", "xdg-user-dirs", "rsync", "git", "wl-clipboard",
+debian = ["coreutils", "curl", "ripgrep", "jq", "python3", "xdg-user-dirs", "rsync", "git", "wl-clipboard",
           "libnotify-bin", "wlsunset", "unzip"]
-void = ["wl-clipboard", "wlsunset", "jq", "curl", "wget", "git", "ripgrep", "bc", "xdg-utils",
+void = ["wl-clipboard", "wlsunset", "jq", "python3", "curl", "wget", "git", "ripgrep", "bc", "xdg-utils",
         "xdg-user-dirs", "libnotify", "rsync", "fuzzel", "dunst"]
 
 [[dep]]

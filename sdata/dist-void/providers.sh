@@ -444,8 +444,9 @@ install_void_darkly() {
     return 1
   fi
   # the one find_package line, exactly once, or the patch no longer applies
-  if ! awk -v old='find_package(Qt6 ${QT_MIN_VERSION} REQUIRED CONFIG COMPONENTS Widgets DBus)' '
-        { while ((i = index($0, old))) { n++; printf "%s", substr($0, 1, i - 1) substr(old, 1, length(old) - 1) " OpenGL)"; $0 = substr($0, i + length(old)) } print }
+  if ! awk -v old='find_package(Qt6 ${QT_MIN_VERSION} REQUIRED CONFIG COMPONENTS Widgets DBus)' \
+        -v new='find_package(Qt6 ${QT_MIN_VERSION} REQUIRED CONFIG COMPONENTS Widgets DBus OpenGL)' '
+        { while ((i = index($0, old))) { n++; printf "%s", substr($0, 1, i - 1) new; $0 = substr($0, i + length(old)) } print }
         END { exit n != 1 }' "$source_dir/CMakeLists.txt" > "$source_dir/CMakeLists.txt.new" \
       || ! mv -f "$source_dir/CMakeLists.txt.new" "$source_dir/CMakeLists.txt"; then
     rm -rf "$temp_dir"

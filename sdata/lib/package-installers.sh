@@ -581,18 +581,25 @@ install-eza(){
 # current by every update. The unpacked one: the one-file build unpacks 100 MB into /tmp on every call.
 ytdlp_dir() { printf '%s' "${XDG_DATA_HOME:-$HOME/.local/share}/inir/yt-dlp"; }
 
-install-ytdlp(){
-  local dir asset tag have base tmp
-  dir="$(ytdlp_dir)"
+# ytdlp_build: upstream's asset for this machine; none for other architectures
+ytdlp_build() {
+  local asset
   case "$(uname -m)" in
     x86_64|amd64) asset=yt-dlp_linux ;;
     aarch64|arm64) asset=yt-dlp_linux_aarch64 ;;
-    *)
-      log_warning "YT Music: yt-dlp has no build for $(uname -m); the distro's yt-dlp is used"
-      return 0
-      ;;
+    *) return 1 ;;
   esac
   compgen -G '/lib/ld-musl-*' >/dev/null && asset="${asset/linux/musllinux}"
+  printf '%s' "$asset"
+}
+
+install-ytdlp(){
+  local dir asset tag have base tmp
+  dir="$(ytdlp_dir)"
+  if ! asset="$(ytdlp_build)"; then
+    log_warning "YT Music: yt-dlp has no build for $(uname -m); the distro's yt-dlp is used"
+    return 0
+  fi
 
   have="$("$dir/yt-dlp" --version 2>/dev/null)"
   tag="$(curl -fsSLI --max-time 15 -o /dev/null -w '%{url_effective}' https://github.com/yt-dlp/yt-dlp/releases/latest 2>/dev/null)"
@@ -621,8 +628,15 @@ install-ytdlp(){
     return
   fi
   rm -rf "$dir.old"
-  [[ ! -e "$dir" ]] || mv "$dir" "$dir.old"
-  mv "$tmp/new" "$dir" && rm -rf "$tmp" "$dir.old"
+  [[ ! -e "$dir" ]] || mv "$dir" "$dir.old" || { rm -rf "$tmp"; return 1; }
+  if ! mv "$tmp/new" "$dir"; then
+    [[ -e "$dir.old" ]] && mv "$dir.old" "$dir"
+    rm -rf "$tmp"
+    log_warning "YT Music: could not put yt-dlp ${tag} in place${have:+, keeping $have}"
+    [[ -n "$have" ]]
+    return
+  fi
+  rm -rf "$tmp" "$dir.old"
   log_success "yt-dlp ${tag} installed for YT Music"
 }
 

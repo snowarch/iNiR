@@ -72,6 +72,7 @@ VOID_BASE_PACKAGES=(
   gum
   dunst
   jq
+  python3
   curl
   wget
   git

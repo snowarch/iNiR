@@ -2426,10 +2426,6 @@ run_update() {
 
     # the shell that runs now is the last good one: a venv it never reads can go before anything changes
     retire_python_venv
-    # the shell that runs now is the last good one: a venv it never reads can go before anything changes
-    retire_python_venv
-    # the shell that runs now is the last good one: a venv it never reads can go before anything changes
-    retire_python_venv
     local installed_mode=$(get_installed_install_mode)
     local installed_strategy=$(get_installed_update_strategy)
     local package_name=$(get_installed_package_name)
