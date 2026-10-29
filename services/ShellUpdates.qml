@@ -773,14 +773,12 @@ Singleton {
         running: false
         command: [
             "/usr/bin/bash", "-c",
-            "vfile=\"$1/version.json\"; " +
-            "if [[ -s \"$vfile\" ]]; then " +
-            "  tmp=$(mktemp); " +
-            "  jq --arg p \"$2\" --arg m \"$3\" --arg u \"$4\" '.repo_path = $p | .repoPath = $p | .install_mode = $m | .installMode = $m | .update_strategy = $u | .updateStrategy = $u' \"$vfile\" > \"$tmp\" && mv \"$tmp\" \"$vfile\" && " +
-            "  echo 'Updated'; " +
-            "else " +
-            "  echo 'Skipped'; " +
-            "fi",
+            // A missing or unreadable version.json is written fresh: the update reads repo_path from it.
+            "vfile=\"$1/version.json\"; tmp=$(mktemp) || exit 0; " +
+            "set -- --arg p \"$2\" --arg m \"$3\" --arg u \"$4\"; " +
+            "filter='.repo_path = $p | .repoPath = $p | .install_mode = $m | .installMode = $m | .update_strategy = $u | .updateStrategy = $u'; " +
+            "if jq -e 'type == \"object\"' \"$vfile\" >/dev/null 2>&1; then jq \"$@\" \"$filter\" \"$vfile\"; else jq -n \"$@\" \"{} | $filter\"; fi > \"$tmp\" " +
+            "  && mv \"$tmp\" \"$vfile\" && echo 'Updated' || { rm -f \"$tmp\"; echo 'Skipped'; }",
             "_", Directories.shellConfig, root.repoPath, root.installMode, root.updateStrategy
         ]
         stdout: StdioCollector {

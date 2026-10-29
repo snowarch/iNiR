@@ -105,7 +105,7 @@ get_spotify_xpui_dir() {
       k = substr($0, 1, RSTART - 1); v = substr($0, RSTART + 1)
       gsub(/^[ \t]+|[ \t\r]+$/, "", k); gsub(/^[ \t]+|[ \t\r]+$/, "", v)
       if (tolower(k) == "spotify_path") { print v; exit }
-    }' "$1" 2>/dev/null)"
+    }' "$1" 2>/dev/null)" || return 0
   [[ -n "$root" ]] || return 0
   [[ "$root" == "~" || "$root" == "~/"* ]] && root="$HOME${root:1}"
   root="${root%/}"

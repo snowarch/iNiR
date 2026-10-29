@@ -41,7 +41,7 @@ response="$INIR_ANI_RUN/response"
 rm -f -- "$response"
 staging=$(mktemp "$INIR_ANI_RUN/.request.XXXXXX") || exit 1
 if printf '%s\n' "$list" | jq -R -n -c --arg prompt "$prompt" '{prompt: $prompt, items: [inputs | select(test("\\S"))]}' > "$staging"; then
-    mv -f -- "$staging" "$request" || exit 1
+    mv -f -- "$staging" "$request" || { rm -f -- "$staging"; exit 1; }
 else
     rm -f -- "$staging"
     exit 1

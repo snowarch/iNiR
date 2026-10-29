@@ -139,6 +139,10 @@ edit_launcher() {
       $0 = "Exec=" body
     }
     { print }' "$path" > "$tmp" || { rm -f "$tmp"; return 1; }
+  # awk ends every file with a newline: a launcher that had none keeps it that way.
+  if [[ -s "$path" && -n "$(tail -c1 "$path")" ]]; then
+    truncate -s -1 "$tmp"
+  fi
   if ! cmp -s "$tmp" "$path"; then
     cat "$tmp" > "$path"
     printf 'changed\n'
