@@ -95,7 +95,7 @@ VOID_BASE_PACKAGES=(
   # UV (fast Python package manager, in Void repo)
   uv
 
-  # Build/runtime deps for Python native extensions (pycairo, pygobject, opencv)
+  # Build/runtime deps for Python native extensions (pycairo, pygobject)
   rsync
   base-devel
   pkg-config

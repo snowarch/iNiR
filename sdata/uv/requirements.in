@@ -10,8 +10,6 @@ pillow
 material-color-utilities
 # 3.x: TonalPalette.tone() returns an ARGB int (2.x returned an RGBA list)
 materialyoucolor>=3.0.2
-numpy
-opencv-contrib-python
 
 # System monitoring
 psutil

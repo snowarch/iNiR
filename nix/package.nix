@@ -26,8 +26,6 @@ let
     loguru
     material-color-utilities
     materialyoucolor
-    numpy
-    opencv4
     pillow
     psutil
     pycairo

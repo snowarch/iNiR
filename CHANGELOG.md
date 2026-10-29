@@ -39,6 +39,7 @@ iNiR is now a base with plugins: Material, Waffle and iRiS come from the iNiR Hu
 - Debian builds niri from its v26.04 tag, with its session files.
 - The docs live at inir.space/docs.
 - Nothing compiles Go on your machine anymore, so `go` left the dependencies: inir-accel solves the iRiS palette and writes the VSCode, OpenCode and Zed themes.
+- OpenCV and numpy left the Python dependencies: inir-accel finds the boxes the region selector snaps to in a screenshot.
 
 ### Fixed
 - Void: a login no longer hangs when D-Bus starts elogind before its own service does.

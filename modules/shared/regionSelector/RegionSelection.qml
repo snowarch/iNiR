@@ -325,10 +325,9 @@ PanelWindow {
 
     Process {
         id: imageDetectionProcess
-        command: ["/usr/bin/bash", "-c", `${Directories.scriptsPath}/images/find-regions-venv.sh ` 
-            + `--image '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}' ` 
-            + `--max-width ${Math.round(root.screen.width * root.falsePositivePreventionRatio)} ` 
-            + `--max-height ${Math.round(root.screen.height * root.falsePositivePreventionRatio)} `]
+        command: [Quickshell.shellPath("scripts/lib/accel-run"), "find-regions", "--image", root.screenshotPath,
+            "--max-width", String(Math.round(root.screen.width * root.falsePositivePreventionRatio)),
+            "--max-height", String(Math.round(root.screen.height * root.falsePositivePreventionRatio))]
         stdout: StdioCollector {
             id: imageDimensionCollector
             onStreamFinished: {
