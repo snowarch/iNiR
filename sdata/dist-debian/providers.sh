@@ -678,7 +678,7 @@ if ! command -v niri &>/dev/null; then
   if ! command -v niri &>/dev/null; then
     log_info "Niri not in repos — compiling from source..."
     if ! ensure_rust_toolchain; then
-      log_error "Niri source fallback requires Rust"
+      log_error "Niri source fallback requires Rust: sudo apt install cargo, then ./setup install"
       return 1
     fi
   
@@ -730,15 +730,15 @@ if ! command -v niri &>/dev/null; then
       if cargo build --release; then
         log_info "Installing Niri..."
         sudo install -Dm755 target/release/niri /usr/local/bin/niri
-        _niri_session_files "$NIRI_BUILD_DIR" || log_error "Niri's session files did not install"
+        _niri_session_files "$NIRI_BUILD_DIR" || log_error "Niri's session files did not install; retry with: ./setup install"
         log_success "Niri installed!"
       else
-        log_error "Niri build failed!"
+        log_error "Niri build failed (the output is above); retry with: ./setup install"
       fi
       cd "${REPO_ROOT}"
       rm -rf "$NIRI_BUILD_DIR"
     else
-      log_error "Failed to clone Niri repository"
+      log_error "Failed to clone Niri repository; once online run: ./setup install"
     fi
     command -v niri &>/dev/null || return 1
   fi
@@ -1009,12 +1009,12 @@ if ! quickshell_installed_compatible; then
       sudo cmake --install build
       log_success "Quickshell installed!"
     else
-      log_error "Quickshell build failed!"
+      log_error "Quickshell build failed (the output is above); retry with: ./setup install"
     fi
     cd "${REPO_ROOT}"
     rm -rf "$QUICKSHELL_BUILD_DIR"
   else
-    log_error "Failed to clone Quickshell repository"
+    log_error "Failed to clone Quickshell repository; once online run: ./setup install"
   fi
   fi
 else

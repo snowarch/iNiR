@@ -1210,7 +1210,8 @@ run_uninstall_quick() {
     echo "  • Create a backup first"
     echo ""
 
-    if ! tui_confirm "Continue?" "no"; then
+    # -y is the go-ahead for the uninstall it was given to
+    if $ask && ! tui_confirm "Continue?" "no"; then
         echo "Cancelled."
         return 0
     fi

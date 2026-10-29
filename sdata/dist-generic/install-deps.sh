@@ -265,10 +265,7 @@ if $ask; then
   echo "  - Fonts (downloaded to ~/.local/share/fonts)"
   echo ""
   
-  local choice
-  read -p "Attempt automatic installation? [y/N]: " choice
-  
-  if [[ "$choice" =~ ^[yY]$ ]]; then
+  if tui_confirm "Attempt automatic installation?" "no"; then
     echo ""
     
     # Install Cargo packages

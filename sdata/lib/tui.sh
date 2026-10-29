@@ -292,6 +292,11 @@ tui_dim() {
 ###############################################################################
 tui_confirm() {
     local prompt="${1:-Continue?}" default="${2:-yes}"
+    # -y (or nobody at a terminal) takes the question's default, which is always the safe answer
+    if [[ "${ask:-true}" == false || ! -t 0 ]]; then
+        [[ "$default" == "yes" ]]
+        return
+    fi
     if $HAS_GUM; then
         if [[ "$default" == "yes" ]]; then
             gum confirm --default=yes --prompt.foreground "$(_tui_color_value accent)" "$prompt"

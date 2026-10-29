@@ -486,7 +486,7 @@ $ask || installflags="$installflags --noconfirm"
 if [[ ${#REQUIRED_AUR_PACKAGES[@]} -gt 0 ]]; then
   log_info "Installing required AUR packages: ${REQUIRED_AUR_PACKAGES[*]}"
   if ! $AUR_HELPER -S $installflags "${REQUIRED_AUR_PACKAGES[@]}"; then
-    log_error "Failed to install required AUR packages: ${REQUIRED_AUR_PACKAGES[*]}"
+    log_error "Failed to install required AUR packages; retry with: ${AUR_HELPER:-yay} -S ${REQUIRED_AUR_PACKAGES[*]}"
     return 1
   fi
 fi

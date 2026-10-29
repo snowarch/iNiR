@@ -165,7 +165,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
   done
 
   if [[ ${#_deb_unresolved[@]} -gt 0 ]]; then
-    log_error "Could not repair Debian dependencies: $(printf '%s ' "${_deb_unresolved[@]}")"
+    log_error "Could not repair Debian dependencies; apt says why with: sudo apt install ${_deb_unresolved[*]}"
     return 1
   fi
   return 0
@@ -627,7 +627,7 @@ if ! fc-list | grep -qi "Material Symbols Rounded"; then
   if curl -fsSL -o "$FONT_DIR/MaterialSymbolsRounded.ttf" "$MATERIAL_URL"; then
     log_success "Material Symbols Rounded font installed"
   else
-    log_error "CRITICAL: Could not download Material Symbols — UI icons will be broken!"
+    log_error "Could not download Material Symbols, so UI icons will be broken; once online run: ./setup install"
   fi
 fi
 
@@ -683,7 +683,7 @@ for cmd in qs niri fish gum cliphist; do
   if command -v "$cmd" &>/dev/null; then
     log_success "$cmd"
   else
-    log_error "$cmd not found"
+    log_error "$cmd not found; get it with: ./setup doctor"
   fi
 done
 echo ""

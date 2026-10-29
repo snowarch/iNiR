@@ -146,7 +146,7 @@ restore_snapshot() {
     fi
     
     if [[ ! -d "$snapshot_dir" ]]; then
-        log_error "Snapshot not found: $snapshot_id"
+        log_error "Snapshot not found: $snapshot_id; pick one with: ./setup rollback"
         return 1
     fi
     
@@ -163,11 +163,11 @@ restore_snapshot() {
     local runtime_target="${XDG_CONFIG_HOME}/quickshell/inir"
     local runtime_launcher="${runtime_target}/scripts/inir"
     if [[ ! -f "$runtime_launcher" ]]; then
-        log_error "Runtime launcher not found: ${runtime_launcher}"
+        log_error "Runtime launcher not found: ${runtime_launcher}; restore it with: ./setup install"
         return 1
     fi
     if ! bash "$runtime_launcher" stop -c "$runtime_target"; then
-        log_error "Could not stop the shell before restoring the snapshot"
+        log_error "Could not stop the shell before restoring the snapshot; stop it with: systemctl --user stop inir.service, then ./setup rollback"
         return 1
     fi
     

@@ -194,7 +194,7 @@ case "${SKIP_QUICKSHELL}" in
         log_success "Launcher installed"
         log_success "Launcher path configured for login and interactive shells"
       else
-        log_error "Could not install the inir launcher"
+        log_error "Could not install the inir launcher; see why with: ./setup doctor"
         return 1
       fi
     fi
@@ -392,7 +392,7 @@ esac
 source "$REPO_ROOT/sdata/lib/functions.sh" 2>/dev/null || true
 local _selected_supervisor
 if ! _selected_supervisor="$(reconcile_inir_supervisor)"; then
-  log_error "Could not configure the iNiR supervisor"
+  log_error "Could not configure the iNiR supervisor; see why with: ./setup doctor"
   return 1
 fi
 log_success "Startup: selected ${_selected_supervisor} supervisor"

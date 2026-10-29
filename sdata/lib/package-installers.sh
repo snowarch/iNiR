@@ -215,7 +215,7 @@ install-yay(){
 
   # Sync databases and install base-devel
   if ! pkg_sudo pacman -Sy --needed --noconfirm base-devel git; then
-      log_error "Failed to install base-devel/git. Check your pacman mirrors."
+      log_error "Failed to install base-devel and git; check your mirrors, then: sudo pacman -Syu --needed base-devel git"
       return 1
   fi
 
@@ -225,7 +225,7 @@ install-yay(){
   # Build and install
   x cd /tmp/buildyay
   if ! makepkg -si --noconfirm; then
-      log_error "Failed to build/install yay."
+      log_error "Failed to build yay; install an AUR helper (yay or paru) yourself, then: ./setup install"
       x cd "${REPO_ROOT}"
       return 1
   fi

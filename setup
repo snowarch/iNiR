@@ -553,7 +553,7 @@ show_help() {
     tui_section_end
 
     tui_section_start "Options"
-    tui_list_item "-y, --yes              Skip prompts (auto-yes)"
+    tui_list_item "-y, --yes              Take each question's default answer"
     tui_list_item "-q, --quiet            Minimal output"
     tui_list_item "--local                Sync local repo to install (skip git pull)"
     tui_list_item "--realign              Safely realign an old published checkout after rewritten remote history (update only)"
@@ -1363,7 +1363,7 @@ run_config() {
                     cp "${REPO_ROOT}/defaults/config.json" "$config_file"
                     tui_success "Config reset to defaults (backup created); a running shell applies it now"
                 else
-                    tui_error "Default config not found"
+                    tui_error "Default config not found; restore the shell's files with: ./setup install"
                 fi
             fi
             ;;
@@ -1492,7 +1492,7 @@ run_theme() {
                             disown
                             tui_success "Wallpaper pipeline started"
                         else
-                            tui_error "switchwall.sh not found or not executable"
+                            tui_error "switchwall.sh not found or not executable; restore it with: ./setup install"
                         fi
                     fi
                 fi
@@ -1599,7 +1599,7 @@ run_backup() {
         if [[ -n "$snapshot_id" ]]; then
             tui_alert "success" "Snapshot created" "ID: $snapshot_id\nVersion: $current_ver ($current_commit)\nRestore with: ./setup rollback"
         else
-            tui_error "Failed to create snapshot"
+            tui_error "Failed to create snapshot; see why with: ./setup doctor"
         fi
     else
         tui_info "Cancelled"
@@ -1746,7 +1746,7 @@ run_install() {
         tui_step 1 3 "Installing dependencies" "Package managers, shell runtime pieces, and compositor requirements."
         inir_event stage deps
         if ! source ./sdata/subcmd-install/1.deps-router.sh; then
-            tui_error "Dependency installation failed"
+            tui_error "Dependency installation failed; fix what it printed above, or install them yourself and run: ./setup install --skip-deps"
             return 1
         fi
         # Reinit after step output to show updated state
@@ -2915,14 +2915,14 @@ run_update() {
     # during the same update.
     source "$REPO_ROOT/sdata/lib/functions.sh" 2>/dev/null || true
     if [[ "${OS_GROUP_ID:-}" == void ]] && ! configure_void_ydotool_uinput; then
-        tui_error "Could not configure the ydotool provider"
+        tui_error "Could not configure the ydotool provider; see why with: ./setup doctor"
         return 1
     fi
     if [[ "${OS_GROUP_ID:-}" == void ]] && ! ensure_void_elogind_mounts; then
         tui_warn "Could not add elogind's boot mounts: a login can hang when D-Bus starts elogind first"
     fi
     if ! reconcile_inir_supervisor >/dev/null; then
-        tui_error "Could not reconcile the iNiR supervisor"
+        tui_error "Could not reconcile the iNiR supervisor; see why with: ./setup doctor"
         return 1
     fi
 

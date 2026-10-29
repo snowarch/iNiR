@@ -64,11 +64,9 @@ case "$OS_GROUP_ID" in
     echo "  3. Run: ./setup install --skip-deps"
     echo ""
     
-    if $ask; then
-      read -p "Continue with --skip-deps? [y/N]: " choice
-      if [[ ! "$choice" =~ ^[yY]$ ]]; then
-        exit 0
-      fi
+    # going on only installs iNiR's files, which is what -y does too
+    if ! tui_confirm "Continue with --skip-deps?" "yes"; then
+      exit 0
     fi
     
     # Skip to file installation

@@ -279,10 +279,7 @@ detect_distro(){
     
     # Allow continuing with generic installer
     if ${ask:-true}; then
-      echo -e "${STY_YELLOW}Would you like to continue with manual dependency installation?${STY_RST}"
-      local choice
-      read -p "[y/N]: " choice
-      if [[ "$choice" =~ ^[yY]$ ]]; then
+      if tui_confirm "Continue and install the dependencies yourself?" "no"; then
         OS_GROUP_ID="generic"
         OS_SPECIFIC_ID="unknown"
         OS_PRETTY_NAME="Unknown Distribution"

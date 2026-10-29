@@ -132,7 +132,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
 
   unset ONLY_MISSING_DEPS
   if [[ ${#_fed_unresolved[@]} -gt 0 ]]; then
-    log_error "Could not repair Fedora dependencies: $(printf '%s ' "${_fed_unresolved[@]}")"
+    log_error "Could not repair Fedora dependencies; dnf says why with: sudo dnf install ${_fed_unresolved[*]}"
     return 1
   fi
   return 0
@@ -514,7 +514,7 @@ for cmd in qs niri fish gum cliphist xwayland-satellite starship eza; do
   if command -v "$cmd" &>/dev/null || command -v ~/.local/bin/$cmd &>/dev/null; then
     log_success "$cmd"
   else
-    log_error "$cmd not found"
+    log_error "$cmd not found; get it with: ./setup doctor"
   fi
 done
 echo ""
