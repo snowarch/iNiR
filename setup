@@ -2258,12 +2258,9 @@ _update_hub_plugins() {
     local cli="${XDG_DATA_HOME:-$HOME/.local/share}/inir/cli/inir" plugins="${XDG_DATA_HOME:-$HOME/.local/share}/inir/plugins"
     local state="${XDG_STATE_HOME:-$HOME/.local/state}/inir/hub" pending id kind name names=() code=() keep verified
     [[ -x "$cli" ]] || return 0
-    pending="$("$cli" hub status --max-age 0 --json 2>/dev/null | python3 -c '
-import json, sys
-for i in json.loads(sys.stdin.read() or "{}").get("items") or []:
-    if i.get("update") and i.get("compatible"):
-        print(i.get("id", ""), i.get("kind", ""), i.get("name") or i.get("id", ""), sep="\t")
-' 2>/dev/null)" || return 0
+    pending="$("$cli" hub status --max-age 0 --json 2>/dev/null | jq -r '
+        (.items // [])[] | select(.update and .compatible) | [.id // "", .kind // "", (.name // .id // "")] | @tsv
+    ' 2>/dev/null)" || return 0
     [[ -n "$pending" ]] || return 0
     local ids=()
     while IFS=$'\t' read -r id kind name; do
@@ -2760,8 +2757,7 @@ run_update() {
         echo ""
         tui_info "Syncing files..."
 
-        python3 "${II_SOURCE}/sdata/lib/runtime-payload.py" copy \
-            --root "$II_SOURCE" --target "$II_TARGET" --delete || return 1
+        runtime_payload copy --root "$II_SOURCE" --target "$II_TARGET" --delete || return 1
 
         # Cleanup deprecated files
         [[ -f "${II_TARGET}/requirements.txt" ]] && rm -f "${II_TARGET}/requirements.txt"

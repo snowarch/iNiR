@@ -183,14 +183,13 @@ cp_file(){
 
 # Generate rsync exclusions from the same policy used by package delivery and manifests.
 # Resolve relative paths against the source checkout, not the copied directory's basename.
-INIR_PAYLOAD_TOOL="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/runtime-payload.py"
+source "$(dirname "${BASH_SOURCE[0]}")/runtime-payload.sh"
 _runtime_rsync() {
-  local source_path payload_root relative filters
+  local source_path relative filters
   source_path="$(realpath -e -- "$1")" || return
-  payload_root="$(cd "$(dirname "$INIR_PAYLOAD_TOOL")/../.." && pwd)" || return
-  relative="${source_path#"$payload_root"/}"
+  relative="${source_path#"$INIR_PAYLOAD_ROOT"/}"
   [[ "$relative" != "$source_path" ]] || { echo "Install source is outside repository" >&2; return 1; }
-  filters="$(python3 "$INIR_PAYLOAD_TOOL" filters --root "$payload_root" --subdir "$relative")" || return
+  filters="$(runtime_payload filters --root "$INIR_PAYLOAD_ROOT" --subdir "$relative")" || return
   local -a exclusions
   mapfile -t exclusions <<< "$filters"
   local target="$2"
@@ -284,9 +283,121 @@ function install_dir__skip_existed(){
   fi
 }
 
-# Marked iNiR blocks in shell profiles: set, remove or prune (see rc-block.py).
+# Marked iNiR blocks in shell profiles (~/.bashrc, ~/.profile, ...): `path` or `env`, each its start marker, the
+# body and its end marker after one blank line. Writing the same block again leaves the file byte-identical.
+#   inir_rc_block set NAME FILE   write block NAME, body on stdin
+#   inir_rc_block remove FILE     drop every iNiR block; FILE goes if nothing else is left
+#   inir_rc_block prune FILE      FILE goes only if it holds nothing but iNiR blocks
+# A profile that is a link (dotfile managers) is written where it points and stays a link.
+_inir_rc_markers() {
+  case "$1" in
+    path) printf '%s\n%s\n' "# iNiR launcher PATH" "# end iNiR launcher PATH" ;;
+    env) printf '%s\n%s\n' "# iNiR environment" "# end iNiR" ;;
+    *) return 1 ;;
+  esac
+}
+
+# _inir_rc_strip FILE OUT NAME...: FILE without those blocks and the blank lines right before each one. A start
+# marker with no end marker after it stays, like everything around it.
+_inir_rc_strip() {
+  local file="$1" out="$2" name start end nonl
+  shift 2
+  cp -- "$file" "$out" || return
+  for name; do
+    { read -r start; read -r end; } < <(_inir_rc_markers "$name")
+    nonl=0
+    [[ -s "$out" && -n "$(tail -c1 -- "$out")" ]] && nonl=1
+    START="$start" END="$end" LC_ALL=C awk -v nonl="$nonl" '
+      function trim(s) { gsub(/^[ \t]+|[ \t]+$/, "", s); return s }
+      { line[NR] = $0 }
+      END {
+        n = 0; held = 0; inblock = 0
+        for (i = 1; i <= NR; i++) {
+          t = trim(line[i])
+          if (inblock) {
+            if (t == ENVIRON["END"]) { inblock = 0; held = 0 } else hold[++held] = i
+            continue
+          }
+          if (t == ENVIRON["START"] && i < NR) { inblock = 1; hold[++held] = i; continue }
+          if (t == "") { hold[++held] = i; continue }
+          for (j = 1; j <= held; j++) keep[++n] = hold[j]
+          held = 0; keep[++n] = i
+        }
+        for (j = 1; j <= held; j++) keep[++n] = hold[j]
+        for (j = 1; j <= n; j++) printf "%s%s", line[keep[j]], (keep[j] == NR && nonl ? "" : "\n")
+      }' "$out" > "$out.next" && mv -f -- "$out.next" "$out" || return
+  done
+}
+
+# _inir_rc_write FILE TEXT_FILE: put TEXT_FILE in FILE atomically, keeping FILE's mode; nothing when equal.
+_inir_rc_write() {
+  local real tmp
+  real="$(realpath -m -- "$1")" || return
+  if [[ -f "$real" ]] && cmp -s -- "$2" "$real"; then return 0; fi
+  tmp="${real}.inir.$$"
+  cp -- "$2" "$tmp" || return
+  [[ ! -e "$real" ]] || chmod "$(stat -c %a -- "$real")" "$tmp" || { rm -f -- "$tmp"; return 1; }
+  mv -f -- "$tmp" "$real"
+}
+
 inir_rc_block() {
-  python3 "${REPO_ROOT}/sdata/lib/rc-block.py" "$@"
+  local cmd="${1:-}" name file scratch text rest body start end
+  case "$cmd" in
+    set) name="${2:-}" file="${3:-}"; _inir_rc_markers "$name" >/dev/null && [[ $# -eq 3 ]] || cmd="" ;;
+    remove|prune) file="${2:-}"; [[ $# -eq 2 ]] || cmd="" ;;
+    *) cmd="" ;;
+  esac
+  if [[ -z "$cmd" ]]; then
+    echo "usage: inir_rc_block set path|env FILE (body on stdin) | remove FILE | prune FILE" >&2
+    return 2
+  fi
+  scratch="$(mktemp -d)" || return
+  local rc=0
+  case "$cmd" in
+    set)
+      body="$(cat)"
+      body="${body#"${body%%[!$'\n']*}"}"
+      { read -r start; read -r end; } < <(_inir_rc_markers "$name")
+      rest=""
+      if [[ -f "$file" ]]; then
+        _inir_rc_strip "$file" "$scratch/rest" "$name" && rest="$(<"$scratch/rest")" || rc=1
+        rest="${rest%"${rest##*[![:space:]]}"}"
+      fi
+      if ((rc == 0)); then
+        if [[ -n "$rest" ]]; then
+          printf '%s\n\n%s\n%s\n%s\n' "$rest" "$start" "$body" "$end" > "$scratch/new"
+        else
+          printf '%s\n%s\n%s\n' "$start" "$body" "$end" > "$scratch/new"
+        fi
+        _inir_rc_write "$file" "$scratch/new" || rc=1
+      fi
+      ;;
+    remove)
+      if [[ -f "$file" ]]; then
+        if ! _inir_rc_strip "$file" "$scratch/rest" path env; then
+          rc=1
+        elif ! cmp -s -- "$file" "$scratch/rest"; then
+          text="$(<"$scratch/rest")"
+          if [[ -z "${text//[[:space:]]/}" ]]; then
+            rm -f -- "$file" || rc=1
+          else
+            printf '%s\n' "${text%"${text##*[![:space:]]}"}" > "$scratch/new" && _inir_rc_write "$file" "$scratch/new" || rc=1
+          fi
+        fi
+      fi
+      ;;
+    prune)
+      if [[ -f "$file" ]]; then
+        text="$(<"$file")"
+        if [[ -n "${text//[[:space:]]/}" ]] && _inir_rc_strip "$file" "$scratch/rest" path env; then
+          text="$(<"$scratch/rest")"
+          [[ -n "${text//[[:space:]]/}" ]] || rm -f -- "$file" || rc=1
+        fi
+      fi
+      ;;
+  esac
+  rm -rf -- "$scratch"
+  return "$rc"
 }
 
 # Writes the iNiR environment block into a bash or zsh rc file.
@@ -1204,67 +1315,60 @@ RUN_EOF
   update_inir_startup_supervisor() {
     local file="$1"
     local supervisor="$2"
-    python3 - "$file" "$supervisor" <<'PY'
-from pathlib import Path
-import re
-import sys
-
-path = Path(sys.argv[1])
-supervisor = sys.argv[2]
-text = path.read_text()
-
-text = re.sub(
-    r'(?ms)^[ \t]*// BEGIN inir-(?:systemd-environment|runsvdir-fallback|turnstile-environment)\n'
-    r'.*?^[ \t]*// END inir-(?:systemd-environment|runsvdir-fallback|turnstile-environment)\n?',
-    '',
-    text,
-)
-text = re.sub(r'(?m)^[ \t]*spawn-sh-at-startup.*runsvdir.*\n?', '', text)
-text = re.sub(
-    r'(?m)^[ \t]*spawn-at-startup "bash" "-c" '
-    r'"systemctl --user import-environment XDG_MENU_PREFIX && kbuildsycoca6"\n?',
-    '',
-    text,
-)
-# Remove all supervisor comment variants.
-text = re.sub(
-    r'(?m)^[ \t]*// iNiR is managed by the (?:user systemd service \(inir\.service\)|runit user service \(service/inir\)|turnstile user service \(service/inir\))\.\n'
-    r'^[ \t]*// Do not add a compositor startup entry here or you\'ll get two shells\.\n?',
-    '',
-    text,
-)
-
-if supervisor == "systemd":
-    supervisor_comment = '''// iNiR is managed by the user systemd service (inir.service).
-// Do not add a compositor startup entry here or you'll get two shells.'''
-    block = '''// BEGIN inir-systemd-environment
+    local comment block tmp text
+    case "$supervisor" in
+      systemd)
+        comment="// iNiR is managed by the user systemd service (inir.service)."
+        block='// BEGIN inir-systemd-environment
 // Export XDG_MENU_PREFIX into the systemd user session and rebuild the
 // sycoca database so KDE/Qt apps see the correct .desktop entries.
 spawn-at-startup "bash" "-c" "systemctl --user import-environment XDG_MENU_PREFIX && kbuildsycoca6"
-// END inir-systemd-environment'''
-elif supervisor == "runsvdir":
-    supervisor_comment = '''// iNiR is managed by the runit user service (service/inir).
-// Do not add a compositor startup entry here or you'll get two shells.'''
-    block = '''// BEGIN inir-runsvdir-fallback
+// END inir-systemd-environment' ;;
+      runsvdir)
+        comment="// iNiR is managed by the runit user service (service/inir)."
+        block="// BEGIN inir-runsvdir-fallback
 // iNiR shell supervisor (runsvdir fallback for non-systemd).
 // Do not add a compositor startup entry here or you'll get two shells.
-spawn-sh-at-startup "exec runsvdir ~/.config/service"
-// END inir-runsvdir-fallback'''
-else:
-    supervisor_comment = '''// iNiR is managed by the turnstile user service (service/inir).
-// Do not add a compositor startup entry here or you'll get two shells.'''
-    block = r'''// BEGIN inir-turnstile-environment
+spawn-sh-at-startup \"exec runsvdir ~/.config/service\"
+// END inir-runsvdir-fallback" ;;
+      *)
+        comment="// iNiR is managed by the turnstile user service (service/inir)."
+        block=$(cat <<'KDL'
+// BEGIN inir-turnstile-environment
 // Publish Niri's session environment to Turnstile-managed user services.
 spawn-sh-at-startup "export PATH=\"$HOME/.local/bin:$PATH\"; export INIR_VENV=\"$HOME/.local/state/quickshell/.venv\"; export ILLOGICAL_IMPULSE_VIRTUAL_ENV=\"$INIR_VENV\"; if command -v turnstile-update-runit-env >/dev/null 2>&1 && [ -n \"${WAYLAND_DISPLAY:-}\" ] && [ -n \"${XDG_RUNTIME_DIR:-}\" ] && [ -n \"${DBUS_SESSION_BUS_ADDRESS:-}\" ]; then turnstile-update-runit-env PATH INIR_VENV ILLOGICAL_IMPULSE_VIRTUAL_ENV WAYLAND_DISPLAY XDG_RUNTIME_DIR DBUS_SESSION_BUS_ADDRESS NIRI_SOCKET; if command -v sv >/dev/null 2>&1 && [ -d \"$HOME/.config/service/inir\" ]; then sv restart \"$HOME/.config/service/inir\" >/dev/null 2>&1 || true; fi; fi"
 // The shell runs outside this session on Turnstile (QS_DISABLE_POLKIT=1), so Niri starts the agent that answers password prompts.
 spawn-sh-at-startup "for agent in /usr/libexec/polkit-gnome-authentication-agent-1 /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1; do if [ -x \"$agent\" ]; then exec \"$agent\"; fi; done"
-// END inir-turnstile-environment'''
-
-suffix = f"\n\n{supervisor_comment}\n"
-if block:
-    suffix += f"\n{block}\n"
-path.write_text(text.rstrip() + suffix)
-PY
+// END inir-turnstile-environment
+KDL
+) ;;
+    esac
+    tmp="$(mktemp)" || return 1
+    # Whatever an earlier run wrote (any supervisor's block and comment, the old runsvdir and kbuildsycoca lines)
+    # goes, then this supervisor's comment and block are appended.
+    LC_ALL=C awk '
+      { line[NR] = $0 }
+      END {
+        names = "(systemd-environment|runsvdir-fallback|turnstile-environment)"
+        for (i = 1; i <= NR; i++) {
+          if (line[i] ~ ("^[ \t]*// BEGIN inir-" names "$")) {
+            for (j = i + 1; j <= NR && line[j] !~ ("^[ \t]*// END inir-" names); j++) ;
+            if (j <= NR) { for (k = i; k <= j; k++) drop[k] = 1; i = j }
+          }
+        }
+        for (i = 1; i <= NR; i++) {
+          if (drop[i]) continue
+          if (line[i] ~ /^[ \t]*spawn-sh-at-startup.*runsvdir/) drop[i] = 1
+          else if (line[i] ~ /^[ \t]*spawn-at-startup "bash" "-c" "systemctl --user import-environment XDG_MENU_PREFIX && kbuildsycoca6"$/) drop[i] = 1
+          else if (line[i] ~ /^[ \t]*\/\/ iNiR is managed by the (user systemd service \(inir\.service\)|runit user service \(service\/inir\)|turnstile user service \(service\/inir\))\.$/ \
+                   && line[i + 1] ~ /^[ \t]*\/\/ Do not add a compositor startup entry here or you.ll get two shells\./) { drop[i] = 1; drop[i + 1] = 1; i++ }
+        }
+        for (i = 1; i <= NR; i++) if (!drop[i]) print line[i]
+      }' "$file" > "$tmp" || { rm -f "$tmp"; return 1; }
+    text="$(<"$tmp")"
+    rm -f "$tmp"
+    printf '%s\n\n%s\n%s\n\n%s\n' "${text%"${text##*[![:space:]]}"}" "$comment" \
+      "// Do not add a compositor startup entry here or you'll get two shells." "$block" > "$file"
   }
 
   [[ -f "$startup_target" ]] && update_inir_startup_supervisor "$startup_target" "$supervisor"

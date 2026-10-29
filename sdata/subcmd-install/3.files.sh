@@ -132,8 +132,7 @@ case "${SKIP_QUICKSHELL}" in
     else
 
       v mkdir -p "$II_TARGET"
-      python3 "${II_SOURCE}/sdata/lib/runtime-payload.py" retire-checkout \
-        --root "$II_SOURCE" --target "$II_TARGET" || return 1
+      runtime_payload retire-checkout --root "$II_SOURCE" --target "$II_TARGET" || return 1
 
       # Create backup before update (if this is an update)
       if [[ "${IS_UPDATE}" == "true" ]]; then
@@ -514,37 +513,22 @@ if [[ -f "dots/.config/darklyrc" ]]; then
     # Keep user Darkly preferences intact. Newer Dolphin versions ask the
     # QStyle to draw FrameFocusRect for focused items, and current Darkly draws
     # that as an extra underline. Disable only that one style feature.
-    python3 - "$darkly_target" <<'PY'
-from pathlib import Path
-import re
-import sys
-
-path = Path(sys.argv[1])
-text = path.read_text()
-section = re.search(r'(?ms)^\[Style\]\s*$.*?(?=^\[|\Z)', text)
-
-if section:
-    block = section.group(0)
-    if re.search(r'(?m)^ViewDrawFocusIndicator=', block):
-        updated = re.sub(
-            r'(?m)^ViewDrawFocusIndicator=.*$',
-            'ViewDrawFocusIndicator=false',
-            block,
-            count=1,
-        )
-    else:
-        trailing = re.search(r'(?:\n[ \t]*)*\Z', block).group(0)
-        body = block[:-len(trailing)] if trailing else block
-        updated = body + ('' if body.endswith('\n') else '\n') \
-            + 'ViewDrawFocusIndicator=false' + (trailing or '\n')
-    text = text[:section.start()] + updated + text[section.end():]
-else:
-    if text and not text.endswith('\n'):
-        text += '\n'
-    text += '\n[Style]\nViewDrawFocusIndicator=false\n'
-
-path.write_text(text)
-PY
+    darkly_tmp="$(mktemp)" && LC_ALL=C awk '
+      function put() { print "ViewDrawFocusIndicator=false" }
+      function flush(   i) { for (i = 1; i <= nblank; i++) print blank[i]; nblank = 0 }
+      state == 1 && /^\[/ { if (!done) put(); done = 1; flush(); state = 2 }
+      state == 1 {
+        if (!done && /^ViewDrawFocusIndicator=/) { flush(); put(); done = 1; next }
+        if ($0 ~ /^[ \t]*$/) { blank[++nblank] = $0; next }
+        flush(); print; next
+      }
+      state == 0 && /^\[Style\][ \t\r]*$/ { state = 1 }
+      { print }
+      END {
+        if (state == 1) { if (!done) put(); flush() }
+        else if (state == 0) { print ""; print "[Style]"; put() }
+      }' "$darkly_target" > "$darkly_tmp" && cat "$darkly_tmp" > "$darkly_target"
+    rm -f "$darkly_tmp"
   fi
 fi
 

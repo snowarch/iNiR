@@ -143,7 +143,7 @@ pkgs.stdenvNoCC.mkDerivation {
     filter = import ./runtime-source-filter.nix { inherit lib; root = ../.; };
   };
 
-  nativeBuildInputs = [ pkgs.makeWrapper pkgs.python3 pkgs.rsync ];
+  nativeBuildInputs = [ pkgs.makeWrapper pkgs.jq pkgs.rsync ];
 
   # Prevent patchShebangs from attempting to rewrite Python scripts;
   # non-executable files are skipped during fixupPhase.
@@ -161,7 +161,7 @@ pkgs.stdenvNoCC.mkDerivation {
     runtime="$out/share/quickshell/inir"
     mkdir -p "$runtime" "$out/bin"
 
-    python3 sdata/lib/runtime-payload.py copy --root . --target "$runtime"
+    bash -c 'source sdata/lib/runtime-payload.sh && runtime_payload copy --root . --target "$1"' _ "$runtime"
 
     chmod +x "$runtime/setup" "$runtime/scripts/inir"
     find "$runtime/scripts" -type f \( -name '*.sh' -o -name '*.fish' -o -name '*.py' \) -exec chmod +x {} \;

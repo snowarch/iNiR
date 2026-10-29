@@ -285,21 +285,9 @@ extras_void_warp_write_state() {
   state_file="$(extras_void_warp_state_file)"
   state_dir="$(dirname "$state_file")"
   mkdir -p "$state_dir"
-  python3 - "$state_file" "$version" "$filename" "$sha256" <<'PY'
-import json, pathlib, sys
-path, version, filename, sha256 = sys.argv[1:]
-payload = {
-    "schema": 1,
-    "provider": "cloudflare-apt-metadata",
-    "version": version,
-    "filename": filename,
-    "sha256": sha256,
-}
-p = pathlib.Path(path)
-tmp = p.with_suffix(p.suffix + ".tmp")
-tmp.write_text(json.dumps(payload, indent=2) + "\n")
-tmp.replace(p)
-PY
+  jq -n --arg version "$version" --arg filename "$filename" --arg sha256 "$sha256" \
+    '{schema: 1, provider: "cloudflare-apt-metadata", version: $version, filename: $filename, sha256: $sha256}' \
+    > "${state_file}.tmp" && mv -f -- "${state_file}.tmp" "$state_file"
 }
 
 extras_void_warp_install_prereqs() {
@@ -440,9 +428,68 @@ extras_mascot_release_base_url() {
   printf '%s\n' "${INIR_MASCOT_RELEASE_BASE_URL:-https://github.com/snowarch/inir-mascot/releases/latest/download}"
 }
 
-extras_mascot_helper() {
-  local shell_dir="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/inir"
-  printf '%s\n' "${shell_dir}/scripts/lib/mascot-pack.py"
+# Kira's art: flat inir-mascot-*.png|gif files from the art release; iNiR owns manifest.json and behaviour.
+EXTRAS_MASCOT_ASSET_RE='^inir-mascot-[a-z0-9]+(-[a-z0-9]+)*\.(png|gif)$'
+
+# extras_mascot_tree DIR: "<count> <sha256>" of the art in DIR, the hash over its "<sha256>  <name>" lines
+# (what the art release publishes as asset_tree_sha256).
+extras_mascot_tree() {
+  local dir="$1" name lines="" count=0
+  if [[ -d "$dir" ]]; then
+    while IFS= read -r name; do
+      [[ "$name" =~ $EXTRAS_MASCOT_ASSET_RE && -f "$dir/$name" ]] || continue
+      lines+="$(sha256sum < "$dir/$name" | cut -d' ' -f1)  $name"$'\n'
+      count=$((count + 1))
+    done < <(cd -- "$dir" && printf '%s\n' * | LC_ALL=C sort)
+  fi
+  printf '%s %s\n' "$count" "$(printf '%s' "$lines" | sha256sum | cut -d' ' -f1)"
+}
+
+# extras_mascot_verify ARCHIVE STAGE [METADATA]: extracts a release holding only flat art files into the empty
+# STAGE, checked against METADATA (the release's json) when there is one. Prints "<count> <tree> <archive sha256>".
+extras_mascot_verify() {
+  local archive="$1" stage="$2" metadata="${3:-}" names member count archive_hash tree tree_count tree_hash
+  names="$(tar -tzf "$archive" 2>/dev/null)" && [[ -n "$names" ]] || { echo "cannot read $archive" >&2; return 1; }
+  [[ "$(tar -tvzf "$archive" 2>/dev/null | cut -c1 | sort -u)" == - ]] || { echo "archive holds more than files" >&2; return 1; }
+  while IFS= read -r member; do
+    [[ "$member" =~ $EXTRAS_MASCOT_ASSET_RE ]] || { echo "invalid archive member: $member" >&2; return 1; }
+  done <<< "$names"
+  [[ -z "$(sort <<< "$names" | uniq -d)" ]] || { echo "archive holds duplicate members" >&2; return 1; }
+  count="$(wc -l <<< "$names")"
+  ((count > 10)) || { echo "archive holds too few assets: $count" >&2; return 1; }
+  grep -qx 'inir-mascot-presence-idle-loop.gif' <<< "$names" || { echo "archive misses the idle loop" >&2; return 1; }
+  archive_hash="$(sha256sum < "$archive" | cut -d' ' -f1)"
+  if [[ -n "$metadata" && -s "$metadata" ]] && ! jq -e --arg name "${archive##*/}" --arg hash "$archive_hash" \
+      --argjson count "$count" --argjson names "$(jq -Rn '[inputs]' <<< "$names")" '
+        type == "object" and .schema == 1 and .archive == $name and .archive_sha256 == $hash
+        and ((.asset_count // -1) | tonumber) == $count and (((.required_assets // []) - $names) | length == 0)' \
+      "$metadata" >/dev/null 2>&1; then
+    echo "archive does not match its metadata" >&2
+    return 1
+  fi
+  mkdir -p -- "$stage" && tar -xzmf "$archive" -C "$stage" --no-same-owner || { echo "cannot extract $archive" >&2; return 1; }
+  tree="$(extras_mascot_tree "$stage")"
+  read -r tree_count tree_hash <<< "$tree"
+  ((tree_count == count)) || { echo "extracted asset count does not match the archive" >&2; return 1; }
+  if [[ -n "$metadata" && -s "$metadata" ]] && ! jq -e --arg tree "$tree_hash" '.asset_tree_sha256 == $tree' "$metadata" >/dev/null 2>&1; then
+    echo "installed asset tree does not match metadata" >&2
+    return 1
+  fi
+  printf '%s %s %s\n' "$count" "$tree_hash" "$archive_hash"
+}
+
+# extras_mascot_write_state FILE TAG COUNT TREE ARCHIVE: what the update compares to decide a repair.
+extras_mascot_write_state() {
+  local file="$1" tmp
+  mkdir -p -- "$(dirname "$file")" && tmp="$(mktemp "$(dirname "$file")/.${file##*/}.XXXXXX")" || return 1
+  if jq -n --arg tag "$2" --argjson count "$3" --arg tree "$4" --arg archive "$5" \
+      --arg at "$(date -u +%Y-%m-%dT%H:%M:%S.%6N+00:00)" \
+      '{schema: 1, tag: $tag, asset_count: $count, asset_tree_sha256: $tree, archive_sha256: $archive, installed_at: $at}' > "$tmp"; then
+    mv -f -- "$tmp" "$file"
+  else
+    rm -f -- "$tmp"
+    return 1
+  fi
 }
 
 # Refresh an installed mascot pack during `./setup update`. Fresh installs
@@ -456,11 +503,8 @@ extras_refresh_mascot_pack_on_update() {
   local state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/inir"
   local state_file="${state_dir}/mascot-pack-state.json"
   local legacy_marker="${state_dir}/mascot-pack-version"
-  local helper
-  helper="$(extras_mascot_helper)"
 
   [[ -e "${shell_dir}/.git" ]] && return 0
-  [[ -x "$helper" || -f "$helper" ]] || return 0
 
   local count
   count=$(find "$dest" -maxdepth 1 -type f \( -name 'inir-mascot-*.png' -o -name 'inir-mascot-*.gif' \) 2>/dev/null | wc -l)
@@ -473,22 +517,11 @@ extras_refresh_mascot_pack_on_update() {
   [[ -n "$latest" ]] || return 0
 
   if [[ -f "$state_file" ]]; then
-    local state_json tree_json
-    state_json="$(python3 "$helper" state "$state_file" 2>/dev/null || true)"
-    tree_json="$(python3 "$helper" tree "$dest" 2>/dev/null || true)"
-    if [[ -n "$state_json" && -n "$tree_json" ]] \
-       && python3 - "$latest" "$state_json" "$tree_json" <<'PY'
-import json, sys
-latest, state_raw, tree_raw = sys.argv[1:]
-state = json.loads(state_raw)
-tree = json.loads(tree_raw)
-raise SystemExit(0 if (
-    state.get("tag") == latest
-    and state.get("asset_count") == tree.get("asset_count")
-    and state.get("asset_tree_sha256") == tree.get("asset_tree_sha256")
-) else 1)
-PY
-    then
+    local tree_count tree_hash
+    read -r tree_count tree_hash < <(extras_mascot_tree "$dest")
+    if jq -e --arg tag "$latest" --argjson count "$tree_count" --arg tree "$tree_hash" '
+        type == "object" and .schema == 1 and has("archive_sha256")
+        and .tag == $tag and .asset_count == $count and .asset_tree_sha256 == $tree' "$state_file" >/dev/null 2>&1; then
       return 0
     fi
   fi
@@ -505,8 +538,6 @@ extras_install_mascot_pack() {
   local requested_tag="${1:-}"
   local shell_dir="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/inir"
   local dest="${shell_dir}/assets/images/mascot"
-  local helper
-  helper="$(extras_mascot_helper)"
   local base_url
   base_url="$(extras_mascot_release_base_url)"
   local pack_url="${base_url}/inir-mascot-pack.tar.gz"
@@ -520,10 +551,6 @@ extras_install_mascot_pack() {
     log_warning "iNiR shell dir not found at ${shell_dir}, skipping mascot pack"
     return 0
   fi
-  if [[ ! -f "$helper" ]]; then
-    log_warning "Mascot pack verifier missing at ${helper}, skipping"
-    return 0
-  fi
   mkdir -p "$dest"
 
   local tmp
@@ -532,7 +559,7 @@ extras_install_mascot_pack() {
   local metadata="${tmp}/inir-mascot-pack.json"
   local checksum="${tmp}/inir-mascot-pack.sha256"
   local stage="${tmp}/stage"
-  local verified_json=""
+  local verified=""
 
   if ! curl -fsSL --retry 2 -o "$archive" "$pack_url"; then
     log_warning "Failed to download the mascot pack (network?), keeping current art"
@@ -542,7 +569,7 @@ extras_install_mascot_pack() {
 
   local metadata_arg=()
   if curl -fsSL --retry 1 -o "$metadata" "$metadata_url" 2>/dev/null; then
-    metadata_arg=(--metadata "$metadata")
+    metadata_arg=("$metadata")
   elif curl -fsSL --retry 1 -o "$checksum" "$checksum_url" 2>/dev/null; then
     local expected actual
     expected="$(awk 'NR==1 {print $1}' "$checksum")"
@@ -554,8 +581,8 @@ extras_install_mascot_pack() {
     fi
   fi
 
-  verified_json="$(python3 "$helper" verify "$archive" "$stage" "${metadata_arg[@]}" 2>/dev/null || true)"
-  if [[ -z "$verified_json" ]]; then
+  verified="$(extras_mascot_verify "$archive" "$stage" "${metadata_arg[@]}" 2>/dev/null)" || verified=""
+  if [[ -z "$verified" ]]; then
     log_warning "Mascot pack validation failed, keeping current art"
     rm -rf "$tmp"
     return 0
@@ -569,18 +596,9 @@ extras_install_mascot_pack() {
     return 0
   fi
 
-  local installed_json
-  installed_json="$(python3 "$helper" tree "$dest" 2>/dev/null || true)"
-  if [[ -z "$installed_json" ]] \
-     || ! python3 - "$verified_json" "$installed_json" <<'PY'
-import json, sys
-verified, installed = map(json.loads, sys.argv[1:])
-raise SystemExit(0 if (
-    verified.get("asset_count") == installed.get("asset_count")
-    and verified.get("asset_tree_sha256") == installed.get("asset_tree_sha256")
-) else 1)
-PY
-  then
+  local count tree_hash archive_hash
+  read -r count tree_hash archive_hash <<< "$verified"
+  if [[ "$(extras_mascot_tree "$dest")" != "$count $tree_hash" ]]; then
     log_warning "Installed mascot tree did not match staging; it will be repaired on the next update"
     rm -rf "$tmp"
     return 0
@@ -594,15 +612,7 @@ PY
   local state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/inir"
   local state_file="${state_dir}/mascot-pack-state.json"
   local legacy_marker="${state_dir}/mascot-pack-version"
-  local count tree_hash archive_hash
-  IFS=$'\t' read -r count tree_hash archive_hash < <(
-    python3 - "$verified_json" <<'PY'
-import json, sys
-value = json.loads(sys.argv[1])
-print(value["asset_count"], value["asset_tree_sha256"], value["archive_sha256"], sep="\t")
-PY
-  )
-  python3 "$helper" write-state "$state_file" "$tag" "$count" "$tree_hash" "$archive_hash"
+  extras_mascot_write_state "$state_file" "$tag" "$count" "$tree_hash" "$archive_hash"
   rm -f "$legacy_marker"
 
   log_success "Mascot pack installed and verified (${count} assets in ${dest})"

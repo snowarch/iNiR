@@ -3,6 +3,8 @@
 
 # shellcheck shell=bash
 
+source "$(dirname "${BASH_SOURCE[0]}")/runtime-payload.sh"
+
 #####################################################################################
 # Configuration
 #####################################################################################
@@ -23,7 +25,7 @@ generate_manifest() {
     commit=$(git -C "$repo_root" rev-parse --short HEAD 2>/dev/null || echo "unknown")
     local entries
     entries=$(mktemp) || return
-    if ! python3 "$repo_root/sdata/lib/runtime-payload.py" manifest --root "$repo_root" > "$entries"; then
+    if ! runtime_payload manifest --root "$repo_root" > "$entries"; then
         rm -f "$entries"
         return 1
     fi
@@ -76,7 +78,7 @@ get_orphan_files() {
             done < "$runtime_dirs_manifest"
         fi
 
-    } | python3 "$REPO_ROOT/sdata/lib/runtime-payload.py" filter-installed --root "$REPO_ROOT" | sort -u > "$current_files"
+    } | runtime_payload filter-installed --root "$REPO_ROOT" | sort -u > "$current_files"
     ); then
         rm -f "$current_files"
         return 1

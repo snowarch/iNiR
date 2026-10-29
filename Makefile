@@ -20,7 +20,7 @@ install-bin:
 	@install -Dm755 scripts/inir $(BINDIR)/inir
 
 install-shell:
-	@python3 sdata/lib/runtime-payload.py copy --root . --target "$(SHELL_INSTALL_DIR)"
+	@bash -c 'source sdata/lib/runtime-payload.sh && runtime_payload copy --root . --target "$$1"' _ "$(SHELL_INSTALL_DIR)"
 	@chmod +x "$(SHELL_INSTALL_DIR)/setup" "$(SHELL_INSTALL_DIR)/scripts/inir"
 	@find "$(SHELL_INSTALL_DIR)/scripts" -type f \( -name "*.sh" -o -name "*.fish" -o -name "*.py" \) -exec chmod +x {} +
 	@printf '{\n  "version": "%s",\n  "commit": "manual",\n  "installed_at": "%s",\n  "installedAt": "%s",\n  "source": "make-install",\n  "repo_path": "",\n  "repoPath": "",\n  "install_mode": "package-managed",\n  "installMode": "package-managed",\n  "update_strategy": "package-manager",\n  "updateStrategy": "package-manager",\n  "package_manager": "manual",\n  "packageManager": "manual",\n  "package_name": "source-install",\n  "packageName": "source-install",\n  "package_update_hint": "sudo make install",\n  "packageUpdateHint": "sudo make install"\n}\n' "$$(cat VERSION)" "$$(date -Iseconds)" "$$(date -Iseconds)" > "$(SHELL_INSTALL_DIR)/version.json"
