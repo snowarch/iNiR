@@ -10,7 +10,7 @@ Control volume, choose what drives the visualisers, and see what is playing.
 
 ## Visualiser sources
 
-**Settings › Quick › Visualizer sources** lists the apps playing audio right now. Turn a filter on to keep that app out of the visualisers. With no filter on, the visualiser follows the player you are using.
+**Settings › Quick › Filters › Visualizer sources** lists the apps playing audio right now. Turn a filter on to keep that app out of the visualisers. With no filter on, the visualiser follows the player you are using.
 
 **Organic** is one of the visualiser styles under **Settings › Bar**, next to Bars and Wave.
 

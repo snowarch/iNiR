@@ -21,7 +21,7 @@ iNiR is built for Niri. Hyprland is not supported, so anything that only worked 
 - Online models (Gemini, Mistral, OpenRouter) need an API key. Keys are stored in your keyring through `secret-tool`, so the keyring has to be running and unlocked.
 - Ollama models appear only while Ollama is running on this machine.
 - Only Gemini models have Google Search built in. Other models get a "switch to search mode" function instead.
-- To block online models, set Settings › System › Policies › AI Policy to Local only.
+- To block online models, set Settings › System › Safety › Policies › AI Policy to Local only.
 
 ## Clipboard
 
@@ -39,7 +39,7 @@ Clipboard history needs `cliphist`. It keeps the latest 400 entries. Image entri
 - Firefox and its forks (LibreWolf, Floorp, Waterfox, Zen) read the new colours when they start.
 - Chromium browsers (Chrome, Chromium, ungoogled-chromium, Brave, Helium, Thorium) repaint a few seconds after a wallpaper change. The first time, iNiR asks for your password once, to set up their policy folders.
 - Vivaldi, Edge and Opera are not themed.
-- Terminal colours are set in Settings › Themes › Terminal Colors (Waffle: Themes › Terminal Colors; iRiS: Colour › App colours). That covers alacritty, btop, foot, ghostty, kitty, konsole, lazygit, starship, wezterm and yazi. Other terminals need their colours set by hand.
+- Terminal colours are set in Settings › Themes › Advanced › Terminal Colors (Waffle: Themes › Terminal Colors; iRiS: Colour › App colours). That covers alacritty, btop, foot, ghostty, kitty, konsole, lazygit, starship, wezterm and yazi. Other terminals need their colours set by hand.
 
 ## Overview and windows
 

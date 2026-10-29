@@ -79,8 +79,6 @@ ColumnLayout {
             page.settingsTaskNavigator = null
     }
 
-    // Pages show every section in one scroll (no tabs); this stays for search, which still names a section by its task.
-    visible: false
     Layout.fillWidth: true
     spacing: 12
 
