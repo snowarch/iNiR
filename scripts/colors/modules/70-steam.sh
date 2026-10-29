@@ -304,46 +304,25 @@ millennium_material_matugen_selected() {
 }
 
 set_millennium_material_matugen() {
-  local py tmp appearance
-  py="$(venv_python)"
-  tmp="${MILLENNIUM_CONFIG}.tmp"
-  appearance="$(millennium_material_appearance)"
+  local tmp="${MILLENNIUM_CONFIG}.tmp" filter
+  local -a args=(--arg active "$MILLENNIUM_THEME_DIR_NAME" --arg condition "$MILLENNIUM_THEME_CONDITION_NAME"
+    --arg appearance "$(millennium_material_appearance)")
+  filter='.general.injectCSS = true | .general.injectJavascript = true
+    | .themes.activeTheme = $active | .themes.allowedStyles = true | .themes.allowedScripts = true
+    | .themes.conditions[$condition].Color = "Matugen" | .themes.conditions[$condition].Appearance = $appearance'
   mkdir -p "$(dirname "$MILLENNIUM_CONFIG")"
-  "$py" - "$MILLENNIUM_CONFIG" "$tmp" "$MILLENNIUM_THEME_DIR_NAME" "$MILLENNIUM_THEME_CONDITION_NAME" "$appearance" <<'PYCFG'
-import json
-import os
-import sys
-
-path, tmp, active_theme, condition_theme, appearance = sys.argv[1:6]
-try:
-    with open(path) as f:
-        before = f.read()
-    data = json.loads(before)
-except Exception:
-    before, data = None, {}
-
-general = data.setdefault("general", {})
-general["injectCSS"] = True
-general["injectJavascript"] = True
-
-themes = data.setdefault("themes", {})
-themes["activeTheme"] = active_theme
-themes["allowedStyles"] = True
-themes["allowedScripts"] = True
-conditions = themes.setdefault("conditions", {})
-theme_conditions = conditions.setdefault(condition_theme, {})
-theme_conditions["Color"] = "Matugen"
-theme_conditions["Appearance"] = appearance
-
-after = json.dumps(data, indent=2) + "\n"
-# Millennium owns this file too and reacts to writes: touch it only when a value changed.
-if before is not None and json.loads(before) == data:
-    sys.exit(0)
-os.makedirs(os.path.dirname(path), exist_ok=True)
-with open(tmp, "w") as f:
-    f.write(after)
-os.replace(tmp, path)
-PYCFG
+  # A config jq can't read as an object starts over from an empty one.
+  if jq -e 'type == "object"' "$MILLENNIUM_CONFIG" >/dev/null 2>&1; then
+    jq "${args[@]}" "$filter" "$MILLENNIUM_CONFIG"
+  else
+    jq -n "${args[@]}" "{} | $filter"
+  fi > "$tmp" || { rm -f "$tmp"; return 1; }
+  # Millennium owns this file too and reacts to writes: touch it only when a value changed.
+  if jq -e --slurpfile new "$tmp" '. == $new[0]' "$MILLENNIUM_CONFIG" >/dev/null 2>&1; then
+    rm -f "$tmp"
+  else
+    mv -f "$tmp" "$MILLENNIUM_CONFIG"
+  fi
 }
 
 deploy_millennium_material() {

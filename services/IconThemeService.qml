@@ -252,31 +252,8 @@ Singleton {
         id: kdeGlobalsUpdateProc
         property string themeName: ""
         property bool skipRestart: false
-        command: [
-            "/usr/bin/python3",
-            "-c",
-            `
-import configparser
-import os
-
-config_path = os.path.expanduser("~/.config/kdeglobals")
-theme = "${kdeGlobalsUpdateProc.themeName}"
-
-config = configparser.ConfigParser()
-config.optionxform = str  # Preserve case
-
-if os.path.exists(config_path):
-    config.read(config_path)
-
-if "Icons" not in config:
-    config["Icons"] = {}
-
-config["Icons"]["Theme"] = theme
-
-with open(config_path, "w") as f:
-    config.write(f, space_around_delimiters=False)
-`
-        ]
+        command: [Quickshell.shellPath("scripts/lib/accel-run"), "ini-set", Directories.homePath + "/.config/kdeglobals", "Icons", "Theme",
+            kdeGlobalsUpdateProc.themeName]
         onExited: (exitCode, exitStatus) => {
             // Also update plasma icon theme via kwriteconfig if available
             kwriteconfigProc.themeName = kdeGlobalsUpdateProc.themeName
@@ -321,31 +298,8 @@ with open(config_path, "w") as f:
     Process {
         id: qt5ctProc
         property string themeName: ""
-        command: [
-            "/usr/bin/python3",
-            "-c",
-            `
-import configparser
-import os
-
-theme = "${qt5ctProc.themeName}"
-config_path = os.path.expanduser("~/.config/qt5ct/qt5ct.conf")
-
-if not os.path.exists(config_path):
-    os.makedirs(os.path.dirname(config_path), exist_ok=True)
-    with open(config_path, "w") as f:
-        f.write("[Appearance]\\nicon_theme=" + theme + "\\n")
-else:
-    config = configparser.ConfigParser()
-    config.optionxform = str
-    config.read(config_path)
-    if "Appearance" not in config:
-        config["Appearance"] = {}
-    config["Appearance"]["icon_theme"] = theme
-    with open(config_path, "w") as f:
-        config.write(f, space_around_delimiters=False)
-`
-        ]
+        command: [Quickshell.shellPath("scripts/lib/accel-run"), "ini-set", Directories.homePath + "/.config/qt5ct/qt5ct.conf", "Appearance",
+            "icon_theme", qt5ctProc.themeName]
         onExited: (exitCode, exitStatus) => {
             _log("[IconThemeService] qt5ct updated:", exitCode === 0 ? "success" : "failed")
         }
@@ -355,31 +309,8 @@ else:
     Process {
         id: qt6ctProc
         property string themeName: ""
-        command: [
-            "/usr/bin/python3",
-            "-c",
-            `
-import configparser
-import os
-
-theme = "${qt6ctProc.themeName}"
-config_path = os.path.expanduser("~/.config/qt6ct/qt6ct.conf")
-
-if not os.path.exists(config_path):
-    os.makedirs(os.path.dirname(config_path), exist_ok=True)
-    with open(config_path, "w") as f:
-        f.write("[Appearance]\\nicon_theme=" + theme + "\\n")
-else:
-    config = configparser.ConfigParser()
-    config.optionxform = str
-    config.read(config_path)
-    if "Appearance" not in config:
-        config["Appearance"] = {}
-    config["Appearance"]["icon_theme"] = theme
-    with open(config_path, "w") as f:
-        config.write(f, space_around_delimiters=False)
-`
-        ]
+        command: [Quickshell.shellPath("scripts/lib/accel-run"), "ini-set", Directories.homePath + "/.config/qt6ct/qt6ct.conf", "Appearance",
+            "icon_theme", qt6ctProc.themeName]
         onExited: (exitCode, exitStatus) => {
             _log("[IconThemeService] qt6ct updated:", exitCode === 0 ? "success" : "failed")
             // Also sync to GTK settings.ini files
@@ -393,44 +324,9 @@ else:
     Process {
         id: gtkSettingsProc
         property string themeName: ""
-        command: [
-            "/usr/bin/python3",
-            "-c",
-            `
-import configparser
-import datetime
-import os
-import shutil
-
-theme = "${gtkSettingsProc.themeName}"
-
-for subdir in ["gtk-3.0", "gtk-4.0"]:
-    path = os.path.expanduser(f"~/.config/{subdir}/settings.ini")
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-
-    config = configparser.ConfigParser(interpolation=None)
-    config.optionxform = str
-    valid = False
-    if os.path.isfile(path):
-        try:
-            config.read(path)
-            valid = config.has_section("Settings")
-        except configparser.Error:
-            valid = False
-
-    if not valid:
-        if os.path.isfile(path) and os.path.getsize(path) > 0:
-            stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-            shutil.copy2(path, f"{path}.corrupt-{stamp}.bak")
-        config = configparser.ConfigParser(interpolation=None)
-        config.optionxform = str
-        config["Settings"] = {}
-
-    config["Settings"]["gtk-icon-theme-name"] = theme
-    with open(path, "w") as f:
-        config.write(f, space_around_delimiters=False)
-`
-        ]
+        command: ["/usr/bin/bash", "-c",
+            "for d in gtk-3.0 gtk-4.0; do \"$1\" ini-set \"$2/.config/$d/settings.ini\" Settings gtk-icon-theme-name \"$3\" --replace-invalid || s=1; done; exit ${s:-0}",
+            "_", Quickshell.shellPath("scripts/lib/accel-run"), Directories.homePath, gtkSettingsProc.themeName]
         onExited: (exitCode, exitStatus) => {
             _log("[IconThemeService] GTK settings.ini updated:", exitCode === 0 ? "success" : "failed")
         }

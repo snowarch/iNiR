@@ -126,27 +126,24 @@ limusic_launchers() {
 }
 
 edit_launcher() {
-  local path="$1" mode="$2"
-  python3 - "$path" "$WEBKIT_THEME_SO" "$mode" <<'PY'
-import sys
-path, module, mode = sys.argv[1:4]
-prefix = f'env "GTK_MODULES={module}" '
-text = open(path).read()
-out = []
-for line in text.split("\n"):
-    if line.startswith("Exec="):
-        body = line[len("Exec="):]
-        if mode == "remove":
-            body = body.replace(prefix, "", 1)
-        elif "GTK_MODULES=" not in body and "limusic" in body.split(" ")[0].lower():
-            body = prefix + body
-        line = "Exec=" + body
-    out.append(line)
-new = "\n".join(out)
-if new != text:
-    open(path, "w").write(new)
-    print("changed")
-PY
+  local path="$1" mode="$2" tmp
+  tmp="$(mktemp)" || return 1
+  PREFIX="env \"GTK_MODULES=$WEBKIT_THEME_SO\" " MODE="$mode" awk '
+    /^Exec=/ {
+      body = substr($0, 6); prefix = ENVIRON["PREFIX"]; cmd = body; sub(/ .*/, "", cmd)
+      if (ENVIRON["MODE"] == "remove") {
+        if ((i = index(body, prefix))) body = substr(body, 1, i - 1) substr(body, i + length(prefix))
+      } else if (!index(body, "GTK_MODULES=") && index(tolower(cmd), "limusic")) {
+        body = prefix body
+      }
+      $0 = "Exec=" body
+    }
+    { print }' "$path" > "$tmp" || { rm -f "$tmp"; return 1; }
+  if ! cmp -s "$tmp" "$path"; then
+    cat "$tmp" > "$path"
+    printf 'changed\n'
+  fi
+  rm -f "$tmp"
 }
 
 patch_limusic_launchers() {

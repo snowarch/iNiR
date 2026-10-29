@@ -33,18 +33,12 @@ fi
 # resume like the first one did, and a finished episode starts over.
 start=0
 if [ -n "$INIR_ANI_PROGRESS" ] && [ -f "$INIR_ANI_PROGRESS" ] && [ -n "$episode" ]; then
-    start=$(python3 - "$INIR_ANI_PROGRESS" "$(key "$base")" "$episode" "${INIR_ANI_FINISHED:-0.9}" <<'PY' 2>/dev/null
-import json, sys
-path, show, episode, finished = sys.argv[1], sys.argv[2], sys.argv[3], float(sys.argv[4])
-try:
-    saved = json.load(open(path)).get(show, {}).get(episode) or {}
-    seconds = float(saved.get("seconds") or 0)
-    duration = float(saved.get("duration") or 0)
-except Exception:
-    seconds, duration = 0, 0
-print(int(seconds) if seconds > 0 and not (duration > 0 and seconds / duration > finished) else 0)
-PY
-    )
+    start=$(jq -r --arg show "$(key "$base")" --arg episode "$episode" --argjson finished "${INIR_ANI_FINISHED:-0.9}" '
+        try ((.[$show][$episode] // {}) as $saved
+            | ($saved.seconds // 0 | tonumber) as $seconds
+            | ($saved.duration // 0 | tonumber) as $duration
+            | if $seconds > 0 and (($duration > 0 and $seconds / $duration > $finished) | not) then $seconds | floor else 0 end)
+        catch 0' "$INIR_ANI_PROGRESS" 2>/dev/null)
 fi
 case "$start" in ''|*[!0-9]*) start=0 ;; esac
 [ "$start" -gt 0 ] && set -- "--start=$start" "$@"

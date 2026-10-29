@@ -36,6 +36,7 @@ REQUESTED_THEME=""
 INIR_FINISH_CSS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/templates/spotify-finish.css"
 TUI_FINISH_CSS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/templates/spotify-tui-finish.css"
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/lib/config-path.sh"
+ACCEL_RUN="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/lib/accel-run"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -96,24 +97,24 @@ get_spicetify_config_path() {
 }
 
 get_spotify_xpui_dir() {
-  python3 - "$1" <<'PY'
-import configparser, pathlib, sys
-
-config_path = pathlib.Path(sys.argv[1])
-config = configparser.RawConfigParser()
-config.read(config_path)
-spotify_root = config.get("Setting", "spotify_path", fallback="").strip()
-
-candidates = []
-if spotify_root:
-    root = pathlib.Path(spotify_root).expanduser()
-    candidates.extend([root / "Apps" / "xpui", root / "xpui"])
-
-for path in candidates:
-    if (path / "index.html").is_file():
-        print(path)
-        break
-PY
+  local root path
+  # spotify_path from [Setting] the way configparser reads it: any case, `=` or `:`, trimmed.
+  root="$(awk '
+    /^[ \t]*\[/ { s = $0; gsub(/^[ \t]*\[|\][ \t\r]*$/, "", s); in_setting = (s == "Setting"); next }
+    in_setting && match($0, /[=:]/) {
+      k = substr($0, 1, RSTART - 1); v = substr($0, RSTART + 1)
+      gsub(/^[ \t]+|[ \t\r]+$/, "", k); gsub(/^[ \t]+|[ \t\r]+$/, "", v)
+      if (tolower(k) == "spotify_path") { print v; exit }
+    }' "$1" 2>/dev/null)"
+  [[ -n "$root" ]] || return 0
+  [[ "$root" == "~" || "$root" == "~/"* ]] && root="$HOME${root:1}"
+  root="${root%/}"
+  for path in "$root/Apps/xpui" "$root/xpui"; do
+    if [[ -f "$path/index.html" ]]; then
+      printf '%s\n' "$path"
+      return 0
+    fi
+  done
 }
 
 is_live_install_patched() {
@@ -128,97 +129,7 @@ get_debugger_port() {
 }
 
 reload_running_spotify() {
-  local port="$1"
-  python3 - "$port" <<'PY'
-import base64
-import json
-import os
-import socket
-import struct
-import sys
-import urllib.parse
-import urllib.request
-
-port = int(sys.argv[1])
-
-with urllib.request.urlopen(f"http://127.0.0.1:{port}/json/list", timeout=2) as response:
-    targets = json.load(response)
-
-page = next((target for target in targets if target.get("type") == "page" and "spotify.com" in target.get("url", "")), None)
-if page is None:
-    raise SystemExit(1)
-
-ws_url = urllib.parse.urlparse(page["webSocketDebuggerUrl"])
-sock = socket.create_connection((ws_url.hostname, ws_url.port), timeout=2)
-
-key = base64.b64encode(os.urandom(16)).decode()
-request = (
-    f"GET {ws_url.path} HTTP/1.1\r\n"
-    f"Host: {ws_url.hostname}:{ws_url.port}\r\n"
-    "Upgrade: websocket\r\n"
-    "Connection: Upgrade\r\n"
-    f"Sec-WebSocket-Key: {key}\r\n"
-    "Sec-WebSocket-Version: 13\r\n"
-    "\r\n"
-)
-sock.sendall(request.encode())
-response = sock.recv(4096)
-if b" 101 " not in response:
-    raise SystemExit(1)
-
-def send(message):
-    payload = json.dumps(message).encode()
-    mask = os.urandom(4)
-    header = bytearray([0x81])
-    length = len(payload)
-    if length < 126:
-        header.append(0x80 | length)
-    elif length < 65536:
-        header.extend((0x80 | 126, *struct.pack("!H", length)))
-    else:
-        header.extend((0x80 | 127, *struct.pack("!Q", length)))
-    sock.sendall(bytes(header) + mask + bytes(byte ^ mask[index % 4] for index, byte in enumerate(payload)))
-
-def receive(wanted_id):
-    buffer = b""
-    while True:
-        while len(buffer) < 2:
-            buffer += sock.recv(65536)
-        length = buffer[1] & 0x7F
-        offset = 2
-        if length == 126:
-            while len(buffer) < 4:
-                buffer += sock.recv(65536)
-            length = struct.unpack("!H", buffer[2:4])[0]
-            offset = 4
-        elif length == 127:
-            while len(buffer) < 10:
-                buffer += sock.recv(65536)
-            length = struct.unpack("!Q", buffer[2:10])[0]
-            offset = 10
-        while len(buffer) < offset + length:
-            buffer += sock.recv(65536)
-        frame, buffer = buffer[offset:offset + length], buffer[offset + length:]
-        try:
-            message = json.loads(frame)
-        except ValueError:
-            continue
-        if message.get("id") == wanted_id:
-            return message
-
-# Swap the theme stylesheet in place: a page reload flashes the whole client and can raise its window.
-swap = """(() => {
-  const links = [...document.querySelectorAll('link.userCSS, link[href^="user.css"]')];
-  // Each link keeps its own file: colors.css is a userCSS link too, and pointing it at user.css dropped the scheme.
-  links.forEach(link => { link.href = new URL(link.href, location.href).pathname.split('/').pop() + '?inir=' + Date.now(); });
-  return links.length;
-})()"""
-send({"id": 1, "method": "Runtime.evaluate", "params": {"expression": swap, "returnByValue": True}})
-swapped = receive(1).get("result", {}).get("result", {}).get("value", 0)
-if not swapped:
-    send({"id": 2, "method": "Page.reload", "params": {"ignoreCache": True}})
-sock.close()
-PY
+  "$ACCEL_RUN" spicetify-reload "$1"
 }
 
 is_process_running() {
@@ -409,28 +320,9 @@ regenerate_user_css_bridge() {
 /* === end iNiR CSS variable bridge === */"
 
   # ── Replace only the bridge block in user.css (keep everything else) ──────
-  # Use python3 for reliable multi-line regex replace without temp file races.
-  # The regex removes ALL occurrences (handles stale duplicate blocks from
-  # previous buggy runs) and appends a single fresh block at the end so these
-  python3 - "$css_file" "$bridge_block" <<'PYEOF'
-import sys, re, pathlib
-css_path = pathlib.Path(sys.argv[1])
-new_block = sys.argv[2]
-content = css_path.read_text()
-pattern = re.compile(
-    r'/\* === iNiR CSS variable bridge - auto-generated, do not edit === \*/.*?/\* === end iNiR CSS variable bridge === \*/\n?',
-    re.DOTALL
-)
-# Strip ALL existing bridge blocks (including duplicates from prior bad runs)
-content = pattern.sub('', content).lstrip('\n')
-# Append the single fresh block so it has final cascade priority
-if content and not content.endswith('\n'):
-    content += '\n'
-content = content + '\n' + new_block + '\n'
-# Removing a block from the middle leaves its blank lines behind: collapse them, or every run grows the file.
-content = re.sub(r'\n{3,}', '\n\n', content)
-css_path.write_text(content)
-PYEOF
+  # Every copy goes (stale duplicates from older runs too) and one fresh block
+  # lands at the end, so these variables win the cascade.
+  "$ACCEL_RUN" spicetify-block "$css_file" bridge "$bridge_block"
 
   log "CSS variable bridge regenerated from current palette"
 }
@@ -470,23 +362,7 @@ regenerate_playback_controls_fix() {
 }
 /* === end iNiR playback controls fix === */"
 
-  python3 - "$css_file" "$playback_block" <<'PYEOF'
-import sys, re, pathlib
-css_path = pathlib.Path(sys.argv[1])
-new_block = sys.argv[2]
-content = css_path.read_text()
-pattern = re.compile(
-    r'/\* === iNiR playback controls fix - auto-generated === \*/.*?(?=(/\* === end iNiR playback controls fix === \*/|/\* === iNiR playback controls fix - auto-generated === \*/|\Z))',
-    re.DOTALL
-)
-content = pattern.sub('', content)
-content = re.sub(r'/\* === end iNiR playback controls fix === \*/\n?', '', content)
-content = content.lstrip('\n')
-content = new_block + '\n' + content
-# Removing a block from the middle leaves its blank lines behind: collapse them, or every run grows the file.
-content = re.sub(r'\n{3,}', '\n\n', content)
-css_path.write_text(content)
-PYEOF
+  "$ACCEL_RUN" spicetify-block "$css_file" playback "$playback_block"
 
   log "Playback controls fix regenerated from current palette"
 }
@@ -558,22 +434,7 @@ regenerate_tui_color_bridge() {
 }
 /* === end iNiR TUI color bridge === */"
 
-  python3 - "$css_file" "$color_block" <<'PYEOF'
-import pathlib, re, sys
-
-css_path = pathlib.Path(sys.argv[1])
-new_block = sys.argv[2]
-content = css_path.read_text()
-pattern = re.compile(
-    r'/\* === iNiR TUI color bridge - auto-generated === \*/.*?/\* === end iNiR TUI color bridge === \*/\n?',
-    re.DOTALL,
-)
-content = pattern.sub('', content).rstrip()
-content += '\n\n' + new_block + '\n'
-# Removing a block from the middle leaves its blank lines behind: collapse them, or every run grows the file.
-content = re.sub(r'\n{3,}', '\n\n', content)
-css_path.write_text(content)
-PYEOF
+  "$ACCEL_RUN" spicetify-block "$css_file" colors "$color_block"
 
   log "TUI color bridge regenerated from current palette"
 }
@@ -626,22 +487,7 @@ button[data-testid='control-button-repeat'][aria-checked='mixed'] {
 }
 /* === end iNiR TUI overrides === */"
 
-  python3 - "$css_file" "$tui_block" <<'PYEOF'
-import pathlib, re, sys
-
-css_path = pathlib.Path(sys.argv[1])
-new_block = sys.argv[2]
-content = css_path.read_text()
-pattern = re.compile(
-    r'/\* === iNiR TUI overrides - auto-generated === \*/.*?/\* === end iNiR TUI overrides === \*/\n?',
-    re.DOTALL,
-)
-content = pattern.sub('', content).rstrip()
-content += '\n\n' + new_block + '\n'
-# Removing a block from the middle leaves its blank lines behind: collapse them, or every run grows the file.
-content = re.sub(r'\n{3,}', '\n\n', content)
-css_path.write_text(content)
-PYEOF
+  "$ACCEL_RUN" spicetify-block "$css_file" tui "$tui_block"
 
   log "TUI overrides regenerated"
 }

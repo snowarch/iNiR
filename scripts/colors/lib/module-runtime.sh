@@ -107,24 +107,6 @@ write_if_changed() {
   return 0
 }
 
-venv_python() {
-  local venv_path
-  if [[ -n "${INIR_VENV:-}" ]]; then
-    venv_path="$(eval echo "$INIR_VENV")"
-  elif [[ -n "${ILLOGICAL_IMPULSE_VIRTUAL_ENV:-}" ]]; then
-    venv_path="$(eval echo "$ILLOGICAL_IMPULSE_VIRTUAL_ENV")"
-  else
-    venv_path="$HOME/.local/state/quickshell/.venv"
-  fi
-
-  local candidate="$venv_path/bin/python3"
-  if [[ -x "$candidate" ]]; then
-    printf '%s\n' "$candidate"
-  else
-    printf '%s\n' python3
-  fi
-}
-
 run_module_script() {
   local module_path="$1"
   if bash "$module_path"; then

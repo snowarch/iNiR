@@ -50,53 +50,32 @@ if command -v gsettings >/dev/null 2>&1; then
 fi
 
 gtk_font_before="$(grep -s '^gtk-font-name=' "$config_home/gtk-3.0/settings.ini" || true)"
-python3 - "$config_home" "$main_font" "$font_size" <<'PY' || status=1
-import os
-import re
-import sys
-import tempfile
+# Every line that sets the key gets the new font; a file without one gets it at its end.
+set_font_line() {
+    local file="$1" tmp
+    [[ -f "$file" ]] || return 0
+    tmp="$(mktemp "$(dirname "$file")/.$(basename "$file").XXXXXX")" || return 1
+    if PREFIX="$2" LINE="$3" awk '
+        index($0, ENVIRON["PREFIX"]) == 1 { $0 = ENVIRON["LINE"]; found = 1 }
+        { lines[NR] = $0 }
+        END {
+            n = NR
+            if (!found) {
+                while (n > 0 && lines[n] ~ /^[ \t\r]*$/) n--
+                if (n) sub(/[ \t\r]+$/, "", lines[n])
+            }
+            for (i = 1; i <= n; i++) print lines[i]
+            if (!found) print ENVIRON["LINE"]
+        }' "$file" > "$tmp" && chmod --reference="$file" "$tmp" && mv -f "$tmp" "$file"; then
+        return 0
+    fi
+    rm -f "$tmp"
+    return 1
+}
 
-config_home, font_name, font_size = sys.argv[1:]
-
-
-def replace_line(path: str, pattern: str, replacement: str, prefix: str) -> None:
-    if not os.path.isfile(path):
-        return
-    with open(path, "r", encoding="utf-8") as handle:
-        content = handle.read()
-    if re.search(pattern, content, flags=re.MULTILINE):
-        content = re.sub(pattern, replacement, content, flags=re.MULTILINE)
-    else:
-        content = content.rstrip() + f"\n{replacement}\n"
-
-    mode = os.stat(path).st_mode
-    fd, temp_path = tempfile.mkstemp(prefix=prefix, dir=os.path.dirname(path))
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as handle:
-            handle.write(content)
-        os.chmod(temp_path, mode)
-        os.replace(temp_path, path)
-    finally:
-        if os.path.exists(temp_path):
-            os.unlink(temp_path)
-
-
-gtk_font = f"{font_name} {font_size}"
-for gtk_version in ("gtk-3.0", "gtk-4.0"):
-    replace_line(
-        os.path.join(config_home, gtk_version, "settings.ini"),
-        r"^gtk-font-name=.*$",
-        f"gtk-font-name={gtk_font}",
-        "settings.ini.",
-    )
-
-replace_line(
-    os.path.join(config_home, "xsettingsd", "xsettingsd.conf"),
-    r"^Gtk/FontName .*$",
-    f'Gtk/FontName "{font_name},  {font_size}"',
-    "xsettingsd.conf.",
-)
-PY
+set_font_line "$config_home/gtk-3.0/settings.ini" "gtk-font-name=" "gtk-font-name=$main_font $font_size" || status=1
+set_font_line "$config_home/gtk-4.0/settings.ini" "gtk-font-name=" "gtk-font-name=$main_font $font_size" || status=1
+set_font_line "$config_home/xsettingsd/xsettingsd.conf" "Gtk/FontName " "Gtk/FontName \"$main_font,  $font_size\"" || status=1
 
 if command -v kwriteconfig6 >/dev/null 2>&1; then
     main_kde="${main_font},${font_size},-1,5,50,0,0,0,0,0"

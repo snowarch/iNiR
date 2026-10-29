@@ -773,27 +773,15 @@ Singleton {
         running: false
         command: [
             "/usr/bin/bash", "-c",
-            "vfile='" + Directories.shellConfig + "/version.json'; " +
-            "if [[ -s \"$vfile\" ]] && command -v jq &>/dev/null; then " +
+            "vfile=\"$1/version.json\"; " +
+            "if [[ -s \"$vfile\" ]]; then " +
             "  tmp=$(mktemp); " +
-            "  jq --arg p '" + root.repoPath + "' --arg m '" + root.installMode + "' --arg u '" + root.updateStrategy + "' '.repo_path = $p | .repoPath = $p | .install_mode = $m | .installMode = $m | .update_strategy = $u | .updateStrategy = $u' \"$vfile\" > \"$tmp\" && mv \"$tmp\" \"$vfile\" && " +
+            "  jq --arg p \"$2\" --arg m \"$3\" --arg u \"$4\" '.repo_path = $p | .repoPath = $p | .install_mode = $m | .installMode = $m | .update_strategy = $u | .updateStrategy = $u' \"$vfile\" > \"$tmp\" && mv \"$tmp\" \"$vfile\" && " +
             "  echo 'Updated'; " +
-            "elif command -v python3 &>/dev/null; then " +
-            "  tmp=$(mktemp); " +
-            "  python3 -c 'import json,sys; path=sys.argv[1]; repo=sys.argv[2]; " +
-            "\ntry: data=json.load(open(path,\"r\",encoding=\"utf-8\"))" +
-            "\nexcept Exception: data={}" +
-            "\ndata[\"repo_path\"]=repo" +
-            "\ndata[\"repoPath\"]=repo" +
-            "\ndata[\"install_mode\"]=sys.argv[3]" +
-            "\ndata[\"installMode\"]=sys.argv[3]" +
-            "\ndata[\"update_strategy\"]=sys.argv[4]" +
-            "\ndata[\"updateStrategy\"]=sys.argv[4]" +
-            "\njson.dump(data, sys.stdout, ensure_ascii=False, indent=2)' \"$vfile\" '" + root.repoPath + "' '" + root.installMode + "' '" + root.updateStrategy + "' > \"$tmp\" " +
-            "    && mv \"$tmp\" \"$vfile\" && echo 'Updated' || echo 'Skipped'; " +
             "else " +
             "  echo 'Skipped'; " +
-            "fi"
+            "fi",
+            "_", Directories.shellConfig, root.repoPath, root.installMode, root.updateStrategy
         ]
         stdout: StdioCollector {
             onStreamFinished: {

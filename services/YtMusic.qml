@@ -1714,26 +1714,19 @@ Singleton {
     Process {
         id: _resolveBrowserArgProc
         property bool _pendingCheck: false
-        command: ["python3", "-c", `
-import sys, os, glob
-browser = '` + root.googleBrowser + `'
-forks = {"zen":"~/.zen","librewolf":"~/.librewolf","floorp":"~/.floorp","waterfox":"~/.waterfox","firefox":"~/.mozilla/firefox"}
-base = os.path.expanduser(forks.get(browser, "~/.mozilla/firefox"))
-if not os.path.exists(base):
-    print("")
-    sys.exit(0)
-for pattern in ["*.default-release", "*.default"]:
-    for m in glob.glob(os.path.join(base, pattern)):
-        if os.path.isdir(m) and os.path.exists(os.path.join(m, "cookies.sqlite")):
-            print("firefox:" + m)
-            sys.exit(0)
-for item in sorted(os.listdir(base)):
-    p = os.path.join(base, item)
-    if os.path.isdir(p) and os.path.exists(os.path.join(p, "cookies.sqlite")):
-        print("firefox:" + p)
-        sys.exit(0)
-print("")
-`]
+        command: ["/usr/bin/bash", "-c", `
+case "$1" in
+    zen) base=~/.zen ;;
+    librewolf) base=~/.librewolf ;;
+    floorp) base=~/.floorp ;;
+    waterfox) base=~/.waterfox ;;
+    *) base=~/.mozilla/firefox ;;
+esac
+for profile in "$base"/*.default-release "$base"/*.default "$base"/*; do
+    [ -d "$profile" ] && [ -e "$profile/cookies.sqlite" ] && { echo "firefox:$profile"; exit 0; }
+done
+echo ""
+`, "_", root.googleBrowser]
         stdout: SplitParser {
             onRead: line => {
                 const resolved = line.trim()

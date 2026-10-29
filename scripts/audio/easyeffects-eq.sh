@@ -77,35 +77,36 @@ output_pipeline_is_empty() {
     [[ -z "${plugins//[[:space:]]/}" ]]
 }
 
+# EasyEffects' neutral ten-band equalizer, laid out the way its own presets are written.
+equalizer_side() {
+    local -a freqs=(32 64 125 250 500 1000 2000 4000 8000 16000)
+    local i
+    for i in "${!freqs[@]}"; do
+        [[ "$i" -gt 0 ]] && printf ',\n'
+        printf '        "band%d": {\n          "frequency": %d.0,\n          "gain": 0.0,\n          "mode": "RLC (BT)",\n' "$i" "${freqs[$i]}"
+        printf '          "mute": false,\n          "q": 4.36,\n          "slope": "x1",\n          "solo": false,\n'
+        printf '          "type": "Bell",\n          "width": 4.0\n        }'
+    done
+    printf '\n'
+}
+
+equalizer_preset_json() {
+    printf '{\n  "output": {\n    "blocklist": [],\n    "plugins_order": [\n      "equalizer#0"\n    ],\n'
+    printf '    "equalizer#0": {\n      "balance": 0.0,\n      "bypass": false,\n      "input-gain": 0.0,\n      "left": {\n'
+    equalizer_side
+    printf '      },\n      "mode": "IIR",\n      "num-bands": 10,\n      "output-gain": 0.0,\n      "pitch-left": 0.0,\n'
+    printf '      "pitch-right": 0.0,\n      "right": {\n'
+    equalizer_side
+    printf '      },\n      "split-channels": false\n    }\n  }\n}\n'
+}
+
 write_inir_equalizer_preset() {
     local preset_dir preset_path tmp_path
     preset_dir="$(easyeffects_preset_dir)"
     mkdir -p "$preset_dir"
     preset_path="$preset_dir/iNiR Equalizer.json"
     tmp_path="$(mktemp "$preset_dir/.inir-equalizer.XXXXXX")"
-    python3 - "$tmp_path" <<'PY_PRESET'
-import json, sys
-frequencies = [32, 64, 125, 250, 500, 1000, 2000, 4000, 8000, 16000]
-def side():
-    return {
-        f"band{i}": {
-            "frequency": float(freq), "gain": 0.0, "mode": "RLC (BT)",
-            "mute": False, "q": 4.36, "slope": "x1", "solo": False,
-            "type": "Bell", "width": 4.0
-        }
-        for i, freq in enumerate(frequencies)
-    }
-eq = {
-    "balance": 0.0, "bypass": False, "input-gain": 0.0,
-    "left": side(), "mode": "IIR", "num-bands": 10,
-    "output-gain": 0.0, "pitch-left": 0.0, "pitch-right": 0.0,
-    "right": side(), "split-channels": False
-}
-preset = {"output": {"blocklist": [], "plugins_order": ["equalizer#0"], "equalizer#0": eq}}
-with open(sys.argv[1], "w", encoding="utf-8") as fh:
-    json.dump(preset, fh, indent=2)
-    fh.write("\n")
-PY_PRESET
+    equalizer_preset_json > "$tmp_path"
     chmod 600 "$tmp_path"
     mv -f "$tmp_path" "$preset_path"
 }
@@ -293,7 +294,7 @@ bootstrap_equalizer() {
         read_state
         return 0
     fi
-    if ! lsp_lv2_available || ! command -v python3 >/dev/null 2>&1; then
+    if ! lsp_lv2_available; then
         read_state
         return 0
     fi

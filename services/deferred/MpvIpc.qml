@@ -185,33 +185,7 @@ Item {
     // connections, so the first QML connect succeeds instead of logging errors.
     Process {
         id: waitProcess
-        command: ["/usr/bin/python3", "-c",
-            "import os, socket, sys, time\n"
-            + "reject = sys.argv[2]\n"
-            + "try:\n"
-            + "    os.unlink(reject)\n"
-            + "except OSError:\n"
-            + "    pass\n"
-            + "deadline = time.time() + 180\n"
-            + "while time.time() < deadline:\n"
-            + "    if os.path.exists(reject):\n"
-            + "        try:\n"
-            + "            with open(reject) as handle:\n"
-            + "                sys.stdout.write(handle.read())\n"
-            + "            os.unlink(reject)\n"
-            + "        except OSError:\n"
-            + "            pass\n"
-            + "        sys.exit(2)\n"
-            + "    try:\n"
-            + "        client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)\n"
-            + "        client.settimeout(1)\n"
-            + "        client.connect(sys.argv[1])\n"
-            + "        client.close()\n"
-            + "        sys.exit(0)\n"
-            + "    except OSError:\n"
-            + "        time.sleep(0.2)\n"
-            + "sys.exit(1)\n",
-            root.path, root.rejectPath]
+        command: [Quickshell.shellPath("scripts/lib/accel-run"), "mpv-wait", root.path, root.rejectPath]
 
         stdout: StdioCollector {
             id: probeCollector
