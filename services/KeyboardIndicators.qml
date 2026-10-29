@@ -318,7 +318,8 @@ Singleton {
                 return;
 
             root._log("evdev monitor exited", exitCode, exitStatus);
-            if (root.usingEvdev) {
+            // 127: accel-run found no inir-accel, retrying every second won't bring it back
+            if (root.usingEvdev && exitCode !== 127) {
                 evdevRestartTimer.restart();
                 return;
             }
