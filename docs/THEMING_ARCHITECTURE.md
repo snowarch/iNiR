@@ -5,7 +5,7 @@ Theming runs in two stages. `switchwall.sh` writes palette files to `~/.local/st
 ## Palette generation
 
 - Inputs: a wallpaper (`switchwall.sh --image`), a seed colour (`--color`), light or dark (`--mode`), a scheme (`--scheme`), and iRiS's surface (`iris-surface.json`) when iRiS is the family and its apps follow Material. Presets in `modules/common/ThemePresets.qml` write `colors.json` and `palette.json` directly.
-- `scripts/colors/generate_colors_material.py` is the only palette generator. It renders the templates in `~/.config/matugen` (installed from `defaults/matugen/`) with `{{colors.<token>.<mode>.<prop>}}` placeholders. matugen is gone, but the paths keep its name.
+- `inir-accel material-colors`, called by `switchwall.sh`, is the only palette generator. It renders the templates in `~/.config/matugen` (installed from `defaults/matugen/`) with `{{colors.<token>.<mode>.<prop>}}` placeholders. matugen is gone, but the paths keep its name.
 
 | File | Use |
 |---|---|

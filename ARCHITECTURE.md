@@ -75,7 +75,7 @@ inir.space, `inir help` and tab completion are built from those comments.
 
 ## Colours
 
-Wallpaper -> `scripts/colors/generate_colors_material.py` -> `colors.json` -> `MaterialThemeLoader` -> each family's
+Wallpaper -> `switchwall.sh` -> `inir-accel material-colors` -> `colors.json` -> `MaterialThemeLoader` -> each family's
 tokens (`Appearance`, `Looks`, `IrisStyle`). `scripts/colors/applycolor.sh` themes the apps listed in
 `scripts/colors/targets/`.
 

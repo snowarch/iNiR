@@ -53,7 +53,7 @@ See [Config System](CONFIG_SYSTEM.md).
 
 ```
 Wallpaper
-  -> scripts/colors/generate_colors_material.py
+  -> switchwall.sh -> inir-accel material-colors
   -> colors.json
   -> MaterialThemeLoader
   -> each family's tokens
