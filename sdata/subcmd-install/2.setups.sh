@@ -243,6 +243,10 @@ function setup_super_daemon(){
   local runit_run="${runit_dir}/run"
   local supervisor accel_quoted
 
+  if [[ ! -x "$accel" ]]; then
+    log_warning "inir-accel is missing, Super-tap daemon skipped"
+    return 0
+  fi
   # the daemon was a python file copied here; inir-accel runs it now
   rm -f "${HOME}/.local/bin/inir_super_overview_daemon.py"
 
@@ -253,7 +257,7 @@ function setup_super_daemon(){
       rm -rf "$runit_dir"
     fi
     x mkdir -p "$(dirname "$service_dst")"
-    sed "s|@INIR_ACCEL@|${accel}|" "$service_src" > "$service_dst" || return 1
+    sed "s|@INIR_ACCEL@|$(printf '%s' "$accel" | sed 's/[&|\\]/\\&/g')|" "$service_src" > "$service_dst" || return 1
     v systemctl --user daemon-reload
     v systemctl --user enable inir-super-overview.service --now
   else

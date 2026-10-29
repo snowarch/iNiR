@@ -4,7 +4,7 @@ After=graphical-session.target
 
 [Service]
 Type=simple
-ExecStart=@INIR_ACCEL@ super-overview-daemon
+ExecStart='@INIR_ACCEL@' super-overview-daemon
 Restart=on-failure
 RestartSec=1
 

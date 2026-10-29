@@ -419,13 +419,19 @@ repair_v2_leftovers() {
   fi
 
   # the opt-in Super-tap daemon ran a python file from ~/.local/bin; inir-accel runs it now
+  # (until accel is in place the old python keeps working, and the next update gets here)
   accel="${XDG_DATA_HOME:-$HOME/.local/share}/inir/accel/current/inir-accel"
   for file in "${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user/inir-super-overview.service" \
       "${XDG_CONFIG_HOME:-$HOME/.config}/service/inir-super-overview/run"; do
-    if [[ -f "$file" ]] && grep -q 'inir_super_overview_daemon\.py' "$file"; then
-      sed -i "s|/usr/bin/env python3 .*inir_super_overview_daemon\.py'\\?|${accel} super-overview-daemon|" "$file" || return 1
+    if [[ -x "$accel" && -f "$file" ]] && grep -q 'inir_super_overview_daemon\.py' "$file"; then
+      line="$(printf '%s' "$accel" | sed 's/[&|\\]/\\&/g')"
+      sed -i "s|/usr/bin/env python3 .*inir_super_overview_daemon\.py'\\?|'${line}' super-overview-daemon|" "$file" || return 1
       rm -f "$HOME/.local/bin/inir_super_overview_daemon.py"
-      [[ "$file" == *.service ]] && { systemctl --user daemon-reload >/dev/null 2>&1 || true; }
+      if [[ "$file" == *.service ]]; then
+        systemctl --user daemon-reload >/dev/null 2>&1 && systemctl --user try-restart inir-super-overview.service >/dev/null 2>&1
+      elif command -v sv >/dev/null 2>&1 && sv status "${file%/run}" 2>/dev/null | grep -q '^run:'; then
+        sv restart "${file%/run}" >/dev/null 2>&1
+      fi
       ((INIR_V2_LEFTOVERS_REPAIRED++)) || true
     fi
   done
