@@ -76,7 +76,7 @@ Item {
             TextField {
                 id: searchField
                 Layout.fillWidth: true
-                placeholderText: Translation.tr("Search...")
+                placeholderText: Translation.tr("Search themes...")
                 renderType: Text.NativeRendering
                 font.pixelSize: Appearance.font.pixelSize.small
                 background: Rectangle {

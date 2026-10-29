@@ -220,7 +220,7 @@ Item {
 
             DialogButton {
                 enabled: PolkitService.interactionAvailable
-                buttonText: Translation.tr("OK")
+                buttonText: Translation.tr("Authenticate")
                 colBackground: Appearance.zzzEverywhere
                     ? Appearance.zzz.secondary : Appearance.colors.colPrimary
                 colBackgroundHover: Appearance.zzzEverywhere

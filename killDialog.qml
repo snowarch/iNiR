@@ -97,7 +97,7 @@ ApplicationWindow {
             RippleButton {
                 colBackground: Appearance.colors.colLayer2
                 contentItem: StyledText {
-                    text: Translation.tr("Yes")
+                    text: Translation.tr("Stop")
                 }
                 onClicked: {
                     Quickshell.execDetached(["/usr/bin/killall", ...conflictGroup.programs])
@@ -107,7 +107,7 @@ ApplicationWindow {
             RippleButton {
                 colBackground: Appearance.colors.colLayer2
                 contentItem: StyledText {
-                    text: Translation.tr("No")
+                    text: Translation.tr("Keep")
                 }
                 onClicked: conflictGroup.visible = false
             }

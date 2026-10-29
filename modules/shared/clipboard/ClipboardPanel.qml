@@ -652,7 +652,7 @@ Scope {
                         onClicked: root.clearAll()
                         text: "check"
                         StyledToolTip {
-                            text: Translation.tr("Confirm")
+                            text: Translation.tr("Clear all")
                         }
                     }
 

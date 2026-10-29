@@ -125,7 +125,7 @@ Item {
                     onClicked: root.canceled()
                 }
                 DialogButton {
-                    buttonText: Translation.tr("OK")
+                    buttonText: Translation.tr("Choose")
                     onClicked: root.selected(
                         root.selectedId === -1 ? null :
                         root.items[root.selectedId]
