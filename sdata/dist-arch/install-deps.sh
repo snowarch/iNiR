@@ -34,6 +34,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
     [jq]="jq"
     [rsync]="rsync"
     [curl]="curl"
+    [unzip]="unzip"
     [git]="git"
     [python3]="python"
     [wlsunset]="wlsunset"

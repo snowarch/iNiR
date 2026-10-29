@@ -65,6 +65,7 @@ check_dependencies() {
         "jq:jq"
         "rsync:rsync"
         "curl:curl"
+        "unzip:unzip"
         "git:git"
         "python3:python3"
         "fish:fish"
