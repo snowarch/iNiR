@@ -404,14 +404,65 @@ inir_rc_block() {
   return "$rc"
 }
 
+# v2 ran its helpers in a Python venv; inir-accel runs them now. It goes once the installed shell never reads it
+# (a rollback to v2 still does): an update calls this before touching anything and once the new shell loaded. The
+# fish file and the rc lines only ever carried its path.
+retire_python_venv() {
+  local runtime="${II_TARGET:-${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/inir}"
+  local fish="${XDG_CONFIG_HOME:-$HOME/.config}/fish/conf.d/inir-env.fish" rc
+  [[ -e "$runtime/sdata/uv/requirements.txt" ]] && return 0
+  rm -rf -- "${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/.venv"
+  if [[ -f "$fish" ]] && ! grep -qv -e '^#' -e '^$' -e '^set -gx INIR_VENV ' -e '^set -gx ILLOGICAL_IMPULSE_VIRTUAL_ENV ' "$fish"; then
+    rm -f -- "$fish"
+  fi
+  for rc in bash zsh; do
+    [[ -f "$HOME/.${rc}rc" ]] && grep -q '^export INIR_VENV=' "$HOME/.${rc}rc" && grep -qxF '# iNiR environment' "$HOME/.${rc}rc" \
+      && write_inir_shell_env "$HOME/.${rc}rc" "$rc"
+  done
+  return 0
+}
+
+# v2 ran its helpers in a Python venv; inir-accel runs them now. It goes once the installed shell never reads it
+# (a rollback to v2 still does): an update calls this before touching anything and once the new shell loaded. The
+# fish file and the rc lines only ever carried its path.
+retire_python_venv() {
+  local runtime="${II_TARGET:-${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/inir}"
+  local fish="${XDG_CONFIG_HOME:-$HOME/.config}/fish/conf.d/inir-env.fish" rc
+  [[ -e "$runtime/sdata/uv/requirements.txt" ]] && return 0
+  rm -rf -- "${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/.venv"
+  if [[ -f "$fish" ]] && ! grep -qv -e '^#' -e '^$' -e '^set -gx INIR_VENV ' -e '^set -gx ILLOGICAL_IMPULSE_VIRTUAL_ENV ' "$fish"; then
+    rm -f -- "$fish"
+  fi
+  for rc in bash zsh; do
+    [[ -f "$HOME/.${rc}rc" ]] && grep -q '^export INIR_VENV=' "$HOME/.${rc}rc" && grep -qxF '# iNiR environment' "$HOME/.${rc}rc" \
+      && write_inir_shell_env "$HOME/.${rc}rc" "$rc"
+  done
+  return 0
+}
+
+# v2 ran its helpers in a Python venv; inir-accel runs them now. It goes once the installed shell never reads it
+# (a rollback to v2 still does): an update calls this before touching anything and once the new shell loaded. The
+# fish file and the rc lines only ever carried its path.
+retire_python_venv() {
+  local runtime="${II_TARGET:-${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/inir}"
+  local fish="${XDG_CONFIG_HOME:-$HOME/.config}/fish/conf.d/inir-env.fish" rc
+  [[ -e "$runtime/sdata/uv/requirements.txt" ]] && return 0
+  rm -rf -- "${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/.venv"
+  if [[ -f "$fish" ]] && ! grep -qv -e '^#' -e '^$' -e '^set -gx INIR_VENV ' -e '^set -gx ILLOGICAL_IMPULSE_VIRTUAL_ENV ' "$fish"; then
+    rm -f -- "$fish"
+  fi
+  for rc in bash zsh; do
+    [[ -f "$HOME/.${rc}rc" ]] && grep -q '^export INIR_VENV=' "$HOME/.${rc}rc" && grep -qxF '# iNiR environment' "$HOME/.${rc}rc" \
+      && write_inir_shell_env "$HOME/.${rc}rc" "$rc"
+  done
+  return 0
+}
+
 # Writes the iNiR environment block into a bash or zsh rc file.
 write_inir_shell_env() {
   local rc_file="$1" shell_name="$2"
-  local venv_path="${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/.venv"
   sed -i '/iNiR-env.sh/d' "$rc_file" 2>/dev/null || true
   inir_rc_block set env "$rc_file" <<EOF
-export INIR_VENV="${venv_path}"
-export ILLOGICAL_IMPULSE_VIRTUAL_ENV="\$INIR_VENV"
 # Terminal colors (Material You from the wallpaper) and the prompt only where someone types: ssh commands, scp and
 # scripts that read this file get clean output
 case \$- in *i*)
@@ -1340,7 +1391,7 @@ spawn-sh-at-startup \"exec runsvdir ~/.config/service\"
         block=$(cat <<'KDL'
 // BEGIN inir-turnstile-environment
 // Publish Niri's session environment to Turnstile-managed user services.
-spawn-sh-at-startup "export PATH=\"$HOME/.local/bin:$PATH\"; export INIR_VENV=\"$HOME/.local/state/quickshell/.venv\"; export ILLOGICAL_IMPULSE_VIRTUAL_ENV=\"$INIR_VENV\"; if command -v turnstile-update-runit-env >/dev/null 2>&1 && [ -n \"${WAYLAND_DISPLAY:-}\" ] && [ -n \"${XDG_RUNTIME_DIR:-}\" ] && [ -n \"${DBUS_SESSION_BUS_ADDRESS:-}\" ]; then turnstile-update-runit-env PATH INIR_VENV ILLOGICAL_IMPULSE_VIRTUAL_ENV WAYLAND_DISPLAY XDG_RUNTIME_DIR DBUS_SESSION_BUS_ADDRESS NIRI_SOCKET; if command -v sv >/dev/null 2>&1 && [ -d \"$HOME/.config/service/inir\" ]; then sv restart \"$HOME/.config/service/inir\" >/dev/null 2>&1 || true; fi; fi"
+spawn-sh-at-startup "export PATH=\"$HOME/.local/bin:$PATH\"; if command -v turnstile-update-runit-env >/dev/null 2>&1 && [ -n \"${WAYLAND_DISPLAY:-}\" ] && [ -n \"${XDG_RUNTIME_DIR:-}\" ] && [ -n \"${DBUS_SESSION_BUS_ADDRESS:-}\" ]; then turnstile-update-runit-env PATH WAYLAND_DISPLAY XDG_RUNTIME_DIR DBUS_SESSION_BUS_ADDRESS NIRI_SOCKET; if command -v sv >/dev/null 2>&1 && [ -d \"$HOME/.config/service/inir\" ]; then sv restart \"$HOME/.config/service/inir\" >/dev/null 2>&1 || true; fi; fi"
 // The shell runs outside this session on Turnstile (QS_DISABLE_POLKIT=1), so Niri starts the agent that answers password prompts.
 spawn-sh-at-startup "for agent in /usr/libexec/polkit-gnome-authentication-agent-1 /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1; do if [ -x \"$agent\" ]; then exec \"$agent\"; fi; done"
 // END inir-turnstile-environment

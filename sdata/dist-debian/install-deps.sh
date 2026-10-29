@@ -40,12 +40,11 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
   declare -A cmd_to_pkg=(
     [qs]="quickshell" [niri]="niri" [nmcli]="network-manager" [wpctl]="wireplumber" [pw-dump]="pipewire-bin"
     [jq]="jq" [rsync]="rsync" [curl]="curl" [git]="git" [python3]="python3"
-    [cairo-headers]="libcairo2-dev" [gi-headers]="libgirepository-2.0-dev" [dbus-headers]="libdbus-1-dev"
     [fish]="fish" [magick]="imagemagick" [grim]="grim" [cliphist]="cliphist"
     [wl-copy]="wl-clipboard" [wl-paste]="wl-clipboard"
     [hyprpicker]="hyprpicker" [playerctl]="playerctl" [notify-send]="libnotify-bin"
     [flock]="util-linux" [wlsunset]="wlsunset" [easyeffects]="easyeffects"
-    [uv]="uv" [cava]="cava" [qalc]="qalc" [yt-dlp]="yt-dlp" [socat]="socat"
+    [cava]="cava" [qalc]="qalc" [yt-dlp]="yt-dlp" [socat]="socat"
     [brightnessctl]="brightnessctl" [slurp]="slurp" [wf-recorder]="wf-recorder"
     [ffmpeg]="ffmpeg" [swappy]="swappy" [tesseract]="tesseract-ocr"
     [blueman-manager]="blueman" [kwriteconfig6]="libkf6config-bin" [ddcutil]="ddcutil"
@@ -277,9 +276,7 @@ DEBIAN_CORE_PKGS=(
   cmake
   ninja-build
   pkg-config
-  # pycairo, pygobject and dbus-python build in the venv
   libcairo2-dev
-  libgirepository-2.0-dev
   libdbus-1-dev
 
   # Icon themes - fallbacks (always available from repos)
@@ -291,7 +288,7 @@ DEBIAN_CORE_PKGS=(
 # Prefer distro packages whenever the currently enabled suite provides them.
 # This covers Debian 13 backports and newer Debian/Ubuntu derivatives while
 # leaving the existing source/release fallbacks intact elsewhere.
-for pkg in quickshell niri xwayland-satellite awww starship eza uv; do
+for pkg in quickshell niri xwayland-satellite awww starship eza; do
   if [[ "$pkg" == "quickshell" ]] && ! apt_quickshell_compatible; then
     continue
   fi
@@ -358,8 +355,6 @@ DEBIAN_TOOLKIT_PKGS=(
   upower
   wtype
   ydotool
-  python3-pil
-  python3-cairo
   brightnessctl
   ddcutil
   geoclue-2.0
@@ -558,16 +553,6 @@ provider_darkly
 debian_gtk_themes
 
 provider_swappy
-
-#####################################################################################
-# Install uv (Python package manager) - from official installer
-#####################################################################################
-tui_info "Installing uv (Python package manager)..."
-
-# Ensure ~/.local/bin is in PATH (uv installs there)
-export PATH="$HOME/.local/bin:$PATH"
-
-provider_uv
 
 provider_starship-eza
 

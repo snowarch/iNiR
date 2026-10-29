@@ -299,20 +299,8 @@ install_void_roboto_flex() {
   if ! curl -fsSL --max-time 120 -o "$archive" \
       "https://github.com/googlefonts/roboto-flex/releases/download/${ROBOTO_FLEX_VERSION}/roboto-flex-fonts.zip" \
       || ! printf '%s  %s\n' "$ROBOTO_FLEX_SHA256" "$archive" | sha256sum -c - >/dev/null 2>&1 \
-      || ! python3 - "$archive" "$extracted" <<'PY'
-import sys
-import zipfile
-
-archive, target = sys.argv[1:]
-with zipfile.ZipFile(archive) as bundle:
-    name = next(
-        entry for entry in bundle.namelist()
-        if "/variable/" in entry and entry.endswith(".ttf")
-    )
-    with open(target, "wb") as output:
-        output.write(bundle.read(name))
-PY
-  then
+      || ! name="$(unzip -Z1 "$archive" | grep -m1 '/variable/.*\.ttf$')" \
+      || ! unzip -p "$archive" "$name" > "$extracted"; then
     rm -rf "$temp_dir"
     log_warning "Could not extract verified Roboto Flex ${ROBOTO_FLEX_VERSION}"
     return 1
@@ -455,19 +443,11 @@ install_void_darkly() {
     log_warning "Could not fetch verified Darkly v${DARKLY_VERSION} source"
     return 1
   fi
-  if ! python3 - "$source_dir/CMakeLists.txt" <<'PY'
-from pathlib import Path
-import sys
-
-path = Path(sys.argv[1])
-text = path.read_text()
-old = 'find_package(Qt6 ${QT_MIN_VERSION} REQUIRED CONFIG COMPONENTS Widgets DBus)'
-new = 'find_package(Qt6 ${QT_MIN_VERSION} REQUIRED CONFIG COMPONENTS Widgets DBus OpenGL)'
-if text.count(old) != 1:
-    raise SystemExit('Darkly Qt6 find_package shape changed')
-path.write_text(text.replace(old, new, 1))
-PY
-  then
+  # the one find_package line, exactly once, or the patch no longer applies
+  if ! awk -v old='find_package(Qt6 ${QT_MIN_VERSION} REQUIRED CONFIG COMPONENTS Widgets DBus)' '
+        { while ((i = index($0, old))) { n++; printf "%s", substr($0, 1, i - 1) substr(old, 1, length(old) - 1) " OpenGL)"; $0 = substr($0, i + length(old)) } print }
+        END { exit n != 1 }' "$source_dir/CMakeLists.txt" > "$source_dir/CMakeLists.txt.new" \
+      || ! mv -f "$source_dir/CMakeLists.txt.new" "$source_dir/CMakeLists.txt"; then
     rm -rf "$temp_dir"
     log_warning "Darkly v${DARKLY_VERSION} Qt6 build patch no longer applies"
     return 1

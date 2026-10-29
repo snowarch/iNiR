@@ -21,7 +21,7 @@ On Arch, the installer uses the bundles in `sdata/dist-arch/`. Most packages com
 | `inir-fonts` | fontconfig, Noto emoji, DejaVu, Liberation, Roboto, Kvantum, Plasma integration |
 | `inir-deps` | The same packages, listed directly, so orphan cleanup does not remove them. It has no files of its own |
 
-Fonts and themes come from the official repositories where they exist: `adw-gtk-theme`, `capitaine-cursors`, `ttf-material-symbols-variable` and `ttf-jetbrains-mono-nerd`. `mission-center` and `uv` are official too.
+Fonts and themes come from the official repositories where they exist: `adw-gtk-theme`, `capitaine-cursors`, `ttf-material-symbols-variable` and `ttf-jetbrains-mono-nerd`. `mission-center` is official too.
 
 ### AUR packages
 
@@ -38,7 +38,6 @@ Void uses XBPS packages for the same profiles. These names differ from Arch:
 | Fish shell | `fish-shell` (provides `/usr/bin/fish`) |
 | Qt 6 compatibility | `qt6-qt5compat` |
 | Quickshell | `quickshell` |
-| Python Pillow | `python3-Pillow` |
 | Geolocation | `geoclue2` |
 | ImageMagick | `ImageMagick` |
 | Network editor | `network-manager-applet` |

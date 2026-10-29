@@ -40,6 +40,7 @@ this needs your attention. It is here for the curious, and for anyone who wants 
 | `~/.local/share/inir/accel/<version>/` | inir-accel. `current` points at the one in use |
 | `~/.local/bin/inir` | What runs when you type `inir`: it starts the shell and hands every other command on |
 | `~/.local/share/inir/cli/inir` | The `inir` command itself |
+| `~/.local/share/inir/yt-dlp/` | yt-dlp for YouTube Music, upstream's own build. Every update brings it current |
 | `~/.config/inir/` | Your settings (`config.json`), your widgets, themes and web apps |
 | `~/.config/niri/config.d/` | Niri's settings, one file per area. Yours: `90-user-extra.kdl` |
 | `~/.local/state/quickshell/` | What the shell remembers: generated colours, notifications, update snapshots |

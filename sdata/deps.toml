@@ -216,7 +216,7 @@ void = "plasma-browser-integration"
 [[dep]]
 name = "base-tools"
 group = "core"
-arch = ["coreutils", "curl", "ripgrep", "jq", "python", "xdg-user-dirs", "xdg-utils", "rsync", "git",
+arch = ["coreutils", "curl", "ripgrep", "jq", "python", "unzip", "xdg-user-dirs", "xdg-utils", "rsync", "git",
         "wl-clipboard", "libnotify", "pacman-contrib", "wlsunset"]
 fedora = ["coreutils", "curl", "ripgrep", "jq", "xdg-user-dirs", "rsync", "git", "unzip", "wl-clipboard",
           "libnotify", "wlsunset"]
@@ -249,14 +249,6 @@ fedora = { pkg = "eza", build = "starship-eza" }
 debian = { pkg = ["starship", "eza"], build = "starship-eza" }
 
 [[dep]]
-name = "uv"
-group = "toolkit"
-arch = "uv"
-fedora = { pkg = "uv", group = "core" }
-debian = { pkg = "uv", build = "uv", group = "core" }
-void = { pkg = "uv", group = "core" }
-
-[[dep]]
 name = "translate"
 group = "fonts"
 arch = { pkg = "translate-shell", groups = ["toolkit", "fonts"] }
@@ -264,18 +256,15 @@ fedora = { pkg = "translate-shell", group = "core" }
 debian = { pkg = "translate-shell", group = "core" }
 void = { pkg = "translate-shell", group = "toolkit" }
 
-# Native builds: Python packages with C extensions, and what setup compiles itself.
+# Native builds: what setup compiles itself.
 [[dep]]
 name = "build-tools"
 group = "core"
-fedora = ["gcc", "gcc-c++", "make", "meson", "ninja-build", "cmake", "pkg-config", "python3-devel",
-          "dbus-devel", "cairo-devel", "cairo-gobject-devel", "gobject-introspection-devel", "gtk3-devel",
+fedora = ["gcc", "gcc-c++", "make", "meson", "ninja-build", "cmake", "pkg-config",
+          "dbus-devel", "cairo-devel", "cairo-gobject-devel", "gtk3-devel",
           "glib2-devel"]
-# pycairo, pygobject and dbus-python build in the venv: their headers come always, not only with the toolkit
-debian = ["build-essential", "cmake", "ninja-build", "pkg-config", "libcairo2-dev", "libgirepository-2.0-dev",
-          "libdbus-1-dev"]
-void = ["base-devel", "pkg-config", "cairo-devel", "python3-devel", "glib-devel", "gobject-introspection",
-        "python3-gobject-devel", "libffi-devel"]
+debian = ["build-essential", "cmake", "ninja-build", "pkg-config", "libcairo2-dev", "libdbus-1-dev"]
+void = ["base-devel", "pkg-config", "cairo-devel", "glib-devel"]
 
 # --- audio -------------------------------------------------------------------------
 
@@ -332,10 +321,10 @@ void = { pkg = "songrec", group = "audio" }
 [[dep]]
 name = "input"
 group = "toolkit"
-arch = ["upower", "wtype", "ydotool", "python-pillow", "fprintd"]
-fedora = ["upower", "wtype", "ydotool", "python3-pillow", "fprintd"]
-debian = ["upower", "wtype", "ydotool", "python3-pil", "python3-cairo", "fprintd"]
-void = ["upower", "wtype", "python3-Pillow", "fprintd", "cmake"]
+arch = ["upower", "wtype", "ydotool", "fprintd"]
+fedora = ["upower", "wtype", "ydotool", "fprintd"]
+debian = ["upower", "wtype", "ydotool", "fprintd"]
+void = ["upower", "wtype", "fprintd", "cmake"]
 
 [[dep]]
 name = "ydotool"

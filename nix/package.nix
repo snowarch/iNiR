@@ -16,25 +16,6 @@ let
       (builtins.hasAttr "qt6" pkgs && builtins.hasAttr name pkgs.qt6)
       (builtins.getAttr name pkgs.qt6);
 
-  # InnerTube and browser-cookie extraction must share one closed Python
-  # environment; putting the yt-dlp executable in PATH does not expose its
-  # module or SecretStorage backend to this interpreter on Nix.
-  pythonRuntime = pkgs.python3.withPackages (ps: with ps; [
-    # sdata/uv/requirements.in, which setup installs into a venv elsewhere.
-    click
-    kde-material-you-colors
-    loguru
-    material-color-utilities
-    materialyoucolor
-    pillow
-    psutil
-    pycairo
-    pygobject3
-    secretstorage
-    tqdm
-    yt-dlp
-  ]);
-
   runtimeDeps =
     with pkgs; [
       bash
@@ -49,12 +30,13 @@ let
       gnused
       jq
       procps
-      pythonRuntime
+      python3
       ripgrep
       rsync
       systemd
       xdg-user-dirs
       xdg-utils
+      yt-dlp
 
       quickshell
       wl-clipboard
@@ -178,7 +160,6 @@ pkgs.stdenvNoCC.mkDerivation {
       --prefix QML2_IMPORT_PATH : "${lib.makeSearchPath "lib/qt-6/qml" qmlDeps}" \
       --prefix QT_PLUGIN_PATH : "${lib.makeSearchPath "lib/qt-6/plugins" qmlDeps}" \
       ${materialSymbolsWrapperArg}
-      --set-default INIR_VENV "${pythonRuntime}" \
       --set-default INIR_SYSTEM_RUNTIME_DIR "$runtime" \
       --set-default INIR_FALLBACK_SYSTEM_RUNTIME_DIR "$runtime"
 

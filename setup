@@ -2424,6 +2424,12 @@ run_update() {
         fi
     fi
 
+    # the shell that runs now is the last good one: a venv it never reads can go before anything changes
+    retire_python_venv
+    # the shell that runs now is the last good one: a venv it never reads can go before anything changes
+    retire_python_venv
+    # the shell that runs now is the last good one: a venv it never reads can go before anything changes
+    retire_python_venv
     local installed_mode=$(get_installed_install_mode)
     local installed_strategy=$(get_installed_update_strategy)
     local package_name=$(get_installed_package_name)
@@ -2924,12 +2930,10 @@ run_update() {
         return 1
     fi
 
-    # Keep update semantics identical to fresh install: the managed Python venv
-    # owns yt-dlp's cookie loader, and Deno is repaired as part of the YT playback runtime.
-    _step_phase_header 6 "Python / YT runtime"
-    install-python-packages
+    # the YT Music runtime a fresh install gets: yt-dlp brought current, Deno repaired
+    _step_phase_header 6 "YT Music runtime"
+    install-ytdlp || tui_warn "YT Music needs yt-dlp; run 'inir doctor' once online"
     ensure-ytmusic-js-runtime || tui_warn "YT Music needs Deno; run 'inir doctor' once online"
-    # after the venv: accel hooks its python3
     prebuilt_activate
     # themes, widgets and web apps: the families came with the base, before the sync
     _update_hub_plugins data || true
@@ -2955,7 +2959,8 @@ run_update() {
                 }
             fi
             case $verified in
-                0) _step_phase_done "Shell restarted on the new version" ;;
+                0) _step_phase_done "Shell restarted on the new version"
+                   retire_python_venv ;;
                 1) _step_phase_fail "The shell did not load the new version"
                    # the old shell reads this when it starts again and shows it on its update indicator
                    _report_update_failure 24 "The new version did not load, so iNiR went back to the one you had. inir update tries again"

@@ -32,7 +32,7 @@ output_path = '~/.config/gtk-4.0/gtk.css'
 input_path = '~/.config/matugen/templates/gtk-3.0/gtk.css'
 output_path = '~/.config/gtk-3.0/gtk.css'
 
-# KDE source color cache (used by kde-material-you-colors-wrapper)
+# Source color cache (switchwall's --cache)
 [templates.kde_colors]
 input_path = '~/.config/matugen/templates/kde/color.txt'
 output_path = '~/.local/state/quickshell/user/generated/color.txt'

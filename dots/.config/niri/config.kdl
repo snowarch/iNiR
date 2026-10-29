@@ -199,10 +199,6 @@ environment {
     // The installer falls back to qt6ct only if plasma-integration is not installed
     QT_QPA_PLATFORMTHEME "kde"
     QT_STYLE_OVERRIDE "Darkly"
-    
-    // Quickshell Python virtual environment
-    INIR_VENV "$HOME/.local/state/quickshell/.venv"
-    ILLOGICAL_IMPULSE_VIRTUAL_ENV "$HOME/.local/state/quickshell/.venv"
 }
 
 // ============================================================================

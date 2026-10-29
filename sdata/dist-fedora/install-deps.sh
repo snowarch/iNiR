@@ -45,7 +45,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
     [wl-copy]="wl-clipboard" [wl-paste]="wl-clipboard"
     [playerctl]="playerctl" [notify-send]="libnotify"
     [flock]="util-linux" [wlsunset]="wlsunset" [easyeffects]="easyeffects"
-    [uv]="uv" [cava]="cava" [qalc]="qalculate" [yt-dlp]="yt-dlp"
+    [cava]="cava" [qalc]="qalculate" [yt-dlp]="yt-dlp"
     [socat]="socat" [brightnessctl]="brightnessctl" [slurp]="slurp"
     [wf-recorder]="wf-recorder" [ffmpeg]="ffmpeg" [swappy]="swappy"
     [tesseract]="tesseract" [blueman-manager]="blueman" [kwriteconfig6]="kf6-kconfig"
@@ -173,7 +173,7 @@ FEDORA_CORE_PKGS=(
   # Login manager required by the shipped ii-pixel login theme.
   sddm
   
-  # Build tools (needed for Python packages like dbus-python, pycairo, pygobject)
+  # Build tools (what setup compiles)
   gcc
   gcc-c++
   make
@@ -181,11 +181,9 @@ FEDORA_CORE_PKGS=(
   ninja-build
   cmake
   pkg-config
-  python3-devel
   dbus-devel
   cairo-devel
   cairo-gobject-devel
-  gobject-introspection-devel
   gtk3-devel
   glib2-devel
   
@@ -203,7 +201,6 @@ FEDORA_CORE_PKGS=(
   wlsunset
   gum
   cliphist
-  uv
   eza
   
   # XDG Portals
@@ -290,7 +287,6 @@ FEDORA_TOOLKIT_PKGS=(
   upower
   wtype
   ydotool
-  python3-pillow
   brightnessctl
   ddcutil
   geoclue2
@@ -451,20 +447,6 @@ fi
 provider_darkly
 
 #####################################################################################
-# uv fallback for Fedora derivatives that do not carry the package
-#####################################################################################
-if ! command -v uv &>/dev/null; then
-  tui_info "Installing uv fallback..."
-  curl -LsSf --connect-timeout 10 --speed-limit 1024 --speed-time 30 https://astral.sh/uv/install.sh | sh 2>/dev/null || {
-    if command -v cargo &>/dev/null; then
-      cargo install uv
-    else
-      log_warning "Could not install uv"
-    fi
-  }
-fi
-
-#####################################################################################
 # Install critical fonts
 #####################################################################################
 fedora_critical_fonts
@@ -513,7 +495,7 @@ echo "  - awww: scottames/awww COPR (upstream source fallback)"
 echo "  - gowall: achno/gowall COPR (upstream source fallback)"
 echo ""
 log_info "Installed from repos:"
-echo "  - gum, cliphist (Fedora 44+), xwayland-satellite, swappy, uv, eza"
+echo "  - gum, cliphist (Fedora 44+), xwayland-satellite, swappy, eza"
 echo ""
 log_info "Fallback sources when Fedora lacks a package:"
 echo "  - cliphist/static release, hyprpicker/source, darkly RPM, starship installer"

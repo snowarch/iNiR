@@ -100,9 +100,7 @@ DEPS_AUDIO_LSP_PLUGINS_LV2="arch:lsp-plugins-lv2 fedora:lsp-plugins-lv2 debian:l
 DEPS_AUDIO_MPV="arch:mpv fedora:mpv debian:mpv ubuntu:mpv opensuse:mpv void:mpv"
 DEPS_AUDIO_MPV_MPRIS="arch:mpv-mpris fedora:mpv-mpris debian:mpv-mpris ubuntu:mpv-mpris opensuse:mpv-mpris void:mpv-mpris"
 DEPS_AUDIO_YTDLP="arch:yt-dlp fedora:yt-dlp debian:yt-dlp ubuntu:yt-dlp opensuse:yt-dlp void:yt-dlp"
-# yt-dlp's cookie-loader module is owned by iNiR's managed
-# Python runtime on setup-managed installs; package-managed distros declare
-# their own Python runtime dependency at the packaging boundary.
+# the fallback: setup installs iNiR's own yt-dlp (install-ytdlp), which runs first
 DEPS_AUDIO_SOCAT="arch:socat fedora:socat debian:socat ubuntu:socat opensuse:socat void:socat"
 DEPS_AUDIO_SONGREC="arch:songrec fedora:COMPILE:https://github.com/marin-m/SongRec debian:COMPILE:https://github.com/marin-m/SongRec ubuntu:songrec opensuse:songrec void:songrec"
 
@@ -158,7 +156,6 @@ DEPS_MISC_NAUTILUS="arch:nautilus fedora:nautilus debian:nautilus ubuntu:nautilu
 DEPS_MISC_FOOT="arch:foot fedora:foot debian:foot ubuntu:foot opensuse:foot void:foot"
 DEPS_MISC_KITTY="arch:kitty fedora:kitty debian:kitty ubuntu:kitty opensuse:kitty void:kitty"
 DEPS_MISC_POLKIT="arch:polkit fedora:polkit debian:polkitd ubuntu:policykit-1 opensuse:polkit void:polkit"
-DEPS_MISC_UV="arch:uv fedora:uv debian:CARGO:uv ubuntu:CARGO:uv opensuse:CARGO:uv void:uv"
 DEPS_MISC_GOWALL="arch:AUR:gowall-bin fedora:gowall debian:COMPILE:https://github.com/Achno/gowall ubuntu:COMPILE:https://github.com/Achno/gowall opensuse:COMPILE:https://github.com/Achno/gowall void:gowall"
 DEPS_MISC_MISSIONCENTER="arch:mission-center fedora:FLATPAK:io.missioncenter.MissionCenter debian:FLATPAK:io.missioncenter.MissionCenter ubuntu:FLATPAK:io.missioncenter.MissionCenter opensuse:FLATPAK:io.missioncenter.MissionCenter void:FLATPAK:io.missioncenter.MissionCenter"
 DEPS_MISC_KCONFIG="arch:kconfig fedora:kf6-kconfig debian:libkf6config-bin ubuntu:libkf6config-bin opensuse:kconfig void:kf6-kconfig"

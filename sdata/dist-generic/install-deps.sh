@@ -123,7 +123,6 @@ echo ""
 
 CARGO_PACKAGES=(
   "xwayland-satellite:X11 compatibility layer"
-  "uv:Fast Python package manager"
 )
 
 # awww must be installed from git (not on crates.io)

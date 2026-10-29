@@ -92,19 +92,12 @@ VOID_BASE_PACKAGES=(
   # Default wallpaper backend
   awww
 
-  # UV (fast Python package manager, in Void repo)
-  uv
-
-  # Build/runtime deps for Python native extensions (pycairo, pygobject)
+  # Build tools (what setup compiles)
   rsync
   base-devel
   pkg-config
   cairo-devel
-  python3-devel
   glib-devel
-  gobject-introspection
-  python3-gobject-devel
-  libffi-devel
 )
 
 # Audio: optional audio stack
@@ -132,7 +125,6 @@ VOID_TOOLKIT_PACKAGES=(
   cmake
   upower
   wtype
-  python3-Pillow
   ImageMagick
   hyprpicker
   translate-shell
@@ -256,12 +248,8 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
     [pkg-config]="pkg-config"
     [cc]="gcc"
     [gcc]="gcc"
-    [python3-devel]="python3-devel"
     [cairo-devel]="cairo-devel"
-    [gobject-introspection]="gobject-introspection"
-    [python3-gobject-devel]="python3-gobject-devel"
     [glib-devel]="glib-devel"
-    [libffi-devel]="libffi-devel"
     [ocr-eng]="tesseract-ocr-eng"
     [ocr-spa]="tesseract-ocr-spa"
     [ocr-rus]="tesseract-ocr-rus"

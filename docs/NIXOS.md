@@ -71,5 +71,5 @@ sudo nixos-rebuild switch --flake .#inir
 
 ## What is different here
 
-- The Python helpers (colours, YouTube Music) come inside the package, so there is no venv to repair.
+- YouTube Music uses the package's own yt-dlp, so there is nothing to repair.
 - The shell lives in the Nix store. Your settings, themes and wallpapers live in your home folder as usual.

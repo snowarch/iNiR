@@ -1,6 +1,6 @@
 pkgname=inir-toolkit
 pkgver=1.0
-pkgrel=1
+pkgrel=2
 pkgdesc='iNiR - input and desktop toolkit dependency bundle'
 arch=(any)
 license=('GPL-3.0-only')
@@ -8,7 +8,6 @@ depends=(
   upower
   wtype
   ydotool
-  python-pillow
   hyprpicker
   translate-shell
   fprintd

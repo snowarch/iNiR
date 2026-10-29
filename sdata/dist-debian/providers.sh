@@ -619,17 +619,6 @@ if ${INSTALL_SCREENCAPTURE:-true}; then
 fi
 }
 
-provider_uv() {
-if ! command -v uv &>/dev/null; then
-  curl -LsSf https://astral.sh/uv/install.sh | sh 2>/dev/null || {
-    if command -v cargo &>/dev/null; then
-      cargo install uv
-    fi
-  }
-  # Re-add to PATH after install
-  export PATH="$HOME/.local/bin:$PATH"
-fi
-}
 
 provider_starship-eza() {
 # Debian 13 carries both tools directly. Older Debian/Ubuntu releases retain

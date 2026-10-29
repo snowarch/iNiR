@@ -423,5 +423,3 @@ fi
 # NOTE: SDDM theme setup is in 3.files.sh AFTER the theming templates are deployed.
 # NOTE: On Void, SDDM activation is offered by run_install only after all install
 # tasks complete because linking a runit service starts it immediately.
-# NOTE: install-python-packages is called in 3.files.sh after requirements.txt
-# is deployed to the target. No need to call it here.

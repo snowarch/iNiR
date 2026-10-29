@@ -131,25 +131,18 @@ prebuilt_activate() {
 
 _PREBUILT_GO=(inir-washi inir-opencode-themegen inir-vscode-themegen inir-zed-themegen)
 
-# prebuilt_accel_hooks: what inir-accel proved byte for byte runs on it: the helpers v2.33 compiled from Go in
-# user/generated/bin (a compiled one kept as *.go.bak) and the venv's python3, which hands every script it doesn't
-# own to python3.real (as activate-accelerators.sh install does on a dev machine). Without accel/current it puts the
-# originals back.
+# prebuilt_accel_hooks: the helpers v2.33 compiled from Go in user/generated/bin run on inir-accel, which proved them
+# byte for byte (a compiled one kept as *.go.bak). Without accel/current it puts the originals back.
 prebuilt_accel_hooks() {
-    local bin state gen venv go real
+    local bin gen go
     bin="$(_prebuilt_home)/accel/current/inir-accel"
-    state="${XDG_STATE_HOME:-$HOME/.local/state}/quickshell"
-    gen="$state/user/generated/bin"
-    venv="$state/.venv/bin"
+    gen="${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/user/generated/bin"
     if [[ ! -x "$bin" ]]; then
         for go in "${_PREBUILT_GO[@]}"; do
             [[ -L "$gen/$go" && "$(readlink "$gen/$go")" == */accel/current/inir-accel ]] || continue
             rm -f "$gen/$go"
             [[ -f "$gen/$go.go.bak" ]] && mv -f "$gen/$go.go.bak" "$gen/$go"
         done
-        if [[ -L "$venv/python3" && "$(readlink "$venv/python3")" == */accel/current/inir-accel && -e "$venv/python3.real" ]]; then
-            ln -sfn "$(readlink -f "$venv/python3.real")" "$venv/python3" && rm -f "$venv/python3.real"
-        fi
         return 0
     fi
     mkdir -p "$gen"
@@ -157,13 +150,6 @@ prebuilt_accel_hooks() {
         [[ -f "$gen/$go" && ! -L "$gen/$go" ]] && mv -f "$gen/$go" "$gen/$go.go.bak"
         ln -sfn "$bin" "$gen/$go"
     done
-    if [[ -d "$venv" ]]; then
-        # a venv made again since the last hook has its own python3 again: that one is the real one now
-        if [[ "$(readlink "$venv/python3" 2>/dev/null)" != "$bin" ]]; then
-            real="$(readlink -f "$venv/python3" 2>/dev/null)" && [[ -x "$real" ]] && ln -sfn "$real" "$venv/python3.real"
-        fi
-        [[ -e "$venv/python3.real" ]] && ln -sfn "$bin" "$venv/python3"
-    fi
     return 0
 }
 
@@ -174,13 +160,12 @@ prebuilt_accel_hooks_ok() {
     bin="$(_prebuilt_home)/accel/current/inir-accel"
     state="${XDG_STATE_HOME:-$HOME/.local/state}/quickshell"
     if [[ -x "$bin" ]]; then
-        [[ ! -d "$state/.venv/bin" || "$(readlink "$state/.venv/bin/python3")" == "$bin" ]] || return 1
         for go in "${_PREBUILT_GO[@]}"; do
             [[ "$(readlink "$state/user/generated/bin/$go")" == "$bin" ]] || return 1
         done
         return 0
     fi
-    for go in .venv/bin/python3 "${_PREBUILT_GO[@]/#/user/generated/bin/}"; do
+    for go in "${_PREBUILT_GO[@]/#/user/generated/bin/}"; do
         [[ "$(readlink "$state/$go")" != */accel/current/inir-accel ]] || return 1
     done
 }

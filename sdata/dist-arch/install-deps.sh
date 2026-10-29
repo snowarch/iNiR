@@ -345,9 +345,6 @@ if $INSTALL_FONTS; then
     ttf-jetbrains-mono-nerd
   )
 fi
-if $INSTALL_TOOLKIT; then
-  OFFICIAL_PACKAGES+=(uv)
-fi
 
 installflags="--needed"
 $ask || installflags="$installflags --noconfirm"
@@ -413,8 +410,6 @@ AUR_PACKAGES=(
 
   # Wallpaper effects editor (used by Gowall integration)
   gowall-bin
-
-  # Note: Python deps are handled via uv + requirements.txt, not AUR packages
 )
 unset REPO_FALLBACK_PACKAGES
 
@@ -482,8 +477,6 @@ fi
 if $INSTALL_AUDIO; then
   : # cava moved to inir-audio PKGBUILD
 fi
-
-# uv is in Arch extra and is installed in the official package batch.
 
 # Reset installflags for AUR helper
 installflags="--needed"

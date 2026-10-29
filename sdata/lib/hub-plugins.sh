@@ -14,23 +14,17 @@ _hub() {
 # Needed: what the hub installed, what the old runtime still holds as a real folder at a plugin's path (a v2.33
 # install carried its families in its own tree), and with all-families every family listed (a fresh install).
 hub_plugins_needed() {
-    local catalogue
+    local catalogue runtime="$1" tree="$2" all="${3:-}" id provides installed kind
     catalogue="$(_hub status --max-age 0 --json 2>/dev/null)" || return 1
-    RUNTIME="$1" TREE="$2" ALL="${3:-}" python3 -c '
-import json, os, sys
-items = json.loads(sys.stdin.read() or "{}").get("items") or []
-if not items:
-    sys.exit(1)
-runtime, tree, every = os.environ["RUNTIME"], os.environ["TREE"], os.environ["ALL"] == "all-families"
-for item in items:
-    provides = item.get("provides") or ""
-    if not provides or os.path.exists(os.path.join(tree, provides)):
-        continue
-    at = os.path.join(runtime, provides)
-    carried = os.path.isdir(at) and not os.path.islink(at)
-    if item.get("installed") or carried or (every and item.get("kind") == "family"):
-        print(item["id"])
-' <<<"$catalogue"
+    jq -e '(.items // []) | length > 0' >/dev/null 2>&1 <<<"$catalogue" || return 1
+    # a unit separator, not a tab: bash folds empty tab-separated fields away
+    while IFS=$'\x1f' read -r id provides installed kind; do
+        [[ -n "$provides" && ! -e "$tree/$provides" ]] || continue
+        if [[ "$installed" == yes || ( -d "$runtime/$provides" && ! -L "$runtime/$provides" ) \
+            || ( "$all" == all-families && "$kind" == family ) ]]; then
+            printf '%s\n' "$id"
+        fi
+    done < <(jq -r '.items[] | [.id, (.provides // ""), (if .installed then "yes" else "" end), (.kind // "")] | map(tostring) | join("\u001f")' <<<"$catalogue")
 }
 
 # hub_fetch_plugins VERSION ID...: into the hub cache, checked against the iNiR version being installed

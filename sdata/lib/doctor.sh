@@ -81,7 +81,6 @@ check_dependencies() {
         "flock:util-linux"
         "wlsunset:wlsunset"
         "easyeffects:EasyEffects"
-        "uv:uv"
         "cava:cava"
         "qalc:qalculate"
         "yt-dlp:yt-dlp"
@@ -140,15 +139,6 @@ check_dependencies() {
                 missing+=("power-profiles-daemon")
                 missing_cmds+=("power-profiles")
             fi
-            ;;
-    esac
-
-    # the venv builds pycairo and pygobject; Debian and Ubuntu ship their headers apart (Fedora and Void as packages above)
-    case "${OS_GROUP_ID:-unknown}" in
-        debian|ubuntu)
-            pkg-config --exists cairo 2>/dev/null || { missing+=("Cairo headers"); missing_cmds+=("cairo-headers"); }
-            pkg-config --exists girepository-2.0 2>/dev/null || { missing+=("GObject headers"); missing_cmds+=("gi-headers"); }
-            pkg-config --exists dbus-1 2>/dev/null || { missing+=("D-Bus headers"); missing_cmds+=("dbus-headers"); }
             ;;
     esac
 
@@ -648,67 +638,21 @@ check_state_directories() {
     [[ $created -gt 0 ]] && doctor_fix "Created $created directory(ies)" || doctor_pass "State directories exist"
 }
 
-check_python_packages() {
-    local venv="${XDG_STATE_HOME}/quickshell/.venv"
-    local req=""
-    local runtime_dir
-    local repo_root
-
-    runtime_dir="$(doctor_runtime_dir)"
-    if [[ -n "$runtime_dir" && -f "${runtime_dir}/sdata/uv/requirements.txt" ]]; then
-        req="${runtime_dir}/sdata/uv/requirements.txt"
-    else
-        repo_root="$(doctor_repo_root || true)"
-        if [[ -n "$repo_root" && -f "${repo_root}/sdata/uv/requirements.txt" ]]; then
-            req="${repo_root}/sdata/uv/requirements.txt"
-        else
-            doctor_runtime_dir_or_fail "Python packages"
-            doctor_pass "Python (no requirements.txt)"
-            return 0
-        fi
-    fi
-    
-    # Check for broken venv (e.g. after python update)
-    if [[ -d "$venv/bin" ]]; then
-        if ! "$venv/bin/python" --version &>/dev/null; then
-            doctor_fail "Broken Python venv detected"
-            rm -rf "$venv"
-        fi
-    fi
-
-    # Check if venv exists (or was just removed above)
-    if [[ ! -d "$venv" ]]; then
-        if command -v uv &>/dev/null; then
-            uv venv "$venv" -p 3.12 2>/dev/null || uv venv "$venv" 2>/dev/null
-            doctor_fix "Created Python venv"
-        else
-            doctor_fail "Python venv missing (install uv)"
-            return
-        fi
-    fi
-    
-    # inir-accel answers the venv's python3 and the Go helpers: a venv made again loses it, one removed leaves a hook
+check_helpers() {
+    # inir-accel answers the Go helpers v2.33 compiled: an accel that moved leaves a hook
     if ! prebuilt_accel_hooks_ok; then
         prebuilt_accel_hooks
         doctor_fix "inir-accel hooks match what is installed again"
     fi
 
-    [[ ! -f "$req" ]] && { doctor_pass "Python (no requirements.txt)"; return; }
-    
-    # Versions count, not just names: a package installed below its floor in requirements.txt breaks the
-    # scripts that rely on the newer API. The offline dry run answers without the network when all is met.
-    if command -v uv &>/dev/null; then
-        local plan
-        plan=$(VIRTUAL_ENV="$venv" uv pip install --dry-run --offline -r "$req" 2>&1)
-        if [[ "$plan" == *"Would make no changes"* ]]; then
-            doctor_pass "Python packages OK"
-        elif VIRTUAL_ENV="$venv" uv pip install -r "$req" &>/dev/null; then
-            doctor_fix "Python packages brought up to requirements"
-        else
-            doctor_fail "Python packages below requirements (uv pip install -r $req failed)"
-        fi
+    if [[ -x "$(ytdlp_dir)/yt-dlp" ]]; then
+        doctor_pass "yt-dlp OK"
+    elif install-ytdlp >/dev/null 2>&1 && [[ -x "$(ytdlp_dir)/yt-dlp" ]]; then
+        doctor_fix "Installed current yt-dlp for YT Music"
+    elif command -v yt-dlp >/dev/null 2>&1; then
+        doctor_pass "yt-dlp OK (the distro's)"
     else
-        doctor_fail "uv not installed, cannot check Python packages"
+        doctor_fail "yt-dlp unavailable for YT Music"
     fi
 
     local deno_bin
@@ -1732,7 +1676,6 @@ check_wallpaper_health() {
 }
 
 check_environment_vars() {
-    local venv_path="${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/.venv"
     local fixed=0
     local legacy_malloc_repaired=0
 
@@ -1742,26 +1685,14 @@ check_environment_vars() {
         doctor_fail "Could not clean legacy Quickshell allocator environment"
     fi
     
-    # Check bash — look for INIR_VENV (canonical) or ILLOGICAL_IMPULSE_VIRTUAL_ENV (legacy)
-    if [[ -f "$HOME/.bashrc" ]] && ! grep -q "INIR_VENV" "$HOME/.bashrc" 2>/dev/null; then
+    # bash and zsh carry the iNiR environment block (terminal colours, prompt)
+    if [[ -f "$HOME/.bashrc" ]] && ! grep -qxF "# iNiR environment" "$HOME/.bashrc" 2>/dev/null; then
         write_inir_shell_env "$HOME/.bashrc" bash
         ((fixed++)) || true
     fi
     
-    # Check fish
-    local fish_conf="${XDG_CONFIG_HOME}/fish/conf.d/inir-env.fish"
-    if command -v fish &>/dev/null && [[ ! -f "$fish_conf" ]]; then
-        mkdir -p "$(dirname "$fish_conf")"
-        cat > "$fish_conf" << FEOF
-# iNiR environment — auto-generated by doctor
-set -gx INIR_VENV "${venv_path}"
-set -gx ILLOGICAL_IMPULSE_VIRTUAL_ENV "\$INIR_VENV"
-FEOF
-        ((fixed++)) || true
-    fi
-    
     # Check zsh
-    if [[ -f "$HOME/.zshrc" ]] && ! grep -q "INIR_VENV" "$HOME/.zshrc" 2>/dev/null; then
+    if [[ -f "$HOME/.zshrc" ]] && ! grep -qxF "# iNiR environment" "$HOME/.zshrc" 2>/dev/null; then
         write_inir_shell_env "$HOME/.zshrc" zsh
         ((fixed++)) || true
     fi
@@ -2011,7 +1942,7 @@ run_doctor_with_fixes() {
     _doctor_run_step 10 $total_steps "Checking file manifest"        check_manifest
     _doctor_run_step 11 $total_steps "Checking user service"         check_service_unit_health
     _doctor_run_step 12 $total_steps "Checking Niri compositor"      check_niri_running
-    _doctor_run_step 13 $total_steps "Checking Python packages"      check_python_packages
+    _doctor_run_step 13 $total_steps "Checking helpers"              check_helpers
     _doctor_run_step 14 $total_steps "Checking stale local quickshell" check_stale_local_quickshell
 
     # Step 15 pre-check: the CLI owns the rebuild for every install kind (`inir doctor --fix-abi`).

@@ -35,7 +35,6 @@ Clipboard history needs `cliphist`. It keeps the latest 400 entries. Image entri
 
 ## Theming
 
-- Colours from a wallpaper need the Python packages that setup installs. `inir doctor` repairs them if they go missing.
 - Theme presets, such as Catppuccin, replace the colours from your wallpaper.
 - Firefox and its forks (LibreWolf, Floorp, Waterfox, Zen) read the new colours when they start.
 - Chromium browsers (Chrome, Chromium, ungoogled-chromium, Brave, Helium, Thorium) repaint a few seconds after a wallpaper change. The first time, iNiR asks for your password once, to set up their policy folders.

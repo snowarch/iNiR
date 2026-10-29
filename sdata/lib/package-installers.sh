@@ -263,64 +263,6 @@ ensure_aur_helper(){
 # through install_pkgbuild_deps() in install-deps.sh (no --asdeps).
 
 #####################################################################################
-# Python Environment (All distros)
-#####################################################################################
-
-install-python-packages(){
-  tui_info "Setting up Python virtual environment..."
-
-  local venv_dir="${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/.venv"
-
-  if ! command -v uv &>/dev/null; then
-    log_warning "uv not installed, skipping Python venv setup"
-    return 0
-  fi
-
-  # Check for broken venv (e.g. after python update)
-  if [[ -d "$venv_dir/bin" ]]; then
-    if ! "$venv_dir/bin/python" --version &>/dev/null; then
-      log_warning "Broken Python venv detected, recreating..."
-      rm -rf "$venv_dir"
-    fi
-  fi
-
-  if [[ ! -d "$venv_dir/bin" ]]; then
-    x mkdir -p "$(dirname "$venv_dir")"
-    uv venv --prompt ii-venv "$venv_dir" -p 3.12 || uv venv --prompt ii-venv "$venv_dir" || {
-      log_warning "Could not create Python venv"
-      return 0
-    }
-  fi
-
-  # Install required packages from requirements.txt
-  # Try repo location first (during install), then target location (during doctor)
-  local requirements_file="${REPO_ROOT}/sdata/uv/requirements.txt"
-  if [[ ! -f "$requirements_file" ]]; then
-    if declare -F get_runtime_shell_dir >/dev/null; then
-      requirements_file="$(get_runtime_shell_dir)/sdata/uv/requirements.txt"
-    else
-      requirements_file="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell/inir/sdata/uv/requirements.txt"
-    fi
-  fi
-
-  if [[ -f "$requirements_file" ]]; then
-    source "$venv_dir/bin/activate"
-    # A package that cannot build (missing headers, no wheel for this Python)
-    # must not stop an install or update halfway; doctor retries it.
-    if ! uv pip install -r "$requirements_file"; then
-      deactivate
-      log_warning "Some Python packages could not be installed; run 'inir doctor' after installing your distro's Python and Cairo development packages"
-      return 0
-    fi
-    deactivate
-  else
-    log_warning "requirements.txt not found"
-  fi
-
-  log_success "Python venv ready at $venv_dir"
-}
-
-#####################################################################################
 # Font Installation (All distros)
 #####################################################################################
 
@@ -635,20 +577,53 @@ install-eza(){
   rm -f /tmp/eza.tar.gz
 }
 
-install-uv(){
-  if command -v uv &>/dev/null; then
-    log_success "uv already installed"
+# yt-dlp for YT Music: upstream's own build, the same on every distro (packages fall behind YouTube) and brought
+# current by every update. The unpacked one: the one-file build unpacks 100 MB into /tmp on every call.
+ytdlp_dir() { printf '%s' "${XDG_DATA_HOME:-$HOME/.local/share}/inir/yt-dlp"; }
+
+install-ytdlp(){
+  local dir asset tag have base tmp
+  dir="$(ytdlp_dir)"
+  case "$(uname -m)" in
+    x86_64|amd64) asset=yt-dlp_linux ;;
+    aarch64|arm64) asset=yt-dlp_linux_aarch64 ;;
+    *)
+      log_warning "YT Music: yt-dlp has no build for $(uname -m); the distro's yt-dlp is used"
+      return 0
+      ;;
+  esac
+  compgen -G '/lib/ld-musl-*' >/dev/null && asset="${asset/linux/musllinux}"
+
+  have="$("$dir/yt-dlp" --version 2>/dev/null)"
+  tag="$(curl -fsSLI --max-time 15 -o /dev/null -w '%{url_effective}' https://github.com/yt-dlp/yt-dlp/releases/latest 2>/dev/null)"
+  tag="${tag##*/}"
+  if [[ ! "$tag" =~ ^[0-9]{4}\.[0-9]{2}\.[0-9]{2}(\.[0-9]+)?$ ]]; then
+    [[ -n "$have" ]] && return 0
+    log_warning "YT Music: could not resolve the current yt-dlp release"
+    return 1
+  fi
+  if [[ "$have" == "$tag" ]]; then
+    log_success "yt-dlp $have is current"
     return 0
   fi
 
-  log_info "Installing uv (Python package manager)..."
-
-  curl -LsSf https://astral.sh/uv/install.sh | sh 2>/dev/null || {
-    log_warning "Could not install uv"
-    return 1
-  }
-
-  log_success "uv installed"
+  base="https://github.com/yt-dlp/yt-dlp/releases/download/${tag}"
+  mkdir -p "${dir%/*}" && tmp="$(mktemp -d "${dir%/*}/.yt-dlp.XXXXXX")" || return 1
+  if ! curl -fsSL --max-time 30 -o "$tmp/SHA2-256SUMS" "$base/SHA2-256SUMS" \
+      || ! curl -fsSL --max-time 300 -o "$tmp/$asset.zip" "$base/$asset.zip" \
+      || ! (cd "$tmp" && grep -E "^[0-9a-f]{64} [ *]?${asset}\.zip\$" SHA2-256SUMS | sha256sum -c --status -) \
+      || ! unzip -q "$tmp/$asset.zip" -d "$tmp/new" \
+      || ! mv "$tmp/new/$asset" "$tmp/new/yt-dlp" \
+      || [[ "$("$tmp/new/yt-dlp" --version 2>/dev/null)" != "$tag" ]]; then
+    rm -rf "$tmp"
+    log_warning "YT Music: could not install yt-dlp ${tag}${have:+, keeping $have}"
+    [[ -n "$have" ]]
+    return
+  fi
+  rm -rf "$dir.old"
+  [[ ! -e "$dir" ]] || mv "$dir" "$dir.old"
+  mv "$tmp/new" "$dir" && rm -rf "$tmp" "$dir.old"
+  log_success "yt-dlp ${tag} installed for YT Music"
 }
 
 ytmusic-deno-compatible(){
@@ -657,19 +632,10 @@ ytmusic-deno-compatible(){
 
   local deno_version
   deno_version="$($deno_bin --version 2>/dev/null | awk 'NR == 1 { print $2; exit }')"
-  [[ -n "$deno_version" ]] || return 1
-
-  python3 - "$deno_version" <<'PY'
-import sys
-
-parts = sys.argv[1].split('.')
-try:
-    version = tuple(int(part) for part in parts[:3])
-except ValueError:
-    raise SystemExit(1)
-version += (0,) * (3 - len(version))
-raise SystemExit(0 if version >= (2, 3, 0) else 1)
-PY
+  # 2.3.0 or newer: a missing part counts as 0, one that isn't a number fails
+  [[ "$deno_version" =~ ^([0-9]+)(\.([0-9]+))?(\.[0-9]+(\..*)?)?$ ]] || return 1
+  local major="${BASH_REMATCH[1]}" minor="${BASH_REMATCH[3]:-0}"
+  (( 10#$major > 2 || (10#$major == 2 && 10#$minor >= 3) ))
 }
 
 ensure-ytmusic-js-runtime(){
@@ -713,28 +679,11 @@ ensure-ytmusic-js-runtime(){
     return 1
   fi
 
-  if ! python3 - "$tmp_dir" "$asset" <<'PY'
-import hashlib
-import pathlib
-import sys
-import zipfile
-
-root = pathlib.Path(sys.argv[1])
-asset = sys.argv[2]
-archive = root / asset
-checksum_file = root / f"{asset}.sha256sum"
-
-expected = checksum_file.read_text(encoding="utf-8").split()[0].lower()
-actual = hashlib.sha256(archive.read_bytes()).hexdigest()
-if actual != expected:
-    raise SystemExit("Deno checksum mismatch")
-
-with zipfile.ZipFile(archive) as zf:
-    info = zf.getinfo("deno")
-    with zf.open(info) as src, (root / "deno").open("wb") as dst:
-        dst.write(src.read())
-PY
-  then
+  local expected actual
+  expected="$(awk 'NF { print tolower($1); exit }' "${tmp_dir}/${asset}.sha256sum")"
+  actual="$(sha256sum "${tmp_dir}/${asset}" | awk '{ print $1 }')"
+  if [[ -z "$expected" || "$actual" != "$expected" ]] \
+      || ! unzip -p "${tmp_dir}/${asset}" deno > "${tmp_dir}/deno"; then
     rm -rf "$tmp_dir"
     log_warning "YT Music: Deno archive verification failed"
     return 1
