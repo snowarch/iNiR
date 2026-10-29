@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Generated from the /// comments on each QML IpcHandler; edit those, then run the IPC registry generator.
-# Targets: 80
+# Targets: 79
 
 declare -gA IPC_TARGET_DESC=(
   [ai]="Shared multi-provider AI service. It supports Gemini, OpenAI-compatible chat and Responses APIs, Mistral and Anthropic; live provider catalogs are normalized into capability-aware model records. Catalog visibility is separate from execution readiness, so public model lists remain browseable without pretending an API key exists. OpenCode Zen and Go resolve their current model lists and per-model API routes dynamically. Normal shell tools use typed actions and approval cards, while arbitrary commands are isolated in Advanced mode."
@@ -25,7 +25,6 @@ declare -gA IPC_TARGET_DESC=(
   [dashboard]="Centered welcome hub panel (ii family): greeting, clock, notifications, media, weather, calendar, todo, system usage and GitHub activity."
   [dev]="Development navigation for loading lazy surfaces and internal views without automating pointer or keyboard input. Destination identifiers are stable and returned as JSON by \`list\`."
   [equalizer]="Open the ii-family EasyEffects output equalizer. The integration is optional and disabled until you enable it. Run \`inir settings\`, then go to **Modules → Optional → EasyEffects Equalizer** and enable the switch. While it is disabled the IPC target is intentionally not constructed. On a fresh empty EasyEffects output pipeline, iNiR bootstraps a neutral 10-band \`iNiR Equalizer\` preset. Existing non-empty effect chains are never replaced automatically."
-  [factory]="What differs from a fresh install, and putting one value back (what support asks first)."
   [gamemode]="Performance mode for gaming. Auto-detects fullscreen apps and disables animations/effects. Can also be toggled manually for those stubborn games that don't go fullscreen properly."
   [globalActions]="Command palette / action registry. Search and execute shell actions from scripts or keybinds."
   [globalStyle]="The Global Style every Material surface and desktop widget follows: material, cards, aurora, inir, angel, regalia, zzz, cookie or editorial."
@@ -108,7 +107,6 @@ declare -gA IPC_TARGET_FAMILY=(
   [dashboard]="shared"
   [dev]="shared"
   [equalizer]="ii"
-  [factory]="shared"
   [gamemode]="shared"
   [globalActions]="shared"
   [globalStyle]="shared"
@@ -191,7 +189,6 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [dashboard]="toggle close open"
   [dev]="list open close reload current meter metered"
   [equalizer]="toggle close open refresh ensure status setBand preset configure"
-  [factory]="changed reset"
   [gamemode]="toggle activate deactivate status"
   [globalActions]="run runWithArgs list search open"
   [globalStyle]="set get list"
@@ -378,8 +375,6 @@ declare -gA IPC_FUNCTION_DESC=(
   ["equalizer:setBand"]="Set one 0-based band gain in dB"
   ["equalizer:preset"]="Apply one built-in EQ preset"
   ["equalizer:configure"]="Convert the active Equalizer to the iNiR 10-band layout"
-  ["factory:changed"]="Every setting that differs from a fresh install, one \`path = value\` per line."
-  ["factory:reset"]="Put one setting back to what a fresh install has; returns the value it took."
   ["gamemode:toggle"]="Toggle gamemode on/off"
   ["gamemode:activate"]="Force enable gamemode"
   ["gamemode:deactivate"]="Force disable gamemode"
@@ -777,7 +772,6 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["dev:meter"]="<ms>"
   ["equalizer:setBand"]="<index> <gain>"
   ["equalizer:preset"]="<name>"
-  ["factory:reset"]="<path>"
   ["globalActions:run"]="<actionId>"
   ["globalActions:runWithArgs"]="<actionId> <args>"
   ["globalActions:list"]="<category>"
@@ -1047,8 +1041,8 @@ Ctrl+Alt+A { spawn "inir" "wallpaperSelector" "openLauncher" "animated"; }'
   [ytmusic]='Mod+M+Space { spawn "inir" "ytmusic" "playPause"; }'
 )
 
-IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode connections controlPanel coverflowSelector customWidgets dashboard dev equalizer factory gamemode globalActions globalStyle hub iris irisDev keyboard livePins lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily pill privacy recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling timer undo voiceSearch vpn wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetStacks widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
-IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio autostart background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode connections controlPanel coverflowSelector customWidgets dashboard dev factory gamemode globalActions globalStyle hub keyboard livePins lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily privacy recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling timer undo voiceSearch vpn wallpaperLauncher wallpaperSelector widgetStacks widgetpower workspaceStrip ytmusic zoom)
+IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode connections controlPanel coverflowSelector customWidgets dashboard dev equalizer gamemode globalActions globalStyle hub iris irisDev keyboard livePins lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily pill privacy recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling timer undo voiceSearch vpn wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetStacks widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
+IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio autostart background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode connections controlPanel coverflowSelector customWidgets dashboard dev gamemode globalActions globalStyle hub keyboard livePins lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily privacy recordingOsd region search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling timer undo voiceSearch vpn wallpaperLauncher wallpaperSelector widgetStacks widgetpower workspaceStrip ytmusic zoom)
 IPC_II_TARGETS=(equalizer pill)
 IPC_WAFFLE_TARGETS=(wactionCenter waffleAltSwitcher wbar wnotificationCenter wwidgets)
 IPC_IRIS_TARGETS=(iris irisDev)

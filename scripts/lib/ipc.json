@@ -1123,29 +1123,6 @@
    ]
   },
   {
-   "name": "factory",
-   "family": "shared",
-   "description": "What differs from a fresh install, and putting one value back (what support asks first).",
-   "notes": "",
-   "example": "",
-   "functions": [
-    {
-     "name": "changed",
-     "args": [],
-     "description": "Every setting that differs from a fresh install, one `path = value` per line.",
-     "values": []
-    },
-    {
-     "name": "reset",
-     "args": [
-      "path"
-     ],
-     "description": "Put one setting back to what a fresh install has; returns the value it took.",
-     "values": []
-    }
-   ]
-  },
-  {
    "name": "gamemode",
    "family": "shared",
    "description": "Performance mode for gaming. Auto-detects fullscreen apps and disables animations/effects. Can also be toggled manually for those stubborn games that don't go fullscreen properly.",
