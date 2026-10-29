@@ -202,8 +202,8 @@ Singleton {
         id: localProbe
         running: false
         command: [
-            "/usr/bin/python3",
-            `${Directories.scriptsPath}/voiceSearch/transcribe-audio.py`,
+            `${Directories.scriptsPath}/lib/accel-run`,
+            "transcribe-audio",
             "--provider", "probe",
             "--local-model", root.localModelPath,
         ]
@@ -261,8 +261,8 @@ Singleton {
         command: {
             const provider = root.activeProvider
             const command = [
-                "/usr/bin/python3",
-                `${Directories.scriptsPath}/voiceSearch/transcribe-audio.py`,
+                `${Directories.scriptsPath}/lib/accel-run`,
+                "transcribe-audio",
                 "--provider", provider,
                 "--audio", root._audioPath,
                 "--language", root.language,
