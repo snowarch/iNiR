@@ -15,6 +15,9 @@ ShellRoot {
     id: root
 
     readonly property bool settled: Plugins.ready && Config.ready
+    // The generated colours load only once something names their loader: a page that never did (Waffle's Taskbar)
+    // opened in the factory dark and blue under a light shell (10-29).
+    readonly property bool colorsFollowed: MaterialThemeLoader.isAutoTheme
 
     // A family without a window keeps its Settings inside the shell.
     function _quitIfNone(): void {
