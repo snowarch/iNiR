@@ -33,9 +33,12 @@ Singleton {
     readonly property bool familyAppsSurface: Boolean(Plugins.setting(panelFamily, "appsSurface", false))
     property string appsSurfaceSeed: ""
     // A scheme the person picks is also their saved preference, so Auto keeps what they last saw instead of an older toggle.
-    onFamilySchemeChoiceChanged: {
-        if (!Config.ready || familySchemeChoice === "auto") return
-        const wantDark = familySchemeChoice === "dark"
+    // After the change has gone out: written from inside it, the config write woke this very binding (a binding loop on
+    // every scheme switch).
+    onFamilySchemeChoiceChanged: Qt.callLater(root.keepSchemePreference)
+    function keepSchemePreference(): void {
+        if (!Config.ready || root.familySchemeChoice === "auto") return
+        const wantDark = root.familySchemeChoice === "dark"
         if ((Config.options?.appearance?.customTheme?.darkmode ?? true) !== wantDark)
             Config.setNestedValue("appearance.customTheme.darkmode", wantDark)
     }
