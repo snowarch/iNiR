@@ -145,6 +145,6 @@ Flow {
 
     ConfigResetKey {
         path: root.configPath
-        keepPlace: false
+        label: ""
     }
 }
