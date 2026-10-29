@@ -21,8 +21,6 @@ Loader {
         if (requested) {
             unloadDelay.stop()
             resident = true
-        } else if (SettingsMaterialPreset.unified) {
-            unloadDelay.stop()
         } else {
             unloadDelay.restart()
         }

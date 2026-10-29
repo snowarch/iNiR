@@ -2,31 +2,17 @@ import QtQuick
 import QtQuick.Layouts
 import qs.modules.common
 
+// Settings stack one per row: labels run down the left edge, states down the right, and the eye reads both columns
+// without zigzagging. `uniform` and `minimumCellWidth` remain for pages that set them.
 GridLayout {
     id: root
 
     property bool uniform: false
-    property real spacing: 8
+    property real spacing: SettingsMaterialPreset.tileGap
     property real minimumCellWidth: 280 * Appearance.fontSizeScale
-    readonly property int visibleCellCount: {
-        let count = 0
-        for (let i = 0; i < children.length; ++i) {
-            if (children[i]?.visible !== false)
-                count++
-        }
-        return Math.max(1, count)
-    }
-    readonly property int adaptiveColumns: {
-        const available = Math.max(0, width)
-        if (visibleCellCount >= 3 && available >= minimumCellWidth * 3 + columnSpacing * 2)
-            return 3
-        if (visibleCellCount >= 2 && available >= minimumCellWidth * 2 + columnSpacing)
-            return 2
-        return 1
-    }
 
     Layout.fillWidth: true
-    columns: adaptiveColumns
+    columns: 1
     columnSpacing: root.spacing
     rowSpacing: root.spacing
     uniformCellWidths: uniform

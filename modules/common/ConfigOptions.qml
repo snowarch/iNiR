@@ -3175,14 +3175,10 @@ JsonAdapter {
 
     property JsonObject settingsUi: JsonObject {
         property bool overlayMode: true // true = layer shell overlay (live preview), false = separate window
-        // Chrome used in overlay mode: "rail", "focus", "unified", or "editorial".
-        // Orthogonal to overlayMode: this picks the look, that picks the host.
-        property string overlayStyle: "rail"
         property bool easyMode: false   // false = full Settings UI; Easy mode remains an explicit opt-in
         // JSON-encoded [{label, pages:[int]}] — custom nav arrangement; "" = registry defaults.
         // String on purpose: property var inside JsonObject crashes the VME.
         property string categories: ""
-        property string chromeLayout: ""
         property JsonObject overlayAppearance: JsonObject {
             property int scrimDim: 35           // % dim of the backdrop scrim behind the settings panel (0-100)
             // Opacity of the settings panel background (0.6-1.0). The

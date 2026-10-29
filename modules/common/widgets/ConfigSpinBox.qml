@@ -3,7 +3,8 @@ import qs.modules.common
 import QtQuick
 import QtQuick.Layouts
 
-RowLayout {
+// A number setting as one tile: label and its line of help on the left, the stepper on the right.
+Item {
     id: root
     property string text: ""
     property string icon
@@ -13,15 +14,21 @@ RowLayout {
     property alias stepSize: spinBoxWidget.stepSize
     property alias from: spinBoxWidget.from
     property alias to: spinBoxWidget.to
+    // only a person's step or typing, never a bound value catching up
+    signal valueModified()
     // Expose hover state for tooltips and other helpers
-    property alias hovered: spinBoxWidget.hovered
+    readonly property bool hovered: rowHover.hovered
     // Integración con buscador global de Settings
     property bool enableSettingsSearch: true
     property int settingsSearchOptionId: -1
 
-    spacing: 10
-    Layout.leftMargin: 8
-    Layout.rightMargin: 8
+    readonly property string settingsTileRole: "tile"
+    property bool tileTop: true
+    property bool tileBottom: true
+
+    Layout.fillWidth: true
+    implicitWidth: row.implicitWidth + SettingsMaterialPreset.tilePaddingX * 2
+    implicitHeight: Math.max(SettingsMaterialPreset.rowMinHeight, row.implicitHeight + SettingsMaterialPreset.tilePaddingY * 2)
 
     function _findSettingsContext() {
         var page = null;
@@ -87,43 +94,67 @@ RowLayout {
         }
     }
 
+    HoverHandler {
+        id: rowHover
+    }
+
+    Rectangle {
+        anchors.fill: parent
+        color: SettingsMaterialPreset.tileColor
+        topLeftRadius: root.tileTop ? SettingsMaterialPreset.tileOuterRadius : SettingsMaterialPreset.tileInnerRadius
+        topRightRadius: topLeftRadius
+        bottomLeftRadius: root.tileBottom ? SettingsMaterialPreset.tileOuterRadius : SettingsMaterialPreset.tileInnerRadius
+        bottomRightRadius: bottomLeftRadius
+    }
+
     RowLayout {
-        Layout.fillWidth: true
-        spacing: 10
+        id: row
+        anchors {
+            fill: parent
+            leftMargin: SettingsMaterialPreset.tilePaddingX
+            rightMargin: SettingsMaterialPreset.tilePaddingX
+            topMargin: SettingsMaterialPreset.tilePaddingY
+            bottomMargin: SettingsMaterialPreset.tilePaddingY
+        }
+        spacing: SettingsMaterialPreset.tilePaddingX
+
         OptionalMaterialSymbol {
             icon: root.icon
-            opacity: root.enabled ? 1 : 0.4
+            iconSize: SettingsMaterialPreset.iconSize
+            color: SettingsMaterialPreset.supportingColor
+            opacity: root.enabled ? 1 : 0.38
         }
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: 1
+            Layout.alignment: Qt.AlignVCenter
+            spacing: 2
 
             StyledText {
                 id: labelWidget
                 Layout.fillWidth: true
-                elide: Text.ElideRight
-                maximumLineCount: 1
+                wrapMode: Text.Wrap
                 text: root.text
-                color: Appearance.angelEverywhere ? Appearance.angel.colText
-                    : Appearance.inirEverywhere ? Appearance.inir.colText
-                    : Appearance.colors.colOnSurface
-                opacity: root.enabled ? 1 : 0.4
+                font.pixelSize: SettingsMaterialPreset.labelSize
+                color: SettingsMaterialPreset.labelColor
+                opacity: root.enabled ? 1 : 0.38
             }
 
             StyledText {
                 visible: root.description.length > 0
                 Layout.fillWidth: true
                 text: root.description
-                font.pixelSize: Appearance.font.pixelSize.smaller
-                color: Appearance.colors.colSubtext
-                opacity: root.enabled ? 0.9 : 0.4
+                font.pixelSize: SettingsMaterialPreset.supportingSize
+                color: SettingsMaterialPreset.supportingColor
+                opacity: root.enabled ? 1 : 0.38
                 wrapMode: Text.WordWrap
             }
         }
-    }
 
-    StyledSpinBox {
-        id: spinBoxWidget
-        Layout.fillWidth: false
+        StyledSpinBox {
+            id: spinBoxWidget
+            Layout.fillWidth: false
+            Layout.alignment: Qt.AlignVCenter
+            onValueModified: root.valueModified()
+        }
     }
 }

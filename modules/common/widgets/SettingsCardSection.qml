@@ -1,18 +1,18 @@
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
 import qs.modules.common
-import qs.modules.common.functions
 import qs.modules.common.widgets
 
+// A section of a Settings page: its name in the accent, then its settings as segmented tiles. Never folded: what a
+// page holds is seen by scrolling, not by opening boxes (folding hid settings people then searched for).
 Item {
     id: root
 
     property string title: ""
     property string icon: ""
+    // kept for pages that still set them; a section is always open
     property bool expanded: true
-    property bool collapsible: true
-    property int animationDuration: Appearance.animation.elementMove.duration
+    property bool collapsible: false
     property string settingsTaskSection: ""
     default property alias contentData: sectionContent.data
 
@@ -20,13 +20,17 @@ Item {
     property int settingsSearchOptionId: -1
 
     Layout.fillWidth: true
-    implicitHeight: card.implicitHeight
+    implicitHeight: column.implicitHeight
+    implicitWidth: column.implicitWidth
+
+    // blocks the tile layout found loose in this section (SettingsMaterialPreset.layoutTiles): their tiles are here
+    property var _blocks: []
 
     function _findSettingsContext() {
         var page = null;
         var p = root.parent;
         while (p) {
-            if (!page && p.hasOwnProperty("settingsPageIndex")) {
+            if (p.hasOwnProperty("settingsPageIndex")) {
                 page = p;
                 break;
             }
@@ -36,14 +40,17 @@ Item {
     }
 
     function focusFromSettingsSearch() {
-        root.expanded = true;
-        if (root.collapsible)
-            headerBackground.forceActiveFocus(Qt.TabFocusReason);
-        else
-            root.forceActiveFocus();
+        root.forceActiveFocus();
+    }
+
+    function relayoutTiles(): void {
+        root._blocks = SettingsMaterialPreset.layoutTiles(sectionContent)
     }
 
     Component.onCompleted: {
+        // pages still start some sections "collapsed" and gate their content on it; every section is open now
+        root.expanded = true
+        Qt.callLater(root.relayoutTiles)
         if (!enableSettingsSearch || !root.title)
             return;
         if (typeof SettingsSearchRegistry === "undefined")
@@ -55,9 +62,7 @@ Item {
             SettingsSearchRegistry.registerCollapsibleSection(root);
         }
 
-        var ctx = _findSettingsContext();
-        var page = ctx.page;
-
+        var page = _findSettingsContext().page;
         settingsSearchOptionId = SettingsSearchRegistry.registerOption({
             control: root,
             pageIndex: page && page.settingsPageIndex !== undefined ? page.settingsPageIndex : -1,
@@ -78,335 +83,64 @@ Item {
         }
     }
 
-    // Shadow — lightweight offset for material/aurora, escalonado for angel
-    // Material/aurora: simple offset rectangle instead of GPU-blurred RectangularShadow
-    // for much better performance (especially with many cards visible at once).
-    Rectangle {
-        visible: !SettingsMaterialPreset.unified
-            && !Appearance.angelEverywhere
-            && !Appearance.editorialEverywhere
-            && !Appearance.zzzEverywhere
-            && Appearance.effectsEnabled
-        x: card.x + 0.5
-        y: card.y + (Appearance.cookieEverywhere
-            ? Appearance.cookie.cardShadowOffset : 1.5)
-        width: card.width
-        height: card.height
-        radius: card.radius
-        color: Appearance.cookieEverywhere
-            ? Appearance.cookie.cardShadowColor : Appearance.colors.colShadow
-        z: -1
-    }
-    Loader {
-        active: Appearance.angelEverywhere
-        sourceComponent: EscalonadoShadow {
-            target: card
-            hovered: root.expanded
+    Repeater {
+        model: root._blocks
+        delegate: Rectangle {
+            id: blockTile
+            required property var modelData
+            readonly property Item block: blockTile.modelData.item
+            readonly property Item caption: blockTile.modelData.caption ?? null
+            // follows an item through every layout between it and the section, so the tile never lags a move
+            function chainY(item: Item): real {
+                let y = 0
+                let p = item
+                while (p && p !== sectionContent) {
+                    y += p.y
+                    p = p.parent
+                }
+                return y
+            }
+            readonly property real blockY: blockTile.block ? blockTile.chainY(blockTile.block) : 0
+            readonly property real topY: blockTile.caption && blockTile.caption.visible ? blockTile.chainY(blockTile.caption) : blockTile.blockY
+            visible: blockTile.block !== null && blockTile.block.visible
+            x: 0
+            y: column.y + sectionContent.y + blockTile.topY - SettingsMaterialPreset.tilePaddingY
+            width: root.width
+            height: blockTile.blockY - blockTile.topY + (blockTile.block ? blockTile.block.height : 0) + SettingsMaterialPreset.tilePaddingY * 2
+            color: SettingsMaterialPreset.tileColor
+            topLeftRadius: blockTile.modelData.tileTop ? SettingsMaterialPreset.tileOuterRadius : SettingsMaterialPreset.tileInnerRadius
+            topRightRadius: topLeftRadius
+            bottomLeftRadius: blockTile.modelData.tileBottom ? SettingsMaterialPreset.tileOuterRadius : SettingsMaterialPreset.tileInnerRadius
+            bottomRightRadius: bottomLeftRadius
         }
     }
 
-    ZzzPlate {
-        anchors.fill: card
-        visible: Appearance.zzzEverywhere
-        // A step darker than the content field (zzz.bg2) so the card reads as
-        // its own sunken plate instead of blending into the page background.
-        fillColor: Appearance.zzz.bg1
-        strokeColor: Appearance.zzz.hairline
-        strokeWidth: Appearance.zzz.hairlineThick
-        chamfer: Appearance.zzz.cutCorner
-        z: -0.5
-    }
+    ColumnLayout {
+        id: column
+        anchors.left: parent.left
+        anchors.right: parent.right
+        spacing: 8
 
-    Loader {
-        anchors.fill: card
-        active: Appearance.cookieEverywhere && root.visible
-        sourceComponent: CookieFace {
-            role: "card"
-            color: SettingsMaterialPreset.cardColor
-            radius: card.radius
-        }
-    }
-
-    Rectangle {
-        id: card
-
-        anchors.fill: parent
-        implicitHeight: cardColumn.implicitHeight + SettingsMaterialPreset.cardPadding * 2
-        radius: SettingsMaterialPreset.cardRadius
-        color: Appearance.cookieEverywhere || Appearance.regaliaEverywhere
-            ? "transparent" : SettingsMaterialPreset.cardColor
-        border.width: SettingsMaterialPreset.unified ? 0
-                     : Appearance.angelEverywhere ? 0
-                     : (Appearance.regaliaEverywhere ? 0
-                     : (Appearance.zzzEverywhere ? 0
-                     : (Appearance.cookieEverywhere ? 0
-                     : (Appearance.editorialEverywhere ? 0
-                     : (Appearance.inirEverywhere ? 1
-                     : (Appearance.auroraEverywhere ? 1 : 1))))))
-        border.color: Appearance.angelEverywhere ? "transparent" : SettingsMaterialPreset.cardBorderColor
-
-        Behavior on color {
-            enabled: Appearance.animationsEnabled
-            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-        }
-        Behavior on border.color {
-            enabled: Appearance.animationsEnabled
-            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-        }
-        Behavior on border.width {
-            enabled: Appearance.animationsEnabled
-            NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-        }
-
-        RegaliaPlate {
-            anchors.fill: parent
-            visible: Appearance.regaliaEverywhere
-            fillColor: SettingsMaterialPreset.cardColor
-            radius: card.radius
-            inset: Appearance.regalia.surfaceInset
-            elevated: true
-        }
-
-        // Angel partial border
-        AngelPartialBorder {
-            targetRadius: card.radius
-            hovered: root.expanded
-        }
-
-        ZzzDiagonalPattern {
-            stripeSpacing: 36
-            stripeThickness: 1
+        StyledText {
+            visible: root.title.length > 0
+            Layout.fillWidth: true
+            Layout.leftMargin: SettingsMaterialPreset.tilePaddingX
+            Layout.rightMargin: SettingsMaterialPreset.tilePaddingX
+            text: Appearance.zzzEverywhere ? root.title.toUpperCase() : root.title
+            wrapMode: Text.Wrap
+            font.family: Appearance.editorialEverywhere ? Appearance.font.family.title : Appearance.font.family.main
+            font.pixelSize: SettingsMaterialPreset.subheaderSize
+            font.weight: Font.Medium
+            font.letterSpacing: 0.1
+            color: SettingsMaterialPreset.subheaderColor
+            Accessible.role: Accessible.Heading
         }
 
         ColumnLayout {
-            id: cardColumn
-            anchors {
-                left: parent.left
-                right: parent.right
-                top: parent.top
-                margins: SettingsMaterialPreset.cardPadding
-            }
-            spacing: SettingsMaterialPreset.groupSpacing
-
-            Rectangle {
-                id: headerBackground
-                Layout.fillWidth: true
-                implicitHeight: headerRow.implicitHeight + SettingsMaterialPreset.headerPaddingY * 2
-                radius: SettingsMaterialPreset.headerRadius
-                activeFocusOnTab: root.collapsible
-                Accessible.role: root.collapsible ? Accessible.Button : Accessible.Heading
-                Accessible.name: root.title
-                Accessible.focusable: root.collapsible
-                Accessible.onPressAction: toggleExpanded()
-
-                function toggleExpanded() {
-                    if (root.collapsible)
-                        root.expanded = !root.expanded;
-                }
-
-                Keys.onSpacePressed: toggleExpanded()
-                Keys.onReturnPressed: toggleExpanded()
-                Keys.onEnterPressed: toggleExpanded()
-
-                color: Appearance.regaliaEverywhere ? "transparent"
-                    : headerMouseArea.containsMouse && root.collapsible
-                        ? SettingsMaterialPreset.headerHoverColor
-                        : ColorUtils.applyAlpha(SettingsMaterialPreset.headerHoverColor, 0)
-
-                Behavior on color {
-                    animation: ColorAnimation { duration: Appearance.animation.stateChange.duration; easing.type: Appearance.animation.stateChange.type; easing.bezierCurve: Appearance.animation.stateChange.bezierCurve }
-                }
-
-                Rectangle {
-                    anchors.fill: parent
-                    radius: headerBackground.radius
-                    color: "transparent"
-                    border.width: 2
-                    border.color: Appearance.editorialEverywhere
-                        ? Appearance.editorial.focusRing : Appearance.colors.colPrimary
-                    visible: headerBackground.activeFocus && root.collapsible
-                }
-
-                EditorialRule {
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.bottom: parent.bottom
-                    height: 2
-                    inset: SettingsMaterialPreset.headerPaddingX
-                    emphasized: root.expanded || headerMouseArea.containsMouse
-                }
-
-                RegaliaControlFace {
-                    anchors.fill: parent
-                    visible: Appearance.regaliaEverywhere && root.collapsible && headerMouseArea.containsMouse
-                    fillColor: Appearance.regalia.controlPlateHover
-                    radius: Appearance.regalia.roundSmall
-                }
-
-                RowLayout {
-                    id: headerRow
-                    anchors.fill: parent
-                    anchors.leftMargin: SettingsMaterialPreset.headerPaddingX
-                    anchors.rightMargin: SettingsMaterialPreset.headerPaddingX
-                    spacing: Appearance.editorialEverywhere ? Math.round(8 * Appearance.editorial.spacing) : 8
-
-                    Loader {
-                        active: Appearance.editorialEverywhere && Appearance.editorial.ornaments
-                        Layout.preferredWidth: active ? 28 : 0
-                        Layout.preferredHeight: active ? 28 : 0
-                        visible: active
-                        sourceComponent: MaterialShape {
-                            implicitSize: 26
-                            shape: MaterialShape.Shape.Flower
-                            color: Appearance.editorial.accent
-                            rotation: root.expanded ? 45 : 0
-                            Behavior on rotation {
-                                enabled: Appearance.animationsEnabled
-                                NumberAnimation { duration: 260; easing.type: Easing.OutCubic }
-                            }
-                        }
-                    }
-
-                    // Icon with expand-state color
-                    Loader {
-                        active: !Appearance.editorialEverywhere && root.icon && root.icon.length > 0
-                        visible: active
-                        Layout.alignment: Qt.AlignVCenter
-
-                        readonly property color _iconColor: root.expanded
-                            ? SettingsMaterialPreset.iconExpandedColor
-                            : SettingsMaterialPreset.iconCollapsedColor
-
-                        sourceComponent: Item {
-                            id: iconHost
-                            // The cookie badge fills this host, and a scalloped
-                            // polygon inscribed in a box is SMALLER than the box —
-                            // its lobes cut inward. Sized to the glyph, the plate
-                            // came out smaller than the glyph sitting on it, so the
-                            // host has to clear the icon for the badge to contain it.
-                            implicitWidth: Appearance.zzzEverywhere ? 26
-                                : Appearance.cookieEverywhere ? Math.round(Appearance.font.pixelSize.larger * 1.75)
-                                : Appearance.font.pixelSize.larger
-                            implicitHeight: implicitWidth
-                            readonly property color iconColor: root.expanded
-                                ? (Appearance.cookieEverywhere
-                                    ? Appearance.colors.colOnPrimaryContainer
-                                    : SettingsMaterialPreset.iconExpandedColor)
-                                : (Appearance.cookieEverywhere
-                                    ? Appearance.colors.colOnLayer2
-                                    : SettingsMaterialPreset.iconCollapsedColor)
-
-                            CookieFace {
-                                anchors.fill: parent
-                                visible: Appearance.cookieEverywhere
-                                role: "badge"
-                                selected: root.expanded
-                                color: root.expanded
-                                    ? Appearance.colors.colPrimaryContainer
-                                    : Appearance.colors.colLayer2
-                            }
-
-                            MaterialSymbol {
-                                visible: !Appearance.zzzEverywhere
-                                anchors.centerIn: parent
-                                text: root.icon
-                                iconSize: Appearance.font.pixelSize.larger
-                                color: iconHost.iconColor
-
-                                Behavior on color {
-                                    animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                                }
-                            }
-                            ZzzGlyphBadge {
-                                visible: Appearance.zzzEverywhere
-                                anchors.centerIn: parent
-                                symbol: root.icon
-                                accentColor: root.expanded ? Appearance.zzz.sticker : Appearance.zzz.secondary
-                                inkColor: root.expanded ? Appearance.zzz.onSticker : Appearance.zzz.onSecondary
-                                badgeSize: 26
-                            }
-                        }
-                    }
-
-                    StyledText {
-                        text: Appearance.zzzEverywhere ? root.title.toUpperCase() : root.title
-                        wrapMode: Text.Wrap
-                        font.family: Appearance.editorialEverywhere ? Appearance.font.family.title : Appearance.font.family.main
-                        font.pixelSize: Appearance.editorialEverywhere ? Appearance.font.pixelSize.huge * Appearance.editorial.titleScale : Appearance.font.pixelSize.normal
-                        readonly property int titleWeight: Appearance.editorialEverywhere
-                            ? Appearance.editorial.titleWeight : Appearance.zzzEverywhere ? Font.ExtraBold : Font.DemiBold
-                        font.weight: titleWeight
-                        font.variableAxes: Object.assign({}, Appearance.font.variableAxes.main, { "wght": titleWeight })
-                        font.letterSpacing: Appearance.editorialEverywhere ? Appearance.editorial.titleTracking : 0
-                        color: root.expanded
-                            ? SettingsMaterialPreset.titleExpandedColor
-                            : SettingsMaterialPreset.titleCollapsedColor
-                        Layout.fillWidth: true
-
-                        Behavior on color {
-                            animation: ColorAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                        }
-                    }
-
-                    MaterialSymbol {
-                        visible: root.collapsible
-                        text: "expand_more"
-                        iconSize: Appearance.font.pixelSize.normal
-                        color: Appearance.regaliaEverywhere
-                            ? (root.expanded ? Appearance.regalia.onColor : Appearance.regalia.onMuted)
-                            : Appearance.angelEverywhere
-                                ? Appearance.angel.colTextMuted
-                                : Appearance.colors.colSubtext
-                        // One glyph that rotates instead of swapping icons
-                        rotation: root.expanded ? 180 : 0
-                        Behavior on rotation {
-                            enabled: Appearance.animationsEnabled
-                            animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                        }
-                    }
-
-                }
-
-                MouseArea {
-                    id: headerMouseArea
-                    anchors.fill: parent
-                    hoverEnabled: root.collapsible
-                    cursorShape: root.collapsible ? Qt.PointingHandCursor : Qt.ArrowCursor
-                    onClicked: {
-                        if (root.collapsible) {
-                            headerBackground.forceActiveFocus(Qt.MouseFocusReason);
-                            headerBackground.toggleExpanded();
-                        }
-                    }
-                }
-            }
-
-            Item {
-                id: contentContainer
-                Layout.fillWidth: true
-                implicitHeight: root.expanded ? sectionContent.implicitHeight : 0
-                clip: true
-                // clip only hides rendering — descendants outside the clipped
-                // area still receive input. Without this, every collapsed
-                // card leaves its full set of switches/sliders live and
-                // clickable, stacked invisibly under whatever renders next.
-                enabled: root.expanded
-
-                Behavior on implicitHeight {
-                    animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
-                }
-
-                ColumnLayout {
-                    id: sectionContent
-                    width: parent.width
-                    spacing: SettingsMaterialPreset.groupSpacing
-                    opacity: root.expanded ? 1 : 0
-
-                    Behavior on opacity {
-                        animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                    }
-                }
-            }
+            id: sectionContent
+            Layout.fillWidth: true
+            spacing: 12
+            onImplicitHeightChanged: Qt.callLater(root.relayoutTiles)
         }
     }
 }

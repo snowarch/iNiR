@@ -199,10 +199,91 @@ ColumnLayout {
         }
     }
 
-    ConfigSelectionArray {
+    // The page's parts as M3 secondary tabs: they read as places on this page, not as values to pick, which a
+    // button group (what was here) made them look like.
+    Item {
+        id: tabs
+        visible: root.options.length > 0
         Layout.fillWidth: true
-        currentValue: root.currentValue
-        options: root.options
-        onSelected: value => root.selected(value)
+        implicitHeight: 48
+
+        Flickable {
+            id: tabFlick
+            anchors.fill: parent
+            contentWidth: tabRow.implicitWidth
+            contentHeight: height
+            flickableDirection: Flickable.HorizontalFlick
+            boundsBehavior: Flickable.StopAtBounds
+            clip: true
+            interactive: contentWidth > width
+
+            Row {
+                id: tabRow
+                height: parent.height
+
+                Repeater {
+                    id: tabRepeater
+                    model: root.options
+                    delegate: RippleButton {
+                        id: tab
+                        required property var modelData
+                        required property int index
+                        readonly property bool current: String(modelData.value) === String(root.currentValue)
+                        height: tabRow.height
+                        implicitWidth: tabLabel.implicitWidth + 32
+                        buttonRadius: Appearance.rounding.verysmall
+                        colBackground: "transparent"
+                        colBackgroundHover: SettingsMaterialPreset.tileHoverColor
+                        colRipple: SettingsMaterialPreset.tilePressColor
+                        pressScaleEnabled: false
+                        onClicked: root.selected(modelData.value)
+                        Accessible.role: Accessible.PageTab
+                        Accessible.name: modelData.displayName
+
+                        contentItem: StyledText {
+                            id: tabLabel
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            text: tab.modelData.displayName
+                            font.pixelSize: Math.round(14 * Appearance.fontSizeScale)
+                            font.weight: Font.Medium
+                            color: tab.current ? SettingsMaterialPreset.labelColor : SettingsMaterialPreset.supportingColor
+                            opacity: tab.modelData.dimmed === true && !tab.current ? 0.6 : 1
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
+                id: indicator
+                readonly property Item target: {
+                    for (let i = 0; i < tabRepeater.count; ++i) {
+                        const t = tabRepeater.itemAt(i)
+                        if (t && t.current)
+                            return t
+                    }
+                    return null
+                }
+                visible: target !== null
+                y: tabRow.height - height
+                height: 3
+                topLeftRadius: 3
+                topRightRadius: 3
+                x: target ? target.x + 16 : 0
+                width: target ? target.width - 32 : 0
+                color: SettingsMaterialPreset.subheaderColor
+                Behavior on x { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMove.duration; easing.type: Appearance.animation.elementMove.type; easing.bezierCurve: Appearance.animation.elementMove.bezierCurve } }
+                Behavior on width { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMove.duration; easing.type: Appearance.animation.elementMove.type; easing.bezierCurve: Appearance.animation.elementMove.bezierCurve } }
+            }
+        }
+
+        Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: 1
+            color: Appearance.colors.colOutlineVariant
+            z: -1
+        }
     }
 }

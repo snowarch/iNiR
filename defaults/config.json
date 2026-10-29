@@ -1459,10 +1459,8 @@
     },
     "settingsUi": {
         "overlayMode": true,
-        "overlayStyle": "rail",
         "easyMode": false,
         "categories": "",
-        "chromeLayout": "",
         "overlayAppearance": {
             "scrimDim": 35,
             "backgroundOpacity": 1.0,

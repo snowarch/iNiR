@@ -7,8 +7,7 @@ import qs.modules.common
 Singleton {
     id: root
 
-    readonly property bool dynamicRegistrationEnabled:
-        (Config.options?.settingsUi?.overlayStyle ?? "rail") !== "unified"
+    readonly property bool dynamicRegistrationEnabled: true
 
     // Lista de entradas de opciones de Settings
     // Cada entrada: { id, control, pageIndex, pageName, section, label, description, keywords }

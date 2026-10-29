@@ -10,10 +10,8 @@ import qs.modules.common.functions
 
 GroupButton {
     id: root
-    horizontalPadding: SettingsMaterialPreset.unified ? 12
-        : Appearance.regaliaEverywhere ? Appearance.regalia.controlPaddingHorizontal : 11
-    verticalPadding: SettingsMaterialPreset.unified ? 7
-        : Appearance.regaliaEverywhere ? Appearance.regalia.controlPaddingVertical : 6
+    horizontalPadding: Appearance.regaliaEverywhere ? Appearance.regalia.controlPaddingHorizontal : 11
+    verticalPadding: Appearance.regaliaEverywhere ? Appearance.regalia.controlPaddingVertical : 6
     bounce: false
     property string buttonIcon
     property string buttonPreviewKind: ""
@@ -21,14 +19,12 @@ GroupButton {
     property bool leftmost: false
     property bool rightmost: false
     readonly property bool showZzzPreview: Appearance.zzzEverywhere && buttonPreviewKind.length > 0
-    leftRadius: SettingsMaterialPreset.unified ? 8
-        : Appearance.regaliaEverywhere ? Appearance.regalia.controlRadius
+    leftRadius: Appearance.regaliaEverywhere ? Appearance.regalia.controlRadius
         : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
         : Appearance.editorialEverywhere
             ? ((toggled || leftmost) ? Appearance.rounding.small : Appearance.rounding.unsharpen)
         : (toggled || leftmost) ? (height / 2) : Appearance.rounding.unsharpenmore
-    rightRadius: SettingsMaterialPreset.unified ? 8
-        : Appearance.regaliaEverywhere ? Appearance.regalia.controlRadius
+    rightRadius: Appearance.regaliaEverywhere ? Appearance.regalia.controlRadius
         : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
         : Appearance.editorialEverywhere
             ? ((toggled || rightmost) ? Appearance.rounding.small : Appearance.rounding.unsharpen)
@@ -47,22 +43,17 @@ GroupButton {
     // colSecondaryContainer resolves to zzz.secondary (a signal) — using it for
     // the unselected base/hover made every segment glow and the hover glare.
     // Selected state stays the inherited GroupButton sticker (colBackgroundToggled).
-    colBackground: SettingsMaterialPreset.unified ? Appearance.colors.colLayer1
-        : Appearance.regaliaEverywhere ? Appearance.regalia.controlPlate
+    colBackground: Appearance.regaliaEverywhere ? Appearance.regalia.controlPlate
         : Appearance.zzzEverywhere ? ColorUtils.transparentize(Appearance.colors.colLayer1Hover, 1)
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-        : Appearance.auroraEverywhere ? "transparent"
         : Appearance.editorialEverywhere ? "transparent"
-        : Appearance.colors.colSurfaceContainerHighest
-    colBackgroundHover: SettingsMaterialPreset.unified ? Appearance.colors.colLayer1Hover
-        : Appearance.regaliaEverywhere ? Appearance.regalia.controlPlateHover
+        : SettingsMaterialPreset.controlColor
+    colBackgroundHover: Appearance.regaliaEverywhere ? Appearance.regalia.controlPlateHover
         : Appearance.zzzEverywhere ? Appearance.colors.colLayer1Hover
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardHover
-        : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceHover
         : Appearance.editorialEverywhere ? Appearance.editorial.controlHover
-        : Appearance.colors.colSurfaceContainerHighestHover
-    colBackgroundActive: SettingsMaterialPreset.unified ? Appearance.colors.colLayer1Active
-        : Appearance.regaliaEverywhere ? Appearance.regalia.controlPlateActive
+        : SettingsMaterialPreset.controlHoverColor
+    colBackgroundActive: Appearance.regaliaEverywhere ? Appearance.regalia.controlPlateActive
         : Appearance.zzzEverywhere ? Appearance.colors.colLayer1Active
         : Appearance.angelEverywhere ? Appearance.angel.colGlassCardActive
         : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurfaceActive

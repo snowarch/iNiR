@@ -16,6 +16,8 @@ Switch {
     // M3 Expressive's thumb carries a check and a hover halo; the styles with their own control faces keep them.
     readonly property bool expressive: !Appearance.regaliaEverywhere && !Appearance.editorialEverywhere
         && !Appearance.zzzEverywhere && !Appearance.inirEverywhere && !Appearance.angelEverywhere
+    // Android 16's switch says its state in the handle both ways: a check on, a cross off (a 24 px handle each).
+    property bool offIcon: root.expressive
     implicitHeight: Appearance.regaliaEverywhere ? 22 : 32 * root.scale
     implicitWidth: Appearance.regaliaEverywhere ? 40 : 52 * root.scale
     property color activeColor: Appearance.editorialEverywhere ? Appearance.editorial.accent
@@ -82,9 +84,9 @@ Switch {
     indicator: Rectangle {
         id: thumb
         width: Appearance.regaliaEverywhere ? 16
-            : (root.pressed || root.down) ? (28 * root.scale) : root.checked ? (24 * root.scale) : (16 * root.scale)
+            : (root.pressed || root.down) ? (28 * root.scale) : (root.checked || root.offIcon) ? (24 * root.scale) : (16 * root.scale)
         height: Appearance.regaliaEverywhere ? 16
-            : (root.pressed || root.down) ? (28 * root.scale) : root.checked ? (24 * root.scale) : (16 * root.scale)
+            : (root.pressed || root.down) ? (28 * root.scale) : (root.checked || root.offIcon) ? (24 * root.scale) : (16 * root.scale)
         radius: Appearance.editorialEverywhere ? Appearance.rounding.verysmall
             : Appearance.regaliaEverywhere ? Appearance.regalia.controlRadius
             : Appearance.zzzEverywhere ? Appearance.zzz.pillRadius
@@ -132,6 +134,15 @@ Switch {
         }
         MaterialSymbol {
             anchors.centerIn: parent
+            visible: root.offIcon
+            text: "close"
+            iconSize: Math.round(thumb.width * 0.66)
+            color: root.inactiveColor
+            opacity: root.checked ? 0 : 1
+            Behavior on opacity { NumberAnimation { duration: Appearance.animation.elementMoveFast.duration } }
+        }
+        MaterialSymbol {
+            anchors.centerIn: parent
             visible: root.expressive
             text: "check"
             iconSize: Math.round(thumb.width * 0.72)
@@ -144,7 +155,7 @@ Switch {
         anchors.left: parent.left
         anchors.leftMargin: Appearance.regaliaEverywhere
             ? (root.checked ? parent.width - width - 3 : 3)
-            : root.checked ? ((root.pressed || root.down) ? (22 * root.scale) : 24 * root.scale) : ((root.pressed || root.down) ? (2 * root.scale) : 8 * root.scale)
+            : root.checked ? ((root.pressed || root.down) ? (22 * root.scale) : 24 * root.scale) : ((root.pressed || root.down) ? (2 * root.scale) : (root.offIcon ? 4 : 8) * root.scale)
 
         Behavior on anchors.leftMargin {
             enabled: Appearance.animationsEnabled

@@ -696,15 +696,9 @@ ShellRoot {
             Config.setNestedValue("settingsUi.overlayMode", false)
             GlobalStates.settingsOverlayOpen = false
         }
-        /// Switch overlay chrome while preserving page `index`
+        /// Kept for scripts from before Settings had one layout: opens the overlay at page `index`
         function setOverlayStyle(style: string, index: int): void {
-            if (index >= 0)
-                GlobalStates.settingsOverlayRequestedPage = index
-            Config.setNestedValues({
-                "settingsUi.overlayMode": true,
-                "settingsUi.overlayStyle": style
-            })
-            GlobalStates.settingsOverlayOpen = true
+            openOverlayAt(index)
         }
     }
 

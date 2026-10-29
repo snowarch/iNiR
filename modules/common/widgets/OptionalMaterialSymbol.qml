@@ -19,6 +19,7 @@ Item {
 
     required property string icon
     property real iconSize: Appearance.font.pixelSize.larger
+    property color color: Appearance.colors.colOnSurface
     readonly property bool hasIcon: root.icon.length > 0
 
     Layout.alignment: Qt.AlignVCenter
@@ -31,6 +32,6 @@ Item {
         anchors.centerIn: parent
         text: root.icon
         iconSize: root.iconSize
-        color: Appearance.colors.colOnSurface
+        color: root.color
     }
 }

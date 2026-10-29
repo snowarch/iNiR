@@ -24,6 +24,9 @@ Button {
         : (Appearance?.rounding?.small ?? 4)
     property real buttonRadiusPressed: buttonRadius
     property real buttonEffectiveRadius: root.down ? root.buttonRadiusPressed : root.buttonRadius
+    // A tile in a segmented list rounds its top and bottom apart: only a run's outer corners are round.
+    property real buttonRadiusTop: root.buttonEffectiveRadius
+    property real buttonRadiusBottom: root.buttonEffectiveRadius
     property int rippleDuration: Appearance.regaliaEverywhere ? Appearance.regalia.pressDuration
         : Appearance.cookieEverywhere ? Appearance.animation.elementMoveFast.duration
         : Appearance.zzzEverywhere ? Appearance.zzz.overshootDuration : 1200
@@ -182,6 +185,10 @@ Button {
         color: (Appearance.cookieEverywhere && root.cookieMorphing) || Appearance.regaliaEverywhere
             ? "transparent" : root.buttonColor
         radius: Appearance.cookieEverywhere ? root._cookieRadius : root.buttonEffectiveRadius
+        topLeftRadius: Appearance.cookieEverywhere ? root._cookieRadius : root.buttonRadiusTop
+        topRightRadius: topLeftRadius
+        bottomLeftRadius: Appearance.cookieEverywhere ? root._cookieRadius : root.buttonRadiusBottom
+        bottomRightRadius: bottomLeftRadius
         // Cookie has no rectangular chrome: a pill focus ring fights the organic
         // silhouette. cookieMorphing surfaces still show focus through CookieFace.
         border.width: Appearance.editorialEverywhere ? (root.visualFocus ? 2 : 1)
@@ -275,6 +282,10 @@ Button {
                     anchors.fill: parent
                     visible: !Appearance.cookieEverywhere || !root.cookieMorphing
                     radius: Appearance.cookieEverywhere ? root._cookieRadius : root.buttonEffectiveRadius
+                    topLeftRadius: buttonBackground.topLeftRadius
+                    topRightRadius: buttonBackground.topLeftRadius
+                    bottomLeftRadius: buttonBackground.bottomLeftRadius
+                    bottomRightRadius: buttonBackground.bottomLeftRadius
                     color: "white"
                 }
                 Loader {

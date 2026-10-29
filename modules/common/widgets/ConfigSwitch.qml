@@ -16,9 +16,24 @@ RippleButton {
     property int settingsSearchOptionId: -1
     signal toggledByUser(bool checked)
 
+    // One setting, one tile (SettingsMaterialPreset.layoutTiles rounds its outer corners).
+    readonly property string settingsTileRole: "tile"
+    property bool tileTop: true
+    property bool tileBottom: true
+
     Layout.fillWidth: true
-    implicitHeight: contentItem.implicitHeight + 6 * 2
-    font.pixelSize: Appearance.font.pixelSize.small
+    implicitHeight: Math.max(SettingsMaterialPreset.rowMinHeight, contentItem.implicitHeight + topPadding + bottomPadding)
+    leftPadding: SettingsMaterialPreset.tilePaddingX
+    rightPadding: SettingsMaterialPreset.tilePaddingX
+    topPadding: SettingsMaterialPreset.tilePaddingY
+    bottomPadding: SettingsMaterialPreset.tilePaddingY
+    font.pixelSize: SettingsMaterialPreset.labelSize
+    buttonRadiusTop: root.tileTop ? SettingsMaterialPreset.tileOuterRadius : SettingsMaterialPreset.tileInnerRadius
+    buttonRadiusBottom: root.tileBottom ? SettingsMaterialPreset.tileOuterRadius : SettingsMaterialPreset.tileInnerRadius
+    colBackground: SettingsMaterialPreset.tileColor
+    colBackgroundHover: SettingsMaterialPreset.tileHoverColor
+    colRipple: SettingsMaterialPreset.tilePressColor
+    pressScaleEnabled: false
 
     function _findSettingsContext() {
         var page = null;
@@ -92,16 +107,18 @@ RippleButton {
     }
 
     contentItem: RowLayout {
-        spacing: 8
+        spacing: SettingsMaterialPreset.tilePaddingX
         OptionalMaterialSymbol {
             id: iconWidget
             icon: root.buttonIcon
-            opacity: root.enabled ? 1 : 0.4
-            iconSize: Appearance.font.pixelSize.large
+            opacity: root.enabled ? 1 : 0.38
+            iconSize: SettingsMaterialPreset.iconSize
+            color: SettingsMaterialPreset.supportingColor
         }
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: 1
+            Layout.alignment: Qt.AlignVCenter
+            spacing: 2
 
             StyledText {
                 id: labelWidget
@@ -109,25 +126,26 @@ RippleButton {
                 text: root.text
                 wrapMode: Text.Wrap
                 font: root.font
-                color: Appearance.angelEverywhere ? Appearance.angel.colText
-                    : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurface
-                opacity: root.enabled ? 1 : 0.4
+                color: SettingsMaterialPreset.labelColor
+                opacity: root.enabled ? 1 : 0.38
             }
 
             StyledText {
                 visible: root.description.length > 0
                 Layout.fillWidth: true
                 text: root.description
-                font.pixelSize: Appearance.font.pixelSize.smaller
-                color: Appearance.colors.colSubtext
-                opacity: root.enabled ? 0.9 : 0.4
+                font.pixelSize: SettingsMaterialPreset.supportingSize
+                color: SettingsMaterialPreset.supportingColor
+                opacity: root.enabled ? 1 : 0.38
                 wrapMode: Text.Wrap
             }
         }
         StyledSwitch {
             id: switchWidget
             down: root.down
+            scale: 1
             Layout.fillWidth: false
+            Layout.alignment: Qt.AlignVCenter
             checked: root.checked
             onClicked: root.clicked()
         }
