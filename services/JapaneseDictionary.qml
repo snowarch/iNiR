@@ -105,7 +105,7 @@ Singleton {
     function downloadStudyDeck(deckId: string): void {
         if (deckProc.running) return
         root.studyDeckStatus = Translation.tr("Downloading study deck…")
-        deckProc.command = ["python3", Quickshell.shellPath("scripts/study-decks.py"), "download", deckId]
+        deckProc.command = [Quickshell.shellPath("scripts/lib/accel-run"), "study-decks", "download", deckId]
         deckProc.running = true
     }
 

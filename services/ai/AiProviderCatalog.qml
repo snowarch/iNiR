@@ -142,8 +142,8 @@ Singleton {
         const chatEndpoint = provider.catalogChatEndpoint ?? provider.endpoint
         const apiFormat = provider.catalogApiFormat ?? provider.api_format ?? "openai"
         const command = [
-            "/usr/bin/python3",
-            `${Directories.scriptsPath}/ai/discover-provider-models.py`,
+            `${Directories.scriptsPath}/lib/accel-run`,
+            "discover-provider-models",
             "--provider-id", provider.id,
             "--kind", provider.catalogKind ?? "openai-compatible",
             "--models-url", provider.modelsEndpoint ?? "",

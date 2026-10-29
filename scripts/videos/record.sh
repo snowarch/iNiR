@@ -455,13 +455,8 @@ maybe_compress_recording() {
         return 0
     fi
 
-    local compressor="$SCRIPT_DIR/compress-discord.py"
-    local python_cmd=""
-    if command -v python3 >/dev/null 2>&1; then
-        python_cmd="$(command -v python3)"
-    fi
-    if [[ -z "$python_cmd" || ! -f "$compressor" ]] || ! command -v ffmpeg >/dev/null 2>&1 || ! command -v ffprobe >/dev/null 2>&1; then
-        if is_truthy "$SHOW_NOTIFICATIONS"; then notify-send "Discord compression skipped" "Missing python3, ffmpeg, or ffprobe" -a 'Recorder' & disown; fi
+    if ! command -v ffmpeg >/dev/null 2>&1 || ! command -v ffprobe >/dev/null 2>&1; then
+        if is_truthy "$SHOW_NOTIFICATIONS"; then notify-send "Discord compression skipped" "Missing ffmpeg or ffprobe" -a 'Recorder' & disown; fi
         return 0
     fi
 
@@ -486,7 +481,7 @@ maybe_compress_recording() {
         if is_truthy "$SHOW_NOTIFICATIONS"; then notify-send "Compressing recording" "Creating Discord-ready copy under ${DISCORD_COMPRESS_TARGET_MB} MB" -a 'Recorder' & disown; fi
 
         local -a compress_cmd=(
-            "$python_cmd" "$compressor"
+            "$SCRIPT_DIR/../lib/accel-run" compress-discord
             --input "$input_file"
             --output "$output_file"
             --target-mb "$DISCORD_COMPRESS_TARGET_MB"

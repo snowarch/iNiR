@@ -176,8 +176,8 @@ Singleton {
         root._runningRequestId = request.requestId;
         root._runningTrackKey = request.trackKey;
         lyricsProc.command = [
-            "python3",
-            `${Directories.scriptsPath}/lyrics/lyrics.py`,
+            `${Directories.scriptsPath}/lib/accel-run`,
+            "lyrics",
             request.title,
             request.artist,
             request.album,
@@ -348,7 +348,7 @@ Singleton {
                 } catch (e) {
                     if (root._runningRequestId !== ""
                             && root._runningRequestId === root._latestRequestId)
-                        console.log("LyricsService: unparseable output from lyrics.py:", raw.slice(0, 200));
+                        console.log("LyricsService: unparseable lyrics output:", raw.slice(0, 200));
                     return;
                 }
 
