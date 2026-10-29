@@ -100,7 +100,7 @@ DEPS_AUDIO_LSP_PLUGINS_LV2="arch:lsp-plugins-lv2 fedora:lsp-plugins-lv2 debian:l
 DEPS_AUDIO_MPV="arch:mpv fedora:mpv debian:mpv ubuntu:mpv opensuse:mpv void:mpv"
 DEPS_AUDIO_MPV_MPRIS="arch:mpv-mpris fedora:mpv-mpris debian:mpv-mpris ubuntu:mpv-mpris opensuse:mpv-mpris void:mpv-mpris"
 DEPS_AUDIO_YTDLP="arch:yt-dlp fedora:yt-dlp debian:yt-dlp ubuntu:yt-dlp opensuse:yt-dlp void:yt-dlp"
-# ytmusicapi and yt-dlp's cookie-loader module are owned by iNiR's managed
+# yt-dlp's cookie-loader module is owned by iNiR's managed
 # Python runtime on setup-managed installs; package-managed distros declare
 # their own Python runtime dependency at the packaging boundary.
 DEPS_AUDIO_SOCAT="arch:socat fedora:socat debian:socat ubuntu:socat opensuse:socat void:socat"

@@ -17,7 +17,6 @@ opencv-contrib-python
 psutil
 
 # YT Music browsing / account API
-ytmusicapi>=1.12.0
 # Current playback runtime plus the local Chromium cookie loader. The shell
 # selects this managed executable before an older distro copy.
 yt-dlp[default,secretstorage]

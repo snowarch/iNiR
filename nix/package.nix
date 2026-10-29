@@ -36,7 +36,6 @@ let
     tqdm
     websockets
     yt-dlp
-    ytmusicapi
   ]);
 
   runtimeDeps =

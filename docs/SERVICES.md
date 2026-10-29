@@ -58,7 +58,7 @@ IpcHandler {
 | `Audio` | PipeWire devices, volume, mute, per-app mixer | `audio` |
 | `MprisController` | MPRIS players, grace period between tracks | `mpris` |
 | `YtMusic` | YouTube Music through mpv and yt-dlp | `ytmusic` |
-| `InnerTube`, `MpvIpc`, `CavaService` (deferred) | Browsing via `scripts/innertube.py`; mpv JSON socket; shared cava | |
+| `InnerTube`, `MpvIpc`, `CavaService` (deferred) | Browsing via `inir-accel innertube`; mpv JSON socket; shared cava | |
 | `Network` | NetworkManager through `nmcli` | `network` |
 | `Vpn` | OpenVPN, WireGuard, IPsec and Tailscale | `vpn` |
 | `BluetoothStatus` | Adapter and devices through `Quickshell.Bluetooth` | `bluetooth` |

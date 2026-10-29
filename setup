@@ -2928,7 +2928,7 @@ run_update() {
     fi
 
     # Keep update semantics identical to fresh install: the managed Python venv
-    # owns ytmusicapi, and Deno is repaired as part of the YT playback runtime.
+    # owns yt-dlp's cookie loader, and Deno is repaired as part of the YT playback runtime.
     _step_phase_header 6 "Python / YT runtime"
     install-python-packages
     ensure-ytmusic-js-runtime || tui_warn "YT Music needs Deno; run 'inir doctor' once online"

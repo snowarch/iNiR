@@ -558,7 +558,7 @@ Singleton {
         root.searchResults = []
         _searchQuery = trimmed
         // Prefer the InnerTube engine (no browser cookies, real YT Music songs).
-        // Fall back to yt-dlp only when ytmusicapi is unavailable.
+        // Fall back to yt-dlp only when InnerTube is unavailable.
         if (InnerTube.available) {
             root._searchViaInnerTube = true
             InnerTube.search(trimmed, f)

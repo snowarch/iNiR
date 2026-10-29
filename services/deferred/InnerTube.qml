@@ -7,7 +7,7 @@ import Quickshell.Io
 import qs.modules.common
 import qs.services
 
-// InnerTube browsing engine — wraps scripts/innertube.py (ytmusicapi).
+// InnerTube browsing engine: `inir-accel innertube` through scripts/innertube-runtime.sh.
 // Public browsing needs NO cookies; replaces the flaky yt-dlp + browser-cookie path.
 // Playback stays in YtMusic.qml (mpv/MPRIS); this service only fetches metadata.
 //
@@ -18,7 +18,7 @@ Singleton {
 
     readonly property bool enabled: Config.options?.sidebar?.ytmusic?.enable ?? false
     property bool ready: false
-    property bool available: false       // ytmusicapi importable (probed via ping)
+    property bool available: false       // the browsing helper answers (probed via ping)
     property bool authenticated: false   // a logged-in session that actually works for browse
     property string accountName: ""
     property string accountAvatar: ""
