@@ -18,7 +18,6 @@ ClippedOutlineCircularProgress 1.0 ClippedOutlineCircularProgress.qml
 ClippedProgressBar 1.0 ClippedProgressBar.qml
 CollapsibleSection 1.0 CollapsibleSection.qml
 CompositorFocusGrab 1.0 CompositorFocusGrab.qml
-ConfigResetKey 1.0 ConfigResetKey.qml
 ConfigRow 1.0 ConfigRow.qml
 ConfigSelectionArray 1.0 ConfigSelectionArray.qml
 ConfigSpinBox 1.0 ConfigSpinBox.qml
