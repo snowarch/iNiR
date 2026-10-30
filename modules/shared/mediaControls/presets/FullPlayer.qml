@@ -275,10 +275,11 @@ Item {
                     onSeekRequested: seconds => playerBase.seek(seconds)
                 }
 
-                // Time + controls
+                // Time + controls. The spacers make the gaps: a fixed spacing on top pushed zzz's wider figures past the
+                // plate's inset on a medium widget.
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: 4
+                    spacing: 0
 
                     StyledText {
                         id: timeStartLabel
