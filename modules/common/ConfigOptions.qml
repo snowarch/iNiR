@@ -536,6 +536,9 @@ JsonAdapter {
     property JsonObject hub: JsonObject {
         // Extra community hub indexes (URLs or local paths to an index.json); the official hub is always read.
         property list<string> sources: []
+        // How every family's Hub page lists the catalogue: "list" rows or a "grid" of cards, in Hub.sorts order.
+        property string view: "list"
+        property string sort: "popular"
     }
 
     property JsonObject idle: JsonObject {

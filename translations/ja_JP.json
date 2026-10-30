@@ -10032,5 +10032,18 @@
   "Marquee": "Marquee",
   "Duo": "Duo",
   "Shrink the desktop while editing": "編集中はデスクトップを縮小",
-  "Off: widgets are arranged in place, at full size": "オフ：ウィジェットはその場で実寸のまま配置されます"
+  "Off: widgets are arranged in place, at full size": "オフ：ウィジェットはその場で実寸のまま配置されます",
+  "Popular": "人気",
+  "Most downloaded": "ダウンロード数順",
+  "Recently updated": "最近更新",
+  "A to Z": "A から Z",
+  "Search %1 items": "%1 件から検索",
+  "Show %1 more": "さらに %1 件表示",
+  "Pulled": "取り下げ済み",
+  "Pulled from the hub: %1": "ハブから取り下げられました: %1",
+  "%1 of %2 people liked it": "%2 人中 %1 人が高評価",
+  "No votes yet": "まだ投票はありません",
+  "%1 downloads": "%1 ダウンロード",
+  "Reviews and votes": "レビューと投票",
+  "Reaches": "接続先"
 }

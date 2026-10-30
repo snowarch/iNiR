@@ -10032,5 +10032,18 @@
   "Marquee": "Marquee",
   "Duo": "Duo",
   "Shrink the desktop while editing": "编辑时缩小桌面",
-  "Off: widgets are arranged in place, at full size": "关闭：在原处以实际大小摆放小组件"
+  "Off: widgets are arranged in place, at full size": "关闭：在原处以实际大小摆放小组件",
+  "Popular": "热门",
+  "Most downloaded": "下载最多",
+  "Recently updated": "最近更新",
+  "A to Z": "A 到 Z",
+  "Search %1 items": "在 %1 项中搜索",
+  "Show %1 more": "再显示 %1 项",
+  "Pulled": "已下架",
+  "Pulled from the hub: %1": "已从 Hub 下架：%1",
+  "%1 of %2 people liked it": "%2 人中有 %1 人喜欢",
+  "No votes yet": "暂无投票",
+  "%1 downloads": "%1 次下载",
+  "Reviews and votes": "评价与投票",
+  "Reaches": "会访问"
 }

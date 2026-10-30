@@ -10032,5 +10032,18 @@
   "Marquee": "Laufband",
   "Duo": "Duo",
   "Shrink the desktop while editing": "Desktop beim Bearbeiten verkleinern",
-  "Off: widgets are arranged in place, at full size": "Aus: Widgets werden an Ort und Stelle in voller Größe angeordnet"
+  "Off: widgets are arranged in place, at full size": "Aus: Widgets werden an Ort und Stelle in voller Größe angeordnet",
+  "Popular": "Beliebt",
+  "Most downloaded": "Meistgeladen",
+  "Recently updated": "Kürzlich aktualisiert",
+  "A to Z": "A bis Z",
+  "Search %1 items": "%1 Einträge durchsuchen",
+  "Show %1 more": "%1 weitere anzeigen",
+  "Pulled": "Zurückgezogen",
+  "Pulled from the hub: %1": "Aus dem Hub zurückgezogen: %1",
+  "%1 of %2 people liked it": "%1 von %2 Personen gefiel es",
+  "No votes yet": "Noch keine Stimmen",
+  "%1 downloads": "%1 Downloads",
+  "Reviews and votes": "Bewertungen und Stimmen",
+  "Reaches": "Verbindet sich mit"
 }

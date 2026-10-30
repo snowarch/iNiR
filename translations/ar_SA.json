@@ -10032,5 +10032,18 @@
   "Marquee": "Marquee",
   "Duo": "Duo",
   "Shrink the desktop while editing": "تصغير سطح المكتب أثناء التعديل",
-  "Off: widgets are arranged in place, at full size": "عند الإيقاف: تُرتَّب الأدوات في مكانها بالحجم الكامل"
+  "Off: widgets are arranged in place, at full size": "عند الإيقاف: تُرتَّب الأدوات في مكانها بالحجم الكامل",
+  "Popular": "الأكثر شيوعًا",
+  "Most downloaded": "الأكثر تنزيلًا",
+  "Recently updated": "المحدّثة مؤخرًا",
+  "A to Z": "من A إلى Z",
+  "Search %1 items": "ابحث في %1 عنصر",
+  "Show %1 more": "اعرض %1 أخرى",
+  "Pulled": "مسحوب",
+  "Pulled from the hub: %1": "سُحب من المتجر: %1",
+  "%1 of %2 people liked it": "أعجب %1 من %2 شخص",
+  "No votes yet": "لا أصوات بعد",
+  "%1 downloads": "%1 تنزيل",
+  "Reviews and votes": "المراجعات والأصوات",
+  "Reaches": "يتصل بـ"
 }

@@ -10032,5 +10032,18 @@
   "Marquee": "Marquee",
   "Duo": "Duo",
   "Shrink the desktop while editing": "편집하는 동안 바탕 화면 축소",
-  "Off: widgets are arranged in place, at full size": "끄면: 위젯을 제자리에서 실제 크기로 배치합니다"
+  "Off: widgets are arranged in place, at full size": "끄면: 위젯을 제자리에서 실제 크기로 배치합니다",
+  "Popular": "인기순",
+  "Most downloaded": "다운로드순",
+  "Recently updated": "최근 업데이트순",
+  "A to Z": "A부터 Z까지",
+  "Search %1 items": "%1개 항목 검색",
+  "Show %1 more": "%1개 더 보기",
+  "Pulled": "내려짐",
+  "Pulled from the hub: %1": "허브에서 내려짐: %1",
+  "%1 of %2 people liked it": "%2명 중 %1명이 좋아함",
+  "No votes yet": "아직 투표 없음",
+  "%1 downloads": "다운로드 %1회",
+  "Reviews and votes": "리뷰와 투표",
+  "Reaches": "연결 대상"
 }

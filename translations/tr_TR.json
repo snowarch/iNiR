@@ -10032,5 +10032,18 @@
   "Marquee": "Marquee",
   "Duo": "Duo",
   "Shrink the desktop while editing": "Düzenlerken masaüstünü küçült",
-  "Off: widgets are arranged in place, at full size": "Kapalı: widget'lar yerinde, tam boyutta düzenlenir"
+  "Off: widgets are arranged in place, at full size": "Kapalı: widget'lar yerinde, tam boyutta düzenlenir",
+  "Popular": "Popüler",
+  "Most downloaded": "En çok indirilen",
+  "Recently updated": "Yakın zamanda güncellenen",
+  "A to Z": "A'dan Z'ye",
+  "Search %1 items": "%1 öğe içinde ara",
+  "Show %1 more": "%1 tane daha göster",
+  "Pulled": "Kaldırıldı",
+  "Pulled from the hub: %1": "Hub'dan kaldırıldı: %1",
+  "%1 of %2 people liked it": "%2 kişiden %1 kişi beğendi",
+  "No votes yet": "Henüz oy yok",
+  "%1 downloads": "%1 indirme",
+  "Reviews and votes": "Yorumlar ve oylar",
+  "Reaches": "Bağlandığı yerler"
 }

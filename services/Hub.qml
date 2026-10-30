@@ -55,6 +55,15 @@ Singleton {
         files: "Reads or writes files outside its own folder",
         inject: "Injects scripts into the site it opens"
     })
+    // How a page orders the catalogue. Popular weighs downloads by how long an item has been out, and its votes.
+    readonly property var sorts: [
+        { id: "popular", label: "Popular", icon: "local_fire_department" },
+        { id: "downloads", label: "Most downloaded", icon: "download" },
+        { id: "rating", label: "Top rated", icon: "thumb_up" },
+        { id: "newest", label: "Newest", icon: "new_releases" },
+        { id: "updated", label: "Recently updated", icon: "update" },
+        { id: "name", label: "A to Z", icon: "sort_by_alpha" }
+    ]
     readonly property string family: {
         const panel = String(Config.options?.panelFamily ?? "ii")
         return panel === "ii" ? "material" : panel
@@ -101,7 +110,8 @@ Singleton {
         return terms.every(term => text.includes(term))
     }
     // The one state a card shows: "install" | "update" | "remove" while that runs, then
-    // "failed", "active" or "present" (a family the shell has), "conflict", "incompatible", "update", "installed" or "get".
+    // "failed", "pulled" (the installed copy was pulled), "active" or "present" (a family the shell has), "conflict",
+    // "incompatible", "update", "installed", "blocked" (pulled before it was installed) or "get".
     function stateOf(item: var): string {
         if (!item)
             return "get"
@@ -110,6 +120,11 @@ Singleton {
             return running === "remove" ? "removing" : running === "update" ? "updating" : "installing"
         if (root.failures[item.id] !== undefined)
             return "failed"
+        // Pulled from the hub: the copy someone has is flagged, and nothing new installs.
+        if (item.installedBlocked)
+            return "pulled"
+        if (item.blocked && item.installed !== item.version)
+            return item.installed ? "installed" : "blocked"
         // A family the shell already has (shipped inside inir, linked, or from the hub) is never a name clash: it is
         // the one in use or one to switch to (10-29: all three read "Name taken", the one in use too).
         if (item.kind === "family" && Plugins.families.includes(item.id))
@@ -157,6 +172,57 @@ Singleton {
         if (family === "waffle")
             return surfaces.includes("waffle-widgets") ? Translation.tr("Shows in the Widgets panel") : Translation.tr("Has no Waffle card yet")
         return Translation.tr("Shows on your desktop")
+    }
+    function votes(item: var): int {
+        return Number(item?.votesUp ?? 0) + Number(item?.votesDown ?? 0)
+    }
+    // Share of people who liked it, or -1 before anyone voted.
+    function liked(item: var): real {
+        const n = root.votes(item)
+        return n > 0 ? Number(item.votesUp ?? 0) / n : -1
+    }
+    // Wilson's lower bound at 95 %: two votes of two don't outrank ninety of a hundred.
+    function _confidence(item: var): real {
+        const n = root.votes(item)
+        if (n === 0)
+            return 0
+        const p = Number(item.votesUp ?? 0) / n, z = 1.96
+        return (p + z * z / (2 * n) - z * Math.sqrt((p * (1 - p) + z * z / (4 * n)) / n)) / (1 + z * z / n)
+    }
+    function _days(date: string): real {
+        const t = Date.parse(String(date ?? "") + "T12:00:00Z")
+        return isNaN(t) ? 365 : Math.max(1, (Date.now() - t) / 86400000)
+    }
+    function _popularity(item: var): real {
+        return Number(item?.downloads ?? 0) / Math.pow(root._days(item?.added ?? item?.updated) + 7, 0.6) * (0.5 + root._confidence(item))
+    }
+    function sorted(items: var, sort: string): var {
+        const by = {
+            downloads: (a, b) => Number(b.downloads ?? 0) - Number(a.downloads ?? 0),
+            rating: (a, b) => root._confidence(b) - root._confidence(a),
+            newest: (a, b) => String(b.added ?? b.updated ?? "").localeCompare(String(a.added ?? a.updated ?? "")),
+            updated: (a, b) => String(b.updated ?? "").localeCompare(String(a.updated ?? "")),
+            name: (a, b) => String(a.name ?? "").localeCompare(String(b.name ?? ""))
+        }[sort] ?? ((a, b) => root._popularity(b) - root._popularity(a))
+        return Array.from(items ?? []).slice().sort((a, b) => by(a, b) || String(a.name ?? "").localeCompare(String(b.name ?? "")))
+    }
+    // 950, 1.2k, 18k, 2.4M
+    function countText(n: real): string {
+        n = Number(n ?? 0)
+        const brief = (v, unit) => (v < 10 ? v.toFixed(1).replace(/\.0$/, "") : Math.round(v)) + unit
+        return n >= 1e6 ? brief(n / 1e6, "M") : n >= 1e3 ? brief(n / 1e3, "k") : String(Math.round(n))
+    }
+    // Where people talk about an item and where they report it: its hub repo on GitHub.
+    function _repo(item: var): string {
+        return String(item?.page ?? "").match(/^https:\/\/github\.com\/[^/]+\/[^/]+/)?.[0] ?? ""
+    }
+    function discussionUrl(item: var): string {
+        const repo = root._repo(item)
+        return String(item?.discussion ?? "") || (repo ? `${repo}/discussions?discussions_q=${encodeURIComponent(item.id)}` : "")
+    }
+    function reportUrl(item: var): string {
+        const repo = root._repo(item)
+        return repo ? `${repo}/issues/new?template=report.yml&item=${encodeURIComponent(item.id + " " + item.version)}` : ""
     }
     function sizeText(bytes: real): string {
         return bytes >= 1048576 ? `${(bytes / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`

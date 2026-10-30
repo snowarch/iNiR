@@ -10032,5 +10032,18 @@
   "Marquee": "Marquee",
   "Duo": "Duo",
   "Shrink the desktop while editing": "संपादन के दौरान डेस्कटॉप छोटा करें",
-  "Off: widgets are arranged in place, at full size": "बंद: विजेट अपनी जगह पर, पूरे आकार में व्यवस्थित होते हैं"
+  "Off: widgets are arranged in place, at full size": "बंद: विजेट अपनी जगह पर, पूरे आकार में व्यवस्थित होते हैं",
+  "Popular": "लोकप्रिय",
+  "Most downloaded": "सबसे ज़्यादा डाउनलोड",
+  "Recently updated": "हाल ही में अपडेट",
+  "A to Z": "A से Z",
+  "Search %1 items": "%1 आइटम में खोजें",
+  "Show %1 more": "%1 और दिखाएँ",
+  "Pulled": "हटाया गया",
+  "Pulled from the hub: %1": "हब से हटाया गया: %1",
+  "%1 of %2 people liked it": "%2 में से %1 लोगों को पसंद आया",
+  "No votes yet": "अभी कोई वोट नहीं",
+  "%1 downloads": "%1 डाउनलोड",
+  "Reviews and votes": "समीक्षाएँ और वोट",
+  "Reaches": "यहाँ से जुड़ता है"
 }

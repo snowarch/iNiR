@@ -10032,5 +10032,18 @@
   "Marquee": "Marquesina",
   "Duo": "Dúo",
   "Shrink the desktop while editing": "Achicar el escritorio al editar",
-  "Off: widgets are arranged in place, at full size": "Apagado: los widgets se acomodan en su lugar, a tamaño completo"
+  "Off: widgets are arranged in place, at full size": "Apagado: los widgets se acomodan en su lugar, a tamaño completo",
+  "Popular": "Populares",
+  "Most downloaded": "Más descargados",
+  "Recently updated": "Actualizados hace poco",
+  "A to Z": "De la A a la Z",
+  "Search %1 items": "Buscar entre %1 elementos",
+  "Show %1 more": "Mostrar %1 más",
+  "Pulled": "Retirado",
+  "Pulled from the hub: %1": "Retirado del hub: %1",
+  "%1 of %2 people liked it": "A %1 de %2 personas les gustó",
+  "No votes yet": "Sin votos todavía",
+  "%1 downloads": "%1 descargas",
+  "Reviews and votes": "Reseñas y votos",
+  "Reaches": "Se conecta a"
 }

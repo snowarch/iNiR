@@ -11,9 +11,22 @@ about the extras.
 - Waffle: **Waffle Settings › Hub**
 - iRiS: **iRiS Settings › Community Hub**, in the footer under the list
 
+## Find things
+
+The search bar looks through names, summaries, tags and authors. Beside it:
+
+- **The order**: Popular (downloads weighed by how long an item has been out, and its votes), Most downloaded, Top
+  rated, Newest, Recently updated, A to Z.
+- **List or grid**: rows show the most at once; the grid shows bigger pictures. The Hub remembers both.
+- **The chips** under it narrow to one kind, to what you have installed, or to what has an update. Each says how many
+  there are.
+
+Every row shows how many people liked the item, how many downloaded it, and when it last changed. Votes are the
+thumbs up and down on the item's discussion: **Reviews and votes** on its page takes you there.
+
 ## Install and remove
 
-Each card says where the item shows up in your family and which permissions it asks for. Press **Get** to install it. Then:
+Each row says where the item shows up in your family and which permissions it asks for. Press **Get** to install it. Then:
 
 - **Add to desktop** (Material) and **Use** (iRiS) put a widget on your desktop.
 - **Use** switches to a colour theme or an iRiS theme.
@@ -34,9 +47,18 @@ In Waffle, **Waffle Settings › Waffle Style › Show your widgets** hides the 
 
 ## Permissions
 
-Each card lists what the item does. **Runs commands on your computer** means it starts programs. **Talks to the internet** means it makes network requests. **Reads or writes files outside its own folder** means it uses files elsewhere in your home. **Injects scripts into the site it opens** applies to web apps.
+A shield on a row means the item asks for permissions; its page lists them, with every internet address its code
+talks to under **Reaches**. **Runs commands on your computer** means it starts programs. **Talks to the internet** means it makes network requests. **Reads or writes files outside its own folder** means it uses files elsewhere in your home. **Injects scripts into the site it opens** applies to web apps.
 
 Items are read before they are added to the catalogue, and every download is checked before it installs. Widgets run inside the shell, so check the permissions before you install one, especially anything that runs commands.
+
+Every submission goes through `inir hub audit` before a person reviews it: code that reads keys, passwords or browser
+cookies, asks for root, starts itself outside the shell, sends data to paste sites or webhooks, mines, listens to the
+keyboard, hides what it does (encoded blobs, minified code, invisible characters) or talks to hosts it didn't declare
+is refused, and code that reads as generated without care gets a quality score a maintainer has to sign off.
+
+If an item turns out to be bad after it was published, the Hub pulls it: it can't be installed any more, and if you
+have it, its page says why and **Remove** takes it off. **Report** on any item's page tells the maintainers.
 
 ## Sources
 

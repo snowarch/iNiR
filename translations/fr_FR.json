@@ -10032,5 +10032,18 @@
   "Marquee": "Bandeau",
   "Duo": "Duo",
   "Shrink the desktop while editing": "Réduire le bureau pendant la modification",
-  "Off: widgets are arranged in place, at full size": "Désactivé : les widgets sont disposés sur place, en taille réelle"
+  "Off: widgets are arranged in place, at full size": "Désactivé : les widgets sont disposés sur place, en taille réelle",
+  "Popular": "Populaires",
+  "Most downloaded": "Les plus téléchargés",
+  "Recently updated": "Mis à jour récemment",
+  "A to Z": "De A à Z",
+  "Search %1 items": "Rechercher parmi %1 éléments",
+  "Show %1 more": "Afficher %1 de plus",
+  "Pulled": "Retiré",
+  "Pulled from the hub: %1": "Retiré du hub : %1",
+  "%1 of %2 people liked it": "%1 personnes sur %2 l'ont aimé",
+  "No votes yet": "Pas encore de votes",
+  "%1 downloads": "%1 téléchargements",
+  "Reviews and votes": "Avis et votes",
+  "Reaches": "Se connecte à"
 }

@@ -10032,5 +10032,18 @@
   "Marquee": "Marquee",
   "Duo": "Duo",
   "Shrink the desktop while editing": "Уменьшать рабочий стол при редактировании",
-  "Off: widgets are arranged in place, at full size": "Выкл.: виджеты расставляются на месте в полном размере"
+  "Off: widgets are arranged in place, at full size": "Выкл.: виджеты расставляются на месте в полном размере",
+  "Popular": "Популярные",
+  "Most downloaded": "Самые скачиваемые",
+  "Recently updated": "Недавно обновлённые",
+  "A to Z": "От A до Z",
+  "Search %1 items": "Искать среди %1 элементов",
+  "Show %1 more": "Показать ещё %1",
+  "Pulled": "Отозвано",
+  "Pulled from the hub: %1": "Отозвано из хаба: %1",
+  "%1 of %2 people liked it": "Понравилось %1 из %2",
+  "No votes yet": "Пока нет голосов",
+  "%1 downloads": "Загрузок: %1",
+  "Reviews and votes": "Отзывы и голоса",
+  "Reaches": "Обращается к"
 }

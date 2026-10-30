@@ -2292,7 +2292,9 @@
         }
     },
     "hub": {
-        "sources": []
+        "sources": [],
+        "view": "list",
+        "sort": "popular"
     },
     "idle": {
         "screenOffTimeout": 300,
