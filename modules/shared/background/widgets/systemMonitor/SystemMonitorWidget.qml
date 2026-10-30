@@ -185,7 +185,8 @@ AbstractBackgroundWidget {
     }
     property var reading: ({})
     Binding on reading {
-        when: root.motionActive
+        // behind windows it follows only the one reading it asked for at birth, until the service lets go
+        when: root.motionActive || (root._primedHere && ResourceUsage._runningRequested)
         value: root._readingNow()
         restoreMode: Binding.RestoreNone
     }
@@ -366,7 +367,18 @@ AbstractBackgroundWidget {
             root._holdingResourceUsage = false;
             ResourceUsage.releaseKeepAlive(root);
         }
+        // Shown but resting behind a window from the start, it still reads the machine once (the service lets go after
+        // its auto-stop delay): a strip shows past the window's edge, and never-read values said 0 °C and 0 % (10-30).
+        if (root._active && !root._readOnce) {
+            root._readOnce = true;
+            if (!shouldHold) {
+                root._primedHere = true;
+                ResourceUsage.ensureRunning();
+            }
+        }
     }
+    property bool _readOnce: false
+    property bool _primedHere: false
     on_ActiveChanged: root._syncResourceUsage()
     onVisibleChanged: root._syncResourceUsage()
     onMotionActiveChanged: root._syncResourceUsage()

@@ -255,10 +255,10 @@ Singleton {
     function stop(): void {
         root._runningRequested = false;
         root._primed = false;
+        // The last reading stays: a stopped service still knows the machine better than a 0 % (a widget resting behind a
+        // window shows it past the window's edge). Only the deltas restart.
         root.previousCpuStats = undefined;
-        root.cpuUsage = 0;
         root.previousCpuCoreStats = ({});
-        root.cpuCoreUsage = [];
         root.cpuFrequencyMhz = -1;
         root._gpuPollingAllowed = false;
         pollTimer.stop();
