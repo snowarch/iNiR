@@ -38,6 +38,9 @@ Scope {
     property string _targetFamily: "ii"
     property bool _phase: false   // false = enter/hold, true = exit
     property bool _active: false
+    // The new family is still being built under the curtain (shell.qml binds it): the hold lasts until it stands.
+    property bool swapPending: false
+    property int _holdWaits: 0
 
     // ── Animated background properties ──────────────────────────────────
     property real _overlayOpacity: 0
@@ -81,7 +84,7 @@ Scope {
     Timer {
         id: watchdog
         interval: root._entryFade + root._enterDuration + root._holdDuration
-            + root._contentExitDelay + root._exitDuration + 3000
+            + root._contentExitDelay + root._exitDuration + 5500
         onTriggered: {
             if (!root._active && !GlobalStates.familyTransitionActive) return
             console.warn("[FamilyTransition] watchdog fired — releasing the overlay")
@@ -182,6 +185,15 @@ Scope {
         id: holdTimer
         interval: root._holdDuration
         onTriggered: {
+            // a first visit compiles the family under the curtain (~1.5 s for iRiS); lifting on a fixed 200 ms showed
+            // its panels building in the reveal. Capped at 2.5 s more, under the watchdog.
+            if (root.swapPending && root._holdWaits++ < 50) {
+                holdTimer.interval = 50
+                holdTimer.restart()
+                return
+            }
+            holdTimer.interval = root._holdDuration
+            root._holdWaits = 0
             root._phase = true        // triggers content exit in family components
             contentExitTimer.start()
         }

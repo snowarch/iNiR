@@ -1093,12 +1093,11 @@ ShellRoot {
             return
         }
 
-        root._warmFamily(targetFamily)
-
         // Keep old and new layer-shell trees out of the same Wayland dispatch.
         if (!(Config.options?.familyTransitionAnimation ?? true)) {
             _transitionInProgress = true
             _transitionUsesOverlay = false
+            root._warmFamily(targetFamily)
             root.beginSerializedFamilySwap(targetFamily)
             return
         }
@@ -1167,6 +1166,9 @@ ShellRoot {
 
         const targetFamily = _pendingFamily
         _pendingFamily = ""
+        // Under the full curtain: finishing the target's compile holds the GUI thread (1.1 s for iRiS the first time
+        // in a session, measured 10-29); before the curtain it swallowed the key press, nothing moved for 1.2 s.
+        root._warmFamily(targetFamily)
         root.beginSerializedFamilySwap(targetFamily)
     }
 
@@ -1233,6 +1235,8 @@ ShellRoot {
             && (GlobalStates.familyTransitionActive || root._transitionInProgress)
         source: "FamilyTransitionOverlay.qml"
         onLoaded: {
+            // the curtain lifts once the new family stands, not on a fixed hold while its panels still build
+            item.swapPending = Qt.binding(() => root._pendingFamily !== "" || root._familyPanelsSuspended)
             item.exitComplete.connect(root.applyPendingFamily)
             item.enterComplete.connect(root.finishFamilyTransition)
         }
