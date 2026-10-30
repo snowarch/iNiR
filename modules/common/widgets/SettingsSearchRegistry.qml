@@ -335,6 +335,11 @@ Singleton {
                 score = Math.max(score, 130)
             if (wanted.length && placeholder === wanted)
                 score = Math.max(score, 110)
+            // A row often names itself shorter than its search entry ("Screenshots" for "Screenshots folder").
+            const own = title || text || mainText
+            if (score < 0 && wanted.length && own.length >= 4
+                    && (wanted.startsWith(own + " ") || own.startsWith(wanted + " ")))
+                score = 70
             if (score >= 0)
                 score += sectionScore(item)
             if (score >= 0 && typeof item.focusFromSettingsSearch === "function")
