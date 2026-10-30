@@ -10001,5 +10001,13 @@
   "Off on new installs. Push the pointer to the edge, then click a workspace to go there, drag a window onto another, or hold × to close it.": "Yeni kurulumlarda kapalıdır. İşaretçiyi kenara itin, ardından gitmek için bir çalışma alanına tıklayın, bir pencereyi diğerine sürükleyin veya kapatmak için × düğmesini basılı tutun.",
   "niri starts these at login, not iNiR, so they keep running when the shell restarts.": "Bunları oturum açılışında iNiR değil niri başlatır, bu yüzden kabuk yeniden başladığında çalışmaya devam ederler.",
   "Picker": "Seçici",
-  "iRiS's gallery grows out of the Island; Grid, Coverflow and Launcher are Material's pickers, opened the same way.": "iRiS galerisi Ada'dan açılır; Izgara, Coverflow ve Başlatıcı Material'in seçicileridir, aynı şekilde açılır."
+  "iRiS's gallery grows out of the Island; Grid, Coverflow and Launcher are Material's pickers, opened the same way.": "iRiS galerisi Ada'dan açılır; Izgara, Coverflow ve Başlatıcı Material'in seçicileridir, aynı şekilde açılır.",
+  "How iRiS draws its icons: on a tinted plate, on an app-icon tile, or the glyph alone as Folio's index.": "How iRiS draws its icons: on a tinted plate, on an app-icon tile, or the glyph alone as Folio's index.",
+  "Glyph": "Glyph",
+  "The corners of every icon plate.": "The corners of every icon plate.",
+  "Glyph colour": "Glyph colour",
+  "The ink of the text, or each area's own colour.": "The ink of the text, or each area's own colour.",
+  "Auto fills glyphs on plates and outlines them alone.": "Auto fills glyphs on plates and outlines them alone.",
+  "Outlined": "Outlined",
+  "How heavy every glyph's line is.": "How heavy every glyph's line is."
 }

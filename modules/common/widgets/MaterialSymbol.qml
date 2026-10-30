@@ -14,6 +14,8 @@ Item {
     // Opt-in gradient down the glyph's own colour (the iRiS tile pack uses it so a
     // glyph keeps its identity hue). Off, the glyph is one flat colour as always.
     property bool glyphGradient: false
+    // The variable font's wght axis: a family can draw its glyphs lighter or bolder.
+    property int glyphWeight: Font.Normal
     readonly property bool gradientActive: root.glyphGradient && !root.useJp && !root.useNerd && root.text.length > 0
     property alias font: iconText.font
     property alias style: iconText.style
@@ -70,7 +72,7 @@ Item {
                 ? (Appearance?.font.family.monospace ?? "JetBrainsMono Nerd Font")
                 : (Appearance?.font.family.iconMaterial ?? "Material Symbols Rounded")
             pixelSize: root.useJp ? root.iconSize * 0.92 : root.effectiveFontSize
-            weight: root.useJp ? Font.Medium : Font.Normal
+            weight: root.useJp ? Font.Medium : root.glyphWeight
             variableAxes: (root.useJp || (root.useNerd && root.hasNerdGlyph)) ? ({}) : ({
                 "FILL": root.effectiveFill,
                 "opsz": root.effectiveOpsz,

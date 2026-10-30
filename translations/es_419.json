@@ -10001,5 +10001,13 @@
   "Off on new installs. Push the pointer to the edge, then click a workspace to go there, drag a window onto another, or hold × to close it.": "Apagado en instalaciones nuevas. Lleva el puntero al borde y haz clic en un espacio para ir, arrastra una ventana a otro o mantén × para cerrarla.",
   "niri starts these at login, not iNiR, so they keep running when the shell restarts.": "niri los inicia al entrar, no iNiR, así que siguen funcionando cuando el shell se reinicia.",
   "Picker": "Selector",
-  "iRiS's gallery grows out of the Island; Grid, Coverflow and Launcher are Material's pickers, opened the same way.": "La galería de iRiS sale de la Isla; Cuadrícula, Coverflow y Lanzador son los selectores de Material, y se abren igual."
+  "iRiS's gallery grows out of the Island; Grid, Coverflow and Launcher are Material's pickers, opened the same way.": "La galería de iRiS sale de la Isla; Cuadrícula, Coverflow y Lanzador son los selectores de Material, y se abren igual.",
+  "How iRiS draws its icons: on a tinted plate, on an app-icon tile, or the glyph alone as Folio's index.": "Cómo dibuja iRiS sus íconos: sobre una placa teñida, sobre una ficha de app, o el glifo solo como el índice de Folio.",
+  "Glyph": "Glifo",
+  "The corners of every icon plate.": "Las esquinas de cada placa de ícono.",
+  "Glyph colour": "Color del glifo",
+  "The ink of the text, or each area's own colour.": "La tinta del texto, o el color propio de cada área.",
+  "Auto fills glyphs on plates and outlines them alone.": "Automático rellena los glifos sobre placas y los contornea cuando van solos.",
+  "Outlined": "Contorno",
+  "How heavy every glyph's line is.": "Qué tan grueso es el trazo de cada glifo."
 }

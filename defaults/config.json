@@ -2477,7 +2477,7 @@
             "highlight": "orange",
             "anime": { "enabled": false, "palette": "sakura", "strength": 60, "highlight": false },
             "figureWeight": "bold",
-            "icons": { "style": "iris", "plate": "black" },
+            "icons": { "style": "iris", "plate": "black", "shape": "auto", "ink": "ink", "fill": "auto", "weight": "regular" },
             "numbersFontFamily": "",
             "signal": "nothing",
             "look": "apple",

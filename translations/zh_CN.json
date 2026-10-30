@@ -10001,5 +10001,13 @@
   "Off on new installs. Push the pointer to the edge, then click a workspace to go there, drag a window onto another, or hold × to close it.": "新安装时关闭。把指针推到屏幕边缘，然后点击工作区前往，把窗口拖到另一个工作区，或按住 × 关闭窗口。",
   "niri starts these at login, not iNiR, so they keep running when the shell restarts.": "这些由 niri 在登录时启动，而不是 iNiR，所以重启 shell 后它们仍在运行。",
   "Picker": "选择器",
-  "iRiS's gallery grows out of the Island; Grid, Coverflow and Launcher are Material's pickers, opened the same way.": "iRiS 的图库从灵动岛展开；网格、封面流和启动器是 Material 的选择器，打开方式相同。"
+  "iRiS's gallery grows out of the Island; Grid, Coverflow and Launcher are Material's pickers, opened the same way.": "iRiS 的图库从灵动岛展开；网格、封面流和启动器是 Material 的选择器，打开方式相同。",
+  "How iRiS draws its icons: on a tinted plate, on an app-icon tile, or the glyph alone as Folio's index.": "How iRiS draws its icons: on a tinted plate, on an app-icon tile, or the glyph alone as Folio's index.",
+  "Glyph": "Glyph",
+  "The corners of every icon plate.": "The corners of every icon plate.",
+  "Glyph colour": "Glyph colour",
+  "The ink of the text, or each area's own colour.": "The ink of the text, or each area's own colour.",
+  "Auto fills glyphs on plates and outlines them alone.": "Auto fills glyphs on plates and outlines them alone.",
+  "Outlined": "Outlined",
+  "How heavy every glyph's line is.": "How heavy every glyph's line is."
 }

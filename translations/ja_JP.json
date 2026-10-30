@@ -10001,5 +10001,13 @@
   "Off on new installs. Push the pointer to the edge, then click a workspace to go there, drag a window onto another, or hold × to close it.": "新規インストールではオフです。ポインターを端に押し当て、ワークスペースをクリックして移動、ウィンドウを別のワークスペースへドラッグ、× を長押しで閉じます。",
   "niri starts these at login, not iNiR, so they keep running when the shell restarts.": "これらはログイン時に iNiR ではなく niri が起動するので、シェルを再起動しても動き続けます。",
   "Picker": "ピッカー",
-  "iRiS's gallery grows out of the Island; Grid, Coverflow and Launcher are Material's pickers, opened the same way.": "iRiS のギャラリーはアイランドから開きます。グリッド、カバーフロー、ランチャーは Material のピッカーで、同じ操作で開きます。"
+  "iRiS's gallery grows out of the Island; Grid, Coverflow and Launcher are Material's pickers, opened the same way.": "iRiS のギャラリーはアイランドから開きます。グリッド、カバーフロー、ランチャーは Material のピッカーで、同じ操作で開きます。",
+  "How iRiS draws its icons: on a tinted plate, on an app-icon tile, or the glyph alone as Folio's index.": "How iRiS draws its icons: on a tinted plate, on an app-icon tile, or the glyph alone as Folio's index.",
+  "Glyph": "Glyph",
+  "The corners of every icon plate.": "The corners of every icon plate.",
+  "Glyph colour": "Glyph colour",
+  "The ink of the text, or each area's own colour.": "The ink of the text, or each area's own colour.",
+  "Auto fills glyphs on plates and outlines them alone.": "Auto fills glyphs on plates and outlines them alone.",
+  "Outlined": "Outlined",
+  "How heavy every glyph's line is.": "How heavy every glyph's line is."
 }
