@@ -81,7 +81,8 @@ QtObject {
     readonly property color labelColor: Appearance.angelEverywhere ? Appearance.angel.colText
         : Appearance.inirEverywhere ? Appearance.inir.colText
         : Appearance.colors.colOnSurface
-    readonly property color supportingColor: Appearance.angelEverywhere ? Appearance.angel.colTextMuted
+    // angel's muted ink is see-through: on its glass it fell to 1.4:1; colSubtext is made readable on the glass floor
+    readonly property color supportingColor: Appearance.angelEverywhere ? Appearance.colors.colSubtext
         : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
         : Appearance.colors.colOnSurfaceVariant
     readonly property int labelSize: Appearance.font.pixelSize.small

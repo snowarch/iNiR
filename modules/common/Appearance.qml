@@ -459,7 +459,8 @@ Singleton {
         // backdrop of a black one (aurora.backdropFloor). An accent used as ink drops to the tone that reads 4.5:1
         // there (Fluent: no accent text on acrylic; M3's medium-contrast light scheme moves primary from tone 40 to 30).
         readonly property color _glassFloor: ColorUtils.mix(colLayer0Base,
-            Qt.rgba(root.aurora.backdropFloor, root.aurora.backdropFloor, root.aurora.backdropFloor, 1), 1 - root.aurora.overlayTransparentize)
+            Qt.rgba(root.aurora.backdropFloor, root.aurora.backdropFloor, root.aurora.backdropFloor, 1),
+            1 - (root.angelEverywhere ? root.angel.overlayOpacity : root.aurora.overlayTransparentize))
         readonly property real _glassInkTone: {
             const y = Math.max(0.0001, (ColorUtils.relativeLuminance(_glassFloor) + 0.05) / 4.5 - 0.05)
             return y <= 0.008856 ? y * 903.2963 : 116 * Math.pow(y, 1 / 3) - 16
@@ -1043,7 +1044,8 @@ Singleton {
         // Acrylic's luminosity layer, done with what MultiEffect has: the backdrop's tonal range is pressed into a band
         // near the glass's own tone, so the glass keeps one tone over any wallpaper (light glass went mid grey over a
         // dark one and dark glass vanished into it, 10-29). Saturation gives back the colour the press takes.
-        readonly property bool _tonedBackdrop: root.globalStyle === "aurora" && root.effectsEnabled
+        // Angel's glass too: its light panels went mid grey over a dark wallpaper (Settings subtext 1.4:1, 10-30).
+        readonly property bool _tonedBackdrop: root.auroraEverywhere && root.effectsEnabled
         readonly property real backdropContrast: _tonedBackdrop ? (root._auroraLightMode ? -0.45 : -0.4) : 0
         readonly property real backdropBrightness: _tonedBackdrop ? (root._auroraLightMode ? 0.2 : -0.15) : 0
         readonly property real wallpaperColor: { Config.revision; return Math.max(0, Math.min(1, Config.options?.appearance?.aurora?.wallpaperColor ?? 0.55)) }
@@ -1382,7 +1384,8 @@ Singleton {
         // ─── BLUR SYSTEM ───
         readonly property real blurIntensity: Config.options?.appearance?.angel?.blur?.intensity ?? 0.35
         readonly property real blurSaturation: Config.options?.appearance?.angel?.blur?.saturation ?? 0.20
-        readonly property real overlayOpacity: Config.options?.appearance?.angel?.blur?.overlayOpacity ?? 0.45
+        // light glass as dense as aurora's (~220 over black); angel's see-through stays in dark
+        readonly property real overlayOpacity: (Config.options?.appearance?.angel?.blur?.overlayOpacity ?? 0.45) * (root._auroraLightMode ? 0.5 : 1)
         readonly property real noiseOpacity: Config.options?.appearance?.angel?.blur?.noiseOpacity ?? 0.15
         readonly property real vignetteStrength: Config.options?.appearance?.angel?.blur?.vignetteStrength ?? 0.4
 
