@@ -101,6 +101,27 @@ Singleton {
         }
     }
 
+    // Bitmap families (X11 misc .pcf, Arabic Newspaper) have no metrics Qt can measure: drawing their name in their
+    // own face logs "Failed to compute left/right minimum bearings" per font, and they look broken in a picker anyway
+    property var bitmapFamilies: []
+    function pickableFamilies(): var {
+        const bitmap = root.bitmapFamilies
+        const seen = {}
+        return Qt.fontFamilies().filter(family => {
+            if (family.startsWith(".") || seen[family] || bitmap.includes(family)) return false
+            seen[family] = true
+            return true
+        })
+    }
+
+    Process {
+        running: true
+        command: ["fc-list", ":scalable=false", "family"]
+        stdout: StdioCollector {
+            onStreamFinished: root.bitmapFamilies = text.split("\n").join(",").split(",").map(f => f.trim()).filter(f => f.length > 0)
+        }
+    }
+
     // Initialize on load
     Component.onCompleted: {
         if (syncEnabled) {

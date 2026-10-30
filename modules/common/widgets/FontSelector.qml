@@ -110,7 +110,7 @@ Item {
                 Layout.fillHeight: true
                 clip: true
                 model: {
-                    let fonts = Qt.fontFamilies()
+                    let fonts = FontSyncService.pickableFamilies()
                     let search = searchField.text.toLowerCase()
                     if (search) {
                         return fonts.filter(f => f.toLowerCase().includes(search))
