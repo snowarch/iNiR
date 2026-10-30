@@ -589,7 +589,7 @@ complete -c inir -n '__inir_at_function settings' -a openOverlay -d 'Switch to o
 complete -c inir -n '__inir_at_function settings' -a openOverlayAt -d 'Switch to overlay mode, open Settings and keep the page, or…'
 complete -c inir -n '__inir_at_function settings' -a openWindowAt -d 'Switch to standalone Window mode and open page index'
 complete -c inir -n '__inir_at_value 1 openWindowAt settings' -a 'index'
-complete -c inir -n '__inir_at_function settings' -a setOverlayStyle -d 'Switch overlay chrome while preserving page index'
+complete -c inir -n '__inir_at_function settings' -a setOverlayStyle -d 'Kept for scripts from before Settings had one layout: opens…'
 complete -c inir -n '__inir_at_value 2 setOverlayStyle settings' -a 'index'
 complete -c inir -n '__inir_at_target' -a settingsNav -d 'Navigate the settings overlay to a specific page (same as c…'
 complete -c inir -n '__inir_at_target' -a settings-nav -d 'Navigate the settings overlay to a specific page (same as c…'

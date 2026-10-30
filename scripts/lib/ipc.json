@@ -3422,7 +3422,7 @@
       "style",
       "index"
      ],
-     "description": "Switch overlay chrome while preserving page `index`",
+     "description": "Kept for scripts from before Settings had one layout: opens the overlay at page `index`",
      "values": [
       "index"
      ]
