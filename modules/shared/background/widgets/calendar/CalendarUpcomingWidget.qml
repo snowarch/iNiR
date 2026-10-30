@@ -60,7 +60,6 @@ AbstractBackgroundWidget {
     readonly property bool groupByDay: root._readConfigKey("groupByDay") ?? true
     readonly property string eventStyle: root._readConfigKey("style") ?? "card"
     readonly property bool instrument: root.eventStyle === "instrument"
-    widgetSurfaceEnabled: !root.instrument
 
     readonly property real cardRadius: root.widgetCardRadius
 

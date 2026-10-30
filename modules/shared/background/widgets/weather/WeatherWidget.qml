@@ -28,7 +28,6 @@ AbstractBackgroundWidget {
     readonly property string weatherStyle: root._readConfigKey("style") ?? "pill"
     // Material's Medium and Large add the hours (and the days) to what the chosen style shows; the dial keeps its own.
     readonly property bool forecastFace: root.materialSized && root.materialSize !== "small" && root.weatherStyle !== "dial"
-    widgetSurfaceEnabled: root.weatherStyle !== "dial"
     readonly property string weatherShape: root._readConfigKey("shape") ?? "pill"
     readonly property real logicalShapeSize: Math.max(1,
         Number(root._readConfigKey("size") ?? 200))

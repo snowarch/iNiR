@@ -44,7 +44,6 @@ AbstractBackgroundWidget {
     readonly property bool showAdjacentDays: Boolean(root._readConfigKey("showAdjacentDays") ?? true)
     readonly property bool instrument: String(root._readConfigKey("style") ?? "card") === "instrument"
     readonly property bool instrumentRule: Boolean(root._readConfigKey("instrumentRule") ?? true)
-    widgetSurfaceEnabled: !root.instrument
     readonly property date today: DateTime.clock.date
     readonly property date viewingDate: {
         const date = new Date(root.today)

@@ -114,8 +114,10 @@ QtObject {
         out.push(
             // switched on over a strength of 0 (a plateless widget's default) the plate stayed invisible: it comes with one
             root.row(widget, "showBackground", "Background", "switch", root.plateDefault(widget), { tune: false, when: plated,
-                apply: next => next && Number(root.value(widget, "backgroundOpacity", 0.16)) <= 0
+                // a face set to Transparent has no plate either: showing the background brings its material back
+                apply: next => Object.assign(next && Number(root.value(widget, "backgroundOpacity", 0.16)) <= 0
                     ? { showBackground: true, backgroundOpacity: 0.16 } : { showBackground: next },
+                    next && String(root.value(widget, "iris.material", "auto")) === "clear" ? { "iris.material": "auto" } : {}),
                 description: "The plate behind the widget.", keywords: ["background", "plate", "card", "surface", "fondo", "superficie"] }),
             root.row(widget, "showBorder", "Outline", "switch", root.plateDefault(widget), { when: plated,
                 apply: next => Object.assign({ showBorder: next }, next && Number(root.value(widget, "borderOpacity", 0.08)) <= 0 ? { borderOpacity: 0.2 } : {},
@@ -173,8 +175,10 @@ QtObject {
     function everyState(key: string): string {
         Config.revision
         // an iRiS face wears its plate and outline unless told otherwise
+        // a face set to Transparent shows no plate, whatever its switch says
         const seen = root._everyRows(key).filter(spec => root.on(spec.widget))
-            .map(spec => String(root.value(spec.widget, key, root.face(spec.widget) ? true : spec.fallback)))
+            .map(spec => key === "showBackground" && root.face(spec.widget) && String(root.value(spec.widget, "iris.material", "auto")) === "clear"
+                ? "false" : String(root.value(spec.widget, key, root.face(spec.widget) ? true : spec.fallback)))
         if (seen.length === 0)
             return ""
         return seen.every(v => v === seen[0]) ? seen[0] : "mixed"

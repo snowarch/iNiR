@@ -53,7 +53,6 @@ AbstractBackgroundWidget {
         const value = Number(root._readConfigKey("rotateSeconds") ?? 45)
         return Number.isFinite(value) && value >= 5 ? Math.min(900, value) : 45
     }
-    widgetSurfaceEnabled: !root.instrument
 
     property int headlineIndex: 0
     property var displayedArticle: null

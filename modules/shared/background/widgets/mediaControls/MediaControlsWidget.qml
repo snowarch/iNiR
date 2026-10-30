@@ -612,7 +612,7 @@ AbstractBackgroundWidget {
                     WidgetSurface {
                         irisPresentation: root.widgetIris
                         anchors.fill: parent
-                        shown: root.materialSized && !root.instrument && !root.irisFaced
+                        shown: root.materialSized && !root.irisFaced
                         regionBrightness: root.regionBrightness
                         surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.widgetCardRadius
                         surfaceOpacity: root.backgroundOpacity

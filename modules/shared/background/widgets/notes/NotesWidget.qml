@@ -62,7 +62,6 @@ AbstractBackgroundWidget {
     readonly property bool instrument: root.noteStyle === "instrument"
     readonly property bool showRules: root._readConfigKey("showRules") ?? true
     readonly property real cardRadius: root.widgetCardRadius
-    widgetSurfaceEnabled: !root.instrument
     property bool _syncingText: false
 
     function _loadPersistedText(): void {

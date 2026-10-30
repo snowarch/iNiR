@@ -26,7 +26,6 @@ AbstractBackgroundWidget {
 
     readonly property bool vertical: Boolean(root._readConfigKey("vertical") ?? false)
     readonly property bool instrument: String(root._readConfigKey("style") ?? "cards") === "instrument"
-    widgetSurfaceEnabled: !root.instrument
     resizableAxes: ({ uniform: "widgetScale" })
     readonly property bool pulse: Boolean(root._readConfigKey("glow") ?? true)
     readonly property bool showProgress: Boolean(root._readConfigKey("showProgress") ?? true)

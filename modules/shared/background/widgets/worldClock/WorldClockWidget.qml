@@ -59,7 +59,6 @@ AbstractBackgroundWidget {
     resizeMinWidth: 240
     resizeMinHeight: root.instrument ? root.instrumentHeightTarget : 170
     needsColText: true
-    widgetSurfaceEnabled: !root.instrument
 
     readonly property color surfaceInk: root.widgetInk
     readonly property string localCity: Weather.visibleCity

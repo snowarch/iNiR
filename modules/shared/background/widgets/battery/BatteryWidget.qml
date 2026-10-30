@@ -35,7 +35,6 @@ AbstractBackgroundWidget {
     irisOptions: [
         { key: "showTime", raw: true, label: Translation.tr("Time remaining"), icon: "timer", fallback: true }
     ]
-    widgetSurfaceEnabled: root.displayMode !== "instrument"
 
     visibleWhenLocked: true
     needsColText: true

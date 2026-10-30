@@ -170,7 +170,6 @@ AbstractBackgroundWidget {
     }
 
     property string clockStyle: root._readConfigKey("style") ?? "digital"
-    widgetSurfaceEnabled: root.clockStyle !== "instrument"
     readonly property bool textClockStyle: root.clockStyle === "digital"
         || root.clockStyle === "androidStacked"
     property bool adaptDigitalToWallpaper: root._readConfigKey("digital.adaptToWallpaper") ?? true

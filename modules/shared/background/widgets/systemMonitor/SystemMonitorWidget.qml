@@ -28,7 +28,6 @@ AbstractBackgroundWidget {
         cornerRadius: -1, x: 50, y: 400
     })
 
-    widgetSurfaceEnabled: root.displayMode !== "instrument" && root.displayMode !== "tiles"
     // a sized card takes the column count that gives each meter the most room: three across a large card left
     // a band of small meters in the middle of it
     readonly property int meterColumns: {
@@ -409,7 +408,7 @@ AbstractBackgroundWidget {
                 screenY: root.y
                 screenWidth: root.scaledScreenWidth
                 screenHeight: root.scaledScreenHeight
-                shown: !root.irisFaced && root.displayMode !== "tiles" && root.displayMode !== "instrument"
+                shown: !root.irisFaced
                     && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
             }
         }

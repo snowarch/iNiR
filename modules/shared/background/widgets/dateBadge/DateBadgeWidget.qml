@@ -34,7 +34,6 @@ AbstractBackgroundWidget {
     readonly property bool showOrdinal: Boolean(root._readConfigKey("showOrdinal") ?? true)
     readonly property bool instrumentMarks: Boolean(root._readConfigKey("instrumentMarks") ?? true)
     readonly property bool instrument: root.badgeStyle === "instrument"
-    widgetSurfaceEnabled: !root.instrument
     readonly property date today: DateTime.clock.date
     readonly property bool horizontal: root.badgeStyle === "ticket" && root.width >= 200 * root.scaleFactor
         && !root.materialLarge
@@ -58,7 +57,7 @@ AbstractBackgroundWidget {
             WidgetSurface {
                 irisPresentation: root.widgetIris
                 anchors.fill: parent
-                shown: !root.irisFaced && root.badgeStyle !== "seal" && !root.instrument
+                shown: !root.irisFaced && root.badgeStyle !== "seal"
                 regionBrightness: root.regionBrightness
                 surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.widgetCardRadius
                 surfaceOpacity: root.backgroundOpacity

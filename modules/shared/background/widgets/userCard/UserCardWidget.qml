@@ -60,7 +60,6 @@ AbstractBackgroundWidget {
     readonly property bool showAvatar: root._readConfigKey("showAvatar") ?? true
     readonly property bool showWeather: root._readConfigKey("showWeather") ?? true
     readonly property bool showHostname: root._readConfigKey("showHostname") ?? true
-    widgetSurfaceEnabled: !root.instrument
 
     readonly property color surfaceInk: root.widgetInk
     readonly property string username: SystemInfo.displayName || SystemInfo.username
