@@ -10009,5 +10009,7 @@
   "The ink of the text, or each area's own colour.": "La tinta del texto, o el color propio de cada área.",
   "Auto fills glyphs on plates and outlines them alone.": "Automático rellena los glifos sobre placas y los contornea cuando van solos.",
   "Outlined": "Contorno",
-  "How heavy every glyph's line is.": "Qué tan grueso es el trazo de cada glifo."
+  "How heavy every glyph's line is.": "Qué tan grueso es el trazo de cada glifo.",
+  "Browse themes": "Ver temas",
+  "Whole redesigns of iRiS and the ones you saved, in Customize: try one, Undo takes it back.": "Rediseños completos de iRiS y los que guardaste, en Personalizar: prueba uno, Deshacer lo revierte."
 }
