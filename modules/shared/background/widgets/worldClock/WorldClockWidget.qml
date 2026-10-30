@@ -648,8 +648,15 @@ AbstractBackgroundWidget {
                 }
 
                 GridLayout {
+                    id: cityGrid
                     Layout.fillWidth: true
                     Layout.fillHeight: true
+                    // one size for every tile: measured per tile, a row a pixel shorter (London) came out a size down
+                    readonly property int rows: Math.max(1, Math.ceil(root.cities.length / Math.max(1, cityGrid.columns)))
+                    readonly property real cellHeight: (cityGrid.height - (cityGrid.rows - 1) * cityGrid.rowSpacing) / cityGrid.rows
+                    readonly property real cellWidth: (cityGrid.width - (cityGrid.columns - 1) * cityGrid.columnSpacing) / Math.max(1, cityGrid.columns)
+                    readonly property bool roomy: cityGrid.cellHeight >= Math.round(70 * root.scaleFactor)
+                        && cityGrid.cellWidth >= Math.round(140 * root.scaleFactor)
                     // a wide card lays its cities in one row; two rows of tiles ran past a medium card, and an odd count
                     // in two columns left a hole
                     columns: root.width > root.height * 1.5 ? Math.min(4, Math.max(1, root.cities.length))
@@ -670,10 +677,8 @@ AbstractBackgroundWidget {
                             readonly property color cellColor: root.widgetSemanticContainer(cityCell.cellRole)
                             readonly property color cellInk: root.widgetSemanticOnContainer(cityCell.cellRole)
                             readonly property color cellAccent: root.widgetSemanticColor(cityCell.cellRole)
-                            // a tall, wide tile (large, a city a row) sets its city and time a size up; three in a row
-                            // on a medium card are tall but cut the time
-                            readonly property bool roomy: cityCell.height >= Math.round(72 * root.scaleFactor)
-                                && cityCell.width >= Math.round(140 * root.scaleFactor)
+                            // a tall, wide tile (large, a city a row) sets its city and time a size up
+                            readonly property bool roomy: cityGrid.roomy
 
                             Layout.fillWidth: true
                             Layout.fillHeight: true

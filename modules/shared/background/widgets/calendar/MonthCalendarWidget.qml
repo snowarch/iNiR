@@ -352,7 +352,8 @@ AbstractBackgroundWidget {
                             MaterialShape {
                                 anchors.centerIn: parent
                                 visible: !root.instrument && dayCell.modelData.isToday
-                                implicitSize: Math.round(Math.min(parent.width, parent.height, Math.round(36 * root.scaleFactor)) * 1.1)
+                                // a size over the cell reads round, but a gapless small month has no room for it
+                                implicitSize: Math.round(Math.min(parent.width, parent.height, Math.round(36 * root.scaleFactor)) * (root.compact ? 1 : 1.1))
                                 shape: MaterialShape.Shape.Pentagon
                                 color: root.accentFace
                             }
@@ -369,6 +370,7 @@ AbstractBackgroundWidget {
                                 border.color: root.accentMark
 
                                 StyledText {
+                                    id: dayNumber
                                     anchors.centerIn: parent
                                     text: dayCell.modelData.day
                                     // the next month's days step back to the quiet ink (3:1 on the wallpaper), not to 32 %
@@ -382,8 +384,8 @@ AbstractBackgroundWidget {
                                 Rectangle {
                                     visible: dayCell.modelData.marked === true
                                     anchors.horizontalCenter: parent.horizontalCenter
-                                    anchors.bottom: parent.bottom
-                                    anchors.bottomMargin: Math.max(1, Math.round(parent.height * 0.12))
+                                    // under the figures' baseline: pinned to the cell's foot, a small month's dot sat on the 31
+                                    y: dayNumber.y + dayNumber.baselineOffset + Math.max(2, Math.round(2 * root.scaleFactor))
                                     width: Math.max(3, Math.round(4 * root.scaleFactor))
                                     height: width
                                     radius: width / 2

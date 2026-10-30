@@ -213,7 +213,7 @@ AbstractBackgroundWidget {
                     Layout.alignment: Qt.AlignHCenter
                     Layout.topMargin: root.showIcon ? Math.round(2 * root.scaleFactor) : 0
                     // the hour labels sit inside the ring at 06 and 18: the time stays between them
-                    Layout.maximumWidth: ringArea.size * (root.showHourLabels ? 0.42 : 0.56)
+                    Layout.maximumWidth: ringArea.size * (root.showHourLabels ? 0.36 : 0.5)
                     text: DateTime.time
                     fontSizeMode: Text.Fit
                     minimumPixelSize: 12

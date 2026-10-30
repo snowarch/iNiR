@@ -144,6 +144,10 @@ AbstractBackgroundWidget {
         default property alias footerData: footerSlot.data
 
         readonly property bool instrumentMode: root.instrument
+        // three to a row: the name can't share its row with the key, it reads under the value instead
+        readonly property bool narrow: !timerCard.instrumentMode && root.materialSized && root.sizedColumns === 3
+        // stacked three high (large): wide and short, its key and figure step down so the minute keys keep their row
+        readonly property bool flat: !timerCard.instrumentMode && root.materialSized && timerCard.width > timerCard.height * 1.8
         readonly property color face: root.widgetSemanticContainer(timerCard.semanticRole)
         readonly property color cardInk: root.widgetSemanticOnContainer(timerCard.semanticRole)
         readonly property color signal: root.widgetSemanticForeground(timerCard.semanticRole)
@@ -210,8 +214,13 @@ AbstractBackgroundWidget {
                     strong: true
                 }
 
+                Item {
+                    visible: timerCard.narrow
+                    Layout.fillWidth: true
+                }
+
                 StyledText {
-                    visible: !timerCard.instrumentMode
+                    visible: !timerCard.instrumentMode && !timerCard.narrow
                     Layout.fillWidth: true
                     text: timerCard.label
                     color: timerCard.mutedInk
@@ -240,7 +249,7 @@ AbstractBackgroundWidget {
 
                 RippleButton {
                     visible: !timerCard.instrumentMode
-                    Layout.preferredWidth: Math.round((root.materialSized && root.sizedColumns === 3 ? 26 : 34) * root.scaleFactor)
+                    Layout.preferredWidth: Math.round((timerCard.narrow ? 26 : timerCard.flat ? 24 : 34) * root.scaleFactor)
                     Layout.preferredHeight: Layout.preferredWidth
                     buttonRadius: Appearance.rounding.full
                     colBackground: ColorUtils.applyAlpha(timerCard.cardInk, 0.10)
@@ -269,8 +278,9 @@ AbstractBackgroundWidget {
                 horizontalAlignment: Text.AlignLeft
                 fontSizeMode: Text.Fit
                 minimumPixelSize: Math.max(15, Math.round(16 * root.scaleFactor))
+                // a third of a stacked card's height left no room for the minute keys under it
                 font.pixelSize: root.materialSized
-                    ? Math.round(Math.min(timerCard.height * 0.3, timerCard.width * 0.24, 52 * root.scaleFactor))
+                    ? Math.round(Math.min(timerCard.height * (timerCard.flat ? 0.2 : 0.26), timerCard.width * 0.24, 52 * root.scaleFactor))
                     : timerCard.instrumentMode
                     ? Math.max(24, Math.round(30 * root.scaleFactor))
                     : Math.round(Appearance.font.pixelSize.large * root.scaleFactor)
@@ -280,6 +290,20 @@ AbstractBackgroundWidget {
                 font.family: root.widgetNumbersFamily
                 font.features: ({ "tnum": 1 })
                 font.letterSpacing: timerCard.instrumentMode ? -1 : 0
+            }
+
+            StyledText {
+                visible: timerCard.narrow
+                Layout.fillWidth: true
+                Layout.topMargin: -Math.round(2 * root.scaleFactor)
+                text: timerCard.label
+                color: timerCard.mutedInk
+                font.family: root.widgetBodyFamily
+                font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
+                font.weight: root.widgetLabelWeight
+                fontSizeMode: Text.HorizontalFit
+                minimumPixelSize: Math.round(9 * root.scaleFactor)
+                elide: Text.ElideRight
             }
 
             Item {
@@ -312,7 +336,7 @@ AbstractBackgroundWidget {
                 Layout.fillWidth: true
                 Layout.preferredHeight: timerCard.instrumentMode
                     ? Math.max(27, Math.round(29 * root.scaleFactor))
-                    : (footerSlot.children.length > 0 ? Math.round(22 * root.scaleFactor) : 0)
+                    : (footerSlot.children.length > 0 ? Math.round(26 * root.scaleFactor) : 0)
                 spacing: Math.round(4 * root.scaleFactor)
 
                 RippleButton {
@@ -428,6 +452,7 @@ AbstractBackgroundWidget {
         }
 
         TimerCard {
+            id: countdownCard
             icon: "hourglass_top"
             value: root.formatSeconds(TimerService.countdownSecondsLeft)
             label: Translation.tr("Countdown")
@@ -446,19 +471,26 @@ AbstractBackgroundWidget {
                 anchors.fill: parent
                 spacing: Math.round(4 * root.scaleFactor)
 
+                // a wide card keeps its keys as two pills at the right: stretched across it they read as stray text
+                Item {
+                    visible: !countdownCard.narrow && !root.instrument
+                    Layout.fillWidth: true
+                }
+
                 Repeater {
                     // a narrow slot keeps one key: two ran past the card
                     model: minuteKeys.width < Math.round(72 * root.scaleFactor) ? [5] : [1, 5]
                     RippleButton {
                         id: minuteButton
                         required property int modelData
-                        Layout.fillWidth: true
+                        Layout.fillWidth: countdownCard.narrow || root.instrument
+                        Layout.preferredWidth: Math.round(48 * root.scaleFactor)
                         Layout.minimumWidth: Math.round(32 * root.scaleFactor)
                         Layout.fillHeight: true
                         buttonRadius: root.instrument || root.widgetEditorial
                             ? root.widgetControlRadius : Appearance.rounding.full
                         colBackground: root.instrument
-                            ? "transparent" : ColorUtils.applyAlpha(root.primaryInk, 0.10)
+                            ? "transparent" : ColorUtils.applyAlpha(root.primaryInk, 0.14)
                         colBackgroundHover: ColorUtils.applyAlpha(
                             root.instrument ? root.widgetAccentVisible : root.primaryInk, 0.16)
                         colRipple: ColorUtils.applyAlpha(
@@ -470,7 +502,7 @@ AbstractBackgroundWidget {
                             text: "+" + modelData + "m"
                             color: root.instrument ? root.widgetInkMuted : root.primaryInk
                             font.family: root.widgetNumbersFamily
-                            font.pixelSize: Math.max(10, Math.round(11 * root.scaleFactor))
+                            font.pixelSize: Math.max(11, Math.round(12 * root.scaleFactor))
                             font.weight: root.instrument || root.widgetEditorial
                                 ? root.widgetLabelWeight : Font.DemiBold
                         }

@@ -248,8 +248,7 @@ AbstractBackgroundWidget {
             text: root.instrument ? Translation.tr("NOTE") : Translation.tr("Notes")
             color: root.instrument ? root.widgetInk : root.widgetInkMuted
             font.family: root.instrument ? Appearance.font.family.monospace : root.widgetTitleFamily
-            font.pixelSize: (root.instrument ? Appearance.font.pixelSize.smaller
-                : Appearance.font.pixelSize.smallest) * root.scaleFactor
+            font.pixelSize: Appearance.font.pixelSize.smaller * root.scaleFactor
             font.weight: root.instrument ? Font.DemiBold : root.widgetLabelWeight
             font.letterSpacing: root.instrument ? Math.round(1.2 * root.scaleFactor) : 0
             elide: Text.ElideRight
@@ -261,13 +260,6 @@ AbstractBackgroundWidget {
             font.family: root.widgetNumbersFamily
             font.pixelSize: Appearance.font.pixelSize.smaller * root.scaleFactor
             font.weight: Font.DemiBold
-        }
-        Rectangle {
-            visible: !root.instrument && !root.editing
-            Layout.preferredWidth: 24 * root.scaleFactor
-            Layout.preferredHeight: 3 * root.scaleFactor
-            radius: height / 2
-            color: root.widgetAccentVisible
         }
         // Notes save as you type; "Done" only lets go of the keyboard, where the title already is.
         StyledText {

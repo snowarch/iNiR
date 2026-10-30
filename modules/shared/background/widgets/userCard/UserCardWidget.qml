@@ -414,18 +414,19 @@ AbstractBackgroundWidget {
                 implicitWidth: Math.round(38 * root.scaleFactor)
                 implicitHeight: Math.round(38 * root.scaleFactor)
                 buttonRadius: height / 2
-                colBackground: root.widgetSemanticContainer(root.widgetSecondaryRole)
-                colBackgroundHover: ColorUtils.mix(root.widgetSemanticContainer(root.widgetSecondaryRole),
-                    root.widgetSemanticOnContainer(root.widgetSecondaryRole), 0.90)
-                colRipple: ColorUtils.mix(root.widgetSemanticContainer(root.widgetSecondaryRole),
-                    root.widgetSemanticOnContainer(root.widgetSecondaryRole), 0.80)
+                // the lock's tone: one family for the keys, red only where the session ends (three tones read as noise)
+                colBackground: root.widgetSemanticContainer(root.widgetPrimaryRole)
+                colBackgroundHover: ColorUtils.mix(root.widgetSemanticContainer(root.widgetPrimaryRole),
+                    root.widgetSemanticOnContainer(root.widgetPrimaryRole), 0.90)
+                colRipple: ColorUtils.mix(root.widgetSemanticContainer(root.widgetPrimaryRole),
+                    root.widgetSemanticOnContainer(root.widgetPrimaryRole), 0.80)
                 onClicked: GlobalStates.openSettings()
                 contentItem: MaterialSymbol {
                     anchors.centerIn: parent
                     text: "settings"
                     fill: 1
                     iconSize: Math.round(17 * root.scaleFactor)
-                    color: root.widgetSemanticOnContainer(root.widgetSecondaryRole)
+                    color: root.widgetSemanticOnContainer(root.widgetPrimaryRole)
                 }
                 StyledToolTip {
                     text: Translation.tr("Settings")
