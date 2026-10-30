@@ -10016,5 +10016,13 @@
   "Island rise": "Altura de la Isla",
   "How far the Island rises out of the shelf's middle; None keeps one straight edge.": "Cuánto sobresale la Isla del centro del estante; Ninguna deja un borde recto.",
   "Deep": "Profunda",
-  "a shelf across it": "un estante de lado a lado"
+  "a shelf across it": "un estante de lado a lado",
+  "Tap to remove": "Toca para quitar",
+  "Tap to add": "Toca para agregar",
+  "Added, in this order": "Agregados, en este orden",
+  "Nothing added yet": "Nada agregado todavía",
+  "Filter %1 available": "Filtrar %1 disponibles",
+  "All %1": "Todos (%1)",
+  "Nothing matches": "Nada coincide",
+  "Everything is added": "Ya está todo agregado"
 }

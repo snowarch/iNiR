@@ -10016,5 +10016,13 @@
   "Island rise": "Relief de l'Îlot",
   "How far the Island rises out of the shelf's middle; None keeps one straight edge.": "Jusqu'où l'Îlot sort du milieu de l'étagère ; Aucun garde un bord droit.",
   "Deep": "Profond",
-  "a shelf across it": "une étagère d'un bord à l'autre"
+  "a shelf across it": "une étagère d'un bord à l'autre",
+  "Tap to remove": "Touche pour retirer",
+  "Tap to add": "Touche pour ajouter",
+  "Added, in this order": "Ajoutés, dans cet ordre",
+  "Nothing added yet": "Rien d'ajouté pour l'instant",
+  "Filter %1 available": "Filtrer %1 disponibles",
+  "All %1": "Tous (%1)",
+  "Nothing matches": "Aucun résultat",
+  "Everything is added": "Tout est ajouté"
 }

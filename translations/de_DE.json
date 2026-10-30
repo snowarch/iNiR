@@ -10016,5 +10016,13 @@
   "Island rise": "Inselhöhe",
   "How far the Island rises out of the shelf's middle; None keeps one straight edge.": "Wie weit die Insel aus der Mitte des Regals ragt; Keine lässt eine gerade Kante.",
   "Deep": "Tief",
-  "a shelf across it": "ein Regal über die Kante"
+  "a shelf across it": "ein Regal über die Kante",
+  "Tap to remove": "Tippen zum Entfernen",
+  "Tap to add": "Tippen zum Hinzufügen",
+  "Added, in this order": "Hinzugefügt, in dieser Reihenfolge",
+  "Nothing added yet": "Noch nichts hinzugefügt",
+  "Filter %1 available": "%1 verfügbare filtern",
+  "All %1": "Alle %1",
+  "Nothing matches": "Nichts passt",
+  "Everything is added": "Alles ist hinzugefügt"
 }
