@@ -10012,7 +10012,6 @@
   "How heavy every glyph's line is.": "Qué tan grueso es el trazo de cada glifo.",
   "Browse themes": "Ver temas",
   "Whole redesigns of iRiS and the ones you saved, in Customize: try one, Undo takes it back.": "Rediseños completos de iRiS y los que guardaste, en Personalizar: prueba uno, Deshacer lo revierte.",
-  "Hug its content in the middle, hug one end, run a shelf across the whole edge with the Island rising from it, or a thin menu bar with the Island hanging from it as a notch.": "Ajusta su contenido en el centro, en un extremo, tiende un estante por todo el borde con la Isla subiendo de él, o una barra de menú fina con la Isla colgando como muesca.",
   "Island rise": "Altura de la Isla",
   "How far the Island rises out of the shelf's middle; None keeps one straight edge.": "Cuánto sobresale la Isla del centro del estante; Ninguna deja un borde recto.",
   "Deep": "Profunda",
@@ -10024,5 +10023,8 @@
   "Filter %1 available": "Filtrar %1 disponibles",
   "All %1": "Todos (%1)",
   "Nothing matches": "Nada coincide",
-  "Everything is added": "Ya está todo agregado"
+  "Everything is added": "Ya está todo agregado",
+  "Hug its content in the middle, dock it in a corner melted into both walls, run a shelf across the whole edge with the Island rising from it, or a thin menu bar with the Island hanging from it as a notch.": "Ajusta su contenido en el centro, la acomoda en una esquina fundida con las dos paredes, tiende un estante por todo el borde con la Isla subiendo de él, o una barra de menú fina con la Isla colgando como muesca.",
+  "Corner left": "Esquina izquierda",
+  "Corner right": "Esquina derecha"
 }

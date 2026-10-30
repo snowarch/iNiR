@@ -10012,7 +10012,6 @@
   "How heavy every glyph's line is.": "L'épaisseur du trait de chaque glyphe.",
   "Browse themes": "Parcourir les thèmes",
   "Whole redesigns of iRiS and the ones you saved, in Customize: try one, Undo takes it back.": "Des refontes complètes d'iRiS et celles que tu as gardées, dans Personnaliser : essaies-en une, Annuler la retire.",
-  "Hug its content in the middle, hug one end, run a shelf across the whole edge with the Island rising from it, or a thin menu bar with the Island hanging from it as a notch.": "Serre son contenu au milieu ou à un bout, tend une étagère sur tout le bord d'où monte l'Îlot, ou une fine barre de menus d'où l'Îlot pend comme une encoche.",
   "Island rise": "Relief de l'Îlot",
   "How far the Island rises out of the shelf's middle; None keeps one straight edge.": "Jusqu'où l'Îlot sort du milieu de l'étagère ; Aucun garde un bord droit.",
   "Deep": "Profond",
@@ -10024,5 +10023,8 @@
   "Filter %1 available": "Filtrer %1 disponibles",
   "All %1": "Tous (%1)",
   "Nothing matches": "Aucun résultat",
-  "Everything is added": "Tout est ajouté"
+  "Everything is added": "Tout est ajouté",
+  "Hug its content in the middle, dock it in a corner melted into both walls, run a shelf across the whole edge with the Island rising from it, or a thin menu bar with the Island hanging from it as a notch.": "Serre son contenu au milieu, se loge dans un coin fondu aux deux bords, tend une étagère sur tout le bord d'où monte l'Îlot, ou une fine barre de menus d'où l'Îlot pend comme une encoche.",
+  "Corner left": "Coin gauche",
+  "Corner right": "Coin droit"
 }
