@@ -285,12 +285,16 @@ PanelWindow {
         root.screenshotReady = false
         screenshotProc.running = true
     }
+    // Nothing is drawn until grim has the screen: drawn at once, the veil was sometimes in the capture, so the frozen
+    // picture came out dark under a second veil and the saved shot dark too (his 10-30).
+    property bool captured: false
 
     Process {
         id: screenshotProc
         running: false
         command: ["/usr/bin/bash", "-c", `/usr/bin/mkdir -p '${StringUtils.shellSingleQuoteEscape(root.screenshotDir)}' && /usr/bin/grim -o '${StringUtils.shellSingleQuoteEscape(root.screen.name)}' '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}'`]
         onExited: (exitCode, exitStatus) => {
+            root.captured = true
             if (exitCode !== 0) {
                 root.screenshotReady = false
                 Quickshell.execDetached(["/usr/bin/notify-send", "Region search failed", "grim failed to capture the screen" , "-a", "Region Selector", "-t", "4000"])
@@ -510,6 +514,7 @@ PanelWindow {
     Rectangle {
         anchors.fill: parent
         color: "transparent"
+        opacity: root.captured ? 1 : 0
 
         Image {
             anchors.fill: parent
