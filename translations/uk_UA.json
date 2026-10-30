@@ -9999,5 +9999,7 @@
   "Settings opens over the desktop, so each change shows on the bar, panels and wallpaper as you make it. Off opens it as a window.": "Налаштування відкриваються поверх стільниці, і кожна зміна одразу видна на панелі, бічних панелях і шпалерах. Вимкнено: в окремому вікні.",
   "On starts it at login. External entries live in your niri file below; edit them there.": "Увімкнено: запускається під час входу. Зовнішні записи є у файлі niri нижче; змінюйте їх там.",
   "Off on new installs. Push the pointer to the edge, then click a workspace to go there, drag a window onto another, or hold × to close it.": "У нових встановленнях вимкнено. Підведіть вказівник до краю, потім клацніть робочий простір, щоб перейти, перетягніть вікно на інший або утримуйте ×, щоб закрити його.",
-  "niri starts these at login, not iNiR, so they keep running when the shell restarts.": "Їх запускає niri під час входу, а не iNiR, тому вони працюють далі, коли оболонка перезапускається."
+  "niri starts these at login, not iNiR, so they keep running when the shell restarts.": "Їх запускає niri під час входу, а не iNiR, тому вони працюють далі, коли оболонка перезапускається.",
+  "Picker": "Вибір шпалер",
+  "iRiS's gallery grows out of the Island; Grid, Coverflow and Launcher are Material's pickers, opened the same way.": "Галерея iRiS виростає з Острова; Сітка, Coverflow і Лаунчер — вікна вибору з Material, відкриваються так само."
 }

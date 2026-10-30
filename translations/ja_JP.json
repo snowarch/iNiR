@@ -9999,5 +9999,7 @@
   "Settings opens over the desktop, so each change shows on the bar, panels and wallpaper as you make it. Off opens it as a window.": "設定をデスクトップの上に開くので、変更がその場でバー、パネル、壁紙に反映されます。オフにするとウィンドウで開きます。",
   "On starts it at login. External entries live in your niri file below; edit them there.": "オンにするとログイン時に起動します。外部の項目は下の niri ファイルにあるので、そちらで編集してください。",
   "Off on new installs. Push the pointer to the edge, then click a workspace to go there, drag a window onto another, or hold × to close it.": "新規インストールではオフです。ポインターを端に押し当て、ワークスペースをクリックして移動、ウィンドウを別のワークスペースへドラッグ、× を長押しで閉じます。",
-  "niri starts these at login, not iNiR, so they keep running when the shell restarts.": "これらはログイン時に iNiR ではなく niri が起動するので、シェルを再起動しても動き続けます。"
+  "niri starts these at login, not iNiR, so they keep running when the shell restarts.": "これらはログイン時に iNiR ではなく niri が起動するので、シェルを再起動しても動き続けます。",
+  "Picker": "ピッカー",
+  "iRiS's gallery grows out of the Island; Grid, Coverflow and Launcher are Material's pickers, opened the same way.": "iRiS のギャラリーはアイランドから開きます。グリッド、カバーフロー、ランチャーは Material のピッカーで、同じ操作で開きます。"
 }

@@ -9999,5 +9999,7 @@
   "Settings opens over the desktop, so each change shows on the bar, panels and wallpaper as you make it. Off opens it as a window.": "설정이 바탕 화면 위에 열려서, 바꾸는 즉시 바, 패널, 배경화면에 반영됩니다. 끄면 창으로 열립니다.",
   "On starts it at login. External entries live in your niri file below; edit them there.": "켜면 로그인할 때 시작합니다. 외부 항목은 아래 niri 파일에 있으니 그곳에서 고치세요.",
   "Off on new installs. Push the pointer to the edge, then click a workspace to go there, drag a window onto another, or hold × to close it.": "새로 설치하면 꺼져 있습니다. 포인터를 가장자리로 밀고, 작업 공간을 클릭해 이동하거나 창을 다른 곳으로 끌거나 ×를 길게 눌러 닫습니다.",
-  "niri starts these at login, not iNiR, so they keep running when the shell restarts.": "로그인할 때 iNiR가 아니라 niri가 실행하므로, 셸을 다시 시작해도 계속 실행됩니다."
+  "niri starts these at login, not iNiR, so they keep running when the shell restarts.": "로그인할 때 iNiR가 아니라 niri가 실행하므로, 셸을 다시 시작해도 계속 실행됩니다.",
+  "Picker": "선택기",
+  "iRiS's gallery grows out of the Island; Grid, Coverflow and Launcher are Material's pickers, opened the same way.": "iRiS 갤러리는 아일랜드에서 펼쳐집니다. 그리드, 커버플로, 런처는 Material의 선택기이며 같은 방법으로 열립니다."
 }

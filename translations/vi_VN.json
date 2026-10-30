@@ -9999,5 +9999,7 @@
   "Settings opens over the desktop, so each change shows on the bar, panels and wallpaper as you make it. Off opens it as a window.": "Cài đặt mở trên màn hình nền, nên mỗi thay đổi hiện ngay trên thanh, các bảng và hình nền. Tắt thì mở thành cửa sổ.",
   "On starts it at login. External entries live in your niri file below; edit them there.": "Bật thì ứng dụng chạy khi đăng nhập. Mục bên ngoài nằm trong tệp niri bên dưới; hãy sửa ở đó.",
   "Off on new installs. Push the pointer to the edge, then click a workspace to go there, drag a window onto another, or hold × to close it.": "Tắt khi mới cài. Đẩy con trỏ ra cạnh màn hình, rồi nhấp một không gian làm việc để chuyển đến, kéo cửa sổ sang không gian khác hoặc giữ × để đóng.",
-  "niri starts these at login, not iNiR, so they keep running when the shell restarts.": "niri khởi chạy chúng khi đăng nhập, không phải iNiR, nên chúng vẫn chạy khi shell khởi động lại."
+  "niri starts these at login, not iNiR, so they keep running when the shell restarts.": "niri khởi chạy chúng khi đăng nhập, không phải iNiR, nên chúng vẫn chạy khi shell khởi động lại.",
+  "Picker": "Bộ chọn",
+  "iRiS's gallery grows out of the Island; Grid, Coverflow and Launcher are Material's pickers, opened the same way.": "Thư viện của iRiS mở ra từ Đảo; Lưới, Coverflow và Trình khởi chạy là bộ chọn của Material, mở theo cùng một cách."
 }

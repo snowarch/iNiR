@@ -9999,5 +9999,7 @@
   "Settings opens over the desktop, so each change shows on the bar, panels and wallpaper as you make it. Off opens it as a window.": "Настройки открываются поверх рабочего стола, и каждое изменение сразу видно на панели, в боковых панелях и на обоях. Выключено: в отдельном окне.",
   "On starts it at login. External entries live in your niri file below; edit them there.": "Включено: запускается при входе. Внешние записи находятся в файле niri ниже; меняйте их там.",
   "Off on new installs. Push the pointer to the edge, then click a workspace to go there, drag a window onto another, or hold × to close it.": "В новых установках выключено. Подведите указатель к краю, затем щёлкните рабочий стол, чтобы перейти, перетащите окно на другой или удерживайте ×, чтобы закрыть его.",
-  "niri starts these at login, not iNiR, so they keep running when the shell restarts.": "Их запускает niri при входе, а не iNiR, поэтому они продолжают работать при перезапуске оболочки."
+  "niri starts these at login, not iNiR, so they keep running when the shell restarts.": "Их запускает niri при входе, а не iNiR, поэтому они продолжают работать при перезапуске оболочки.",
+  "Picker": "Выбор обоев",
+  "iRiS's gallery grows out of the Island; Grid, Coverflow and Launcher are Material's pickers, opened the same way.": "Галерея iRiS вырастает из Острова; Сетка, Coverflow и Лаунчер — окна выбора из Material, открываются так же."
 }

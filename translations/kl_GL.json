@@ -9999,5 +9999,7 @@
   "Settings opens over the desktop, so each change shows on the bar, panels and wallpaper as you make it. Off opens it as a window.": "Inissititernerit desktop-ip qulaani ammartarput, taamaalilluni allannguutit tamarmik bar-imi, panel-ini tunuliaqummilu takuneqartarput. Qamitsinneqarpat window-itut ammartarput.",
   "On starts it at login. External entries live in your niri file below; edit them there.": "Ikitaraangat iserninni aallartittarpoq. Avataaneersut niri-p fiilianiipput ataani; tassani allanngortikkit.",
   "Off on new installs. Push the pointer to the edge, then click a workspace to go there, drag a window onto another, or hold × to close it.": "Nutaamik ikkussuinermi qamitsinneqarpoq. Pointer killinganut nuukkiuk, taava workspace tooruk tassunga ingerlaniarlutit, window allamut nusukkiuk imaluunniit × tooqqatiinnarlugu matuniarlugu.",
-  "niri starts these at login, not iNiR, so they keep running when the shell restarts.": "Taakku niri-p iserninni aallartittarpai, iNiR-ip pinnani, taamaattumik shell aallarteqqinneqaraangat suli ingerlasarput."
+  "niri starts these at login, not iNiR, so they keep running when the shell restarts.": "Taakku niri-p iserninni aallartittarpai, iNiR-ip pinnani, taamaattumik shell aallarteqqinneqaraangat suli ingerlasarput.",
+  "Picker": "Picker",
+  "iRiS's gallery grows out of the Island; Grid, Coverflow and Launcher are Material's pickers, opened the same way.": "iRiS's gallery grows out of the Island; Grid, Coverflow and Launcher are Material's pickers, opened the same way."
 }

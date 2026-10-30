@@ -9999,5 +9999,7 @@
   "Settings opens over the desktop, so each change shows on the bar, panels and wallpaper as you make it. Off opens it as a window.": "Le impostazioni si aprono sopra il desktop, così vedi ogni modifica su barra, pannelli e sfondo mentre la fai. Spento le apre in una finestra.",
   "On starts it at login. External entries live in your niri file below; edit them there.": "Acceso lo avvia all'accesso. Le voci esterne sono nel tuo file di niri qui sotto; modificale lì.",
   "Off on new installs. Push the pointer to the edge, then click a workspace to go there, drag a window onto another, or hold × to close it.": "Spento nelle nuove installazioni. Porta il puntatore al bordo, poi fai clic su uno spazio per andarci, trascina una finestra su un altro o tieni premuto × per chiuderla.",
-  "niri starts these at login, not iNiR, so they keep running when the shell restarts.": "Li avvia niri all'accesso, non iNiR, quindi continuano a girare quando la shell si riavvia."
+  "niri starts these at login, not iNiR, so they keep running when the shell restarts.": "Li avvia niri all'accesso, non iNiR, quindi continuano a girare quando la shell si riavvia.",
+  "Picker": "Selettore",
+  "iRiS's gallery grows out of the Island; Grid, Coverflow and Launcher are Material's pickers, opened the same way.": "La galleria di iRiS nasce dall'Isola; Griglia, Coverflow e Launcher sono i selettori di Material, aperti allo stesso modo."
 }

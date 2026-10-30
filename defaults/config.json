@@ -2750,6 +2750,7 @@
         },
         "wallpaper": {
             "livePreview": true,
+            "picker": "iris",
             "layout": "reel",
             "motion": true,
             "liveQuality": "best",

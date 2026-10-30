@@ -9999,5 +9999,7 @@
   "Settings opens over the desktop, so each change shows on the bar, panels and wallpaper as you make it. Off opens it as a window.": "Les paramètres s'ouvrent par-dessus le bureau : chaque changement apparaît aussitôt sur la barre, les panneaux et le fond d'écran. Désactivé, ils s'ouvrent dans une fenêtre.",
   "On starts it at login. External entries live in your niri file below; edit them there.": "Activé, il démarre à la connexion. Les entrées externes sont dans votre fichier niri ci-dessous ; modifiez-les là.",
   "Off on new installs. Push the pointer to the edge, then click a workspace to go there, drag a window onto another, or hold × to close it.": "Désactivé sur les nouvelles installations. Poussez le pointeur au bord, puis cliquez sur un espace pour y aller, glissez une fenêtre vers un autre ou maintenez × pour la fermer.",
-  "niri starts these at login, not iNiR, so they keep running when the shell restarts.": "C'est niri qui les lance à la connexion, pas iNiR : ils continuent de tourner quand le shell redémarre."
+  "niri starts these at login, not iNiR, so they keep running when the shell restarts.": "C'est niri qui les lance à la connexion, pas iNiR : ils continuent de tourner quand le shell redémarre.",
+  "Picker": "Sélecteur",
+  "iRiS's gallery grows out of the Island; Grid, Coverflow and Launcher are Material's pickers, opened the same way.": "La galerie d'iRiS naît de l'Îlot ; Grille, Défilement des pochettes et Lanceur sont les sélecteurs de Material, ouverts de la même façon."
 }

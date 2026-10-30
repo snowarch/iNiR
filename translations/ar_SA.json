@@ -9999,5 +9999,7 @@
   "Settings opens over the desktop, so each change shows on the bar, panels and wallpaper as you make it. Off opens it as a window.": "تُفتح الإعدادات فوق سطح المكتب، فيظهر كل تغيير على الشريط واللوحات والخلفية فور إجرائه. عند الإيقاف تُفتح كنافذة.",
   "On starts it at login. External entries live in your niri file below; edit them there.": "التفعيل يشغّله عند تسجيل الدخول. العناصر الخارجية موجودة في ملف niri أدناه؛ عدّلها هناك.",
   "Off on new installs. Push the pointer to the edge, then click a workspace to go there, drag a window onto another, or hold × to close it.": "معطّل في التثبيتات الجديدة. ادفع المؤشر إلى الحافة، ثم انقر مساحة عمل للانتقال إليها، أو اسحب نافذة إلى أخرى، أو اضغط مطولًا على × لإغلاقها.",
-  "niri starts these at login, not iNiR, so they keep running when the shell restarts.": "يشغّل niri هذه عند تسجيل الدخول، لا iNiR، لذا تبقى تعمل عند إعادة تشغيل الواجهة."
+  "niri starts these at login, not iNiR, so they keep running when the shell restarts.": "يشغّل niri هذه عند تسجيل الدخول، لا iNiR، لذا تبقى تعمل عند إعادة تشغيل الواجهة.",
+  "Picker": "المنتقي",
+  "iRiS's gallery grows out of the Island; Grid, Coverflow and Launcher are Material's pickers, opened the same way.": "معرض iRiS يخرج من الجزيرة؛ الشبكة وCoverflow والمشغّل هي منتقيات Material، وتُفتح بالطريقة نفسها."
 }
