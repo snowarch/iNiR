@@ -950,7 +950,19 @@ ShellRoot {
             // the component under a load still running. Going back to a family is instant.
             property bool criticalUsed: false
             property bool panelsUsed: false
-            onChosenChanged: if (family.chosen) family.criticalUsed = true
+            onChosenChanged: {
+                if (!family.chosen) return
+                family.criticalUsed = true
+                if (root._transitionInProgress) Qt.callLater(family.finishNow)
+            }
+            // Under the switch's curtain nothing is on screen to keep smooth, so the parts finish at once instead of in
+            // the incubator's 10 ms slices between frames: Material stood after 3.7 s fresh, 9.6 s on a shell
+            // reloaded all day.
+            // Reading item while it loads completes it (LazyLoader docs, both runtimes).
+            function finishNow() {
+                void criticalParts.item
+                void panelParts.item
+            }
             onPanelsWantedChanged: if (family.panelsWanted) family.panelsUsed = true
             // The switch's curtain lifts once the chosen family stands: lifted on the swap alone, Material was still
             // building its panels on screen for a second or two (his 10-30: "se lagea todo").
