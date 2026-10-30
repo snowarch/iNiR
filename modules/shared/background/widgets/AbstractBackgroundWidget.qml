@@ -2393,8 +2393,10 @@ AbstractWidget {
 
     property bool needsColText: false
     // Text with no plate of its own always reads the wallpaper under it: legibility is the floor, not a setting
-    // (his 10-30: light ink vanished on a white wallpaper with adaptation off). The switches keep their colours.
-    readonly property bool _regionSampling: root.needsColText || root.irisReadsRegion
+    // (his 10-30: light ink vanished on a white wallpaper with adaptation off). The switches keep their colours. A
+    // widget with no plate reads it whether it asked or not: the image converter's captions took the scheme's ink and
+    // went dark on a dark mountain in light mode.
+    readonly property bool _regionSampling: root.needsColText || root.irisReadsRegion || !root.widgetHasSurface
     // iRiS glass turns to frost over a bright wallpaper only when asked (off, the glass darkens instead); everything
     // else follows the wallpaper always.
     readonly property bool positionColorAdaptationEnabled: !root.widgetIrisFamily
@@ -3041,12 +3043,17 @@ AbstractWidget {
             targetContrast = 3.0): color {
         const set = root.widgetSemanticSet(role);
         const candidates = [set.color, set.onContainer, set.onColor, set.container, root.widgetInk];
+        // Bare on the wallpaper a colour has to read on the region's worst part too, or the ink takes its place: against
+        // the mean alone a light accent passed on a sky half cloud and vanished on the bright half (month's weekend).
+        const bare = !root.widgetHasSurface && root._hasBrightness && Qt.colorEqual(backdrop, root.accentBackdrop);
+        const ratioOf = c => bare ? Math.min(ColorUtils.contrastRatio(c, backdrop), ColorUtils.contrastRatio(c, root._worstBackdrop))
+            : ColorUtils.contrastRatio(c, backdrop);
         let best = candidates[0];
-        let bestRatio = ColorUtils.contrastRatio(best, backdrop);
+        let bestRatio = ratioOf(best);
         for (let i = 0; i < candidates.length; i++) {
             const candidate = Qt.color(candidates[i]);
             if (!candidate.valid) continue;
-            const ratio = ColorUtils.contrastRatio(candidate, backdrop);
+            const ratio = ratioOf(candidate);
             if (ratio >= targetContrast) return candidate;
             if (ratio > bestRatio) {
                 best = candidate;
@@ -3064,6 +3071,20 @@ AbstractWidget {
         return ColorUtils.readableAccentInk(source, root.accentBackdrop,
             targetContrast, root.widgetInk);
     }
+
+    // A filled mark straight on the wallpaper (today, a chip, an icon's shape) stands 3:1 off the region under it: the
+    // role's container when it does, else the role's colour, each with its own ink. Dark mode's container is a deep tone
+    // and today's pentagon sank into a dark cloud (10-30).
+    function widgetMark(role: string): var {
+        const set = root.widgetSemanticSet(role);
+        if (root.widgetHasSurface || !root._hasBrightness)
+            return { fill: set.container, ink: set.onContainer };
+        const off = c => Math.min(ColorUtils.contrastRatio(c, root._regionBg), ColorUtils.contrastRatio(c, root._worstBackdrop));
+        const container = off(set.container);
+        return container >= 3 || container >= off(set.color)
+            ? { fill: set.container, ink: set.onContainer } : { fill: set.color, ink: set.onColor };
+    }
+    readonly property var widgetPrimaryMark: root.widgetMark(root.widgetPrimaryRole)
 
     readonly property color widgetAccentVisible: root.widgetSemanticForeground(root.widgetPrimaryRole)
     readonly property color widgetAccent2Visible: root.widgetSemanticForeground(root.widgetSecondaryRole)

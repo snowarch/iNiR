@@ -388,8 +388,8 @@ AbstractBackgroundWidget {
                     MaterialShapeWrappedMaterialSymbol {
                         Layout.alignment: Qt.AlignTop
                         shape: MaterialShape.Shape.Sunny
-                        color: root.widgetSemanticContainer(root.widgetPrimaryRole)
-                        colSymbol: root.widgetSemanticOnContainer(root.widgetPrimaryRole)
+                        color: root.widgetPrimaryMark.fill
+                        colSymbol: root.widgetPrimaryMark.ink
                         text: Icons.getWeatherIcon(Weather.data?.wCode, Weather.isNightNow()) ?? "cloud"
                         fill: 1
                         iconSize: Math.round(24 * root.scaleFactor)

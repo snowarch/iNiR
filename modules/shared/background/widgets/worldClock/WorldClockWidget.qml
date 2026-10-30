@@ -600,7 +600,7 @@ AbstractBackgroundWidget {
                     implicitWidth: localChip.implicitWidth + Math.round(18 * root.scaleFactor)
                     implicitHeight: localChip.implicitHeight + Math.round(8 * root.scaleFactor)
                     radius: root.widgetEditorial ? root.widgetControlRadius : height / 2
-                    color: root.widgetSemanticContainer(root.widgetPrimaryRole)
+                    color: root.widgetPrimaryMark.fill
 
                     RowLayout {
                         id: localChip
@@ -611,13 +611,13 @@ AbstractBackgroundWidget {
                             text: "place"
                             fill: 1
                             iconSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
-                            color: root.widgetSemanticOnContainer(root.widgetPrimaryRole)
+                            color: root.widgetPrimaryMark.ink
                         }
 
                         StyledText {
                             text: root.localCity || Translation.tr("Local")
                             elide: Text.ElideRight
-                            color: root.widgetSemanticOnContainer(root.widgetPrimaryRole)
+                            color: root.widgetPrimaryMark.ink
                             font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
                             font.weight: root.widgetLabelWeight
                         }
