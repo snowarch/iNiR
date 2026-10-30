@@ -945,15 +945,28 @@ ShellRoot {
             readonly property bool chosen: Config.ready && Plugins.ready && !root._familyPanelsSuspended
                 && (Config.options?.panelFamily ?? "ii") === family.modelData
             readonly property bool panelsWanted: family.chosen && GlobalStates.deferredPanelsReady
-            // A part gets its source the first time it's wanted and keeps it: a LazyLoader compiles its source as soon
-            // as it has one (every family's parts compiled before the first frame), and dropping the source would delete
-            // the component under a load still running. Going back to a family is instant.
+            // A part gets its source the first time it's wanted and keeps it while the family is in use: a LazyLoader
+            // compiles its source as soon as it has one (every family's parts compiled before the first frame), and
+            // dropping the source would delete the component under a load still running.
             property bool criticalUsed: false
             property bool panelsUsed: false
             onChosenChanged: {
-                if (!family.chosen) return
+                if (!family.chosen) {
+                    family.release.restart()
+                    return
+                }
+                family.release.stop()
                 family.criticalUsed = true
                 if (root._transitionInProgress) Qt.callLater(family.finishNow)
+            }
+            // A family left behind lets its parts go once the switch is well over, so what it compiled can be freed:
+            // kept for good, every family visited stayed in memory (+75 MB after two rounds of the three, a nest).
+            property Timer release: Timer {
+                interval: 30000
+                onTriggered: if (!family.chosen && !criticalParts.active && !panelParts.active) {
+                    family.criticalUsed = false
+                    family.panelsUsed = false
+                }
             }
             // Under the switch's curtain nothing is on screen to keep smooth, so the parts finish at once instead of in
             // the incubator's 10 ms slices between frames: Material stood after 3.7 s fresh, 9.6 s on a shell
