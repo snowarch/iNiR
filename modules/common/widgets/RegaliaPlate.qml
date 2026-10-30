@@ -16,20 +16,20 @@ Item {
     property bool active: false
     property bool hovered: false
     property bool glassEnabled: false
-    property real glassScreenX: {
-        if (!root._glassActive)
-            return 0
-        void root.width
-        void root.height
-        return root.mapToItem(null, 0, 0).x
+    // Read once layout settles: read inside a resize it got the parent's old place (Settings' card, still centred on
+    // y = 0, put the wallpaper copy 500 px low and the live desktop showed through, 10-30). Callers that move set these.
+    property real glassScreenX: root._inWindow.x
+    property real glassScreenY: root._inWindow.y
+    property point _inWindow: Qt.point(0, 0)
+    function _syncGlassPosition(): void {
+        if (root._glassActive && root.visible)
+            root._inWindow = root.mapToItem(null, 0, 0)
     }
-    property real glassScreenY: {
-        if (!root._glassActive)
-            return 0
-        void root.width
-        void root.height
-        return root.mapToItem(null, 0, 0).y
-    }
+    onWidthChanged: Qt.callLater(root._syncGlassPosition)
+    onHeightChanged: Qt.callLater(root._syncGlassPosition)
+    onVisibleChanged: Qt.callLater(root._syncGlassPosition)
+    on_GlassActiveChanged: Qt.callLater(root._syncGlassPosition)
+    Component.onCompleted: Qt.callLater(root._syncGlassPosition)
     property real glassScreenWidth: root.QsWindow?.window?.screen?.width ?? (Quickshell.screens[0]?.width ?? 1920)
     property real glassScreenHeight: root.QsWindow?.window?.screen?.height ?? (Quickshell.screens[0]?.height ?? 1080)
 

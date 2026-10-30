@@ -1291,7 +1291,8 @@ Singleton {
         readonly property color signalHardwareHover: ColorUtils.mix(root.m3colors.m3error, root.m3colors.m3onError, 0.86)
         readonly property color signalHardwareInk: root.m3colors.m3onError
 
-        readonly property color primaryPlate: ColorUtils.mix(chassis2, root.m3colors.m3primaryContainer, dark ? 0.70 : 0.56)
+        // the chosen key has to read at a glance beside its neighbours: at 0.70/0.56 it measured 1.2:1 (10-30)
+        readonly property color primaryPlate: ColorUtils.mix(chassis2, root.m3colors.m3primaryContainer, dark ? 0.40 : 0.22)
         readonly property color primaryPlateHover: ColorUtils.mix(primaryPlate, root.m3colors.m3primary, 0.86)
         readonly property color primaryPlateActive: ColorUtils.mix(primaryPlate, root.m3colors.m3shadow, dark ? 0.88 : 0.94)
         readonly property color primaryPlateInk: ColorUtils.ensureReadable(root.m3colors.m3primary, primaryPlate, 4.5)
