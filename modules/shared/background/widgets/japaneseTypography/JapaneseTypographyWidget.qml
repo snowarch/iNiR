@@ -239,7 +239,8 @@ AbstractBackgroundWidget {
     readonly property int ruleThickness: Math.max(1, Math.min(6,
         Config.getNestedValue("background.widgets.japaneseTypography.ruleThickness", 1)))
 
-    readonly property real outerPad: Math.round(Math.max(12 * root.scaleFactor, Math.min(root.width, root.height) * 0.035))
+    // a CJK glyph draws above its line box: 12 px left 夏 six pixels from the edge
+    readonly property real outerPad: Math.round(Math.max(18 * root.scaleFactor, Math.min(root.width, root.height) * 0.05))
     readonly property bool compact: root.width < 270 * root.scaleFactor || root.height < 430 * root.scaleFactor
     readonly property real footerExtent: root.showFooter
         ? Math.round(Math.max(54 * root.scaleFactor, Math.min(98 * root.scaleFactor, root.height * 0.16)))

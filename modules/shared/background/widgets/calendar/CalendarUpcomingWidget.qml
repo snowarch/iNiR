@@ -52,6 +52,8 @@ AbstractBackgroundWidget {
     resizeMaxHeight: 800
 
     readonly property int maxEvents: Number(root._readConfigKey("maxEvents") ?? 5)
+    // Type follows the room: large kept small's sizes and left half its plate empty (10-30 gallery).
+    readonly property real roomScale: root.materialLarge ? 1.3 : 1
     readonly property bool showDate: root._readConfigKey("showDate") ?? true
     readonly property bool showTime: root._readConfigKey("showTime") ?? true
     readonly property bool showLocation: root._readConfigKey("showLocation") ?? false
@@ -243,7 +245,7 @@ AbstractBackgroundWidget {
                         color: root.instrument ? root.widgetInk : (root.widgetEditorial ? root.widgetInk : root.widgetInkMuted)
                         font.family: root.instrument ? Appearance.font.family.monospace : root.widgetTitleFamily
                         font.pixelSize: Math.round((root.instrument ? Appearance.font.pixelSize.normal
-                            : Appearance.font.pixelSize.smaller * root.widgetTitleScale) * root.scaleFactor)
+                            : Appearance.font.pixelSize.smaller * root.widgetTitleScale) * root.scaleFactor * root.roomScale)
                         font.weight: root.instrument ? Font.Bold : (root.widgetEditorial ? root.widgetTitleWeight : Font.Medium)
                         font.letterSpacing: root.instrument ? Math.round(1.4 * root.scaleFactor) : root.widgetTitleTracking
                     }
@@ -279,7 +281,7 @@ AbstractBackgroundWidget {
                             font {
                                 family: root.instrument ? Appearance.font.family.monospace : root.widgetBodyFamily
                                 pixelSize: Math.round((root.instrument ? Appearance.font.pixelSize.small
-                                    : Appearance.font.pixelSize.smaller) * root.scaleFactor)
+                                    : Appearance.font.pixelSize.smaller) * root.scaleFactor * root.roomScale)
                                 weight: Font.DemiBold
                             }
                         }
@@ -292,7 +294,7 @@ AbstractBackgroundWidget {
                                 Layout.alignment: Qt.AlignTop
                                 Layout.topMargin: Math.round((root.instrument ? 1 : 4) * root.scaleFactor)
                                 width: Math.max(2, Math.round((root.instrument ? 2 : 3) * root.scaleFactor))
-                                height: Math.round((root.instrument ? 34 : 16) * root.scaleFactor)
+                                height: Math.round((root.instrument ? 34 : 16) * root.scaleFactor * root.roomScale)
                                 radius: root.instrument ? 0 : width / 2
                                 color: eventDelegate.modelData?.color || root.widgetAccentVisible
                             }
@@ -308,7 +310,7 @@ AbstractBackgroundWidget {
                                     font.family: root.widgetEditorial
                                         ? root.widgetTitleFamily : root.widgetBodyFamily
                                     font.pixelSize: Math.round((root.instrument ? Appearance.font.pixelSize.normal
-                                        : Appearance.font.pixelSize.small) * root.scaleFactor)
+                                        : Appearance.font.pixelSize.small) * root.scaleFactor * root.roomScale)
                                     font.weight: root.instrument ? Font.DemiBold
                                         : (root.widgetEditorial ? root.widgetTitleWeight : Font.Medium)
                                     font.letterSpacing: root.widgetEditorial ? root.widgetTitleTracking : 0
@@ -322,7 +324,7 @@ AbstractBackgroundWidget {
                                     text: root._formatDateTime(eventDelegate.modelData)
                                     color: root.instrument ? root.widgetAccentVisible : root.widgetInkMuted
                                     font.pixelSize: Math.round((root.instrument ? Appearance.font.pixelSize.small
-                                        : Appearance.font.pixelSize.smaller) * root.scaleFactor)
+                                        : Appearance.font.pixelSize.smaller) * root.scaleFactor * root.roomScale)
                                     font.family: root.widgetNumbersFamily
                                     elide: Text.ElideRight
                                     wrapMode: Text.NoWrap
@@ -377,7 +379,7 @@ AbstractBackgroundWidget {
                                 : Translation.tr("No upcoming events")
                             color: root.instrument ? root.widgetInk : root.widgetInkMuted
                             font.family: root.instrument ? root.widgetTitleFamily : root.widgetBodyFamily
-                            font.pixelSize: Math.round((root.instrument ? 22 : Appearance.font.pixelSize.small) * root.scaleFactor)
+                            font.pixelSize: Math.round((root.instrument ? 22 : Appearance.font.pixelSize.small) * root.scaleFactor * root.roomScale)
                             font.weight: root.instrument ? Font.Bold : Font.Normal
                             wrapMode: Text.WordWrap
                         }
@@ -432,7 +434,7 @@ AbstractBackgroundWidget {
     // plus a day heading when it opens a day).
     readonly property int fittingEvents: {
         const k = root.scaleFactor
-        const line = px => Math.ceil(px * k * 1.36)
+        const line = px => Math.ceil(px * k * root.roomScale * 1.36)
         const small = root.instrument ? Appearance.font.pixelSize.normal : Appearance.font.pixelSize.small
         const smaller = root.instrument ? Appearance.font.pixelSize.small : Appearance.font.pixelSize.smaller
         let room = root.height - Math.round(24 * k) - line(Appearance.font.pixelSize.normal) - Math.round(4 * k)

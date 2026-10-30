@@ -212,7 +212,8 @@ AbstractBackgroundWidget {
                 StyledText {
                     Layout.alignment: Qt.AlignHCenter
                     Layout.topMargin: root.showIcon ? Math.round(2 * root.scaleFactor) : 0
-                    Layout.maximumWidth: ringArea.size * 0.56
+                    // the hour labels sit inside the ring at 06 and 18: the time stays between them
+                    Layout.maximumWidth: ringArea.size * (root.showHourLabels ? 0.42 : 0.56)
                     text: DateTime.time
                     fontSizeMode: Text.Fit
                     minimumPixelSize: 12
@@ -243,6 +244,8 @@ AbstractBackgroundWidget {
                     }
 
                     StyledText {
+                        // the ring already says "of the day"; the phrase only where it fits clear of the ticks
+                        visible: ringArea.size >= Math.round(250 * root.scaleFactor)
                         text: Translation.tr("of the day")
                         color: root.inkMuted
                         font {

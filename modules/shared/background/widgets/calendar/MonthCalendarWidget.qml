@@ -372,9 +372,9 @@ AbstractBackgroundWidget {
                                 StyledText {
                                     anchors.centerIn: parent
                                     text: dayCell.modelData.day
-                                    color: dayCell.modelData.isToday
-                                        ? root.accentMarkInk : root.ink
-                                    opacity: dayCell.modelData.currentMonth ? 1 : 0.32
+                                    // the next month's days step back to the quiet ink (3:1 on the wallpaper), not to 32 %
+                                    color: dayCell.modelData.isToday ? root.accentMarkInk
+                                        : dayCell.modelData.currentMonth ? root.ink : root.widgetInkSubtle
                                     font.pixelSize: Math.round((root.compact ? Appearance.font.pixelSize.smaller
                                         : root.strip ? Appearance.font.pixelSize.large : Appearance.font.pixelSize.small) * root.scaleFactor)
                                     font.weight: dayCell.modelData.isToday ? Font.Bold : Font.Normal

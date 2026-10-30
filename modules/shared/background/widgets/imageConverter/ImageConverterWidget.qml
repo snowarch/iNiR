@@ -238,16 +238,25 @@ AbstractBackgroundWidget {
 
         Rectangle {
             id: dropZone
+            // With no plate the zone is its own opaque card (Material's container, as Settings draws one): a 6 % veil
+            // over a snowy ridge left its words unreadable (10-30 gallery).
+            readonly property bool card: !root.widgetHasSurface
+            readonly property color base: {
+                const c = Qt.color(root.widgetSemanticContainer("surface"))
+                return dropZone.card ? Qt.rgba(c.r, c.g, c.b, 1) : ColorUtils.applyAlpha(root.widgetInk, 0.06)
+            }
+            readonly property color ink: dropZone.card ? root.widgetSemanticOnContainer("surface") : root.widgetInk
             Layout.fillWidth: true
             Layout.fillHeight: true
             radius: Math.max(10, root.widgetCardRadius - 5)
             color: {
+                const tint = (seed, a) => dropZone.card ? ColorUtils.mix(seed, dropZone.base, a) : ColorUtils.applyAlpha(seed, a)
                 switch (root.conversionState) {
-                case "hover": return ColorUtils.applyAlpha(root.widgetAccent, 0.18)
-                case "converting": return ColorUtils.applyAlpha(root.widgetAccent2, 0.18)
-                case "done": return ColorUtils.applyAlpha(root.widgetAccent3, 0.18)
-                case "error": return ColorUtils.applyAlpha(root.widgetSignal, 0.14)
-                default: return ColorUtils.applyAlpha(root.widgetInk, 0.06)
+                case "hover": return tint(root.widgetAccent, 0.18)
+                case "converting": return tint(root.widgetAccent2, 0.18)
+                case "done": return tint(root.widgetAccent3, 0.18)
+                case "error": return tint(root.widgetSignal, 0.14)
+                default: return dropZone.base
                 }
             }
             border.width: root.conversionState === "hover" ? 2 : 1
@@ -257,7 +266,7 @@ AbstractBackgroundWidget {
                 case "converting": return root.widgetAccent2
                 case "done": return root.widgetAccent3
                 case "error": return root.widgetSignal
-                default: return ColorUtils.applyAlpha(root.widgetInk, 0.20)
+                default: return ColorUtils.applyAlpha(dropZone.ink, 0.20)
                 }
             }
 
@@ -293,7 +302,8 @@ AbstractBackgroundWidget {
                 fill: root.conversionState === "done" ? 1 : 0
                 iconSize: Math.round(34 * root.scaleFactor)
                 color: root.conversionState === "error"
-                    ? root.widgetSemanticForeground(root.widgetSignalRole) : root.widgetAccentVisible
+                    ? root.widgetSemanticForeground(root.widgetSignalRole, dropZone.color)
+                    : root.widgetSemanticForeground(root.widgetPrimaryRole, dropZone.color)
             }
 
             StyledText {
@@ -303,8 +313,8 @@ AbstractBackgroundWidget {
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                 color: root.conversionState === "error"
-                    ? root.widgetSemanticForeground(root.widgetSignalRole, root.accentBackdrop, 4.5) : root.widgetInk
-                opacity: root.conversionState === "idle" ? 0.68 : 1
+                    ? root.widgetSemanticForeground(root.widgetSignalRole, dropZone.color, 4.5) : dropZone.ink
+                opacity: root.conversionState === "idle" ? 0.78 : 1
                 font.pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
                 text: {
                     switch (root.conversionState) {
