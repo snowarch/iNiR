@@ -2,9 +2,9 @@ import QtQuick
 import QtQuick.Layouts
 import qs.modules.common
 
-// Short inline note for settings pages: an accent-tinted line that informs or
-// warns right where the control is. Prefer this over a long tooltip — a tooltip
-// that has to wrap breaks the layout in window mode.
+// Short inline note for settings pages: supporting text right where the control is, or a warning. Prefer this over
+// a long tooltip: a tooltip that has to wrap breaks the layout in window mode. Only a warning wears a glyph; a small
+// decorative one beside supporting text read as an empty checkbox (10-30).
 RowLayout {
     id: root
 
@@ -25,7 +25,8 @@ RowLayout {
     }
 
     MaterialSymbol {
-        text: root.icon
+        visible: root.warning
+        text: root.icon === "info" ? "warning" : root.icon
         iconSize: Appearance.font.pixelSize.small
         color: root.noteColor
     }
