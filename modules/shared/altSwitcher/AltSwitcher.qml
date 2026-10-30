@@ -1320,6 +1320,8 @@ Scope {
                     target: listContent
                     blur: 0.5 * Appearance.sizes.elevationMargin
                     spread: 0
+                    // under the list's own fill: above it, it darkened the whole list
+                    z: -1
                     visible: !root.editorial && !Appearance.zzzEverywhere && (Appearance.angelEverywhere || (!Appearance.inirEverywhere && !Appearance.auroraEverywhere))
                 }
 
