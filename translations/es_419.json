@@ -10059,5 +10059,7 @@
   "Anywhere": "Cualquier lugar",
   "Change per frame": "Cambio por fotograma",
   "How much the picture changes each frame: higher is quicker and harder, lower is softer.": "Cuánto cambia la imagen en cada fotograma: más alto es más rápido y brusco, más bajo es más suave.",
-  "Source, motion, screens, effects": "Origen, movimiento, pantallas, efectos"
+  "Source, motion, screens, effects": "Origen, movimiento, pantallas, efectos",
+  "Pill bar and island surfaces": "Barra píldora y superficies de isla",
+  "Everything drawn as an island wears these: bar islands, panels and widgets. Each keeps its own shape.": "Todo lo que se dibuja como isla usa esto: las islas de la barra, los paneles y los widgets. Cada uno conserva su forma."
 }

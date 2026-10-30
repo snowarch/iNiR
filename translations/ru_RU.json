@@ -10059,5 +10059,7 @@
   "Anywhere": "Откуда угодно",
   "Change per frame": "Изменение за кадр",
   "How much the picture changes each frame: higher is quicker and harder, lower is softer.": "Насколько меняется картинка за кадр: выше — быстрее и резче, ниже — мягче.",
-  "Source, motion, screens, effects": "Источник, движение, экраны, эффекты"
+  "Source, motion, screens, effects": "Источник, движение, экраны, эффекты",
+  "Pill bar and island surfaces": "Панель-капсула и поверхности островов",
+  "Everything drawn as an island wears these: bar islands, panels and widgets. Each keeps its own shape.": "Всё, что рисуется островом, носит эти настройки: острова панели, панели и виджеты. Форма у каждого своя."
 }

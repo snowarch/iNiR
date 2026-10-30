@@ -10059,5 +10059,7 @@
   "Anywhere": "Звідусіль",
   "Change per frame": "Зміна за кадр",
   "How much the picture changes each frame: higher is quicker and harder, lower is softer.": "Наскільки змінюється зображення за кадр: вище — швидше й різкіше, нижче — м'якше.",
-  "Source, motion, screens, effects": "Джерело, рух, екрани, ефекти"
+  "Source, motion, screens, effects": "Джерело, рух, екрани, ефекти",
+  "Pill bar and island surfaces": "Панель-капсула та поверхні островів",
+  "Everything drawn as an island wears these: bar islands, panels and widgets. Each keeps its own shape.": "Усе, що малюється островом, має ці налаштування: острови панелі, панелі й віджети. Форма в кожного своя."
 }

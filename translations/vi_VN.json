@@ -10059,5 +10059,7 @@
   "Anywhere": "Bất kỳ đâu",
   "Change per frame": "Thay đổi mỗi khung hình",
   "How much the picture changes each frame: higher is quicker and harder, lower is softer.": "Mức hình ảnh thay đổi mỗi khung hình: cao hơn thì nhanh và gắt hơn, thấp hơn thì mềm hơn.",
-  "Source, motion, screens, effects": "Nguồn, chuyển động, màn hình, hiệu ứng"
+  "Source, motion, screens, effects": "Nguồn, chuyển động, màn hình, hiệu ứng",
+  "Pill bar and island surfaces": "Thanh viên thuốc và bề mặt đảo",
+  "Everything drawn as an island wears these: bar islands, panels and widgets. Each keeps its own shape.": "Mọi thứ vẽ dạng đảo đều mang các thiết lập này: đảo trên thanh, bảng và widget. Mỗi thứ giữ hình dạng riêng."
 }

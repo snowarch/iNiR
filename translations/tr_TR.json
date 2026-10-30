@@ -10059,5 +10059,7 @@
   "Anywhere": "Herhangi bir yerden",
   "Change per frame": "Kare başına değişim",
   "How much the picture changes each frame: higher is quicker and harder, lower is softer.": "Görüntünün her karede ne kadar değiştiği: yüksek değer daha hızlı ve sert, düşük değer daha yumuşak.",
-  "Source, motion, screens, effects": "Kaynak, hareket, ekranlar, efektler"
+  "Source, motion, screens, effects": "Kaynak, hareket, ekranlar, efektler",
+  "Pill bar and island surfaces": "Hap çubuğu ve ada yüzeyleri",
+  "Everything drawn as an island wears these: bar islands, panels and widgets. Each keeps its own shape.": "Ada olarak çizilen her şey bunları giyer: çubuk adaları, paneller ve widget'lar. Her biri kendi şeklini korur."
 }

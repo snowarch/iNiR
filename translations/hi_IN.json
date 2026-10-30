@@ -10059,5 +10059,7 @@
   "Anywhere": "कहीं से भी",
   "Change per frame": "प्रति फ़्रेम बदलाव",
   "How much the picture changes each frame: higher is quicker and harder, lower is softer.": "हर फ़्रेम में तस्वीर कितनी बदलती है: ज़्यादा मान तेज़ और कठोर, कम मान नरम।",
-  "Source, motion, screens, effects": "स्रोत, गति, स्क्रीन, प्रभाव"
+  "Source, motion, screens, effects": "स्रोत, गति, स्क्रीन, प्रभाव",
+  "Pill bar and island surfaces": "पिल बार और आइलैंड सतहें",
+  "Everything drawn as an island wears these: bar islands, panels and widgets. Each keeps its own shape.": "आइलैंड के रूप में बनी हर चीज़ इन्हें पहनती है: बार आइलैंड, पैनल और विजेट। हर एक अपना आकार रखता है।"
 }

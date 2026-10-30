@@ -10059,5 +10059,7 @@
   "Anywhere": "Anywhere",
   "Change per frame": "Change per frame",
   "How much the picture changes each frame: higher is quicker and harder, lower is softer.": "How much the picture changes each frame: higher is quicker and harder, lower is softer.",
-  "Source, motion, screens, effects": "Source, motion, screens, effects"
+  "Source, motion, screens, effects": "Source, motion, screens, effects",
+  "Pill bar and island surfaces": "Pill bar and island surfaces",
+  "Everything drawn as an island wears these: bar islands, panels and widgets. Each keeps its own shape.": "Everything drawn as an island wears these: bar islands, panels and widgets. Each keeps its own shape."
 }

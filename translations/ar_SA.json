@@ -10059,5 +10059,7 @@
   "Anywhere": "من أي مكان",
   "Change per frame": "التغيير لكل إطار",
   "How much the picture changes each frame: higher is quicker and harder, lower is softer.": "مقدار تغيّر الصورة في كل إطار: القيمة الأعلى أسرع وأحدّ، والأدنى أنعم.",
-  "Source, motion, screens, effects": "المصدر، الحركة، الشاشات، التأثيرات"
+  "Source, motion, screens, effects": "المصدر، الحركة، الشاشات، التأثيرات",
+  "Pill bar and island surfaces": "شريط الكبسولة وأسطح الجزر",
+  "Everything drawn as an island wears these: bar islands, panels and widgets. Each keeps its own shape.": "كل ما يُرسم كجزيرة يرتدي هذه الإعدادات: جزر الشريط واللوحات والأدوات. ويحتفظ كلٌّ منها بشكله."
 }

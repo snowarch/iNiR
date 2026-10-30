@@ -10059,5 +10059,7 @@
   "Anywhere": "מכל מקום",
   "Change per frame": "שינוי לכל פריים",
   "How much the picture changes each frame: higher is quicker and harder, lower is softer.": "כמה התמונה משתנה בכל פריים: גבוה יותר מהיר וחד יותר, נמוך יותר רך יותר.",
-  "Source, motion, screens, effects": "מקור, תנועה, מסכים, אפקטים"
+  "Source, motion, screens, effects": "מקור, תנועה, מסכים, אפקטים",
+  "Pill bar and island surfaces": "סרגל גלולה ומשטחי איים",
+  "Everything drawn as an island wears these: bar islands, panels and widgets. Each keeps its own shape.": "כל מה שמצויר כאי לובש את אלה: איי הסרגל, לוחות ווידג'טים. כל אחד שומר על צורתו."
 }

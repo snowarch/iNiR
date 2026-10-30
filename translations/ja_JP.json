@@ -10059,5 +10059,7 @@
   "Anywhere": "どこからでも",
   "Change per frame": "1フレームごとの変化",
   "How much the picture changes each frame: higher is quicker and harder, lower is softer.": "1フレームごとに画像がどれだけ変わるか。高いほど速く硬く、低いほど柔らかくなります。",
-  "Source, motion, screens, effects": "ソース、モーション、画面、エフェクト"
+  "Source, motion, screens, effects": "ソース、モーション、画面、エフェクト",
+  "Pill bar and island surfaces": "ピルバーとアイランドの面",
+  "Everything drawn as an island wears these: bar islands, panels and widgets. Each keeps its own shape.": "アイランドとして描かれるものはすべてこれをまといます：バーのアイランド、パネル、ウィジェット。形はそれぞれのままです。"
 }

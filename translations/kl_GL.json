@@ -10059,5 +10059,7 @@
   "Anywhere": "Sumiluunniit",
   "Change per frame": "Assiliaq ataasiakkaarlugu allanngorneq",
   "How much the picture changes each frame: higher is quicker and harder, lower is softer.": "Assiliaq ataasiakkaarlugu assi qanoq allanngortiginersoq: qaffasinnerusoq sukkanerullunilu sakkortunerusarpoq, appasinnerusoq aqitsunnerusarpoq.",
-  "Source, motion, screens, effects": "Aallaavik, aalaneq, saqqummersitsiviit, sunniutit"
+  "Source, motion, screens, effects": "Aallaavik, aalaneq, saqqummersitsiviit, sunniutit",
+  "Pill bar and island surfaces": "Pill-bjælke aamma qeqertaasat qaavi",
+  "Everything drawn as an island wears these: bar islands, panels and widgets. Each keeps its own shape.": "Qeqertaasatut titartakkat tamarmik makkuninnga atisaqarput: bjælkep qeqertaasai, panelit widget-illu. Tamarmik ilusertik pigiinnartarpaat."
 }

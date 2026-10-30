@@ -10059,5 +10059,7 @@
   "Anywhere": "任意位置",
   "Change per frame": "每帧变化",
   "How much the picture changes each frame: higher is quicker and harder, lower is softer.": "每帧画面变化多少：越高越快越硬，越低越柔和。",
-  "Source, motion, screens, effects": "来源、动效、屏幕、效果"
+  "Source, motion, screens, effects": "来源、动效、屏幕、效果",
+  "Pill bar and island surfaces": "胶囊栏与岛屿表面",
+  "Everything drawn as an island wears these: bar islands, panels and widgets. Each keeps its own shape.": "所有以岛屿形式绘制的元素都使用这些设置：栏上的岛屿、面板和小组件。各自保留自己的形状。"
 }

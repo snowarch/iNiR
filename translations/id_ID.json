@@ -10059,5 +10059,7 @@
   "Anywhere": "Di mana saja",
   "Change per frame": "Perubahan per bingkai",
   "How much the picture changes each frame: higher is quicker and harder, lower is softer.": "Seberapa banyak gambar berubah tiap bingkai: lebih tinggi lebih cepat dan tajam, lebih rendah lebih lembut.",
-  "Source, motion, screens, effects": "Sumber, gerakan, layar, efek"
+  "Source, motion, screens, effects": "Sumber, gerakan, layar, efek",
+  "Pill bar and island surfaces": "Bilah pil dan permukaan pulau",
+  "Everything drawn as an island wears these: bar islands, panels and widgets. Each keeps its own shape.": "Semua yang digambar sebagai pulau memakai ini: pulau bilah, panel, dan widget. Masing-masing tetap dengan bentuknya."
 }
