@@ -2396,7 +2396,7 @@ AbstractWidget {
     // (his 10-30: light ink vanished on a white wallpaper with adaptation off). The switches keep their colours. A
     // widget with no plate reads it whether it asked or not: the image converter's captions took the scheme's ink and
     // went dark on a dark mountain in light mode.
-    readonly property bool _regionSampling: root.needsColText || root.irisReadsRegion || !root.widgetHasSurface
+    readonly property bool _regionSampling: root.needsColText || root.irisReadsRegion || (!root.widgetHasSurface && !root.irisFaced)
     // iRiS glass turns to frost over a bright wallpaper only when asked (off, the glass darkens instead); everything
     // else follows the wallpaper always.
     readonly property bool positionColorAdaptationEnabled: !root.widgetIrisFamily
