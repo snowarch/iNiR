@@ -17,7 +17,7 @@ QtObject {
     readonly property bool glass: Appearance.auroraEverywhere && !Appearance.inirEverywhere
 
     // ── Page ──
-    readonly property int pageSpacing: Math.round(28 * Appearance.fontSizeScale)
+    readonly property int pageSpacing: Math.round(24 * Appearance.fontSizeScale)
     // past this a row is read with the head, not the eyes: label and control drift too far apart
     readonly property int pageMaxWidth: Math.round(860 * Appearance.fontSizeScale)
 
@@ -28,7 +28,8 @@ QtObject {
         : Appearance.cookieEverywhere ? Appearance.cookie.bg0
         : Appearance.inirEverywhere ? Appearance.inir.colLayer0
         : root.glass ? ColorUtils.transparentize(Appearance.m3colors.m3surfaceContainerLow, root.dark ? 0.22 : 0.18)
-        : root.dark ? Appearance.m3colors.m3surface : Appearance.m3colors.m3surfaceContainer
+        // the 2025 dark ladder starts at tone 4: a window there read as black, the tiles barely off it
+        : root.dark ? Appearance.m3colors.m3surfaceContainerLow : Appearance.m3colors.m3surfaceContainer
     readonly property int windowRadius: Appearance.regaliaEverywhere ? Appearance.regalia.panelRadius
         : Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
         : Appearance.editorialEverywhere ? Appearance.rounding.verylarge
@@ -44,9 +45,10 @@ QtObject {
         : Math.round(20 * Appearance.rounding.scale)
     readonly property int tileInnerRadius: Math.min(root.tileOuterRadius, Math.max(2, Math.round(4 * Appearance.rounding.scale)))
     readonly property int tilePaddingX: Math.round(16 * Appearance.fontSizeScale)
-    readonly property int tilePaddingY: Math.round(12 * Appearance.fontSizeScale)
-    readonly property int rowMinHeight: Math.round(56 * Appearance.fontSizeScale)
-    readonly property int iconSize: Math.round(24 * Appearance.fontSizeScale)
+    // desktop density: Android's 56 px phone rows looked zoomed in on a 1320 px window
+    readonly property int tilePaddingY: Math.round(10 * Appearance.fontSizeScale)
+    readonly property int rowMinHeight: Math.round(48 * Appearance.fontSizeScale)
+    readonly property int iconSize: Math.round(20 * Appearance.fontSizeScale)
     // regalia's window is chassis1: its tiles step up one chassis, their controls one more
     readonly property color tileColor: Appearance.regaliaEverywhere ? Appearance.regalia.chassis2
         : Appearance.editorialEverywhere ? Appearance.editorial.layer(1)
@@ -56,7 +58,7 @@ QtObject {
         : Appearance.angelEverywhere ? ColorUtils.transparentize(Appearance.colors.colLayer1Base, Appearance.angel.cardTransparentize * 0.7)
         : root.glass ? ColorUtils.transparentize(root.dark ? Appearance.m3colors.m3surfaceContainerHigh : Appearance.m3colors.m3surfaceContainerLowest,
             root.dark ? 0.45 : 0.3)
-        : root.dark ? Appearance.m3colors.m3surfaceContainer : Appearance.m3colors.m3surfaceContainerLowest
+        : root.dark ? Appearance.m3colors.m3surfaceContainerHigh : Appearance.m3colors.m3surfaceContainerLowest
     // M3 state layers: on-surface at 8 % hovered, 10 % pressed
     readonly property color tileHoverColor: ColorUtils.mix(root.tileColor, Appearance.colors.colOnSurface, 0.92)
     readonly property color tilePressColor: Appearance.regaliaEverywhere ? Appearance.regalia.pressPlate
@@ -66,7 +68,7 @@ QtObject {
         : Appearance.zzzEverywhere ? Appearance.zzz.bg2
         : Appearance.inirEverywhere ? Appearance.inir.colLayer2
         : root.glass ? ColorUtils.transparentize(Appearance.m3colors.m3surfaceContainerHighest, root.dark ? 0.35 : 0.2)
-        : Appearance.m3colors.m3surfaceContainerHighest
+        : root.dark ? Appearance.m3colors.m3surfaceBright : Appearance.m3colors.m3surfaceContainerHighest
     readonly property color controlHoverColor: ColorUtils.mix(root.controlColor, Appearance.colors.colOnSurface, 0.92)
 
     // ── Text ──
@@ -82,9 +84,9 @@ QtObject {
     readonly property color supportingColor: Appearance.angelEverywhere ? Appearance.angel.colTextMuted
         : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
         : Appearance.colors.colOnSurfaceVariant
-    readonly property int labelSize: Appearance.font.pixelSize.normal
-    readonly property int supportingSize: Math.round(14 * Appearance.fontSizeScale)
-    readonly property int subheaderSize: Math.round(14 * Appearance.fontSizeScale)
+    readonly property int labelSize: Appearance.font.pixelSize.small
+    readonly property int supportingSize: Math.round(13 * Appearance.fontSizeScale)
+    readonly property int subheaderSize: Math.round(13 * Appearance.fontSizeScale)
 
     // ── Older names the pages draw their own pieces with ──
     readonly property color accentColor: root.subheaderColor
