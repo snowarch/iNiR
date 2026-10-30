@@ -725,6 +725,15 @@ Singleton {
 		return (s ?? "").toLowerCase().replace(/[\t\r\n|•·]+/g, " ").replace(/\s+/g, " ").trim();
 	}
 
+	// What played last, if a tap can bring it back: its player app. A browser's video closed with its tab, so it is not
+	// offered (Now Playing at rest showed a closed video that a tap could not reopen, his 10-30).
+	function lastPlayedApp(): var {
+		const id = String(Persistent.states.lastPlayed.entry ?? "");
+		if (id.length === 0 || /firefox|zen|chrom|brave|vivaldi|opera|edge|librewolf|floorp|browser/i.test(id)) return null;
+		return AppSearch.lookupDesktopEntry(id);
+	}
+	function resumeLast(): bool { return AppSearch.launchEntry(root.lastPlayedApp()); }
+
 	function _isBrowserPlayer(player): bool {
 		if (!player) return false;
 		const name = (player.dbusName ?? "").toLowerCase();

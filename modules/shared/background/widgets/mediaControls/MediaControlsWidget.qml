@@ -356,6 +356,7 @@ AbstractBackgroundWidget {
             last.artist = rememberBase.effectiveArtist
             last.source = identity.length > 0 ? identity.charAt(0).toUpperCase() + identity.slice(1) : ""
             last.art = rememberBase.displayedArtFilePath
+            last.entry = String(root.meaningfulPlayer?.desktopEntry ?? "")
             last.at = Date.now()
         }
         onEffectiveIsPlayingChanged: if (!root.irisFaced && !rememberBase.effectiveIsPlaying
@@ -373,7 +374,7 @@ AbstractBackgroundWidget {
     irisDefaultSize: "medium"
     irisOptions: [
         { key: "lyrics", label: Translation.tr("Synced lyrics"), icon: "lyrics", fallback: true },
-        { key: "rest", label: Translation.tr("Rest when paused"), icon: "bedtime", fallback: true }
+        { key: "rest", label: Translation.tr("Rest when paused"), icon: "bedtime", fallback: false }
     ]
     readonly property real placeholderWidth: Math.round(
         (root.instrument ? 220 : 96) * Appearance.fontSizeScale * scaleFactor)

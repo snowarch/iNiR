@@ -16,7 +16,10 @@ Item {
 
     required property var widget
     readonly property var last: Persistent.states.lastPlayed
-    readonly property bool known: String(root.last.title ?? "").length > 0
+    // Only what a tap can bring back: a closed browser video stayed here as "Last played" and a tap did nothing.
+    readonly property bool known: String(root.last.title ?? "").length > 0 && MprisController.lastPlayedApp() !== null
+    TapHandler { onTapped: MprisController.resumeLast() }
+    HoverHandler { cursorShape: Qt.PointingHandCursor }
     readonly property string size: root.widget.materialSize
     readonly property real s: root.widget.scaleFactor
     function px(value: real): int { return Math.round(value * root.s) }

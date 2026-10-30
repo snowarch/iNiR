@@ -274,6 +274,8 @@ Singleton {
                 property string artist: ""
                 property string source: ""
                 property string art: ""
+                // The player's desktop entry, so a tap at rest can open it again.
+                property string entry: ""
                 property real at: 0
             }
         }
