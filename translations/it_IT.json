@@ -10047,5 +10047,10 @@
   "Reviews and votes": "Recensioni e voti",
   "Reaches": "Si collega a",
   "Pulled from the hub": "Ritirato dall'hub",
-  "You have %1": "Hai %1"
+  "You have %1": "Hai %1",
+  "Transition frame rate": "Fotogrammi al secondo della transizione",
+  "Max panel width": "Larghezza massima del pannello",
+  "This transition plays in the shell; awww keeps drawing the wallpaper once it ends.": "Questa transizione gira nella shell; poi awww continua a disegnare lo sfondo.",
+  "awww draws your wallpapers and their transitions. GIFs, videos and the backdrop are drawn by the shell.": "awww disegna i tuoi sfondi e le loro transizioni. GIF, video e lo sfondo di supporto li disegna la shell.",
+  "awww isn't installed, so the shell draws your wallpapers itself. Install awww for lighter wallpapers and its transitions.": "awww non è installato, quindi la shell disegna gli sfondi da sola. Installa awww per sfondi più leggeri e le sue transizioni."
 }

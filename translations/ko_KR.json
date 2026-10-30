@@ -10047,5 +10047,10 @@
   "Reviews and votes": "리뷰와 투표",
   "Reaches": "연결 대상",
   "Pulled from the hub": "hub에서 내려짐",
-  "You have %1": "현재 %1"
+  "You have %1": "현재 %1",
+  "Transition frame rate": "전환 프레임 속도",
+  "Max panel width": "최대 패널 너비",
+  "This transition plays in the shell; awww keeps drawing the wallpaper once it ends.": "이 전환은 셸에서 재생되고, 끝나면 awww가 다시 배경화면을 그립니다.",
+  "awww draws your wallpapers and their transitions. GIFs, videos and the backdrop are drawn by the shell.": "awww가 배경화면과 전환을 그립니다. GIF, 동영상, 배경은 셸이 그립니다.",
+  "awww isn't installed, so the shell draws your wallpapers itself. Install awww for lighter wallpapers and its transitions.": "awww가 설치되지 않아 셸이 직접 배경화면을 그립니다. 더 가벼운 배경화면과 전환을 원하면 awww를 설치하세요."
 }

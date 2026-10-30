@@ -10047,5 +10047,10 @@
   "Reviews and votes": "Yorumlar ve oylar",
   "Reaches": "Bağlandığı yerler",
   "Pulled from the hub": "Hub'dan kaldırıldı",
-  "You have %1": "Sende %1"
+  "You have %1": "Sende %1",
+  "Transition frame rate": "Geçiş kare hızı",
+  "Max panel width": "En fazla panel genişliği",
+  "This transition plays in the shell; awww keeps drawing the wallpaper once it ends.": "Bu geçiş kabukta oynar; bitince duvar kağıdını yine awww çizer.",
+  "awww draws your wallpapers and their transitions. GIFs, videos and the backdrop are drawn by the shell.": "Duvar kağıtlarını ve geçişlerini awww çizer. GIF'ler, videolar ve arka plan kabuk tarafından çizilir.",
+  "awww isn't installed, so the shell draws your wallpapers itself. Install awww for lighter wallpapers and its transitions.": "awww kurulu değil, bu yüzden duvar kağıtlarını kabuk kendisi çiziyor. Daha hafif duvar kağıtları ve geçişleri için awww'yi kur."
 }
