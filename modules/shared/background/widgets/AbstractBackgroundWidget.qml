@@ -1897,13 +1897,13 @@ AbstractWidget {
         onTriggered: {
             if (root._isZonePlacement)
                 root.snapToZone(root.placementStrategy)
-            else if (root.placementStrategy === "free"
-                    && (Math.round(root._clampX(root.x)) !== Math.round(root.x) || Math.round(root._clampY(root.y)) !== Math.round(root.y)))
-                root._setOutputValues({ x: Math.round(root._clampX(root.x)), y: Math.round(root._clampY(root.y)) })
             root._makeRoom()
         }
     }
-    // A widget that grew moves the neighbours it now covers aside; it runs once the new size has settled.
+    // A widget that grew moves the neighbours it now covers aside; it runs once the new size has settled, and only while
+    // the person arranges. Neither a settle nor a size arriving from another family writes a position: each family has
+    // its own safe edges and sizes, and moving or clamping for one of them rewrote where the person put things in the
+    // others (his 10-30: widgets out of place after a family switch). The drawn position is clamped, the stored one stays.
     function _makeRoom(): void {
         if (GlobalStates.widgetEditMode && root._canvas && typeof root._canvas.makeRoom === "function")
             root._canvas.makeRoom(root.editInstanceKey)
@@ -2788,12 +2788,7 @@ AbstractWidget {
         onTriggered: {
             if (root._isZonePlacement)
                 root.snapToZone(root.placementStrategy)
-            else if (root.placementStrategy === "free"
-                    && (Math.round(root._clampX(root.x)) !== Math.round(root.x) || Math.round(root._clampY(root.y)) !== Math.round(root.y)))
-                root._setOutputValues({ x: Math.round(root._clampX(root.x)), y: Math.round(root._clampY(root.y)) })
-            // a size someone chose makes room in or out of edit mode
-            if (root._canvas && typeof root._canvas.makeRoom === "function")
-                root._canvas.makeRoom(root.editInstanceKey)
+            root._makeRoom()
         }
     }
 
