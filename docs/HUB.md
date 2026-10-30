@@ -22,7 +22,13 @@ The search bar looks through names, summaries, tags and authors. Beside it:
   there are.
 
 Every row shows how many people liked the item, how many downloaded it, and when it last changed. Votes are the
-thumbs up and down on the item's discussion: **Reviews and votes** on its page takes you there.
+thumbs up and down on the item's discussion: **Reviews and votes** on its page takes you there, or from a terminal:
+
+```sh
+inir hub rate excalidraw up      # down, or clear to take your vote back
+```
+
+With `gh` logged in the vote goes straight in; without it, the discussion opens in your browser.
 
 ## Install and remove
 
@@ -68,4 +74,4 @@ The catalogue refreshes about every six hours. Offline, the Hub shows the last l
 
 ## Make something
 
-The [contributing guide](https://github.com/snowarch/inir-hub/blob/main/CONTRIBUTING.md) has templates for every kind. For widgets, the [Widget SDK](https://github.com/snowarch/inir/blob/main/defaults/widgets/WIDGET-SDK.md) and the [iRiS SDK](https://github.com/snowarch/inir/blob/main/defaults/widgets/IRIS-SDK.md) are the reference.
+The [contributing guide](https://github.com/snowarch/inir-hub/blob/main/CONTRIBUTING.md) has templates for every kind, and `inir hub submit` sends what you made as a pull request. For widgets, the [Widget SDK](https://github.com/snowarch/inir/blob/main/defaults/widgets/WIDGET-SDK.md) and the [iRiS SDK](https://github.com/snowarch/inir/blob/main/defaults/widgets/IRIS-SDK.md) are the reference.
