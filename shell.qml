@@ -1192,11 +1192,15 @@ ShellRoot {
         interval: 120
         repeat: false
         onTriggered: {
-            if (root._familyWarming && root._familyWarmWaits++ < 100) {
+            // The warm-up can only save what loading the family on the GUI thread costs (~0.9 s for Material, his log
+            // 10-30), so it is waited for about that long: a 5 s cap held Material's switch 6.4 s behind the curtain
+            // and tripped the overlay's watchdog.
+            if (root._familyWarming && root._familyWarmWaits++ < 20) {
                 familyLoadSettleTimer.interval = 50
                 familyLoadSettleTimer.restart()
                 return
             }
+            if (root._familyWarmWaits > 0) console.info(`[FamilyTransition] warm-up waited ${root._familyWarmWaits * 50} ms${root._familyWarming ? " (still compiling)" : ""}`)
             familyLoadSettleTimer.interval = 120
             const directSwap = !root._transitionUsesOverlay
             root._familyPanelsSuspended = false
