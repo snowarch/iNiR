@@ -25,17 +25,19 @@ Item {
     // gives even short headings less width than their natural text width.
     implicitWidth: Math.min(root.maximumWidth, placeholderColumn.implicitWidth) + 24
     implicitHeight: placeholderColumn.implicitHeight
-    y: shown ? 0 : 10
-
-    Behavior on opacity {
-        NumberAnimation {
-            duration: Appearance.animation.elementMoveEnter.duration
-            easing.type: Appearance.animation.elementMoveEnter.type
-            easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
+    // the rise is a transform: inside a layout, a y binding pulled the message up over whatever sat above it
+    transform: Translate {
+        y: root.shown ? 0 : 10
+        Behavior on y {
+            NumberAnimation {
+                duration: Appearance.animation.elementMoveEnter.duration
+                easing.type: Appearance.animation.elementMoveEnter.type
+                easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
+            }
         }
     }
 
-    Behavior on y {
+    Behavior on opacity {
         NumberAnimation {
             duration: Appearance.animation.elementMoveEnter.duration
             easing.type: Appearance.animation.elementMoveEnter.type
