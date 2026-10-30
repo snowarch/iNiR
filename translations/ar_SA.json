@@ -10052,5 +10052,12 @@
   "Max panel width": "أقصى عرض للوحة",
   "This transition plays in the shell; awww keeps drawing the wallpaper once it ends.": "يعمل هذا الانتقال داخل الواجهة، ثم يعود awww لرسم الخلفية عند انتهائه.",
   "awww draws your wallpapers and their transitions. GIFs, videos and the backdrop are drawn by the shell.": "يرسم awww خلفياتك وانتقالاتها. أما ملفات GIF والفيديو والخلفية الاحتياطية فترسمها الواجهة.",
-  "awww isn't installed, so the shell draws your wallpapers itself. Install awww for lighter wallpapers and its transitions.": "awww غير مثبت، لذا ترسم الواجهة خلفياتك بنفسها. ثبّت awww لخلفيات أخف وانتقالاته."
+  "awww isn't installed, so the shell draws your wallpapers itself. Install awww for lighter wallpapers and its transitions.": "awww غير مثبت، لذا ترسم الواجهة خلفياتك بنفسها. ثبّت awww لخلفيات أخف وانتقالاته.",
+  "Fades": "تلاشٍ",
+  "Sweeps": "مسحات",
+  "Circles": "دوائر",
+  "Anywhere": "من أي مكان",
+  "Change per frame": "التغيير لكل إطار",
+  "How much the picture changes each frame: higher is quicker and harder, lower is softer.": "مقدار تغيّر الصورة في كل إطار: القيمة الأعلى أسرع وأحدّ، والأدنى أنعم.",
+  "Source, motion, screens, effects": "المصدر، الحركة، الشاشات، التأثيرات"
 }

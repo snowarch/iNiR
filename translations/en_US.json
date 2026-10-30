@@ -10052,5 +10052,12 @@
   "Max panel width": "Max panel width",
   "This transition plays in the shell; awww keeps drawing the wallpaper once it ends.": "This transition plays in the shell; awww keeps drawing the wallpaper once it ends.",
   "awww draws your wallpapers and their transitions. GIFs, videos and the backdrop are drawn by the shell.": "awww draws your wallpapers and their transitions. GIFs, videos and the backdrop are drawn by the shell.",
-  "awww isn't installed, so the shell draws your wallpapers itself. Install awww for lighter wallpapers and its transitions.": "awww isn't installed, so the shell draws your wallpapers itself. Install awww for lighter wallpapers and its transitions."
+  "awww isn't installed, so the shell draws your wallpapers itself. Install awww for lighter wallpapers and its transitions.": "awww isn't installed, so the shell draws your wallpapers itself. Install awww for lighter wallpapers and its transitions.",
+  "Fades": "Fades",
+  "Sweeps": "Sweeps",
+  "Circles": "Circles",
+  "Anywhere": "Anywhere",
+  "Change per frame": "Change per frame",
+  "How much the picture changes each frame: higher is quicker and harder, lower is softer.": "How much the picture changes each frame: higher is quicker and harder, lower is softer.",
+  "Source, motion, screens, effects": "Source, motion, screens, effects"
 }

@@ -10052,5 +10052,12 @@
   "Max panel width": "Lebar panel maksimum",
   "This transition plays in the shell; awww keeps drawing the wallpaper once it ends.": "Transisi ini diputar di shell; setelah selesai awww kembali menggambar wallpaper.",
   "awww draws your wallpapers and their transitions. GIFs, videos and the backdrop are drawn by the shell.": "awww menggambar wallpaper dan transisinya. GIF, video, dan latar belakang digambar oleh shell.",
-  "awww isn't installed, so the shell draws your wallpapers itself. Install awww for lighter wallpapers and its transitions.": "awww belum terpasang, jadi shell menggambar wallpaper sendiri. Pasang awww untuk wallpaper yang lebih ringan dan transisinya."
+  "awww isn't installed, so the shell draws your wallpapers itself. Install awww for lighter wallpapers and its transitions.": "awww belum terpasang, jadi shell menggambar wallpaper sendiri. Pasang awww untuk wallpaper yang lebih ringan dan transisinya.",
+  "Fades": "Pudar",
+  "Sweeps": "Sapuan",
+  "Circles": "Lingkaran",
+  "Anywhere": "Di mana saja",
+  "Change per frame": "Perubahan per bingkai",
+  "How much the picture changes each frame: higher is quicker and harder, lower is softer.": "Seberapa banyak gambar berubah tiap bingkai: lebih tinggi lebih cepat dan tajam, lebih rendah lebih lembut.",
+  "Source, motion, screens, effects": "Sumber, gerakan, layar, efek"
 }

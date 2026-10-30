@@ -10052,5 +10052,12 @@
   "Max panel width": "パネルの最大幅",
   "This transition plays in the shell; awww keeps drawing the wallpaper once it ends.": "このトランジションはシェル内で再生され、終わると awww が壁紙の描画に戻ります。",
   "awww draws your wallpapers and their transitions. GIFs, videos and the backdrop are drawn by the shell.": "壁紙とトランジションは awww が描画します。GIF、動画、背景はシェルが描画します。",
-  "awww isn't installed, so the shell draws your wallpapers itself. Install awww for lighter wallpapers and its transitions.": "awww が入っていないため、シェルが壁紙を描画しています。軽い壁紙とトランジションには awww をインストールしてください。"
+  "awww isn't installed, so the shell draws your wallpapers itself. Install awww for lighter wallpapers and its transitions.": "awww が入っていないため、シェルが壁紙を描画しています。軽い壁紙とトランジションには awww をインストールしてください。",
+  "Fades": "フェード",
+  "Sweeps": "スイープ",
+  "Circles": "円",
+  "Anywhere": "どこからでも",
+  "Change per frame": "1フレームごとの変化",
+  "How much the picture changes each frame: higher is quicker and harder, lower is softer.": "1フレームごとに画像がどれだけ変わるか。高いほど速く硬く、低いほど柔らかくなります。",
+  "Source, motion, screens, effects": "ソース、モーション、画面、エフェクト"
 }

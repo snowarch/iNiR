@@ -10052,5 +10052,12 @@
   "Max panel width": "Độ rộng bảng tối đa",
   "This transition plays in the shell; awww keeps drawing the wallpaper once it ends.": "Chuyển cảnh này chạy trong shell; sau đó awww tiếp tục vẽ hình nền.",
   "awww draws your wallpapers and their transitions. GIFs, videos and the backdrop are drawn by the shell.": "awww vẽ hình nền và các chuyển cảnh. GIF, video và nền phụ do shell vẽ.",
-  "awww isn't installed, so the shell draws your wallpapers itself. Install awww for lighter wallpapers and its transitions.": "Chưa cài awww nên shell tự vẽ hình nền. Cài awww để hình nền nhẹ hơn và có chuyển cảnh của nó."
+  "awww isn't installed, so the shell draws your wallpapers itself. Install awww for lighter wallpapers and its transitions.": "Chưa cài awww nên shell tự vẽ hình nền. Cài awww để hình nền nhẹ hơn và có chuyển cảnh của nó.",
+  "Fades": "Mờ dần",
+  "Sweeps": "Quét",
+  "Circles": "Hình tròn",
+  "Anywhere": "Bất kỳ đâu",
+  "Change per frame": "Thay đổi mỗi khung hình",
+  "How much the picture changes each frame: higher is quicker and harder, lower is softer.": "Mức hình ảnh thay đổi mỗi khung hình: cao hơn thì nhanh và gắt hơn, thấp hơn thì mềm hơn.",
+  "Source, motion, screens, effects": "Nguồn, chuyển động, màn hình, hiệu ứng"
 }

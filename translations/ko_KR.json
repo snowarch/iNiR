@@ -10052,5 +10052,12 @@
   "Max panel width": "최대 패널 너비",
   "This transition plays in the shell; awww keeps drawing the wallpaper once it ends.": "이 전환은 셸에서 재생되고, 끝나면 awww가 다시 배경화면을 그립니다.",
   "awww draws your wallpapers and their transitions. GIFs, videos and the backdrop are drawn by the shell.": "awww가 배경화면과 전환을 그립니다. GIF, 동영상, 배경은 셸이 그립니다.",
-  "awww isn't installed, so the shell draws your wallpapers itself. Install awww for lighter wallpapers and its transitions.": "awww가 설치되지 않아 셸이 직접 배경화면을 그립니다. 더 가벼운 배경화면과 전환을 원하면 awww를 설치하세요."
+  "awww isn't installed, so the shell draws your wallpapers itself. Install awww for lighter wallpapers and its transitions.": "awww가 설치되지 않아 셸이 직접 배경화면을 그립니다. 더 가벼운 배경화면과 전환을 원하면 awww를 설치하세요.",
+  "Fades": "페이드",
+  "Sweeps": "스윕",
+  "Circles": "원형",
+  "Anywhere": "아무 곳",
+  "Change per frame": "프레임당 변화",
+  "How much the picture changes each frame: higher is quicker and harder, lower is softer.": "프레임마다 그림이 얼마나 바뀌는지: 높을수록 빠르고 거칠고, 낮을수록 부드럽습니다.",
+  "Source, motion, screens, effects": "소스, 움직임, 화면, 효과"
 }

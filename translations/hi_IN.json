@@ -10052,5 +10052,12 @@
   "Max panel width": "पैनल की अधिकतम चौड़ाई",
   "This transition plays in the shell; awww keeps drawing the wallpaper once it ends.": "यह ट्रांज़िशन शेल में चलता है; खत्म होने पर awww फिर से वॉलपेपर बनाता है।",
   "awww draws your wallpapers and their transitions. GIFs, videos and the backdrop are drawn by the shell.": "awww आपके वॉलपेपर और उनके ट्रांज़िशन बनाता है। GIF, वीडियो और बैकड्रॉप शेल बनाता है।",
-  "awww isn't installed, so the shell draws your wallpapers itself. Install awww for lighter wallpapers and its transitions.": "awww इंस्टॉल नहीं है, इसलिए शेल खुद वॉलपेपर बनाता है। हल्के वॉलपेपर और उसके ट्रांज़िशन के लिए awww इंस्टॉल करें।"
+  "awww isn't installed, so the shell draws your wallpapers itself. Install awww for lighter wallpapers and its transitions.": "awww इंस्टॉल नहीं है, इसलिए शेल खुद वॉलपेपर बनाता है। हल्के वॉलपेपर और उसके ट्रांज़िशन के लिए awww इंस्टॉल करें।",
+  "Fades": "फ़ेड",
+  "Sweeps": "स्वीप",
+  "Circles": "वृत्त",
+  "Anywhere": "कहीं से भी",
+  "Change per frame": "प्रति फ़्रेम बदलाव",
+  "How much the picture changes each frame: higher is quicker and harder, lower is softer.": "हर फ़्रेम में तस्वीर कितनी बदलती है: ज़्यादा मान तेज़ और कठोर, कम मान नरम।",
+  "Source, motion, screens, effects": "स्रोत, गति, स्क्रीन, प्रभाव"
 }

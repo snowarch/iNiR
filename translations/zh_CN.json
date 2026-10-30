@@ -10052,5 +10052,12 @@
   "Max panel width": "面板最大宽度",
   "This transition plays in the shell; awww keeps drawing the wallpaper once it ends.": "此过渡在 shell 中播放，结束后由 awww 继续绘制壁纸。",
   "awww draws your wallpapers and their transitions. GIFs, videos and the backdrop are drawn by the shell.": "awww 绘制你的壁纸及其过渡。GIF、视频和背景由 shell 绘制。",
-  "awww isn't installed, so the shell draws your wallpapers itself. Install awww for lighter wallpapers and its transitions.": "未安装 awww，因此由 shell 自己绘制壁纸。安装 awww 可获得更轻量的壁纸和它的过渡效果。"
+  "awww isn't installed, so the shell draws your wallpapers itself. Install awww for lighter wallpapers and its transitions.": "未安装 awww，因此由 shell 自己绘制壁纸。安装 awww 可获得更轻量的壁纸和它的过渡效果。",
+  "Fades": "淡入淡出",
+  "Sweeps": "扫过",
+  "Circles": "圆形",
+  "Anywhere": "任意位置",
+  "Change per frame": "每帧变化",
+  "How much the picture changes each frame: higher is quicker and harder, lower is softer.": "每帧画面变化多少：越高越快越硬，越低越柔和。",
+  "Source, motion, screens, effects": "来源、动效、屏幕、效果"
 }

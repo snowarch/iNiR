@@ -10052,5 +10052,12 @@
   "Max panel width": "רוחב לוח מרבי",
   "This transition plays in the shell; awww keeps drawing the wallpaper once it ends.": "המעבר הזה רץ במעטפת; כשהוא נגמר awww ממשיך לצייר את הרקע.",
   "awww draws your wallpapers and their transitions. GIFs, videos and the backdrop are drawn by the shell.": "awww מצייר את הרקעים שלך ואת המעברים שלהם. קובצי GIF, סרטונים והרקע האחורי מצוירים על ידי המעטפת.",
-  "awww isn't installed, so the shell draws your wallpapers itself. Install awww for lighter wallpapers and its transitions.": "awww לא מותקן, לכן המעטפת מציירת את הרקעים בעצמה. התקן את awww לרקעים קלים יותר ולמעברים שלו."
+  "awww isn't installed, so the shell draws your wallpapers itself. Install awww for lighter wallpapers and its transitions.": "awww לא מותקן, לכן המעטפת מציירת את הרקעים בעצמה. התקן את awww לרקעים קלים יותר ולמעברים שלו.",
+  "Fades": "עמעומים",
+  "Sweeps": "סריקות",
+  "Circles": "עיגולים",
+  "Anywhere": "מכל מקום",
+  "Change per frame": "שינוי לכל פריים",
+  "How much the picture changes each frame: higher is quicker and harder, lower is softer.": "כמה התמונה משתנה בכל פריים: גבוה יותר מהיר וחד יותר, נמוך יותר רך יותר.",
+  "Source, motion, screens, effects": "מקור, תנועה, מסכים, אפקטים"
 }

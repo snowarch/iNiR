@@ -10052,5 +10052,12 @@
   "Max panel width": "Panelip silissusaa annerpaaq",
   "This transition plays in the shell; awww keeps drawing the wallpaper once it ends.": "Ikaarsaaneq una shell-imi ingerlavoq; naammassippat awww tunuliaqutamik titartaaqqippoq.",
   "awww draws your wallpapers and their transitions. GIFs, videos and the backdrop are drawn by the shell.": "awww tunuliaqutatit ikaarsaanerillu titartarai. GIF-it, videot tunuliaqutallu shell-imit titartarneqarput.",
-  "awww isn't installed, so the shell draws your wallpapers itself. Install awww for lighter wallpapers and its transitions.": "awww ikkussorneqanngilaq, taamaattumik shell nammineq tunuliaqutatit titartarpai. awww ikkussoruk tunuliaqutat oqinnerusut ikaarsaanerillu pillugit."
+  "awww isn't installed, so the shell draws your wallpapers itself. Install awww for lighter wallpapers and its transitions.": "awww ikkussorneqanngilaq, taamaattumik shell nammineq tunuliaqutatit titartarpai. awww ikkussoruk tunuliaqutat oqinnerusut ikaarsaanerillu pillugit.",
+  "Fades": "Qaamasiartuaarnerit",
+  "Sweeps": "Sanimut nuussinerit",
+  "Circles": "Ammalortut",
+  "Anywhere": "Sumiluunniit",
+  "Change per frame": "Assiliaq ataasiakkaarlugu allanngorneq",
+  "How much the picture changes each frame: higher is quicker and harder, lower is softer.": "Assiliaq ataasiakkaarlugu assi qanoq allanngortiginersoq: qaffasinnerusoq sukkanerullunilu sakkortunerusarpoq, appasinnerusoq aqitsunnerusarpoq.",
+  "Source, motion, screens, effects": "Aallaavik, aalaneq, saqqummersitsiviit, sunniutit"
 }

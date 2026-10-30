@@ -10052,5 +10052,12 @@
   "Max panel width": "Максимальная ширина панели",
   "This transition plays in the shell; awww keeps drawing the wallpaper once it ends.": "Этот переход идёт в оболочке; потом обои снова рисует awww.",
   "awww draws your wallpapers and their transitions. GIFs, videos and the backdrop are drawn by the shell.": "awww рисует ваши обои и переходы. GIF, видео и подложку рисует оболочка.",
-  "awww isn't installed, so the shell draws your wallpapers itself. Install awww for lighter wallpapers and its transitions.": "awww не установлен, поэтому обои рисует сама оболочка. Установите awww для более лёгких обоев и его переходов."
+  "awww isn't installed, so the shell draws your wallpapers itself. Install awww for lighter wallpapers and its transitions.": "awww не установлен, поэтому обои рисует сама оболочка. Установите awww для более лёгких обоев и его переходов.",
+  "Fades": "Затухания",
+  "Sweeps": "Сдвиги",
+  "Circles": "Круги",
+  "Anywhere": "Откуда угодно",
+  "Change per frame": "Изменение за кадр",
+  "How much the picture changes each frame: higher is quicker and harder, lower is softer.": "Насколько меняется картинка за кадр: выше — быстрее и резче, ниже — мягче.",
+  "Source, motion, screens, effects": "Источник, движение, экраны, эффекты"
 }

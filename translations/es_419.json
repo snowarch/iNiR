@@ -10052,5 +10052,12 @@
   "Max panel width": "Ancho máximo del panel",
   "This transition plays in the shell; awww keeps drawing the wallpaper once it ends.": "Esta transición se reproduce en el shell; awww sigue dibujando el fondo cuando termina.",
   "awww draws your wallpapers and their transitions. GIFs, videos and the backdrop are drawn by the shell.": "awww dibuja tus fondos y sus transiciones. Los GIF, los videos y el fondo de respaldo los dibuja el shell.",
-  "awww isn't installed, so the shell draws your wallpapers itself. Install awww for lighter wallpapers and its transitions.": "awww no está instalado, así que el shell dibuja tus fondos. Instala awww para fondos más livianos y sus transiciones."
+  "awww isn't installed, so the shell draws your wallpapers itself. Install awww for lighter wallpapers and its transitions.": "awww no está instalado, así que el shell dibuja tus fondos. Instala awww para fondos más livianos y sus transiciones.",
+  "Fades": "Fundidos",
+  "Sweeps": "Barridos",
+  "Circles": "Círculos",
+  "Anywhere": "Cualquier lugar",
+  "Change per frame": "Cambio por fotograma",
+  "How much the picture changes each frame: higher is quicker and harder, lower is softer.": "Cuánto cambia la imagen en cada fotograma: más alto es más rápido y brusco, más bajo es más suave.",
+  "Source, motion, screens, effects": "Origen, movimiento, pantallas, efectos"
 }
