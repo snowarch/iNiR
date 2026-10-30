@@ -2650,6 +2650,7 @@
             "clockAccent": "highlight",
             "padding": 100,
             "satelliteScale": 100,
+            "rise": "deep",
             "layout": "island",
             "strip": "clear",
             "fullStart": ["workspaces", "window"],

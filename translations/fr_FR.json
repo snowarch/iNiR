@@ -10011,5 +10011,10 @@
   "Outlined": "Contour",
   "How heavy every glyph's line is.": "L'épaisseur du trait de chaque glyphe.",
   "Browse themes": "Parcourir les thèmes",
-  "Whole redesigns of iRiS and the ones you saved, in Customize: try one, Undo takes it back.": "Des refontes complètes d'iRiS et celles que tu as gardées, dans Personnaliser : essaies-en une, Annuler la retire."
+  "Whole redesigns of iRiS and the ones you saved, in Customize: try one, Undo takes it back.": "Des refontes complètes d'iRiS et celles que tu as gardées, dans Personnaliser : essaies-en une, Annuler la retire.",
+  "Hug its content in the middle, hug one end, run a shelf across the whole edge with the Island rising from it, or a thin menu bar with the Island hanging from it as a notch.": "Serre son contenu au milieu ou à un bout, tend une étagère sur tout le bord d'où monte l'Îlot, ou une fine barre de menus d'où l'Îlot pend comme une encoche.",
+  "Island rise": "Relief de l'Îlot",
+  "How far the Island rises out of the shelf's middle; None keeps one straight edge.": "Jusqu'où l'Îlot sort du milieu de l'étagère ; Aucun garde un bord droit.",
+  "Deep": "Profond",
+  "a shelf across it": "une étagère d'un bord à l'autre"
 }

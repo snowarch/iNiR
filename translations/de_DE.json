@@ -10011,5 +10011,10 @@
   "Outlined": "Umriss",
   "How heavy every glyph's line is.": "Wie kräftig die Linie jedes Zeichens ist.",
   "Browse themes": "Themes ansehen",
-  "Whole redesigns of iRiS and the ones you saved, in Customize: try one, Undo takes it back.": "Komplette Neugestaltungen von iRiS und deine gespeicherten, in Anpassen: probier eins aus, Rückgängig nimmt es zurück."
+  "Whole redesigns of iRiS and the ones you saved, in Customize: try one, Undo takes it back.": "Komplette Neugestaltungen von iRiS und deine gespeicherten, in Anpassen: probier eins aus, Rückgängig nimmt es zurück.",
+  "Hug its content in the middle, hug one end, run a shelf across the whole edge with the Island rising from it, or a thin menu bar with the Island hanging from it as a notch.": "Umschließt den Inhalt in der Mitte oder an einem Ende, legt ein Regal über die ganze Kante, aus dem die Insel aufsteigt, oder eine dünne Menüleiste, an der die Insel als Notch hängt.",
+  "Island rise": "Inselhöhe",
+  "How far the Island rises out of the shelf's middle; None keeps one straight edge.": "Wie weit die Insel aus der Mitte des Regals ragt; Keine lässt eine gerade Kante.",
+  "Deep": "Tief",
+  "a shelf across it": "ein Regal über die Kante"
 }
