@@ -15,6 +15,11 @@ Item {
     property alias from: spinBoxWidget.from
     property alias to: spinBoxWidget.to
     property alias specialValueText: spinBoxWidget.specialValueText
+    // A label's trailing "(px)" is its unit: it rides beside the number, where the eye reads the value, and leaves the
+    // name. A parenthesis that isn't a unit sets unit: "" and stays in the name.
+    readonly property var _tail: /^(.*\S)\s*[(（]([^()（）]+)[)）]\s*$/.exec(root.text)
+    property string unit: root._tail ? root._tail[2] : ""
+    readonly property string label: root._tail && root.unit === root._tail[2] ? root._tail[1] : root.text
     // only a person's step or typing, never a bound value catching up
     signal valueModified()
     // Expose hover state for tooltips and other helpers
@@ -134,7 +139,7 @@ Item {
                 id: labelWidget
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
-                text: root.text
+                text: root.label
                 font.pixelSize: SettingsMaterialPreset.labelSize
                 color: SettingsMaterialPreset.labelColor
                 opacity: root.enabled ? 1 : 0.38
@@ -155,6 +160,7 @@ Item {
             id: spinBoxWidget
             Layout.fillWidth: false
             Layout.alignment: Qt.AlignVCenter
+            unit: root.unit
             onValueModified: root.valueModified()
         }
     }

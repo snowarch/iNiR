@@ -24,6 +24,8 @@ SpinBox {
     editable: true
     // the lowest value's word when it means something else than a number ("Auto" for -1, "Off" for 0)
     property string specialValueText: ""
+    // shown after the number, a step quieter, never inside what is typed
+    property string unit: ""
     textFromValue: function(value, locale) {
         return value === root.from && root.specialValueText.length > 0 ? root.specialValueText : String(value)
     }
@@ -77,22 +79,37 @@ SpinBox {
     // went nowhere); the pill wears M3's focus ring.
     contentItem: FocusScope {
         implicitHeight: root.baseHeight
-        implicitWidth: Math.max(labelText.implicitWidth, 40)
+        // one width for the usual "100 %" so the steppers of a page line up in a column
+        implicitWidth: Math.max(figure.implicitWidth, 56)
 
-        StyledTextInput {
-            id: labelText
-            focus: true
-            onActiveFocusChanged: if (activeFocus && root.visualFocus) selectAll()
+        Row {
+            id: figure
             anchors.centerIn: parent
-            text: root.displayText
-            color: Appearance.regaliaEverywhere ? Appearance.regalia.onColor : Appearance.colors.colOnSurface
-            font.family: Appearance.font.family.numbers
-            font.variableAxes: Appearance.font.variableAxes.numbers
-            font.pixelSize: Appearance.font.pixelSize.normal
-            font.features: { "tnum": 1 }
-            validator: root.validator
-            inputMethodHints: Qt.ImhFormattedNumbersOnly
-            selectByMouse: true
+            spacing: unitText.visible ? 3 : 0
+            StyledTextInput {
+                id: labelText
+                focus: true
+                onActiveFocusChanged: if (activeFocus && root.visualFocus) selectAll()
+                anchors.verticalCenter: parent.verticalCenter
+                text: root.displayText
+                color: Appearance.regaliaEverywhere ? Appearance.regalia.onColor : Appearance.colors.colOnSurface
+                font.family: Appearance.font.family.numbers
+                font.variableAxes: Appearance.font.variableAxes.numbers
+                font.pixelSize: Appearance.font.pixelSize.normal
+                font.features: { "tnum": 1 }
+                validator: root.validator
+                inputMethodHints: Qt.ImhFormattedNumbersOnly
+                selectByMouse: true
+            }
+            StyledText {
+                id: unitText
+                visible: root.unit.length > 0 && root.displayText !== root.specialValueText
+                anchors.baseline: labelText.baseline
+                text: root.unit
+                color: labelText.color
+                opacity: 0.62
+                font.pixelSize: Appearance.font.pixelSize.smaller
+            }
         }
     }
 
