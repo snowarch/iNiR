@@ -9993,5 +9993,6 @@
   "The shell you're using": "正在使用的 Shell",
   "Ready to use": "可直接使用",
   "A whole shell": "完整的 Shell",
-  "Or a fixed colour": "或固定颜色"
+  "Or a fixed colour": "或固定颜色",
+  "Pose: %1": "姿势：%1"
 }

@@ -30,6 +30,9 @@ ColumnLayout {
     property var options: []
     property string currentValue: ""
     property bool expanded: false
+    // The grid alone, for a row that already names the event and its pose (Material's event folds): a second
+    // header under it was a fold inside a fold.
+    property bool headless: false
     signal selected(string value)
 
     // Chrome is parameterised so the same component can wear either family's
@@ -60,6 +63,7 @@ ColumnLayout {
 
     // Collapsed header row: current thumbnail + name, tap to expand
     Rectangle {
+        visible: !root.headless
         Layout.fillWidth: true
         implicitHeight: 56
         radius: root.surfaceRadius
@@ -136,9 +140,10 @@ ColumnLayout {
 
     // Expanded thumbnail grid
     Rectangle {
-        visible: root.expanded
+        visible: root.expanded || root.headless
         Layout.fillWidth: true
-        implicitHeight: 330
+        // As tall as its rows, up to three; a lone Auto cell sat in 330 px of air.
+        implicitHeight: Math.min(330, Math.ceil(root.options.length / Math.max(1, Math.floor((width - 16) / 104))) * 118 + 16)
         radius: root.surfaceRadius
         color: root.surfaceColor
 
@@ -216,7 +221,8 @@ ColumnLayout {
                     TapHandler {
                         onTapped: {
                             root.selected(cell.modelData.value)
-                            root.expanded = false
+                            if (!root.headless)
+                                root.expanded = false
                         }
                     }
                 }

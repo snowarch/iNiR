@@ -120,6 +120,7 @@ ShellEditSizeBadge 1.0 ShellEditSizeBadge.qml
 ShellEditSurfaceFrame 1.0 ShellEditSurfaceFrame.qml
 SettingsCardSection 1.0 SettingsCardSection.qml
 SettingsDivider 1.0 SettingsDivider.qml
+SettingsFold 1.0 SettingsFold.qml
 SettingsGroup 1.0 SettingsGroup.qml
 SettingsNote 1.0 SettingsNote.qml
 ShellDesaturationEffect 1.0 ShellDesaturationEffect.qml
