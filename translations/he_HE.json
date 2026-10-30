@@ -9994,5 +9994,10 @@
   "Ready to use": "מוכן לשימוש",
   "A whole shell": "Shell שלם",
   "Or a fixed colour": "או צבע קבוע",
-  "Pose: %1": "תנוחה: %1"
+  "Pose: %1": "תנוחה: %1",
+  "Counts the popups still open, so ones cleared in their own app (like Discord) leave the badge. Off keeps the classic counter.": "סופר את החלונות הקופצים שעדיין פתוחים, כך שאלה שנסגרו באפליקציה שלהם (כמו Discord) יורדים מהתג. כבוי שומר על המונה הקלאסי.",
+  "Settings opens over the desktop, so each change shows on the bar, panels and wallpaper as you make it. Off opens it as a window.": "ההגדרות נפתחות מעל שולחן העבודה, כך שכל שינוי מופיע מיד בסרגל, בלוחות וברקע. כבוי פותח אותן כחלון.",
+  "On starts it at login. External entries live in your niri file below; edit them there.": "מופעל מפעיל אותו בכניסה. רשומות חיצוניות נמצאות בקובץ niri שלמטה; ערכו אותן שם.",
+  "Off on new installs. Push the pointer to the edge, then click a workspace to go there, drag a window onto another, or hold × to close it.": "כבוי בהתקנות חדשות. דחפו את הסמן לקצה, ואז לחצו על סביבת עבודה כדי לעבור אליה, גררו חלון לאחרת או החזיקו × כדי לסגור אותו.",
+  "niri starts these at login, not iNiR, so they keep running when the shell restarts.": "niri מפעיל אותם בכניסה, לא iNiR, ולכן הם ממשיכים לרוץ כשהמעטפת מופעלת מחדש."
 }

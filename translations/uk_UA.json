@@ -9994,5 +9994,10 @@
   "Ready to use": "Готово до використання",
   "A whole shell": "Цілий Shell",
   "Or a fixed colour": "Або сталий колір",
-  "Pose: %1": "Поза: %1"
+  "Pose: %1": "Поза: %1",
+  "Counts the popups still open, so ones cleared in their own app (like Discord) leave the badge. Off keeps the classic counter.": "Рахує лише відкриті спливні сповіщення: закриті в самому застосунку (наприклад, Discord) зникають зі значка. Вимкнено: класичний лічильник.",
+  "Settings opens over the desktop, so each change shows on the bar, panels and wallpaper as you make it. Off opens it as a window.": "Налаштування відкриваються поверх стільниці, і кожна зміна одразу видна на панелі, бічних панелях і шпалерах. Вимкнено: в окремому вікні.",
+  "On starts it at login. External entries live in your niri file below; edit them there.": "Увімкнено: запускається під час входу. Зовнішні записи є у файлі niri нижче; змінюйте їх там.",
+  "Off on new installs. Push the pointer to the edge, then click a workspace to go there, drag a window onto another, or hold × to close it.": "У нових встановленнях вимкнено. Підведіть вказівник до краю, потім клацніть робочий простір, щоб перейти, перетягніть вікно на інший або утримуйте ×, щоб закрити його.",
+  "niri starts these at login, not iNiR, so they keep running when the shell restarts.": "Їх запускає niri під час входу, а не iNiR, тому вони працюють далі, коли оболонка перезапускається."
 }

@@ -9994,5 +9994,10 @@
   "Ready to use": "Siap dipakai",
   "A whole shell": "Shell lengkap",
   "Or a fixed colour": "Atau warna tetap",
-  "Pose: %1": "Pose: %1"
+  "Pose: %1": "Pose: %1",
+  "Counts the popups still open, so ones cleared in their own app (like Discord) leave the badge. Off keeps the classic counter.": "Menghitung popup yang masih terbuka, jadi yang dihapus di aplikasinya (seperti Discord) hilang dari lencana. Nonaktif memakai penghitung klasik.",
+  "Settings opens over the desktop, so each change shows on the bar, panels and wallpaper as you make it. Off opens it as a window.": "Pengaturan terbuka di atas desktop, jadi setiap perubahan langsung terlihat di bilah, panel, dan wallpaper. Nonaktif membukanya sebagai jendela.",
+  "On starts it at login. External entries live in your niri file below; edit them there.": "Aktif berarti dijalankan saat login. Entri eksternal ada di berkas niri Anda di bawah; ubah di sana.",
+  "Off on new installs. Push the pointer to the edge, then click a workspace to go there, drag a window onto another, or hold × to close it.": "Nonaktif pada instalasi baru. Dorong penunjuk ke tepi, lalu klik ruang kerja untuk pindah ke sana, seret jendela ke ruang lain, atau tahan × untuk menutupnya.",
+  "niri starts these at login, not iNiR, so they keep running when the shell restarts.": "niri yang menjalankannya saat login, bukan iNiR, jadi tetap berjalan saat shell dimulai ulang."
 }

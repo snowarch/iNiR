@@ -9994,5 +9994,10 @@
   "Ready to use": "Pronto para usar",
   "A whole shell": "Um Shell completo",
   "Or a fixed colour": "Ou uma cor fixa",
-  "Pose: %1": "Pose: %1"
+  "Pose: %1": "Pose: %1",
+  "Counts the popups still open, so ones cleared in their own app (like Discord) leave the badge. Off keeps the classic counter.": "Conta os pop-ups ainda abertos, então os limpos no próprio app (como o Discord) saem do contador. Desligado usa o contador clássico.",
+  "Settings opens over the desktop, so each change shows on the bar, panels and wallpaper as you make it. Off opens it as a window.": "As configurações abrem sobre a área de trabalho, então cada mudança aparece na barra, nos painéis e no papel de parede na hora. Desligado abre em uma janela.",
+  "On starts it at login. External entries live in your niri file below; edit them there.": "Ligado inicia no login. As entradas externas ficam no seu arquivo do niri abaixo; edite-as lá.",
+  "Off on new installs. Push the pointer to the edge, then click a workspace to go there, drag a window onto another, or hold × to close it.": "Desligado em instalações novas. Leve o ponteiro até a borda e clique em uma área de trabalho para ir até ela, arraste uma janela para outra ou segure × para fechá-la.",
+  "niri starts these at login, not iNiR, so they keep running when the shell restarts.": "O niri inicia estes no login, não o iNiR, então continuam rodando quando o shell reinicia."
 }

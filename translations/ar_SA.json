@@ -9994,5 +9994,10 @@
   "Ready to use": "جاهز للاستخدام",
   "A whole shell": "Shell كامل",
   "Or a fixed colour": "أو لون ثابت",
-  "Pose: %1": "الوضعية: %1"
+  "Pose: %1": "الوضعية: %1",
+  "Counts the popups still open, so ones cleared in their own app (like Discord) leave the badge. Off keeps the classic counter.": "يعدّ النوافذ المنبثقة التي ما زالت مفتوحة، فتختفي من الشارة تلك التي أُغلقت في تطبيقها (مثل Discord). عند الإيقاف يبقى العدّاد الكلاسيكي.",
+  "Settings opens over the desktop, so each change shows on the bar, panels and wallpaper as you make it. Off opens it as a window.": "تُفتح الإعدادات فوق سطح المكتب، فيظهر كل تغيير على الشريط واللوحات والخلفية فور إجرائه. عند الإيقاف تُفتح كنافذة.",
+  "On starts it at login. External entries live in your niri file below; edit them there.": "التفعيل يشغّله عند تسجيل الدخول. العناصر الخارجية موجودة في ملف niri أدناه؛ عدّلها هناك.",
+  "Off on new installs. Push the pointer to the edge, then click a workspace to go there, drag a window onto another, or hold × to close it.": "معطّل في التثبيتات الجديدة. ادفع المؤشر إلى الحافة، ثم انقر مساحة عمل للانتقال إليها، أو اسحب نافذة إلى أخرى، أو اضغط مطولًا على × لإغلاقها.",
+  "niri starts these at login, not iNiR, so they keep running when the shell restarts.": "يشغّل niri هذه عند تسجيل الدخول، لا iNiR، لذا تبقى تعمل عند إعادة تشغيل الواجهة."
 }

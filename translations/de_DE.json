@@ -9994,5 +9994,10 @@
   "Ready to use": "Einsatzbereit",
   "A whole shell": "Eine komplette Shell",
   "Or a fixed colour": "Oder eine feste Farbe",
-  "Pose: %1": "Pose: %1"
+  "Pose: %1": "Pose: %1",
+  "Counts the popups still open, so ones cleared in their own app (like Discord) leave the badge. Off keeps the classic counter.": "Zählt die noch offenen Popups, sodass in ihrer App geschlossene (etwa Discord) aus dem Zähler verschwinden. Aus: der klassische Zähler.",
+  "Settings opens over the desktop, so each change shows on the bar, panels and wallpaper as you make it. Off opens it as a window.": "Die Einstellungen öffnen sich über dem Desktop, so siehst du jede Änderung sofort an Leiste, Panels und Hintergrund. Aus: als Fenster.",
+  "On starts it at login. External entries live in your niri file below; edit them there.": "An startet es bei der Anmeldung. Externe Einträge stehen in deiner niri-Datei unten; bearbeite sie dort.",
+  "Off on new installs. Push the pointer to the edge, then click a workspace to go there, drag a window onto another, or hold × to close it.": "Bei neuen Installationen aus. Schieb den Zeiger an den Rand, dann klick einen Arbeitsbereich an, zieh ein Fenster auf einen anderen oder halte × zum Schließen.",
+  "niri starts these at login, not iNiR, so they keep running when the shell restarts.": "niri startet sie bei der Anmeldung, nicht iNiR, deshalb laufen sie weiter, wenn die Shell neu startet."
 }

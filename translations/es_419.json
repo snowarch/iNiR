@@ -9994,5 +9994,10 @@
   "Ready to use": "Lista para usar",
   "A whole shell": "Una shell completa",
   "Or a fixed colour": "O un color fijo",
-  "Pose: %1": "Pose: %1"
+  "Pose: %1": "Pose: %1",
+  "Counts the popups still open, so ones cleared in their own app (like Discord) leave the badge. Off keeps the classic counter.": "Cuenta los avisos que siguen abiertos, así los que cierras en su propia app (como Discord) salen del contador. Apagado usa el contador clásico.",
+  "Settings opens over the desktop, so each change shows on the bar, panels and wallpaper as you make it. Off opens it as a window.": "Configuración se abre sobre el escritorio, así ves cada cambio en la barra, los paneles y el fondo mientras lo haces. Apagado la abre como ventana.",
+  "On starts it at login. External entries live in your niri file below; edit them there.": "Encendido lo inicia al entrar. Las entradas externas están en tu archivo de niri, abajo; edítalas ahí.",
+  "Off on new installs. Push the pointer to the edge, then click a workspace to go there, drag a window onto another, or hold × to close it.": "Apagado en instalaciones nuevas. Lleva el puntero al borde y haz clic en un espacio para ir, arrastra una ventana a otro o mantén × para cerrarla.",
+  "niri starts these at login, not iNiR, so they keep running when the shell restarts.": "niri los inicia al entrar, no iNiR, así que siguen funcionando cuando el shell se reinicia."
 }

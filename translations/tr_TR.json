@@ -9994,5 +9994,10 @@
   "Ready to use": "Kullanıma hazır",
   "A whole shell": "Eksiksiz bir kabuk",
   "Or a fixed colour": "Ya da sabit bir renk",
-  "Pose: %1": "Poz: %1"
+  "Pose: %1": "Poz: %1",
+  "Counts the popups still open, so ones cleared in their own app (like Discord) leave the badge. Off keeps the classic counter.": "Yalnızca açık kalan bildirimleri sayar; kendi uygulamasında temizlenenler (Discord gibi) rozetten düşer. Kapalıyken klasik sayaç kullanılır.",
+  "Settings opens over the desktop, so each change shows on the bar, panels and wallpaper as you make it. Off opens it as a window.": "Ayarlar masaüstünün üzerinde açılır; her değişiklik çubukta, panellerde ve duvar kâğıdında anında görünür. Kapalıyken pencere olarak açılır.",
+  "On starts it at login. External entries live in your niri file below; edit them there.": "Açıkken oturum açıldığında başlar. Harici girdiler aşağıdaki niri dosyasındadır; onları orada düzenleyin.",
+  "Off on new installs. Push the pointer to the edge, then click a workspace to go there, drag a window onto another, or hold × to close it.": "Yeni kurulumlarda kapalıdır. İşaretçiyi kenara itin, ardından gitmek için bir çalışma alanına tıklayın, bir pencereyi diğerine sürükleyin veya kapatmak için × düğmesini basılı tutun.",
+  "niri starts these at login, not iNiR, so they keep running when the shell restarts.": "Bunları oturum açılışında iNiR değil niri başlatır, bu yüzden kabuk yeniden başladığında çalışmaya devam ederler."
 }
