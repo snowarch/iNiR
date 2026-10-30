@@ -146,7 +146,7 @@ AbstractBackgroundWidget {
 
     // A player draws its own plate; the resting mark sits bare on the wallpaper and reads against it.
     accentBackdrop: root.hasPlayer ? Appearance.colors.colLayer0
-        : root.positionColorAdaptationEnabled && root._hasBrightness ? root._regionBg
+        : root._hasBrightness ? root._regionBg
         : root.widgetIrisFamily ? root._inkDark : Appearance.colors.colLayer0
     readonly property color mediaSurfaceInk: root.forceLightInk ? root._inkLight
         : root.forceDarkInk ? root._inkDark

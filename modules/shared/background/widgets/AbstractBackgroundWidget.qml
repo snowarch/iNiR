@@ -2392,11 +2392,13 @@ AbstractWidget {
     }
 
     property bool needsColText: false
-    readonly property bool _regionSampling: (root.needsColText && (root.positionColorAdaptationEnabled
-        || (root.widgetIrisFamily && !root.widgetHasSurface))) || root.irisReadsRegion
-    readonly property bool positionColorAdaptationEnabled: Boolean(root.widgetIrisFamily
-        ? Config.getNestedValue("iris.widgets.brightWallpapers", false)
-        : Config.getNestedValue("background.widgets.adaptColorsToWallpaperPosition", true))
+    // Text with no plate of its own always reads the wallpaper under it: legibility is the floor, not a setting
+    // (his 10-30: light ink vanished on a white wallpaper with adaptation off). The switches keep their colours.
+    readonly property bool _regionSampling: root.needsColText || root.irisReadsRegion
+    // iRiS glass turns to frost over a bright wallpaper only when asked (off, the glass darkens instead); everything
+    // else follows the wallpaper always.
+    readonly property bool positionColorAdaptationEnabled: !root.widgetIrisFamily
+        || Boolean(Config.getNestedValue("iris.widgets.brightWallpapers", false))
     property color dominantColor: Appearance.colors.colPrimary
     // Wallpaper region brightness (0-1, gamma-encoded luma). -1 = not yet analyzed.
     property real regionBrightness: -1
@@ -2471,7 +2473,7 @@ AbstractWidget {
     // Dark ink on this widget's own backdrop: the wallpaper under it reads light.
     readonly property bool inkOnLight: root.forceDarkInk ? true : root.forceLightInk ? false
         : root._onBlurredLock ? false
-        : root.positionColorAdaptationEnabled && root._hasBrightness && root.backdropIsLight
+        : root._hasBrightness && root.backdropIsLight
     // The same for content on glass (iRiS faces).
     readonly property bool glassInkOnLight: root.forceDarkInk ? true : root.forceLightInk ? false
         : root._onBlurredLock ? false
@@ -2483,7 +2485,7 @@ AbstractWidget {
     property color colText: {
         if (root.forceLightInk) return root._inkLight
         if (root.forceDarkInk) return root._inkDark
-        if (root._onBlurredLock || !root.positionColorAdaptationEnabled)
+        if (root._onBlurredLock || !root._hasBrightness)
             return root.widgetIrisFamily ? root._inkLight : Appearance.colors.colOnLayer0
         return root.inkOnLight ? root._inkDark : root._inkLight
     }
@@ -2883,7 +2885,7 @@ AbstractWidget {
             const seed = role === "signal" ? FamilyStyle.dangerOnMedia : role === "warning" ? FamilyStyle.highlightOnMedia
                 : role === "success" ? (FamilyStyle.light ? Lume.mark(FamilyStyle.success, 0.35, 0, false, 3) : FamilyStyle.success)
                 : role === "tertiary" ? root.irisAccent3 : role === "secondary" ? root.irisAccent2 : root.irisAccent
-            const sample = root.regionBrightness < 0 || !root.positionColorAdaptationEnabled ? null
+            const sample = root.regionBrightness < 0 ? null
                 : { level: root.regionBrightness, spread: root.regionBrightnessSpread }
             const shown = sample ? FamilyStyle.markOn(seed, sample, onLight, 3)
                 : onLight ? FamilyStyle.deepAccent(seed, FamilyStyle.inkOnLight) : seed
@@ -2956,7 +2958,7 @@ AbstractWidget {
     property bool widgetSurfaceEnabled: true
     readonly property bool widgetHasSurface: root.widgetSurfaceEnabled
         && (root.backgroundOpacity > 0 || root.effectiveBlur)
-    readonly property bool regionIsBright: root.positionColorAdaptationEnabled && root._hasBrightness
+    readonly property bool regionIsBright: root._hasBrightness
         ? root.backdropIsLight : root._unreadIsLight
 
     // Surfaces use semantic containers directly. This removes the old HSL
@@ -3009,7 +3011,7 @@ AbstractWidget {
         : Appearance.rounding.extralarge
 
     property color accentBackdrop: root.widgetHasSurface ? root.widgetPlateColor
-        : root.positionColorAdaptationEnabled && root._hasBrightness ? root._regionBg
+        : root._hasBrightness ? root._regionBg
         : root.widgetIrisFamily ? root._inkDark : Appearance.colors.colLayer0
 
     // Pick only among existing generated semantic tokens. Movement can therefore
@@ -3050,8 +3052,7 @@ AbstractWidget {
     // dark shadow; dark ink on a light region gets only a faint light lift over its darker patches,
     // since a dark shadow under dark text reads as a smear and a strong light one as a glow.
     readonly property bool legibleAlways: root.widgetIrisFamily && Boolean(root.irisWidgetOptions.legibleAlways ?? false)
-    readonly property real _haloBusy: root.legibleAlways ? 1 : root.positionColorAdaptationEnabled
-        ? Math.min(1, root.regionBrightnessSpread / 0.28) : 0
+    readonly property real _haloBusy: root.legibleAlways ? 1 : Math.min(1, root.regionBrightnessSpread / 0.28)
     // The same held by the whole bare widget (Lume's third step for content with no plate): a soft dark
     // shadow under light ink as the region's brightest part climbs toward the ink, a faint light lift
     // under dark ink over the region's darker patches. Off where the backdrop already holds the ink,
