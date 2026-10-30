@@ -643,7 +643,7 @@ AbstractBackgroundWidget {
                     // a short card spends its height on the cities; the date put the last of them past the edge
                     visible: root.height >= Math.round(200 * root.scaleFactor) && !root.materialSmall
                     text: Translation.locale.toString(WorldClock.now, "dddd, MMMM d yyyy")
-                    color: ColorUtils.applyAlpha(root.surfaceInk, 0.6)
+                    color: root.widgetInkMuted
                     elide: Text.ElideRight
                     font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
                 }

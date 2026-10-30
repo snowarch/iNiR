@@ -156,7 +156,7 @@ AbstractBackgroundWidget {
         Item { Layout.fillHeight: true }
         StyledText {
             text: Translation.tr("Uptime")
-            color: ColorUtils.applyAlpha(root.surfaceInk, 0.66)
+            color: root.widgetInkMuted
             font.pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
         }
         Row {
@@ -179,7 +179,7 @@ AbstractBackgroundWidget {
                     StyledText {
                         anchors.baseline: partValue.baseline
                         text: part.modelData.unit
-                        color: ColorUtils.applyAlpha(root.surfaceInk, 0.66)
+                        color: root.widgetInkMuted
                         font.pixelSize: Math.round(16 * root.scaleFactor)
                         font.weight: Font.DemiBold
                     }
@@ -190,7 +190,7 @@ AbstractBackgroundWidget {
             Layout.fillWidth: true
             visible: root.showSince
             text: Translation.tr("Since %1").arg(root.bootLabel)
-            color: ColorUtils.applyAlpha(root.surfaceInk, 0.66)
+            color: root.widgetInkMuted
             elide: Text.ElideRight
             font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
         }
@@ -224,7 +224,7 @@ AbstractBackgroundWidget {
 
                     StyledText {
                         text: Translation.tr("System uptime")
-                        color: ColorUtils.applyAlpha(root.surfaceInk, 0.66)
+                        color: root.widgetInkMuted
                         font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
                     }
                     StyledText {

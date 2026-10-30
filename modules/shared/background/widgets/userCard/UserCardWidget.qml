@@ -218,7 +218,7 @@ AbstractBackgroundWidget {
                         anchors.centerIn: parent
                         text: "person"
                         iconSize: Math.round(avatarContainer.size * 0.55)
-                        color: ColorUtils.applyAlpha(root.surfaceInk, 0.6)
+                        color: root.widgetInkMuted
                     }
                 }
 
@@ -279,7 +279,7 @@ AbstractBackgroundWidget {
                     Layout.fillWidth: true
                     text: Translation.tr("Up %1").arg(DateTime.uptime || "--")
                     elide: Text.ElideRight
-                    color: ColorUtils.applyAlpha(root.surfaceInk, 0.6)
+                    color: root.widgetInkMuted
                     font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
                 }
             }
@@ -356,7 +356,7 @@ AbstractBackgroundWidget {
                     StyledText {
                         Layout.fillWidth: true
                         text: fact.modelData.label
-                        color: ColorUtils.applyAlpha(root.surfaceInk, 0.66)
+                        color: root.widgetInkMuted
                         elide: Text.ElideRight
                         font.pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
                     }

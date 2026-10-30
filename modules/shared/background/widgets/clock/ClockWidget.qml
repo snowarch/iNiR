@@ -303,7 +303,9 @@ AbstractBackgroundWidget {
         ? root.debugRegionBrightness : root.regionBrightness
     readonly property color _digitalRegionBg: {
         const dominant = Qt.color(root._digitalRegionColor);
-        if (!root._digitalHasBrightness) return dominant;
+        // The sample's mean colour is the backdrop as drawn; rebuilding it from the gamma level as HSL lightness made a
+        // sunset read darker than it is and kept white digits on it at under 3:1 (10-30 gallery).
+        if (!root._digitalHasBrightness || !root.debugRegionActive) return dominant;
         return Qt.hsla(dominant.hslHue, dominant.hslSaturation,
             root._digitalRegionBrightness, 1.0);
     }

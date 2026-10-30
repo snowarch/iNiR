@@ -370,7 +370,7 @@ AbstractBackgroundWidget {
                             Layout.fillWidth: true
                             text: Weather.data?.description ?? ""
                             elide: Text.ElideRight
-                            color: ColorUtils.applyAlpha(root.widgetInk, 0.72)
+                            color: root.widgetInkMuted
                             font.pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
                         }
 
@@ -380,7 +380,7 @@ AbstractBackgroundWidget {
                                 && root.height >= Math.round(150 * root.scaleFactor)
                             text: Weather.visibleCity
                             elide: Text.ElideRight
-                            color: ColorUtils.applyAlpha(root.widgetInk, 0.5)
+                            color: root.widgetInkSubtle
                             font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
                         }
                     }

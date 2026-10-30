@@ -41,8 +41,7 @@ ColumnLayout {
         heroLabel.implicitWidth))
     readonly property real desiredImplicitHeight: Math.ceil(
         (weekdayLabel.visible ? weekdayLabel.implicitHeight : 0)
-        + (dateLabel.visible
-            ? dateLabel.implicitHeight - Appearance.sizes.spacingSmall : 0)
+        + (dateLabel.visible ? dateLabel.implicitHeight : 0)
         + heroLabel.implicitHeight
         - (root.showDate ? Appearance.sizes.spacingMedium : 0))
 
@@ -61,7 +60,8 @@ ColumnLayout {
             family: root.fontFamily
             pixelSize: root.labelPixelSize
             weight: Font.DemiBold
-            letterSpacing: Appearance.zzzEverywhere ? Appearance.zzz.tracking : 0
+            // caps want air (Material's label tracking); the date sat on this line with none
+            letterSpacing: Appearance.zzzEverywhere ? Appearance.zzz.tracking : root.labelPixelSize * 0.08
         }
     }
 
@@ -69,7 +69,6 @@ ColumnLayout {
         id: dateLabel
         visible: root.showDate
         Layout.alignment: root.layoutAlignment
-        Layout.topMargin: -Appearance.sizes.spacingSmall
         horizontalAlignment: root.horizontalAlignment
         text: Translation.locale.toString(root.currentDate, "d MMM")
         color: root.dateColor

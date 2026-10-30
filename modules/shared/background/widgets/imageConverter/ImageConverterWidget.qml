@@ -232,7 +232,7 @@ AbstractBackgroundWidget {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
             text: "PNG · JPG · WEBP · AVIF · BMP · TIFF · PDF"
-            color: ColorUtils.applyAlpha(root.widgetInk, 0.56)
+            color: root.widgetInkSubtle
             font.pixelSize: Math.round(Appearance.font.pixelSize.smallest * root.scaleFactor)
         }
 
@@ -344,7 +344,7 @@ AbstractBackgroundWidget {
 
             StyledText {
                 text: Translation.tr("Convert to")
-                color: ColorUtils.applyAlpha(root.widgetInk, 0.72)
+                color: root.widgetInkMuted
                 font.pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
             }
 

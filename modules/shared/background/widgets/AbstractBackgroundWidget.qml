@@ -2425,8 +2425,10 @@ AbstractWidget {
     // The gap between each pair of thresholds keeps a widget dragged along a boundary from flickering.
     // Bare ink turns over at a mid tone; glass carries a veil that keeps light ink legible further up,
     // so it turns only where that veil would have to hide the glass.
-    readonly property real _lightEnter: 0.30
-    readonly property real _lightLeave: 0.21
+    // Dark ink out-reads light ink above a relative luminance of 0.18 (1.05 / (L + 0.05) = (L + 0.05) / 0.05): the pair
+    // sits around it. At 0.30 a sunset sky (~0.25) kept light ink at 3:1 and its captions near 2:1 (10-30 gallery).
+    readonly property real _lightEnter: 0.22
+    readonly property real _lightLeave: 0.15
     readonly property real _brightEnter: 0.46
     readonly property real _brightLeave: 0.36
     property bool backdropIsLight: false
@@ -2974,8 +2976,27 @@ AbstractWidget {
     readonly property color widgetInk: root.widgetHasSurface ? root.widgetSurfaceInk : root.colText
     readonly property color widgetInkMuted: root.widgetEditorial && root.widgetHasSurface && !root.forceLightInk && !root.forceDarkInk
         ? ColorUtils.ensureReadable(ColorUtils.mix(root.widgetInk, root.widgetPlateColor, 0.72), root.widgetPlateColor, 4.5)
-        : ColorUtils.applyAlpha(root.widgetInk, 0.66)
-    readonly property color widgetInkSubtle: ColorUtils.applyAlpha(root.widgetInk, 0.58)
+        : root.widgetHasSurface || !root._hasBrightness ? ColorUtils.applyAlpha(root.widgetInk, 0.66)
+        // bare, a caption is a solid tone measured on the wallpaper under it: a fixed alpha lost it on mid tones
+        : root._quietInk(0.7, 4.5)
+    readonly property color widgetInkSubtle: root.widgetHasSurface || !root._hasBrightness ? ColorUtils.applyAlpha(root.widgetInk, 0.58)
+        : root._quietInk(0.62, 3)
+    // A step back from the ink toward the wallpaper, only as far as `ratio` allows on the worst part; never past the
+    // ink's own polarity (ensureReadable flipped a light caption to black over a mostly dark region).
+    function _quietInk(weight: real, ratio: real): color {
+        for (let w = weight; w < 1; w += 0.05) {
+            const c = ColorUtils.mix(root.widgetInk, root._regionBg, w)
+            if (ColorUtils.contrastRatio(c, root._worstBackdrop) >= ratio) return c
+        }
+        return root.widgetInk
+    }
+    // The part of the region that fights the ink most (its brightest under light ink, darkest under dark): a sky over
+    // mountains averaged dark, and captions over the sky went under 2:1.
+    readonly property color _worstBackdrop: {
+        const v = root._inkIsLight ? Math.min(1, root.regionBrightness + root.regionBrightnessSpread)
+            : Math.max(0, root.regionBrightness - root.regionBrightnessSpread)
+        return Qt.rgba(v, v, v, 1)
+    }
     readonly property bool widgetEditorial: !root.widgetIris && Appearance.editorialEverywhere
     // Family-owned type: iRiS widgets speak the Island's typeface; every other
     // family keeps the shell fonts it always used.
