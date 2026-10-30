@@ -18,6 +18,15 @@ Item {
     property bool tileTop: true
     property bool tileBottom: true
 
+    // A menu alone in its tile is a setting row: the name on the left, the menu at the right edge. Full-width menus
+    // under their names made whole pages a stack of slabs (Compositor had 19).
+    readonly property bool _menuRow: {
+        if (!root.tileActive || root.title.length === 0)
+            return false
+        const kids = sectionContent.visibleChildren
+        return kids.length === 1 && kids[0].popup !== undefined && kids[0].textRole !== undefined
+    }
+
     readonly property int _padX: root.tileActive ? SettingsMaterialPreset.tilePaddingX : 0
     readonly property int _padY: root.tileActive ? SettingsMaterialPreset.tilePaddingY : 0
 
@@ -38,7 +47,7 @@ Item {
         bottomRightRadius: bottomLeftRadius
     }
 
-    ColumnLayout {
+    GridLayout {
         id: column
         anchors {
             fill: parent
@@ -47,7 +56,9 @@ Item {
             topMargin: root._padY
             bottomMargin: root._padY
         }
-        spacing: root.tileActive ? 12 : SettingsMaterialPreset.tileGap
+        columns: root._menuRow ? 2 : 1
+        columnSpacing: SettingsMaterialPreset.tilePaddingX
+        rowSpacing: root.tileActive ? 12 : SettingsMaterialPreset.tileGap
 
         ColumnLayout {
             readonly property string settingsTileRole: "caption"
@@ -79,7 +90,9 @@ Item {
         }
         ColumnLayout {
             id: sectionContent
-            Layout.fillWidth: true
+            Layout.fillWidth: !root._menuRow
+            Layout.preferredWidth: root._menuRow ? Math.round(240 * Appearance.fontSizeScale) : -1
+            Layout.alignment: Qt.AlignVCenter
             spacing: SettingsMaterialPreset.tileGap
         }
     }
