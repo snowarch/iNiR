@@ -1,4 +1,5 @@
 import qs.modules.common
+import qs.modules.common.widgets
 import QtQuick
 import QtQuick.Controls
 
@@ -6,6 +7,7 @@ import QtQuick.Controls
  * Does not include visual layout, but includes the easily neglected colors.
  */
 TextInput {
+    cursorDelegate: TextCursor {}
     color: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.colors.colOnLayer1
     Behavior on color {
         enabled: Appearance.animationsEnabled

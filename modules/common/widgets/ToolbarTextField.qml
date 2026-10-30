@@ -7,6 +7,7 @@ import qs.modules.common
 import qs.modules.common.widgets
 
 TextField {
+    cursorDelegate: TextCursor {}
     id: filterField
 
     property alias colBackground: background.color

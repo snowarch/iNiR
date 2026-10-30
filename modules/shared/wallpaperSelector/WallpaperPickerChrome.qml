@@ -181,6 +181,7 @@ Item {
             }
 
             TextInput {
+                cursorDelegate: TextCursor {}
                 id: searchField
                 visible: searchChip.reveal > 0
                 opacity: searchChip.reveal

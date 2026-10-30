@@ -1458,6 +1458,7 @@ MouseArea {
                     }
                     
                     TextInput {
+                        cursorDelegate: TextCursor {}
                         id: loginPasswordField
                         Layout.fillWidth: true
                         Layout.fillHeight: true

@@ -198,3 +198,4 @@ LiveWindowCaptureView 1.0 LiveWindowCaptureView.qml
 LiveWindowCrop 1.0 LiveWindowCrop.qml
 WheelIntent 1.0 WheelIntent.qml
 LiveWindowCropView 1.0 LiveWindowCropView.qml
+TextCursor 1.0 TextCursor.qml

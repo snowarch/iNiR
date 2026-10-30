@@ -9,6 +9,7 @@ import QtQuick.Controls
  * https://m3.material.io/components/text-fields/overview
  */
 TextArea {
+    cursorDelegate: TextCursor {}
     id: root
     Material.theme: Material.System
     Material.accent: Appearance.regaliaEverywhere ? "transparent" : Appearance.colors.colPrimary

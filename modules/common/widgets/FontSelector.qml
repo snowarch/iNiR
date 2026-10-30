@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import qs.services
 import qs.modules.common
+import qs.modules.common.widgets
 
 Item {
     id: root
@@ -91,6 +92,7 @@ Item {
             spacing: 8
 
             TextField {
+                cursorDelegate: TextCursor {}
                 id: searchField
                 Layout.fillWidth: true
                 placeholderText: Translation.tr("Search fonts...")

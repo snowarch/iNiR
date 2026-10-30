@@ -770,6 +770,7 @@ Item {
                             elide: Text.ElideRight
                         }
                         TextInput {
+                            cursorDelegate: TextCursor {}
                             id: nameInput
                             anchors.horizontalCenter: parent.horizontalCenter
                             y: root.pictureHeight + root.nameGap

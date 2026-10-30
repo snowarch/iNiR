@@ -422,6 +422,7 @@ Item {
     }
 
     TextInput {
+        cursorDelegate: TextCursor {}
         id: renameField
         anchors.left: parent.left
         anchors.right: parent.right

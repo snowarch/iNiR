@@ -575,6 +575,7 @@ AbstractBackgroundWidget {
                 border.color: ColorUtils.applyAlpha(root.ink, 0.16)
 
                 TextArea {
+                    cursorDelegate: TextCursor {}
                     id: taskInput
                     anchors.fill: parent
                     anchors.margins: Math.round(10 * root.scaleFactor)

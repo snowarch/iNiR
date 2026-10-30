@@ -315,6 +315,7 @@ AbstractBackgroundWidget {
         }
 
         TextEdit {
+            cursorDelegate: TextCursor {}
             id: textEdit
             width: editorFlick.width
             height: Math.max(editorFlick.height, contentHeight)

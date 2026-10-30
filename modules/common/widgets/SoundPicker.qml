@@ -215,6 +215,7 @@ ColumnLayout {
                     color: Appearance.colors.colOnLayer2
                 }
                 TextInput {
+                    cursorDelegate: TextCursor {}
                     id: customPathInput
                     Layout.fillWidth: true
                     text: root.isFile ? root.currentValue : ""

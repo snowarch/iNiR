@@ -1,4 +1,5 @@
 import qs.modules.common
+import qs.modules.common.widgets
 import QtQuick
 import QtQuick.Controls
 
@@ -6,6 +7,7 @@ import QtQuick.Controls
  * Does not include visual layout, but includes the easily neglected colors.
  */
 TextArea {
+    cursorDelegate: TextCursor {}
     id: root
     renderType: Text.NativeRendering
     selectedTextColor: Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateInk : Appearance.colors.colOnSecondaryContainer
