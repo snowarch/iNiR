@@ -952,6 +952,9 @@ ShellRoot {
             property bool panelsUsed: false
             onChosenChanged: if (family.chosen) family.criticalUsed = true
             onPanelsWantedChanged: if (family.panelsWanted) family.panelsUsed = true
+            // The switch's curtain lifts once the chosen family stands: lifted on the swap alone, Material was still
+            // building its panels on screen for a second or two (his 10-30: "se lagea todo").
+            Binding { when: family.chosen; target: root; property: "_familyUp"; value: family.up }
             // A part that doesn't compile leaves the person without panels: the update reads these lines and rolls the
             // family back (robust-update.sh, restart_shell_and_verify). The type loader compiles it once for both.
             function checkPart(url: string) {
@@ -1014,6 +1017,7 @@ ShellRoot {
     property bool _familyPanelsSuspended: false
     property string _familySwapTarget: ""
     property real _transitionStartedAt: 0
+    property bool _familyUp: false
     property bool _familyRestartPending: false
 
     function _ensureFamilyPanels(family: string): void {
@@ -1244,7 +1248,7 @@ ShellRoot {
         source: "FamilyTransitionOverlay.qml"
         onLoaded: {
             // the curtain lifts once the new family stands, not on a fixed hold while its panels still build
-            item.swapPending = Qt.binding(() => root._pendingFamily !== "" || root._familyPanelsSuspended)
+            item.swapPending = Qt.binding(() => root._pendingFamily !== "" || root._familyPanelsSuspended || !root._familyUp)
             item.exitComplete.connect(root.applyPendingFamily)
             item.enterComplete.connect(root.finishFamilyTransition)
         }

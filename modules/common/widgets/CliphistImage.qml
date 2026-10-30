@@ -72,6 +72,7 @@ Rectangle {
             if [ -s '${imageDecodeFilePath}' ]; then
                 exit 0
             fi
+            /usr/bin/mkdir -p '${imageDecodePath}'
             _tmp='${imageDecodeFilePath}'.$$
             if echo '${StringUtils.shellSingleQuoteEscape(root.entry)}' | ${Cliphist.cliphistBinary} decode > "$_tmp" && [ -s "$_tmp" ]; then
                 /usr/bin/mv -f "$_tmp" '${imageDecodeFilePath}'

@@ -159,12 +159,10 @@ Singleton {
         Quickshell.execDetached(["mkdir", "-p", `${stateUserPath}`])
         Quickshell.execDetached(["mkdir", "-p", `${favicons}`])
         Quickshell.execDetached(["mkdir", "-p", `${coverArt}`])
-        Quickshell.execDetached(["rm", "-rf", `${booruPreviews}`])
-        Quickshell.execDetached(["mkdir", "-p", `${booruPreviews}`])
-        Quickshell.execDetached(["rm", "-rf", `${latexOutput}`])
-        Quickshell.execDetached(["mkdir", "-p", `${latexOutput}`])
-        Quickshell.execDetached(["rm", "-rf", `${cliphistDecode}`])
-        Quickshell.execDetached(["mkdir", "-p", `${cliphistDecode}`])
+        // Emptied and made again in one process: as two detached ones the mkdir could run before the rm, which left the
+        // folder gone and every clipboard image after it blank.
+        for (const dir of [booruPreviews, latexOutput, cliphistDecode])
+            Quickshell.execDetached(["/usr/bin/bash", "-c", 'rm -rf -- "$1" && mkdir -p -- "$1"', "fresh", dir])
         Quickshell.execDetached(["mkdir", "-p", `${aiChats}`])
         Quickshell.execDetached(["mkdir", "-p", `${screenTimePath}`])
         Quickshell.execDetached(["mkdir", "-p", `${userActions}`])
