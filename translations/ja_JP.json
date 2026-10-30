@@ -10045,5 +10045,7 @@
   "No votes yet": "まだ投票はありません",
   "%1 downloads": "%1 ダウンロード",
   "Reviews and votes": "レビューと投票",
-  "Reaches": "接続先"
+  "Reaches": "接続先",
+  "Pulled from the hub": "hub から取り下げ済み",
+  "You have %1": "現在 %1"
 }
