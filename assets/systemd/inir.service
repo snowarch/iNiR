@@ -48,6 +48,9 @@ TimeoutStopSec=15
 # hot-reload (extensions freed before the root), each coredump is 45-90 MB and
 # its crash reports pile up in ~/.cache/quickshell/crashes/.
 LimitCORE=0
+# The shell holds an fd per process, watch, socket and texture source; the 1024 default ran out after a
+# long day of reloads and Wayland dropped the connection ("Too many open files").
+LimitNOFILE=65536
 Environment=QS_DISABLE_CRASH_HANDLER=1
 
 # Clean up stale Quickshell runtime entries (by-pid, by-id) left behind
