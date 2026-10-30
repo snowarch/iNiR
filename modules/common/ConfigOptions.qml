@@ -1575,6 +1575,8 @@ JsonAdapter {
                 property int size: 32
                 property bool snap: true
             }
+            // off: arranging happens on the full-size desktop, no card
+            property bool editCard: true
 
             // Custom widget data lives in root.customWidgetData (not here)
             // to avoid JsonAdapter crash on property var inside JsonObject.

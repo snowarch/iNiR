@@ -26,7 +26,8 @@ Some things are easier to change where they sit.
 - iRiS: right-click the desktop and pick **Customize iRiS**. The Island grows a capsule with Themes, Look and Pieces,
   plus undo, redo and Done.
 - Material: **Settings › Shell Layout** moves the bar, the dock and the sidebars right on the desktop.
-  **Settings › Widgets › Edit Mode** arranges the desktop widgets, with a grid to snap to.
+  **Settings › Widgets › Edit Mode** arranges the desktop widgets, with a grid to snap to. The desktop shrinks into
+  a card while you do; turn off **Shrink the desktop while editing** to arrange them in place, at full size.
 - Waffle: **Waffle Settings › Shell Layout** places the taskbar.
 
 While you drag anything (a widget, a window in the overview, a row in a Settings editor), **Esc** puts it back where

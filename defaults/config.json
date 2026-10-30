@@ -1035,6 +1035,7 @@
                 "size": 32,
                 "snap": true
             },
+            "editCard": true,
             "custom": {},
             "style": "panel"
         },

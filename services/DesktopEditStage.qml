@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import qs
+import qs.modules.common
 
 // Arranging widgets as a place of its own: the desktop recedes into a card between what a family puts above and below
 // it, and the windows of that workspace wait on an empty one until Done. A family that wants the card writes each
@@ -14,6 +15,8 @@ Singleton {
 
     // output -> { progress, top, bottom }: progress 0 is the desktop, 1 the card; top/bottom are screen px.
     property var stages: ({})
+    // Settings › Widgets: off, the desktop stays full size and widgets are arranged in place
+    readonly property bool card: Config.options?.background?.widgets?.editCard ?? true
     readonly property real gap: 22
 
     function setStage(output: string, progress: real, top: real, bottom: real): void {
@@ -32,7 +35,7 @@ Singleton {
     // the screen's proportions and is the biggest copy that fits between the reserves.
     function cardFor(output: string, w: real, h: real): var {
         const stage = root.stages[output]
-        if (!stage || w <= 0 || h <= 0)
+        if (!stage || w <= 0 || h <= 0 || !root.card)
             return { x: 0, y: 0, s: 1, p: 0 }
         const top = stage.top + root.gap
         const bottom = h - stage.bottom - root.gap
