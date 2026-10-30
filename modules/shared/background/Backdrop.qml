@@ -34,8 +34,11 @@ Variants {
         anchors.right: true
 
         color: "transparent"
-        // Niri only shows the backdrop in the overview; mapped all the time it held a full-screen swapchain for nothing.
-        visible: !CompositorService.isNiri || NiriService.inOverview
+        // Stays mapped: Niri shows its backdrop through the whole overview animation, between workspaces as they slide,
+        // and as the desktop itself when the wallpaper is hidden ("only the backdrop"). Mapped only in the overview
+        // (10-22) it left a grey desktop and vanished at both ends of the overview's motion (his 10-30). Its media only
+        // play in the overview, so outside it the surface is one still buffer.
+        visible: true
 
         // Material ii backdrop config (independent)
         readonly property var iiBackdrop: Config.options?.background?.backdrop ?? {}
