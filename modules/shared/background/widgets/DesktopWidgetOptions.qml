@@ -123,7 +123,15 @@ QtObject {
                 keywords: ["outline", "border", "line", "borde"] }))
         if (plate) out.push(
             root.row(widget, "backgroundOpacity", "Background strength", "range", root.plateDefault(widget) ? 0.16 : 0, { min: 0, max: 1, step: 0.02, scale: 100, unit: " %",
-                when: () => root.plain(widget) && Boolean(root.value(widget, "showBackground", root.plateDefault(widget))) }))
+                when: () => root.plain(widget) && Boolean(root.value(widget, "showBackground", root.plateDefault(widget))) }),
+            // Settings kept these two; the edit sheet lost them when it took over the widget manager (his 10-30)
+            root.row(widget, "useBlur", "Blur background", "switch", false, { tune: true,
+                when: () => root.plain(widget) && Boolean(root.value(widget, "showBackground", root.plateDefault(widget))),
+                keywords: ["blur", "frosted", "glass", "desenfoque"] }),
+            root.row(widget, "cornerRadius", "Corners", "range", -1, { tune: true, min: -1, max: 48, step: 1, unit: " px", lowLabel: "Theme",
+                when: () => root.plain(widget) && (Boolean(root.value(widget, "showBackground", root.plateDefault(widget)))
+                    || Boolean(root.value(widget, "showBorder", root.plateDefault(widget)))),
+                keywords: ["corner", "radius", "round", "esquinas", "redondeo"] }))
         out.push(
             root.row(widget, "colorMode", "Ink", "choice", "auto", { tune: true, when: () => root.plain(widget),
                 choices: root.choices([["auto", "Auto"], ["light", "Light ink"], ["dark", "Dark ink"]]), keywords: ["ink", "text", "colour", "color", "contrast"] }),

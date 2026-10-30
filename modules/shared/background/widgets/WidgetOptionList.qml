@@ -86,7 +86,8 @@ ColumnLayout {
             stepSize: Number(range.spec.step ?? 1) * range.scale
             value: Number(root.valueOf(range.spec) ?? 0) * range.scale
             unit: String(range.spec.unit ?? "").replace(/^ %$/, "%")
-            format: v => range.spec.zeroLabel && Math.round(v) === 0 ? root.label(range.spec.zeroLabel)
+            format: v => range.spec.lowLabel && v <= range.from ? root.label(range.spec.lowLabel)
+                : range.spec.zeroLabel && Math.round(v) === 0 ? root.label(range.spec.zeroLabel)
                 : Number(v.toFixed(range.stepSize < 1 ? 1 : 0)) + range.unit
             onCommitted: v => DesktopWidgetOptions.write(range.spec, v / range.scale)
         }
