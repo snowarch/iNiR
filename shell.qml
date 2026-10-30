@@ -1013,6 +1013,7 @@ ShellRoot {
     property bool _transitionUsesOverlay: false
     property bool _familyPanelsSuspended: false
     property string _familySwapTarget: ""
+    property real _transitionStartedAt: 0
     property bool _familyRestartPending: false
 
     function _ensureFamilyPanels(family: string): void {
@@ -1104,6 +1105,7 @@ ShellRoot {
 
         _transitionInProgress = true
         _transitionUsesOverlay = true
+        _transitionStartedAt = Date.now()
         _pendingFamily = targetFamily
         GlobalStates.familyTransitionTarget = targetFamily
         GlobalStates.familyTransitionDirection = direction
@@ -1166,9 +1168,9 @@ ShellRoot {
 
         const targetFamily = _pendingFamily
         _pendingFamily = ""
-        // Under the full curtain: finishing the target's compile holds the GUI thread (1.1 s for iRiS the first time
-        // in a session, measured 10-29); before the curtain it swallowed the key press, nothing moved for 1.2 s.
-        root._warmFamily(targetFamily)
+        // No warm-up under the curtain: its compile held the GUI thread (1.2 s for iRiS before the curtain, 10-29), and
+        // under it both switches to Material after a reload stood still until the watchdog, 6.9 s (his 10-30). The
+        // panels compile once as they load, the way every boot does (1.2 s for Material), and the curtain holds for it.
         root.beginSerializedFamilySwap(targetFamily)
     }
 
@@ -1226,6 +1228,8 @@ ShellRoot {
             familyFinishSettleTimer.restart()
             return
         }
+        if (_transitionStartedAt > 0) console.info(`[FamilyTransition] ${Config.options?.panelFamily ?? ""} stood after ${Date.now() - _transitionStartedAt} ms`)
+        _transitionStartedAt = 0
         _transitionInProgress = false
         _transitionUsesOverlay = false
         GlobalStates.familyTransitionActive = false
