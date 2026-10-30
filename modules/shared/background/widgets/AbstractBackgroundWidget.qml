@@ -2561,6 +2561,7 @@ AbstractWidget {
     readonly property var irisWidgetOptions: Config.options?.iris?.widgets ?? ({})
     readonly property bool irisRim: Boolean(root.irisWidgetOptions.rim ?? false)
     readonly property string irisOutline: {
+        if (!root.showBorder) return "none"
         const value = String(root.irisWidgetOptions.outline ?? "auto")
         return ["auto", "always", "none"].includes(value) ? value : "auto"
     }
@@ -2627,6 +2628,8 @@ AbstractWidget {
     readonly property bool irisFaced: root.widgetIris && root.hasIrisFace
     readonly property var irisMaterials: ["glass", "clear", "solid", "tinted"]
     readonly property string irisMaterial: {
+        // the widget's Background switch, the same one every family's edit mode turns off for all
+        if (!root.showBackground) return "clear"
         const own = String(root._readConfigKey("iris.material") ?? "auto")
         const shared = String(root.irisWidgetOptions.material ?? "glass")
         return root.irisMaterials.includes(own) ? own : root.irisMaterials.includes(shared) ? shared : "glass"

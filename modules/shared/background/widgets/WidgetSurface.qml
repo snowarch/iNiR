@@ -84,8 +84,9 @@ Rectangle {
     readonly property string _irisMaterialName: String(parent?.irisMaterial ?? Config.options?.iris?.widgets?.material ?? "glass")
     readonly property bool _irisGlass: root._iris && root._backgroundVisible && root._irisMaterialName === "glass"
     readonly property bool _irisClear: root._iris && root._irisMaterialName === "clear"
-    readonly property string _irisOutline: String(Config.options?.iris?.widgets?.outline ?? "auto")
-    readonly property bool _irisRimHidden: root._iris && !GlobalStates.widgetEditMode && (root._irisOutline === "none"
+    readonly property string _irisOutline: String(parent?.irisOutline ?? Config.options?.iris?.widgets?.outline ?? "auto")
+    // Arranging draws its own selection outline around the widget; the widget's outline stays as set.
+    readonly property bool _irisRimHidden: root._iris && (root._irisOutline === "none"
         || (root._irisOutline !== "always" && root._irisClear && !Boolean(Config.options?.iris?.widgets?.rim ?? false)))
     readonly property real _irisStrength: Math.max(0, Math.min(1, Number(parent?.irisSurfaceOpacity
         ?? (Config.options?.iris?.widgets?.opacity ?? 100) / 100)))

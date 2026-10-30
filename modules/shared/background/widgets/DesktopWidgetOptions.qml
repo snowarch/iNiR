@@ -104,20 +104,24 @@ QtObject {
         const out = [
             root.row(widget, "iris.design", "Design", "choice", "auto", { tune: true, choices: root.choices(designs),
                 when: () => designs.length > 2, keywords: ["design", "look", "style", "material", "instrument", "readout"] }),
-            root.row(widget, "iris.material", "Material", "choice", "auto", { tune: true, when: () => root.face(widget),
+            root.row(widget, "iris.material", "Material", "choice", "auto", { tune: true,
+                when: () => root.face(widget) && Boolean(root.value(widget, "showBackground", true)),
                 choices: root.choices([["auto", "Same as every widget"], ["glass", "Glass"], ["clear", "Transparent"], ["solid", "Solid"], ["tinted", "Tinted"]]),
                 keywords: ["glass", "transparent", "background", "plate", "fondo", "vidrio"] })
         ]
-        if (plate) out.push(
+        // A widget that draws its own card in Material (plate false) still wears the iRiS plate as a face.
+        const plated = () => root.on(widget) && (plate || root.face(widget))
+        out.push(
             // switched on over a strength of 0 (a plateless widget's default) the plate stayed invisible: it comes with one
-            root.row(widget, "showBackground", "Background", "switch", root.plateDefault(widget), { tune: false, when: () => root.plain(widget),
+            root.row(widget, "showBackground", "Background", "switch", root.plateDefault(widget), { tune: false, when: plated,
                 apply: next => next && Number(root.value(widget, "backgroundOpacity", 0.16)) <= 0
                     ? { showBackground: true, backgroundOpacity: 0.16 } : { showBackground: next },
                 description: "The plate behind the widget.", keywords: ["background", "plate", "card", "surface", "fondo", "superficie"] }),
-            root.row(widget, "showBorder", "Outline", "switch", root.plateDefault(widget), { when: () => root.plain(widget),
+            root.row(widget, "showBorder", "Outline", "switch", root.plateDefault(widget), { when: plated,
                 apply: next => Object.assign({ showBorder: next }, next && Number(root.value(widget, "borderOpacity", 0.08)) <= 0 ? { borderOpacity: 0.2 } : {},
                     next && Number(root.value(widget, "borderWidth", 1)) <= 0 ? { borderWidth: 1 } : {}),
-                keywords: ["outline", "border", "line", "borde"] }),
+                keywords: ["outline", "border", "line", "borde"] }))
+        if (plate) out.push(
             root.row(widget, "backgroundOpacity", "Background strength", "range", root.plateDefault(widget) ? 0.16 : 0, { min: 0, max: 1, step: 0.02, scale: 100, unit: " %",
                 when: () => root.plain(widget) && Boolean(root.value(widget, "showBackground", root.plateDefault(widget))) }))
         out.push(
@@ -145,20 +149,24 @@ QtObject {
     }
     // Every widget at once, from its own row (so the plate still comes on with a visible strength): a face's surface
     // stays iRiS's. The state reads the widgets on the desktop: one shared value, or "mixed".
+    // Background and outline mean one thing on every design, an iRiS face included: "every background off" in any
+    // family's edit mode leaves no plate in any family (10-30: hidden in Material, iRiS kept drawing its glass).
     function _everyRows(key: string): var {
-        return root.widgetRows.filter(spec => spec.key === key && spec.widget && !root.resolved(spec.widget).face
-            && !root._bare(spec.widget, key))
+        const shared = ["showBackground", "showBorder"].includes(key)
+        return root.widgetRows.filter(spec => spec.key === key && spec.widget
+            && (shared || !root.resolved(spec.widget).face) && spec.showIf() && !root._bare(spec.widget, key))
     }
     // A widget drawn bare by default (the clock, the art) counts for its plate only while it shows one: showing every
     // background put a card behind the mascot, and the factory desktop read as mixed.
     function _bare(widget: string, key: string): bool {
         const plate = key === "showBorder" ? "showBorder" : ["showBackground", "backgroundOpacity"].includes(key) ? "showBackground" : ""
-        return plate !== "" && !root.plateDefault(widget) && !Boolean(root.value(widget, plate, false))
+        return plate !== "" && !root.face(widget) && !root.plateDefault(widget) && !Boolean(root.value(widget, plate, false))
     }
     function everyState(key: string): string {
         Config.revision
+        // an iRiS face wears its plate and outline unless told otherwise
         const seen = root._everyRows(key).filter(spec => root.on(spec.widget))
-            .map(spec => String(root.value(spec.widget, key, spec.fallback)))
+            .map(spec => String(root.value(spec.widget, key, root.face(spec.widget) ? true : spec.fallback)))
         if (seen.length === 0)
             return ""
         return seen.every(v => v === seen[0]) ? seen[0] : "mixed"
