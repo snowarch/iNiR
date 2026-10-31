@@ -340,8 +340,8 @@ AbstractWidget {
     transform: [
         Rotation { origin.x: root.width / 2; origin.y: root.height / 2; angle: chaos.item?.angle ?? 0 },
         Translate { x: chaos.item?.dx ?? 0; y: chaos.item?.dy ?? 0 },
-        Scale { xScale: root._shelfScale; yScale: root._shelfScale },
-        Translate { x: root._shelfDX + root._glideX * root._glide; y: root._shelfDY + root._glideY * root._glide }
+        Scale { xScale: shelf.item?.shrink ?? 1; yScale: shelf.item?.shrink ?? 1 },
+        Translate { x: (shelf.item?.dx ?? 0) + root._glideX * root._glide; y: (shelf.item?.dy ?? 0) + root._glideY * root._glide }
     ]
 
     // Only while the mascot can romp: a dozen objects per widget otherwise, for nobody.
@@ -519,154 +519,37 @@ AbstractWidget {
     }
 
     // ── The shelf (a family that hosts arranging: DesktopEditStage) ──
-    // The widget takes its own picture for the shelf when arranging starts and after it changes size (a grab per second
-    // per widget stalled the whole mode); held or carried it keeps the last one. Done leaves it on disk.
-    readonly property bool _picturing: GlobalStates.widgetEditMode && DesktopEditStage.hosted(root.outputName)
-        && root.visible && root.width > 0 && root.height > 0 && root.configEntryName.length > 0
-    property var _picture: null
-    function _takePicture(): void {
-        if (root._editEngaged || root.isDragging || root._isResizing || root._shelfMoving || !root.Window.window?.visible)
-            return
-        const w = Math.round(root.width)
-        const h = Math.round(root.height)
-        root.grabToImage(result => {
-            root._picture = result
-            // On disk at once: the shelf reads a file at the size it shows it, sharp; a grab's own url can't be.
-            const path = DesktopEditStage.savedPicture(root.configEntryName)
-            DesktopEditStage.setPicture(root.configEntryName, result.saveToFile(path)
-                ? "file://" + path + "?" + (++root._pictureTakes) : result.url, w, h)
-        }, Qt.size(w, h))
+    // Only while arranging: everything about the shelf is in here.
+    Loader {
+        id: shelf
+        active: GlobalStates.widgetEditMode
+        sourceComponent: WidgetShelfMotion { widget: root }
     }
-    property int _pictureTakes: 0
-    Timer {
-        id: pictureTimer
-        interval: 600
-        running: root._picturing
-        onTriggered: root._takePicture()
-    }
-    // Taken back to the shelf while arranging, the widget leaves its last look on disk and its live one goes with it.
+    readonly property bool _shelfMoving: shelf.item?.moving ?? false
+    on_ShelfMovingChanged: root._report()
+    readonly property var _departure: shelf.item?.departure ?? null
     Component.onDestruction: {
         DesktopEditStage.inspect(root.outputName, root, false)
         DesktopEditStage.choose(root.outputName, root, false)
         DesktopEditStage.point(root.outputName, root, false)
-        if (!root._picture)
-            return
-        root._picture.saveToFile(DesktopEditStage.savedPicture(root.configEntryName))
-        DesktopEditStage.setPicture(root.configEntryName, "", 0, 0)
     }
-    on_PicturingChanged: {
-        if (root._picturing || !root._picture)
-            return
-        root._picture.saveToFile(DesktopEditStage.savedPicture(root.configEntryName))
-        DesktopEditStage.setPicture(root.configEntryName, "", 0, 0)
-        root._picture = null
-    }
-
-    // Taken from the shelf, the widget lands where it was dropped (or on a free spot) and grows out of its picture;
-    // taken back, it shrinks into it. `_shelf` runs 0 (the picture) to 1 (the widget in place).
-    property real _shelf: 1
-    property rect _shelfRect: Qt.rect(0, 0, 0, 0)
-    readonly property bool _shelfMoving: shelfGrow.running || shelfShrink.running
-    on_ShelfMovingChanged: root._report()
-    readonly property real _shelfK: root._shelfRect.width > 0 && root.width > 0 && root.height > 0
-        ? Math.min(root._shelfRect.width / root.width, root._shelfRect.height / root.height) : 1
-    readonly property real _shelfScale: 1 + (root._shelfK - 1) * (1 - root._shelf)
-    readonly property real _shelfDX: root._shelfRect.width > 0
-        ? (root._shelfRect.x + (root._shelfRect.width - root.width * root._shelfK) / 2 - root.x) * (1 - root._shelf) : 0
-    readonly property real _shelfDY: root._shelfRect.width > 0
-        ? (root._shelfRect.y + (root._shelfRect.height - root.height * root._shelfK) / 2 - root.y) * (1 - root._shelf) : 0
-    // A rect in screen px (the shelf's) seen from the desktop, which is a card while arranging.
-    function _fromScreen(rect: var): rect {
-        const card = DesktopEditStage.cardFor(root.outputName, root.screenWidth, root.screenHeight)
-        return Qt.rect((rect.x - card.x) / card.s, (rect.y - card.y) / card.s, rect.width / card.s, rect.height / card.s)
-    }
-    property var _landedArrival: null
-    function _land(): void {
-        const arrival = DesktopEditStage.arrival(root.outputName, root.configEntryName)
-        if (!arrival || !root._geometryReady || arrival === root._landedArrival)
-            return
-        root._landedArrival = arrival
-        // A turn later: dropped from inside the handler of `_arrival` it re-read itself (binding loop).
-        Qt.callLater(DesktopEditStage.arrived, root.outputName, root.configEntryName)
-        let spot = null
-        if (arrival.at?.exact) {
-            spot = { x: root._clampX(arrival.at.x), y: root._clampY(arrival.at.y) }
-        } else if (arrival.at) {
-            spot = root._planDrop(arrival.at.x - root.width / 2, arrival.at.y - root.height / 2)
-        } else {
-            spot = DesktopArrange.plan(root.outputName, root.editInstanceKey, root.x, root.y, root.width, root.height, root._stackId)
-        }
-        const wasX = root.x
-        const wasY = root.y
-        if (spot && (Math.abs(spot.x - root.x) > 0.5 || Math.abs(spot.y - root.y) > 0.5)) {
-            root.x = spot.x
-            root.y = spot.y
-            root._setOutputValues({ x: spot.x, y: spot.y, placementStrategy: "free" })
-        }
-        if (arrival.glide) {
-            if (spot && root.animationsActive) {
-                root._glideX = wasX - root.x
-                root._glideY = wasY - root.y
-                root._glide = 1
-                glideRun.restart()
-            }
-            return
-        }
-        if (!arrival.from || !root.animationsActive)
-            return
-        root._shelfRect = root._fromScreen(arrival.from)
-        root._shelf = 0
-        shelfGrow.restart()
-    }
-    readonly property var _arrival: DesktopEditStage.arrival(root.outputName, root.configEntryName)
-    on_ArrivalChanged: root._land()
-    on_GeometryReadyChanged: {
-        root._land()
-        if (root._geometryReady)
-            newcomerSettle.restart()
-    }
+    on_GeometryReadyChanged: if (root._geometryReady) newcomerSettle.restart()
     // Brought out while the desktop is up (a switch in Settings, IPC) onto a place another widget took meanwhile, it
     // steps to the nearest free spot and the others stay. At start every widget keeps its place; from the shelf
-    // `_land` places it.
+    // the shelf places it.
     Timer {
         id: newcomerSettle
         interval: 400
         onTriggered: {
             const canvas = root._canvas
             if (!canvas?.settled || typeof canvas.freeSpot !== "function" || root.placementStrategy !== "free" || root.locked
-                    || root.isDragging || DesktopEditStage.arrival(root.outputName, root.configEntryName) || root._landedArrival
+                    || root.isDragging || DesktopEditStage.arrival(root.outputName, root.configEntryName) || shelf.item?.landed
                     || root.outputName.startsWith("lock:") || root.width <= 0 || root.height <= 0)
                 return
             const spot = canvas.freeSpot(root.editInstanceKey, root.x, root.y, root.width, root.height)
             if (spot.moved)
                 root._setOutputValues({ x: Math.round(spot.x), y: Math.round(spot.y), placementStrategy: "free" })
         }
-    }
-    readonly property var _departure: DesktopEditStage.departure(root.outputName, root.configEntryName)
-    on_DepartureChanged: {
-        if (!root._departure)
-            return
-        shelfGrow.stop()
-        root._shelfRect = root._fromScreen(root._departure.to)
-        shelfShrink.restart()
-    }
-    // Away from the shelf, or back into it from wherever the drop or the grid moved it.
-    NumberAnimation {
-        id: shelfGrow
-        target: root
-        property: "_shelf"
-        to: 1
-        duration: FamilyStyle.duration(380)
-        easing.type: Easing.BezierSpline
-        easing.bezierCurve: FamilyStyle.morphCurve
-    }
-    NumberAnimation {
-        id: shelfShrink
-        target: root
-        property: "_shelf"
-        to: 0
-        duration: DesktopEditStage.departDuration
-        easing.type: Easing.InCubic
     }
     // One already out, pulled off the shelf again, slides from where it was to where it was dropped.
     property real _glide: 0
@@ -680,6 +563,12 @@ AbstractWidget {
         duration: FamilyStyle.duration(420)
         easing.type: Easing.BezierSpline
         easing.bezierCurve: FamilyStyle.morphCurve
+    }
+    function glideFrom(x: real, y: real): void {
+        root._glideX = x - root.x
+        root._glideY = y - root.y
+        root._glide = 1
+        glideRun.restart()
     }
     // Taking a widget away while a shelf is out sends it into its picture there.
     function takeAway(): void {
@@ -1665,8 +1554,8 @@ AbstractWidget {
     on_ZoneSafeTopChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()
     on_ZoneSafeRightChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()
     on_ZoneSafeBottomChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()
-    onWidthChanged: { _geometryPlacementDebounce.restart(); root._report(); if (root._picturing) pictureTimer.restart() }
-    onHeightChanged: { _geometryPlacementDebounce.restart(); root._report(); if (root._picturing) pictureTimer.restart() }
+    onWidthChanged: { _geometryPlacementDebounce.restart(); root._report(); shelf.item?.retake() }
+    onHeightChanged: { _geometryPlacementDebounce.restart(); root._report(); shelf.item?.retake() }
     Timer {
         id: _zoneResnapDebounce
         interval: 100; repeat: false
