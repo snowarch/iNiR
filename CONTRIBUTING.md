@@ -84,12 +84,12 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for a detailed breakdown. Key directories
 
 ```qml
 // Reading: always available after Config.ready
-Config.options.bar.autoHide.enable        // schema-declared, typed
-Config.options?.bar?.autoHide?.enable      // also fine: ?. is harmless
+Config.options.material.bar.autoHide.enable        // schema-declared, typed
+Config.options?.material?.bar?.autoHide?.enable      // also fine: ?. is harmless
 
 // Writing: ALWAYS setNestedValue, never direct assignment
-Config.setNestedValue("bar.autoHide.enable", true)    // persisted
-Config.options.bar.autoHide.enable = true              // NOT persisted
+Config.setNestedValue("material.bar.autoHide.enable", true)    // persisted
+Config.options.material.bar.autoHide.enable = true              // NOT persisted
 ```
 
 **Adding a new config key** requires updating together:

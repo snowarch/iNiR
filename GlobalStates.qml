@@ -142,7 +142,13 @@ Singleton {
     function _settingsInShell(): bool {
         const family = Plugins.settingsFamily
         if (Plugins.part(family, "settingsApp").length === 0) return true
-        return Plugins.part(family, "settingsHost").length > 0 && (Config.options?.settingsUi?.overlayMode ?? false)
+        return Plugins.part(family, "settingsHost").length > 0 && Boolean(Plugins.setting(family, "settingsOverlay", false))
+    }
+
+    // Overlay or window is the Settings family's own choice (plugin.json `settings.settingsOverlay`).
+    function setSettingsOverlay(on: bool): void {
+        const key = Plugins.settingKey(Plugins.settingsFamily, "settingsOverlay")
+        if (key.length > 0) Config.setNestedValue(key, on)
     }
 
     function _openSettings(index: int, key: string, section): void {
@@ -449,7 +455,7 @@ Singleton {
         root.resolveOutputName(root.overviewTargetOutput, [])
     // Material's screen list for the side panels; a family with its own (`sidebarsAnyScreen`) ignores it.
     readonly property var sidebarScreenList: Plugins.flag(Plugins.active, "sidebarsAnyScreen")
-        ? [] : (Config.options?.sidebar?.screenList ?? [])
+        ? [] : (Config.options?.material?.sidebar?.screenList ?? [])
     readonly property string sidebarLeftPresentationOutput:
         root.resolveOutputName(root.sidebarLeftTargetOutput,
             root.sidebarScreenList)

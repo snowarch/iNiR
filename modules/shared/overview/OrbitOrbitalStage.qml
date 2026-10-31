@@ -903,7 +903,7 @@ Item {
                 islandSkin: root.workspaceSurfaceStyle === "ricelin"
                 surfaceDialect: root.workspaceSurfaceStyle === "ricelin" ? "island" : root.surfaceDialect
                 radiusOverride: root.workspaceSurfaceStyle === "ricelin"
-                    ? (Config.options?.appearance?.island?.radius ?? 18) * root.workspaceRadiusScale
+                    ? (Config.options?.material?.style?.island?.radius ?? 18) * root.workspaceRadiusScale
                     : Appearance.rounding.normal * root.workspaceRadiusScale
                 wallpaperBackdrop: root.workspaceWallpaperFallback
 
@@ -1410,7 +1410,7 @@ Item {
         target: null
         blocking: true
         onWheel: event => {
-            const inverted = Config.options?.bar?.workspaces?.invertScroll ?? false
+            const inverted = Config.options?.material?.bar?.workspaces?.invertScroll ?? false
             let angle = event.angleDelta.y
             let pixels = event.pixelDelta.y
             root.wheelEventCount += 1

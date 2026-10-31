@@ -36,3 +36,16 @@ Waffle and iRiS do not have Easy mode.
 ## Where settings are saved
 
 Everything is stored in one file, `~/.config/inir/config.json`. Settings writes it for you, so nobody needs to touch it.
+
+The file only holds what you changed; anything it doesn't say comes from the shell's defaults. It has two kinds of
+sections:
+
+- **Shell sections** hold what every family shares: `weather`, `ytmusic`, `apps` (your pinned apps live in
+  `apps.pinned`), `notifications`, `lock`, `idle`, `background`, colours and fonts under `appearance`, and so on.
+  Change one and every family follows.
+- **One section per family** holds only how that family looks: `material` (bar, sidebars, dock, control panel,
+  dashboard and the global style under `material.style`), `waffles` and `iris`. A family never reads another
+  family's section, so tuning Material's bar can't move anything in iRiS.
+
+Older files (from before this split, with `bar`, `sidebar`, `dock` or `appearance.globalStyle` at the top) are
+moved into place the first time the shell starts. Your values come along; nothing to do by hand.

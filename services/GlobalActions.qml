@@ -491,7 +491,7 @@ Singleton {
             category: "tools",
             keywords: ["notepad", "notes", "write", "text", "memo"],
             execute: () => {
-                const enabledWidgets = Config.options?.sidebar?.right?.enabledWidgets ?? ["calendar", "todo", "notepad", "calculator", "sysmon", "timer"]
+                const enabledWidgets = Config.options?.material?.sidebar?.right?.enabledWidgets ?? ["calendar", "todo", "notepad", "calculator", "sysmon", "timer"]
                 const notepadIndex = Math.max(0, enabledWidgets.indexOf("notepad"))
                 GlobalStates.openSidebarRight("")
                 if (Persistent?.states?.sidebar?.bottomGroup) {
@@ -679,8 +679,8 @@ Singleton {
             category: "settings",
             keywords: ["bar", "autohide", "hide", "panel"],
             execute: () => {
-                const current = Config.options?.bar?.autoHide?.enable ?? false
-                Config.setNestedValue("bar.autoHide.enable", !current)
+                const current = Config.options?.material?.bar?.autoHide?.enable ?? false
+                Config.setNestedValue("material.bar.autoHide.enable", !current)
             }
         },
         {
@@ -691,8 +691,8 @@ Singleton {
             category: "settings",
             keywords: ["dock", "taskbar", "bottom", "panel"],
             execute: () => {
-                const current = Config.options?.dock?.enable ?? true
-                Config.setNestedValue("dock.enable", !current)
+                const current = Config.options?.material?.dock?.enable ?? true
+                Config.setNestedValue("material.dock.enable", !current)
             }
         },
         {

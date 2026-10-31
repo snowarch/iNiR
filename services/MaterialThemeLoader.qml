@@ -304,7 +304,7 @@ Singleton {
     // palette is unchanged, so a full switchwall.sh re-extraction would be
     // wasted work — only the surface ramp the overlay writes has to catch up.
     Connections {
-        target: Config.options?.appearance ?? null
+        target: Config.options?.material?.style ?? null
         function onGlobalStyleChanged() {
             root._log("[MaterialThemeLoader] globalStyle changed, re-applying external theming")
             root.requestExternalApply()

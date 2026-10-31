@@ -506,12 +506,12 @@ Variants {
             // Vignette effect at bar level
             Rectangle {
                 id: barVignette
-                readonly property bool isVertical: Config.options?.bar?.vertical ?? false
-                readonly property bool isBarAtTop: !isVertical && !(Config.options?.bar?.bottom ?? false)
-                readonly property bool isBarAtLeft: isVertical && !(Config.options?.bar?.bottom ?? false)
-                readonly property bool barVignetteEnabled: Config.options?.bar?.vignette?.enabled ?? false
-                readonly property real barVignetteIntensity: Config.options?.bar?.vignette?.intensity ?? 0.6
-                readonly property real barVignetteRadius: Config.options?.bar?.vignette?.radius ?? 0.5
+                readonly property bool isVertical: Config.options?.material?.bar?.vertical ?? false
+                readonly property bool isBarAtTop: !isVertical && !(Config.options?.material?.bar?.bottom ?? false)
+                readonly property bool isBarAtLeft: isVertical && !(Config.options?.material?.bar?.bottom ?? false)
+                readonly property bool barVignetteEnabled: Config.options?.material?.bar?.vignette?.enabled ?? false
+                readonly property real barVignetteIntensity: Config.options?.material?.bar?.vignette?.intensity ?? 0.6
+                readonly property real barVignetteRadius: Config.options?.material?.bar?.vignette?.radius ?? 0.5
 
                 anchors {
                     left: isVertical ? (isBarAtLeft ? parent.left : undefined) : parent.left

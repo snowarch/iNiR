@@ -43,7 +43,7 @@ Item {
     // ZZZ style editor). Each layer's visibility is (consumer intent) AND
     // (global master), so a panel that never wanted a layer stays off and the
     // master can hide a layer shell-wide. Defaults true → no behaviour change.
-    readonly property var _backdrop: Config.options?.appearance?.zzz?.backdrop
+    readonly property var _backdrop: Config.options?.material?.style?.zzz?.backdrop
     readonly property bool _burstOn: _backdrop?.burst ?? true
     readonly property bool _ghostOn: _backdrop?.ghost ?? true
     readonly property bool _gridOn: _backdrop?.grid ?? true
@@ -54,7 +54,7 @@ Item {
     // ZZZ's carbon console plate picks up a faint hue of the desktop. Opt-in via
     // appearance.zzz.glass and gated by effectsEnabled, so it costs nothing when
     // off / in game mode. The ghost mark, grid and frame stay crisp on top.
-    readonly property bool glass: Appearance.effectsEnabled && (Config.options?.appearance?.zzz?.glass ?? true)
+    readonly property bool glass: Appearance.effectsEnabled && (Config.options?.material?.style?.zzz?.glass ?? true)
 
     readonly property bool active: Appearance.zzzEverywhere
     readonly property real frameMargin: Math.max(

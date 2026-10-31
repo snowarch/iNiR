@@ -12,8 +12,8 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: 8
 
-    readonly property bool leftFit: Config.options?.sidebar?.collapseWidgetsTab ?? false
-    readonly property bool rightFit: Config.options?.sidebar?.collapseEmptyNotifications ?? false
+    readonly property bool leftFit: Config.options?.material?.sidebar?.collapseWidgetsTab ?? false
+    readonly property bool rightFit: Config.options?.material?.sidebar?.collapseEmptyNotifications ?? false
     readonly property real leftRatio: leftFit ? SidebarGeometry.leftFitPreferredRatio : 1
     readonly property real rightRatio: rightFit ? SidebarGeometry.rightFitExpandedPreferredRatio : 1
 

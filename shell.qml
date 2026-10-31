@@ -53,7 +53,7 @@ ShellRoot {
     property var _screenTimeService
     function _ensureScreenTimeService(): void {
         if (GlobalStates.deferredPanelsReady
-                && (Config.options?.sidebar?.screenTime?.enable ?? false))
+                && (Config.options?.screenTime?.enable ?? false))
             root._screenTimeService = ScreenTime
     }
     // Tier 4: T+1500ms (background features - updates, sync, content services)
@@ -342,11 +342,11 @@ ShellRoot {
         }
 
         const legacyPinnedApps = ["org.gnome.Nautilus", "firefox", "foot"];
-        const currentPinnedApps = Config.options?.dock?.pinnedApps ?? [];
+        const currentPinnedApps = Config.options?.apps?.pinned ?? [];
         if (currentPinnedApps.length === legacyPinnedApps.length
                 && currentPinnedApps.every((panel, idx) => panel === legacyPinnedApps[idx])) {
-            root._log("[Shell] Migrating dock.pinnedApps default terminal from foot to kitty");
-            Config.setNestedValue("dock.pinnedApps", ["org.gnome.Nautilus", "firefox", "kitty"])
+            root._log("[Shell] Migrating apps.pinned default terminal from foot to kitty");
+            Config.setNestedValue("apps.pinned", ["org.gnome.Nautilus", "firefox", "kitty"])
         }
 
         if (changed)
@@ -365,9 +365,9 @@ ShellRoot {
         /// it
         function mediaWidth(px: string): string {
             const value = parseInt(px)
-            if (value >= 120 && value <= 640) Config.setNestedValue("bar.media.maxWidth", value)
+            if (value >= 120 && value <= 640) Config.setNestedValue("material.bar.media.maxWidth", value)
             else if (px.length > 0) return "Use a width from 120 to 640 px"
-            return String(value >= 120 && value <= 640 ? value : (Config.options?.bar?.media?.maxWidth ?? 220))
+            return String(value >= 120 && value <= 640 ? value : (Config.options?.material?.bar?.media?.maxWidth ?? 220))
         }
         /// Show/hide bar
         function toggle(): void {
@@ -676,14 +676,14 @@ ShellRoot {
         }
         /// Switch to overlay mode and open Settings
         function openOverlay(): void {
-            Config.setNestedValue("settingsUi.overlayMode", true)
+            GlobalStates.setSettingsOverlay(true)
             GlobalStates.settingsOverlayOpen = true
         }
         /// Switch to overlay mode, open Settings and keep the page, or jump to a page by its number
         function openOverlayAt(index: int): void {
             if (index >= 0)
                 GlobalStates.settingsOverlayRequestedPage = index
-            Config.setNestedValue("settingsUi.overlayMode", true)
+            GlobalStates.setSettingsOverlay(true)
             GlobalStates.settingsOverlayOpen = true
         }
         /// Switch to standalone Window mode and open page `index`
@@ -693,7 +693,7 @@ ShellRoot {
                 args.push(`QS_SETTINGS_PAGE=${index}`)
             args.push(Quickshell.shellPath("scripts/inir"), "settings-window")
             Quickshell.execDetached(args)
-            Config.setNestedValue("settingsUi.overlayMode", false)
+            GlobalStates.setSettingsOverlay(false)
             GlobalStates.settingsOverlayOpen = false
         }
         /// Kept for scripts from before Settings had one layout: opens the overlay at page `index`
@@ -890,8 +890,8 @@ ShellRoot {
         }
         function _usePillLauncher(): bool {
             return (Config.options?.panelFamily ?? "ii") === "ii"
-                && (Config.options?.bar?.appearanceStyle ?? "classic") === "pill"
-                && (Config.options?.bar?.pill?.superSpaceLauncher ?? "overview") === "pill"
+                && (Config.options?.material?.bar?.appearanceStyle ?? "classic") === "pill"
+                && (Config.options?.material?.bar?.pill?.superSpaceLauncher ?? "overview") === "pill"
         }
         /// Open/close overview
         function toggle(): void {

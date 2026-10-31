@@ -53,7 +53,7 @@ AbstractBackgroundWidget {
         : root.clockStyle === "androidStacked"
             ? androidStackedClockLoader.height : digitalClockLoader.height
     readonly property bool statusShown: root.wallpaperSafetyTriggered
-        || (root.shellLocked && (Config.options?.lock?.showLockedText ?? false))
+        || (root.shellLocked && (Config.family?.lock?.showLockedText ?? false))
     implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : root.activeClockHeight
         + (root.statusShown ? contentColumn.spacing + statusText.implicitHeight : 0)
     materialNaturalHeight: root.activeClockHeight
@@ -174,7 +174,7 @@ AbstractBackgroundWidget {
         || root.clockStyle === "androidStacked"
     property bool adaptDigitalToWallpaper: root._readConfigKey("digital.adaptToWallpaper") ?? true
     readonly property bool shellLocked: GlobalStates.screenLocked && Config.options?.panelFamily !== "iris"
-    property bool forceCenter: (root.shellLocked && (Config.options?.lock?.centerClock ?? false))
+    property bool forceCenter: (root.shellLocked && (Config.family?.lock?.centerClock ?? false))
     property bool wallpaperSafetyTriggered: false
     property bool debugRegionActive: false
     property color debugRegionColor: "transparent"
@@ -745,7 +745,7 @@ AbstractBackgroundWidget {
                     }
                     ClockStatusText {
                         id: lockStatusText
-                        shown: root.shellLocked && (Config.options?.lock?.showLockedText ?? false)
+                        shown: root.shellLocked && (Config.family?.lock?.showLockedText ?? false)
                         statusIcon: "lock"
                         statusText: Translation.tr("Locked")
                     }

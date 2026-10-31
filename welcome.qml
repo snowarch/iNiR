@@ -138,15 +138,15 @@ Scope {
             globalStyle: "material",
             description: Translation.tr("Clean Material surfaces with the M3 bar and dock."),
             values: {
-                "appearance.iiMotionProfile": "contextual",
-                "bar.appearanceStyle": "m3",
-                "bar.m3.borderless": "pills",
-                "bar.m3.showBackground": true,
-                "bar.showBackground": true,
-                "bar.opacity": 1.0,
-                "dock.style": "m3",
-                "dock.showBackground": true,
-                "sidebar.style": "panel"
+                "material.style.iiMotionProfile": "contextual",
+                "material.bar.appearanceStyle": "m3",
+                "material.bar.m3.borderless": "pills",
+                "material.bar.m3.showBackground": true,
+                "material.bar.showBackground": true,
+                "material.bar.opacity": 1.0,
+                "material.dock.style": "m3",
+                "material.dock.showBackground": true,
+                "material.sidebar.style": "panel"
             }
         },
         {
@@ -154,17 +154,17 @@ Scope {
             globalStyle: "cookie",
             description: Translation.tr("Playful shapes, joined controls and a pill dock."),
             values: {
-                "appearance.iiMotionProfile": "contextual",
-                "bar.appearanceStyle": "pill",
-                "bar.pill.barMode": false,
-                "bar.pill.musicViz": false,
-                "bar.pill.soul.enable": true,
-                "bar.pill.soul.style": "orb",
-                "bar.showBackground": true,
-                "bar.opacity": 1.0,
-                "dock.style": "pill",
-                "dock.showBackground": true,
-                "sidebar.style": "panel"
+                "material.style.iiMotionProfile": "contextual",
+                "material.bar.appearanceStyle": "pill",
+                "material.bar.pill.barMode": false,
+                "material.bar.pill.musicViz": false,
+                "material.bar.pill.soul.enable": true,
+                "material.bar.pill.soul.style": "orb",
+                "material.bar.showBackground": true,
+                "material.bar.opacity": 1.0,
+                "material.dock.style": "pill",
+                "material.dock.showBackground": true,
+                "material.sidebar.style": "panel"
             }
         },
         {
@@ -172,13 +172,13 @@ Scope {
             globalStyle: "aurora",
             description: Translation.tr("Translucent islands for the bar, dock and sidebars."),
             values: {
-                "appearance.iiMotionProfile": "contextual",
-                "bar.appearanceStyle": "islands",
-                "bar.showBackground": true,
-                "bar.opacity": 1.0,
-                "dock.style": "island",
-                "dock.showBackground": true,
-                "sidebar.style": "island"
+                "material.style.iiMotionProfile": "contextual",
+                "material.bar.appearanceStyle": "islands",
+                "material.bar.showBackground": true,
+                "material.bar.opacity": 1.0,
+                "material.dock.style": "island",
+                "material.dock.showBackground": true,
+                "material.sidebar.style": "island"
             }
         },
         {
@@ -186,13 +186,13 @@ Scope {
             globalStyle: "inir",
             description: Translation.tr("Sharp framed surfaces with a denser, technical feel."),
             values: {
-                "appearance.iiMotionProfile": "classic",
-                "bar.appearanceStyle": "frame",
-                "bar.showBackground": true,
-                "bar.opacity": 1.0,
-                "dock.style": "panel",
-                "dock.showBackground": true,
-                "sidebar.style": "panel"
+                "material.style.iiMotionProfile": "classic",
+                "material.bar.appearanceStyle": "frame",
+                "material.bar.showBackground": true,
+                "material.bar.opacity": 1.0,
+                "material.dock.style": "panel",
+                "material.dock.showBackground": true,
+                "material.sidebar.style": "panel"
             }
         },
         {
@@ -200,13 +200,13 @@ Scope {
             globalStyle: "cards",
             description: Translation.tr("Soft rounded cards with familiar desktop structure."),
             values: {
-                "appearance.iiMotionProfile": "contextual",
-                "bar.appearanceStyle": "classic",
-                "bar.showBackground": true,
-                "bar.opacity": 1.0,
-                "dock.style": "panel",
-                "dock.showBackground": true,
-                "sidebar.style": "panel"
+                "material.style.iiMotionProfile": "contextual",
+                "material.bar.appearanceStyle": "classic",
+                "material.bar.showBackground": true,
+                "material.bar.opacity": 1.0,
+                "material.dock.style": "panel",
+                "material.dock.showBackground": true,
+                "material.sidebar.style": "panel"
             }
         },
         {
@@ -214,14 +214,14 @@ Scope {
             globalStyle: "angel",
             description: Translation.tr("Scenic glass, strong accents and a pill dock."),
             values: {
-                "appearance.iiMotionProfile": "contextual",
-                "appearance.angelSubStyle": "frost",
-                "bar.appearanceStyle": "scenic",
-                "bar.showBackground": true,
-                "bar.opacity": 1.0,
-                "dock.style": "pill",
-                "dock.showBackground": true,
-                "sidebar.style": "panel"
+                "material.style.iiMotionProfile": "contextual",
+                "material.style.angelSubStyle": "frost",
+                "material.bar.appearanceStyle": "scenic",
+                "material.bar.showBackground": true,
+                "material.bar.opacity": 1.0,
+                "material.dock.style": "pill",
+                "material.dock.showBackground": true,
+                "material.sidebar.style": "panel"
             }
         },
         {
@@ -229,13 +229,13 @@ Scope {
             globalStyle: "regalia",
             description: Translation.tr("Structured surfaces, a classic bar and a macOS-style dock."),
             values: {
-                "appearance.iiMotionProfile": "classic",
-                "bar.appearanceStyle": "classic",
-                "bar.showBackground": true,
-                "bar.opacity": 1.0,
-                "dock.style": "macos",
-                "dock.showBackground": true,
-                "sidebar.style": "panel"
+                "material.style.iiMotionProfile": "classic",
+                "material.bar.appearanceStyle": "classic",
+                "material.bar.showBackground": true,
+                "material.bar.opacity": 1.0,
+                "material.dock.style": "macos",
+                "material.dock.showBackground": true,
+                "material.sidebar.style": "panel"
             }
         },
         {
@@ -243,13 +243,13 @@ Scope {
             globalStyle: "zzz",
             description: Translation.tr("Poster-like surfaces with bold graphic contrast."),
             values: {
-                "appearance.iiMotionProfile": "classic",
-                "bar.appearanceStyle": "classic",
-                "bar.showBackground": true,
-                "bar.opacity": 1.0,
-                "dock.style": "panel",
-                "dock.showBackground": true,
-                "sidebar.style": "panel"
+                "material.style.iiMotionProfile": "classic",
+                "material.bar.appearanceStyle": "classic",
+                "material.bar.showBackground": true,
+                "material.bar.opacity": 1.0,
+                "material.dock.style": "panel",
+                "material.dock.showBackground": true,
+                "material.sidebar.style": "panel"
             }
         },
         {
@@ -257,13 +257,13 @@ Scope {
             globalStyle: "editorial",
             description: Translation.tr("Quiet paper-like surfaces led by typography."),
             values: {
-                "appearance.iiMotionProfile": "contextual",
-                "bar.appearanceStyle": "classic",
-                "bar.showBackground": true,
-                "bar.opacity": 1.0,
-                "dock.style": "panel",
-                "dock.showBackground": true,
-                "sidebar.style": "panel"
+                "material.style.iiMotionProfile": "contextual",
+                "material.bar.appearanceStyle": "classic",
+                "material.bar.showBackground": true,
+                "material.bar.opacity": 1.0,
+                "material.dock.style": "panel",
+                "material.dock.showBackground": true,
+                "material.sidebar.style": "panel"
             }
         }
     ]
@@ -333,22 +333,22 @@ Scope {
     function flowM3Layout(profile: string): var {
         if (profile === "minimum")
             return {
-                "bar.m3.layoutMode": "custom",
-                "bar.m3.layouts.leftLayout": ["leftSidebarButton", "workspaces"],
-                "bar.m3.layouts.middleLayout": ["docktoPanel"],
-                "bar.m3.layouts.rightLayout": ["clockWidget", "systemIcons", "rightSidebarButton"]
+                "material.bar.m3.layoutMode": "custom",
+                "material.bar.m3.layouts.leftLayout": ["leftSidebarButton", "workspaces"],
+                "material.bar.m3.layouts.middleLayout": ["docktoPanel"],
+                "material.bar.m3.layouts.rightLayout": ["clockWidget", "systemIcons", "rightSidebarButton"]
             }
         return {
-            "bar.m3.layoutMode": "compact",
-            "bar.m3.layouts.leftLayout": ["leftSidebarButton", "media", "workspaces"],
-            "bar.m3.layouts.middleLayout": ["docktoPanel"],
-            "bar.m3.layouts.rightLayout": ["utilButtons", "weatherBar", "clockWidget", "systemIcons", "rightSidebarButton"]
+            "material.bar.m3.layoutMode": "compact",
+            "material.bar.m3.layouts.leftLayout": ["leftSidebarButton", "media", "workspaces"],
+            "material.bar.m3.layouts.middleLayout": ["docktoPanel"],
+            "material.bar.m3.layouts.rightLayout": ["utilButtons", "weatherBar", "clockWidget", "systemIcons", "rightSidebarButton"]
         }
     }
 
     function stylePresetMatches(id: string): bool {
         const preset = root.presetById(root.stylePresets, id)
-        return (Config.options?.appearance?.globalStyle ?? "material") === preset.globalStyle
+        return (Config.options?.material?.style?.globalStyle ?? "material") === preset.globalStyle
             && root.valuesMatch(preset.values)
             && (id !== "material" || root.valuesMatch(root.flowM3Layout(root.selectedProfile)))
     }
@@ -374,31 +374,31 @@ Scope {
     // family. Waffle keeps its independent `waffles.*` configuration intact,
     // so switching families never erases or silently reconfigures it.
     readonly property var profileEssentials: ({
-        "dock.enable": true,
-        "dock.hoverToReveal": false,
-        "dock.pinnedOnStartup": true,
-        "dashboard.enable": true,
-        "bar.weather.enable": true,
-        "bar.modules.weather": true,
-        "bar.modules.battery": true,
-        "bar.modules.sysTray": true,
-        "bar.modules.clock": true,
-        "bar.modules.workspaces": true,
-        "bar.modules.activeWindow": true,
-        "bar.modules.leftSidebarButton": true,
-        "bar.modules.rightSidebarButton": true,
+        "material.dock.enable": true,
+        "material.dock.hoverToReveal": false,
+        "material.dock.pinnedOnStartup": true,
+        "material.dashboard.enable": true,
+        "weather.enable": true,
+        "material.bar.modules.weather": true,
+        "material.bar.modules.battery": true,
+        "material.bar.modules.sysTray": true,
+        "material.bar.modules.clock": true,
+        "material.bar.modules.workspaces": true,
+        "material.bar.modules.activeWindow": true,
+        "material.bar.modules.leftSidebarButton": true,
+        "material.bar.modules.rightSidebarButton": true,
         "sounds.notifications": true,
         "gameMode.autoDetect": true,
         "audio.protection.enable": true,
-        "sidebar.collapseEmptyNotifications": false,
-        "sidebar.collapseWidgetsTab": false,
-        "sidebar.right.headerBanner": "wallpaper",
-        "sidebar.right.sectionOrder": ["system", "sliders", "toggles", "notifications", "widgets"],
-        "sidebar.quickToggles.style": "android",
-        "sidebar.quickToggles.android.columns": 4,
+        "material.sidebar.collapseEmptyNotifications": false,
+        "material.sidebar.collapseWidgetsTab": false,
+        "material.sidebar.right.headerBanner": "wallpaper",
+        "material.sidebar.right.sectionOrder": ["system", "sliders", "toggles", "notifications", "widgets"],
+        "material.sidebar.quickToggles.style": "android",
+        "material.sidebar.quickToggles.android.columns": 4,
         // Material II's embedded bar taskbar duplicates the Material II dock.
         // Waffle owns a separate taskbar under `waffles.bar.*` and is unaffected.
-        "bar.modules.taskbar": false
+        "material.bar.modules.taskbar": false
     })
 
     // Ordering only; no profile enables a provider-backed tab.
@@ -412,29 +412,29 @@ Scope {
     function profileComposition(profile: string): var {
         if (profile === "minimum")
             return {
-                "bar.modules.resources": false,
-                "bar.modules.utilButtons": false,
-                "bar.modules.media": false,
-                "bar.m3.layoutMode": "custom",
-                "bar.m3.layouts.leftLayout": ["leftSidebarButton", "workspaces"],
-                "bar.m3.layouts.middleLayout": ["docktoPanel"],
-                "bar.m3.layouts.rightLayout": ["clockWidget", "systemIcons", "rightSidebarButton"],
-                "sidebar.news.enable": false,
-                "sidebar.wallhaven.enable": false,
-                "sidebar.ytmusic.enable": false,
-                "sidebar.tools.enable": false,
-                "sidebar.software.enable": false,
-                "sidebar.widgets.context": true,
-                "sidebar.widgets.week": true,
-                "sidebar.widgets.media": true,
-                "sidebar.widgets.controls": false,
-                "sidebar.widgets.status": false,
-                "sidebar.widgets.wallpaper": true,
-                "sidebar.widgets.note": false,
-                "sidebar.widgets.launch": false,
-                "sidebar.widgets.worldClock": false,
-                "sidebar.right.enabledWidgets": ["calendar", "todo"],
-                "sidebar.quickToggles.android.toggles": [
+                "material.bar.modules.resources": false,
+                "material.bar.modules.utilButtons": false,
+                "material.bar.modules.media": false,
+                "material.bar.m3.layoutMode": "custom",
+                "material.bar.m3.layouts.leftLayout": ["leftSidebarButton", "workspaces"],
+                "material.bar.m3.layouts.middleLayout": ["docktoPanel"],
+                "material.bar.m3.layouts.rightLayout": ["clockWidget", "systemIcons", "rightSidebarButton"],
+                "news.enable": false,
+                "wallhaven.enable": false,
+                "ytmusic.enable": false,
+                "material.sidebar.tools.enable": false,
+                "material.sidebar.software.enable": false,
+                "material.sidebar.widgets.context": true,
+                "material.sidebar.widgets.week": true,
+                "material.sidebar.widgets.media": true,
+                "material.sidebar.widgets.controls": false,
+                "material.sidebar.widgets.status": false,
+                "material.sidebar.widgets.wallpaper": true,
+                "material.sidebar.widgets.note": false,
+                "material.sidebar.widgets.launch": false,
+                "material.sidebar.widgets.worldClock": false,
+                "material.sidebar.right.enabledWidgets": ["calendar", "todo"],
+                "material.sidebar.quickToggles.android.toggles": [
                     { "size": 1, "type": "network" },
                     { "size": 1, "type": "bluetooth" },
                     { "size": 1, "type": "audio" },
@@ -452,32 +452,32 @@ Scope {
             }
         if (profile === "full")
             return {
-                "bar.modules.resources": true,
-                "bar.modules.utilButtons": true,
-                "bar.modules.media": true,
-                "bar.m3.layoutMode": "compact",
-                "bar.m3.layouts.leftLayout": ["leftSidebarButton", "media", "workspaces"],
-                "bar.m3.layouts.middleLayout": ["docktoPanel"],
-                "bar.m3.layouts.rightLayout": ["utilButtons", "weatherBar", "clockWidget", "systemIcons", "rightSidebarButton"],
-                "sidebar.news.enable": true,
-                "sidebar.wallhaven.enable": true,
-                "sidebar.ytmusic.enable": true,
-                "sidebar.tools.enable": true,
-                "sidebar.software.enable": true,
-                "sidebar.widgets.context": true,
-                "sidebar.widgets.week": true,
-                "sidebar.widgets.media": true,
-                "sidebar.widgets.controls": true,
-                "sidebar.widgets.status": true,
-                "sidebar.widgets.wallpaper": true,
-                "sidebar.widgets.note": true,
-                "sidebar.widgets.launch": true,
-                "sidebar.widgets.worldClock": true,
-                "sidebar.right.enabledWidgets": [
+                "material.bar.modules.resources": true,
+                "material.bar.modules.utilButtons": true,
+                "material.bar.modules.media": true,
+                "material.bar.m3.layoutMode": "compact",
+                "material.bar.m3.layouts.leftLayout": ["leftSidebarButton", "media", "workspaces"],
+                "material.bar.m3.layouts.middleLayout": ["docktoPanel"],
+                "material.bar.m3.layouts.rightLayout": ["utilButtons", "weatherBar", "clockWidget", "systemIcons", "rightSidebarButton"],
+                "news.enable": true,
+                "wallhaven.enable": true,
+                "ytmusic.enable": true,
+                "material.sidebar.tools.enable": true,
+                "material.sidebar.software.enable": true,
+                "material.sidebar.widgets.context": true,
+                "material.sidebar.widgets.week": true,
+                "material.sidebar.widgets.media": true,
+                "material.sidebar.widgets.controls": true,
+                "material.sidebar.widgets.status": true,
+                "material.sidebar.widgets.wallpaper": true,
+                "material.sidebar.widgets.note": true,
+                "material.sidebar.widgets.launch": true,
+                "material.sidebar.widgets.worldClock": true,
+                "material.sidebar.right.enabledWidgets": [
                     "calendar", "events", "todo", "notepad",
                     "calculator", "sysmon", "weather", "timer"
                 ],
-                "sidebar.quickToggles.android.toggles": [
+                "material.sidebar.quickToggles.android.toggles": [
                     { "size": 1, "type": "network" },
                     { "size": 1, "type": "bluetooth" },
                     { "size": 1, "type": "audio" },
@@ -502,31 +502,31 @@ Scope {
                 "mascot.enable": false
             }
         return {
-            "bar.modules.resources": true,
-            "bar.modules.utilButtons": true,
-            "bar.modules.media": true,
-            "bar.m3.layoutMode": "compact",
-            "bar.m3.layouts.leftLayout": ["leftSidebarButton", "media", "workspaces"],
-            "bar.m3.layouts.middleLayout": ["docktoPanel"],
-            "bar.m3.layouts.rightLayout": ["utilButtons", "weatherBar", "clockWidget", "systemIcons", "rightSidebarButton"],
-            "sidebar.news.enable": true,
-            "sidebar.wallhaven.enable": true,
-            "sidebar.ytmusic.enable": false,
-            "sidebar.tools.enable": false,
-            "sidebar.software.enable": false,
-            "sidebar.widgets.context": true,
-            "sidebar.widgets.week": true,
-            "sidebar.widgets.media": true,
-            "sidebar.widgets.controls": true,
-            "sidebar.widgets.status": true,
-            "sidebar.widgets.wallpaper": true,
-            "sidebar.widgets.note": false,
-            "sidebar.widgets.launch": false,
-            "sidebar.widgets.worldClock": false,
-            "sidebar.right.enabledWidgets": [
+            "material.bar.modules.resources": true,
+            "material.bar.modules.utilButtons": true,
+            "material.bar.modules.media": true,
+            "material.bar.m3.layoutMode": "compact",
+            "material.bar.m3.layouts.leftLayout": ["leftSidebarButton", "media", "workspaces"],
+            "material.bar.m3.layouts.middleLayout": ["docktoPanel"],
+            "material.bar.m3.layouts.rightLayout": ["utilButtons", "weatherBar", "clockWidget", "systemIcons", "rightSidebarButton"],
+            "news.enable": true,
+            "wallhaven.enable": true,
+            "ytmusic.enable": false,
+            "material.sidebar.tools.enable": false,
+            "material.sidebar.software.enable": false,
+            "material.sidebar.widgets.context": true,
+            "material.sidebar.widgets.week": true,
+            "material.sidebar.widgets.media": true,
+            "material.sidebar.widgets.controls": true,
+            "material.sidebar.widgets.status": true,
+            "material.sidebar.widgets.wallpaper": true,
+            "material.sidebar.widgets.note": false,
+            "material.sidebar.widgets.launch": false,
+            "material.sidebar.widgets.worldClock": false,
+            "material.sidebar.right.enabledWidgets": [
                 "calendar", "events", "todo", "notepad", "weather"
             ],
-            "sidebar.quickToggles.android.toggles": [
+            "material.sidebar.quickToggles.android.toggles": [
                 { "size": 1, "type": "network" },
                 { "size": 1, "type": "bluetooth" },
                 { "size": 1, "type": "audio" },
@@ -557,7 +557,7 @@ Scope {
         Config.setNestedValues(Object.assign({},
             root.profileEssentials,
             root.profileComposition(profile), {
-                "sidebar.left.tabOrder": root.profileTabOrder,
+                "material.sidebar.left.tabOrder": root.profileTabOrder,
                 "welcomeWizard.profile": profile
             }))
         root.profileCustomized = false
@@ -646,10 +646,10 @@ Scope {
     ]
     // The Layout step's placement rows; a family on the base steps brings its own.
     readonly property var classicPlacementRows: [
-        { label: Translation.tr("Bar position"), key: "bar.bottom", fallback: false, options: [
+        { label: Translation.tr("Bar position"), key: "material.bar.bottom", fallback: false, options: [
             { displayName: Translation.tr("Top"), icon: "vertical_align_top", value: false },
             { displayName: Translation.tr("Bottom"), icon: "vertical_align_bottom", value: true }] },
-        { label: Translation.tr("Dock position"), key: "dock.position", fallback: "bottom", options: [
+        { label: Translation.tr("Dock position"), key: "material.dock.position", fallback: "bottom", options: [
             { displayName: Translation.tr("Bottom"), icon: "arrow_downward", value: "bottom" },
             { displayName: Translation.tr("Left"), icon: "arrow_back", value: "left" },
             { displayName: Translation.tr("Right"), icon: "arrow_forward", value: "right" }] }

@@ -317,16 +317,16 @@ AbstractBackgroundWidget {
         switch (key) {
         case "temp":
         case "gpuTemp": {
-            const caution = Config.options?.bar?.resources?.tempCautionThreshold ?? 65;
-            const warning = Config.options?.bar?.resources?.tempWarningThreshold ?? 80;
+            const caution = Config.options?.material?.bar?.resources?.tempCautionThreshold ?? 65;
+            const warning = Config.options?.material?.bar?.resources?.tempWarningThreshold ?? 80;
             return value >= warning ? 2 : value >= caution ? 1 : 0;
         }
         case "cpu":
-            return value >= (Config.options?.bar?.resources?.cpuWarningThreshold ?? 90) ? 2 : 0;
+            return value >= (Config.options?.material?.bar?.resources?.cpuWarningThreshold ?? 90) ? 2 : 0;
         case "mem":
-            return value >= (Config.options?.bar?.resources?.memoryWarningThreshold ?? 90) ? 2 : 0;
+            return value >= (Config.options?.material?.bar?.resources?.memoryWarningThreshold ?? 90) ? 2 : 0;
         case "gpu":
-            return value >= (Config.options?.bar?.resources?.gpuWarningThreshold ?? 90) ? 2 : 0;
+            return value >= (Config.options?.material?.bar?.resources?.gpuWarningThreshold ?? 90) ? 2 : 0;
         case "disk":
             return value >= 90 ? 2 : 0;
         default:

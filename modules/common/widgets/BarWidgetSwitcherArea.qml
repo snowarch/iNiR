@@ -5,7 +5,7 @@ import QtQuick.Layouts
 MouseArea {
     id: root
     property bool vertical: false
-    property bool isMaterial: Config.options.bar.m3.cornerStyle === 3
+    property bool isMaterial: Config.options.material.bar.m3.cornerStyle === 3
     property real horizontalExtraPadding: 12
 
     property Component colDefault

@@ -81,7 +81,7 @@ Item {
             colBackground: ColorUtils.applyAlpha(root.accent, 0.14)
             colBackgroundHover: ColorUtils.applyAlpha(root.accent, 0.22)
             colRipple: ColorUtils.applyAlpha(root.accent, 0.3)
-            downAction: () => Config.setNestedValue("sidebar.screenTime.enable", true)
+            downAction: () => Config.setNestedValue("screenTime.enable", true)
             contentItem: InstrumentLabel {
                 id: offLabel
                 anchors.centerIn: parent

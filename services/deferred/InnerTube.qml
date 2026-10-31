@@ -16,7 +16,7 @@ import qs.services
 Singleton {
     id: root
 
-    readonly property bool enabled: Config.options?.sidebar?.ytmusic?.enable ?? false
+    readonly property bool enabled: Config.options?.ytmusic?.enable ?? false
     property bool ready: false
     property bool available: false       // the browsing helper answers (probed via ping)
     property bool authenticated: false   // a logged-in session that actually works for browse
@@ -168,8 +168,8 @@ Singleton {
                         root.connectError = "";
                         // Persist the working browser so playback (mpv/yt-dlp) reuses the same source.
                         if (d.browser && d.browser !== "manual" && d.browser !== "auto")
-                            Config.setNestedValue("sidebar.ytmusic.browser", d.browser);
-                        Config.setNestedValue("sidebar.ytmusic.connected", true);
+                            Config.setNestedValue("ytmusic.browser", d.browser);
+                        Config.setNestedValue("ytmusic.connected", true);
                         root.loadHome();
                     } else {
                         root.authenticated = false;
@@ -189,7 +189,7 @@ Singleton {
                 root.connectedBrowser = "";
                 root.libraryPages = {};
                 root.libraryLoaded = {};
-                Config.setNestedValue("sidebar.ytmusic.connected", false);
+                Config.setNestedValue("ytmusic.connected", false);
             }
         }
     }
@@ -257,8 +257,8 @@ Singleton {
                     root.accountName = d.account || "";
                     root.accountAvatar = d.avatar || "";
                     if (root.authenticated) {
-                        if (!(Config.options?.sidebar?.ytmusic?.connected ?? false))
-                            Config.setNestedValue("sidebar.ytmusic.connected", true);
+                        if (!(Config.options?.ytmusic?.connected ?? false))
+                            Config.setNestedValue("ytmusic.connected", true);
                     }
                     if (!root.authenticated) {
                         root.libraryPages = {};

@@ -73,8 +73,8 @@ AbstractBackgroundWidget {
         : ""
 
     function _fetch(force: bool): void {
-        const mode = Config.options?.sidebar?.news?.mode ?? "local"
-        const topic = Config.options?.sidebar?.news?.topic ?? "WORLD"
+        const mode = Config.options?.news?.mode ?? "local"
+        const topic = Config.options?.news?.topic ?? "WORLD"
         if (force)
             NewsService.refresh(mode, topic)
         else

@@ -27,20 +27,20 @@ MouseArea {
     property bool oskVisible: false
     
     readonly property bool requirePasswordToPower: Config.options?.lock?.security?.requirePasswordToPower ?? true
-    readonly property bool blurEnabled: Config.options?.lock?.blur?.enable ?? true
+    readonly property bool blurEnabled: Config.family?.lock?.blur?.enable ?? true
     readonly property bool useSafeBlurPipeline: CompositorService.isNiri
     readonly property real blurAmount: 0.8
-    readonly property real blurRadius: Config.options?.lock?.blur?.radius ?? 64
-    readonly property real blurZoom: Config.options?.lock?.blur?.extraZoom ?? 1.1
+    readonly property real blurRadius: Config.family?.lock?.blur?.radius ?? 64
+    readonly property real blurZoom: Config.family?.lock?.blur?.extraZoom ?? 1.1
     readonly property bool enableAnimation: Config.options?.lock?.enableAnimation ?? false
     readonly property bool _zzz: Appearance.zzzEverywhere
     readonly property bool editorial: Appearance.editorialEverywhere
 
     // Widget visibility
-    readonly property bool showWeather: Config.options?.lock?.widgets?.weather ?? true
-    readonly property bool showMedia: Config.options?.lock?.widgets?.media ?? true
-    readonly property bool showPowerButtons: Config.options?.lock?.widgets?.powerButtons ?? true
-    readonly property bool showHintText: Config.options?.lock?.widgets?.hintText ?? true
+    readonly property bool showWeather: Config.family?.lock?.widgets?.weather ?? true
+    readonly property bool showMedia: Config.family?.lock?.widgets?.media ?? true
+    readonly property bool showPowerButtons: Config.family?.lock?.widgets?.powerButtons ?? true
+    readonly property bool showHintText: Config.family?.lock?.widgets?.hintText ?? true
 
     function safeLockNotificationImage(source): string {
         const value = String(source ?? "")
@@ -339,7 +339,7 @@ MouseArea {
     Rectangle {
         anchors.fill: parent
         color: Appearance.colors.colScrim
-        opacity: (Config.options?.lock?.dim?.enable ?? false) ? (Config.options?.lock?.dim?.opacity ?? 0.3) : 0
+        opacity: (Config.family?.lock?.dim?.enable ?? false) ? (Config.family?.lock?.dim?.opacity ?? 0.3) : 0
         z: 0
 
         Behavior on opacity {
@@ -373,9 +373,9 @@ MouseArea {
         }
         
         // Config-driven clock properties
-        readonly property string clockStyle: Config.options?.lock?.clock?.style ?? "default"
-        readonly property string clockPosition: Config.options?.lock?.clock?.position ?? "center"
-        readonly property bool statusEnabled: Config.options?.lock?.status?.enable ?? true
+        readonly property string clockStyle: Config.family?.lock?.clock?.style ?? "default"
+        readonly property string clockPosition: Config.family?.lock?.clock?.position ?? "center"
+        readonly property bool statusEnabled: Config.family?.lock?.status?.enable ?? true
 
         // Status row - compact indicators at top
         Loader {
@@ -691,11 +691,11 @@ MouseArea {
         // Lock screen notifications - grouped by app, read-only
         Loader {
             id: lockNotificationsLoader
-            readonly property bool lockNotifEnabled: Config.options?.lock?.notifications?.enable ?? false
-            readonly property int lockNotifMaxCount: Config.options?.lock?.notifications?.maxCount ?? 3
-            readonly property bool lockNotifShowBody: Config.options?.lock?.notifications?.showBody ?? true
+            readonly property bool lockNotifEnabled: Config.family?.lock?.notifications?.enable ?? false
+            readonly property int lockNotifMaxCount: Config.family?.lock?.notifications?.maxCount ?? 3
+            readonly property bool lockNotifShowBody: Config.family?.lock?.notifications?.showBody ?? true
             readonly property string lockNotifPosition: {
-                const pos = Config.options?.lock?.notifications?.position ?? "auto"
+                const pos = Config.family?.lock?.notifications?.position ?? "auto"
                 return pos === "auto" ? "center" : pos
             }
             active: lockNotifEnabled && Notifications.list.length > 0
@@ -1476,7 +1476,7 @@ MouseArea {
                         
                         enabled: !root.context.unlockInProgress
                         
-                        property bool materialShapeChars: Config.options?.lock?.materialShapeChars ?? false
+                        property bool materialShapeChars: Config.family?.lock?.materialShapeChars ?? false
                         property string placeholder: GlobalStates.screenUnlockFailed 
                             ? Translation.tr("Incorrect password") 
                             : Translation.tr("Password")

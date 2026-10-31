@@ -98,7 +98,7 @@ Scope {
                 anchors {
                     top: parent.top
                     horizontalCenter: parent.horizontalCenter
-                    topMargin: (Config.options?.bar?.vertical ?? false) ? Appearance.sizes.hyprlandGapsOut : Appearance.sizes.barHeight + Appearance.sizes.hyprlandGapsOut
+                    topMargin: (Config.options?.material?.bar?.vertical ?? false) ? Appearance.sizes.hyprlandGapsOut : Appearance.sizes.barHeight + Appearance.sizes.hyprlandGapsOut
                 }
                 implicitHeight: Appearance.sizes.wallpaperSelectorHeight
                 implicitWidth: Appearance.sizes.wallpaperSelectorWidth

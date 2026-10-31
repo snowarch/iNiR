@@ -114,7 +114,7 @@ Scope {
                 (Config.options?.panelFamily ?? "ii") === "ii"
                 && ShellLayoutController.sidebarOpenAtSlot(edgeSlot)
             readonly property string notificationPosition:
-                Config.options?.notifications?.position ?? "topRight"
+                Config.family?.notifications?.position ?? "topRight"
             readonly property bool edgeNotificationOpen:
                 (Notifications.popupList?.length ?? 0) > 0
                 && (isRight ? notificationPosition.endsWith("Right")
@@ -179,7 +179,7 @@ Scope {
             readonly property bool islandChrome: !Appearance.zzzEverywhere
                 && (chromeStyle === "island"
                     || (chromeStyle === "auto"
-                        && (Config.options?.bar?.appearanceStyle ?? "classic") === "pill"))
+                        && (Config.options?.material?.bar?.appearanceStyle ?? "classic") === "pill"))
             readonly property bool perMonitor: (Config.options?.workspaceStrip?.perMonitor ?? true) && CompositorService.isNiri
             readonly property bool scrollNavigation: Config.options?.workspaceStrip?.scrollNavigation ?? false
             readonly property bool scrollNavigationSwitchWorkspace: Config.options?.workspaceStrip?.scrollNavigationSwitchWorkspace ?? true

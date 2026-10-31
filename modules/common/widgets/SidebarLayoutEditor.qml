@@ -45,21 +45,21 @@ ColumnLayout {
     readonly property var rightOrder: {
         root.configVersion
         return root.sanitizeOrder(
-            Config.options?.sidebar?.right?.sectionOrder ?? root.rightDefaultOrder,
+            Config.options?.material?.sidebar?.right?.sectionOrder ?? root.rightDefaultOrder,
             root.rightDefaultOrder)
     }
 
     readonly property var leftOrder: {
         root.configVersion
         return root.sanitizeOrder(
-            Config.options?.sidebar?.left?.tabOrder ?? root.leftDefaultOrder,
+            Config.options?.material?.sidebar?.left?.tabOrder ?? root.leftDefaultOrder,
             root.leftDefaultOrder)
     }
 
     readonly property real notificationsWeight: Math.max(0.35,
-        Number(Config.options?.sidebar?.right?.sectionWeights?.notifications ?? 1))
+        Number(Config.options?.material?.sidebar?.right?.sectionWeights?.notifications ?? 1))
     readonly property real widgetsWeight: Math.max(0.35,
-        Number(Config.options?.sidebar?.right?.sectionWeights?.widgets ?? 1))
+        Number(Config.options?.material?.sidebar?.right?.sectionWeights?.widgets ?? 1))
     readonly property real notificationsShare: notificationsWeight / Math.max(0.7,
         notificationsWeight + widgetsWeight)
 
@@ -103,15 +103,15 @@ ColumnLayout {
         target = Math.max(0, Math.min(target, order.length))
         order.splice(target, 0, moved)
         Config.setNestedValue(kind === "right"
-            ? "sidebar.right.sectionOrder" : "sidebar.left.tabOrder", order)
+            ? "material.sidebar.right.sectionOrder" : "material.sidebar.left.tabOrder", order)
         cancelLift()
     }
 
     function saveBalance(share: real): void {
         const clamped = Math.max(0.2, Math.min(0.8, share))
         Config.setNestedValues({
-            "sidebar.right.sectionWeights.notifications": clamped * 2,
-            "sidebar.right.sectionWeights.widgets": (1 - clamped) * 2
+            "material.sidebar.right.sectionWeights.notifications": clamped * 2,
+            "material.sidebar.right.sectionWeights.widgets": (1 - clamped) * 2
         })
     }
 
@@ -183,7 +183,7 @@ ColumnLayout {
             materialIcon: "restart_alt"
             mainText: Translation.tr("Reset")
             onClicked: {
-                Config.setNestedValue("sidebar.right.sectionOrder", root.rightDefaultOrder)
+                Config.setNestedValue("material.sidebar.right.sectionOrder", root.rightDefaultOrder)
                 root.cancelLift()
             }
         }
@@ -314,7 +314,7 @@ ColumnLayout {
             materialIcon: "restart_alt"
             mainText: Translation.tr("Reset")
             onClicked: {
-                Config.setNestedValue("sidebar.left.tabOrder", root.leftDefaultOrder)
+                Config.setNestedValue("material.sidebar.left.tabOrder", root.leftDefaultOrder)
                 root.cancelLift()
             }
         }

@@ -452,7 +452,7 @@ Item { // Wrapper
         implicitWidth: columnLayout.implicitWidth
         implicitHeight: columnLayout.implicitHeight
         radius: root.islandStyle
-            ? (root.showResults ? (Config.options?.appearance?.island?.radius ?? 18)
+            ? (root.showResults ? (Config.options?.material?.style?.island?.radius ?? 18)
                 : searchBar.height / 2 + searchBar.verticalPadding)
             : root.zzzEverywhere ? Appearance.zzz.panelRadius
             : Appearance.regaliaEverywhere

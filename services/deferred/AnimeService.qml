@@ -193,7 +193,7 @@ Singleton {
         root.lastError = ""
         
         const dayNum = root._dayToNum[targetDay] ?? 1
-        const isAdult = Config.options?.sidebar?.animeSchedule?.showNsfw ?? false
+        const isAdult = Config.options?.animeSchedule?.showNsfw ?? false
         
         // Get current airing anime that air on this day
         const query = `
@@ -281,7 +281,7 @@ Singleton {
         
         const season = selectedSeason
         const year = selectedYear
-        const isAdult = Config.options?.sidebar?.animeSchedule?.showNsfw ?? false
+        const isAdult = Config.options?.animeSchedule?.showNsfw ?? false
         
         const query = `
             query ($season: MediaSeason, $year: Int, $isAdult: Boolean) {
@@ -326,7 +326,7 @@ Singleton {
         root.loadingTop = true
         root.lastError = ""
         
-        const isAdult = Config.options?.sidebar?.animeSchedule?.showNsfw ?? false
+        const isAdult = Config.options?.animeSchedule?.showNsfw ?? false
         
         const query = `
             query ($isAdult: Boolean) {
@@ -415,7 +415,7 @@ Singleton {
     }
     
     Component.onCompleted: {
-        if (Config.options?.sidebar?.animeSchedule?.enable) {
+        if (Config.options?.animeSchedule?.enable) {
             Qt.callLater(() => root.fetchSchedule("today"))
         }
     }

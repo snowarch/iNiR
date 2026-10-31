@@ -35,7 +35,7 @@ Scope {
     readonly property real osdWidth: Appearance.sizes.osdWidth
     readonly property real widgetWidth: Appearance.sizes.mediaControlsWidth
     readonly property real widgetHeight: Appearance.sizes.mediaControlsHeight
-    readonly property real dockHeight: Config.options?.dock?.height ?? 60
+    readonly property real dockHeight: Config.options?.material?.dock?.height ?? 60
     readonly property real dockMargin: Appearance.sizes.elevationMargin + Appearance.sizes.hyprlandGapsOut
     property real popupRounding: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
         : Appearance.inirEverywhere ? Appearance.inir.roundingLarge : Appearance.rounding.large

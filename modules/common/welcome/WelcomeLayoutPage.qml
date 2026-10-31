@@ -153,7 +153,7 @@ Flickable {
                 ColumnLayout {
                     Layout.fillWidth: true
                     visible: !root.familyWelcome?.placementRows
-                        && (Config.options?.bar?.appearanceStyle ?? "m3") === "m3"
+                        && (Config.options?.material?.bar?.appearanceStyle ?? "m3") === "m3"
                     spacing: 9
 
                     RowLayout {
@@ -385,7 +385,7 @@ Flickable {
                 ColumnLayout {
                     Layout.fillWidth: true
                     visible: !root.familyWelcome?.placementRows
-                        && (Config.options?.bar?.appearanceStyle ?? "m3") !== "m3"
+                        && (Config.options?.material?.bar?.appearanceStyle ?? "m3") !== "m3"
                     spacing: 9
 
                     RowLayout {
@@ -405,7 +405,7 @@ Flickable {
                             color: root.welcomeOnSurface
                         }
                         WelcomeText {
-                            text: String(Config.options?.bar?.appearanceStyle ?? "m3").toUpperCase()
+                            text: String(Config.options?.material?.bar?.appearanceStyle ?? "m3").toUpperCase()
                             font.family: root.welcomeFontNumbers
                             font.pixelSize: root.welcomeFontMeta
                             font.weight: Font.Bold

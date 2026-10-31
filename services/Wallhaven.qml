@@ -65,7 +65,7 @@ QtObject {
     property real rateLimitedUntilMs: 0
     readonly property bool isRateLimited: nowMs < rateLimitedUntilMs
 
-    readonly property bool _active: (Config.options?.sidebar?.wallhaven?.enable ?? true) && (GlobalStates?.sidebarLeftOpen ?? false)
+    readonly property bool _active: (Config.options?.wallhaven?.enable ?? true) && (GlobalStates?.sidebarLeftOpen ?? false)
 
     property Timer wallhavenClock: Timer {
         // Removed: nowMs is updated on-demand in handlers that need it
@@ -590,8 +590,8 @@ QtObject {
     }
 
     // Config-driven options
-    property string apiKey: (Config.options?.sidebar?.wallhaven?.apiKey ?? "").trim()
-    property int defaultLimit: Config.options?.sidebar?.wallhaven?.limit ?? 24
+    property string apiKey: (Config.options?.wallhaven?.apiKey ?? "").trim()
+    property int defaultLimit: Config.options?.wallhaven?.limit ?? 24
     property bool allowNsfw: Persistent.states?.booru?.allowNsfw ?? false
     property string sortingMode: "toplist"
     property string topRange: "1w"

@@ -11,7 +11,7 @@ import qs.services
 Singleton {
     id: root
 
-    readonly property bool enabled: Config.options?.sidebar?.screenTime?.enable ?? false
+    readonly property bool enabled: Config.options?.screenTime?.enable ?? false
     property bool ready: false
 
     property var _todayData: null
@@ -116,7 +116,7 @@ Singleton {
 
     Timer {
         id: pollTimer
-        interval: (Config.options?.sidebar?.screenTime?.pollIntervalSeconds ?? 5) * 1000
+        interval: (Config.options?.screenTime?.pollIntervalSeconds ?? 5) * 1000
         running: root.enabled && root.ready && root._initialized
         repeat: true
         triggeredOnStart: true
@@ -374,7 +374,7 @@ Singleton {
 
     function _pruneHistory(): void {
         const retention = Math.max(1,
-            Config.options?.sidebar?.screenTime?.retentionDays ?? 30)
+            Config.options?.screenTime?.retentionDays ?? 30)
         Quickshell.execDetached([
             "/usr/bin/find", Directories.screenTimePath,
             "-maxdepth", "1", "-type", "f", "-name", "*.json",

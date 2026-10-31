@@ -35,7 +35,7 @@ Item {
     property bool chamferBottomRight: !Appearance.zzz.round
     property bool glassEnabled: Appearance.zzzEverywhere
         && Appearance.effectsEnabled
-        && (Config.options?.appearance?.zzz?.glass ?? true)
+        && (Config.options?.material?.style?.zzz?.glass ?? true)
     // Lets a host dial the wash down without forking the component.
     property real strength: 1.0
 

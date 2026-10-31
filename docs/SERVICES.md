@@ -76,7 +76,7 @@ IpcHandler {
 | `GameMode` | Fullscreen detection, automatic or manual | `gamemode` |
 | `GamePerformanceService` | Focused game detection, optional MangoHud CSV | |
 | `ResourceUsage` | CPU, RAM, GPU, temperature, disk. Stops after `resources.autoStopDelay` | |
-| `ScreenTime` | Focused-app usage, only with `sidebar.screenTime.enable` | |
+| `ScreenTime` | Focused-app usage, only with `screenTime.enable` | |
 | `MemoryPressureService` | Watches the JS heap (Qt V4 memfd leak), offers a restart | `memory` |
 
 ## Theming and appearance

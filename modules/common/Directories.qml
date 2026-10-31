@@ -90,8 +90,8 @@ Singleton {
     property string coverArt: `${Directories.cachePath}/media/coverart`
     property string tempImages: "/tmp/quickshell/media/images"
     property string booruPreviews: `${Directories.cachePath}/media/boorus`
-    property string booruDownloads: Config.options?.sidebar?.booru?.downloadPath?.sfw || Directories.wallpapersPath
-    property string booruDownloadsNsfw: Config.options?.sidebar?.booru?.downloadPath?.nsfw || `${Directories.wallpapersPath}/🌶️`
+    property string booruDownloads: Config.options?.booru?.downloadPath?.sfw || Directories.wallpapersPath
+    property string booruDownloadsNsfw: Config.options?.booru?.downloadPath?.nsfw || `${Directories.wallpapersPath}/🌶️`
     property string latexOutput: `${Directories.cachePath}/media/latex`
     property string shellConfig: `${Directories.configPath}/illogical-impulse`
     property string shellConfigName: "config.json"

@@ -1381,7 +1381,7 @@ _inir_doctor_perf() {
     if [[ -f "$cfg_path" ]] && command -v jq >/dev/null 2>&1; then
         printf '=== Enabled features ===\n'
         local style family animations effects_blur compositor_blur
-        style="$(jq -r '.appearance.globalStyle // "material"' "$cfg_path" 2>/dev/null)"
+        style="$(jq -r '.material.style.globalStyle // "material"' "$cfg_path" 2>/dev/null)"
         family="$(jq -r '.panelFamily // "ii"' "$cfg_path" 2>/dev/null)"
         animations="$(jq -r 'if (.performance.reduceAnimations // false) then false else true end' "$cfg_path" 2>/dev/null)"
         effects_blur="$(jq -r '.background.effects.enableBlur | if . == null then true else . end' "$cfg_path" 2>/dev/null)"

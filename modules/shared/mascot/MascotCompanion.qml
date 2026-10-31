@@ -96,8 +96,8 @@ Scope {
     // Where the user's main panel actually lives — contextual reactions and
     // panel-flavored peeks come from this edge instead of a hardcoded "top"
     readonly property string panelEdge: (Config.options?.panelFamily ?? "ii") === "waffle" ? "bottom"
-        : (Config.options?.bar?.bottom ?? false) ? "bottom"
-        : (Config.options?.bar?.vertical ?? false) ? "left"
+        : (Config.options?.material?.bar?.bottom ?? false) ? "bottom"
+        : (Config.options?.material?.bar?.vertical ?? false) ? "left"
         : "top"
 
     // Which screen she lives on: the configured primary, or the one with

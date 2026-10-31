@@ -782,7 +782,7 @@ Scope {
         readonly property var workSafetyOptions: Config.options?.workSafety ?? {}
         readonly property var workSafetyEnableOptions: workSafetyOptions.enable ?? {}
         readonly property var workSafetyTriggerOptions: workSafetyOptions.triggerCondition ?? {}
-        readonly property var lockBlurOptions: Config.options?.panelFamily === "iris" ? ({}) : (Config.options?.lock?.blur ?? {})
+        readonly property var lockBlurOptions: Config.family?.lock?.blur ?? {}
         readonly property var desktopFreeWorkArea: ShellLayoutController.desktopWorkArea(
             screen?.name ?? "", screen?.width ?? 0, screen?.height ?? 0)
         readonly property var desktopItemsWorkArea: ShellLayoutController.desktopZoneWorkArea(
@@ -965,7 +965,7 @@ Scope {
         readonly property bool usePerMonitorRange: _multiMonEnabled &&
             (wallpaperData.workspaceFirst !== undefined && wallpaperData.workspaceLast !== undefined)
         readonly property int effectiveWorkspaceFirst: usePerMonitorRange ? wallpaperData.workspaceFirst : 1
-        readonly property int effectiveWorkspaceLast: usePerMonitorRange ? wallpaperData.workspaceLast : (Config.options?.bar?.workspaces?.shown ?? 10)
+        readonly property int effectiveWorkspaceLast: usePerMonitorRange ? wallpaperData.workspaceLast : (Config.options?.material?.bar?.workspaces?.shown ?? 10)
 
         // Wallpaper — use per-monitor path when multi-monitor enabled, otherwise direct config
         readonly property string wallpaperPathRaw: {
@@ -1638,7 +1638,7 @@ Scope {
                 id: wallpaperContainer
                 property int chunkSize: bgRoot.usePerMonitorRange ?
                     (bgRoot.effectiveWorkspaceLast - bgRoot.effectiveWorkspaceFirst + 1) :
-                    (Config?.options?.bar?.workspaces?.shown ?? 10)
+                    (Config?.options?.material?.bar?.workspaces?.shown ?? 10)
                 property int lower: bgRoot.usePerMonitorRange ?
                     bgRoot.effectiveWorkspaceFirst :
                     (Math.floor(bgRoot.firstWorkspaceId / chunkSize) * chunkSize)
@@ -2043,12 +2043,12 @@ Scope {
                 // Bar-level vignette (darkens the edge under the bar)
                 Rectangle {
                     id: barVignette
-                    readonly property bool isVertical: Config.options?.bar?.vertical ?? false
-                    readonly property bool isBarAtTop: !isVertical && !(Config.options?.bar?.bottom ?? false)
-                    readonly property bool isBarAtLeft: isVertical && !(Config.options?.bar?.bottom ?? false)
-                    readonly property bool barVignetteEnabled: Config.options?.bar?.vignette?.enabled ?? false
-                    readonly property real barVignetteIntensity: Config.options?.bar?.vignette?.intensity ?? 0.6
-                    readonly property real barVignetteRadius: Config.options?.bar?.vignette?.radius ?? 0.5
+                    readonly property bool isVertical: Config.options?.material?.bar?.vertical ?? false
+                    readonly property bool isBarAtTop: !isVertical && !(Config.options?.material?.bar?.bottom ?? false)
+                    readonly property bool isBarAtLeft: isVertical && !(Config.options?.material?.bar?.bottom ?? false)
+                    readonly property bool barVignetteEnabled: Config.options?.material?.bar?.vignette?.enabled ?? false
+                    readonly property real barVignetteIntensity: Config.options?.material?.bar?.vignette?.intensity ?? 0.6
+                    readonly property real barVignetteRadius: Config.options?.material?.bar?.vignette?.radius ?? 0.5
 
                     anchors {
                         left: isVertical ? (isBarAtLeft ? parent.left : undefined) : parent.left

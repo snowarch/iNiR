@@ -336,7 +336,7 @@ Singleton {
         if (providerList.indexOf(provider) !== -1) {
             Persistent.states.booru.provider = provider
             root.addSystemMessage(Translation.tr("Provider set to ") + providers[provider].name
-                + (provider == "zerochan" ? Translation.tr(". Notes for Zerochan:\n- You must enter a color\n- Set your zerochan username in `sidebar.booru.zerochan.username` config option. You [might be banned for not doing so](https://www.zerochan.net/api#:~:text=The%20request%20may%20still%20be%20completed%20successfully%20without%20this%20custom%20header%2C%20but%20your%20project%20may%20be%20banned%20for%20being%20anonymous.)!") : ""))
+                + (provider == "zerochan" ? Translation.tr(". Notes for Zerochan:\n- You must enter a color\n- Set your zerochan username in `booru.zerochan.username` config option. You [might be banned for not doing so](https://www.zerochan.net/api#:~:text=The%20request%20may%20still%20be%20completed%20successfully%20without%20this%20custom%20header%2C%20but%20your%20project%20may%20be%20banned%20for%20being%20anonymous.)!") : ""))
         } else {
             root.addSystemMessage(Translation.tr("Invalid API provider. Supported: \n- ") + providerList.join("\n- "))
         }
@@ -415,8 +415,8 @@ Singleton {
             params.push("limit=" + limit)
             if (resolvedProviderId == "gelbooru") {
                 params.push("pid=" + page)
-                const apiKey = String(Config.options?.sidebar?.booru?.gelbooru?.apiKey ?? "").trim()
-                const userId = String(Config.options?.sidebar?.booru?.gelbooru?.userId ?? "").trim()
+                const apiKey = String(Config.options?.booru?.gelbooru?.apiKey ?? "").trim()
+                const userId = String(Config.options?.booru?.gelbooru?.userId ?? "").trim()
                 if (apiKey.length > 0 && userId.length > 0) {
                     params.push("api_key=" + encodeURIComponent(apiKey))
                     params.push("user_id=" + encodeURIComponent(userId))
@@ -442,8 +442,8 @@ Singleton {
         const requestProviderId = providers[providerOverride] ? providerOverride : currentProvider
         const requestProvider = providers[requestProviderId]
         if (requestProviderId === "gelbooru") {
-            const apiKey = String(Config.options?.sidebar?.booru?.gelbooru?.apiKey ?? "").trim()
-            const userId = String(Config.options?.sidebar?.booru?.gelbooru?.userId ?? "").trim()
+            const apiKey = String(Config.options?.booru?.gelbooru?.apiKey ?? "").trim()
+            const userId = String(Config.options?.booru?.gelbooru?.userId ?? "").trim()
             if (apiKey.length === 0 || userId.length === 0) {
                 root.addSystemMessage(Translation.tr("Gelbooru requires an API key and user ID. Add both in Settings → Sidebars → Gelbooru."))
                 root.responseFinished()
@@ -512,8 +512,8 @@ Singleton {
                 xhr.setRequestHeader("Accept-Version", "v7")
             }
             else if (requestProviderId == "zerochan") {
-                const userAgent = (Config.options?.sidebar?.booru?.zerochan?.username)
-                    ? `Desktop sidebar booru viewer - username: ${Config.options?.sidebar?.booru?.zerochan?.username}`
+                const userAgent = (Config.options?.booru?.zerochan?.username)
+                    ? `Desktop sidebar booru viewer - username: ${Config.options?.booru?.zerochan?.username}`
                     : defaultUserAgent
                 xhr.setRequestHeader("User-Agent", userAgent)
             }
@@ -539,8 +539,8 @@ Singleton {
         }
         var url = provider.tagSearchTemplate.replace("{{query}}", encodeURIComponent(query))
         if (currentProvider === "gelbooru") {
-            const apiKey = String(Config.options?.sidebar?.booru?.gelbooru?.apiKey ?? "").trim()
-            const userId = String(Config.options?.sidebar?.booru?.gelbooru?.userId ?? "").trim()
+            const apiKey = String(Config.options?.booru?.gelbooru?.apiKey ?? "").trim()
+            const userId = String(Config.options?.booru?.gelbooru?.userId ?? "").trim()
             if (apiKey.length === 0 || userId.length === 0)
                 return
             url += "&api_key=" + encodeURIComponent(apiKey) + "&user_id=" + encodeURIComponent(userId)

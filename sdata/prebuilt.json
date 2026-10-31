@@ -28,7 +28,7 @@
       "repo": "qs-rs",
       "dest": "runtime",
       "with": "qs-rs",
-      "when": "sidebar.plugins.enable",
+      "when": "material.sidebar.plugins.enable",
       "title": "Qt WebEngine for the Web Apps tab",
       "file": "qs-rs-webengine-0.1.0-x86_64.tar.gz",
       "sha256": ""

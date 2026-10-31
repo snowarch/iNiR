@@ -1121,17 +1121,17 @@ Scope {
                         
                         // Calculate bar/dock offset at top
                         let barOffset = 0;
-                        if (respectBar && !(Config.options?.bar?.bottom ?? false)) {
+                        if (respectBar && !(Config.options?.material?.bar?.bottom ?? false)) {
                             barOffset = Appearance.sizes.barHeight + Appearance.rounding.screenRounding;
                         }
-                        const dock = Config.options?.dock;
+                        const dock = Config.options?.material?.dock;
                         if (dock?.enable && dock?.position === "top") {
                             barOffset += (dock.height ?? 60) + 20;
                         }
                         
                         // Calculate bar/dock offset at bottom
                         let bottomOffset = 8;
-                        if (respectBar && (Config.options?.bar?.bottom ?? false)) {
+                        if (respectBar && (Config.options?.material?.bar?.bottom ?? false)) {
                             bottomOffset += Appearance.sizes.barHeight + Appearance.rounding.screenRounding;
                         }
                         if (dock?.enable && dock?.position === "bottom") {

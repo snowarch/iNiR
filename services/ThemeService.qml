@@ -143,7 +143,7 @@ Singleton {
     // silently inherited material's corner style.
 
     function cornerStyleForGlobalStyle(styleId: string): int {
-        const styles = Config.options?.appearance?.globalStyleCornerStyles
+        const styles = Config.options?.material?.style?.globalStyleCornerStyles
         switch (styleId) {
         case "cards": return styles?.cards ?? 3
         case "aurora": return styles?.aurora ?? 1
@@ -165,10 +165,10 @@ Singleton {
         if (styleId === "angel" && cornerStyle === 0)
             cornerStyle = 1
         Config.setNestedValues({
-            "appearance.globalStyle": styleId,
-            "dock.cardStyle": cards,
-            "sidebar.cardStyle": cards,
-            "bar.cornerStyle": cornerStyle
+            "material.style.globalStyle": styleId,
+            "material.dock.cardStyle": cards,
+            "material.sidebar.cardStyle": cards,
+            "material.bar.cornerStyle": cornerStyle
         })
     }
 
@@ -191,7 +191,7 @@ Singleton {
             return id
         }
         /// Return the active style
-        function get(): string { return Config.options?.appearance?.globalStyle ?? "material" }
+        function get(): string { return Config.options?.material?.style?.globalStyle ?? "material" }
         /// List the styles
         function list(): string { return root.globalStyles.join(", ") }
     }

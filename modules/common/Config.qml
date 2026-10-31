@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.services
+import "functions/ConfigMigrations.js" as ConfigMigrations
 
 Singleton {
     id: root
@@ -712,7 +713,16 @@ Singleton {
     // Plugins' parts of the config (`iris`, `waffles` slots in the adapter) are filled before the file is read: the
     // plugin's schema (plugin.json `configKey` and part `config`), or, when no installed plugin owns the key, a holder
     // that reads and writes that subtree back whole, so removing a plugin loses none of its settings.
-    readonly property var _pluginSlots: ["iris", "waffles"]
+    // The slots are the adapter's empty JsonObject properties (ConfigOptions declares them without a value), so the
+    // list has one owner.
+    readonly property var _pluginSlots: Object.keys(configOptionsJsonAdapter).filter(k => /^[a-z]\w*$/.test(k)
+        && !root._reservedNames.includes(k) && configOptionsJsonAdapter[k] === null)
+    // The active family's own subtree (`material`, `waffles`, `iris`): what a shared surface reads for that family's
+    // look of it, so the base never names a family.
+    readonly property var family: {
+        const key = String(Plugins.manifests?.[Plugins.active]?.configKey ?? "");
+        return key.length > 0 && root._slotsReady ? configOptionsJsonAdapter[key] : null;
+    }
     readonly property var _reservedNames: ["objectName", "property", "signal", "readonly", "alias", "function", "default",
         "required", "import", "as", "on", "enum", "component", "pragma", "var", "let", "const", "if", "else", "for", "while",
         "do", "return", "new", "delete", "typeof", "instanceof", "in", "of", "this", "null", "true", "false", "switch",
@@ -737,7 +747,7 @@ Singleton {
 
     function _installSlots(force: bool): void {
         if (root._slotsReady || !(Plugins.ready || force)) return;
-        let disk = undefined;
+        let disk = root._migrateDisk();
         for (const key of root._pluginSlots) {
             const owner = Object.keys(Plugins.manifests).find(id => Plugins.manifests[id].configKey === key);
             let slot = null;
@@ -746,16 +756,25 @@ Singleton {
                 slot = component.status === Component.Ready ? component.createObject(configOptionsJsonAdapter) : null;
                 if (!slot) console.warn(`[Config] ${owner}'s config schema failed to load: ${component.errorString()}`);
             }
-            if (!slot) {
-                if (disk === undefined) {
-                    diskProbe.reload();
-                    try { disk = JSON.parse(diskProbe.text() || "{}"); } catch (e) { disk = {}; }
-                }
+            if (!slot)
                 slot = root._holderFor(disk?.[key]);
-            }
             configOptionsJsonAdapter[key] = slot;
         }
         root._slotsReady = true;
+    }
+
+    // Keys that changed owner move in the file itself before anything reads it (ConfigMigrations.js), so the person's
+    // values follow them whatever path brought this version.
+    function _migrateDisk(): var {
+        diskProbe.reload();
+        const text = diskProbe.text() || "";
+        let disk = {};
+        try { disk = JSON.parse(text || "{}"); } catch (e) { return {}; }
+        if (text.length > 0 && ConfigMigrations.migrate(disk)) {
+            diskProbe.setText(root._qtJson(disk) + "\n");
+            console.log("[Config] moved keys to their owners (ConfigMigrations.js)");
+        }
+        return disk;
     }
 
     function _holderFor(subtree): QtObject {
@@ -771,6 +790,7 @@ Singleton {
         path: root.filePath
         preload: false
         blockAllReads: true
+        blockWrites: true
         printErrors: false
     }
 

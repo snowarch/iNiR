@@ -52,7 +52,7 @@ ColumnLayout {
     })
 
     function _metaIcon(id) {
-        if (id === "activeWindow" && (Config.options?.bar?.modules?.taskbar ?? false))
+        if (id === "activeWindow" && (Config.options?.material?.bar?.modules?.taskbar ?? false))
             return "dock_to_bottom"
         return ({ leftSidebarButton: "side_navigation", activeWindow: "window",
             resources: "memory", media: "music_note", workspaces: "workspaces", clock: "schedule",
@@ -61,7 +61,7 @@ ColumnLayout {
             weather: "cloud" })[id] || "widgets"
     }
     function _metaLabel(id) {
-        if (id === "activeWindow" && (Config.options?.bar?.modules?.taskbar ?? false))
+        if (id === "activeWindow" && (Config.options?.material?.bar?.modules?.taskbar ?? false))
             return Translation.tr("Taskbar")
         return ({ leftSidebarButton: Translation.tr("Left sidebar"), activeWindow: Translation.tr("Active window"),
             resources: Translation.tr("Resources"), media: Translation.tr("Media"),
@@ -81,14 +81,14 @@ ColumnLayout {
     }
 
     // ─── Reactive layout view ───────────────────────────────────────────
-    readonly property bool migrated: Config.options?.bar?.layout?.migrated === true
+    readonly property bool migrated: Config.options?.material?.bar?.layout?.migrated === true
     readonly property bool _layoutContainsActiveWindow: root._zones.some(zoneName => {
-        const ids = Config.options?.bar?.layout?.[zoneName] ?? []
+        const ids = Config.options?.material?.bar?.layout?.[zoneName] ?? []
         return ids.includes("activeWindow")
     })
     function _getZone(name) {
         if (!root.migrated) return root._defaultLayout[name] ?? []
-        const a = Config.options?.bar?.layout?.[name]
+        const a = Config.options?.material?.bar?.layout?.[name]
         const ids = (a && a.length >= 0) ? Array.from(a) : Array.from(root._defaultLayout[name] ?? [])
         return ids
             .map(id => id === "taskbar" && !root._layoutContainsActiveWindow ? "activeWindow" : id)
@@ -112,14 +112,14 @@ ColumnLayout {
         if (root.migrated) return
         const d = root._defaultLayout
         Config.setNestedValues({
-            "bar.layout.left": d.left, "bar.layout.centerLeft": d.centerLeft, "bar.layout.center": d.center,
-            "bar.layout.centerRight": d.centerRight, "bar.layout.right": d.right, "bar.layout.migrated": true })
+            "material.bar.layout.left": d.left, "material.bar.layout.centerLeft": d.centerLeft, "material.bar.layout.center": d.center,
+            "material.bar.layout.centerRight": d.centerRight, "material.bar.layout.right": d.right, "material.bar.layout.migrated": true })
     }
     function _resetToDefaults() {
         const d = root._defaultLayout
         Config.setNestedValues({
-            "bar.layout.left": d.left, "bar.layout.centerLeft": d.centerLeft, "bar.layout.center": d.center,
-            "bar.layout.centerRight": d.centerRight, "bar.layout.right": d.right, "bar.layout.migrated": true })
+            "material.bar.layout.left": d.left, "material.bar.layout.centerLeft": d.centerLeft, "material.bar.layout.center": d.center,
+            "material.bar.layout.centerRight": d.centerRight, "material.bar.layout.right": d.right, "material.bar.layout.migrated": true })
     }
     function _addToZone(id, toZone, atIndex) {
         root._ensureMigrated()
@@ -127,13 +127,13 @@ ColumnLayout {
         if (id !== "spacer" && dst.indexOf(id) !== -1) return
         const idx = (atIndex === undefined || atIndex < 0) ? dst.length : Math.max(0, Math.min(atIndex, dst.length))
         dst.splice(idx, 0, id)
-        Config.setNestedValue("bar.layout." + toZone, dst)
+        Config.setNestedValue("material.bar.layout." + toZone, dst)
     }
     function _remove(zone, idx) {
         root._ensureMigrated()
         const arr = root._getZone(zone).slice()
         arr.splice(idx, 1)
-        Config.setNestedValue("bar.layout." + zone, arr)
+        Config.setNestedValue("material.bar.layout." + zone, arr)
     }
     // Move from (srcZone, srcIdx) to dstZone at dstIdx. Handles same- and
     // cross-zone with a single atomic write per affected zone. Source zone
@@ -151,15 +151,15 @@ ColumnLayout {
             const arr = root._getZone(srcZone).slice()
             const [m] = arr.splice(srcIdx, 1)
             arr.splice(Math.max(0, Math.min(dstIdx, arr.length)), 0, m)
-            Config.setNestedValue("bar.layout." + srcZone, arr)
+            Config.setNestedValue("material.bar.layout." + srcZone, arr)
         } else {
             const src = root._getZone(srcZone).slice()
             const dst = root._getZone(dstZone).slice()
             const [m] = src.splice(srcIdx, 1)
             dst.splice(Math.max(0, Math.min(dstIdx, dst.length)), 0, m)
             let u = {}
-            u["bar.layout." + srcZone] = src
-            u["bar.layout." + dstZone] = dst
+            u["material.bar.layout." + srcZone] = src
+            u["material.bar.layout." + dstZone] = dst
             Config.setNestedValues(u)
         }
     }
@@ -234,7 +234,7 @@ ColumnLayout {
         // visibility bit. While that mode is active, hiding `activeWindow`
         // would only mutate latent state and leave the visible taskbar intact.
         property string visibilityKey: moduleId === "activeWindow"
-            && (Config.options?.bar?.modules?.taskbar ?? false)
+            && (Config.options?.material?.bar?.modules?.taskbar ?? false)
             ? ""
             : (root._visKeys[moduleId] || "")
         readonly property bool beingDragged: root.dragInfo && root.dragInfo.id === moduleId && root.dragInfo.zone === zone && root.dragInfo.index === rowIndex
@@ -318,16 +318,16 @@ ColumnLayout {
                 buttonRadius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
                 onClicked: {
                     const k = rowRoot.visibilityKey
-                    Config.setNestedValue("bar.modules." + k, !(Config.options?.bar?.modules?.[k] ?? true))
+                    Config.setNestedValue("material.bar.modules." + k, !(Config.options?.material?.bar?.modules?.[k] ?? true))
                 }
                 contentItem: MaterialSymbol {
                     anchors.centerIn: parent
-                    text: (Config.options?.bar?.modules?.[rowRoot.visibilityKey] ?? true) ? "visibility" : "visibility_off"
+                    text: (Config.options?.material?.bar?.modules?.[rowRoot.visibilityKey] ?? true) ? "visibility" : "visibility_off"
                     iconSize: Appearance.font.pixelSize.small
-                    color: (Config.options?.bar?.modules?.[rowRoot.visibilityKey] ?? true) ? rowRoot._fg : rowRoot._fgSubtle
+                    color: (Config.options?.material?.bar?.modules?.[rowRoot.visibilityKey] ?? true) ? rowRoot._fg : rowRoot._fgSubtle
                 }
                 StyledToolTip {
-                    text: (Config.options?.bar?.modules?.[rowRoot.visibilityKey] ?? true)
+                    text: (Config.options?.material?.bar?.modules?.[rowRoot.visibilityKey] ?? true)
                         ? Translation.tr("Hide from bar (keep in layout)") : Translation.tr("Show in bar")
                 }
             }

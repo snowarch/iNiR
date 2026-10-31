@@ -150,8 +150,8 @@ AbstractWidget {
         && (Appearance.angelEverywhere
             || (Appearance.auroraEverywhere && !Appearance.inirEverywhere)
             || (root._widgetIslandStyle
-                && (Config.options?.appearance?.island?.glass ?? true)
-                && (Config.options?.appearance?.island?.opacity ?? 1) < 0.999))
+                && (Config.options?.material?.style?.island?.glass ?? true)
+                && (Config.options?.material?.style?.island?.opacity ?? 1) < 0.999))
     readonly property bool effectiveBlur: root.showBackground && root.useBlur && root.blurAvailable
     readonly property bool showBorder: root._readConfigKey("showBorder") ?? true
     // Granular card controls — override booleans when present
@@ -2486,7 +2486,7 @@ AbstractWidget {
     readonly property bool glassInkOnLight: root.forceDarkInk ? true : root.forceLightInk ? false
         : root._onBlurredLock ? false
         : root.positionColorAdaptationEnabled && root._hasBrightness && root.backdropIsBright
-    readonly property bool _onBlurredLock: GlobalStates.screenLocked && (Config.options?.lock?.blur?.enable ?? false)
+    readonly property bool _onBlurredLock: GlobalStates.screenLocked && (Config.family?.lock?.blur?.enable ?? false)
     // With the wallpaper unread, iRiS keeps its light ink (the contract of *On bright wallpapers*
     // off); the shell's light mode says nothing about the wallpaper under a plate-less widget.
     readonly property bool _unreadIsLight: !root.widgetIrisFamily && !Appearance.m3colors.darkmode

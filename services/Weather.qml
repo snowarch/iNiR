@@ -11,16 +11,16 @@ import qs.services
 Singleton {
     id: root
 
-    readonly property bool enabled: Config.options?.bar?.weather?.enable ?? false
-    readonly property int fetchInterval: (Config.options?.bar?.weather?.fetchInterval ?? 10) * 60 * 1000
-    readonly property bool useUSCS: Config.options?.bar?.weather?.useUSCS ?? false
-    readonly property bool hideLocation: Config.options?.bar?.weather?.hideLocation ?? false
+    readonly property bool enabled: Config.options?.weather?.enable ?? false
+    readonly property int fetchInterval: (Config.options?.weather?.fetchInterval ?? 10) * 60 * 1000
+    readonly property bool useUSCS: Config.options?.weather?.useUSCS ?? false
+    readonly property bool hideLocation: Config.options?.weather?.hideLocation ?? false
 
     // Manual location config
-    readonly property string configCity: Config.options?.bar?.weather?.city ?? ""
-    readonly property real configLat: Config.options?.bar?.weather?.manualLat ?? 0
-    readonly property real configLon: Config.options?.bar?.weather?.manualLon ?? 0
-    readonly property bool enableGPS: Config.options?.bar?.weather?.enableGPS ?? false
+    readonly property string configCity: Config.options?.weather?.city ?? ""
+    readonly property real configLat: Config.options?.weather?.manualLat ?? 0
+    readonly property real configLon: Config.options?.weather?.manualLon ?? 0
+    readonly property bool enableGPS: Config.options?.weather?.enableGPS ?? false
     readonly property bool hasManualCoords: configLat !== 0 || configLon !== 0
     readonly property bool hasManualCity: configCity.length > 0
 

@@ -27,8 +27,8 @@ Scope {
         // Separate conditions for clarity
         readonly property int fakeRoundingMode: Config?.options?.appearance?.fakeScreenRounding ?? 0
         readonly property bool showFakeRounding: fakeRoundingMode === 1 || (fakeRoundingMode === 2 && !fullscreen)
-        readonly property bool cornerOpenEnabled: Config?.options?.sidebar?.cornerOpen?.enable ?? false
-        readonly property bool cornerOpenAtBottom: Config?.options?.sidebar?.cornerOpen?.bottom ?? false
+        readonly property bool cornerOpenEnabled: Config?.options?.material?.sidebar?.cornerOpen?.enable ?? false
+        readonly property bool cornerOpenAtBottom: Config?.options?.material?.sidebar?.cornerOpen?.bottom ?? false
         readonly property bool cornerOpenMatchesPosition: cornerOpenAtBottom === cornerWidget.isBottom
         readonly property bool shouldShowCornerOpen: cornerOpenEnabled
             && cornerOpenMatchesPosition && !fullscreen
@@ -102,8 +102,8 @@ Scope {
                                             : Appearance.rounding.screenRounding)
                 : 0
             // Size for corner open interaction area
-            readonly property int cornerOpenWidth: Config.options?.sidebar?.cornerOpen?.cornerRegionWidth ?? 20
-            readonly property int cornerOpenHeight: Config.options?.sidebar?.cornerOpen?.cornerRegionHeight ?? 20
+            readonly property int cornerOpenWidth: Config.options?.material?.sidebar?.cornerOpen?.cornerRegionWidth ?? 20
+            readonly property int cornerOpenHeight: Config.options?.material?.sidebar?.cornerOpen?.cornerRegionHeight ?? 20
             readonly property int orbitHotCornerSize: Math.max(4, Math.min(40,
                 Config.options?.orbit?.hotCornerSize ?? 12))
             readonly property int orbitHotCornerActivationDistance: Math.max(1, Math.min(32,
@@ -199,20 +199,20 @@ Scope {
                     implicitHeight: cornerWidget.cornerOpenHeight
                     hoverEnabled: true
                     onPositionChanged: {
-                        if (Config.options?.sidebar?.cornerOpen?.clickless ?? false) return;
-                        if (!(Config.options?.sidebar?.cornerOpen?.clicklessCornerEnd ?? false)) return;
-                        const verticalOffset = Config.options?.sidebar?.cornerOpen?.clicklessCornerVerticalOffset ?? 10;
+                        if (Config.options?.material?.sidebar?.cornerOpen?.clickless ?? false) return;
+                        if (!(Config.options?.material?.sidebar?.cornerOpen?.clicklessCornerEnd ?? false)) return;
+                        const verticalOffset = Config.options?.material?.sidebar?.cornerOpen?.clicklessCornerVerticalOffset ?? 10;
                         const correctX = (cornerWidget.isRight && mouseArea.mouseX >= mouseArea.width - 2) || (cornerWidget.isLeft && mouseArea.mouseX <= 2);
                         const correctY = (cornerWidget.isTop && mouseArea.mouseY > verticalOffset || cornerWidget.isBottom && mouseArea.mouseY < mouseArea.height - verticalOffset);
                         if (correctX && correctY)
                             screenCorners.actionForCorner[cornerPanelWindow.corner](cornerPanelWindow.screen?.name ?? "");
                     }
                     onEntered: {
-                        if (Config.options?.sidebar?.cornerOpen?.clickless ?? false)
+                        if (Config.options?.material?.sidebar?.cornerOpen?.clickless ?? false)
                             screenCorners.actionForCorner[cornerPanelWindow.corner](cornerPanelWindow.screen?.name ?? "");
                     }
                     onPressed: {
-                        if (!(Config.options?.sidebar?.cornerOpen?.clickless ?? false)) {
+                        if (!(Config.options?.material?.sidebar?.cornerOpen?.clickless ?? false)) {
                             screenCorners.actionForCorner[cornerPanelWindow.corner](cornerPanelWindow.screen?.name ?? "");
                             if (Config.options?.background?.effects?.ripple?.hotcorners ?? true) {
                                 GlobalStates.requestRipple(0, 0, cornerPanelWindow.screen.name);
@@ -220,7 +220,7 @@ Scope {
                         }
                     }
                     onScrollDown: {
-                        if (!(Config.options?.sidebar?.cornerOpen?.valueScroll ?? false))
+                        if (!(Config.options?.material?.sidebar?.cornerOpen?.valueScroll ?? false))
                             return;
                         if (cornerWidget.isLeft)
                             Brightness.stepBrightness(cornerPanelWindow.screen, -0.05);
@@ -229,7 +229,7 @@ Scope {
                         }
                     }
                     onScrollUp: {
-                        if (!(Config.options?.sidebar?.cornerOpen?.valueScroll ?? false))
+                        if (!(Config.options?.material?.sidebar?.cornerOpen?.valueScroll ?? false))
                             return;
                         if (cornerWidget.isLeft)
                             Brightness.stepBrightness(cornerPanelWindow.screen, 0.05);
@@ -238,7 +238,7 @@ Scope {
                         }
                     }
                     onMovedAway: {
-                        if (!(Config.options?.sidebar?.cornerOpen?.valueScroll ?? false))
+                        if (!(Config.options?.material?.sidebar?.cornerOpen?.valueScroll ?? false))
                             return;
                         if (cornerWidget.isLeft)
                             GlobalStates.osdBrightnessOpen = false;
@@ -247,7 +247,7 @@ Scope {
                     }
 
                     Loader {
-                        active: Config.options?.sidebar?.cornerOpen?.visualize ?? false
+                        active: Config.options?.material?.sidebar?.cornerOpen?.visualize ?? false
                         anchors.fill: parent
                         sourceComponent: Rectangle {
                             color: Appearance.colors.colPrimary

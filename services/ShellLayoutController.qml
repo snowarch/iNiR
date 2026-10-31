@@ -98,9 +98,9 @@ Singleton {
 
     function sidebarAssignments(): var {
         const configuredFeature = root._validSidebarSlot(
-            Config.options?.sidebar?.shellLayout?.feature?.slot, "left")
+            Config.options?.material?.sidebar?.shellLayout?.feature?.slot, "left")
         const configuredSystem = root._validSidebarSlot(
-            Config.options?.sidebar?.shellLayout?.system?.slot, "right")
+            Config.options?.material?.sidebar?.shellLayout?.system?.slot, "right")
         if (configuredFeature !== configuredSystem) {
             return {
                 featureSidebar: configuredFeature,
@@ -165,7 +165,7 @@ Singleton {
         const roleKey = root._sidebarRoleKey(surfaceId)
         if (roleKey.length === 0)
             return ({})
-        const role = Config.options?.sidebar?.shellLayout?.[roleKey]
+        const role = Config.options?.material?.sidebar?.shellLayout?.[roleKey]
         const configuredMode = String(role?.sizeMode ?? "full")
         const sizeMode = ["full", "fit", "custom"].includes(configuredMode)
             ? configuredMode : "full"
@@ -178,8 +178,8 @@ Singleton {
             customHeight: Math.round(customHeight),
             width: Math.round(width),
             legacyFitEnabled: surfaceId === "featureSidebar"
-                ? (Config.options?.sidebar?.collapseWidgetsTab ?? false)
-                : (Config.options?.sidebar?.collapseEmptyNotifications ?? false)
+                ? (Config.options?.material?.sidebar?.collapseWidgetsTab ?? false)
+                : (Config.options?.material?.sidebar?.collapseEmptyNotifications ?? false)
         }
     }
 
@@ -232,26 +232,26 @@ Singleton {
         if (root.activeFamily !== "ii")
             return result
 
-        const barVertical = Config.options?.bar?.vertical ?? false
+        const barVertical = Config.options?.material?.bar?.vertical ?? false
         const barIdentifier = barVertical ? "iiVerticalBar" : "iiBar"
-        const barOutputs = Config.options?.bar?.screenList ?? []
+        const barOutputs = Config.options?.material?.bar?.screenList ?? []
         if (root.panelEnabled(barIdentifier)
                 && root.outputEnabled(barOutputs, outputName)
                 && (GlobalStates.barOpen ?? true)) {
             const barState = root.currentState("iiBar", outputName)
-            const appearanceStyle = Config.options?.bar?.appearanceStyle ?? "classic"
+            const appearanceStyle = Config.options?.material?.bar?.appearanceStyle ?? "classic"
             let thickness = 0
             if (appearanceStyle === "pill" && !barVertical) {
                 const screen = Quickshell.screens.find(item => (item?.name ?? "") === outputName)
                     ?? Quickshell.screens[0]
                 const shortEdge = Math.min(screen?.width ?? 1920, screen?.height ?? 1080)
                 const resolutionScale = Math.max(0.78, Math.min(1.6, shortEdge / 1080))
-                const scale = resolutionScale * 1.1 * (Config.options?.bar?.pill?.scale ?? 1)
-                const restHeight = (Config.options?.bar?.pill?.barMode ?? false)
-                    ? Math.max(58, Config.options?.bar?.pill?.expandedHeight ?? 66) * scale
-                    : Math.max(38, Config.options?.bar?.pill?.restHeight ?? 44) * scale
-                const topGap = 8 * (Config.options?.bar?.pill?.topGap ?? 1) * scale
-                const appGap = Config.options?.bar?.pill?.appGap ?? 1
+                const scale = resolutionScale * 1.1 * (Config.options?.material?.bar?.pill?.scale ?? 1)
+                const restHeight = (Config.options?.material?.bar?.pill?.barMode ?? false)
+                    ? Math.max(58, Config.options?.material?.bar?.pill?.expandedHeight ?? 66) * scale
+                    : Math.max(38, Config.options?.material?.bar?.pill?.restHeight ?? 44) * scale
+                const topGap = 8 * (Config.options?.material?.bar?.pill?.topGap ?? 1) * scale
+                const appGap = Config.options?.material?.bar?.pill?.appGap ?? 1
                 thickness = Math.max(0, restHeight + topGap - 12 * (1 - appGap) * scale)
             } else if (barVertical) {
                 thickness = Appearance.sizes.verticalBarWidth + Appearance.rounding.screenRounding
@@ -260,8 +260,8 @@ Singleton {
                 // reserve its visual extent, not only the exclusive-zone core.
                 thickness = Appearance.sizes.barHeight + Appearance.rounding.screenRounding
             } else {
-                const showBackground = Config.options?.bar?.showBackground ?? true
-                const cornerStyle = Config.options?.bar?.cornerStyle ?? 0
+                const showBackground = Config.options?.material?.bar?.showBackground ?? true
+                const cornerStyle = Config.options?.material?.bar?.cornerStyle ?? 0
                 const detachedZzz = Appearance.zzzEverywhere
                     && Appearance.zzz.round
                     && appearanceStyle === "classic"
@@ -281,14 +281,14 @@ Singleton {
             root.applyInset(result, result.barEdge, thickness)
         }
 
-        const dockOutputs = Config.options?.dock?.screenList ?? []
+        const dockOutputs = Config.options?.material?.dock?.screenList ?? []
         if (root.panelEnabled("iiDock")
-                && (Config.options?.dock?.enable ?? true)
+                && (Config.options?.material?.dock?.enable ?? true)
                 && root.outputEnabled(dockOutputs, outputName)) {
             const dockState = root.currentState("iiDock", outputName)
             result.dockEdge = dockState.ok ? dockState.slot : ""
             root.applyInset(result, result.dockEdge,
-                (Config.options?.dock?.height ?? 70)
+                (Config.options?.material?.dock?.height ?? 70)
                     + Appearance.sizes.elevationMargin
                     + Appearance.sizes.hyprlandGapsOut)
         }
@@ -363,12 +363,12 @@ Singleton {
                 width: sizeState.width,
                 legacyFitEnabled: sizeState.legacyFitEnabled,
                 sanitizedAssignment: assignments.sanitized,
-                source: "sidebar.shellLayout"
+                source: "material.sidebar.shellLayout"
             }
         }
         case "iiBar": {
-            const vertical = Config.options?.bar?.vertical ?? false
-            const alternateEdge = Config.options?.bar?.bottom ?? false
+            const vertical = Config.options?.material?.bar?.vertical ?? false
+            const alternateEdge = Config.options?.material?.bar?.bottom ?? false
             return {
                 ok: true,
                 id: surfaceId,
@@ -376,7 +376,7 @@ Singleton {
                     : (alternateEdge ? "bottom" : "top"),
                 scope: desc.layoutScope,
                 outputName: outputName,
-                enabledOutputs: Config.options?.bar?.screenList ?? [],
+                enabledOutputs: Config.options?.material?.bar?.screenList ?? [],
                 source: "bar.vertical+bar.bottom"
             }
         }
@@ -384,13 +384,13 @@ Singleton {
             return {
                 ok: true,
                 id: surfaceId,
-                slot: Config.options?.dock?.position ?? "bottom",
-                enabled: Config.options?.dock?.enable ?? true,
-                thickness: Math.round(Config.options?.dock?.height ?? 60),
+                slot: Config.options?.material?.dock?.position ?? "bottom",
+                enabled: Config.options?.material?.dock?.enable ?? true,
+                thickness: Math.round(Config.options?.material?.dock?.height ?? 60),
                 scope: desc.layoutScope,
                 outputName: outputName,
-                enabledOutputs: Config.options?.dock?.screenList ?? [],
-                source: "dock.position"
+                enabledOutputs: Config.options?.material?.dock?.screenList ?? [],
+                source: "material.dock.position"
             }
         default:
             return root._family?.surfaceState?.(surfaceId, desc, outputName)
@@ -470,8 +470,8 @@ Singleton {
 
     function _barKeyUpdates(slot: string): var {
         return {
-            "bar.vertical": slot === "left" || slot === "right",
-            "bar.bottom": slot === "bottom" || slot === "right"
+            "material.bar.vertical": slot === "left" || slot === "right",
+            "material.bar.bottom": slot === "bottom" || slot === "right"
         }
     }
 
@@ -489,8 +489,8 @@ Singleton {
             const otherRole = targetRole === "feature" ? "system" : "feature"
             const oppositeSlot = slot === "left" ? "right" : "left"
             const updates = {}
-            updates["sidebar.shellLayout." + targetRole + ".slot"] = slot
-            updates["sidebar.shellLayout." + otherRole + ".slot"] = oppositeSlot
+            updates["material.sidebar.shellLayout." + targetRole + ".slot"] = slot
+            updates["material.sidebar.shellLayout." + otherRole + ".slot"] = oppositeSlot
             Config.setNestedValues(updates)
             break
         }
@@ -498,7 +498,7 @@ Singleton {
             const updates = root._barKeyUpdates(slot)
             if ((validation.swapWith ?? "") === "iiDock") {
                 const barState = root.currentState("iiBar", outputName)
-                updates["dock.position"] = barState.ok ? barState.slot : "bottom"
+                updates["material.dock.position"] = barState.ok ? barState.slot : "bottom"
             }
             Config.setNestedValues(updates)
             break
@@ -508,10 +508,10 @@ Singleton {
                 const dockState = root.currentState("iiDock", outputName)
                 const updates = root._barKeyUpdates(
                     dockState.ok ? dockState.slot : "top")
-                updates["dock.position"] = slot
+                updates["material.dock.position"] = slot
                 Config.setNestedValues(updates)
             } else {
-                Config.setNestedValue("dock.position", slot)
+                Config.setNestedValue("material.dock.position", slot)
             }
             break
         }
@@ -541,7 +541,7 @@ Singleton {
             if (!Number.isFinite(numeric))
                 return root._failure("invalid-value", "Invalid dock size")
             const clamped = Math.round(Math.max(40, Math.min(200, numeric)))
-            Config.setNestedValue("dock.height", clamped)
+            Config.setNestedValue("material.dock.height", clamped)
             Config.flushWrites()
             return {
                 ok: true,
@@ -567,19 +567,19 @@ Singleton {
             const mode = String(value ?? "")
             if (!["full", "fit", "custom"].includes(mode))
                 return root._failure("invalid-value", "Invalid sidebar size mode")
-            path = "sidebar.shellLayout." + roleKey + ".sizeMode"
+            path = "material.sidebar.shellLayout." + roleKey + ".sizeMode"
             effectiveValue = mode
         } else if (key === "height") {
             const numeric = Number(value)
             if (!Number.isFinite(numeric))
                 return root._failure("invalid-value", "Invalid sidebar height")
-            path = "sidebar.shellLayout." + roleKey + ".customHeight"
+            path = "material.sidebar.shellLayout." + roleKey + ".customHeight"
             effectiveValue = Math.round(Math.max(320, Math.min(2160, numeric)))
         } else if (key === "thickness") {
             const numeric = Number(value)
             if (!Number.isFinite(numeric))
                 return root._failure("invalid-value", "Invalid sidebar width")
-            path = "sidebar.shellLayout." + roleKey + ".width"
+            path = "material.sidebar.shellLayout." + roleKey + ".width"
             effectiveValue = Math.round(Math.max(320, Math.min(900, numeric)))
         }
 
@@ -612,9 +612,9 @@ Singleton {
             if (!placement.ok)
                 return placement
             const updates = {}
-            updates["sidebar.shellLayout." + roleKey + ".sizeMode"] = "full"
-            updates["sidebar.shellLayout." + roleKey + ".customHeight"] = 720
-            updates["sidebar.shellLayout." + roleKey + ".width"] = 460
+            updates["material.sidebar.shellLayout." + roleKey + ".sizeMode"] = "full"
+            updates["material.sidebar.shellLayout." + roleKey + ".customHeight"] = 720
+            updates["material.sidebar.shellLayout." + roleKey + ".width"] = 460
             Config.setNestedValues(updates)
             Config.flushWrites()
             const result = root._clone(placement)
@@ -627,7 +627,7 @@ Singleton {
             const placement = root.moveSurface(surfaceId, "bottom", outputName)
             if (!placement.ok)
                 return placement
-            Config.setNestedValue("dock.height", 60)
+            Config.setNestedValue("material.dock.height", 60)
             Config.flushWrites()
             const result = root._clone(placement)
             result.reset = true

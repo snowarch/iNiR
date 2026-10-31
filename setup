@@ -1294,11 +1294,11 @@ run_config() {
         # Not jq's `//`: it skips false too, and a switch that is off is a value.
         read_key() { jq -r --slurpfile d "$defaults" "[($1), (\$d[0] | $1)] | map(select(. != null)) | if length > 0 then .[0] else \"?\" end" "$config_file" 2>/dev/null; }
         panel_family=$(read_key '.panelFamily')
-        global_style=$(read_key '.appearance.globalStyle')
+        global_style=$(read_key '.material.style.globalStyle')
         clock_format=$(read_key '.time.format')
         search_url=$(read_key '.search.engineBaseUrl')
-        if [[ "$(read_key '.bar.vertical')" == "true" ]]; then bar_place="vertical"
-        elif [[ "$(read_key '.bar.bottom')" == "true" ]]; then bar_place="bottom"
+        if [[ "$(read_key '.material.bar.vertical')" == "true" ]]; then bar_place="vertical"
+        elif [[ "$(read_key '.material.bar.bottom')" == "true" ]]; then bar_place="bottom"
         else bar_place="top"; fi
     fi
 

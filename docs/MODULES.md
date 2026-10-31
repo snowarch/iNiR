@@ -59,15 +59,15 @@ Surfaces in `modules/shared/` keep their `ii` IDs: `iiOverview`, `iiOverlay`, `i
 
 ## Bar layout
 
-The ii bar reads `bar.layout`, which has five zones: `left`, `centerLeft`, `center`, `centerRight` and `right`. `workspaces` stays in the centre. The bar page is `modules/ii/settings/BarConfig.qml`.
+The ii bar reads `material.bar.layout`, which has five zones: `left`, `centerLeft`, `center`, `centerRight` and `right`. `workspaces` stays in the centre. The bar page is `modules/ii/settings/BarConfig.qml`.
 
 `modulesLayout`, `edgeModulesLayout` and `modulesPlacement` are deprecated. `Config.qml` keeps them only so old files still load. Nothing rewrites them: the bar falls back to its built-in layout, so existing configs keep working.
 
 ## Notable behaviour
 
-- **Screen Time.** `services/ScreenTime.qml` runs only when `sidebar.screenTime.enable` is on, which is off by default. The widgets are `modules/ii/sidebarRight/screenTime/ScreenTimeWidget.qml` and `modules/waffle/actionCenter/screenTime/ScreenTimePage.qml`.
-- **World Clock.** `modules/ii/sidebarLeft/widgets/WorldClockWidget.qml`, configured under `sidebar.widgets.worldClock_settings`.
-- **Dock.** Scrolling an app icon cycles that app's windows (`modules/ii/dock/DockAppButton.qml`). `dock.notificationBadge` shows pending notifications on icons.
+- **Screen Time.** `services/ScreenTime.qml` runs only when `screenTime.enable` is on, which is off by default. The widgets are `modules/ii/sidebarRight/screenTime/ScreenTimeWidget.qml` and `modules/waffle/actionCenter/screenTime/ScreenTimePage.qml`.
+- **World Clock.** `modules/ii/sidebarLeft/widgets/WorldClockWidget.qml`, configured under `material.sidebar.widgets.worldClock_settings`.
+- **Dock.** Scrolling an app icon cycles that app's windows (`modules/ii/dock/DockAppButton.qml`). `material.dock.notificationBadge` shows pending notifications on icons.
 - **Clipboard.** `Ctrl+P` pins an entry. Pins are stored in `clipboard.pinned`.
 
 ## Contributor rules

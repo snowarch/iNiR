@@ -146,7 +146,7 @@ Item {
 
     // ── Esquinas ──
     readonly property real _radius: root.radiusOverride >= 0 ? root.radiusOverride
-        : root._island ? (Config.options?.appearance?.island?.radius ?? 18)
+        : root._island ? (Config.options?.material?.style?.island?.radius ?? 18)
         : root.island ? Math.min(width, height) / 2
         : root._angel ? Appearance.angel.roundingSmall
         : root._regalia ? Appearance.regalia.roundNormal

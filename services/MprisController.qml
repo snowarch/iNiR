@@ -367,7 +367,7 @@ Singleton {
 	}
 
 	readonly property bool isYtMusicActive: {
-		if (!(Config.options?.sidebar?.ytmusic?.enable ?? false)) return false;
+		if (!(Config.options?.ytmusic?.enable ?? false)) return false;
 		if (activePlayer) return _isYtMusicMpv(activePlayer);
 		// Fallback only during transient gaps where activePlayer is momentarily null
 		// while YtMusic is still playing/initializing.
@@ -522,7 +522,7 @@ Singleton {
 		const name = player?.dbusName ?? "";
 		if (!name) return false;
 		
-		const ytMusicEnabled = Config.options?.sidebar?.ytmusic?.enable ?? false;
+		const ytMusicEnabled = Config.options?.ytmusic?.enable ?? false;
 		if (!ytMusicEnabled && _isYtMusicMpvRaw(player)) return false;
 
 		// Explicitly drop X/Twitter media noise early (url/title/album)
@@ -717,7 +717,7 @@ Singleton {
 	}
 
 	function _isYtMusicMpv(player): bool {
-		if (!(Config.options?.sidebar?.ytmusic?.enable ?? false)) return false;
+		if (!(Config.options?.ytmusic?.enable ?? false)) return false;
 		return _isYtMusicMpvRaw(player);
 	}
 	
@@ -908,7 +908,7 @@ Singleton {
 	// Check if player is related to YtMusic (for duplicate filtering)
 	function _isYtMusicRelated(player): bool {
 		if (!player) return false;
-		if (!(Config.options?.sidebar?.ytmusic?.enable ?? false)) return false;
+		if (!(Config.options?.ytmusic?.enable ?? false)) return false;
 		if (_isYtMusicMpv(player)) return true;
 		// Only consider browser YouTube players as YtMusic-related if titles match closely
 		if (!YtMusic.currentVideoId && !YtMusic.currentTitle) return false;

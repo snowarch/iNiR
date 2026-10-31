@@ -572,7 +572,7 @@ repair_v2_leftovers() {
     tmp="${conf}.inir-repair.$$"
     if jq -e '.waffles.widgetsPanel | has("weatherHideLocation")' "$conf" >/dev/null 2>&1; then
       jq '(.waffles.widgetsPanel.weatherHideLocation == true) as $hidden
-          | .bar.weather.hideLocation = ((.bar.weather.hideLocation // false) or $hidden)
+          | .weather.hideLocation = ((.weather.hideLocation // .bar.weather.hideLocation // false) or $hidden)
           | del(.waffles.widgetsPanel.weatherHideLocation)' "$conf" >"$tmp" && mv "$tmp" "$conf" || { rm -f "$tmp"; return 1; }
       ((INIR_V2_LEFTOVERS_REPAIRED++)) || true
     fi
