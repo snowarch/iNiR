@@ -60,6 +60,10 @@ AbstractBackgroundWidget {
         ? ColorUtils.applyAlpha(root.widgetSurfaceInk, 0.58) : root.widgetInkMuted
     readonly property color accentMark: root.instrument ? root.widgetAccentVisible : root.accentFace
     readonly property color accentMarkInk: root.instrument ? root.widgetAccentVisible : root.accentInk
+    // a picked day is tonal, a step under today's accent
+    readonly property color pickFace: root.instrument ? ColorUtils.applyAlpha(root.widgetAccentVisible, 0.16)
+        : root.widgetSemanticContainer(root.widgetSecondaryRole)
+    readonly property color pickInk: root.instrument ? root.widgetAccentVisible : root.widgetSemanticOnContainer(root.widgetSecondaryRole)
 
     // A day with something on it keeps a dot under its number (Lucid's month view).
     function hasEvents(year: int, month: int, day: int): bool {
@@ -87,6 +91,7 @@ AbstractBackgroundWidget {
         for (let day = 1; day <= daysInMonth; ++day) {
             cells.push({
                 day: day,
+                date: new Date(year, month, day),
                 currentMonth: true,
                 marked: root.hasEvents(year, month, day),
                 isToday: year === root.today.getFullYear()
@@ -127,7 +132,7 @@ AbstractBackgroundWidget {
             for (let i = 0; i < 14; ++i) {
                 const day = new Date(start)
                 day.setDate(start.getDate() + i)
-                cells.push({ day: day.getDate(), currentMonth: day.getMonth() === root.today.getMonth(),
+                cells.push({ day: day.getDate(), date: day, currentMonth: day.getMonth() === root.today.getMonth(),
                     marked: root.hasEvents(day.getFullYear(), day.getMonth(), day.getDate()),
                     isToday: i === (root.today.getDay() - root.weekStart + 7) % 7 })
             }
@@ -142,6 +147,32 @@ AbstractBackgroundWidget {
         }
         return cells
     }
+    // A tapped day is read in the line under the month (what is on it, or that nothing is), as the iRiS face does;
+    // the same day again, the today key or another month lets it go.
+    property var picked: null
+    readonly property bool picks: !root.compact && !GlobalStates.widgetEditMode
+    function samePicked(date: var): bool {
+        return Boolean(root.picked) && Boolean(date) && root.picked.getFullYear() === date.getFullYear()
+            && root.picked.getMonth() === date.getMonth() && root.picked.getDate() === date.getDate()
+    }
+    function pick(date: var): void {
+        root.picked = root.samePicked(date) ? null : new Date(date)
+    }
+    readonly property string pickedLine: {
+        if (!root.picked)
+            return ""
+        const events = Array.from(typeof Events !== "undefined" ? Events.getAllEventsForDate(root.picked) ?? [] : [])
+            .concat(Array.from(typeof CalendarSync !== "undefined" ? CalendarSync.getEventsForDate(root.picked) ?? [] : []))
+            .sort((a, b) => new Date(a.dateTime || a.startDate) - new Date(b.dateTime || b.startDate))
+        const day = root.picked.toLocaleDateString(Translation.locale, "ddd d")
+        if (events.length === 0)
+            return day + " · " + Translation.tr("Nothing on this day")
+        const first = events[0]
+        const when = first.allDay ? Translation.tr("All day") : Qt.formatTime(new Date(first.dateTime || first.startDate), "HH:mm")
+        const more = events.length > 1 ? " · " + Translation.tr("+%1 more").arg(events.length - 1) : ""
+        return day + " · " + (first.title || Translation.tr("Untitled")) + ", " + when + more
+    }
+    onMonthShiftChanged: root.picked = null
     onCompactChanged: if (root.compact || root.strip) root.monthShift = 0
     onStripChanged: if (root.compact || root.strip) root.monthShift = 0
 
@@ -258,8 +289,10 @@ AbstractBackgroundWidget {
                         StyledText {
                             Layout.fillWidth: true
                             visible: !root.instrument && !root.compact
-                            text: root.strip ? root.today.toLocaleDateString(Translation.locale, "dddd d") : String(root.viewingDate.getFullYear())
-                            font.capitalization: Font.Capitalize
+                            text: root.pickedLine.length > 0 ? root.pickedLine
+                                : root.strip ? root.today.toLocaleDateString(Translation.locale, "dddd d") : String(root.viewingDate.getFullYear())
+                            elide: Text.ElideRight
+                            font.capitalization: root.pickedLine.length > 0 ? Font.MixedCase : Font.Capitalize
                             color: root.inkMuted
                             font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
                             font.family: root.widgetNumbersFamily
@@ -284,6 +317,7 @@ AbstractBackgroundWidget {
                             colBackgroundHover: ColorUtils.applyAlpha(root.ink, 0.08)
                             colRipple: ColorUtils.applyAlpha(root.ink, 0.12)
                             releaseAction: () => {
+                                root.picked = null
                                 if (modelData.delta === 0) root.monthShift = 0
                                 else root.monthShift += modelData.delta
                             }
@@ -347,6 +381,27 @@ AbstractBackgroundWidget {
                             Layout.fillHeight: true
                             // hidden, not gone: a layout closes the gap of an invisible cell and the 1st slid to Monday
                             opacity: dayCell.modelData.currentMonth || root.showAdjacentDays ? 1 : 0
+                            readonly property bool pickable: root.picks && Boolean(dayCell.modelData.date)
+                            readonly property bool chosen: root.samePicked(dayCell.modelData.date)
+
+                            HoverHandler {
+                                id: dayHover
+                                enabled: dayCell.pickable
+                                cursorShape: Qt.PointingHandCursor
+                            }
+                            TapHandler {
+                                enabled: dayCell.pickable
+                                onTapped: root.pick(dayCell.modelData.date)
+                            }
+                            // chosen is the tonal fill, hover the M3 state layer; today keeps its own shape
+                            Rectangle {
+                                anchors.centerIn: parent
+                                width: Math.min(parent.width, parent.height, Math.round(36 * root.scaleFactor))
+                                height: width
+                                radius: width / 2
+                                visible: !dayCell.modelData.isToday && (dayCell.chosen || dayHover.hovered)
+                                color: dayCell.chosen ? root.pickFace : ColorUtils.applyAlpha(root.ink, 0.08)
+                            }
 
                             // Today wears one of M3 Expressive's shapes, filled in the accent.
                             MaterialShape {
@@ -375,6 +430,7 @@ AbstractBackgroundWidget {
                                     text: dayCell.modelData.day
                                     // the next month's days step back to the quiet ink (3:1 on the wallpaper), not to 32 %
                                     color: dayCell.modelData.isToday ? root.accentMarkInk
+                                        : dayCell.chosen ? root.pickInk
                                         : dayCell.modelData.currentMonth ? root.ink : root.widgetInkSubtle
                                     font.pixelSize: Math.round((root.compact ? Appearance.font.pixelSize.smaller
                                         : root.strip ? Appearance.font.pixelSize.large : Appearance.font.pixelSize.small) * root.scaleFactor)
@@ -389,7 +445,7 @@ AbstractBackgroundWidget {
                                     width: Math.max(3, Math.round(4 * root.scaleFactor))
                                     height: width
                                     radius: width / 2
-                                    color: dayCell.modelData.isToday ? root.accentMarkInk : root.widgetAccentVisible
+                                    color: dayCell.modelData.isToday ? root.accentMarkInk : dayCell.chosen ? root.pickInk : root.widgetAccentVisible
                                     opacity: dayCell.modelData.currentMonth ? 1 : 0.32
                                 }
                             }
