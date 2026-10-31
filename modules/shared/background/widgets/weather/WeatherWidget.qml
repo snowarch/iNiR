@@ -27,7 +27,7 @@ AbstractBackgroundWidget {
 
     readonly property string weatherStyle: root._readConfigKey("style") ?? "pill"
     // Material's Medium and Large add the hours (and the days) to what the chosen style shows; the dial keeps its own.
-    readonly property bool forecastFace: root.materialSized && root.materialSize !== "small" && root.weatherStyle !== "dial"
+    readonly property bool forecastFace: root.sizeClass !== "small" && root.weatherStyle !== "dial"
     readonly property string weatherShape: root._readConfigKey("shape") ?? "pill"
     readonly property real logicalShapeSize: Math.max(1,
         Number(root._readConfigKey("size") ?? 200))
@@ -81,21 +81,16 @@ AbstractBackgroundWidget {
         return raw + "°";
     }
 
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : root.weatherStyle === "detail" ? Math.round(shapeSize * 2.2)
-        : root.weatherStyle === "dial" ? Math.round(shapeSize * 1.4) : shapeSize
     // the dial (iNstrument) lays itself out per size instead of shrinking its medium drawing into small
-    materialFitted: !root.forecastFace && root.weatherStyle !== "dial"
-    materialFitPadding: 0
-    materialNaturalWidth: root.forecastFace ? 0 : root.weatherStyle === "detail" ? Math.round(shapeSize * 2.2)
+    fitted: !root.forecastFace && root.weatherStyle !== "dial"
+    fitPadding: 0
+    drawnWidth: root.forecastFace ? 0 : root.weatherStyle === "detail" ? Math.round(shapeSize * 2.2)
         : root.weatherStyle === "dial" ? Math.round(shapeSize * 1.4) : shapeSize
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : root.weatherStyle === "detail" ? Math.round(shapeSize * 0.95) : shapeSize
-    materialNaturalHeight: root.forecastFace ? 0 : root.weatherStyle === "detail" ? Math.round(shapeSize * 0.95) : shapeSize
+    drawnHeight: root.forecastFace ? 0 : root.weatherStyle === "detail" ? Math.round(shapeSize * 0.95) : shapeSize
     irisFacePart: "weather"
-    irisSizes: ["small", "medium", "large"]
     irisOptions: [
         { key: "showLocation", raw: true, label: Translation.tr("Location"), icon: "location_on", fallback: true }
     ]
-    resizableAxes: ({ uniform: "size" })
     resizeMinWidth: root.weatherStyle === "detail" ? 280
         : root.weatherStyle === "dial" ? 224 : 80
     resizeMinHeight: root.weatherStyle === "detail" ? 150
@@ -292,8 +287,8 @@ AbstractBackgroundWidget {
         id: pillBackground
         visible: !root.irisFaced && !root.forecastFace && root.weatherStyle === "pill"
         anchors.centerIn: parent
-        width: root.materialFits ? root.materialNaturalWidth : parent.width
-        height: root.materialFits ? root.materialNaturalHeight : parent.height
+        width: root.fits ? root.drawnWidth : parent.width
+        height: root.fits ? root.drawnHeight : parent.height
         shape: root.pillShapeEnum
         color: root.shapeFill
         implicitSize: root.shapeSize
@@ -311,8 +306,8 @@ AbstractBackgroundWidget {
                 shown: !root.irisFaced && (root.forecastFace || root.weatherStyle === "card" || root.weatherStyle === "detail")
                     && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
                 anchors.centerIn: parent
-                width: root.materialFits ? root.materialNaturalWidth : parent.width
-                height: root.materialFits ? root.materialNaturalHeight : parent.height
+                width: root.fits ? root.drawnWidth : parent.width
+                height: root.fits ? root.drawnHeight : parent.height
                 surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.cardRadius
                 surfaceOpacity: root.backgroundOpacity
                 surfaceBorderWidth: root.borderWidth
@@ -338,8 +333,8 @@ AbstractBackgroundWidget {
                 id: detailLayout
                 visible: !root.irisFaced && !root.forecastFace && root.weatherStyle === "detail"
                 anchors.centerIn: parent
-                width: (root.materialFits ? root.materialNaturalWidth : parent.width) - Math.round(32 * root.scaleFactor)
-                height: (root.materialFits ? root.materialNaturalHeight : parent.height) - Math.round(32 * root.scaleFactor)
+                width: (root.fits ? root.drawnWidth : parent.width) - Math.round(32 * root.scaleFactor)
+                height: (root.fits ? root.drawnHeight : parent.height) - Math.round(32 * root.scaleFactor)
                 clip: true
                 spacing: Math.round(6 * root.scaleFactor)
 
@@ -456,8 +451,8 @@ AbstractBackgroundWidget {
         sourceComponent: Item {
             Item {
                 anchors.centerIn: parent
-                width: root.materialFits ? root.materialNaturalWidth : parent.width
-                height: root.materialFits ? root.materialNaturalHeight : parent.height
+                width: root.fits ? root.drawnWidth : parent.width
+                height: root.fits ? root.drawnHeight : parent.height
                 visible: !root.irisFaced && !root.forecastFace && root.weatherStyle !== "detail" && root.weatherStyle !== "dial"
 
                 MaterialSymbol {
@@ -551,7 +546,7 @@ AbstractBackgroundWidget {
         visible: active
         sourceComponent: WeatherForecast {
             widget: root
-            large: root.materialLarge
+            large: root.isLarge
         }
     }
 
@@ -566,8 +561,8 @@ AbstractBackgroundWidget {
             Item {
                 id: instrumentArea
                 anchors.centerIn: parent
-                width: root.materialFits ? root.materialNaturalWidth : parent.width
-                height: root.materialFits ? root.materialNaturalHeight : parent.height
+                width: root.fits ? root.drawnWidth : parent.width
+                height: root.fits ? root.drawnHeight : parent.height
                 opacity: root.weatherStyle === "dial" ? 1 : 0
                 visible: !root.irisFaced && opacity > 0
                 enabled: root.weatherStyle === "dial"
@@ -577,7 +572,7 @@ AbstractBackgroundWidget {
                 }
 
                 // large keeps medium's stage on top and lists the days under it
-                readonly property real stageHeight: root.materialLarge ? Math.round(176 * root.scaleFactor) : height
+                readonly property real stageHeight: root.isLarge ? Math.round(176 * root.scaleFactor) : height
                 readonly property real side: Math.min(width, instrumentArea.stageHeight)
 
                 RowLayout {
@@ -598,7 +593,7 @@ AbstractBackgroundWidget {
                             Layout.fillWidth: true
                             // the town alone: its province cut the label short
                             text: root.showLocation && Weather.showVisibleCity && String(Weather.visibleCity || "").length > 0
-                                ? (root.materialSmall ? String(Weather.visibleCity).split(",")[0].trim()
+                                ? (root.isSmall ? String(Weather.visibleCity).split(",")[0].trim()
                                     : Translation.tr("Atmosphere / %1").arg(String(Weather.visibleCity).split(",")[0].trim()))
                                 : Translation.tr("Atmosphere / Local")
                             color: root.widgetAccentVisible
@@ -653,7 +648,7 @@ AbstractBackgroundWidget {
                                     { label: Translation.tr("Feels"), value: String(Weather.data?.tempFeelsLike ?? "").replace(/[CF]$/, "") },
                                     { label: Translation.tr("Humidity"), value: String(Weather.data?.humidity ?? "") },
                                     { label: Translation.tr("Wind"), value: String(Weather.data?.wind ?? "").split(" ")[0] + " " + String(Weather.data?.windDir ?? "") }
-                                ].slice(0, root.materialSmall ? 2 : 3)
+                                ].slice(0, root.isSmall ? 2 : 3)
                                 InstrumentField {
                                     required property var modelData
                                     Layout.alignment: Qt.AlignTop
@@ -676,7 +671,7 @@ AbstractBackgroundWidget {
                             ? Math.max(Math.round(102 * root.scaleFactor), Math.round(instrumentArea.side * 0.52),
                                 sunTimes.visible ? sunTimes.implicitWidth : 0) : 0
                         Layout.fillHeight: true
-                        visible: root.showSunPath && !root.materialSmall
+                        visible: root.showSunPath && !root.isSmall
                             && Boolean(Weather.data?.sunrise) && Boolean(Weather.data?.sunset)
                         readonly property real rx: Math.max(1, width * 0.43)
                         readonly property real ry: Math.max(1, height * 0.28)
@@ -780,7 +775,7 @@ AbstractBackgroundWidget {
 
                 // Large: the days as a log, a rule between each, the range in the figure face.
                 ColumnLayout {
-                    visible: root.materialLarge
+                    visible: root.isLarge
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.top: instrumentStage.bottom
@@ -791,7 +786,7 @@ AbstractBackgroundWidget {
                     anchors.bottomMargin: Math.round(12 * root.scaleFactor)
                     spacing: 0
                     Repeater {
-                        model: root.materialLarge ? Array.from(Weather.data?.forecast ?? []).slice(0, 5) : []
+                        model: root.isLarge ? Array.from(Weather.data?.forecast ?? []).slice(0, 5) : []
                         Item {
                             id: logDay
                             required property var modelData

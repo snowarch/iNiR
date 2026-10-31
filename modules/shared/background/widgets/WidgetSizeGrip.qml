@@ -16,14 +16,11 @@ Item {
     property real reachWidth: 0
     property real reachHeight: 0
 
-    function sizeOf(name: string): size {
-        const box = DesktopWidgetDesign.materialFootprint(name)
-        return Qt.size(Math.round(box.width * root.widget.scaleFactor), Math.round(box.height * root.widget.scaleFactor))
-    }
+    function sizeOf(name: string): size { return root.widget.footprintOf(name) }
     function nearest(width: real, height: real): string {
-        let best = root.widget.materialSize
+        let best = root.widget.sizeClass
         let bestDistance = Infinity
-        for (const size of root.widget.materialSizes) {
+        for (const size of root.widget.sizes) {
             const target = root.sizeOf(size)
             const distance = Math.pow(width - target.width, 2) + Math.pow(height - target.height, 2)
             if (distance < bestDistance) {
@@ -45,7 +42,7 @@ Item {
         z: root.z - 1
         visible: opacity > 0
         opacity: root.active ? 1 : 0
-        readonly property size landing: root.sizeOf(root.widget.materialSize)
+        readonly property size landing: root.sizeOf(root.widget.sizeClass)
         width: landing.width
         height: landing.height
         radius: Appearance.rounding.normal
@@ -67,7 +64,7 @@ Item {
             StyledText {
                 id: landingLabel
                 anchors.centerIn: parent
-                text: root.widget.materialSizeLabels[root.widget.materialSize] ?? ""
+                text: root.widget.sizeLabels[root.widget.sizeClass] ?? ""
                 color: Appearance.colors.colOnPrimary
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 font.weight: Font.DemiBold
@@ -84,7 +81,7 @@ Item {
         Behavior on color { enabled: Appearance.animationsEnabled; ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
         StyledText {
             anchors.centerIn: parent
-            text: (root.widget.materialSizeLabels[root.widget.materialSize] ?? "").charAt(0)
+            text: (root.widget.sizeLabels[root.widget.sizeClass] ?? "").charAt(0)
             color: root.active || area.containsMouse ? Appearance.colors.colOnPrimary : Appearance.colors.colOnPrimaryContainer
             font.pixelSize: Appearance.font.pixelSize.smaller
             font.weight: Font.Bold
@@ -106,10 +103,10 @@ Item {
             const point = area.mapToItem(root.widget.parent, mouse.x, mouse.y)
             area.startX = point.x
             area.startY = point.y
-            area.startSize = root.widget.materialSize
+            area.startSize = root.widget.sizeClass
             GlobalStates.selectDesktopWidget(root.widget.editInstanceKey)
-            root.widget._resizePreviewValues = ({ materialSize: area.startSize })
-            root.widget._materialSizing = true
+            root.widget._resizePreviewValues = ({ sizeClass: area.startSize })
+            root.widget._sizing = true
         }
         onPositionChanged: mouse => {
             if (!area.pressed)
@@ -117,10 +114,10 @@ Item {
             const point = area.mapToItem(root.widget.parent, mouse.x, mouse.y)
             const start = root.sizeOf(area.startSize)
             const size = root.nearest(start.width + point.x - area.startX, start.height + point.y - area.startY)
-            if (size !== root.widget.materialSize)
-                root.widget._resizePreviewValues = ({ materialSize: size })
+            if (size !== root.widget.sizeClass)
+                root.widget._resizePreviewValues = ({ sizeClass: size })
         }
-        onReleased: root.widget.commitMaterialSize(root.widget.materialSize)
-        onCanceled: root.widget.commitMaterialSize(area.startSize)
+        onReleased: root.widget.commitSize(root.widget.sizeClass)
+        onCanceled: root.widget.commitSize(area.startSize)
     }
 }

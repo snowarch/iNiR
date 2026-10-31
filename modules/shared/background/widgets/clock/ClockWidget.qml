@@ -54,18 +54,13 @@ AbstractBackgroundWidget {
             ? androidStackedClockLoader.height : digitalClockLoader.height
     readonly property bool statusShown: root.wallpaperSafetyTriggered
         || (root.shellLocked && (Config.family?.lock?.showLockedText ?? false))
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : root.activeClockHeight
+    drawnHeight: root.activeClockHeight
         + (root.statusShown ? contentColumn.spacing + statusText.implicitHeight : 0)
-    materialNaturalHeight: root.activeClockHeight
-        + (root.statusShown ? contentColumn.spacing + statusText.implicitHeight : 0)
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : Math.max(root.activeClockWidth,
-        root.statusShown ? statusText.implicitWidth : 0)
-    materialFitted: true
-    materialNaturalWidth: Math.max(root.activeClockWidth,
+    fitted: true
+    drawnWidth: Math.max(root.activeClockWidth,
         root.statusShown ? statusText.implicitWidth : 0)
     irisFacePart: "clock"
     designFaceKey: "widgetClock"
-    irisSizes: ["small", "medium", "large"]
     irisOptions: [
         { key: "face", label: Translation.tr("Face"), fallback: "analog", choices: [
             { label: Translation.tr("Analog"), icon: "schedule", value: "analog" },
@@ -73,8 +68,6 @@ AbstractBackgroundWidget {
         { key: "seconds", label: Translation.tr("Second hand"), icon: "avg_pace", fallback: true }
     ]
     // Digital mode resizes via timeScale, cookie via cookie.size — avoids scaleFactor churn
-    resizableAxes: root.clockStyle === "cookie" ? ({ uniform: "cookie.size" })
-        : ({ uniform: "timeScale" })
     resizeMinWidth: root.clockStyle === "cookie" ? 120
         : root.clockStyle === "instrument" ? 120 : 80
     resizeMinHeight: root.clockStyle === "cookie" ? 120
@@ -376,7 +369,7 @@ AbstractBackgroundWidget {
         id: clockSurface
         regionBrightness: root.regionBrightness
         anchors.fill: parent
-        anchors.margins: root.materialSized ? 0 : -Math.round(8 * root.scaleFactor)
+        anchors.margins: 0
         surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.cardRadius
         surfaceOpacity: root.backgroundOpacity
         surfaceBorderWidth: root.borderWidth
@@ -386,8 +379,8 @@ AbstractBackgroundWidget {
         surfaceAccent: root.widgetAccent
         surfaceFill: root.widgetPlateColor
         surfaceUseBlur: root.effectiveBlur
-        screenX: root.x + (root.materialSized ? 0 : Math.round(8 * root.scaleFactor))
-        screenY: root.y + (root.materialSized ? 0 : Math.round(8 * root.scaleFactor))
+        screenX: root.x + (0)
+        screenY: root.y + (0)
         screenWidth: root.scaledScreenWidth
         screenHeight: root.scaledScreenHeight
         shown: !root.irisFaced && root.textClockStyle
@@ -398,8 +391,8 @@ AbstractBackgroundWidget {
         id: contentColumn
         visible: !root.irisFaced
         anchors.centerIn: parent
-        width: root.materialFits ? root.materialNaturalWidth : root.implicitWidth
-        height: root.materialFits ? root.materialNaturalHeight : root.implicitHeight
+        width: root.fits ? root.drawnWidth : root.implicitWidth
+        height: root.fits ? root.drawnHeight : root.implicitHeight
         spacing: Math.round(6 * root.scaleFactor)
 
         FadeLoader {

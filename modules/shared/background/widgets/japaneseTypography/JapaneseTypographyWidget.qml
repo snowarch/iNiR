@@ -63,8 +63,6 @@ AbstractBackgroundWidget {
         outlineColor: "#000000",
         outlineOpacity: 0,
         shadowStrength: 35,
-        contentWidth: 330,
-        contentHeight: 600,
         dim: 10,
         widgetScale: 100,
         widgetOpacity: 100,
@@ -80,13 +78,9 @@ AbstractBackgroundWidget {
         y: 120
     })
 
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 330) * root.scaleFactor)
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : Math.round(Number(root._readConfigKey("contentHeight") ?? 600) * root.scaleFactor)
     // Under an iRiS Design that prints this widget (AIRISU), the print is its face; elsewhere it draws itself.
     irisDesignPart: "widgetJapanese"
     irisDesignPrint: "japaneseTypography"
-    irisSizes: ["small", "medium", "large"]
-    resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
     resizeMinWidth: 220
     resizeMinHeight: 320
     resizeMaxWidth: 720

@@ -17,7 +17,7 @@ AbstractBackgroundWidget {
     configEntryName: "monthCalendar"
     defaultConfig: ({
         placementStrategy: "free",
-        contentWidth: 300, contentHeight: 340,
+        
         weekStart: 1, showAdjacentDays: true, style: "card", instrumentRule: true,
         widgetScale: 100, widgetOpacity: 100,
         showBackground: true, useBlur: false, showBorder: true,
@@ -26,14 +26,9 @@ AbstractBackgroundWidget {
         x: 420, y: 120
     })
 
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 300) * root.scaleFactor)
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : Math.round(Number(root._readConfigKey("contentHeight") ?? 340) * root.scaleFactor)
     irisFacePart: "calendar"
-    irisSizes: ["small", "medium", "large"]
-    irisDefaultSize: "medium"
     visibleWhenLocked: true
     needsColText: true
-    resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
     resizeMinWidth: 252
     resizeMinHeight: 290
     resizeMaxWidth: 520
@@ -115,8 +110,8 @@ AbstractBackgroundWidget {
     }
 
     // Small: the month in initials; Medium: this week and the next under the header.
-    readonly property bool compact: root.materialSmall
-    readonly property bool strip: root.materialSized && root.materialSize === "medium"
+    readonly property bool compact: root.isSmall
+    readonly property bool strip: root.sizeClass === "medium"
     // in the shell's language: hardcoded English initials sat under a month named in the system's
     function weekdayLabels(): var {
         const start = root.weekStart === 0 ? 0 : 1

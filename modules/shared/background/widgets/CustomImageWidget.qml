@@ -30,18 +30,13 @@ AbstractBackgroundWidget {
         shape: "Cookie4Sided",
         fitMode: "cover",
         size: 220,
-        contentWidth: 0,
-        contentHeight: 0,
         dim: 0,
         widgetScale: 100,
         widgetOpacity: 100,
         x: 120,
         y: 320
     })
-    resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
     irisFacePart: "photo"
-    irisSizes: ["small", "medium", "large"]
-    irisDefaultSize: "medium"
     irisOptions: [
         { key: "fitMode", raw: true, label: Translation.tr("Picture"), fallback: "cover", choices: [
             { label: Translation.tr("Fill"), icon: "crop", value: "cover" },
@@ -67,17 +62,8 @@ AbstractBackgroundWidget {
     readonly property string shapeName: String(root._readConfigKey("shape") ?? "Cookie4Sided")
     readonly property string fitMode:
         root._readConfigKey("fitMode") === "contain" ? "contain" : "cover"
-    readonly property real logicalSize: Math.max(80, Number(root._readConfigKey("size") ?? 220))
-    readonly property real logicalWidth: {
-        const value = Number(root._readConfigKey("contentWidth") ?? 0)
-        return value > 0 ? Math.max(80, value) : root.logicalSize
-    }
-    readonly property real logicalHeight: {
-        const value = Number(root._readConfigKey("contentHeight") ?? 0)
-        return value > 0 ? Math.max(80, value) : root.logicalSize
-    }
-    readonly property real renderedWidth: Math.round(root.logicalWidth * root.scaleFactor)
-    readonly property real renderedHeight: Math.round(root.logicalHeight * root.scaleFactor)
+    readonly property real renderedWidth: root.footprintWidth
+    readonly property real renderedHeight: root.footprintHeight
     readonly property int effectiveTransitionDuration: root.animationsActive
         ? Appearance.calcEffectiveDuration(root.transitionDuration) : 0
     property var mediaPaths: []
@@ -108,8 +94,6 @@ AbstractBackgroundWidget {
 
     property bool dropHover: false
 
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : root.renderedWidth
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : root.renderedHeight
 
     function fileUrl(path: string): string {
         const value = String(path ?? "")

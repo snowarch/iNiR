@@ -79,10 +79,7 @@ QtObject {
         // Fine-tune unless a row says `tune: false` (the plate, which people come to turn off).
         if (spec.tune === undefined && kind === "switch") spec.tune = true
         const when = spec.when
-        // a sized card (Material, S/M/L) takes its size from the size, never from these
-        const free = key === "contentWidth" || key === "contentHeight"
         spec.showIf = () => root.on(widget) && root.overlay(widget)[key] === undefined && (when === undefined || when())
-            && !(free && root.sized(widget))
         delete spec.when
         return spec
     }
@@ -146,12 +143,9 @@ QtObject {
             root.row(widget, "locked", "Lock position", "switch", false, { tune: true, keywords: ["lock", "pin", "fixed", "bloquear"] }))
         return out
     }
-    function sized(widget: string): bool {
-        return (Config.options?.panelFamily ?? "ii") !== "iris" && (DesktopWidgetRegistry.entry(widget)?.sizes ?? []).length > 0
-    }
     // Material's medium and large weather is the forecast face: the pill's own sizes and parts mean nothing there.
     function weatherForecast(): bool {
-        return root.sized("weather") && ["medium", "large"].includes(String(root.value("weather", "materialSize", "small")))
+        return ["medium", "large"].includes(String(root.value("weather", "sizeClass", "small")))
             && !root.is("weather", "style", "pill", "dial")
     }
     function plateDefault(widget: string): bool {
@@ -189,12 +183,11 @@ QtObject {
             DesktopWidgetLayout.setEverywhereMany(entries)
         return entries.length
     }
-    // Every iRiS face has the three sizes; the one chosen is Material's too where it has it (one size per family).
     function size(widget: string): var {
-        const material = DesktopWidgetRegistry.entry(widget)?.sizes ?? []
-        return root.row(widget, "iris.size", "Size", "choice", "medium", { when: () => root.face(widget),
-            choices: root.choices([["small", "Small"], ["medium", "Medium"], ["large", "Large"]]),
-            apply: next => Object.assign({ "iris.size": next }, material.includes(next) ? { materialSize: next } : {}),
+        const sizes = DesktopWidgetRegistry.sizesOf(widget)
+        const labels = { small: "Small", medium: "Medium", large: "Large" }
+        return root.row(widget, "sizeClass", "Size", "choice", sizes[0] ?? "medium", { when: () => sizes.length > 1,
+            choices: root.choices(["small", "medium", "large"].filter(size => sizes.includes(size)).map(size => [size, labels[size]])),
             keywords: ["size", "small", "medium", "large", "tamaño"] })
     }
     // A preset that writes several keys at once reads as its name until one of them is changed by hand.
@@ -210,7 +203,7 @@ QtObject {
         root.size("clock"),
         root.row("clock", "iris.face", "Face", "choice", "analog", { when: () => root.face("clock"), choices: root.choices([["analog", "Analog", "schedule"], ["digital", "Digital", "timer_10"]]) }),
         root.row("clock", "iris.seconds", "Second hand", "switch", true, { when: () => root.face("clock") && root.is("clock", "iris.face", "analog", "analog") }),
-        root.row("clock", "iris.week", "Week strip", "switch", true, { when: () => root.face("clock") && !root.is("clock", "iris.size", "medium", "small") }),
+        root.row("clock", "iris.week", "Week strip", "switch", true, { when: () => root.face("clock") && !root.is("clock", "sizeClass", "medium", "small") }),
         root.row("clock", "style", "Clock style", "choice", "digital", { when: () => root.material("clock"),
             choices: root.choices([["digital", "Digital"], ["androidStacked", "Android stacked"], ["cookie", "Cookie"], ["pixel", "Pixel"], ["instrument", "Instrument"]]) }),
         root.row("clock", "pixel.orientation", "Orientation", "choice", "horizontal", { when: () => root.material("clock") && root.is("clock", "style", "digital", "pixel"),
@@ -274,8 +267,6 @@ QtObject {
         root.row("worldClock", "instrumentLayout", "Instrument layout", "choice", "grid", { when: () => root.plain("worldClock") && root.is("worldClock", "style", "cards", "instrument"), choices: root.choices([["grid", "Atlas"], ["rows", "Strip"]]) }),
         root.row("worldClock", "showDate", "Date", "switch", true, { tune: true, when: () => root.plain("worldClock") && root.is("worldClock", "style", "cards", "instrument") }),
         root.row("worldClock", "showDayState", "Day/Night", "switch", true, { tune: true, when: () => root.plain("worldClock") && root.is("worldClock", "style", "cards", "instrument") }),
-        root.row("worldClock", "contentWidth", "Width", "range", 300, { min: 240, max: 700, step: 10, unit: " px", when: () => root.plain("worldClock") }),
-        root.row("worldClock", "contentHeight", "Height", "range", 210, { min: 190, max: 480, step: 4, unit: " px", when: () => root.plain("worldClock") }),
         ...root.closing("worldClock", true),
 
         // ── Month calendar ──
@@ -285,8 +276,6 @@ QtObject {
         root.row("monthCalendar", "showAdjacentDays", "Show adjacent month days", "switch", true, {}),
         root.row("monthCalendar", "style", "Style", "choice", "card", { when: () => root.material("monthCalendar"), choices: root.choices([["card", "Card"], ["instrument", "Instrument"]]) }),
         root.row("monthCalendar", "instrumentRule", "Header rule", "switch", true, { tune: true, when: () => root.plain("monthCalendar") && root.is("monthCalendar", "style", "card", "instrument") }),
-        root.row("monthCalendar", "contentWidth", "Width", "range", 300, { min: 252, max: 520, step: 4, unit: " px", when: () => root.plain("monthCalendar") }),
-        root.row("monthCalendar", "contentHeight", "Height", "range", 340, { min: 290, max: 620, step: 4, unit: " px", when: () => root.plain("monthCalendar") }),
         ...root.closing("monthCalendar", true),
 
         // ── Upcoming events ──
@@ -298,8 +287,6 @@ QtObject {
         root.row("calendarUpcoming", "showTime", "Show time", "switch", true, { when: () => root.plain("calendarUpcoming") }),
         root.row("calendarUpcoming", "maxEvents", "Maximum events", "range", 5, { min: 1, max: 12, when: () => root.plain("calendarUpcoming") }),
         root.row("calendarUpcoming", "style", "Presentation", "choice", "card", { when: () => root.material("calendarUpcoming"), choices: root.choices([["card", "Card"], ["instrument", "Instrument"]]) }),
-        root.row("calendarUpcoming", "contentWidth", "Width", "range", 280, { min: 200, max: 720, step: 10, unit: " px", when: () => root.plain("calendarUpcoming") }),
-        root.row("calendarUpcoming", "contentHeight", "Height", "range", 220, { min: 140, max: 720, step: 10, unit: " px", when: () => root.plain("calendarUpcoming") }),
         ...root.closing("calendarUpcoming", true),
 
         // ── Date badge ──
@@ -311,8 +298,6 @@ QtObject {
         root.row("dateBadge", "style", "Style", "choice", "ticket", { when: () => root.material("dateBadge"),
             choices: root.choices([["ticket", "Ticket"], ["stacked", "Stacked"], ["seal", "Seal"], ["instrument", "Instrument"]]) }),
         root.row("dateBadge", "instrumentMarks", "Marks", "switch", true, { tune: true, when: () => root.plain("dateBadge") && root.is("dateBadge", "style", "ticket", "instrument") }),
-        root.row("dateBadge", "contentWidth", "Width", "range", 220, { min: 140, max: 600, step: 10, unit: " px", when: () => root.plain("dateBadge") }),
-        root.row("dateBadge", "contentHeight", "Height", "range", 140, { min: 120, max: 240, step: 4, unit: " px", when: () => root.plain("dateBadge") }),
         ...root.closing("dateBadge", true),
 
         // ── Day progress ──
@@ -324,8 +309,6 @@ QtObject {
         root.row("dayProgress", "showDate", "Show date", "switch", true, { when: () => root.plain("dayProgress") }),
         root.row("dayProgress", "hourLabels", "Hour labels", "switch", true, { tune: true, when: () => root.plain("dayProgress") }),
         root.row("dayProgress", "fontScale", "Text size", "range", 100, { min: 60, max: 180, step: 10, unit: " %", when: () => root.plain("dayProgress") }),
-        root.row("dayProgress", "contentWidth", "Width", "range", 240, { min: 190, max: 500, step: 10, unit: " px", when: () => root.plain("dayProgress") }),
-        root.row("dayProgress", "contentHeight", "Height", "range", 240, { min: 190, max: 500, step: 10, unit: " px", when: () => root.plain("dayProgress") }),
         ...root.closing("dayProgress", true),
 
         // ── Timers ──
@@ -345,8 +328,6 @@ QtObject {
         root.row("uptime", "showSince", "Start time", "switch", true, {}),
         root.row("uptime", "style", "Style", "choice", "row", { when: () => root.material("uptime"), choices: root.choices([["row", "Row"], ["instrument", "Instrument"]]) }),
         root.row("uptime", "showBreakdown", "Breakdown", "switch", true, { tune: true, when: () => root.plain("uptime") && root.is("uptime", "style", "row", "instrument") }),
-        root.row("uptime", "contentWidth", "Width", "range", 250, { min: 180, max: 600, step: 10, unit: " px", when: () => root.plain("uptime") }),
-        root.row("uptime", "contentHeight", "Height", "range", 96, { min: 72, max: 240, step: 4, unit: " px", when: () => root.plain("uptime") }),
         ...root.closing("uptime", true),
 
         // ── Media controls ──
@@ -382,10 +363,11 @@ QtObject {
 
         // ── Visualizer ──
         ...root.opening("visualizer"),
-        root.preset("visualizer", "Preset", "default", [["default", "Default", { barRadius: 2, barMinHeight: 1, contentWidth: 304, contentHeight: 104, barCount: 48, barSpacing: 2 }],
-            ["dense", "Dense", { barRadius: 1, barMinHeight: 2, contentWidth: 304, contentHeight: 80, barCount: 64, barSpacing: 1 }],
-            ["minimal", "Minimal", { barRadius: 4, barMinHeight: 1, contentWidth: 200, contentHeight: 80, barCount: 24, barSpacing: 3 }],
-            ["wide", "Wide", { barRadius: 2, barMinHeight: 1, contentWidth: 480, contentHeight: 120, barCount: 80, barSpacing: 2 }]], () => !root.is("visualizer", "vizType", "bars", "organic")),
+        root.size("visualizer"),
+        root.preset("visualizer", "Preset", "default", [["default", "Default", { barRadius: 2, barMinHeight: 1, barCount: 48, barSpacing: 2 }],
+            ["dense", "Dense", { barRadius: 1, barMinHeight: 2, barCount: 64, barSpacing: 1 }],
+            ["minimal", "Minimal", { barRadius: 4, barMinHeight: 1, barCount: 24, barSpacing: 3 }],
+            ["wide", "Wide", { barRadius: 2, barMinHeight: 1, barCount: 80, barSpacing: 2 }]], () => !root.is("visualizer", "vizType", "bars", "organic")),
         root.row("visualizer", "vizType", "Type", "choice", "bars", { choices: root.choices([["bars", "Bars", "bar_chart"], ["wave", "Wave", "waves"], ["organic", "Organic", "bubble_chart"]]) }),
         root.row("visualizer", "paletteMode", "Colors", "choice", "cava", { choices: root.choices([["cava", "Cava"], ["accent", "Accent"], ["primary", "Primary"], ["album", "Album"]]) }),
         root.row("visualizer", "barsOrigin", "Bars rise from", "choice", "bottom", { when: () => root.is("visualizer", "vizType", "bars", "bars"),
@@ -410,8 +392,6 @@ QtObject {
         root.row("visualizer", "fillRatio", "Spectrum height", "range", 90, { min: 10, max: 100, step: 5, unit: " %", when: () => !root.is("visualizer", "vizType", "bars", "organic") }),
         root.row("visualizer", "edgeInset", "Edge inset", "range", 0, { min: 0, max: 32, unit: " px", when: () => !root.is("visualizer", "vizType", "bars", "organic") }),
         root.row("visualizer", "edgeSoftness", "Curve headroom", "range", 28, { min: 0, max: 100, step: 5, unit: " %", when: () => !root.is("visualizer", "vizType", "bars", "organic") }),
-        root.row("visualizer", "contentWidth", "Width", "range", 304, { min: 100, max: 800, step: 20, unit: " px" }),
-        root.row("visualizer", "contentHeight", "Height", "range", 104, { min: 40, max: 400, step: 10, unit: " px" }),
         ...root.closing("visualizer", true),
 
         // ── System monitor ──
@@ -423,15 +403,11 @@ QtObject {
         ...[["showCpu", "CPU", true], ["showMemory", "Memory", true], ["showGpu", "GPU", true], ["showTemp", "CPU heat", false], ["showGpuTemp", "GPU heat", false], ["showDisk", "Disk", false]]
             .map(entry => root.row("systemMonitor", entry[0], entry[1], "switch", entry[2], { keywords: ["monitor", "usage", "temperature", "temp"] })),
         root.row("systemMonitor", "showLabels", "Labels and percentages", "switch", true, { when: () => root.plain("systemMonitor") }),
-        root.preset("systemMonitor", "Layout", "default", [["default", "Default", { contentWidth: 320, contentHeight: 120 }], ["compact", "Compact", { contentWidth: 240, contentHeight: 80 }],
-            ["wide", "Wide", { contentWidth: 480, contentHeight: 120 }], ["tall", "Tall", { contentWidth: 320, contentHeight: 180 }]], () => root.plain("systemMonitor")),
         root.row("systemMonitor", "displayMode", "Display mode", "choice", "bars", { when: () => root.material("systemMonitor"),
             choices: root.choices([["bars", "Bars"], ["graph", "Graph"], ["rings", "Rings"], ["text", "Text"], ["tiles", "Tiles"], ["instrument", "Instrument"]]) }),
         root.row("systemMonitor", "trackAlpha", "Track opacity", "range", 0.08, { min: 0, max: 0.5, step: 0.02, scale: 100, unit: " %", when: () => root.material("systemMonitor") }),
         root.row("systemMonitor", "fillOpacity", "Fill opacity", "range", 0.7, { min: 0.1, max: 1, step: 0.05, scale: 100, unit: " %", when: () => root.material("systemMonitor") }),
         root.row("systemMonitor", "graphFillOpacity", "Graph fill opacity", "range", 0.3, { min: 0, max: 1, step: 0.05, scale: 100, unit: " %", when: () => root.material("systemMonitor") && root.is("systemMonitor", "displayMode", "bars", "graph") }),
-        root.row("systemMonitor", "contentWidth", "Width", "range", 320, { min: 120, max: 800, step: 20, unit: " px", when: () => root.plain("systemMonitor") }),
-        root.row("systemMonitor", "contentHeight", "Height", "range", 120, { min: 40, max: 400, step: 10, unit: " px", when: () => root.plain("systemMonitor") }),
         ...root.closing("systemMonitor", true),
 
         // ── Battery ──
@@ -457,7 +433,7 @@ QtObject {
         ...[["wifi", "Wi-Fi"], ["bluetooth", "Bluetooth"], ["focus", "Focus"], ["nightLight", "Night light"], ["awake", "Keep awake"],
             ["gameMode", "Game mode"], ["mic", "Microphone"], ["darkMode", "Dark mode"]]
             .map(entry => root.row("controls", "iris.tile." + entry[0], entry[1], "switch", true, { tune: false, keywords: ["keys", "tiles", "toggle"] })),
-        root.row("controls", "iris.sliders", "Volume and brightness", "switch", true, { tune: false, when: () => !root.is("controls", "iris.size", "medium", "small") }),
+        root.row("controls", "iris.sliders", "Volume and brightness", "switch", true, { tune: false, when: () => !root.is("controls", "sizeClass", "medium", "small") }),
         ...root.closing("controls", false),
         ...root.opening("screenTime"),
         root.size("screenTime"),
@@ -471,7 +447,7 @@ QtObject {
         ...root.opening("weather"),
         root.size("weather"),
         root.row("weather", "showLocation", "Location", "switch", true, {}),
-        root.row("weather", "iris.details", "Details", "switch", true, { when: () => root.face("weather") && root.is("weather", "iris.size", "medium", "large"),
+        root.row("weather", "iris.details", "Details", "switch", true, { when: () => root.face("weather") && root.is("weather", "sizeClass", "medium", "large"),
             keywords: ["humidity", "wind", "uv", "air"] }),
         root.row("weather", "style", "Style", "choice", "pill", { when: () => root.material("weather"),
             choices: root.choices([["pill", "Shape"], ["card", "Card"], ["detail", "Detail"], ["dial", "Instrument"]]) }),
@@ -503,8 +479,6 @@ QtObject {
         root.row("newsTicker", "rotateSeconds", "Change every", "choice", 45, { when: () => root.face("newsTicker"),
             choices: root.choices([[15, "15 s"], [45, "45 s"], [120, "2 min"], [300, "5 min"]]) }),
         root.row("newsTicker", "style", "Presentation", "choice", "card", { when: () => root.material("newsTicker"), choices: root.choices([["card", "Card"], ["instrument", "Instrument"]]) }),
-        root.row("newsTicker", "contentWidth", "Width", "range", 320, { min: 200, max: 600, step: 10, unit: " px", when: () => root.plain("newsTicker") }),
-        root.row("newsTicker", "contentHeight", "Height", "range", 92, { min: 60, max: 300, step: 4, unit: " px", when: () => root.plain("newsTicker") }),
         ...root.closing("newsTicker", true),
 
         // ── Notes ──
@@ -516,8 +490,6 @@ QtObject {
         root.row("notes", "textAlign", "Alignment", "choice", "left", { tune: true, when: () => root.plain("notes"),
             choices: root.choices([["left", "Left", "format_align_left"], ["center", "Center", "format_align_center"], ["right", "Right", "format_align_right"]]) }),
         root.row("notes", "fontSize", "Font size", "range", 14, { min: 10, max: 48, unit: " px", when: () => root.plain("notes") }),
-        root.row("notes", "contentWidth", "Width", "range", 240, { min: 160, max: 720, step: 10, unit: " px", when: () => root.plain("notes") }),
-        root.row("notes", "contentHeight", "Height", "range", 160, { min: 100, max: 720, step: 10, unit: " px", when: () => root.plain("notes") }),
         ...root.closing("notes", true),
 
         // ── Todo ──
@@ -526,8 +498,6 @@ QtObject {
         root.row("todo", "showCompleted", "Show completed tasks", "switch", true, {}),
         root.row("todo", "style", "Presentation", "choice", "card", { when: () => root.material("todo"), choices: root.choices([["card", "Card"], ["instrument", "Instrument"]]) }),
         root.row("todo", "instrumentRules", "Row rules", "switch", true, { tune: true, when: () => root.plain("todo") && root.is("todo", "style", "card", "instrument") }),
-        root.row("todo", "contentWidth", "Width", "range", 300, { min: 240, max: 560, step: 4, unit: " px", when: () => root.plain("todo") }),
-        root.row("todo", "contentHeight", "Height", "range", 276, { min: 220, max: 720, step: 4, unit: " px", when: () => root.plain("todo") }),
         ...root.closing("todo", true),
 
         // ── User card ──
@@ -536,15 +506,14 @@ QtObject {
         root.row("userCard", "showAvatar", "Picture", "switch", true, {}),
         // the weather shows on iRiS's large face and Material's medium one
         root.row("userCard", "showWeather", "Weather", "switch", true, { when: () => root.face("userCard")
-            ? root.is("userCard", "iris.size", "medium", "large") : !root.is("userCard", "materialSize", "medium", "small") }),
-        root.row("userCard", "showHostname", "Computer name", "switch", true, { when: () => root.face("userCard") || !root.is("userCard", "materialSize", "medium", "small") }),
+            ? root.is("userCard", "sizeClass", "medium", "large") : !root.is("userCard", "sizeClass", "medium", "small") }),
+        root.row("userCard", "showHostname", "Computer name", "switch", true, { when: () => root.face("userCard") || !root.is("userCard", "sizeClass", "medium", "small") }),
         root.row("userCard", "style", "Presentation", "choice", "card", { when: () => root.material("userCard"), choices: root.choices([["card", "Card"], ["instrument", "Instrument"]]) }),
-        root.row("userCard", "contentWidth", "Width", "range", 280, { min: 240, max: 600, step: 10, unit: " px", when: () => root.plain("userCard") }),
-        root.row("userCard", "contentHeight", "Height", "range", 176, { min: 176, max: 320, step: 2, unit: " px", when: () => root.plain("userCard") }),
         ...root.closing("userCard", true),
 
         // ── Custom image ──
         ...root.opening("customImage"),
+        root.size("customImage"),
         root.row("customImage", "sourceMode", "Source type", "choice", "file", { choices: root.choices([["file", "Single file", "image"], ["folder", "Folder gallery", "photo_library"]]) }),
         root.row("customImage", "path", "Media file", "text", "", { placeholder: "Image, GIF, or video", when: () => root.is("customImage", "sourceMode", "file", "file"),
             keywords: ["image", "picture", "photo", "gif", "video", "path", "file", "imagen"] }),
@@ -561,23 +530,24 @@ QtObject {
 
         // ── Image converter ──
         ...root.opening("imageConverter"),
+        root.size("imageConverter"),
         root.row("imageConverter", "selectedFormat", "Convert to", "choice", "webp", {
             choices: root.choices([["png", "PNG"], ["jpg", "JPG"], ["webp", "WEBP"], ["avif", "AVIF"], ["bmp", "BMP"], ["tiff", "TIFF"], ["pdf", "PDF"]]) }),
         ...root.closing("imageConverter", true),
 
         // ── Decorative shape ──
         ...root.opening("shape"),
+        root.size("shape"),
         root.row("shape", "shape", "Shape", "choice", "Flower", { choicesFrom: "shapes" }),
         root.row("shape", "outline", "Fill", "choice", false, { choices: root.choices([[false, "Filled"], [true, "Outline"]]) }),
         root.row("shape", "treatment", "Treatment", "choice", "flat", { when: () => !Boolean(root.value("shape", "outline", false)),
             choices: root.choices([["flat", "Solid"], ["inset", "Inset"], ["duotone", "Duotone"]]) }),
         root.row("shape", "angle", "Rotation", "range", 0, { min: 0, max: 360, step: 15, unit: "°" }),
-        root.row("shape", "contentWidth", "Width", "range", 160, { min: 64, max: 600, step: 10, unit: " px" }),
-        root.row("shape", "contentHeight", "Height", "range", 160, { min: 64, max: 240, step: 4, unit: " px" }),
         ...root.closing("shape", false),
 
         // ── Japanese typography ──
         ...root.opening("japaneseTypography"),
+        root.size("japaneseTypography"),
         root.row("japaneseTypography", "preset", "Layout presets", "choice", "exhibition", {
             choices: root.choices([["exhibition", "Exhibition"], ["magazine", "Magazine"], ["minimal", "Minimal"], ["traditional", "Traditional"]]),
             apply: next => root.relative("japaneseTypography", JapanesePresets.composition("background.widgets.japaneseTypography", next)) }),
@@ -627,17 +597,17 @@ QtObject {
 
         // ── Editorial ──
         ...root.opening("editorial"),
+        root.size("editorial"),
         root.row("editorial", "style", "Style", "choice", "poster", { choices: root.choices([["poster", "Poster"], ["quote", "Quote"], ["label", "Label"]]) }),
         root.row("editorial", "title", "Title", "text", "Make room for wonder.", { placeholder: "Title" }),
         root.row("editorial", "caption", "Caption", "text", "A LITTLE EVERY DAY", { placeholder: "Caption" }),
         root.row("editorial", "footer", "Footer", "text", "YOUR OWN PERSPECTIVE", { placeholder: "Footer" }),
         root.row("editorial", "showAccent", "Accents", "choice", true, { choices: root.choices([[true, "Decorative accents"], [false, "Text only"]]) }),
-        root.row("editorial", "contentWidth", "Width", "range", 360, { min: 180, max: 900, step: 20, unit: " px" }),
-        root.row("editorial", "contentHeight", "Height", "range", 240, { min: 140, max: 900, step: 20, unit: " px" }),
         ...root.closing("editorial", true),
 
         // ── Mascot ──
         ...root.opening("mascot"),
+        root.size("mascot"),
         root.row("mascot", "poseFilter", "Poses", "choice", "all", { tune: true,
             choices: root.choices([["all", "All"], ["featured", "Featured"], ["pixel", "Pixel"], ["street", "Street"], ["chibi", "Chibi"], ["loops", "Loops"], ["manual", "Manual"]]) }),
         root.row("mascot", "pose", "Pose on the desktop", "choice", "reading", { choicesFrom: "mascotPoses", when: () => String(root.value("mascot", "customPath", "")).length === 0 }),
@@ -647,9 +617,8 @@ QtObject {
     // What a row shows and what it writes (IrisOptions.currentValue / commit route `spec.widget` rows here).
     function read(spec: var): var {
         if (spec.widgetEnable) return root.on(spec.widget)
-        if (spec.key === "iris.size")
-            return root.value(spec.widget, "iris.size", undefined) ?? root.value(spec.widget, "materialSize", undefined)
-                ?? DesktopWidgetStacks.reported[spec.widget]?.size ?? spec.fallback
+        if (spec.key === "sizeClass")
+            return root.value(spec.widget, "sizeClass", undefined) ?? DesktopWidgetStacks.reported[spec.widget]?.size ?? spec.fallback
         return root.value(spec.widget, spec.key, spec.fallback)
     }
     function write(spec: var, next: var): void {

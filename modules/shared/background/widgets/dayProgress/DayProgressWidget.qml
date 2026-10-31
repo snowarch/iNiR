@@ -13,7 +13,7 @@ AbstractBackgroundWidget {
 
     configEntryName: "dayProgress"
     defaultConfig: ({
-        placementStrategy: "free", contentWidth: 240, contentHeight: 240,
+        placementStrategy: "free", 
         widgetScale: 100, widgetOpacity: 100, colorMode: "auto", dim: 0,
         style: "ring", comet: true, showIcon: true, showDate: true, hourLabels: true, fontScale: 100,
         showBackground: false, showBorder: false, backgroundOpacity: 0,
@@ -21,11 +21,7 @@ AbstractBackgroundWidget {
         x: 80, y: 260
     })
 
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 240) * scaleFactor)
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : Math.round(Number(root._readConfigKey("contentHeight") ?? 240) * scaleFactor)
     irisFacePart: "day"
-    irisSizes: ["small", "medium", "large"]
-    resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
     resizeMinWidth: 190
     resizeMinHeight: 190
     needsColText: true
@@ -65,7 +61,7 @@ AbstractBackgroundWidget {
     }
 
     // Medium is wide: the dial keeps the day, the time and what the sun does next sit beside it.
-    readonly property bool wide: root.materialSized && root.materialSize === "medium"
+    readonly property bool wide: root.sizeClass === "medium"
     readonly property bool sunUp: Weather.sunState === "day"
     readonly property string sunNext: String((root.sunUp ? Weather.data?.sunset : Weather.data?.sunrise) ?? "")
     readonly property string sunLine: root.sunNext.length > 0

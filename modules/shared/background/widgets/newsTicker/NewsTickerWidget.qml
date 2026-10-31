@@ -16,7 +16,7 @@ AbstractBackgroundWidget {
 
     configEntryName: "newsTicker"
     defaultConfig: ({
-        placementStrategy: "free", contentWidth: 320, contentHeight: 92,
+        placementStrategy: "free", 
         widgetScale: 100, widgetOpacity: 100, colorMode: "auto", dim: 0,
         showBackground: true, showBorder: true, backgroundOpacity: 0.16,
         borderWidth: 1, borderOpacity: 0.2, cornerRadius: -1, useBlur: false,
@@ -30,19 +30,12 @@ AbstractBackgroundWidget {
         { label: Translation.tr("5 min"), value: 300 }
     ]
 
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 320)
-        * root.scaleFactor)
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : Math.round(Number(root._readConfigKey("contentHeight") ?? 92)
-        * root.scaleFactor)
     irisFacePart: "news"
-    irisSizes: ["small", "medium", "large"]
-    irisDefaultSize: "medium"
     irisOptions: [
         { key: "showMeta", raw: true, label: Translation.tr("Source and time"), icon: "info", fallback: true },
         { key: "rotateSeconds", raw: true, label: Translation.tr("Change every"), fallback: 45,
             choices: root.rotateChoices }
     ]
-    resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
     resizeMinWidth: 220
     resizeMinHeight: 72
     needsColText: true
@@ -231,12 +224,12 @@ AbstractBackgroundWidget {
     RowLayout {
         visible: !root.irisFaced
         anchors.fill: parent
-        anchors.margins: Math.round((root.materialSized ? 14 : 10) * root.scaleFactor)
+        anchors.margins: Math.round((14) * root.scaleFactor)
         spacing: Math.round(9 * root.scaleFactor)
 
         // Small gives the headline the whole width: the mark and the open key took half of it.
         MaterialShape {
-            visible: !root.instrument && !root.materialSmall
+            visible: !root.instrument && !root.isSmall
             Layout.alignment: Qt.AlignVCenter
             implicitSize: Math.round(32 * root.scaleFactor)
             shape: MaterialShape.Shape.Cookie4Sided
@@ -302,7 +295,7 @@ AbstractBackgroundWidget {
 
                 StyledText {
                     // small gives the source its room
-                    visible: root.articleCount > 1 && !root.materialSmall
+                    visible: root.articleCount > 1 && !root.isSmall
                     text: ((root.headlineIndex % Math.max(1, root.articleCount)) + 1)
                         + "/" + root.articleCount
                     color: root.instrument ? root.widgetInkMuted : root.widgetInkSubtle
@@ -315,17 +308,17 @@ AbstractBackgroundWidget {
             StyledText {
                 id: headlineText
                 Layout.fillWidth: true
-                Layout.fillHeight: !root.materialLarge
+                Layout.fillHeight: !root.isLarge
                 text: root.displayedArticle?.title
                     ?? (!Network.online ? Network.offlineReason
                         : NewsService.loading ? Translation.tr("Loading…") : Translation.tr("No news"))
                 color: root.widgetInk
                 wrapMode: Text.WordWrap
-                maximumLineCount: root.materialSmall ? 5 : root.materialSized ? 3 : 2
+                maximumLineCount: root.isSmall ? 5 : 3
                 elide: Text.ElideRight
                 font.family: root.widgetTitleFamily
                 font.pixelSize: Math.round((root.instrument ? Appearance.font.pixelSize.normal
-                    : (root.materialLarge ? Appearance.font.pixelSize.larger : Appearance.font.pixelSize.small)
+                    : (root.isLarge ? Appearance.font.pixelSize.larger : Appearance.font.pixelSize.small)
                         * root.widgetTitleScale) * root.scaleFactor)
                 font.weight: root.instrument ? Font.DemiBold : root.widgetTitleWeight
                 font.letterSpacing: root.widgetTitleTracking
@@ -341,7 +334,7 @@ AbstractBackgroundWidget {
             }
             // Large: the headlines that come next, under the one on show.
             Repeater {
-                model: root.materialLarge ? root.upcomingArticles : []
+                model: root.isLarge ? root.upcomingArticles : []
                 delegate: ColumnLayout {
                     id: nextRow
                     required property var modelData
@@ -374,11 +367,11 @@ AbstractBackgroundWidget {
                     }
                 }
             }
-            Item { Layout.fillHeight: true; visible: root.materialLarge }
+            Item { Layout.fillHeight: true; visible: root.isLarge }
         }
 
         RippleButton {
-            visible: !root.materialSmall
+            visible: !root.isSmall
             Layout.alignment: Qt.AlignVCenter
             width: Math.round(32 * root.scaleFactor)
             height: width

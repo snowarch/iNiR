@@ -9,14 +9,11 @@ import qs.modules.shared.background.widgets
 AbstractBackgroundWidget {
     id: root
     configEntryName: "shape"
-    defaultConfig: ({ placementStrategy: "free", contentWidth: 160, contentHeight: 160,
+    defaultConfig: ({ placementStrategy: "free", 
         shape: "Flower", treatment: "flat", outline: false, angle: 0, strokeWidth: 3,
         widgetScale: 100, widgetOpacity: 100, colorMode: "auto", dim: 0,
         showBackground: false, showBorder: false, backgroundOpacity: 0,
         borderWidth: 0, borderOpacity: 0.2, cornerRadius: -1, useBlur: false, x: 80, y: 240 })
-    implicitWidth: root.materialSized ? root.materialWidth : Math.max(64, Number(root._readConfigKey("contentWidth") ?? 160)) * scaleFactor
-    implicitHeight: root.materialSized ? root.materialHeight : Math.max(64, Number(root._readConfigKey("contentHeight") ?? 160)) * scaleFactor
-    resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
     resizeMinWidth: 64
     resizeMinHeight: 64
     readonly property string shapeName: String(root._readConfigKey("shape") ?? "Flower")

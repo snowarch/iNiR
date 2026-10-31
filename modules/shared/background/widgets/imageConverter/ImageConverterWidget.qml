@@ -18,8 +18,6 @@ AbstractBackgroundWidget {
         locked: false,
         placementStrategy: "free",
         selectedFormat: "webp",
-        contentWidth: 292,
-        contentHeight: 260,
         widgetScale: 100,
         widgetOpacity: 100,
         colorMode: "auto",
@@ -58,9 +56,6 @@ AbstractBackgroundWidget {
     property var outputPaths: []
     signal conversionFinished(var paths)
 
-    implicitWidth: root.materialSized ? root.materialWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 292) * root.scaleFactor)
-    implicitHeight: root.materialSized ? root.materialHeight : Math.round(Number(root._readConfigKey("contentHeight") ?? 260) * root.scaleFactor)
-    resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
     resizeMinWidth: 250
     resizeMinHeight: 220
     needsColText: false

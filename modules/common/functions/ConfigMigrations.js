@@ -108,10 +108,46 @@ function _remove(obj, path) {
     if (_isObject(parent)) delete parent[keys[keys.length - 1]];
 }
 
+// One size per widget instance (10-31): each family kept its own and a sync held them together; `sizeClass` takes the
+// one on screen. Free sizes get a name that belongs to no family. Base entries nest `iris.size`, per-screen ones keep
+// it as a flat key.
+function _oneSize(entry, irisActive) {
+    if (!_isObject(entry)) return false;
+    let changed = false;
+    const iris = entry["iris.size"] ?? (_isObject(entry.iris) ? entry.iris.size : undefined);
+    const material = entry.materialSize;
+    if (iris !== undefined || material !== undefined) {
+        if (entry.sizeClass === undefined) entry.sizeClass = irisActive ? (iris ?? material) : (material ?? iris);
+        delete entry["iris.size"];
+        if (_isObject(entry.iris)) delete entry.iris.size;
+        delete entry.materialSize;
+        changed = true;
+    }
+    for (const [from, to] of [["materialWidth", "freeWidth"], ["materialHeight", "freeHeight"]]) {
+        if (entry[from] === undefined) continue;
+        if (entry[to] === undefined) entry[to] = entry[from];
+        delete entry[from];
+        changed = true;
+    }
+    return changed;
+}
+
+function _widgetSizes(obj) {
+    const widgets = _get(obj, "background.widgets");
+    if (!_isObject(widgets)) return false;
+    const irisActive = obj.panelFamily === "iris";
+    const entries = Object.values(widgets);
+    for (const group of [widgets.custom, widgets.mascotInstances])
+        if (_isObject(group)) entries.push(...Object.values(group));
+    for (const record of Array.isArray(widgets.outputOverrides) ? widgets.outputOverrides : [])
+        if (_isObject(record?.widgets)) entries.push(...Object.values(record.widgets));
+    return entries.map(entry => _oneSize(entry, irisActive)).some(moved => moved);
+}
+
 // Moves the keys of a parsed config.json to their owners in place; true when anything moved.
 function migrate(obj) {
     if (!_isObject(obj)) return false;
-    let changed = false;
+    let changed = _widgetSizes(obj);
     for (const [from, to] of moves) {
         const value = _get(obj, from);
         if (value === undefined) continue;

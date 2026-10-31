@@ -13,11 +13,7 @@ AbstractBackgroundWidget {
         placementStrategy: "free", widgetScale: 100, cornerRadius: -1, x: 520, y: 600
     })
 
-    implicitWidth: root.irisFaceWidth
-    implicitHeight: root.irisFaceHeight
     irisFacePart: "lyrics"
-    irisSizes: ["small", "medium", "large"]
-    irisDefaultSize: "medium"
     semanticPaletteControls: false
     widgetSurfaceEnabled: false
     needsColText: false

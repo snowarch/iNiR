@@ -17,7 +17,7 @@ AbstractBackgroundWidget {
     configEntryName: "todo"
     defaultConfig: ({
         placementStrategy: "free",
-        contentWidth: 300, contentHeight: 276,
+        
         widgetScale: 100, widgetOpacity: 100, style: "card", instrumentRules: true,
         showCompleted: true,
         showBackground: true, useBlur: false, showBorder: true,
@@ -26,13 +26,7 @@ AbstractBackgroundWidget {
         x: 120, y: 180
     })
 
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 300)
-        * root.scaleFactor)
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : Math.round(Number(root._readConfigKey("contentHeight") ?? 276)
-        * root.scaleFactor)
     irisFacePart: "todo"
-    irisSizes: ["small", "medium", "large"]
-    irisDefaultSize: "medium"
     irisOptions: [
         { key: "showCompleted", raw: true, label: Translation.tr("Show completed"), icon: "task_alt", fallback: true }
     ]
@@ -40,7 +34,6 @@ AbstractBackgroundWidget {
     visibleWhenLocked: false
     needsColText: true
     draggable: GlobalStates.widgetEditMode && !GlobalStates.screenLocked && !root.locked
-    resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
     resizeMinWidth: 240
     resizeMinHeight: 220
     resizeMaxWidth: 560
@@ -77,8 +70,8 @@ AbstractBackgroundWidget {
     readonly property real inset: Math.round(12 * root.scaleFactor)
     // medium holds two whole rows under its head: at 48 the second missed its room by 4 px and the card said
     // "2 tasks left" over one
-    readonly property real itemHeight: Math.round((root.materialSmall ? 36 : root.materialSized && !root.materialLarge ? 44 : 48) * root.scaleFactor)
-    readonly property real taskFontSize: Math.round((root.materialSmall ? Appearance.font.pixelSize.small : Appearance.font.pixelSize.normal) * root.scaleFactor)
+    readonly property real itemHeight: Math.round((root.isSmall ? 36 : !root.isLarge ? 44 : 48) * root.scaleFactor)
+    readonly property real taskFontSize: Math.round((root.isSmall ? Appearance.font.pixelSize.small : Appearance.font.pixelSize.normal) * root.scaleFactor)
 
     function openNewTask(): void {
         root.editingText = ""
@@ -259,7 +252,7 @@ AbstractBackgroundWidget {
                         text: Translation.tr("Tasks")
                         color: root.ink
                         font.family: root.widgetTitleFamily
-                        font.pixelSize: Math.round((root.materialSmall ? Appearance.font.pixelSize.larger : Appearance.font.pixelSize.huge)
+                        font.pixelSize: Math.round((root.isSmall ? Appearance.font.pixelSize.larger : Appearance.font.pixelSize.huge)
                             * root.widgetTitleScale * root.scaleFactor)
                         font.weight: root.widgetTitleWeight
                         font.letterSpacing: root.widgetTitleTracking
@@ -281,7 +274,7 @@ AbstractBackgroundWidget {
                 }
 
                 RippleButton {
-                    visible: root.completedCount > 0 && !root.materialSmall
+                    visible: root.completedCount > 0 && !root.isSmall
                     Layout.preferredWidth: Math.round((root.instrument ? 30 : 34) * root.scaleFactor)
                     Layout.preferredHeight: Math.round((root.instrument ? 30 : 34) * root.scaleFactor)
                     buttonRadius: root.instrument ? root.widgetControlRadius : Appearance.rounding.full
@@ -343,7 +336,7 @@ AbstractBackgroundWidget {
 
                     width: todoList.width
                     // small wraps a task to two lines instead of cutting its words
-                    implicitHeight: root.materialSmall
+                    implicitHeight: root.isSmall
                         ? Math.max(root.itemHeight, taskText.implicitHeight + Math.round(14 * root.scaleFactor)) : root.itemHeight
                     // whole rows only: a half row under the plate's edge read as cut
                     visible: taskRow.y + taskRow.height <= todoList.contentY + todoList.height + 1
@@ -371,9 +364,9 @@ AbstractBackgroundWidget {
 
                         RowLayout {
                             anchors.fill: parent
-                            anchors.leftMargin: Math.round((root.materialSmall ? 6 : 10) * root.scaleFactor)
-                            anchors.rightMargin: Math.round((root.materialSmall ? 8 : 12) * root.scaleFactor)
-                            spacing: Math.round((root.materialSmall ? 5 : 9) * root.scaleFactor)
+                            anchors.leftMargin: Math.round((root.isSmall ? 6 : 10) * root.scaleFactor)
+                            anchors.rightMargin: Math.round((root.isSmall ? 8 : 12) * root.scaleFactor)
+                            spacing: Math.round((root.isSmall ? 5 : 9) * root.scaleFactor)
 
                             InstrumentLabel {
                                 visible: root.instrument
@@ -383,8 +376,8 @@ AbstractBackgroundWidget {
                                 scaleFactor: root.scaleFactor
                             }
                             RippleButton {
-                                Layout.preferredWidth: Math.round((root.materialSmall ? 22 : 26) * root.scaleFactor)
-                                Layout.preferredHeight: Math.round((root.materialSmall ? 22 : 26) * root.scaleFactor)
+                                Layout.preferredWidth: Math.round((root.isSmall ? 22 : 26) * root.scaleFactor)
+                                Layout.preferredHeight: Math.round((root.isSmall ? 22 : 26) * root.scaleFactor)
                                 Layout.alignment: Qt.AlignVCenter
                                 buttonRadius: root.instrument ? Math.round(4 * root.scaleFactor) : Appearance.rounding.full
                                 colBackground: taskRow.modelData.done
@@ -436,8 +429,8 @@ AbstractBackgroundWidget {
                                 text: taskRow.modelData.content
                                 color: rowInk
                                 elide: Text.ElideRight
-                                wrapMode: root.materialSmall ? Text.Wrap : Text.NoWrap
-                                maximumLineCount: root.materialSmall ? 2 : 1
+                                wrapMode: root.isSmall ? Text.Wrap : Text.NoWrap
+                                maximumLineCount: root.isSmall ? 2 : 1
                                 font.pixelSize: root.taskFontSize
                                 font.strikeout: taskRow.modelData.done
                             }

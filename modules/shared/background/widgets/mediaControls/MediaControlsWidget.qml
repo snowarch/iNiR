@@ -52,8 +52,7 @@ AbstractBackgroundWidget {
     readonly property var sizedGeometry: root.instrument ? root.presetGeometry["instrument"]
         : root.presetGeometry[root.effectiveSizedPreset] ?? root.presetGeometry["full"]
 
-    readonly property real widgetWidth: root.materialSized ? root.materialWidth : Math.round(
-        root.sizedGeometry.w * Appearance.fontSizeScale * scaleFactor)
+    readonly property real widgetWidth: root.footprintWidth
 
     readonly property bool lyricsAvailable: LyricsService.status === "ok"
         && LyricsService.lyricsLines.length > 0
@@ -76,12 +75,10 @@ AbstractBackgroundWidget {
     // A size class picks the player that fits it: Small the cover tile, Medium the chosen wide player, Large the
     // cover or the lyrics sheet.
     readonly property string selectedPreset: {
-        if (!root.materialSized)
-            return root.chosenPreset
         const tall = ["albumart", "lyrics", "lyricsSplit"].includes(root.chosenPreset)
-        if (root.materialSize === "small")
+        if (root.sizeClass === "small")
             return "albumart"
-        if (root.materialSize === "large")
+        if (root.sizeClass === "large")
             return tall ? root.chosenPreset : "albumart"
         return tall || root.chosenPreset === "expandingLyrics" ? "full" : root.chosenPreset
     }
@@ -138,11 +135,7 @@ AbstractBackgroundWidget {
 
     readonly property bool nativeIrisPlayer: root.widgetIris && ["full", "compact", "minimal", "classic"].includes(root.effectiveRenderedPreset)
 
-    readonly property real widgetHeight: root.materialSized ? root.materialHeight : root.nativeIrisPlayer
-        ? Math.round((root.effectiveRenderedPreset === "compact" ? 126 : 204) * scaleFactor * Appearance.fontSizeScale)
-        : Math.round(
-        (root.sizedGeometry.hBare ?? root.sizedGeometry.h) * Appearance.fontSizeScale * scaleFactor)
-        + root.lyricsSheetHeight + root.lyricsPanelHeight
+    readonly property real widgetHeight: root.footprintHeight
 
     // The plate a player draws. Aurora's and Angel's glass is a tint over the blurred wallpaper, so the words read
     // against that mix: light glass over a dark wallpaper is mid grey and took light ink (2.3:1).
@@ -171,7 +164,6 @@ AbstractBackgroundWidget {
         property color colSubtext: root.mediaSurfaceInkMuted
     }
     property real popupRounding: Appearance.rounding.screenRounding - Appearance.sizes.hyprlandGapsOut + 1
-    resizableAxes: ({ uniform: "widgetScale" })
     resizeMinWidth: 160
     resizeMinHeight: 80
     needsColText: true
@@ -380,11 +372,7 @@ AbstractBackgroundWidget {
         ? [root.meaningfulPlayer] : []
     readonly property bool hasPlayer: root.meaningfulPlayers.length > 0
 
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : root.hasPlayer ? root.widgetWidth : root.placeholderWidth
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : root.hasPlayer ? root.widgetHeight : root.placeholderHeight
     irisFacePart: "nowPlaying"
-    irisSizes: ["small", "medium", "large"]
-    irisDefaultSize: "medium"
     irisOptions: [
         { key: "lyrics", label: Translation.tr("Synced lyrics"), icon: "lyrics", fallback: true },
         { key: "rest", label: Translation.tr("Rest when paused"), icon: "bedtime", fallback: false }
@@ -625,7 +613,7 @@ AbstractBackgroundWidget {
                     WidgetSurface {
                         irisPresentation: root.widgetIris
                         anchors.fill: parent
-                        shown: root.materialSized && !root.irisFaced
+                        shown: !root.irisFaced
                         regionBrightness: root.regionBrightness
                         surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.widgetCardRadius
                         surfaceOpacity: root.backgroundOpacity
@@ -642,19 +630,19 @@ AbstractBackgroundWidget {
                     MediaRest {
                         id: materialRest
                         anchors.fill: parent
-                        visible: root.materialSized && !root.instrument && materialRest.known
+                        visible: !root.instrument && materialRest.known
                         widget: root
                     }
                     WidgetBlank {
                         anchors.fill: parent
-                        visible: root.materialSized && !root.instrument && !materialRest.known
+                        visible: !root.instrument && !materialRest.known
                         widget: root
                         icon: "music_note"
                         title: Translation.tr("Nothing playing")
                     }
                     MaterialShape {
                         id: idleOrnament
-                        visible: !root.widgetIris && !root.instrument && !root.materialSized
+                        visible: false
                         anchors.centerIn: parent
                         implicitSize: Math.max(24, Math.min(parent.width, parent.height)
                             - Appearance.sizes.elevationMargin)

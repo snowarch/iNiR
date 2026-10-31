@@ -104,30 +104,21 @@ AbstractWidget {
     // font sizes by it, so the old 1.05 press bump physically moved/resized the
     // widget as soon as it was selected.
     property bool _isResizing: false
-    property bool _irisSizing: false
+    property bool _sizing: false
     property bool _irisPreviewing: false
     property var _resizePreviewValues: ({})
-    // A sized Material widget whose drawing has its own proportions scales it to the class footprint.
-    readonly property real scaleFactor: root._baseScale * (root.materialFits ? root._materialFit : 1)
+    readonly property real scaleFactor: root._baseScale * (root.fits ? root._fit : 1)
     property bool _geometryReady: false
     readonly property bool animateGeometry: root._geometryReady && root.animationsActive
         && !root._isResizing && !root.containsPress
 
     Behavior on implicitWidth {
         enabled: root.animateGeometry
-        NumberAnimation {
-            duration: root.widgetIris ? FamilyStyle.morphDuration : Appearance.animation.elementMove.duration
-            easing.type: root.widgetIris ? Easing.BezierSpline : Appearance.animation.elementMove.type
-            easing.bezierCurve: root.widgetIris ? FamilyStyle.morphCurve : Appearance.animation.elementMove.bezierCurve
-        }
+        NumberAnimation { duration: FamilyStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: FamilyStyle.morphCurve }
     }
     Behavior on implicitHeight {
         enabled: root.animateGeometry
-        NumberAnimation {
-            duration: root.widgetIris ? FamilyStyle.morphDuration : Appearance.animation.elementMove.duration
-            easing.type: root.widgetIris ? Easing.BezierSpline : Appearance.animation.elementMove.type
-            easing.bezierCurve: root.widgetIris ? FamilyStyle.morphCurve : Appearance.animation.elementMove.bezierCurve
-        }
+        NumberAnimation { duration: FamilyStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: FamilyStyle.morphCurve }
     }
     readonly property real widgetOpacity: {
         const v = Number(root._readConfigKey("widgetOpacity") ?? 100);
@@ -600,8 +591,6 @@ AbstractWidget {
         }
     }
 
-    readonly property int _editGridSize: Config.getNestedValue("background.widgets.editGrid.size", 32)
-    readonly property bool _snapEnabled: GlobalStates.widgetEditMode && (Config.getNestedValue("background.widgets.editGrid.snap", true))
 
     readonly property int _editScreenMargin: 8
     readonly property int _editToolbarGap: 12
@@ -721,7 +710,7 @@ AbstractWidget {
     // iRiS: the toolbar and the sheet step out while the widget is carried or resized and come back
     // where it lands, instead of chasing every frame of the gesture.
     readonly property bool _irisGesture: root.irisFaced
-        && ((root.containsPress && root.dragMoved) || root._isResizing || root._irisSizing)
+        && ((root.containsPress && root.dragMoved) || root._isResizing || root._sizing)
     on_IrisGestureChanged: {
         if (root._irisGesture || !editPopoverPanel.open) return
         root._editPlacementSide = ""
@@ -840,84 +829,6 @@ AbstractWidget {
             root._editControlsShown = true
             editPopoverPanel.open = true
         }
-    }
-
-    function _snapToGrid(value: real, origin: real): real {
-        return origin + Math.round((value - origin) / _editGridSize) * _editGridSize
-    }
-
-    // Grid snapping uses the panel-aware work area. The grid can therefore
-    // magnetize a widget to the live bar/dock boundary while free placement
-    // remains available across the full desktop when snapping is disabled.
-    readonly property real _editMagnetThreshold: Math.max(6,
-        Math.min(18, root._editGridSize * 0.4))
-
-    function _snapEditEdge(value: real, start: real, end: real, vertical: bool): real {
-        const minValue = Number(start) || 0
-        const maxValue = Math.max(minValue, Number(end) || 0)
-        const raw = Math.max(minValue, Math.min(maxValue, Number(value) || 0))
-        const threshold = root._editMagnetThreshold
-        // A resized edge meets a neighbour's edge, or stops one gutter short of it, before the grid.
-        const canvas = root._canvas
-        if (canvas && typeof canvas.arrangeNeighbours === "function") {
-            const gap = canvas.arrangeGap ?? 16
-            let best = null
-            const bodies = DesktopArrange.bodiesOf(root.outputName).map(b => ({ x: b.x, y: b.y, width: b.w, height: b.h }))
-            for (const n of canvas.arrangeNeighbours(root.editInstanceKey).concat(bodies)) {
-                const lines = vertical ? [n.y, n.y + n.height, n.y - gap, n.y + n.height + gap]
-                    : [n.x, n.x + n.width, n.x - gap, n.x + n.width + gap]
-                for (const line of lines) {
-                    const d = Math.abs(line - raw)
-                    if (d <= root._neighbourMagnet && (best === null || d < best.d))
-                        best = { d: d, at: line }
-                }
-            }
-            if (best !== null && best.at >= minValue && best.at <= maxValue)
-                return root._snapToPixel(best.at)
-        }
-        if (Math.abs(raw - minValue) <= threshold)
-            return root._snapToPixel(minValue)
-        if (Math.abs(raw - maxValue) <= threshold)
-            return root._snapToPixel(maxValue)
-        const center = minValue + (maxValue - minValue) / 2
-        if (Math.abs(raw - center) <= threshold)
-            return root._snapToPixel(center)
-        return root._snapToPixel(Math.max(minValue,
-            Math.min(maxValue, root._snapToGrid(raw, minValue))))
-    }
-
-    function _snapEditAxis(value: real, extent: real,
-            start: real, end: real): real {
-        const minValue = Number(start) || 0
-        const maxValue = Math.max(minValue, (Number(end) || 0) - extent)
-        const raw = Math.max(minValue, Math.min(maxValue, Number(value) || 0))
-        const threshold = root._editMagnetThreshold
-
-        // Safe-area edges are stronger targets than the regular lattice. They
-        // correspond to bar/dock boundaries when those surfaces occupy an edge.
-        if (Math.abs(raw - minValue) <= threshold)
-            return root._snapToPixel(minValue)
-        if (Math.abs(raw - maxValue) <= threshold)
-            return root._snapToPixel(maxValue)
-
-        // A center rail makes balanced layouts deterministic even when the
-        // current work-area width is not divisible by the configured grid size.
-        const center = minValue + Math.max(0, maxValue - minValue) / 2
-        if (Math.abs(raw - center) <= threshold)
-            return root._snapToPixel(center)
-
-        return root._snapToPixel(Math.max(minValue,
-            Math.min(maxValue, root._snapToGrid(raw, minValue))))
-    }
-
-    function _snapEditX(value: real): real {
-        return root._snapEditAxis(value, root.width,
-            root._zoneSafeLeft, root._zoneSafeRight)
-    }
-
-    function _snapEditY(value: real): real {
-        return root._snapEditAxis(value, root.height,
-            root._zoneSafeTop, root._zoneSafeBottom)
     }
 
     // ── Arranging (DesktopArrange) ──────────────────────────────
@@ -1616,263 +1527,19 @@ AbstractWidget {
         }
     }
 
-    // ── Edit mode resize handles ─────────────────────────────
-    readonly property bool _hasResize: !root.irisFaced && Object.keys(root.resizableAxes).length > 0
-    readonly property bool _resizeVisible: GlobalStates.widgetEditMode
-        && root._hasResize && !root.locked && root._editControlsShown && !root._outfitted
-    // A sized Material widget still takes any size (a visualizer as wide as the screen, 10-25): its handles set a free
-    // footprint over the size class, and the class follows to the nearest one so the layout fits what it got.
-    readonly property var _dragAxes: root.materialSized ? ({ width: "materialWidth", height: "materialHeight" }) : root.resizableAxes
-
-    // Resize handle component — small draggable square at edges/corners
-    component ResizeHandle: Rectangle {
-        id: rh
-        // Which edges this handle controls
-        property bool resizeLeft: false
-        property bool resizeRight: false
-        property bool resizeTop: false
-        property bool resizeBottom: false
-
-        readonly property bool _corner: (resizeLeft || resizeRight)
-            && (resizeTop || resizeBottom)
-        readonly property bool _axisSupported: {
-            const axes = root._dragAxes
-            if (axes.uniform)
-                return rh._corner
-            const horizontal = (resizeLeft || resizeRight) && Boolean(axes.width)
-            const vertical = (resizeTop || resizeBottom) && Boolean(axes.height)
-            return rh._corner ? horizontal && vertical : horizontal || vertical
-        }
-
-        z: 201
-        visible: root._resizeVisible && rh._axisSupported
-        width: 12; height: 12
-        radius: root.widgetIrisFamily ? 6 : 4
-        color: root.widgetIrisFamily ? FamilyStyle.accent : Appearance.colors.colPrimary
-        border { width: 1; color: root.widgetIrisFamily ? FamilyStyle.surface : ColorUtils.applyAlpha(Appearance.colors.colOnPrimary, 0.3) }
-        opacity: rhArea.containsMouse || rhArea.pressed ? 1.0 : 0.7
-
-        // Track drag start state in canvas-space to avoid feedback loops
-        property real _startWidth: 0
-        property real _startHeight: 0
-        property real _startX: 0
-        property real _startY: 0
-        property real _canvasStartX: 0
-        property real _canvasStartY: 0
-        // Starting config values for ratio-based resize
-        property var _startConfigVals: ({})
-
-        MouseArea {
-            id: rhArea
-            anchors.fill: parent
-            anchors.margins: -6
-            hoverEnabled: rh.visible
-            visible: rh.visible
-            cursorShape: {
-                if ((rh.resizeLeft && rh.resizeTop) || (rh.resizeRight && rh.resizeBottom)) return Qt.SizeFDiagCursor;
-                if ((rh.resizeRight && rh.resizeTop) || (rh.resizeLeft && rh.resizeBottom)) return Qt.SizeBDiagCursor;
-                if (rh.resizeLeft || rh.resizeRight) return Qt.SizeHorCursor;
-                if (rh.resizeTop || rh.resizeBottom) return Qt.SizeVerCursor;
-                return Qt.ArrowCursor;
-            }
-            preventStealing: true
-
-            onPressed: (mouse) => {
-                rh._startWidth = root.width;
-                rh._startHeight = root.height;
-                rh._startX = root.x;
-                rh._startY = root.y;
-                const mapped = rhArea.mapToItem(root.parent, mouse.x, mouse.y);
-                rh._canvasStartX = mapped.x;
-                rh._canvasStartY = mapped.y;
-                // Capture config values at drag start for ratio calculation
-                const axes = root._dragAxes;
-                let vals = {};
-                if (axes.uniform) vals.uniform = Number(root._readConfigKey(axes.uniform) ?? 100);
-                // Axis dimensions are logical pixels. Start from the rendered
-                // frame, including a presentation's minimum, not a smaller saved
-                // card size. Merely switching style must not rewrite that size.
-                const unit = root.materialSized ? root._baseScale : root.scaleFactor
-                if (axes.width)
-                    vals.width = root.width / unit;
-                if (axes.height)
-                    vals.height = root.height / unit;
-                rh._startConfigVals = vals
-                root._resizePreviewValues = ({})
-                root._isResizing = true
-            }
-
-            onPositionChanged: (mouse) => {
-                if (!pressed) return;
-                const mapped = rhArea.mapToItem(root.parent, mouse.x, mouse.y);
-                const dx = mapped.x - rh._canvasStartX;
-                const dy = mapped.y - rh._canvasStartY;
-                const axes = root._dragAxes
-                const isUniform = !!axes.uniform
-
-                let newW = rh._startWidth;
-                let newH = rh._startHeight;
-                let newX = rh._startX;
-                let newY = rh._startY;
-
-                if (rh.resizeRight) {
-                    let rightEdge = rh._startX + rh._startWidth + dx
-                    if (root._snapEnabled)
-                        rightEdge = root._snapEditEdge(rightEdge,
-                            root._zoneSafeLeft, root._zoneSafeRight, false)
-                    newW = Math.max(root.resizeMinWidth, Math.min(root.resizeMaxWidth,
-                        rightEdge - rh._startX))
-                }
-                if (rh.resizeLeft) {
-                    const fixedRight = rh._startX + rh._startWidth
-                    let leftEdge = rh._startX + dx
-                    if (root._snapEnabled)
-                        leftEdge = root._snapEditEdge(leftEdge,
-                            root._zoneSafeLeft, root._zoneSafeRight, false)
-                    const dw = Math.max(root.resizeMinWidth, Math.min(root.resizeMaxWidth,
-                        fixedRight - leftEdge))
-                    newX = fixedRight - dw
-                    newW = dw
-                }
-                if (rh.resizeBottom) {
-                    let bottomEdge = rh._startY + rh._startHeight + dy
-                    if (root._snapEnabled)
-                        bottomEdge = root._snapEditEdge(bottomEdge,
-                            root._zoneSafeTop, root._zoneSafeBottom, true)
-                    newH = Math.max(root.resizeMinHeight, Math.min(root.resizeMaxHeight,
-                        bottomEdge - rh._startY))
-                }
-                if (rh.resizeTop) {
-                    const fixedBottom = rh._startY + rh._startHeight
-                    let topEdge = rh._startY + dy
-                    if (root._snapEnabled)
-                        topEdge = root._snapEditEdge(topEdge,
-                            root._zoneSafeTop, root._zoneSafeBottom, true)
-                    const dh = Math.max(root.resizeMinHeight, Math.min(root.resizeMaxHeight,
-                        fixedBottom - topEdge))
-                    newY = fixedBottom - dh
-                    newH = dh
-                }
-
-                const preview = {}
-                if (isUniform) {
-                    const widthRatio = rh._startWidth > 0 ? newW / rh._startWidth : 1
-                    const heightRatio = rh._startHeight > 0 ? newH / rh._startHeight : 1
-                    const ratio = Math.abs(widthRatio - 1) >= Math.abs(heightRatio - 1)
-                        ? widthRatio : heightRatio
-                    const value = Math.round(rh._startConfigVals.uniform * ratio)
-                    preview[axes.uniform] = axes.uniform === "widgetScale"
-                        ? Math.max(50, Math.min(200, value)) : value
-                } else {
-                    if (axes.width && (rh.resizeLeft || rh.resizeRight)) {
-                        const ratio = rh._startWidth > 0 ? newW / rh._startWidth : 1
-                        preview[axes.width] = Math.round(
-                            rh._startConfigVals.width * ratio)
-                    }
-                    if (axes.height && (rh.resizeTop || rh.resizeBottom)) {
-                        const ratio = rh._startHeight > 0 ? newH / rh._startHeight : 1
-                        preview[axes.height] = Math.round(
-                            rh._startConfigVals.height * ratio)
-                    }
-                }
-                root._resizePreviewValues = preview
-                if (rh.resizeLeft)
-                    root.x = root._clampX(rh._startX + rh._startWidth - root.width)
-                if (rh.resizeTop)
-                    root.y = root._clampY(rh._startY + rh._startHeight - root.height)
-            }
-
-            onReleased: {
-                const updates = ({})
-                const preview = root._resizePreviewValues
-                for (const key in preview)
-                    updates[key] = preview[key]
-                if (root.materialSized && Object.keys(preview).length > 0) {
-                    const w = Number(preview.materialWidth ?? root.width / root._baseScale)
-                    const h = Number(preview.materialHeight ?? root.height / root._baseScale)
-                    updates.materialWidth = Math.round(w)
-                    updates.materialHeight = Math.round(h)
-                    updates.materialSize = root.nearestMaterialSize(w, h)
-                }
-                if (rh.resizeLeft)
-                    updates.x = Math.round(root.x)
-                if (rh.resizeTop)
-                    updates.y = Math.round(root.y)
-                if (Object.keys(updates).length > 0)
-                    root._setOutputValues(updates)
-                root._resizePreviewValues = ({})
-                root._isResizing = false
-                if (root._isZonePlacement)
-                    root.snapToZone(root.placementStrategy)
-                else if (root._isAutoPlacement)
-                    root.refreshPlacementIfNeeded()
-                _makeRoomLater.restart()
-            }
-
-            onCanceled: {
-                root.x = rh._startX
-                root.y = rh._startY
-                root._resizePreviewValues = ({})
-                root._isResizing = false
-            }
-        }
-    }
-
-    // Edit chrome exists only while arranging: twelve widgets kept eight handles and two grips each all day (10-25).
-    Loader {
-        z: 201
-        anchors.fill: parent
-        active: root._resizeVisible
-        sourceComponent: Item {
-            ResizeHandle {
-                anchors { right: parent.left; bottom: parent.top; margins: -1 }
-                resizeLeft: true; resizeTop: true
-            }
-            ResizeHandle {
-                anchors { left: parent.right; bottom: parent.top; margins: -1 }
-                resizeRight: true; resizeTop: true
-            }
-            ResizeHandle {
-                anchors { right: parent.left; top: parent.bottom; margins: -1 }
-                resizeLeft: true; resizeBottom: true
-            }
-            ResizeHandle {
-                anchors { left: parent.right; top: parent.bottom; margins: -1 }
-                resizeRight: true; resizeBottom: true
-            }
-            // Edge handles (4 midpoints)
-            ResizeHandle {
-                anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.top; bottomMargin: -1 }
-                resizeTop: true
-            }
-            ResizeHandle {
-                anchors { horizontalCenter: parent.horizontalCenter; top: parent.bottom; topMargin: -1 }
-                resizeBottom: true
-            }
-            ResizeHandle {
-                anchors { right: parent.left; verticalCenter: parent.verticalCenter; rightMargin: -1 }
-                resizeLeft: true
-            }
-            ResizeHandle {
-                anchors { left: parent.right; verticalCenter: parent.verticalCenter; leftMargin: -1 }
-                resizeRight: true
-            }
-        }
-    }
-
     FamilyPart {
         z: 202
-        when: GlobalStates.widgetEditMode && root.irisFaced && root.irisSizeChoices.length > 1 && !root.locked
+        when: GlobalStates.widgetEditMode && root.irisFaced && root.sizeChoices.length > 1 && !root.locked
         family: "iris"
         part: "widget.sizeGrip"
-        props: ({ widget: root, visible: root.editSelected || root._gripHover || root._irisSizing })
+        props: ({ widget: root, visible: root.editSelected || root._gripHover || root._sizing })
     }
     Loader {
         z: 202
-        active: GlobalStates.widgetEditMode && root.materialSized && root.materialSizes.length > 1 && !root.locked
+        active: GlobalStates.widgetEditMode && !root.irisFaced && root.sizeChoices.length > 1 && !root.locked
         sourceComponent: WidgetSizeGrip {
             widget: root
-            visible: root.editSelected || root._gripHover || root._materialSizing
+            visible: root.editSelected || root._gripHover || root._sizing
         }
     }
     // The grip reads the hover a tick late: hiding it under the pointer re-delivers hover at once and
@@ -1880,19 +1547,12 @@ AbstractWidget {
     property bool _gripHover: false
     Timer { id: gripHoverSettle; interval: 0; onTriggered: root._gripHover = widgetEditHover.hovered }
     Connections {
-        target: root.irisFaced || root.materialSized ? widgetEditHover : null
+        target: root.sized ? widgetEditHover : null
         function onHoveredChanged(): void { gripHoverSettle.restart() }
     }
 
-    function commitIrisSize(size: string): void {
-        root._resizePreviewValues = ({})
-        root._irisSizing = false
-        if (size !== String(root._readConfigKey("iris.size") ?? ""))
-            root._setOutputValues(root.stacked ? { "iris.size": size } : root._sizeValues(size))
-        _irisSizeSettle.restart()
-    }
     Timer {
-        id: _irisSizeSettle
+        id: _sizeSettle
         interval: FamilyStyle.morphDuration + 40
         onTriggered: {
             if (root._isZonePlacement)
@@ -2204,7 +1864,7 @@ AbstractWidget {
                     active: semanticQuickRoot.page === "options"
                     sourceComponent: WidgetOptionList {
                         widget: root.configEntryName
-                        exclude: ["iris.size", "iris.design", "iris.material", "placementStrategy", "locked"]
+                        exclude: ["sizeClass", "iris.design", "iris.material", "placementStrategy", "locked"]
                     }
                 }
             }
@@ -2285,16 +1945,16 @@ AbstractWidget {
             }
 
             WidgetQuickSection {
-                visible: semanticQuickRoot.page === "layout" && root.materialSized && root.materialSizes.length > 1 && !root.locked
+                visible: semanticQuickRoot.page === "layout" && root.sizeChoices.length > 1 && !root.locked
                 Layout.fillWidth: true
                 title: Translation.tr("Size")
-                detail: root.materialSizeLabels[root.materialSize] ?? ""
+                detail: root.sizeLabels[root.sizeClass] ?? ""
                 WidgetQuickChoices {
                     maxColumns: 3
-                    current: root.materialSize
-                    model: ["small", "medium", "large"].filter(size => root.materialSizes.includes(size))
-                        .map(size => ({ value: size, label: root.materialSizeLabels[size] }))
-                    onPicked: value => root.commitMaterialSize(value)
+                    current: root.sizeClass
+                    model: ["small", "medium", "large"].filter(size => root.sizeChoices.includes(size))
+                        .map(size => ({ value: size, label: root.sizeLabels[size] }))
+                    onPicked: value => root.commitSize(value)
                 }
             }
 
@@ -2311,6 +1971,7 @@ AbstractWidget {
     // Override in subclasses to enable resize in edit mode.
     // Keys: "width", "height" → config key name for that axis
     // Or: "uniform" → single config key for aspect-locked resize
+    // People's own widgets from before size classes still set it (v2.33's example); nothing reads it.
     property var resizableAxes: ({})
     property int resizeMinWidth: 60
     property int resizeMinHeight: 40
@@ -2322,17 +1983,14 @@ AbstractWidget {
         String(root._storedConfigKey("iris.design") ?? "auto"), String(root._storedConfigKey("design") ?? "auto"),
         root.hasIrisFace)
     readonly property string widgetSharedDesign: root._designResolved.design
-    readonly property var widgetDesignValues: root.materialSized
-        ? Object.assign({}, DesktopWidgetDesign.values(root.configEntryName, root.widgetSharedDesign),
-            DesktopWidgetDesign.materialValues(root.configEntryName, root.materialSize))
-        : DesktopWidgetDesign.values(root.configEntryName, root.widgetSharedDesign)
+    readonly property var widgetDesignValues: DesktopWidgetDesign.values(root.configEntryName, root.widgetSharedDesign)
     function _readConfigKey(key: string): var {
         if (Object.prototype.hasOwnProperty.call(root.widgetDesignValues, key))
             return root.widgetDesignValues[key]
         return root._storedConfigKey(key)
     }
     function _storedConfigKey(key: string): var {
-        if ((root._isResizing || root._irisSizing || root._irisPreviewing || root._materialSizing)
+        if ((root._isResizing || root._sizing || root._irisPreviewing)
                 && Object.prototype.hasOwnProperty.call(root._resizePreviewValues, key))
             return root._resizePreviewValues[key]
         return DesktopWidgetLayout.value(root.outputName, root.configEntryName,
@@ -2360,9 +2018,9 @@ AbstractWidget {
         _seedDefaultsIfNeeded();
         root._syncPlacementStrategy();
         _placementLater.restart();
-        Qt.callLater(() => root._keepSize(true))
+        root._shownSize = root.sizeClass
         if (!root.outputName.startsWith("lock:"))
-            DesktopWidgetStacks.report(root.configEntryName, root.irisSizes, root.irisDefaultSize, root.hasIrisFace)
+            DesktopWidgetStacks.report(root.configEntryName, root.sizes, root.sizes[0] ?? "", root.hasIrisFace)
         root._stackMemo = root._stackKey()
     }
     function resetToDefaults(): void {
@@ -2378,10 +2036,8 @@ AbstractWidget {
         updates["palette.tertiary"] = "tertiary"
         updates["palette.signal"] = "signal"
         updates["palette.surface"] = "surface"
-        if (root.materialSized)
-            Object.assign(updates, root._sizeValues(root.materialSizes[0] ?? ""))
+        Object.assign(updates, { sizeClass: root.sizes[0] ?? "", freeWidth: 0, freeHeight: 0 })
         if (root.widgetIrisFamily && root.hasIrisFace) {
-            Object.assign(updates, root._sizeValues(root.irisDefaultSize))
             updates["iris.material"] = "auto"
             updates["iris.design"] = "auto"
             updates["iris.opacity"] = -1
@@ -2634,8 +2290,6 @@ AbstractWidget {
         }
         root._setOutputValue("iris.design", value === DesktopWidgetDesign.current ? "auto" : value)
     }
-    property var irisSizes: ["small"]
-    property string irisDefaultSize: root.irisSizes[0]
     property var irisOptions: []
     readonly property bool irisFaced: root.widgetIris && root.hasIrisFace
     readonly property var irisMaterials: ["glass", "clear", "solid", "tinted"]
@@ -2647,66 +2301,39 @@ AbstractWidget {
         return root.irisMaterials.includes(own) ? own : root.irisMaterials.includes(shared) ? shared : "glass"
     }
     readonly property bool irisReadsRegion: root.irisFaced && (root.irisMaterial === "glass" || root.irisMaterial === "clear")
-    // A stack keeps the size classes all its pages have.
-    readonly property var irisSizeChoices: root.stacked ? root.stack.sizes : root.irisSizes
-    readonly property string irisSize: {
-        const chosen = String(root._readConfigKey("iris.size") ?? "")
-        if (!root.stacked) {
-            const other = String(root._storedConfigKey("materialSize") ?? "")
-            return root.irisSizes.includes(chosen) ? chosen : root.irisSizes.includes(other) ? other : root.irisDefaultSize
-        }
-        const choices = root.stack.sizes
-        return choices.includes(chosen) ? chosen : choices.includes(root.stack.size) ? root.stack.size : choices[0]
+    // One size per instance (`sizeClass`), from the classes the widget's manifest lists: every family and design draws
+    // the same footprint, so changing family leaves the desktop as it was arranged. A stack keeps the classes all its
+    // pages have. Where the family's faces take any box (`widgetFreeSize` in its plugin.json) a free width and height lie
+    // over the class, which follows to the nearest one; S, M or L clears them.
+    readonly property var sizes: DesktopWidgetRegistry.sizesOf(root.configEntryName)
+    readonly property var sizeChoices: root.stacked ? root.stack.sizes : root.sizes
+    readonly property string sizeClass: {
+        const chosen = String(root._readConfigKey("sizeClass") ?? "")
+        if (root.sizeChoices.includes(chosen)) return chosen
+        if (root.stacked && root.sizeChoices.includes(root.stack.size)) return root.stack.size
+        return root.sizeChoices[0] ?? ""
     }
-    // Material's own size classes (DesktopWidgetRegistry sizes); iRiS faces keep theirs.
-    readonly property var materialSizes: DesktopWidgetDesign.materialSizesOf(root.configEntryName)
-    readonly property bool materialSized: !root.widgetIrisFamily && root.materialSizes.length > 0
-        && !root.outputName.startsWith("lock:")
-    readonly property string materialSize: {
-        const chosen = String(root._storedConfigKey("materialSize") ?? "")
-        const other = String(root._storedConfigKey("iris.size") ?? "")
-        return root.materialSizes.includes(chosen) ? chosen : root.materialSizes.includes(other) ? other : (root.materialSizes[0] ?? "")
+    readonly property bool sized: root.sizeClass.length > 0
+    readonly property bool isSmall: root.sizeClass === "small"
+    readonly property bool isLarge: root.sizeClass === "large"
+    readonly property real sizeGutter: Math.round(DesktopWidgetRegistry.gap * FamilyStyle.density * root._baseScale)
+    readonly property var sizeLabels: ({ small: Translation.tr("Small"), medium: Translation.tr("Medium"), large: Translation.tr("Large") })
+    function footprintOf(size: string): size {
+        const box = DesktopWidgetRegistry.footprint(size)
+        const k = FamilyStyle.density * root._baseScale
+        return Qt.size(Math.round(box.width * k), Math.round(box.height * k))
     }
-    // One size for every family: a size is written to both keys and the one shown is kept once, so changing family
-    // leaves the desktop as it was arranged (each family has its own default size).
-    function _sizeValues(size: string): var {
-        const values = ({})
-        if (root.irisSizes.includes(size) && root.hasIrisFace) values["iris.size"] = size
-        if (root.materialSizes.includes(size)) values.materialSize = size
-        return values
-    }
-    // `settle` (at load) also brings the other family's key to the shown size when they disagree on a size this family
-    // could show: configs from before one size per family kept L here and S there. Only at load, in the family the
-    // person is in; on a switch the shown key is the stale one.
-    property bool _sizeSettled: false
-    function _keepSize(settle: bool): void {
-        if (!Config.ready || root.stacked || root.outputName.length === 0 || root.outputName.startsWith("lock:"))
-            return
-        const shown = root.irisFaced ? root.irisSize : root.materialSized ? root.materialSize : ""
-        if (!shown)
-            return
-        // a face that arrives after load still gets its settle, once
-        settle = settle || !root._sizeSettled
-        root._sizeSettled = true
-        const values = root._sizeValues(shown)
-        const ownSizes = root.irisFaced ? root.irisSizes : root.materialSizes
-        for (const key of Object.keys(values)) {
-            const stored = root._storedConfigKey(key)
-            if (stored !== undefined && !(settle && stored !== shown && ownSizes.includes(String(stored))))
-                delete values[key]
-        }
-        if (Object.keys(values).length > 0)
-            DesktopWidgetLayout.setValues(root.outputName, root.configEntryName, values)
-    }
-    onIrisFacedChanged: Qt.callLater(() => root._keepSize(false))
-    readonly property size materialFootprint: DesktopWidgetDesign.materialFootprint(root.materialSize)
-    // A free footprint (set with the handles) wins over the class's; S, M or L clears it.
-    readonly property real _freeWidth: Number(root._readConfigKey("materialWidth") ?? 0) || 0
-    readonly property real _freeHeight: Number(root._readConfigKey("materialHeight") ?? 0) || 0
-    readonly property bool materialFree: root.materialSized && (root._freeWidth > 0 || root._freeHeight > 0)
-    readonly property real materialWidth: Math.round((root._freeWidth > 0 ? root._freeWidth : root.materialFootprint.width) * root._baseScale)
-    readonly property real materialHeight: Math.round((root._freeHeight > 0 ? root._freeHeight : root.materialFootprint.height) * root._baseScale)
-    // The edit window's edge grips (MaterialWidgetOutfit) drive a free size in screen pixels at true size.
+    readonly property bool _freeAllowed: Plugins.flag(Plugins.active, "widgetFreeSize")
+    readonly property real _freeWidth: root._freeAllowed ? Number(root._readConfigKey("freeWidth") ?? 0) || 0 : 0
+    readonly property real _freeHeight: root._freeAllowed ? Number(root._readConfigKey("freeHeight") ?? 0) || 0 : 0
+    readonly property bool freeSized: root._freeWidth > 0 || root._freeHeight > 0
+    readonly property real footprintWidth: root._freeWidth > 0 ? Math.round(root._freeWidth * root._baseScale)
+        : root.sized ? root.footprintOf(root.sizeClass).width : 0
+    readonly property real footprintHeight: root._freeHeight > 0 ? Math.round(root._freeHeight * root._baseScale)
+        : root.sized ? root.footprintOf(root.sizeClass).height : 0
+    implicitWidth: root.footprintWidth
+    implicitHeight: root.footprintHeight
+    // The family's edit window drives a free size in screen pixels at true size.
     function beginFreeSize(): void {
         root._resizePreviewValues = ({})
         root._isResizing = true
@@ -2714,104 +2341,79 @@ AbstractWidget {
     function previewFreeSize(width: real, height: real): void {
         const w = Math.max(root.resizeMinWidth, Math.min(root.resizeMaxWidth, width))
         const h = Math.max(root.resizeMinHeight, Math.min(root.resizeMaxHeight, height))
-        root._resizePreviewValues = { materialWidth: Math.round(w / root._baseScale), materialHeight: Math.round(h / root._baseScale) }
+        root._resizePreviewValues = { freeWidth: Math.round(w / root._baseScale), freeHeight: Math.round(h / root._baseScale) }
     }
     function commitFreeSize(): void {
         const preview = root._resizePreviewValues
         root._isResizing = false
         root._resizePreviewValues = ({})
-        if (preview.materialWidth === undefined) return
-        root._setOutputValues({ materialWidth: preview.materialWidth, materialHeight: preview.materialHeight,
-            materialSize: root.nearestMaterialSize(preview.materialWidth, preview.materialHeight) })
+        if (preview.freeWidth === undefined) return
+        root._setOutputValues({ freeWidth: preview.freeWidth, freeHeight: preview.freeHeight,
+            sizeClass: root.nearestSize(preview.freeWidth, preview.freeHeight) })
         _makeRoomLater.restart()
     }
     function cancelFreeSize(): void {
         root._resizePreviewValues = ({})
         root._isResizing = false
     }
-    function nearestMaterialSize(width: real, height: real): string {
-        let best = root.materialSize
+    function nearestSize(width: real, height: real): string {
+        let best = root.sizeClass
         let gap = Number.POSITIVE_INFINITY
-        for (const size of root.materialSizes) {
-            const foot = DesktopWidgetDesign.materialFootprint(size)
+        for (const size of root.sizes) {
+            const foot = DesktopWidgetRegistry.footprint(size)
             const d = Math.abs(foot.width - width) + Math.abs(foot.height - height)
             if (d < gap) { gap = d; best = size }
         }
         return best
     }
-    // Widgets with their own proportions report the size their drawing takes (at the current scaleFactor);
-    // the fit keeps it inside the footprint with `materialFitPadding` around it.
-    property real materialNaturalWidth: 0
-    property real materialNaturalHeight: 0
-    property real materialFitPadding: 14
-    property real materialFitMax: 1.6
-    property bool materialFitted: false
-    readonly property bool materialFits: root.materialSized && root.materialFitted
-    property real _materialFit: 1
-    function _refitMaterial(): void {
-        if (!root.materialSized || root.materialNaturalWidth <= 0 || root.materialNaturalHeight <= 0) {
-            root._materialFit = 1
+    function commitSize(size: string): void {
+        root._resizePreviewValues = ({})
+        root._sizing = false
+        if (root.sizeChoices.includes(size) && (root.freeSized || size !== String(root._storedConfigKey("sizeClass") ?? "")))
+            root._setOutputValues(Object.assign({ sizeClass: size }, root.freeSized ? { freeWidth: 0, freeHeight: 0 } : {}))
+        _sizeSettle.restart()
+    }
+    // A drawing with its own proportions reports the size it takes (at the current scaleFactor); the fit keeps it inside
+    // the footprint with `fitPadding` around it. A face lays itself out for its size and takes no fit.
+    property real drawnWidth: 0
+    property real drawnHeight: 0
+    property real fitPadding: 14
+    property real fitMax: 1.6
+    property bool fitted: false
+    readonly property bool fits: root.fitted && root.sized && !root.irisFaced
+    property real _fit: 1
+    function _refit(): void {
+        if (!root.fits || root.drawnWidth <= 0 || root.drawnHeight <= 0) {
+            root._fit = 1
             return
         }
         // The drawing grows with the fit, so its size at fit 1 stays put and the next pass lands on the same value.
-        const unitWidth = root.materialNaturalWidth / root._materialFit
-        const unitHeight = root.materialNaturalHeight / root._materialFit
-        const pad = root.materialFitPadding * root._baseScale * 2
-        const fit = Math.max(0.4, Math.min(root.materialFitMax,
-            (root.materialWidth - pad) / unitWidth, (root.materialHeight - pad) / unitHeight))
-        if (Math.abs(fit - root._materialFit) > 0.004)
-            root._materialFit = fit
+        const unitWidth = root.drawnWidth / root._fit
+        const unitHeight = root.drawnHeight / root._fit
+        const pad = root.fitPadding * root._baseScale * 2
+        const fit = Math.max(0.4, Math.min(root.fitMax,
+            (root.footprintWidth - pad) / unitWidth, (root.footprintHeight - pad) / unitHeight))
+        if (Math.abs(fit - root._fit) > 0.004)
+            root._fit = fit
     }
-    onMaterialNaturalWidthChanged: _materialRefitLater.restart()
-    onMaterialNaturalHeightChanged: _materialRefitLater.restart()
-    onMaterialWidthChanged: _materialRefitLater.restart()
-    onMaterialHeightChanged: _materialRefitLater.restart()
-    onMaterialSizedChanged: {
-        _materialRefitLater.restart()
-        Qt.callLater(() => root._keepSize(false))
-    }
+    onDrawnWidthChanged: _refitLater.restart()
+    onDrawnHeightChanged: _refitLater.restart()
+    onFootprintWidthChanged: _refitLater.restart()
+    onFootprintHeightChanged: _refitLater.restart()
+    onFitsChanged: _refitLater.restart()
     Timer {
-        id: _materialRefitLater
+        id: _refitLater
         interval: 0
-        onTriggered: root._refitMaterial()
-    }
-    readonly property var materialSizeLabels: root.irisSizeLabels
-    readonly property bool materialSmall: root.materialSized && root.materialSize === "small"
-    readonly property bool materialLarge: root.materialSized && root.materialSize === "large"
-    property bool _materialSizing: false
-    function commitMaterialSize(size: string): void {
-        root._resizePreviewValues = ({})
-        root._materialSizing = false
-        if (root.materialSizes.includes(size) && (root.materialFree || size !== String(root._storedConfigKey("materialSize") ?? "")))
-            root._setOutputValues(Object.assign(root._sizeValues(size), root.materialFree ? { materialWidth: 0, materialHeight: 0 } : {}))
-        _materialSizeSettle.restart()
+        onTriggered: root._refit()
     }
     // a size chosen elsewhere (Settings) makes room like one chosen here; the first size it shows is no change
-    property string _shownMaterialSize: ""
-    onMaterialSizeChanged: {
-        const was = root._shownMaterialSize
-        root._shownMaterialSize = root.materialSize
-        if (was.length > 0 && root.materialSized && root._sizeSettled && !root._materialSizing)
-            _materialSizeSettle.restart()
+    property string _shownSize: ""
+    onSizeClassChanged: {
+        const was = root._shownSize
+        root._shownSize = root.sizeClass
+        if (was.length > 0 && !root._sizing)
+            _sizeSettle.restart()
     }
-    Timer {
-        id: _materialSizeSettle
-        interval: Appearance.animation.elementMove.duration + 40
-        onTriggered: {
-            if (root._isZonePlacement)
-                root.snapToZone(root.placementStrategy)
-            root._makeRoom()
-        }
-    }
-
-    readonly property real irisUnit: Math.round(170 * FamilyStyle.density * root.scaleFactor)
-    readonly property real irisGutter: Math.round(16 * FamilyStyle.density * root.scaleFactor)
-    property real irisFaceWidth: root.irisSize === "small" ? root.irisUnit : root.irisUnit * 2 + root.irisGutter
-    property real irisFaceHeight: root.irisSize === "large" ? root.irisUnit * 2 + root.irisGutter : root.irisUnit
-    // A new size glides there while arranging, as a widget does on a phone; outside the mode it is just the size.
-    Behavior on irisFaceWidth { enabled: GlobalStates.widgetEditMode; NumberAnimation { duration: 300; easing.type: Easing.OutBack; easing.overshoot: 0.7 } }
-    Behavior on irisFaceHeight { enabled: GlobalStates.widgetEditMode; NumberAnimation { duration: 300; easing.type: Easing.OutBack; easing.overshoot: 0.7 } }
-    readonly property var irisSizeLabels: ({ small: Translation.tr("Small"), medium: Translation.tr("Medium"), large: Translation.tr("Large") })
     function irisOption(key: string, fallback: var): var {
         const value = root._readConfigKey("iris." + key)
         return value === undefined || value === null ? fallback : value
@@ -2843,7 +2445,7 @@ AbstractWidget {
     }
     function commitIrisScale(percent: int): void {
         root.commitIrisValue("widgetScale", percent)
-        _irisSizeSettle.restart()
+        _sizeSettle.restart()
     }
 
     readonly property Item irisFaceView: irisFaceLoader.item
@@ -3178,7 +2780,7 @@ AbstractWidget {
         id: _zoneResnapDebounce
         interval: 100; repeat: false
         onTriggered: {
-            if (root._isZonePlacement && !root.containsPress && !root._isResizing && !root._irisSizing)
+            if (root._isZonePlacement && !root.containsPress && !root._isResizing && !root._sizing)
                 root.snapToZone(root.placementStrategy)
         }
     }
@@ -3186,7 +2788,7 @@ AbstractWidget {
         id: _geometryPlacementDebounce
         interval: 120; repeat: false
         onTriggered: {
-            if (!Config.ready || root.containsPress || root._isResizing || root._irisSizing)
+            if (!Config.ready || root.containsPress || root._isResizing || root._sizing)
                 return;
             if (root._isZonePlacement)
                 root.snapToZone(root.placementStrategy);

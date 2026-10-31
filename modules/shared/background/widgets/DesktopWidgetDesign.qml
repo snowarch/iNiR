@@ -44,27 +44,6 @@ QtObject {
         todo: { style: "instrument", instrumentRules: false }
     })
 
-    // Material's size classes: footprints on an 8 px grid, and per widget the classes it draws (default first)
-    // plus what each one sets on it (DesktopWidgetRegistry). Box widgets take the footprint as contentWidth/contentHeight.
-    readonly property int materialUnit: 176
-    readonly property int materialGap: 16
-    function materialSizesOf(widget: string): var { return DesktopWidgetRegistry.entry(widget)?.sizes ?? [] }
-    function materialFootprint(size: string): size {
-        const unit = root.materialUnit
-        return Qt.size(size === "small" ? unit : unit * 2 + root.materialGap, size === "large" ? unit * 2 + root.materialGap : unit)
-    }
-    function materialValues(widget: string, size: string): var {
-        const entry = DesktopWidgetRegistry.entry(widget)
-        if (!entry || !entry.sizes.includes(size)) return ({})
-        const values = Object.assign({}, entry[size] ?? {})
-        if (entry.box) {
-            const box = root.materialFootprint(size)
-            values.contentWidth = box.width
-            values.contentHeight = box.height
-        }
-        return values
-    }
-
     function supports(widget: string): bool { return root.instruments[widget] !== undefined }
     function values(widget: string, design: string): var {
         if (design === "instrument") return root.instruments[widget] ?? ({})

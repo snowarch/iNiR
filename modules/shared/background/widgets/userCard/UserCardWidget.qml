@@ -17,8 +17,6 @@ AbstractBackgroundWidget {
     configEntryName: "userCard"
     defaultConfig: ({
             placementStrategy: "free",
-            contentWidth: 280,
-            contentHeight: 176,
             widgetScale: 100,
             widgetOpacity: 100,
             colorMode: "auto",
@@ -38,20 +36,12 @@ AbstractBackgroundWidget {
             y: 420
         })
 
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 280) * scaleFactor)
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : Math.round(Math.max(170, Number(root._readConfigKey("contentHeight") ?? 176)) * scaleFactor)
     irisFacePart: "profile"
-    irisSizes: ["small", "medium", "large"]
-    irisDefaultSize: "medium"
     irisOptions: [
         { key: "showAvatar", raw: true, label: Translation.tr("Picture"), icon: "account_circle", fallback: true },
         { key: "showWeather", raw: true, label: Translation.tr("Weather"), icon: "partly_cloudy_day", fallback: true },
         { key: "showHostname", raw: true, label: Translation.tr("Computer name"), icon: "computer", fallback: true }
     ]
-    resizableAxes: ({
-            width: "contentWidth",
-            height: "contentHeight"
-        })
     resizeMinWidth: 240
     resizeMinHeight: 170
     needsColText: true
@@ -188,14 +178,14 @@ AbstractBackgroundWidget {
         // Small stacks the picture over the name, which then has the whole width.
         GridLayout {
             Layout.fillWidth: true
-            columns: root.materialSmall ? 1 : 2
+            columns: root.isSmall ? 1 : 2
             columnSpacing: Math.round(12 * root.scaleFactor)
             rowSpacing: Math.round(8 * root.scaleFactor)
 
             Item {
                 id: avatarContainer
                 visible: root.showAvatar
-                readonly property int size: Math.round((root.materialLarge ? 84 : 48) * root.scaleFactor)
+                readonly property int size: Math.round((root.isLarge ? 84 : 48) * root.scaleFactor)
                 Layout.preferredWidth: size
                 Layout.preferredHeight: size
                 Layout.alignment: Qt.AlignVCenter
@@ -264,11 +254,11 @@ AbstractBackgroundWidget {
 
                 StyledText {
                     Layout.fillWidth: true
-                    text: root.materialSmall || root.materialLarge ? root.username : root.userDisplay
+                    text: root.isSmall || root.isLarge ? root.username : root.userDisplay
                     elide: Text.ElideRight
                     color: root.surfaceInk
                     font.family: root.widgetTitleFamily
-                    font.pixelSize: Math.round((root.materialLarge ? Appearance.font.pixelSize.huge : Appearance.font.pixelSize.normal)
+                    font.pixelSize: Math.round((root.isLarge ? Appearance.font.pixelSize.huge : Appearance.font.pixelSize.normal)
                         * root.widgetTitleScale * root.scaleFactor)
                     font.weight: root.widgetTitleWeight
                     font.letterSpacing: root.widgetTitleTracking
@@ -287,7 +277,7 @@ AbstractBackgroundWidget {
         Rectangle {
             Layout.alignment: Qt.AlignLeft
             Layout.maximumWidth: parent.width
-            visible: root.showWeather && root.weatherLine.text !== "" && !root.materialSmall && !root.materialLarge
+            visible: root.showWeather && root.weatherLine.text !== "" && !root.isSmall && !root.isLarge
                 && root.height >= Math.round(170 * root.scaleFactor)
             implicitWidth: Math.min(parent.width,
                 weatherChip.implicitWidth + Math.round(18 * root.scaleFactor))
@@ -328,10 +318,10 @@ AbstractBackgroundWidget {
         ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: false
-            visible: root.materialLarge
+            visible: root.isLarge
             spacing: Math.round(6 * root.scaleFactor)
             Repeater {
-                model: root.materialLarge ? root.machineFacts : []
+                model: root.isLarge ? root.machineFacts : []
                 RowLayout {
                     id: fact
                     required property var modelData
@@ -373,7 +363,7 @@ AbstractBackgroundWidget {
 
         RowLayout {
             Layout.fillWidth: true
-            Layout.topMargin: root.materialLarge ? Math.round(6 * root.scaleFactor) : 0
+            Layout.topMargin: root.isLarge ? Math.round(6 * root.scaleFactor) : 0
             spacing: Math.round(6 * root.scaleFactor)
 
             RippleButton {
@@ -398,7 +388,7 @@ AbstractBackgroundWidget {
                         color: root.widgetSemanticOnContainer(root.widgetPrimaryRole)
                     }
                     StyledText {
-                        visible: !root.materialSmall
+                        visible: !root.isSmall
                         text: Translation.tr("Lock")
                         color: root.widgetSemanticOnContainer(root.widgetPrimaryRole)
                         font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
@@ -477,9 +467,9 @@ AbstractBackgroundWidget {
                 // small is the person and the session: the label, condition and keys left the name 40 px
                 Item {
                     visible: root.showAvatar
-                    Layout.preferredWidth: Math.round((root.materialSmall ? 44 : root.materialLarge ? 96 : 58) * root.scaleFactor)
+                    Layout.preferredWidth: Math.round((root.isSmall ? 44 : root.isLarge ? 96 : 58) * root.scaleFactor)
                     Layout.preferredHeight: Layout.preferredWidth
-                    Layout.alignment: root.materialSmall || root.materialLarge ? Qt.AlignTop : Qt.AlignVCenter
+                    Layout.alignment: root.isSmall || root.isLarge ? Qt.AlignTop : Qt.AlignVCenter
 
                     Rectangle {
                         id: instrumentAvatarMask
@@ -507,7 +497,7 @@ AbstractBackgroundWidget {
                     spacing: Math.round(3 * root.scaleFactor)
 
                     InstrumentLabel {
-                        visible: !root.materialSmall
+                        visible: !root.isSmall
                         text: Translation.tr("Identity / Session")
                         color: root.widgetAccentVisible
                         scaleFactor: root.scaleFactor
@@ -519,7 +509,7 @@ AbstractBackgroundWidget {
                         color: root.widgetInk
                         elide: Text.ElideRight
                         font.family: root.widgetTitleFamily
-                        font.pixelSize: Math.round((root.materialSmall ? 20 : 26) * root.scaleFactor)
+                        font.pixelSize: Math.round((root.isSmall ? 20 : 26) * root.scaleFactor)
                         font.weight: Font.Bold
                     }
                     StyledText {
@@ -541,13 +531,13 @@ AbstractBackgroundWidget {
                             scaleFactor: root.scaleFactor
                             label: Translation.tr("Session")
                             // small reads the two largest units, as the uptime widget does
-                            value: root.materialSmall ? String(DateTime.uptime).split(", ").slice(0, 2).join(" ") : DateTime.uptime
+                            value: root.isSmall ? String(DateTime.uptime).split(", ").slice(0, 2).join(" ") : DateTime.uptime
                             ink: root.widgetInk
                             muted: root.widgetInkMuted
                             family: root.widgetNumbersFamily
                         }
                         InstrumentField {
-                            visible: root.showWeather && root.weatherLine.text !== "" && !root.materialSmall
+                            visible: root.showWeather && root.weatherLine.text !== "" && !root.isSmall
                             Layout.fillWidth: true
                             Layout.alignment: Qt.AlignTop
                             scaleFactor: root.scaleFactor
@@ -562,7 +552,7 @@ AbstractBackgroundWidget {
                 }
 
                 ColumnLayout {
-                    visible: !root.materialSmall
+                    visible: !root.isSmall
                     Layout.alignment: Qt.AlignVCenter
                     spacing: Math.round(5 * root.scaleFactor)
                     Repeater {

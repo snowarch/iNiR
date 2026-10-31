@@ -21,7 +21,7 @@ AbstractBackgroundWidget {
         fillOpacity: 0.7, graphFillOpacity: 0.3,
         showCpu: true, showMemory: true, showGpu: true,
         showTemp: false, showGpuTemp: false, showDisk: false, showLabels: true,
-        contentWidth: 320, contentHeight: 120, dim: 0,
+        dim: 0,
         widgetScale: 100, widgetOpacity: 100, colorMode: "auto",
         showBackground: true, useBlur: false, showBorder: true,
         backgroundOpacity: 0.16, borderWidth: 1, borderOpacity: 0.2,
@@ -32,40 +32,22 @@ AbstractBackgroundWidget {
     // a band of small meters in the middle of it
     readonly property int meterColumns: {
         const count = Math.max(1, root._resourceModel.length)
-        if (!root.materialSized)
-            return Math.max(1, Math.min(count, Math.floor((root.implicitWidth + 10 * root.scaleFactor) / (110 * root.scaleFactor))))
         const gap = 10 * root.scaleFactor, inner = 28 * root.scaleFactor
         let best = 1, bestSide = 0
         for (let columns = 1; columns <= count; ++columns) {
             const rows = Math.ceil(count / columns)
-            const side = Math.min((root.materialHeight - inner - gap * (rows - 1)) / rows, (root.materialWidth - inner - gap * (columns - 1)) / columns)
+            const side = Math.min((root.footprintHeight - inner - gap * (rows - 1)) / rows, (root.footprintWidth - inner - gap * (columns - 1)) / columns)
             if (side > bestSide + 0.5) { best = columns; bestSide = side }
         }
         return best
     }
     // too small for a meter each (small with three or more): a ledger, a row per reading
-    readonly property bool meterLedger: root.materialSmall && root._resourceModel.length > 2
+    readonly property bool meterLedger: root.isSmall && root._resourceModel.length > 2
     readonly property int meterRows: Math.ceil(root._resourceModel.length / root.meterColumns)
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 320) * scaleFactor)
-    implicitHeight: {
-        if (root.irisFaced)
-            return root.irisFaceHeight;
-        if (root.materialSized)
-            return root.materialHeight;
-        const stored = Math.round(Number(root._readConfigKey("contentHeight") ?? 120) * scaleFactor);
-        if (root.displayMode === "tiles")
-            return Math.max(stored, root._tilesMinHeight);
-        if (root.displayMode === "instrument")
-            return Math.max(stored, Math.round((root.meterRows * 110 + 20) * root.scaleFactor));
-        return stored;
-    }
-
     visibleWhenLocked: false
     needsColText: true
     irisFacePart: "vitals"
     designFaceKey: "widgetVitals"
-    irisSizes: ["small", "medium", "large"]
-    irisDefaultSize: "medium"
     irisOptions: [
         { key: "showCpu", raw: true, label: Translation.tr("CPU"), icon: "memory", fallback: true },
         { key: "showMemory", raw: true, label: Translation.tr("Memory"), icon: "storage", fallback: true },
@@ -74,7 +56,6 @@ AbstractBackgroundWidget {
         { key: "showGpuTemp", raw: true, label: Translation.tr("GPU heat"), icon: "device_thermostat", fallback: false },
         { key: "showDisk", raw: true, label: Translation.tr("Disk"), icon: "hard_drive", fallback: false }
     ]
-    resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
     resizeMinWidth: root.displayMode === "tiles" ? 100
         : root.displayMode === "instrument" ? 150 : 120
     resizeMinHeight: root.displayMode === "tiles" ? 100
@@ -271,7 +252,7 @@ AbstractBackgroundWidget {
 
     // ── Style tokens ──
     readonly property real cardRadius: root.widgetCardRadius
-    readonly property int _innerMargin: root.materialSized ? Math.round(14 * root.scaleFactor) : Appearance.angelEverywhere || Appearance.inirEverywhere ? 6 : 2
+    readonly property int _innerMargin: Math.round(14 * root.scaleFactor)
 
     // Rings/bars/text reuse the same categorical palette as Tiles. The wallpaper
     // already generated these semantic roles, so position analysis must not invent
@@ -648,7 +629,7 @@ AbstractBackgroundWidget {
                         readonly property real _liveValue: root._getValue(modelData.key)
                         readonly property color _liveColor: root._getColor(modelData.key)
                         // Sized: the type grows with the row and the bar stays a bar, not a slab.
-                        readonly property real big: root.materialSized ? Math.min(barsBody.height / Math.max(1, root._resourceModel.length) * 0.42, 26 * root.scaleFactor) : 0
+                        readonly property real big: Math.min(barsBody.height / Math.max(1, root._resourceModel.length) * 0.42, 26 * root.scaleFactor)
                         MaterialSymbol {
                             visible: root.showLabels
                             text: barRow.modelData.icon

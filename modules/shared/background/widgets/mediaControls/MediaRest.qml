@@ -20,7 +20,7 @@ Item {
     readonly property bool known: String(root.last.title ?? "").length > 0 && MprisController.lastPlayedApp() !== null
     TapHandler { onTapped: MprisController.resumeLast() }
     HoverHandler { cursorShape: Qt.PointingHandCursor }
-    readonly property string size: root.widget.materialSize
+    readonly property string size: root.widget.sizeClass
     readonly property real s: root.widget.scaleFactor
     function px(value: real): int { return Math.round(value * root.s) }
     readonly property color ink: root.widget.widgetInk

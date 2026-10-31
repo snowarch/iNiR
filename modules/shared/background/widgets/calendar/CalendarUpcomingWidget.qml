@@ -17,7 +17,7 @@ AbstractBackgroundWidget {
     configEntryName: "calendarUpcoming"
     defaultConfig: ({
         placementStrategy: "free",
-        contentWidth: 280, contentHeight: 240,
+        
         maxEvents: 5,
         showDate: true,
         showTime: true,
@@ -31,13 +31,7 @@ AbstractBackgroundWidget {
         x: 80, y: 80
     })
 
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 280)
-        * root.scaleFactor)
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : Math.round(Number(root._readConfigKey("contentHeight") ?? 240)
-        * root.scaleFactor)
     irisFacePart: "agenda"
-    irisSizes: ["small", "medium", "large"]
-    irisDefaultSize: "medium"
     irisOptions: [
         { key: "groupByDay", raw: true, label: Translation.tr("Group by day"), icon: "event_list", fallback: true },
         { key: "showLocation", raw: true, label: Translation.tr("Location"), icon: "location_on", fallback: false }
@@ -45,7 +39,6 @@ AbstractBackgroundWidget {
 
     visibleWhenLocked: true
     needsColText: true
-    resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
     resizeMinWidth: 200
     resizeMinHeight: 120
     resizeMaxWidth: 600
@@ -53,7 +46,7 @@ AbstractBackgroundWidget {
 
     readonly property int maxEvents: Number(root._readConfigKey("maxEvents") ?? 5)
     // Type follows the room: large kept small's sizes and left half its plate empty (10-30 gallery).
-    readonly property real roomScale: root.materialLarge ? 1.3 : 1
+    readonly property real roomScale: root.isLarge ? 1.3 : 1
     readonly property bool showDate: root._readConfigKey("showDate") ?? true
     readonly property bool showTime: root._readConfigKey("showTime") ?? true
     readonly property bool showLocation: root._readConfigKey("showLocation") ?? false

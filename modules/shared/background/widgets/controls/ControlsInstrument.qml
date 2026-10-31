@@ -22,7 +22,7 @@ Item {
     readonly property color muted: root.widget.widgetInkMuted
     readonly property color accent: root.widget.widgetAccentVisible
     readonly property var monitor: Brightness.getMonitorForScreen(root.QsWindow?.window?.screen ?? null)
-    readonly property string size: String(root.widget.irisSize ?? "medium")
+    readonly property string size: String(root.widget.sizeClass ?? "medium")
 
     readonly property var channels: {
         const list = [

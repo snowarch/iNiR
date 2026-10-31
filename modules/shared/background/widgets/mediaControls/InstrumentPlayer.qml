@@ -34,7 +34,7 @@ Item {
     }
 
     // Small stacks the cover beside its words and the transport under both; large gives the cover the room.
-    readonly property string size: root.widget.materialSized ? root.widget.materialSize : "medium"
+    readonly property string size: root.widget.sizeClass
     readonly property bool small: root.size === "small"
     readonly property bool large: root.size === "large"
     readonly property real coverSize: Math.round((root.small ? 52 : root.large ? 148 : 84) * root.s)

@@ -13,7 +13,7 @@ AbstractBackgroundWidget {
 
     configEntryName: "uptime"
     defaultConfig: ({
-        placementStrategy: "free", contentWidth: 250, contentHeight: 96,
+        placementStrategy: "free", 
         widgetScale: 100, widgetOpacity: 100, colorMode: "auto", dim: 0,
         style: "row", showSince: true, showBreakdown: true,
         showBackground: true, showBorder: true, backgroundOpacity: 0.16,
@@ -37,17 +37,10 @@ AbstractBackgroundWidget {
     // Session day is an ordinal; elapsed duration remains the primary value.
     readonly property int sessionDay: Math.max(1, Math.floor(root.sessionSeconds / 86400) + 1)
 
-    readonly property int rowWidth: Math.round(Number(root._readConfigKey("contentWidth") ?? 250) * scaleFactor)
-    readonly property int rowHeight: Math.round(Number(root._readConfigKey("contentHeight") ?? 96) * scaleFactor)
-    // Preserve the saved row dimensions when switching presentation.
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : root.instrument ? Math.max(root.rowWidth, Math.round(260 * scaleFactor)) : root.rowWidth
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : root.instrument ? Math.max(root.rowHeight, Math.round(130 * scaleFactor)) : root.rowHeight
     irisFacePart: "uptime"
-    irisSizes: ["small", "medium", "large"]
     irisOptions: [
         { key: "showSince", raw: true, label: Translation.tr("Start time"), icon: "login", fallback: true }
     ]
-    resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
     resizeMinWidth: root.instrument ? Math.round(260 * scaleFactor) : 190
     resizeMinHeight: root.instrument ? Math.round(130 * scaleFactor) : 76
     needsColText: true
@@ -128,14 +121,14 @@ AbstractBackgroundWidget {
         sourceComponent: Item {
             UptimeDay {
                 anchors.fill: parent
-                visible: !root.irisFaced && !root.instrument && root.materialSized && !root.materialSmall
+                visible: !root.irisFaced && !root.instrument && !root.isSmall
                 widget: root
-                large: root.materialLarge
+                large: root.isLarge
             }
         }
     }
     ColumnLayout {
-        visible: !root.irisFaced && !root.instrument && root.materialSmall
+        visible: !root.irisFaced && !root.instrument && root.isSmall
         anchors.fill: parent
         anchors.margins: Math.round(16 * root.scaleFactor)
         spacing: Math.round(2 * root.scaleFactor)
@@ -201,7 +194,7 @@ AbstractBackgroundWidget {
         sourceComponent: Item {
             RowLayout {
                 opacity: root.instrument ? 0 : 1
-                visible: !root.irisFaced && !root.materialSized && opacity > 0
+                visible: !root.irisFaced && !opacity > 0
                 enabled: !root.instrument
                 Behavior on opacity {
                     enabled: root.animationsActive
@@ -269,8 +262,8 @@ AbstractBackgroundWidget {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.top: parent.top
-                    height: root.materialLarge ? implicitHeight : parent.height
-                    columns: root.materialSmall ? 1 : 3
+                    height: root.isLarge ? implicitHeight : parent.height
+                    columns: root.isSmall ? 1 : 3
                     columnSpacing: Math.round(12 * root.scaleFactor)
                     rowSpacing: Math.round(8 * root.scaleFactor)
 
@@ -285,7 +278,7 @@ AbstractBackgroundWidget {
 
                             InstrumentLabel {
                                 Layout.fillWidth: true
-                                text: root.materialSmall ? Translation.tr("Uptime") : Translation.tr("System / Uptime")
+                                text: root.isSmall ? Translation.tr("Uptime") : Translation.tr("System / Uptime")
                                 color: root.widgetAccentVisible
                                 scaleFactor: root.scaleFactor
                                 strong: true
@@ -295,7 +288,7 @@ AbstractBackgroundWidget {
                         StyledText {
                             Layout.fillWidth: true
                             verticalAlignment: Text.AlignVCenter
-                            text: root.materialSmall ? root.materialParts.map(part => part.value + part.unit).join(" ") : DateTime.uptime || "--"
+                            text: root.isSmall ? root.materialParts.map(part => part.value + part.unit).join(" ") : DateTime.uptime || "--"
                             color: root.widgetInk
                             elide: Text.ElideRight
                             fontSizeMode: Text.Fit
@@ -309,7 +302,7 @@ AbstractBackgroundWidget {
                     }
 
                     Rectangle {
-                        visible: root.showInstrumentDetails && !root.materialSmall
+                        visible: root.showInstrumentDetails && !root.isSmall
                         Layout.alignment: Qt.AlignVCenter
                         Layout.preferredHeight: Math.round(58 * root.scaleFactor)
                         Layout.preferredWidth: Math.max(1, Math.round(root.scaleFactor))
@@ -319,11 +312,11 @@ AbstractBackgroundWidget {
                     ColumnLayout {
                         visible: root.showInstrumentDetails
                         Layout.preferredWidth: Math.max(84, Math.round(96 * root.scaleFactor))
-                        Layout.fillWidth: root.materialSmall
+                        Layout.fillWidth: root.isSmall
                         Layout.alignment: Qt.AlignVCenter
                         spacing: Math.round(5 * root.scaleFactor)
 
-                        Item { Layout.fillHeight: true; visible: !root.materialSmall }
+                        Item { Layout.fillHeight: true; visible: !root.isSmall }
 
                         StyledText {
                             visible: root.showBreakdown
@@ -343,13 +336,13 @@ AbstractBackgroundWidget {
                             scaleFactor: root.scaleFactor
                         }
 
-                        Item { Layout.fillHeight: true; visible: !root.materialSmall }
+                        Item { Layout.fillHeight: true; visible: !root.isSmall }
                     }
                 }
 
                 // Large: the day in 24 ticks, the hours it has been on lit, and the session's facts under them.
                 ColumnLayout {
-                    visible: root.materialLarge
+                    visible: root.isLarge
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.bottom: parent.bottom

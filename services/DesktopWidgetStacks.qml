@@ -25,7 +25,7 @@ Singleton {
 
     readonly property var sharedKeys: ({
         "x": true, "y": true, "placementStrategy": true, "widgetScale": true, "locked": true,
-        "iris.size": true, "iris.material": true, "iris.opacity": true, "cornerRadius": true
+        "sizeClass": true, "iris.material": true, "iris.opacity": true, "cornerRadius": true
     })
     readonly property var sizeOrder: ["small", "medium", "large"]
     readonly property var intervals: [10, 20, 30, 60, 300]
@@ -194,9 +194,9 @@ Singleton {
         }
         const key = root.prefix + id
         for (const record of (Config.options?.background?.widgets?.outputOverrides ?? [])) {
-            const size = record?.widgets?.[key]?.["iris.size"]
+            const size = record?.widgets?.[key]?.["sizeClass"]
             if (size !== undefined && fit(size) !== size)
-                DesktopWidgetLayout.setValue(String(record.output), key, "iris.size", fit(size))
+                DesktopWidgetLayout.setValue(String(record.output), key, "sizeClass", fit(size))
         }
         if (stack.size.length > 0 && fit(stack.size) !== stack.size)
             root._patch(id, { size: fit(stack.size) })
@@ -337,8 +337,8 @@ Singleton {
         const facts = root.reported[anchor]
         for (const output of root._outputs()) {
             const values = root._effective(output, anchor)
-            if (values["iris.size"] === undefined && facts?.size)
-                values["iris.size"] = facts.size
+            if (values["sizeClass"] === undefined && facts?.size)
+                values["sizeClass"] = facts.size
             DesktopWidgetLayout.setValues(output, root.prefix + id, values)
         }
         const list = root.stacks.slice()

@@ -9,22 +9,18 @@ import qs.modules.shared.background.widgets
 AbstractBackgroundWidget {
     id: root
     configEntryName: "dateBadge"
-    defaultConfig: ({ placementStrategy: "free", contentWidth: 220, contentHeight: 140,
+    defaultConfig: ({ placementStrategy: "free", 
         style: "ticket", showYear: true, showWeekday: true, showOrdinal: true,
         instrumentMarks: true, widgetScale: 100, widgetOpacity: 100,
         colorMode: "auto", dim: 0, showBackground: true, showBorder: true,
         backgroundOpacity: 0.16, borderWidth: 1, borderOpacity: 0.2,
         cornerRadius: -1, useBlur: false, x: 260, y: 80 })
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : Math.max(140, Number(root._readConfigKey("contentWidth") ?? 220)) * scaleFactor
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : Math.max(120, Number(root._readConfigKey("contentHeight") ?? 140)) * scaleFactor
     irisFacePart: "date"
-    irisSizes: ["small", "medium", "large"]
     irisOptions: [
         { key: "showWeekday", raw: true, label: Translation.tr("Weekday"), icon: "calendar_view_week", fallback: true },
         { key: "showYear", raw: true, label: Translation.tr("Year"), icon: "event", fallback: true },
         { key: "showOrdinal", raw: true, label: Translation.tr("Day of the year"), icon: "linear_scale", fallback: true }
     ]
-    resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
     resizeMinWidth: 140
     resizeMinHeight: 120
     needsColText: true
@@ -36,7 +32,7 @@ AbstractBackgroundWidget {
     readonly property bool instrument: root.badgeStyle === "instrument"
     readonly property date today: DateTime.clock.date
     readonly property bool horizontal: root.badgeStyle === "ticket" && root.width >= 200 * root.scaleFactor
-        && !root.materialLarge
+        && !root.isLarge
     readonly property int dayOfYear: {
         // Calendar ordinal must not drift by one when the local timezone crosses
         // a DST boundary. Compare UTC midnights, not elapsed local milliseconds.
@@ -130,16 +126,16 @@ AbstractBackgroundWidget {
                 id: dayNumber
                 visible: !root.irisFaced && !root.instrument
                 x: root.horizontal ? 10 * root.scaleFactor : 0
-                y: root.horizontal ? (root.height - height) / 2 : root.height * (root.materialLarge ? 0.08 : 0.14)
+                y: root.horizontal ? (root.height - height) / 2 : root.height * (root.isLarge ? 0.08 : 0.14)
                 width: root.horizontal ? root.width * 0.36 : root.width
-                height: root.height * (root.materialLarge ? 0.4 : 0.45)
+                height: root.height * (root.isLarge ? 0.4 : 0.45)
                 text: Qt.locale().toString(root.today, "d")
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
                 color: root.horizontal ? root.widgetSemanticOnContainer(root.widgetPrimaryRole)
                     : root.widgetAccentVisible
                 font.family: root.widgetNumbersFamily
-                font.pixelSize: Math.min(height, (root.materialLarge ? 170 : 80) * root.scaleFactor)
+                font.pixelSize: Math.min(height, (root.isLarge ? 170 : 80) * root.scaleFactor)
                 font.weight: root.widgetTitleWeight
                 fontSizeMode: Text.Fit
                 minimumPixelSize: 16
@@ -154,14 +150,14 @@ AbstractBackgroundWidget {
             ColumnLayout {
                 visible: !root.irisFaced && !root.instrument
                 x: root.horizontal ? root.width * 0.36 + 24 * root.scaleFactor : root.width * 0.14
-                y: root.horizontal ? (root.height - implicitHeight) / 2 : root.height * (root.materialLarge ? 0.49 : 0.59)
+                y: root.horizontal ? (root.height - implicitHeight) / 2 : root.height * (root.isLarge ? 0.49 : 0.59)
                 width: root.horizontal ? root.width - x - 14 * root.scaleFactor : root.width * 0.72
                 spacing: 2 * root.scaleFactor
 
                 // large's week strip names the day in its lit cell: the line would say it twice
                 StyledText {
                     Layout.fillWidth: true
-                    visible: root.showWeekday && !(root.materialLarge && !root.instrument)
+                    visible: root.showWeekday && !(root.isLarge && !root.instrument)
                     text: Translation.locale.toString(root.today, "dddd")
                     horizontalAlignment: root.horizontal ? Text.AlignLeft : Text.AlignHCenter
                     color: root.widgetInk
@@ -188,7 +184,7 @@ AbstractBackgroundWidget {
         active: !root.irisFaced
         sourceComponent: Item {
             ColumnLayout {
-                visible: !root.irisFaced && !root.instrument && root.materialLarge
+                visible: !root.irisFaced && !root.instrument && root.isLarge
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
@@ -209,7 +205,7 @@ AbstractBackgroundWidget {
                     Layout.fillWidth: true
                     spacing: Math.round(4 * root.scaleFactor)
                     Repeater {
-                        model: root.materialLarge ? 7 : 0
+                        model: root.isLarge ? 7 : 0
                         Rectangle {
                             id: weekDay
                             required property int index
@@ -271,16 +267,16 @@ AbstractBackgroundWidget {
                 GridLayout {
                     anchors.fill: parent
                     anchors.margins: Math.round(12 * root.scaleFactor)
-                    columns: root.materialSmall ? 1 : 2
+                    columns: root.isSmall ? 1 : 2
                     columnSpacing: Math.round(12 * root.scaleFactor)
                     rowSpacing: Math.round(6 * root.scaleFactor)
 
                     Item {
                         id: dateIndexHero
-                        Layout.preferredWidth: root.materialSmall ? -1 : Math.max(Math.round(74 * root.scaleFactor), parent.width * 0.42)
-                        Layout.fillWidth: root.materialSmall
-                        Layout.preferredHeight: root.materialSmall ? parent.height * 0.5 : -1
-                        Layout.fillHeight: !root.materialSmall
+                        Layout.preferredWidth: root.isSmall ? -1 : Math.max(Math.round(74 * root.scaleFactor), parent.width * 0.42)
+                        Layout.fillWidth: root.isSmall
+                        Layout.preferredHeight: root.isSmall ? parent.height * 0.5 : -1
+                        Layout.fillHeight: !root.isSmall
 
                         // Two registration corners frame the hero without becoming a card.
                         Item {
@@ -389,7 +385,7 @@ AbstractBackgroundWidget {
 
                             StyledText {
                                 visible: root.showOrdinal
-                                text: root.materialSmall ? root.dayOfYear + "/" + root.daysInYear : Translation.tr("Day") + " " + root.dayOfYear + " / " + root.daysInYear
+                                text: root.isSmall ? root.dayOfYear + "/" + root.daysInYear : Translation.tr("Day") + " " + root.dayOfYear + " / " + root.daysInYear
                                 color: root.widgetInkMuted
                                 font {
                                     family: root.widgetBodyFamily

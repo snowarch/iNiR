@@ -7,19 +7,15 @@ import qs.modules.common.widgets
 AbstractBackgroundWidget {
     id: root
     configEntryName: "editorial"
-    defaultConfig: ({ placementStrategy: "free", contentWidth: 360, contentHeight: 240,
+    defaultConfig: ({ placementStrategy: "free", 
         title: "Make room for wonder.", caption: "A LITTLE EVERY DAY", footer: "YOUR OWN PERSPECTIVE",
         style: "poster", showAccent: true, widgetScale: 100, widgetOpacity: 100,
         colorMode: "auto", dim: 0, showBackground: false, showBorder: false,
         backgroundOpacity: 0.12, borderWidth: 1, borderOpacity: 0.2,
         cornerRadius: -1, useBlur: false, x: 100, y: 300 })
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : Math.max(180, Number(root._readConfigKey("contentWidth") ?? 360)) * scaleFactor
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : Math.max(140, Number(root._readConfigKey("contentHeight") ?? 240)) * scaleFactor
     // Under an iRiS Design that prints this widget (AIRISU), the print is its face; elsewhere it draws itself.
     irisDesignPart: "widgetEditorial"
     irisDesignPrint: "editorial"
-    irisSizes: ["medium", "large", "small"]
-    resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
     resizeMinWidth: 180
     resizeMinHeight: 140
     needsColText: true

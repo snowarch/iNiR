@@ -234,9 +234,8 @@ Scope {
                 if (!canvas || typeof canvas._loadedDesktopWidgets !== "function") continue
                 for (const widget of canvas._loadedDesktopWidgets()) {
                     if (widget.configEntryName !== widgetName) continue
-                    if (widget.materialSized && widget.materialSizes.includes(size)) widget.commitMaterialSize(size)
-                    else if (!widget.materialSized && widget.irisSizeChoices.includes(size)) widget.commitIrisSize(size)
-                    else continue
+                    if (!widget.sizeChoices.includes(size)) continue
+                    widget.commitSize(size)
                     out.push(output)
                 }
             }
@@ -323,7 +322,7 @@ Scope {
                                 issues.push("'" + a.text + "' over '" + b.text + "' at " + Math.round(Math.max(a.x, b.x)) + "," + Math.round(Math.max(a.y, b.y)))
                         }
                     if (issues.length > 0)
-                        out.push({ output: output, widget: widget.configEntryName, size: widget.irisSize ?? "", issues: issues })
+                        out.push({ output: output, widget: widget.configEntryName, size: widget.sizeClass ?? "", issues: issues })
                 }
             }
             return JSON.stringify(out)

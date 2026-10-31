@@ -18,7 +18,7 @@ AbstractBackgroundWidget {
 
     configEntryName: "mascot"
     defaultConfig: ({
-        placementStrategy: "free", contentWidth: 200,
+        placementStrategy: "free",
         widgetScale: 100, widgetOpacity: 100, colorMode: "auto", dim: 0,
         showBackground: false, showBorder: false, backgroundOpacity: 0.16,
         borderWidth: 1, borderOpacity: 0.2, cornerRadius: -1, useBlur: false,
@@ -27,22 +27,9 @@ AbstractBackgroundWidget {
         x: 120, y: 320
     })
 
-    property int mascotContentSize: 200
-    function _syncMascotContentSize(): void {
-        const contentWidth = Number(root._readConfigKey("contentWidth") ?? 200)
-        const baseScale = Number(root._baseScale)
-        const next = Math.round(
-            (Number.isFinite(contentWidth) ? contentWidth : 200)
-            * (Number.isFinite(baseScale) ? baseScale : 1))
-        if (root.mascotContentSize !== next)
-            root.mascotContentSize = next
-    }
-    implicitWidth: root.materialSized ? root.materialWidth : root.mascotContentSize
-    implicitHeight: root.materialSized ? root.materialHeight : root.mascotContentSize
     // She's an image — no ink to adapt — but her optional card is the shared
     // region-aware plate, so run the analysis only while the card is on.
     needsColText: widgetHasSurface
-    resizableAxes: ({ uniform: "contentWidth" })
     resizeMinWidth: 96
     resizeMinHeight: 96
 
@@ -149,8 +136,6 @@ AbstractBackgroundWidget {
         function on_AnchorItemChanged() { root._syncToAnchor() }
         function onWidthChanged() { root._syncToAnchor() }
         function onHeightChanged() { root._syncToAnchor() }
-        function on_ResizePreviewValuesChanged() { root._syncMascotContentSize() }
-        function on_IsResizingChanged() { root._syncMascotContentSize() }
     }
     Connections {
         target: root._anchorItem
@@ -165,7 +150,6 @@ AbstractBackgroundWidget {
     Connections {
         target: Config
         function onConfigChanged() {
-            root._syncMascotContentSize()
             root._resolveAnchorItem()
             root._syncToAnchor()
         }
@@ -174,7 +158,6 @@ AbstractBackgroundWidget {
     // synchronous Config write during instantiation re-enters that binding
     // mid-evaluation (logged as a binding loop on `shown`).
     Component.onCompleted: Qt.callLater(() => {
-        root._syncMascotContentSize()
         root._resolveAnchorItem()
         root._syncToAnchor()
     })

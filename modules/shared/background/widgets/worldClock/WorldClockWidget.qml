@@ -14,8 +14,6 @@ AbstractBackgroundWidget {
     configEntryName: "worldClock"
     defaultConfig: ({
             placementStrategy: "free",
-            contentWidth: 300,
-            contentHeight: 210,
             widgetScale: 100,
             widgetOpacity: 100,
             colorMode: "auto",
@@ -39,23 +37,11 @@ AbstractBackgroundWidget {
             y: 200
         })
 
-    readonly property int listWidth: Math.round(Number(root._readConfigKey("contentWidth") ?? 300) * scaleFactor)
-    readonly property int listHeight: Math.round(Number(root._readConfigKey("contentHeight") ?? 210) * scaleFactor)
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : root.listWidth
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : root.instrument
-        ? Math.max(root.listHeight, root.instrumentHeightTarget)
-        : root.listHeight
     irisFacePart: "worldClock"
-    irisSizes: ["small", "medium", "large"]
-    irisDefaultSize: "medium"
     irisOptions: [
         { key: "showNames", raw: true, label: Translation.tr("City names"), icon: "label", fallback: true },
         { key: "showOffsets", raw: true, label: Translation.tr("Time difference"), icon: "schedule", fallback: true }
     ]
-    resizableAxes: ({
-            width: "contentWidth",
-            height: "contentHeight"
-        })
     resizeMinWidth: 240
     resizeMinHeight: root.instrument ? root.instrumentHeightTarget : 170
     needsColText: true
@@ -65,7 +51,7 @@ AbstractBackgroundWidget {
     readonly property var cities: WorldClock.entries
     readonly property bool instrument: String(root._readConfigKey("style") ?? "cards") === "instrument"
     readonly property string instrumentLayout: String(root._readConfigKey("instrumentLayout") ?? "grid")
-    readonly property bool instrumentHero: !root.materialSized || root.materialLarge
+    readonly property bool instrumentHero: root.isLarge
     readonly property bool showNames: Boolean(root._readConfigKey("showNames") ?? true)
     readonly property bool showOffsets: Boolean(root._readConfigKey("showOffsets") ?? true)
     readonly property bool showDate: Boolean(root._readConfigKey("showDate") ?? true)
@@ -236,7 +222,7 @@ AbstractBackgroundWidget {
             ColumnLayout {
                 anchors.fill: parent
                 // a sized card keeps its readings off the edge as the plated faces do
-                anchors.margins: root.materialSized ? Math.round(12 * root.scaleFactor) : 0
+                anchors.margins: Math.round(12 * root.scaleFactor)
                 opacity: root.instrument ? 1 : 0
                 visible: !root.irisFaced && opacity > 0
                 enabled: root.instrument
@@ -421,7 +407,7 @@ AbstractBackgroundWidget {
                                             StyledText {
                                                 Layout.fillWidth: true
                                                 // small has room for the offset only
-                                                visible: root.showDate && !root.materialSmall
+                                                visible: root.showDate && !root.isSmall
                                                 text: root.cityDateText(comparisonZone.cityIndex)
                                                 color: root.widgetInkMuted
                                                 elide: Text.ElideRight
@@ -452,7 +438,7 @@ AbstractBackgroundWidget {
                                         color: root.widgetInk
                                         font.family: root.widgetNumbersFamily
                                         // small leaves the city's name its room
-                                        font.pixelSize: Math.round((root.materialSmall ? 19 : 24) * root.scaleFactor)
+                                        font.pixelSize: Math.round((root.isSmall ? 19 : 24) * root.scaleFactor)
                                         font.weight: root.widgetEditorial ? Appearance.editorial.titleWeight : Font.DemiBold
                                         font.features: ({ "tnum": 1 })
                                         font.letterSpacing: -1
@@ -493,7 +479,7 @@ AbstractBackgroundWidget {
 
                                 // small gives the rule's room to the city's name
                                 Rectangle {
-                                    visible: !root.materialSmall
+                                    visible: !root.isSmall
                                     Layout.preferredWidth: index === 0
                                         ? Math.max(18, Math.round(24 * root.scaleFactor))
                                         : Math.max(10, Math.round(14 * root.scaleFactor))
@@ -531,7 +517,7 @@ AbstractBackgroundWidget {
                                         StyledText {
                                             Layout.fillWidth: true
                                             // small keeps the day's step (+1D) and drops the date it can't fit
-                                            visible: root.showDate && !root.materialSmall
+                                            visible: root.showDate && !root.isSmall
                                             text: root.cityDateText(index)
                                             color: root.widgetInkMuted
                                             elide: Text.ElideRight
@@ -561,7 +547,7 @@ AbstractBackgroundWidget {
                                     text: ledgerZone.modelData.time
                                     color: root.widgetInk
                                     font.family: root.widgetNumbersFamily
-                                    font.pixelSize: root.materialSmall ? Math.round((index === 0 ? 22 : 19) * root.scaleFactor)
+                                    font.pixelSize: root.isSmall ? Math.round((index === 0 ? 22 : 19) * root.scaleFactor)
                                         : index === 0 ? Math.max(22, Math.round(27 * root.scaleFactor))
                                         : Math.max(20, Math.round(24 * root.scaleFactor))
                                     font.weight: index === 0 && root.widgetEditorial
@@ -595,7 +581,7 @@ AbstractBackgroundWidget {
                 // small is only the cities: a row each, its name over its time
                 Rectangle {
                     Layout.alignment: Qt.AlignLeft
-                    visible: Weather.showVisibleCity && !root.materialSmall
+                    visible: Weather.showVisibleCity && !root.isSmall
                     implicitWidth: localChip.implicitWidth + Math.round(18 * root.scaleFactor)
                     implicitHeight: localChip.implicitHeight + Math.round(8 * root.scaleFactor)
                     radius: root.widgetEditorial ? root.widgetControlRadius : height / 2
@@ -625,14 +611,14 @@ AbstractBackgroundWidget {
 
                 StyledText {
                     Layout.fillWidth: true
-                    visible: !root.materialSmall
+                    visible: !root.isSmall
                     text: DateTime.time || "--:--"
                     color: root.surfaceInk
                     elide: Text.ElideRight
                     font {
                         family: root.widgetNumbersFamily
                         // here leads: never smaller than the cities' times under it
-                        pixelSize: Math.round((root.materialLarge ? 40 : Appearance.font.pixelSize.huge) * root.scaleFactor)
+                        pixelSize: Math.round((root.isLarge ? 40 : Appearance.font.pixelSize.huge) * root.scaleFactor)
                         weight: Font.DemiBold
                     }
                 }
@@ -640,7 +626,7 @@ AbstractBackgroundWidget {
                 StyledText {
                     Layout.fillWidth: true
                     // a short card spends its height on the cities; the date put the last of them past the edge
-                    visible: root.height >= Math.round(200 * root.scaleFactor) && !root.materialSmall
+                    visible: root.height >= Math.round(200 * root.scaleFactor) && !root.isSmall
                     text: Translation.locale.toString(WorldClock.now, "dddd, MMMM d yyyy")
                     color: root.widgetInkMuted
                     elide: Text.ElideRight
@@ -660,7 +646,7 @@ AbstractBackgroundWidget {
                     // a wide card lays its cities in one row; two rows of tiles ran past a medium card, and an odd count
                     // in two columns left a hole
                     columns: root.width > root.height * 1.5 ? Math.min(4, Math.max(1, root.cities.length))
-                        : root.materialSmall || root.cities.length % 2 === 1 ? 1 : 2
+                        : root.isSmall || root.cities.length % 2 === 1 ? 1 : 2
                     columnSpacing: Math.round(6 * root.scaleFactor)
                     rowSpacing: Math.round(6 * root.scaleFactor)
 

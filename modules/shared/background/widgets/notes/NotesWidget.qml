@@ -16,7 +16,7 @@ AbstractBackgroundWidget {
     configEntryName: "notes"
     defaultConfig: ({
         placementStrategy: "free",
-        contentWidth: 240, contentHeight: 160,
+        
         text: "",
         fontSize: 14,
         fontFamily: "sans",
@@ -30,17 +30,10 @@ AbstractBackgroundWidget {
         x: 80, y: 80
     })
 
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 240)
-        * root.scaleFactor)
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : Math.round(Number(root._readConfigKey("contentHeight") ?? 160)
-        * root.scaleFactor)
     irisFacePart: "notes"
-    irisSizes: ["small", "medium", "large"]
-    irisDefaultSize: "medium"
 
     visibleWhenLocked: false
     needsColText: true
-    resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
     resizeMinWidth: 120
     resizeMinHeight: 80
     resizeMaxWidth: 800
@@ -283,8 +276,8 @@ AbstractBackgroundWidget {
     Flickable {
         id: editorFlick
         anchors.fill: parent
-        anchors.margins: root.irisFaced ? root.irisGutter : Math.round(14 * root.scaleFactor)
-        anchors.topMargin: root.irisFaced ? Math.round(root.irisGutter * 2.75)
+        anchors.margins: root.irisFaced ? root.sizeGutter : Math.round(14 * root.scaleFactor)
+        anchors.topMargin: root.irisFaced ? Math.round(root.sizeGutter * 2.75)
             : noteHeading.visible ? noteHeading.y + noteHeading.height + 10 * root.scaleFactor : anchors.margins
         clip: true
         contentWidth: width

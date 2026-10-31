@@ -26,7 +26,7 @@ AbstractBackgroundWidget {
         organicCompression: 0,
         barCount: 48, barSpacing: 2, barRadius: 2, barMinHeight: 1,
         lineWidth: 2, edgeInset: 0, edgeSoftness: 28, accentStrength: 70,
-        contentWidth: 304, contentHeight: 104, dim: 0,
+        dim: 0,
         widgetScale: 100, widgetOpacity: 100, colorMode: "auto",
         // A visualizer is drawn on the wallpaper itself: a plate and an outline only box the music in.
         showBackground: false, useBlur: false, showBorder: false,
@@ -34,19 +34,15 @@ AbstractBackgroundWidget {
         cornerRadius: -1, x: 100, y: 100
     })
 
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : Math.round(Number(root._readConfigKey("contentWidth") ?? 304) * scaleFactor)
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : Math.round(Number(root._readConfigKey("contentHeight") ?? 104) * scaleFactor)
     // Under an iRiS Design that prints this widget (AIRISU), the print is its face; elsewhere it draws itself.
     irisDesignPart: "widgetVisualizer"
     irisDesignPrint: "visualizer"
-    irisSizes: ["medium", "small", "large"]
     // What a print reads: the spectrum, whether it is moving, and its ceiling.
     readonly property var printPoints: cavaProcess.points
     readonly property bool printLive: root._active && cavaProcess.audioSignalActive
 
     visibleWhenLocked: false
     needsColText: true
-    resizableAxes: ({ width: "contentWidth", height: "contentHeight" })
     resizeMinWidth: 120
     resizeMinHeight: 48
 

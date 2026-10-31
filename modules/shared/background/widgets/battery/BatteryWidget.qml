@@ -25,20 +25,16 @@ AbstractBackgroundWidget {
         cornerRadius: -1, x: 50, y: 50
     })
 
-    implicitWidth: root.irisFaced ? root.irisFaceWidth : root.materialSized ? root.materialWidth : Math.round((root.displayMode === "instrument" ? 220 : 160) * scaleFactor)
-    materialFitted: true
-    materialNaturalWidth: Math.round((root.displayMode === "instrument" ? 220 : 160) * scaleFactor)
-    implicitHeight: root.irisFaced ? root.irisFaceHeight : root.materialSized ? root.materialHeight : Math.round((root.displayMode === "instrument" ? 140 : 104) * scaleFactor)
-    materialNaturalHeight: Math.round((root.displayMode === "instrument" ? 140 : 104) * scaleFactor)
+    fitted: true
+    drawnWidth: Math.round((root.displayMode === "instrument" ? 220 : 160) * scaleFactor)
+    drawnHeight: Math.round((root.displayMode === "instrument" ? 140 : 104) * scaleFactor)
     irisFacePart: "battery"
-    irisSizes: ["small", "medium", "large"]
     irisOptions: [
         { key: "showTime", raw: true, label: Translation.tr("Time remaining"), icon: "timer", fallback: true }
     ]
 
     visibleWhenLocked: true
     needsColText: true
-    resizableAxes: ({ uniform: "widgetScale" })
     resizeMinWidth: 40
     resizeMinHeight: 40
 
