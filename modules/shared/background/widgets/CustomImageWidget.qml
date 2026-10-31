@@ -659,13 +659,32 @@ AbstractBackgroundWidget {
             }
         }
 
-        MaterialSymbol {
+        // empty, it says what goes here and how, like the iRiS face; a picture that failed names itself
+        ColumnLayout {
             anchors.centerIn: parent
+            width: Math.round(Math.min(root.renderedWidth, root.renderedHeight) * 0.7)
             visible: !root._hosted && (root.currentPath.length === 0 || root.activeFailed)
-            text: root.activeFailed ? "broken_image" : (root.dropHover ? "download" : "perm_media")
-            fill: root.dropHover ? 1 : 0
-            iconSize: Math.max(28, Math.round(Math.min(root.renderedWidth, root.renderedHeight) * 0.24))
-            color: root.widgetSemanticOnContainer(root.widgetPrimaryRole)
+            spacing: Math.round(6 * root.scaleFactor)
+            MaterialSymbol {
+                Layout.alignment: Qt.AlignHCenter
+                text: root.activeFailed ? "broken_image" : (root.dropHover ? "download" : "perm_media")
+                fill: root.dropHover ? 1 : 0
+                iconSize: Math.max(24, Math.round(Math.min(root.renderedWidth, root.renderedHeight) * 0.2))
+                color: root.widgetSemanticOnContainer(root.widgetPrimaryRole)
+            }
+            StyledText {
+                Layout.fillWidth: true
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.Wrap
+                maximumLineCount: 3
+                elide: Text.ElideRight
+                text: root.dropHover ? Translation.tr("Drop to show it")
+                    : root.activeFailed ? root.currentName
+                    : Translation.tr("Drop a picture or a folder here")
+                color: root.widgetSemanticOnContainer(root.widgetPrimaryRole)
+                font.pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
+                font.weight: Font.Medium
+            }
         }
 
         MaterialShape {
