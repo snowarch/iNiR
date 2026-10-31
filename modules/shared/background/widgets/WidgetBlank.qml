@@ -22,18 +22,21 @@ Item {
 
     readonly property real s: root.widget.scaleFactor
     readonly property bool roomy: root.height >= 120 * root.s && root.width >= 150 * root.s
+    // a short wide box (medium) gives its height to the words: the full mark pushed a two-line detail onto the
+    // plate's foot in a mono style
+    readonly property bool tall: root.height >= 200 * root.s
     readonly property color face: root.widget.widgetSemanticContainer(root.widget.widgetPrimaryRole)
     readonly property color mark: root.widget.widgetSemanticOnContainer(root.widget.widgetPrimaryRole)
 
     ColumnLayout {
         anchors.centerIn: parent
         width: Math.min(parent.width - Math.round(24 * root.s), Math.round(300 * root.s))
-        spacing: Math.round(6 * root.s)
+        spacing: Math.round((root.tall ? 6 : 4) * root.s)
 
         Rectangle {
             Layout.alignment: Qt.AlignHCenter
-            Layout.bottomMargin: Math.round(4 * root.s)
-            implicitWidth: Math.round((root.roomy ? 44 : 36) * root.s)
+            Layout.bottomMargin: Math.round((root.tall ? 4 : 2) * root.s)
+            implicitWidth: Math.round((root.roomy && root.tall ? 44 : 36) * root.s)
             implicitHeight: implicitWidth
             radius: width / 2
             color: root.face
@@ -41,7 +44,7 @@ Item {
                 anchors.centerIn: parent
                 text: root.icon
                 fill: 1
-                iconSize: Math.round((root.roomy ? 22 : 18) * root.s)
+                iconSize: Math.round((root.roomy && root.tall ? 22 : 18) * root.s)
                 color: root.mark
             }
         }
