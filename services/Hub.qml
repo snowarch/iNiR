@@ -377,6 +377,9 @@ Singleton {
 
     Process {
         id: statusProcess
+        // The shell that asks is the one whose version decides what fits: without it the command looked only in
+        // ~/.config/quickshell/inir, read 0.0.0 for a shell run from elsewhere and called every item too new.
+        environment: ({ INIR_RUNTIME_DIR: root.launcher.replace(/\/scripts\/inir$/, "") })
         stdout: StdioCollector {
             id: statusOut
             onStreamFinished: {
@@ -431,7 +434,7 @@ Singleton {
     Process {
         id: actionProcess
         // It reads the catalogue again itself; no `hub changed` call back into this shell.
-        environment: ({ INIR_HUB_FROM_SHELL: "1" })
+        environment: ({ INIR_HUB_FROM_SHELL: "1", INIR_RUNTIME_DIR: root.launcher.replace(/\/scripts\/inir$/, "") })
         stdout: StdioCollector {
             id: actionOut
             onStreamFinished: {
