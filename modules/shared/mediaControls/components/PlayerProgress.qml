@@ -38,6 +38,10 @@ Item {
     readonly property bool waveAnimationActive: root.motion && root.enableWavy && root.isPlaying
         && root.visible && Appearance.animationsEnabled
     property real displayedProgress: progressValue
+    // These styles' track tokens are their plate's own layer: the length sank into it (1.04-1.17:1 on a widget). A
+    // tint of the fill stands about 2:1 off any plate, light or dark, and still reads as the same line.
+    readonly property bool trackSinks: Appearance.auroraEverywhere || Appearance.regaliaEverywhere
+        || Appearance.editorialEverywhere || Appearance.angelEverywhere || Appearance.inirEverywhere
 
     Behavior on displayedProgress {
         enabled: Appearance.animationsEnabled && root.isPlaying && root.motion
@@ -57,7 +61,7 @@ Item {
         wavy: root.enableWavy && root.isPlaying
         animateWave: root.waveAnimationActive
         highlightColor: root.highlightColor
-        trackColor: root.trackColor
+        trackColor: root.trackSinks ? ColorUtils.applyAlpha(root.highlightColor, 0.3) : root.trackColor
         handleColor: root.highlightColor
         value: root.displayedProgress
         onMoved: {
