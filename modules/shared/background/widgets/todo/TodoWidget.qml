@@ -75,7 +75,9 @@ AbstractBackgroundWidget {
     readonly property color tertiaryFace: root.widgetSemanticContainer(root.widgetTertiaryRole)
     readonly property color tertiaryInk: root.widgetSemanticOnContainer(root.widgetTertiaryRole)
     readonly property real inset: Math.round(12 * root.scaleFactor)
-    readonly property real itemHeight: Math.round((root.materialSmall ? 36 : 48) * root.scaleFactor)
+    // medium holds two whole rows under its head: at 48 the second missed its room by 4 px and the card said
+    // "2 tasks left" over one
+    readonly property real itemHeight: Math.round((root.materialSmall ? 36 : root.materialSized && !root.materialLarge ? 44 : 48) * root.scaleFactor)
     readonly property real taskFontSize: Math.round((root.materialSmall ? Appearance.font.pixelSize.small : Appearance.font.pixelSize.normal) * root.scaleFactor)
 
     function openNewTask(): void {
@@ -114,20 +116,13 @@ AbstractBackgroundWidget {
         onTriggered: root.clearCompletedArmed = false
     }
 
+    // every task wears one tone: a colour per position said nothing, and the add key is the one primary
     function taskFace(index: int): color {
-        switch (index % 3) {
-        case 0: return root.tertiaryFace
-        case 1: return root.secondaryFace
-        default: return root.primaryFace
-        }
+        return root.secondaryFace
     }
 
     function taskInk(index: int): color {
-        switch (index % 3) {
-        case 0: return root.tertiaryInk
-        case 1: return root.secondaryInk
-        default: return root.primaryInk
-        }
+        return root.secondaryInk
     }
 
     Connections {
@@ -261,7 +256,7 @@ AbstractBackgroundWidget {
                     StyledText {
                         Layout.fillWidth: true
                         visible: !root.instrument
-                        text: Translation.tr("Todo")
+                        text: Translation.tr("Tasks")
                         color: root.ink
                         font.family: root.widgetTitleFamily
                         font.pixelSize: Math.round((root.materialSmall ? Appearance.font.pixelSize.larger : Appearance.font.pixelSize.huge)
