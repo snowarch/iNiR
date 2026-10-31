@@ -70,6 +70,25 @@ QtObject {
             : ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, hovered ? 0.1 : 0.055)
     }
 
+    // What single widgets ask of a look: room inside a clipped frame, depth under raised shapes, an edge on a shaped pill,
+    // what a player's glass reads as over the wallpaper.
+    property real clipInset: 0
+    property bool glassPlates: false
+    property bool softDepth: true
+    property bool tileDepth: true
+    property bool flatFaces: false
+    property color tagHover: Appearance.colors.colSecondaryContainerHover
+    property color onAccentContainer: Appearance.colors.colOnPrimaryContainer
+    property bool ornaments: true
+    property string serifFamily: "serif"
+    property real cardInset: 20
+    property Component tilePlate: null
+    property color pillRing: "transparent"
+    property real pillRingWidth: 0
+    function emphasisWeight(weight: int): int { return weight }
+    function labelTracking(pixelSize: real): real { return pixelSize * 0.08 }
+    function glassOver(backdrop: color): color { return Appearance.colors.colLayer0 }
+
     // What resetting a widget also clears, and the verbs over a shared widget material, where the family has one.
     function resetValues(widget: var): var { return ({}) }
     function materialAction(action: string): string { return "This family has no shared widget material" }

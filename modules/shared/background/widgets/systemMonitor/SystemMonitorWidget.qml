@@ -984,16 +984,15 @@ AbstractBackgroundWidget {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         radius: root.cardRadius
-                        color: Appearance.regaliaEverywhere ? "transparent" : tile.role.bg
+                        color: root.look.tilePlate ? "transparent" : tile.role.bg
 
-                        RegaliaPlate {
+                        Loader {
+                            readonly property real plateRadius: tile.radius
+                            readonly property color plateFill: tile.role.bg
                             anchors.fill: parent
                             z: -1
-                            visible: Appearance.regaliaEverywhere
-                            radius: tile.radius
-                            fillColor: tile.role.bg
-                            inset: Appearance.regalia.surfaceInset
-                            elevated: true
+                            active: root.look.tilePlate !== null
+                            sourceComponent: root.look.tilePlate
                         }
 
                         Behavior on color {
@@ -1008,8 +1007,7 @@ AbstractBackgroundWidget {
                         StyledRectangularShadow {
                             target: tile
                             z: -2
-                            visible: !root.familyDesign && !Appearance.zzzEverywhere && !Appearance.inirEverywhere
-                                && !Appearance.regaliaEverywhere
+                            visible: !root.familyDesign && root.look.tileDepth
                         }
 
                         ColumnLayout {

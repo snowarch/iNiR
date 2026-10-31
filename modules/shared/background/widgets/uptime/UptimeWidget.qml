@@ -273,7 +273,7 @@ AbstractBackgroundWidget {
                             minimumPixelSize: Math.max(20, Math.round(20 * root.scaleFactor))
                             font.family: root.widgetNumbersFamily
                             font.pixelSize: Math.round(42 * root.scaleFactor)
-                            font.weight: root.widgetEditorial ? Appearance.editorial.titleWeight : Font.Bold
+                            font.weight: root.look.emphasisWeight(Font.Bold)
                             font.features: ({ "tnum": 1 })
                             font.letterSpacing: -1
                         }

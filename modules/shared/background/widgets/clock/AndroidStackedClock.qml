@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import qs.services
 import qs.modules.common
 import qs.modules.common.widgets
+import qs.modules.shared.background.widgets
 
 ColumnLayout {
     id: root
@@ -61,7 +62,7 @@ ColumnLayout {
             pixelSize: root.labelPixelSize
             weight: Font.DemiBold
             // caps want air (Material's label tracking); the date sat on this line with none
-            letterSpacing: Appearance.zzzEverywhere ? Appearance.zzz.tracking : root.labelPixelSize * 0.08
+            letterSpacing: DesktopWidgetLook.look.labelTracking(root.labelPixelSize)
         }
     }
 

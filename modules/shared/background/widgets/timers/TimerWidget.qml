@@ -261,7 +261,7 @@ AbstractBackgroundWidget {
                 // a third of a stacked card's height left no room for the minute keys under it
                 font.pixelSize: Math.round(Math.min(timerCard.height * (timerCard.flat ? 0.2 : 0.26), timerCard.width * 0.24, 52 * root.scaleFactor))
                 font.weight: timerCard.instrumentMode
-                    ? (root.widgetEditorial ? Appearance.editorial.titleWeight : Font.Bold)
+                    ? root.look.emphasisWeight(Font.Bold)
                     : Font.Bold
                 font.family: root.widgetNumbersFamily
                 font.features: ({ "tnum": 1 })

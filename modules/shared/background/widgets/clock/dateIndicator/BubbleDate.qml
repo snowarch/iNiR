@@ -5,6 +5,7 @@ import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
 import QtQuick
+import qs.modules.shared.background.widgets
 
 Item {
     id: root
@@ -21,7 +22,7 @@ Item {
 
     StyledDropShadow {
         target: bubble
-        visible: !Appearance.zzzEverywhere
+        visible: DesktopWidgetLook.look.softDepth
     }
 
     MaterialShape {

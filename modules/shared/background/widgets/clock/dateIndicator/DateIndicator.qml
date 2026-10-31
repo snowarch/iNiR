@@ -4,6 +4,7 @@ import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.common.functions
 import QtQuick
+import qs.modules.shared.background.widgets
 
 Item {
     id: root
@@ -31,7 +32,7 @@ Item {
         }
 
         sourceComponent: RectangleDate {
-            color: ColorUtils.mix(root.color, Appearance.zzzEverywhere ? Appearance.colors.colLayer1Hover : Appearance.colors.colSecondaryContainerHover, 0.5)
+            color: ColorUtils.mix(root.color, DesktopWidgetLook.look.tagHover, 0.5)
             radius: Appearance.rounding.small
             implicitWidth: 45 * rectLoader.opacity
             implicitHeight: 30 * rectLoader.opacity

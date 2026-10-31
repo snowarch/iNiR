@@ -181,7 +181,7 @@ AbstractBackgroundWidget {
                             color: root.widgetInk
                             font.family: root.widgetNumbersFamily
                             font.pixelSize: Math.round(52 * root.scaleFactor)
-                            font.weight: root.widgetEditorial ? Appearance.editorial.titleWeight : Font.Bold
+                            font.weight: root.look.emphasisWeight(Font.Bold)
                             font.features: ({ "tnum": 1 })
                             font.letterSpacing: -0.8
                         }
@@ -236,7 +236,7 @@ AbstractBackgroundWidget {
         sourceComponent: Item {
             Item {
                 anchors.fill: parent
-                anchors.margins: Appearance.angelEverywhere || Appearance.inirEverywhere ? 4 : 0
+                anchors.margins: root.look.clipInset
                 opacity: root.displayMode === "ring" ? 1 : 0
                 visible: !root.familyFaced && !root.noBattery && opacity > 0
                 enabled: root.displayMode === "ring"
@@ -293,7 +293,7 @@ AbstractBackgroundWidget {
         sourceComponent: Item {
             Item {
                 anchors.fill: parent
-                anchors.margins: Appearance.angelEverywhere || Appearance.inirEverywhere ? 4 : 0
+                anchors.margins: root.look.clipInset
                 opacity: root.displayMode === "bars" ? 1 : 0
                 visible: !root.familyFaced && !root.noBattery && opacity > 0
                 enabled: root.displayMode === "bars"
@@ -383,7 +383,7 @@ AbstractBackgroundWidget {
         sourceComponent: Item {
             Item {
                 anchors.fill: parent
-                anchors.margins: Appearance.angelEverywhere || Appearance.inirEverywhere ? 8 : 4
+                anchors.margins: 4 + root.look.clipInset
                 opacity: root.displayMode === "pill" ? 1 : 0
                 visible: !root.familyFaced && !root.noBattery && opacity > 0
                 enabled: root.displayMode === "pill"

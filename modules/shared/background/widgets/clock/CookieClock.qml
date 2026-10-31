@@ -12,6 +12,7 @@ import Quickshell.Io
 
 import qs.modules.shared.background.widgets.clock.dateIndicator
 import qs.modules.shared.background.widgets.clock.minuteMarks
+import qs.modules.shared.background.widgets
 
 Item {
     id: root
@@ -56,8 +57,7 @@ Item {
     property color colShadow: Appearance.colors.colShadow
     property color colBackground: root._primaryContainerColor
     property color colOnBackground: root.readableOnFace(
-        Appearance.zzzEverywhere ? Appearance.zzz.onAccent
-            : Appearance.colors.colOnPrimaryContainer,
+        DesktopWidgetLook.look.onAccentContainer,
         root.colBackground)
     property color colBackgroundInfo: root.supportingOnFace(
         root.colOnBackground, root.colBackground)
@@ -134,7 +134,7 @@ Item {
     }
 
     property bool useSineCookie: Config.getNestedValue("background.widgets.clock.cookie.useSineCookie", false)
-    readonly property bool _drawFaceDirectly: Appearance.zzzEverywhere || !Appearance.effectsEnabled
+    readonly property bool _drawFaceDirectly: DesktopWidgetLook.look.flatFaces || !Appearance.effectsEnabled
     property real faceRotation: 0
     RotationAnimation on faceRotation {
         running: root.constantlyRotate && root.powerActive

@@ -16,11 +16,11 @@ AbstractBackgroundWidget {
     needsColText: true
     readonly property string composition: String(root._readConfigKey("style") ?? "poster")
     readonly property bool showAccent: Boolean(root._readConfigKey("showAccent") ?? true)
-    readonly property bool _globalEditorial: Appearance.editorialEverywhere
-    readonly property real _titleScale: root._globalEditorial ? Appearance.editorial.titleScale : 1
-    readonly property bool _ornaments: !root._globalEditorial || Appearance.editorial.ornaments
+    readonly property bool _globalEditorial: root.look.editorial
+    readonly property real _titleScale: root.look.titleScale(root)
+    readonly property bool _ornaments: root.look.ornaments
     readonly property bool centered: composition === "quote"
-    readonly property real inset: (root._globalEditorial ? Appearance.editorial.inset : 20) * scaleFactor
+    readonly property real inset: root.look.cardInset * scaleFactor
 
     Loader {
         anchors.fill: parent
@@ -64,8 +64,8 @@ AbstractBackgroundWidget {
                         font.capitalization: Font.AllUppercase
                         color: root.widgetAccentVisible
                         font.pixelSize: Appearance.font.pixelSize.smallest * root.scaleFactor
-                        font.weight: root._globalEditorial ? Appearance.editorial.labelWeight : Font.DemiBold
-                        font.letterSpacing: root._globalEditorial ? Appearance.editorial.metadataTracking : 0
+                        font.weight: root._globalEditorial ? root.look.labelWeight(root) : Font.DemiBold
+                        font.letterSpacing: root.look.metadataTracking(root)
                         horizontalAlignment: root.centered ? Text.AlignHCenter : Text.AlignLeft
                         elide: Text.ElideRight
                     }
@@ -84,11 +84,11 @@ AbstractBackgroundWidget {
                     textFormat: Text.PlainText
                     color: root.widgetInk
                     font.family: root.centered
-                        ? (root._globalEditorial ? Appearance.editorial.serifFamily : "serif")
-                        : (root._globalEditorial ? Appearance.editorial.displayFamily : Appearance.font.family.main)
+                        ? root.look.serifFamily
+                        : (root._globalEditorial ? root.look.titleFamily(root) : Appearance.font.family.main)
                     font.pixelSize: (root.composition === "label" ? 34 : 48) * root._titleScale * root.scaleFactor
-                    font.weight: root._globalEditorial ? Appearance.editorial.titleWeight : root.centered ? Font.Normal : Font.DemiBold
-                    font.letterSpacing: root._globalEditorial ? Appearance.editorial.titleTracking : 0
+                    font.weight: root._globalEditorial ? root.look.titleWeight(root) : root.centered ? Font.Normal : Font.DemiBold
+                    font.letterSpacing: root._globalEditorial ? root.look.titleTracking(root) : 0
                     font.italic: root.centered
                     fontSizeMode: Text.Fit
                     minimumPixelSize: Math.max(1, 12 * root.scaleFactor)

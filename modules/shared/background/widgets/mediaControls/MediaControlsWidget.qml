@@ -122,13 +122,8 @@ AbstractBackgroundWidget {
 
     readonly property real widgetHeight: root.footprintHeight
 
-    // The plate a player draws. Aurora's and Angel's glass is a tint over the blurred wallpaper, so the words read
-    // against that mix: light glass over a dark wallpaper is mid grey and took light ink (2.3:1).
-    readonly property bool mediaGlass: Appearance.auroraEverywhere && !Appearance.inirEverywhere && !Appearance.zzzEverywhere
-    readonly property color mediaPlate: root.mediaGlass
-        ? ColorUtils.mix(Appearance.colors.colLayer0Base, root._regionBg,
-            1 - (Appearance.angelEverywhere ? Appearance.angel.overlayOpacity : Appearance.aurora.popupTransparentize))
-        : Appearance.colors.colLayer0
+    // The plate a player draws: glass is a tint over the blurred wallpaper, so the words read against that mix.
+    readonly property color mediaPlate: root.look.glassOver(root._regionBg)
     // A player draws its own plate; the resting mark sits bare on the wallpaper and reads against it.
     accentBackdrop: root.hasPlayer ? root.mediaPlate
         : root._hasBrightness ? root._regionBg
@@ -143,7 +138,7 @@ AbstractBackgroundWidget {
         ? ColorUtils.applyAlpha(root.mediaSurfaceInk, 0.72)
         // glass keeps a margin: the cover art under it, a fifth of the mix, is not in the estimate
         : ColorUtils.ensureReadable(ColorUtils.mix(root.mediaSurfaceInk, root.mediaPlate, 0.8), root.mediaPlate,
-            root.mediaGlass ? 6 : 4.5)
+            root.look.glassPlates ? 6 : 4.5)
     readonly property QtObject _desktopInkOverride: QtObject {
         property color colOnLayer0: root.mediaSurfaceInk
         property color colSubtext: root.mediaSurfaceInkMuted

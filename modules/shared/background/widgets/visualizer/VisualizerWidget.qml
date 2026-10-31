@@ -369,7 +369,7 @@ AbstractBackgroundWidget {
             AudioVisualizerLayer {
                 id: visualizerLayer
                 anchors.fill: parent
-                anchors.margins: Appearance.angelEverywhere || Appearance.inirEverywhere ? 4 : 0
+                anchors.margins: root.look.clipInset
                 points: root.vizType === "organic"
                     ? (root._active && cavaProcess.audioSignalActive
                         ? cavaProcess.points : root._organicSilentPoints)

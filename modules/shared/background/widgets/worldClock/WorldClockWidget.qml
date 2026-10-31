@@ -275,7 +275,7 @@ AbstractBackgroundWidget {
                                 minimumPixelSize: Math.max(26, Math.round(26 * root.scaleFactor))
                                 font.family: root.widgetNumbersFamily
                                 font.pixelSize: Math.round(48 * root.scaleFactor)
-                                font.weight: root.widgetEditorial ? Appearance.editorial.titleWeight : Font.Bold
+                                font.weight: root.look.emphasisWeight(Font.Bold)
                                 font.features: ({ "tnum": 1 })
                                 font.letterSpacing: -1
                             }
@@ -401,7 +401,7 @@ AbstractBackgroundWidget {
                                         font.family: root.widgetNumbersFamily
                                         // small leaves the city's name its room
                                         font.pixelSize: Math.round((root.isSmall ? 19 : 24) * root.scaleFactor)
-                                        font.weight: root.widgetEditorial ? Appearance.editorial.titleWeight : Font.DemiBold
+                                        font.weight: root.look.emphasisWeight(Font.DemiBold)
                                         font.features: ({ "tnum": 1 })
                                         font.letterSpacing: -1
                                     }
@@ -512,8 +512,7 @@ AbstractBackgroundWidget {
                                     font.pixelSize: root.isSmall ? Math.round((index === 0 ? 22 : 19) * root.scaleFactor)
                                         : index === 0 ? Math.max(22, Math.round(27 * root.scaleFactor))
                                         : Math.max(20, Math.round(24 * root.scaleFactor))
-                                    font.weight: index === 0 && root.widgetEditorial
-                                        ? Appearance.editorial.titleWeight : Font.DemiBold
+                                    font.weight: index === 0 ? root.look.emphasisWeight(Font.DemiBold) : Font.DemiBold
                                     font.features: ({ "tnum": 1 })
                                     font.letterSpacing: -0.6
                                 }

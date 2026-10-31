@@ -234,39 +234,20 @@ AbstractBackgroundWidget {
         sourceComponent: StyledDropShadow {
             anchors.fill: undefined
             target: pillBackground
-            visible: !root.familyFaced && pillBackground.visible && !Appearance.zzzEverywhere
+            visible: !root.familyFaced && pillBackground.visible && root.look.softDepth
         }
     }
 
-    // zzz: ShapeCanvas (MaterialShape's base) has no stroke/border property, so
-    // the pill previously rendered as a flat colour blob with none of zzz's
-    // hairline-outline language — the one desktop widget with no zzz edge
-    // treatment at all. Fake a hairline stroke with a second, slightly larger
-    // shape behind the fill in the hairline colour.
+    // A shape has no stroke: the edge a look asks for is a slightly larger one behind the fill.
     Loader {
         anchors.fill: parent
-        active: !root.familyFaced
+        active: !root.familyFaced && !root.forecastFace && root.weatherStyle === "pill" && root.look.pillRingWidth > 0
         sourceComponent: Item {
             MaterialShape {
-                visible: !root.familyFaced && !root.forecastFace && root.weatherStyle === "pill" && Appearance.zzzEverywhere
                 anchors.centerIn: parent
                 shape: root.pillShapeEnum
-                color: Appearance.zzz.hairlineStrong
-                implicitSize: root.shapeSize + Appearance.zzz.borderThick * 2
-            }
-        }
-    }
-
-    Loader {
-        anchors.fill: parent
-        active: !root.familyFaced
-        sourceComponent: Item {
-            MaterialShape {
-                visible: !root.familyFaced && !root.forecastFace && root.weatherStyle === "pill" && (Appearance.inirEverywhere || Appearance.angelEverywhere)
-                anchors.centerIn: parent
-                shape: root.pillShapeEnum
-                color: Appearance.inirEverywhere ? Appearance.inir.colBorder : Appearance.angel.colCardBorder
-                implicitSize: root.shapeSize + 2
+                color: root.look.pillRing
+                implicitSize: root.shapeSize + root.look.pillRingWidth * 2
             }
         }
     }
@@ -411,7 +392,7 @@ AbstractBackgroundWidget {
                                     text: metricChip.modelData.value
                                     color: metricChip.chipInk
                                     font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
-                                    font.weight: Appearance.editorialEverywhere ? Appearance.editorial.labelWeight : Font.Medium
+                                    font.weight: root.look.labelWeight(root)
                                 }
                             }
                         }
