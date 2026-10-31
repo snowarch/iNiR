@@ -8,6 +8,8 @@ WidgetSurface 1.0 WidgetSurface.qml
 WidgetPlate 1.0 WidgetPlate.qml
 WidgetChaos 1.0 WidgetChaos.qml
 WidgetShelfMotion 1.0 WidgetShelfMotion.qml
+WidgetPlacement 1.0 WidgetPlacement.qml
+WidgetStackMotion 1.0 WidgetStackMotion.qml
 WidgetSheetPages 1.0 WidgetSheetPages.qml
 WidgetLook 1.0 WidgetLook.qml
 singleton DesktopWidgetLook 1.0 DesktopWidgetLook.qml

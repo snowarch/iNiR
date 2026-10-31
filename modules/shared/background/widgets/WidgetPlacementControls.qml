@@ -39,9 +39,9 @@ ColumnLayout {
                 Layout.preferredWidth: Math.round(120 * root.d)
                 maxColumns: 3
                 current: root.widget.placementStrategy
-                model: (root.widget._snapZones ?? []).map(zone => ({ value: zone, icon: root.zoneGlyphs[zone],
+                model: (root.widget.placement.zones).map(zone => ({ value: zone, icon: root.zoneGlyphs[zone],
                     tooltip: Translation.tr(root.zoneNames[zone]) }))
-                onPicked: value => root.widget.snapToZone(value)
+                onPicked: value => root.widget.placement.snapToZone(value)
             }
             WidgetQuickChoices {
                 Layout.alignment: Qt.AlignTop

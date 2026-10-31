@@ -70,12 +70,12 @@ Item {
             return
         }
         const widget = root.widget
-        const nx = widget._clampX(widget.x + root.dx)
-        const ny = widget._clampY(widget.y + root.dy)
+        const nx = widget.placement.clampX(widget.x + root.dx)
+        const ny = widget.placement.clampY(widget.y + root.dy)
         root.dx = 0
         root.dy = 0
         widget._setOutputValues({ x: Math.round(nx), y: Math.round(ny) })
-        widget.syncFreePositionFromConfig()
+        widget.placement.syncFree()
         straighten.restart()
     }
 

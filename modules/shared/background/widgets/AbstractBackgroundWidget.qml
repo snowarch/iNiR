@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Effects
 import Quickshell
-import Quickshell.Io
 import qs
 import qs.services
 import qs.modules.common
@@ -64,9 +63,16 @@ AbstractWidget {
     readonly property var stack: DesktopWidgetStacks.info(root.outputName, root.configEntryName)
     readonly property bool stacked: root.stack !== null
     readonly property bool stackShown: root.stack === null || root.stack.shown
-    // 0 while this page is shown; a page's length away (+1 below, -1 above) while it waits or leaves.
-    property real stackPos: 0
-    readonly property bool stackMoving: stackSlide.running
+    // Pages turning and the drop that makes a stack: only a widget that can stack builds them.
+    Loader {
+        id: stacking
+        active: root.stacked || root.stackable
+        sourceComponent: WidgetStackMotion { widget: root }
+    }
+    readonly property real stackPos: stacking.item?.pos ?? 0
+    readonly property bool stackMoving: stacking.item?.moving ?? false
+    readonly property real absorb: stacking.item?.absorb ?? 0
+    readonly property string _dropKey: stacking.item?.dropKey ?? ""
     readonly property bool stackPresent: root.stackShown || (root.stackMoving && root.familyFaced)
     readonly property bool stackLeaving: root.stacked && !root.stackShown && root.stackPresent
     // A stack sits in the layer order as one.
@@ -85,7 +91,7 @@ AbstractWidget {
     // Supports nested configEntryName like "custom.my-widget"
     // Custom widget data lives in Config.customWidgetData (outside adapter).
     property var configEntry: Config.getNestedValue(root._configPath, ({}))
-    // Disable base class x/y behaviors — we define our own with _autoPosition gating
+    // Disable base class x/y behaviors: ours only run while the placement drives x and y.
     animateXPos: false
     animateYPos: false
     dragAboveContent: GlobalStates.widgetEditMode
@@ -153,187 +159,16 @@ AbstractWidget {
     }
     readonly property real cornerRadiusOverride: root._readConfigKey("cornerRadius") ?? -1
     readonly property string colorMode: root._readConfigKey("colorMode") ?? "auto"
-    // A direct binding creates a resize/config revision cycle.
+    // Written by the placement: a direct binding makes a resize/config revision cycle.
     property string placementStrategy: "free"
+    readonly property WidgetPlacement placement: WidgetPlacement { widget: root }
 
-    function _syncPlacementStrategy(): void {
-        const next = root._readConfigKey("placementStrategy") ?? "free";
-        if (root.placementStrategy !== next)
-            root.placementStrategy = next;
-    }
-
-    Connections {
-        target: Config
-        function onRevisionChanged(): void {
-            root._syncPlacementStrategy();
-        }
-    }
-    on_IsResizingChanged: root._syncPlacementStrategy()
-
-    // ── Snap zones ────────────────────────────────────────────
-    // 9 screen regions for quick widget placement
-    readonly property var _snapZones: [
-        "topLeft", "topCenter", "topRight",
-        "centerLeft", "center", "centerRight",
-        "bottomLeft", "bottomCenter", "bottomRight"
-    ]
-    // Free placement spans the complete output. Zone placement separately
-    // respects the live bar/dock edge so an automatic snap stays visible after
-    // edit mode restores those movable surfaces.
-    readonly property var _workArea: ShellLayoutController.desktopWorkArea(
-        root.outputName, root.scaledScreenWidth, root.scaledScreenHeight)
-    readonly property var _zoneWorkArea: ShellLayoutController.desktopZoneWorkArea(
-        root.outputName, root.scaledScreenWidth, root.scaledScreenHeight)
-    readonly property real _safeLeft: root._workArea.left ?? 0
-    readonly property real _safeTop: root._workArea.top ?? 0
-    readonly property real _safeRight: root._workArea.right ?? root.scaledScreenWidth
-    readonly property real _safeBottom: root._workArea.bottom ?? root.scaledScreenHeight
-    readonly property real _safeWidth: root._workArea.width ?? 0
-    readonly property real _safeHeight: root._workArea.height ?? 0
-    readonly property real _zoneSafeLeft: root._zoneWorkArea.left ?? root._safeLeft
-    readonly property real _zoneSafeTop: root._zoneWorkArea.top ?? root._safeTop
-    readonly property real _zoneSafeRight: root._zoneWorkArea.right ?? root._safeRight
-    readonly property real _zoneSafeBottom: root._zoneWorkArea.bottom ?? root._safeBottom
-    readonly property int _zoneMargin: 16
-
-    function _getZonePosition(zone: string): point {
-        const left = root._zoneSafeLeft + root._zoneMargin
-        const top = root._zoneSafeTop + root._zoneMargin
-        const right = Math.max(left,
-            root._zoneSafeRight - root._zoneMargin - root.width)
-        const bottom = Math.max(top,
-            root._zoneSafeBottom - root._zoneMargin - root.height)
-        const cx = left + (right - left) / 2
-        const cy = top + (bottom - top) / 2
-        switch (zone) {
-            case "topLeft":      return Qt.point(left, top)
-            case "topCenter":    return Qt.point(cx, top)
-            case "topRight":     return Qt.point(right, top)
-            case "centerLeft":   return Qt.point(left, cy)
-            case "center":       return Qt.point(cx, cy)
-            case "centerRight":  return Qt.point(right, cy)
-            case "bottomLeft":   return Qt.point(left, bottom)
-            case "bottomCenter": return Qt.point(cx, bottom)
-            case "bottomRight":  return Qt.point(right, bottom)
-            default:               return Qt.point(cx, cy)
-        }
-    }
-
-    function nudge(dx: real, dy: real): void {
-        if (root.locked) return
-        root._setOutputValues({placementStrategy: "free",
-            x: root._snapToPixel(root._clampX(root.x + dx)),
-            y: root._snapToPixel(root._clampY(root.y + dy))})
-    }
-
-    function snapToZone(zone: string): void {
-        const pos = root._getZonePosition(zone);
-        const finalX = root._snapToPixel(pos.x);
-        const finalY = root._snapToPixel(pos.y);
-        const updates = ({})
-        if (root.placementStrategy !== zone)
-            updates.placementStrategy = zone
-        if (Number(root._readConfigKey("x")) !== finalX)
-            updates.x = finalX
-        if (Number(root._readConfigKey("y")) !== finalY)
-            updates.y = finalY
-        if (Object.keys(updates).length > 0)
-            root._setOutputValues(updates)
-    }
-
-    // Detect which zone a position is closest to (for drag-to-snap)
-    function _nearestZone(px: real, py: real): string {
-        let closest = "center";
-        let minDist = Infinity;
-        for (let i = 0; i < root._snapZones.length; i++) {
-            const zone = root._snapZones[i];
-            const pos = root._getZonePosition(zone);
-            const dx = px - pos.x;
-            const dy = py - pos.y;
-            const dist = dx * dx + dy * dy;
-            if (dist < minDist) {
-                minDist = dist;
-                closest = zone;
-            }
-        }
-        return closest;
-    }
-
-    function _snapToPixel(value: real): real {
-        const numeric = Number(value)
-        return Math.round(Number.isFinite(numeric) ? numeric : 0)
-    }
-
-    // Auto-placement results from image analysis (leastBusy/mostBusy)
-    property real _autoPlaceX: 0
-    property real _autoPlaceY: 0
-    readonly property bool _isAutoPlacement: root.placementStrategy === "leastBusy" || root.placementStrategy === "mostBusy"
-
-    function _clampX(value: real): real {
-        const maxX = Math.max(root._safeLeft, root._safeRight - root.width)
-        return root._snapToPixel(Math.max(root._safeLeft,
-            Math.min(Number(value) || 0, maxX)))
-    }
-
-    function _clampY(value: real): real {
-        const maxY = Math.max(root._safeTop, root._safeBottom - root.height)
-        return root._snapToPixel(Math.max(root._safeTop,
-            Math.min(Number(value) || 0, maxY)))
-    }
-
-    // Target position — zones read stored config, free clamps to screen
-    property real targetX: {
-        if (root._isZonePlacement) {
-            const rawX = Number(root._readConfigKey("x") ?? 0);
-            return _snapToPixel(Number.isFinite(rawX) ? rawX : 0);
-        }
-        if (root.placementStrategy === "free") {
-            const rawX = Number(root._readConfigKey("x") ?? 0);
-            const safeX = Number.isFinite(rawX) ? rawX : 0;
-            return root._clampX(safeX);
-        }
-        return root._clampX(root._autoPlaceX);
-    }
-    property real targetY: {
-        if (root._isZonePlacement) {
-            const rawY = Number(root._readConfigKey("y") ?? 0);
-            return _snapToPixel(Number.isFinite(rawY) ? rawY : 0);
-        }
-        if (root.placementStrategy === "free") {
-            const rawY = Number(root._readConfigKey("y") ?? 0);
-            const safeY = Number.isFinite(rawY) ? rawY : 0;
-            return root._clampY(safeY);
-        }
-        return root._clampY(root._autoPlaceY);
-    }
-
-    // The canvas keeps containsPress true through the drop commit. Placement
-    // therefore resumes from committed coordinates, without a timed guard.
-    readonly property bool _autoPosition: root.placementStrategy !== "free"
-        && !root.containsPress && !root.isDragging && !root._isResizing
-    Binding {
-        target: root
-        property: "x"
-        value: root.targetX
-        when: root._autoPosition
-        restoreMode: Binding.RestoreNone
-    }
-    Binding {
-        target: root
-        property: "y"
-        value: root.targetY
-        when: root._autoPosition
-        restoreMode: Binding.RestoreNone
-    }
-
-    // Free-mode overflow re-clamp is imperative (in _geometryPlacementDebounce)
-    // — a Binding that reads root.x while writing it loops (Qt warning at :245).
     Behavior on x {
-        enabled: Appearance.animationsEnabled && root._autoPosition
+        enabled: Appearance.animationsEnabled && root.placement.following
         NumberAnimation { duration: Appearance.animation.elementMove.duration; easing.type: Appearance.animation.elementMove.type; easing.bezierCurve: Appearance.animation.elementMove.bezierCurve }
     }
     Behavior on y {
-        enabled: Appearance.animationsEnabled && root._autoPosition
+        enabled: Appearance.animationsEnabled && root.placement.following
         NumberAnimation { duration: Appearance.animation.elementMove.duration; easing.type: Appearance.animation.elementMove.type; easing.bezierCurve: Appearance.animation.elementMove.bezierCurve }
     }
 
@@ -421,33 +256,11 @@ AbstractWidget {
     // No Item.scale — widgets use scaleFactor for layout math to avoid bitmap blur
 
     // In edit mode, allow dragging regardless of strategy (user can reposition freely)
-    readonly property bool _isZonePlacement: root._snapZones.indexOf(root.placementStrategy) >= 0
     draggable: (placementStrategy === "free" || GlobalStates.widgetEditMode) && !GlobalStates.screenLocked && !root.locked
     grabCursor: GlobalStates.widgetEditMode
-    function syncFreePositionFromConfig(): void {
-        if (!Config.ready || root.containsPress || root._isResizing) return;
-        if (root.placementStrategy !== "free") return;
-        root.x = root.targetX;
-        root.y = root.targetY;
-    }
-
-    onTargetXChanged: root.syncFreePositionFromConfig()
-    onTargetYChanged: root.syncFreePositionFromConfig()
-
-    function applyPlacementFromConfig(): void {
-        if (!Config.ready || root.containsPress || root._isResizing) return;
-        if (root._isZonePlacement) {
-            root.snapToZone(root.placementStrategy);
-        } else {
-            syncFreePositionFromConfig();
-            refreshPlacementIfNeeded();
-        }
-    }
-
-
     // Sheets keep clear of the bar and the edit toolbar (the zone work area), even where a free widget sits under them.
-    readonly property real quickControlsAvailableWidth: Math.max(0, root._zoneSafeRight - root._zoneSafeLeft - 16)
-    readonly property real quickControlsAvailableHeight: Math.max(0, root._zoneSafeBottom - root._zoneSafeTop - 64)
+    readonly property real quickControlsAvailableWidth: Math.max(0, root.placement.zoneRight - root.placement.zoneLeft - 16)
+    readonly property real quickControlsAvailableHeight: Math.max(0, root.placement.zoneBottom - root.placement.zoneTop - 64)
 
     function containsEditPoint(point: point): bool {
         return point.x >= -12 && point.y >= -12 && point.x < root.width + 12 && point.y < root.height + 12
@@ -469,7 +282,7 @@ AbstractWidget {
         function onWidgetEditModeChanged(): void {
             if (!GlobalStates.widgetEditMode)
                 root.quickControlsOpen = false
-            _geometryPlacementDebounce.restart()
+            root.placement.settle()
         }
         function onDesktopWidgetQuickControlsChanged(): void {
             if (GlobalStates.desktopWidgetQuickControls !== root.editInstanceKey)
@@ -498,6 +311,8 @@ AbstractWidget {
     on_ArrangingChanged: root._report()
     property bool _snapping: false
     function _arrangeMoved(): void {
+        if (root.isDragging)
+            stacking.item?.probe()
         if (!root._arranging)
             return
         if (root.isDragging && root._dropKey.length === 0 && !root._snapping) {
@@ -515,7 +330,7 @@ AbstractWidget {
     // Where a widget asked to go to x,y would rest (the IPC probe, a shelf drop without a plan).
     function _planDrop(x: real, y: real): var {
         const plan = DesktopArrange.plan(root.outputName, root.editInstanceKey, x, y, root.width, root.height, root._stackId)
-        return { x: Math.round(root._clampX(plan.x)), y: Math.round(root._clampY(plan.y)), guides: plan.guides, neighbours: plan.neighbours }
+        return { x: Math.round(root.placement.clampX(plan.x)), y: Math.round(root.placement.clampY(plan.y)), guides: plan.guides, neighbours: plan.neighbours }
     }
 
     // ── The shelf (a family that hosts arranging: DesktopEditStage) ──
@@ -627,7 +442,7 @@ AbstractWidget {
 
     Connections {
         target: GlobalStates
-        function onDesktopWidgetNudge(dx: int, dy: int): void { if (root.editSelected && root.visible) root.nudge(dx, dy) }
+        function onDesktopWidgetNudge(dx: int, dy: int): void { if (root.editSelected && root.visible) root.placement.nudge(dx, dy) }
     }
 
     Keys.onPressed: event => {
@@ -637,10 +452,10 @@ AbstractWidget {
         if (event.key === Qt.Key_Escape) {
             if (root.quickControlsOpen) root.quickControlsOpen = false
             else GlobalStates.clearDesktopWidgetSelection()
-        } else if (event.key === Qt.Key_Left) root.nudge(-step, 0)
-        else if (event.key === Qt.Key_Right) root.nudge(step, 0)
-        else if (event.key === Qt.Key_Up) root.nudge(0, -step)
-        else if (event.key === Qt.Key_Down) root.nudge(0, step)
+        } else if (event.key === Qt.Key_Left) root.placement.nudge(-step, 0)
+        else if (event.key === Qt.Key_Right) root.placement.nudge(step, 0)
+        else if (event.key === Qt.Key_Up) root.placement.nudge(0, -step)
+        else if (event.key === Qt.Key_Down) root.placement.nudge(0, step)
         else return
         event.accepted = true
     }
@@ -693,8 +508,8 @@ AbstractWidget {
         id: _sizeSettle
         interval: FamilyStyle.morphDuration + 40
         onTriggered: {
-            if (root._isZonePlacement)
-                root.snapToZone(root.placementStrategy)
+            if (root.placement.onZone)
+                root.placement.snapToZone(root.placementStrategy)
             root._makeRoom()
         }
     }
@@ -717,115 +532,6 @@ AbstractWidget {
         && !root.outputName.startsWith("lock:")
     readonly property var _canvas: root.parent?.parent ?? null
     readonly property bool stackDropHint: root._canvas !== null && root._canvas.stackHint === root.editInstanceKey
-    property string _dropKey: ""
-    // 0 at rest, 1 once the widget has glided into the stack it was dropped on.
-    property real absorb: 0
-
-    function _probeStackDrop(): void {
-        const canvas = root._canvas
-        if (!canvas || typeof canvas.stackDropCandidate !== "function")
-            return
-        const key = root.isDragging && root.stackable ? canvas.stackDropCandidate(root.editInstanceKey) : ""
-        if (key === root._dropKey)
-            return
-        root._dropKey = key
-        canvas.stackHint = key
-    }
-    function _clearStackDrop(): void {
-        root._dropKey = ""
-        if (root._canvas && root._canvas.stackHint !== undefined)
-            root._canvas.stackHint = ""
-    }
-    Connections {
-        target: root
-        function onXChanged(): void { if (root.isDragging) root._probeStackDrop() }
-        function onYChanged(): void { if (root.isDragging) root._probeStackDrop() }
-    }
-
-    // The dropped widget glides onto the target's place and dissolves into it, then joins.
-    function _absorb(): void {
-        const target = root._canvas?.loadedWidget(root._dropKey) ?? null
-        if (!target) {
-            root._clearStackDrop()
-            return
-        }
-        stackAbsorb.targetKey = target.configEntryName
-        stackAbsorb.toX = Math.round(target.x + (target.width - root.width) / 2)
-        stackAbsorb.toY = Math.round(target.y + (target.height - root.height) / 2)
-        if (root.animationsActive) {
-            stackAbsorb.restart()
-        } else {
-            root._joinStack(stackAbsorb.targetKey)
-        }
-    }
-    function _joinStack(targetName: string): void {
-        const id = DesktopWidgetStacks.merge(targetName, root.configEntryName)
-        root._clearStackDrop()
-        root.absorb = 0
-        // Joined, this widget stands where its stack does; refused, where it stood.
-        root.x = root.targetX
-        root.y = root.targetY
-        if (id.length > 0)
-            stackLand.restart()
-    }
-    ParallelAnimation {
-        id: stackAbsorb
-        property string targetKey: ""
-        property real toX: 0
-        property real toY: 0
-        NumberAnimation { target: root; property: "x"; to: stackAbsorb.toX; duration: FamilyStyle.moveDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: FamilyStyle.moveCurve }
-        NumberAnimation { target: root; property: "y"; to: stackAbsorb.toY; duration: FamilyStyle.moveDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: FamilyStyle.moveCurve }
-        NumberAnimation { target: root; property: "absorb"; from: 0; to: 1; duration: FamilyStyle.moveDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: FamilyStyle.moveCurve }
-        onFinished: root._joinStack(stackAbsorb.targetKey)
-    }
-    // Once it has joined, the stack turns to it, so the drop is seen to have landed.
-    Timer {
-        id: stackLand
-        interval: 260
-        onTriggered: {
-            const id = DesktopWidgetStacks.memberMap[root.configEntryName]
-            if (id !== undefined)
-                DesktopWidgetStacks.show(root.outputName, id, root.configEntryName)
-        }
-    }
-
-    // The page shown changes: the one leaving slides out, the one arriving slides in from the side it
-    // was turned from. Forming or dissolving a stack never animates.
-    property string _stackMemo: ""
-    function _stackKey(): string {
-        return root.stack === null ? "" : root.stack.id + (root.stack.shown ? "+" : "-")
-    }
-    onStackChanged: {
-        const memo = root._stackKey()
-        if (memo === root._stackMemo)
-            return
-        const before = root._stackMemo
-        root._stackMemo = memo
-        const turned = before.length > 0 && memo.length > 0 && before.slice(0, -1) === memo.slice(0, -1)
-        if (!turned || !root.animationsActive || !root.familyFaced || !root.visible && memo.endsWith("-")) {
-            stackSlide.stop()
-            root.stackPos = 0
-            return
-        }
-        const arriving = memo.endsWith("+")
-        stackSlide.stop()
-        root.stackPos = arriving ? root.stack.dir : 0
-        stackSlide.to = arriving ? 0 : -root.stack.dir
-        stackSlide.restart()
-        // Arranging: the page that comes up is the one being arranged.
-        if (arriving && GlobalStates.widgetEditMode
-                && DesktopWidgetStacks.memberMap[String(GlobalStates.selectedDesktopWidget).split("::")[1]] === root.stack.id)
-            GlobalStates.selectDesktopWidget(root.editInstanceKey)
-    }
-    NumberAnimation {
-        id: stackSlide
-        target: root
-        property: "stackPos"
-        duration: FamilyStyle.moveDuration
-        easing.type: Easing.BezierSpline
-        easing.bezierCurve: FamilyStyle.moveCurve
-    }
-
     ShellEditSizeBadge {
         z: 203
         anchors.centerIn: parent
@@ -839,19 +545,19 @@ AbstractWidget {
     }
 
     onCanceled: {
-        root._clearStackDrop()
+        stacking.item?.clearDrop()
         if (root._arranging) DesktopArrange.cancel()
     }
     onReleased: {
         if (GlobalStates.screenLocked || !root.dragMoved) return;
         if (root._dropKey.length > 0) {
-            root._absorb()
+            stacking.item?.drop()
             return
         }
         const spot = DesktopArrange.end(root.outputName, root.editInstanceKey, root.x, root.y, root.width, root.height,
             root._arrangeFree, root._stackId)
-        const finalX = root._clampX(spot.x)
-        const finalY = root._clampY(spot.y)
+        const finalX = root.placement.clampX(spot.x)
+        const finalY = root.placement.clampY(spot.y)
         // Let go on top of another, it slides to where it rests instead of jumping.
         if (spot.moved && root.animationsActive) {
             root._glideX = root.x - finalX
@@ -961,12 +667,11 @@ AbstractWidget {
         Qt.callLater(() => root._geometryReady = true)
         root._applyBackdropSample()
         _seedDefaultsIfNeeded();
-        root._syncPlacementStrategy();
-        _placementLater.restart();
+        root.placement.syncStrategy();
+        root.placement.applyLater();
         root._shownSize = root.sizeClass
         if (!root.outputName.startsWith("lock:"))
             DesktopWidgetStacks.report(root.configEntryName, root.sizes, root.sizes[0] ?? "", root.hasFamilyFace)
-        root._stackMemo = root._stackKey()
     }
     function resetToDefaults(): void {
         const updates = {};
@@ -984,8 +689,8 @@ AbstractWidget {
         Object.assign(updates, { sizeClass: root.sizes[0] ?? "", freeWidth: 0, freeHeight: 0 })
         Object.assign(updates, root.look.resetValues(root))
         root._setOutputValues(updates);
-        syncFreePositionFromConfig();
-        refreshPlacementIfNeeded();
+        root.placement.syncFree();
+        root.placement.refresh();
     }
 
     property bool needsColText: false
@@ -1517,10 +1222,7 @@ AbstractWidget {
         return c;
     }
 
-    // Auto placement (quietest or busiest spot) still searches the whole wallpaper in a process.
     readonly property string wallpaperPath: root._lumaPath
-    onWallpaperPathChanged: if (root.wallpaperPath.length > 0 && root._isAutoPlacement)
-        _placementDebounce.restart()
     onIsDraggingChanged: {
         // A sheet that chases the widget across the screen re-decides its edge
         // on every frame of the drag. Moving the widget puts it away instead.
@@ -1529,110 +1231,13 @@ AbstractWidget {
         if (root.isDragging && root._arranging)
             DesktopArrange.begin(root.outputName, root.editInstanceKey)
     }
-    onPlacementStrategyChanged: _placementLater.restart()
-    // Deferred placement dies with the widget: a Qt.callLater queued as a config write disables it
-    // ran into a destroyed context.
-    Timer {
-        id: _placementLater
-        interval: 0
-        onTriggered: root.applyPlacementFromConfig()
-    }
-    // Re-snap zone positions when screen size changes
-    onScaledScreenWidthChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()
-        else if (root.placementStrategy === "free") _geometryPlacementDebounce.restart()
-    onScaledScreenHeightChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()
-        else if (root.placementStrategy === "free") _geometryPlacementDebounce.restart()
-    on_SafeLeftChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()
-        else _geometryPlacementDebounce.restart()
-    on_SafeTopChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()
-        else _geometryPlacementDebounce.restart()
-    on_SafeRightChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()
-        else _geometryPlacementDebounce.restart()
-    on_SafeBottomChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()
-        else _geometryPlacementDebounce.restart()
-    on_ZoneSafeLeftChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()
-    on_ZoneSafeTopChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()
-    on_ZoneSafeRightChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()
-    on_ZoneSafeBottomChanged: if (root._isZonePlacement) _zoneResnapDebounce.restart()
-    onWidthChanged: { _geometryPlacementDebounce.restart(); root._report(); shelf.item?.retake() }
-    onHeightChanged: { _geometryPlacementDebounce.restart(); root._report(); shelf.item?.retake() }
-    Timer {
-        id: _zoneResnapDebounce
-        interval: 100; repeat: false
-        onTriggered: {
-            if (root._isZonePlacement && !root.containsPress && !root._isResizing && !root._sizing)
-                root.snapToZone(root.placementStrategy)
-        }
-    }
-    Timer {
-        id: _geometryPlacementDebounce
-        interval: 120; repeat: false
-        onTriggered: {
-            if (!Config.ready || root.containsPress || root._isResizing || root._sizing)
-                return;
-            if (root._isZonePlacement)
-                root.snapToZone(root.placementStrategy);
-            else if (root._isAutoPlacement)
-                root.refreshPlacementIfNeeded();
-            else if (root.placementStrategy === "free") {
-                // Re-clamp rendered position against the full desktop canvas.
-                // Saved coordinates stay untouched until the next user gesture.
-                const clampedX = root._clampX(root.x)
-                const clampedY = root._clampY(root.y)
-                if (Math.round(root.x) !== Math.round(clampedX))
-                    root.x = clampedX
-                if (Math.round(root.y) !== Math.round(clampedY))
-                    root.y = clampedY
-            }
-        }
-    }
+    onWidthChanged: { root._report(); shelf.item?.retake() }
+    onHeightChanged: { root._report(); shelf.item?.retake() }
     Connections {
         target: Config
         function onReadyChanged() {
             root._seedDefaultsIfNeeded();
-            root.applyPlacementFromConfig();
-        }
-    }
-    Timer {
-        id: _placementDebounce
-        interval: 500
-        repeat: false
-        onTriggered: root.refreshPlacementIfNeeded()
-    }
-    function refreshPlacementIfNeeded() {
-        if (!Config.ready || !root._isAutoPlacement) return;
-        if (!root.wallpaperPath || root.wallpaperPath.length === 0) return;
-        leastBusyRegionProc.running = false;
-        leastBusyRegionProc.running = true;
-    }
-
-    Process {
-        id: leastBusyRegionProc
-        property int contentWidth: Math.max(1, Math.round(root.width / Math.max(root.wallpaperScale, 0.001)))
-        property int contentHeight: Math.max(1, Math.round(root.height / Math.max(root.wallpaperScale, 0.001)))
-        command: [Quickshell.shellPath("scripts/images/least-busy-region-venv.sh")
-            , "--screen-width", Math.round(root.scaledScreenWidth)
-            , "--screen-height", Math.round(root.scaledScreenHeight)
-            , "--width", contentWidth
-            , "--height", contentHeight
-            , "--horizontal-padding", 48
-            , "--vertical-padding", 48
-            , root.wallpaperPath
-            , ...(root.placementStrategy === "mostBusy" ? ["--busiest"] : [])
-        ]
-        stdout: StdioCollector {
-            id: leastBusyRegionOutputCollector
-            onStreamFinished: {
-                const output = leastBusyRegionOutputCollector.text;
-                if (output.length === 0 || !root._isAutoPlacement) return;
-                try {
-                    const parsedContent = JSON.parse(output);
-                    root._autoPlaceX = root._clampX(parsedContent.center_x * root.wallpaperScale - root.width / 2);
-                    root._autoPlaceY = root._clampY(parsedContent.center_y * root.wallpaperScale - root.height / 2);
-                } catch (e) {
-                    console.warn("[Widgets] Failed to parse placement output:", e);
-                }
-            }
+            root.placement.apply();
         }
     }
 }

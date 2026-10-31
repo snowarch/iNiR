@@ -72,7 +72,7 @@ Item {
         Qt.callLater(DesktopEditStage.arrived, widget.outputName, widget.configEntryName)
         let spot = null
         if (arrival.at?.exact) {
-            spot = { x: widget._clampX(arrival.at.x), y: widget._clampY(arrival.at.y) }
+            spot = { x: widget.placement.clampX(arrival.at.x), y: widget.placement.clampY(arrival.at.y) }
         } else if (arrival.at) {
             spot = widget._planDrop(arrival.at.x - widget.width / 2, arrival.at.y - widget.height / 2)
         } else {

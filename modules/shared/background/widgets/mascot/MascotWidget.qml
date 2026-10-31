@@ -109,15 +109,15 @@ AbstractBackgroundWidget {
         // Perch on the anchor's top edge; if that would push her off the top of
         // the screen (anchor sits near the top edge), sit on its bottom instead.
         const above = anchor.y + sink - root.height
-        const nx = Math.round(root._clampX(anchor.x + (anchor.width - root.width) / 2))
-        const ny = Math.round(root._clampY(above >= 0 ? above : anchor.y + anchor.height - sink))
+        const nx = Math.round(root.placement.clampX(anchor.x + (anchor.width - root.width) / 2))
+        const ny = Math.round(root.placement.clampY(above >= 0 ? above : anchor.y + anchor.height - sink))
         if (Math.round(root.x) === nx && Math.round(root.y) === ny) return
         root._syncingAnchor = true
         root._setOutputValues({ x: nx, y: ny, placementStrategy: "free" })
         // "free" mode's live x/y aren't driven by a reactive Binding (see
-        // AbstractBackgroundWidget's _autoPosition gate) — force the resync
+        // the placement's following gate) — force the resync
         // the same way a drag-release does, or she won't visually move.
-        root.syncFreePositionFromConfig()
+        root.placement.syncFree()
         root._syncingAnchor = false
     }
     // Connections, not `onHeightChanged:` — AbstractBackgroundWidget already
@@ -233,8 +233,8 @@ AbstractBackgroundWidget {
         copy.enable = true
         copy.anchorWidget = ""
         copy.placementStrategy = "free"
-        copy.x = Math.round(root._clampX(root.x + 48))
-        copy.y = Math.round(root._clampY(root.y + 48))
+        copy.x = Math.round(root.placement.clampX(root.x + 48))
+        copy.y = Math.round(root.placement.clampY(root.y + 48))
         Config.addMascotInstance(copy)
     }
 
