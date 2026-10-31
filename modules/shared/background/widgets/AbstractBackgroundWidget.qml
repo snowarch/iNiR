@@ -3111,8 +3111,9 @@ AbstractWidget {
         return Math.max(0, Math.min(0.55, (0.62 - darkest) / 0.35 * 0.55))
     }
     readonly property color _legibleShadowColor: root._inkIsLight ? Qt.rgba(0, 0, 0, 1) : Qt.rgba(1, 1, 1, 1)
-    // iRiS only: Material widgets keep their own text halo and never carry a shadow under the whole body.
-    readonly property bool _legibleShadow: root.widgetIrisFamily && root.needsColText && !root.widgetHasSurface && !root.irisFaced
+    // iRiS, and a Material widget bare by design (bareShadow, Day's dial): the rest keep their own text halo.
+    property bool bareShadow: false
+    readonly property bool _legibleShadow: (root.widgetIrisFamily || root.bareShadow) && root.needsColText && !root.widgetHasSurface && !root.irisFaced
         && !GlobalStates.widgetEditMode && root._legibleShadowOpacity > 0.06
     readonly property color colHalo: root.inkOnLight && !root.forceDarkInk
         ? Qt.rgba(1, 1, 1, 0.12 + 0.3 * root._haloBusy)
