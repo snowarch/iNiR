@@ -382,22 +382,6 @@ AbstractBackgroundWidget {
     readonly property real placeholderHeight: Math.round(
         (root.instrument ? 56 : 96) * Appearance.fontSizeScale * scaleFactor)
 
-    property int _idleShapeIndex: 0
-    readonly property var _idleShapes: [
-        MaterialShape.Shape.Cookie4Sided,
-        MaterialShape.Shape.Clover4Leaf,
-        MaterialShape.Shape.Cookie12Sided,
-        MaterialShape.Shape.SoftBurst
-    ]
-
-    Timer {
-        running: !root.widgetIris && !root.instrument && !root.hasPlayer && root.visible && root.motionActive
-            && Appearance.animationsEnabled
-        interval: 9000
-        repeat: true
-        onTriggered: root._idleShapeIndex = (root._idleShapeIndex + 1) % root._idleShapes.length
-    }
-
     // This instance only exists when its effective output-local enable state is
     // true. Rechecking the global base would incorrectly disable Cava for a
     // widget enabled only on this monitor.
@@ -639,38 +623,6 @@ AbstractBackgroundWidget {
                         widget: root
                         icon: "music_note"
                         title: Translation.tr("Nothing playing")
-                    }
-                    MaterialShape {
-                        id: idleOrnament
-                        visible: false
-                        anchors.centerIn: parent
-                        implicitSize: Math.max(24, Math.min(parent.width, parent.height)
-                            - Appearance.sizes.elevationMargin)
-                        shape: root._idleShapes[root._idleShapeIndex]
-                        color: ColorUtils.applyAlpha(root.widgetAccentVisible, 0.20)
-
-                        animation: NumberAnimation {
-                            duration: Appearance.animation.elementMoveEnter.duration
-                            easing.type: Appearance.animation.elementMoveEnter.type
-                            easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
-                        }
-
-                        MaterialSymbol {
-                            anchors.centerIn: parent
-                            text: "music_note"
-                            fill: 1
-                            iconSize: Math.round(idleOrnament.implicitSize * 0.34)
-                            color: root.widgetAccentVisible
-                        }
-
-                        StyledToolTip {
-                            text: Translation.tr("No active player")
-                            visible: idleHover.hovered
-                        }
-
-                        HoverHandler {
-                            id: idleHover
-                        }
                     }
                 }
             }
