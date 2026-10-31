@@ -16,6 +16,8 @@ Singleton {
     readonly property QtObject p: provider.item?.style ?? null
     // Which desktop widgets the family's worn Design prints its own face for.
     readonly property var facePrints: provider.item?.prints ?? ({})
+    // The glyph set the family draws every glyph from (a Material Symbols cut); empty keeps Appearance's.
+    readonly property string glyphFont: String(root.p?.glyphFont ?? "")
     readonly property var _c: Appearance.colors
     readonly property real _scale: Appearance.fontSizeScale ?? 1
 

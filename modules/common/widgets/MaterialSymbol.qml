@@ -70,7 +70,7 @@ Item {
             family: root.useJp ? "Zen Kaku Gothic New"
                 : (root.useNerd && root.hasNerdGlyph)
                 ? (Appearance?.font.family.monospace ?? "JetBrainsMono Nerd Font")
-                : (Appearance?.font.family.iconMaterial ?? "Material Symbols Rounded")
+                : (FamilyStyle.glyphFont || (Appearance?.font.family.iconMaterial ?? "Material Symbols Rounded"))
             pixelSize: root.useJp ? root.iconSize * 0.92 : root.effectiveFontSize
             weight: root.useJp ? Font.Medium : root.glyphWeight
             variableAxes: (root.useJp || (root.useNerd && root.hasNerdGlyph)) ? ({}) : ({
