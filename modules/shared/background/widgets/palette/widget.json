@@ -1,0 +1,12 @@
+{
+  "name": "Palette",
+  "group": "Palette",
+  "main": "PaletteWidget.qml",
+  "icon": "palette",
+  "tint": "#ff375f",
+  "category": "decor",
+  "keywords": "colours colors swatches hex wallpaper cover accent theme",
+  "sizes": ["medium", "small", "large"],
+  "lock": true,
+  "familyFace": true
+}

@@ -1,0 +1,12 @@
+{
+  "name": "World clock",
+  "group": "World clock",
+  "main": "WorldClockWidget.qml",
+  "icon": "public",
+  "tint": "#ff9f0a",
+  "category": "today",
+  "keywords": "time zones cities timezone",
+  "sizes": ["medium", "small", "large"],
+  "lock": true,
+  "palette": true
+}

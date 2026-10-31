@@ -1,0 +1,11 @@
+{
+  "name": "Image",
+  "group": "Custom image",
+  "main": "CustomImageWidget.qml",
+  "icon": "add_photo_alternate",
+  "tint": "#30b0c7",
+  "category": "decor",
+  "keywords": "picture photo image",
+  "sizes": ["medium", "small", "large"],
+  "palette": true
+}

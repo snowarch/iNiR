@@ -1,0 +1,12 @@
+{
+  "name": "Batteries",
+  "group": "Battery",
+  "main": "BatteryWidget.qml",
+  "icon": "battery_full",
+  "tint": "#34c759",
+  "category": "system",
+  "keywords": "power charge",
+  "sizes": ["small", "medium", "large"],
+  "lock": true,
+  "palette": true
+}

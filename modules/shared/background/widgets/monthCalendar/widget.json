@@ -1,0 +1,12 @@
+{
+  "name": "Calendar",
+  "group": "Month Calendar",
+  "main": "MonthCalendarWidget.qml",
+  "icon": "calendar_month",
+  "tint": "#ff3b30",
+  "category": "today",
+  "keywords": "calendar month date days",
+  "sizes": ["large", "small", "medium"],
+  "lock": true,
+  "palette": true
+}

@@ -1,0 +1,12 @@
+{
+  "name": "Day",
+  "group": "Day progress",
+  "main": "DayProgressWidget.qml",
+  "icon": "timelapse",
+  "tint": "#ff9f0a",
+  "category": "today",
+  "keywords": "day sun hours",
+  "sizes": ["small", "medium", "large"],
+  "lock": true,
+  "palette": true
+}

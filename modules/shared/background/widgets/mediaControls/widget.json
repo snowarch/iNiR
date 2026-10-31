@@ -1,0 +1,12 @@
+{
+  "name": "Now Playing",
+  "group": "Media Controls",
+  "main": "MediaControlsWidget.qml",
+  "icon": "album",
+  "tint": "#ff375f",
+  "category": "media",
+  "keywords": "music player now playing song spotify cover",
+  "sizes": ["medium", "small", "large"],
+  "lock": true,
+  "palette": true
+}

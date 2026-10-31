@@ -1,0 +1,12 @@
+{
+  "name": "Up next",
+  "group": "Upcoming Events",
+  "main": "CalendarUpcomingWidget.qml",
+  "icon": "event",
+  "tint": "#ff3b30",
+  "category": "today",
+  "keywords": "agenda events next up",
+  "sizes": ["medium", "small", "large"],
+  "lock": true,
+  "palette": true
+}

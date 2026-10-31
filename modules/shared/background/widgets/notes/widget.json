@@ -1,0 +1,12 @@
+{
+  "name": "Notes",
+  "group": "Notes",
+  "main": "NotesWidget.qml",
+  "icon": "sticky_note_2",
+  "tint": "#ffcc00",
+  "category": "notes",
+  "keywords": "sticky memo text write",
+  "sizes": ["medium", "small", "large"],
+  "lock": true,
+  "palette": true
+}

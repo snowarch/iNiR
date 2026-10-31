@@ -1,0 +1,11 @@
+{
+  "name": "Japanese Typography",
+  "group": "Japanese Typography",
+  "main": "JapaneseTypographyWidget.qml",
+  "icon": "translate",
+  "tint": "#bf5af2",
+  "category": "decor",
+  "keywords": "japanese kanji text",
+  "sizes": ["large"],
+  "palette": true
+}

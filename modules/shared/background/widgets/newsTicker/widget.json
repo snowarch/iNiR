@@ -1,0 +1,12 @@
+{
+  "name": "News",
+  "group": "News",
+  "main": "NewsTickerWidget.qml",
+  "icon": "newspaper",
+  "tint": "#30b0c7",
+  "category": "media",
+  "keywords": "news feed rss headlines",
+  "sizes": ["medium", "small", "large"],
+  "lock": true,
+  "palette": true
+}

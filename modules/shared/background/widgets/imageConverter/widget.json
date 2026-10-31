@@ -1,0 +1,11 @@
+{
+  "name": "Image converter",
+  "group": "Image converter",
+  "main": "ImageConverterWidget.qml",
+  "icon": "transform",
+  "tint": "#30b0c7",
+  "category": "decor",
+  "keywords": "picture convert image",
+  "sizes": ["large", "medium"],
+  "palette": true
+}

@@ -1,0 +1,12 @@
+{
+  "name": "Vitals",
+  "group": "System Monitor",
+  "main": "SystemMonitorWidget.qml",
+  "icon": "monitor_heart",
+  "tint": "#34c759",
+  "category": "system",
+  "keywords": "vitals cpu gpu ram memory temperature performance",
+  "sizes": ["medium", "small", "large"],
+  "lock": true,
+  "palette": true
+}

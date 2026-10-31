@@ -1,0 +1,11 @@
+{
+  "name": "Mascot",
+  "group": "Mascot",
+  "main": "MascotWidget.qml",
+  "icon": "pets",
+  "tint": "#ff375f",
+  "category": "decor",
+  "keywords": "pet character companion",
+  "sizes": ["large", "small"],
+  "palette": true
+}

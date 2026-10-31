@@ -1,0 +1,11 @@
+{
+  "name": "Visualizer",
+  "group": "Visualizer",
+  "main": "VisualizerWidget.qml",
+  "icon": "graphic_eq",
+  "tint": "#bf5af2",
+  "category": "media",
+  "keywords": "audio cava spectrum equalizer sound",
+  "sizes": ["medium", "small", "large"],
+  "palette": true
+}

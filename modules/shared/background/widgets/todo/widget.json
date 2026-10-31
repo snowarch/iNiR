@@ -1,0 +1,12 @@
+{
+  "name": "Tasks",
+  "group": "Todo",
+  "main": "TodoWidget.qml",
+  "icon": "checklist",
+  "tint": "#ff9f0a",
+  "category": "notes",
+  "keywords": "tasks checklist list",
+  "sizes": ["large", "small", "medium"],
+  "lock": true,
+  "palette": true
+}

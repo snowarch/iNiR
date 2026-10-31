@@ -1,0 +1,11 @@
+{
+  "name": "Editorial",
+  "group": "Editorial",
+  "main": "EditorialWidget.qml",
+  "icon": "text_fields",
+  "tint": "#5e5ce6",
+  "category": "decor",
+  "keywords": "text typography quote",
+  "sizes": ["large", "medium"],
+  "palette": true
+}

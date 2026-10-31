@@ -143,28 +143,6 @@ Rectangle {
         : "transparent"
     readonly property color _cookieStrokeBase: root.colorMode === "auto"
         ? Appearance.cookie.onColor : ColorUtils.contrastColor(root._plate)
-    readonly property string surfaceReport: JSON.stringify({
-        style: root._iris ? "iris" : root._cookie ? "cookie"
-            : root._zzz ? "zzz"
-            : root._regalia ? "regalia"
-            : root._editorial ? "editorial"
-            : root._island ? "island"
-            : root._angel ? "angel"
-            : root._aurora ? "aurora"
-            : root._inir ? "inir" : "material",
-        cookie: root._cookie,
-        island: root._island,
-        glass: root._glass,
-        paperStack: root._editorialStack,
-        visible: root.visible,
-        backgroundOpacity: root.surfaceOpacity,
-        backgroundVisible: root._backgroundVisible,
-        borderWidth: root.surfaceBorderWidth,
-        borderOpacity: root.surfaceBorderOpacity,
-        radius: root.radius,
-        fill: String(root._iris ? root._irisFill : root._cookie ? root._cookieFill : root._flatFill)
-    })
-
     // iRiS widget plates share one continuous corner, tighter than the Island.
     radius: surfaceRadius
     color: root._iris ? (root._irisGlass ? "transparent" : root._irisFill)

@@ -17,30 +17,6 @@ import Quickshell.Hyprland
 
 import qs.modules.shared.livePins
 import qs.modules.shared.background.widgets
-import qs.modules.shared.background.widgets.clock
-import qs.modules.shared.background.widgets.mediaControls
-import qs.modules.shared.background.widgets.weather
-import qs.modules.shared.background.widgets.visualizer
-import qs.modules.shared.background.widgets.imageConverter
-import qs.modules.shared.background.widgets.systemMonitor
-import qs.modules.shared.background.widgets.battery
-import qs.modules.shared.background.widgets.notes
-import qs.modules.shared.background.widgets.calendar
-import qs.modules.shared.background.widgets.todo
-import qs.modules.shared.background.widgets.timers
-import qs.modules.shared.background.widgets.shape
-import qs.modules.shared.background.widgets.dateBadge
-import qs.modules.shared.background.widgets.uptime
-import qs.modules.shared.background.widgets.controls
-import qs.modules.shared.background.widgets.screenTime
-import qs.modules.shared.background.widgets.palette
-import qs.modules.shared.background.widgets.lyrics
-import qs.modules.shared.background.widgets.dayProgress
-import qs.modules.shared.background.widgets.worldClock
-import qs.modules.shared.background.widgets.userCard
-import qs.modules.shared.background.widgets.newsTicker
-import qs.modules.shared.background.widgets.mascot
-import qs.modules.shared.background.widgets.japaneseTypography
 import qs.modules.shared.background.desktopItems
 import "root:modules/common/functions/parallax.js" as ParallaxMath
 import "widgets/OrganicEdgeConfig.js" as OrganicEdgeConfig
@@ -55,19 +31,6 @@ Scope {
 
     // Bounded diagnostics for the desktop clock. They are inert unless the
     // supervised shell is loaded with INIR_REGION_DEBUG=1.
-    property bool clockDebugRegionActive: false
-    property color clockDebugRegionColor: "transparent"
-    property real clockDebugRegionBrightness: -1
-    property real clockDebugRegionSpread: 0
-    property bool clockDebugQuickControlsOpen: false
-    property bool clockDebugLayoutProbeActive: false
-    property int clockDebugLayoutProbeX: 0
-    property int clockDebugLayoutProbeY: 0
-    property var _clockDebugSnapshot: null
-    property bool _clockDebugEditModeSnapshot: false
-    property bool _clockDebugEditModeSnapshotValid: false
-    property string clockDebugPaletteReport: "{}"
-    property string clockDebugControlsReport: "{}"
 
     function promoteDesktopWidgetKey(instanceKey: string): var {
         const key = String(instanceKey ?? "")
@@ -99,10 +62,6 @@ Scope {
     readonly property var _everyKeys: ({ plate: "showBackground", outline: "showBorder", strength: "backgroundOpacity", ink: "colorMode", lock: "locked" })
 
     /// Desktop background and widget controls.
-    ///
-    /// The mutating diagnostic functions require the supervised shell to be loaded with `INIR_REGION_DEBUG=1`. They
-    /// snapshot the clock's relevant config on first use; always finish a diagnostic run with `clockDebugRestore`
-    /// before removing the environment flag.
     ///
     /// ```kdl
     /// Super+W { spawn "inir" "background" "toggleEditMode"; }
@@ -567,115 +526,6 @@ Scope {
             return widgetName + (enabled ? " enabled" : " disabled");
         }
 
-        /// Report clock palette, renderer and quick-control geometry diagnostics
-        function clockDebugState(): string {
-            return JSON.stringify({
-                enabled: Quickshell.env("INIR_REGION_DEBUG") === "1",
-                config: {
-                    style: Config.getNestedValue("background.widgets.clock.style", "cookie"),
-                    adaptToWallpaper: Config.getNestedValue("background.widgets.clock.digital.adaptToWallpaper", true),
-                    placementStrategy: Config.getNestedValue("background.widgets.clock.placementStrategy", "free"),
-                    x: Config.getNestedValue("background.widgets.clock.x", 0),
-                    y: Config.getNestedValue("background.widgets.clock.y", 0)
-                },
-                injectedRegion: {
-                    active: backgroundScope.clockDebugRegionActive,
-                    color: String(backgroundScope.clockDebugRegionColor),
-                    brightness: backgroundScope.clockDebugRegionBrightness,
-                    spread: backgroundScope.clockDebugRegionSpread
-                },
-                palette: backgroundScope.clockDebugPaletteReport,
-                controls: backgroundScope.clockDebugControlsReport,
-                snapshotActive: backgroundScope._clockDebugSnapshot !== null
-                    || backgroundScope._clockDebugEditModeSnapshotValid
-            });
-        }
-
-        /// Temporarily select a diagnostic clock mode
-        function clockDebugSetMode(style: string, adaptToWallpaper: bool): string {
-            if (Quickshell.env("INIR_REGION_DEBUG") !== "1")
-                return "clock diagnostics disabled; load with INIR_REGION_DEBUG=1";
-            if (style !== "digital" && style !== "cookie")
-                return "invalid clock style: " + style;
-            backgroundScope._captureClockDebugSnapshot();
-            let updates = {};
-            updates["background.widgets.clock.style"] = style;
-            updates["background.widgets.clock.digital.adaptToWallpaper"] = adaptToWallpaper;
-            if (style === "cookie") {
-                updates["background.widgets.clock.cookie.hourMarks"] = true;
-                updates["background.widgets.clock.cookie.timeIndicators"] = true;
-                updates["background.widgets.clock.cookie.dialNumberStyle"] = "full";
-                updates["background.widgets.clock.cookie.minuteHandStyle"] = "medium";
-                updates["background.widgets.clock.cookie.hourHandStyle"] = "fill";
-                updates["background.widgets.clock.cookie.secondHandStyle"] = "classic";
-                updates["background.widgets.clock.cookie.dateStyle"] = "bubble";
-            }
-            Config.setNestedValues(updates);
-            return style + (adaptToWallpaper ? " adaptive" : " static");
-        }
-
-        /// Inject a temporary wallpaper-region sample
-        function clockDebugSetRegion(color: string, brightness: real, spread: real): string {
-            if (Quickshell.env("INIR_REGION_DEBUG") !== "1")
-                return "clock diagnostics disabled; load with INIR_REGION_DEBUG=1";
-            const parsed = Qt.color(color);
-            if (!parsed.valid)
-                return "invalid color: " + color;
-            backgroundScope.clockDebugRegionColor = parsed;
-            backgroundScope.clockDebugRegionBrightness = Math.max(0, Math.min(1, brightness));
-            backgroundScope.clockDebugRegionSpread = Math.max(0, Math.min(1, spread));
-            backgroundScope.clockDebugRegionActive = true;
-            return "region injected";
-        }
-
-        /// Probe quick-control geometry at a hypothetical clock position without moving the widget
-        function clockDebugSetLayout(x: int, y: int, quickControlsOpen: bool): string {
-            if (Quickshell.env("INIR_REGION_DEBUG") !== "1")
-                return "clock diagnostics disabled; load with INIR_REGION_DEBUG=1";
-            if (!backgroundScope._clockDebugEditModeSnapshotValid) {
-                backgroundScope._clockDebugEditModeSnapshot = GlobalStates.widgetEditMode;
-                backgroundScope._clockDebugEditModeSnapshotValid = true;
-            }
-            backgroundScope.clockDebugLayoutProbeX = x;
-            backgroundScope.clockDebugLayoutProbeY = y;
-            backgroundScope.clockDebugLayoutProbeActive = true;
-            GlobalStates.setWidgetEditMode(true);
-            backgroundScope.clockDebugQuickControlsOpen = quickControlsOpen;
-            return "layout probe requested";
-        }
-
-        /// Restore the config captured by clock diagnostics
-        function clockDebugRestore(): string {
-            backgroundScope.clockDebugRegionActive = false;
-            backgroundScope.clockDebugQuickControlsOpen = false;
-            backgroundScope.clockDebugLayoutProbeActive = false;
-            if (backgroundScope._clockDebugSnapshot !== null) {
-                Config.setNestedValues(backgroundScope._clockDebugSnapshot);
-                backgroundScope._clockDebugSnapshot = null;
-            }
-            if (backgroundScope._clockDebugEditModeSnapshotValid) {
-                GlobalStates.setWidgetEditMode(backgroundScope._clockDebugEditModeSnapshot);
-                backgroundScope._clockDebugEditModeSnapshotValid = false;
-            }
-            return "clock diagnostics restored";
-        }
-    }
-
-    function _captureClockDebugSnapshot(): void {
-        if (backgroundScope._clockDebugSnapshot !== null)
-            return;
-        const prefix = "background.widgets.clock";
-        let snapshot = {};
-        snapshot[prefix + ".style"] = Config.getNestedValue(prefix + ".style", "cookie");
-        snapshot[prefix + ".digital.adaptToWallpaper"] = Config.getNestedValue(prefix + ".digital.adaptToWallpaper", true);
-        snapshot[prefix + ".cookie.hourMarks"] = Config.getNestedValue(prefix + ".cookie.hourMarks", false);
-        snapshot[prefix + ".cookie.timeIndicators"] = Config.getNestedValue(prefix + ".cookie.timeIndicators", true);
-        snapshot[prefix + ".cookie.dialNumberStyle"] = Config.getNestedValue(prefix + ".cookie.dialNumberStyle", "none");
-        snapshot[prefix + ".cookie.minuteHandStyle"] = Config.getNestedValue(prefix + ".cookie.minuteHandStyle", "medium");
-        snapshot[prefix + ".cookie.hourHandStyle"] = Config.getNestedValue(prefix + ".cookie.hourHandStyle", "fill");
-        snapshot[prefix + ".cookie.secondHandStyle"] = Config.getNestedValue(prefix + ".cookie.secondHandStyle", "dot");
-        snapshot[prefix + ".cookie.dateStyle"] = Config.getNestedValue(prefix + ".cookie.dateStyle", "bubble");
-        backgroundScope._clockDebugSnapshot = snapshot;
     }
 
     Variants {
@@ -3066,447 +2916,16 @@ Scope {
                     }
                 }
 
-                FadeLoader {
-                    shown: bgRoot._widgetShown("weather")
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMask : null
-                    WidgetInputMask { id: _hitMask; loader: parent }
-                    sourceComponent: WeatherWidget {
-                        widgetIndex: 0
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
-                }
-
-                FadeLoader {
-                    shown: bgRoot._widgetShown("customImage")
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMaskCustomImage : null
-                    WidgetInputMask { id: _hitMaskCustomImage; loader: parent }
-                    sourceComponent: CustomImageWidget {
-                        widgetIndex: 16
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
-                }
-
-                FadeLoader {
-                    shown: bgRoot._widgetShown("imageConverter")
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMaskImageConverter : null
-                    WidgetInputMask { id: _hitMaskImageConverter; loader: parent }
-                    sourceComponent: ImageConverterWidget {
-                        widgetIndex: 17
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
-                }
-
-                FadeLoader {
-                    shown: bgRoot._widgetShown("clock")
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMask2 : null
-                    WidgetInputMask { id: _hitMask2; loader: parent }
-                    sourceComponent: ClockWidget {
-                        widgetIndex: 1
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                        wallpaperSafetyTriggered: bgRoot.wallpaperSafetyTriggered
-                        debugRegionActive: backgroundScope.clockDebugRegionActive
-                        debugRegionColor: backgroundScope.clockDebugRegionColor
-                        debugRegionBrightness: backgroundScope.clockDebugRegionBrightness
-                        debugRegionSpread: backgroundScope.clockDebugRegionSpread
-                        debugQuickControlsOpen: backgroundScope.clockDebugQuickControlsOpen
-                        debugLayoutProbeActive: backgroundScope.clockDebugLayoutProbeActive
-                        debugLayoutProbeX: backgroundScope.clockDebugLayoutProbeX
-                        debugLayoutProbeY: backgroundScope.clockDebugLayoutProbeY
-                        onDebugPaletteReportChanged: backgroundScope.clockDebugPaletteReport = debugPaletteReport
-                        onEditControlsGeometryReportChanged: backgroundScope.clockDebugControlsReport = editControlsGeometryReport
-                    }
-                }
-
-                FadeLoader {
-                    shown: bgRoot._widgetShown("mediaControls")
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMask3 : null
-                    WidgetInputMask { id: _hitMask3; loader: parent }
-                    sourceComponent: MediaControlsWidget {
-                        widgetIndex: 2
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
-                }
-
-                FadeLoader {
-                    shown: bgRoot._widgetShown("visualizer")
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMask4 : null
-                    WidgetInputMask { id: _hitMask4; loader: parent }
-                    sourceComponent: VisualizerWidget {
-                        widgetIndex: 3
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
-                }
-
-                FadeLoader {
-                    shown: bgRoot._widgetShown("systemMonitor")
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMask5 : null
-                    WidgetInputMask { id: _hitMask5; loader: parent }
-                    sourceComponent: SystemMonitorWidget {
-                        widgetIndex: 4
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
-                }
-
-                FadeLoader {
-                    shown: bgRoot._widgetShown("battery")
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMask6 : null
-                    WidgetInputMask { id: _hitMask6; loader: parent }
-                    sourceComponent: BatteryWidget {
-                        widgetIndex: 5
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
-                }
-
-                FadeLoader {
-                    shown: bgRoot._widgetShown("notes")
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMask7 : null
-                    WidgetInputMask { id: _hitMask7; loader: parent }
-                    sourceComponent: NotesWidget {
-                        widgetIndex: 6
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
-                }
-
-                FadeLoader {
-                    shown: bgRoot._widgetShown("calendarUpcoming")
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMask8 : null
-                    WidgetInputMask { id: _hitMask8; loader: parent }
-                    sourceComponent: CalendarUpcomingWidget {
-                        widgetIndex: 7
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
-                }
-
-                FadeLoader {
-                    shown: bgRoot._widgetShown("monthCalendar")
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMaskMonthCalendar : null
-                    WidgetInputMask { id: _hitMaskMonthCalendar; loader: parent }
-                    sourceComponent: MonthCalendarWidget {
-                        widgetIndex: 8
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
-                }
-
-                FadeLoader {
-                    shown: bgRoot._widgetShown("todo")
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMaskTodo : null
-                    WidgetInputMask { id: _hitMaskTodo; loader: parent }
-                    sourceComponent: TodoWidget {
-                        widgetIndex: 10
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
-                }
-
-                FadeLoader {
-                    shown: bgRoot._widgetShown("timers")
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMaskTimers : null
-                    WidgetInputMask { id: _hitMaskTimers; loader: parent }
-                    sourceComponent: TimerWidget {
-                        widgetIndex: 18
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
-                }
-
-                FadeLoader {
-                    shown: bgRoot._widgetShown("dayProgress")
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMaskDayProgress : null
-                    WidgetInputMask { id: _hitMaskDayProgress; loader: parent }
-                    sourceComponent: DayProgressWidget {
-                        widgetIndex: 8
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
-                }
-
-                FadeLoader {
-                    shown: bgRoot._widgetShown("uptime")
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMask10 : null
-                    WidgetInputMask { id: _hitMask10; loader: parent }
-                    sourceComponent: UptimeWidget {
-                        widgetIndex: 9
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
-                }
-
-                FadeLoader {
-                    shown: bgRoot._widgetShown("controls") && (Config.options?.panelFamily ?? "ii") === "iris"
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMaskControls : null
-                    WidgetInputMask { id: _hitMaskControls; loader: parent }
-                    sourceComponent: ControlsWidget {
-                        widgetIndex: 19
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
-                }
-
-                FadeLoader {
-                    shown: bgRoot._widgetShown("screenTime") && (Config.options?.panelFamily ?? "ii") === "iris"
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMaskScreenTime : null
-                    WidgetInputMask { id: _hitMaskScreenTime; loader: parent }
-                    sourceComponent: ScreenTimeWidget {
-                        widgetIndex: 39
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
-                }
-
-                FadeLoader {
-                    shown: bgRoot._widgetShown("palette") && (Config.options?.panelFamily ?? "ii") === "iris"
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMaskPalette : null
-                    WidgetInputMask { id: _hitMaskPalette; loader: parent }
-                    sourceComponent: PaletteWidget {
-                        widgetIndex: 40
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
-                }
-
-                FadeLoader {
-                    shown: bgRoot._widgetShown("lyrics") && (Config.options?.panelFamily ?? "ii") === "iris"
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMaskLyrics : null
-                    WidgetInputMask { id: _hitMaskLyrics; loader: parent }
-                    sourceComponent: LyricsWidget {
-                        widgetIndex: 40
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
-                }
-
-                FadeLoader {
-                    shown: bgRoot._widgetShown("editorial")
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? editorialHitMask : null
-                    WidgetInputMask { id: editorialHitMask; loader: parent }
-                    sourceComponent: EditorialWidget {
-                        widgetIndex: 22
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
-                }
-
-                FadeLoader {
-                    shown: bgRoot._widgetShown("shape")
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMaskshape : null
-                    WidgetInputMask { id: _hitMaskshape; loader: parent }
-                    sourceComponent: ShapeWidget {
-                        widgetIndex: 20
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
-                }
-
-                FadeLoader {
-                    shown: bgRoot._widgetShown("dateBadge")
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMaskdateBadge : null
-                    WidgetInputMask { id: _hitMaskdateBadge; loader: parent }
-                    sourceComponent: DateBadgeWidget {
-                        widgetIndex: 21
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
-                }
-
-
-                FadeLoader {
-                    shown: bgRoot._widgetShown("worldClock")
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMask15 : null
-                    WidgetInputMask { id: _hitMask15; loader: parent }
-                    sourceComponent: WorldClockWidget {
-                        widgetIndex: 14
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
-                }
-
-                FadeLoader {
-                    shown: bgRoot._widgetShown("userCard")
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMask16 : null
-                    WidgetInputMask { id: _hitMask16; loader: parent }
-                    sourceComponent: UserCardWidget {
-                        widgetIndex: 15
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
-                }
-
-                FadeLoader {
-                    shown: bgRoot._widgetShown("newsTicker")
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMask12 : null
-                    WidgetInputMask { id: _hitMask12; loader: parent }
-                    sourceComponent: NewsTickerWidget {
-                        widgetIndex: 11
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
-                }
-
-                FadeLoader {
-                    shown: bgRoot._widgetShown("mascot")
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMask13 : null
-                    WidgetInputMask { id: _hitMask13; loader: parent }
-                    sourceComponent: MascotWidget {
-                        widgetIndex: 12
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
-                    }
-                }
-
-                FadeLoader {
-                    shown: bgRoot._widgetShown("japaneseTypography")
-                    z: item?.desktopStackZ ?? 0
-                    containmentMask: GlobalStates.widgetEditMode ? _hitMask14 : null
-                    WidgetInputMask { id: _hitMask14; loader: parent }
-                    sourceComponent: JapaneseTypographyWidget {
-                        widgetIndex: 13
-                        outputName: bgRoot.screen?.name ?? ""
-                        screenWidth: bgRoot.screen.width
-                        screenHeight: bgRoot.screen.height
-                        scaledScreenWidth: bgRoot.screen.width
-                        scaledScreenHeight: bgRoot.screen.height
-                        wallpaperScale: 1
+                Repeater {
+                    model: DesktopWidgetRegistry.entries
+                    DesktopWidgetSlot {
+                        required property var modelData
+                        required property int index
+                        desktop: bgRoot
+                        file: modelData.file
+                        order: index
+                        shown: bgRoot._widgetShown(modelData.key)
+                            && DesktopWidgetRegistry.offered(modelData.key, Plugins.active)
                     }
                 }
 
@@ -3520,65 +2939,18 @@ Scope {
                             return Object.keys(obj ?? {}).sort();
                         }
                     }
-
-                    Loader {
-                        id: mascotInstanceLoader
+                    DesktopWidgetSlot {
                         required property string modelData
                         required property int index
-                        z: item?.desktopStackZ ?? 0
-                        containmentMask: GlobalStates.widgetEditMode ? _hitMaskInst : null
-                        WidgetInputMask { id: _hitMaskInst; loader: parent }
-
-                        active: false
-
-                        function _configEnabled(): bool {
-                            return DesktopWidgetLayout.enabled(bgRoot.screenName,
-                                "mascotInstances." + modelData,
-                                Config.getNestedValue("background.widgets.mascotInstances." + modelData + ".enable", false));
-                        }
-                        function _load(): void {
-                            active = true;
-                            setSource(Quickshell.shellPath("modules/shared/background/widgets/mascot/MascotWidget.qml"), {
-                                configEntryName: "mascotInstances." + modelData,
-                                widgetIndex: 23 + index,
-                                outputName: bgRoot.screen?.name ?? "",
-                                screenWidth: bgRoot.screen.width,
-                                screenHeight: bgRoot.screen.height,
-                                scaledScreenWidth: bgRoot.screen.width,
-                                scaledScreenHeight: bgRoot.screen.height,
-                                wallpaperScale: 1
-                            });
-                        }
-                        function _unload(): void {
-                            active = false;
-                            source = "";
-                        }
-                        function _syncLoaded(): void {
-                            if (_configEnabled()) {
-                                if (!item) _load();
-                            } else if (item || active) {
-                                _unload();
-                            }
-                        }
-
-                        Component.onCompleted: Qt.callLater(_syncLoaded)
-
-                        Connections {
-                            target: Config
-                            function onConfigChanged() { Qt.callLater(mascotInstanceLoader._syncLoaded) }
-                        }
-                        Connections {
-                            target: bgRoot.screen
-                            function onWidthChanged() {
-                                if (!mascotInstanceLoader.item) return;
-                                mascotInstanceLoader.item.screenWidth = bgRoot.screen.width;
-                                mascotInstanceLoader.item.scaledScreenWidth = bgRoot.screen.width;
-                            }
-                            function onHeightChanged() {
-                                if (!mascotInstanceLoader.item) return;
-                                mascotInstanceLoader.item.screenHeight = bgRoot.screen.height;
-                                mascotInstanceLoader.item.scaledScreenHeight = bgRoot.screen.height;
-                            }
+                        readonly property string instance: "mascotInstances." + modelData
+                        desktop: bgRoot
+                        file: DesktopWidgetRegistry.entry("mascot").file
+                        order: 100 + index
+                        props: ({ configEntryName: instance })
+                        shown: {
+                            void Config.revision;
+                            return bgRoot._widgetEnabled(instance,
+                                Config.getNestedValue("background.widgets." + instance + ".enable", false));
                         }
                     }
                 }
@@ -3586,80 +2958,19 @@ Scope {
                 // Custom user widgets from ~/.config/inir/widgets/
                 Repeater {
                     model: CustomWidgets.ready ? CustomWidgets.widgets : []
-
-                    Loader {
-                        id: customWidgetLoader
-                        z: item?.desktopStackZ ?? 0
-                        containmentMask: GlobalStates.widgetEditMode ? _customHitMask : null
-                        WidgetInputMask { id: _customHitMask; loader: parent }
+                    DesktopWidgetSlot {
                         required property var modelData
                         required property int index
-
-                        active: false
-
-                        function _configEnabled(): bool {
-                            return DesktopWidgetLayout.enabled(bgRoot.screenName,
-                                "custom." + modelData.id,
-                                Config.getNestedValue("background.widgets.custom." + modelData.id + ".enable", false));
-                        }
-
-                        // setSource passes required properties at construction time
-                        function _load(): void {
-                            const props = {
-                                widgetIndex: 40 + index,
-                                outputName: bgRoot.screen?.name ?? "",
-                                screenWidth: bgRoot.screen.width,
-                                screenHeight: bgRoot.screen.height,
-                                scaledScreenWidth: bgRoot.screen.width,
-                                scaledScreenHeight: bgRoot.screen.height,
-                                wallpaperScale: 1,
-                            };
-                            // Pass manifest data for auto-popover and resize
-                            if (modelData.configKeys && Object.keys(modelData.configKeys).length > 0)
-                                props.manifestConfigKeys = modelData.configKeys;
-                            // Default to uniform resize via widgetScale for all custom widgets
-                            const axes = (modelData.resizableAxes && Object.keys(modelData.resizableAxes).length > 0)
-                                ? modelData.resizableAxes : { uniform: "widgetScale" };
-                            props.resizableAxes = axes;
-                            active = true;
-                            setSource(modelData.qmlPath, props);
-                        }
-
-                        function _unload(): void {
-                            active = false;
-                            source = "";
-                        }
-
-                        function _syncLoaded(): void {
-                            if (_configEnabled()) {
-                                if (!item)
-                                    _load();
-                            } else if (item || active) {
-                                _unload();
-                            }
-                        }
-
-                        Component.onCompleted: Qt.callLater(_syncLoaded)
-
-                        Connections {
-                            target: Config
-                            function onConfigChanged() {
-                                Qt.callLater(customWidgetLoader._syncLoaded);
-                            }
-                        }
-
-                        Connections {
-                            target: bgRoot.screen
-                            function onWidthChanged() {
-                                if (!customWidgetLoader.item) return;
-                                customWidgetLoader.item.screenWidth = bgRoot.screen.width;
-                                customWidgetLoader.item.scaledScreenWidth = bgRoot.screen.width;
-                            }
-                            function onHeightChanged() {
-                                if (!customWidgetLoader.item) return;
-                                customWidgetLoader.item.screenHeight = bgRoot.screen.height;
-                                customWidgetLoader.item.scaledScreenHeight = bgRoot.screen.height;
-                            }
+                        readonly property string instance: "custom." + modelData.id
+                        desktop: bgRoot
+                        file: modelData.qmlPath
+                        order: 200 + index
+                        props: Object.keys(modelData.configKeys ?? {}).length > 0
+                            ? ({ manifestConfigKeys: modelData.configKeys }) : ({})
+                        shown: {
+                            void Config.revision;
+                            return bgRoot._widgetEnabled(instance,
+                                Config.getNestedValue("background.widgets." + instance + ".enable", false));
                         }
                     }
                 }

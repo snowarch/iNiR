@@ -1,0 +1,13 @@
+{
+  "name": "Clock",
+  "group": "Clock",
+  "main": "ClockWidget.qml",
+  "icon": "schedule",
+  "tint": "#ff9f0a",
+  "category": "today",
+  "keywords": "time hour watch",
+  "sizes": ["medium", "small", "large"],
+  "defaultOn": true,
+  "lock": true,
+  "palette": true
+}

@@ -1,0 +1,12 @@
+{
+  "name": "Date",
+  "group": "Date badge",
+  "main": "DateBadgeWidget.qml",
+  "icon": "today",
+  "tint": "#ff3b30",
+  "category": "today",
+  "keywords": "date day today",
+  "sizes": ["small", "medium", "large"],
+  "lock": true,
+  "palette": true
+}

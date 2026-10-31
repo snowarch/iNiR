@@ -1,12 +1,11 @@
 module qs.modules.shared.background.widgets
 AbstractBackgroundWidget 1.0 AbstractBackgroundWidget.qml
-EditorialWidget 1.0 EditorialWidget.qml
-CustomImageWidget 1.0 CustomImageWidget.qml
 ManifestPopover 1.0 ManifestPopover.qml
 WidgetChoiceButton 1.0 WidgetChoiceButton.qml
 WidgetEditAction 1.0 WidgetEditAction.qml
 WidgetPlacementControls 1.0 WidgetPlacementControls.qml
 WidgetSurface 1.0 WidgetSurface.qml
+DesktopWidgetSlot 1.0 DesktopWidgetSlot.qml
 OrganicEdgeWidget 1.0 OrganicEdgeWidget.qml
 WidgetQuickControlsLayout 1.0 WidgetQuickControlsLayout.qml
 WidgetQuickChoice 1.0 WidgetQuickChoice.qml

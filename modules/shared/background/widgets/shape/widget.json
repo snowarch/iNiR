@@ -1,0 +1,11 @@
+{
+  "name": "Shape",
+  "group": "Decorative shape",
+  "main": "ShapeWidget.qml",
+  "icon": "category",
+  "tint": "#bf5af2",
+  "category": "decor",
+  "keywords": "decoration decorative",
+  "sizes": ["small", "medium", "large"],
+  "palette": true
+}

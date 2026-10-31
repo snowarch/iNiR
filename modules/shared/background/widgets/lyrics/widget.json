@@ -1,0 +1,12 @@
+{
+  "name": "Lyrics",
+  "group": "Lyrics",
+  "main": "LyricsWidget.qml",
+  "icon": "lyrics",
+  "tint": "#ff375f",
+  "category": "media",
+  "keywords": "lyrics words song sing karaoke music lines",
+  "sizes": ["medium", "small", "large"],
+  "lock": true,
+  "familyFace": true
+}

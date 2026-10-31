@@ -20,12 +20,14 @@ AbstractWidget {
     // designs (Material, iNstrument, Readout) keep drawing themselves under any Design.
     property string designFaceKey: ""
     readonly property bool widgetIris: root.widgetIrisFamily && root.irisDesign === "iris"
-    required property int screenWidth
-    required property int screenHeight
-    required property int scaledScreenWidth
-    required property int scaledScreenHeight
-    required property real wallpaperScale
-    property string outputName: ""
+    // The Background it sits on; a host with no desktop behind it (the lock) sets these itself.
+    property var desktop: null
+    property int screenWidth: root.desktop?.screen?.width ?? 0
+    property int screenHeight: root.desktop?.screen?.height ?? 0
+    property int scaledScreenWidth: root.screenWidth
+    property int scaledScreenHeight: root.screenHeight
+    property real wallpaperScale: 1
+    property string outputName: root.desktop?.screen?.name ?? ""
     readonly property string _configPath: "background.widgets." + root.configEntryName
 
     function _setOutputValues(values): void {
@@ -77,12 +79,6 @@ AbstractWidget {
     // A page leaving a stack stays above the one arriving until it is gone.
     readonly property int desktopStackZ: root.stackLeaving ? 10001
         : root.editSelected ? 10000 : root.desktopPersistentZ
-    // Diagnostic-only control, supplied by Background.qml when the supervised
-    // shell is loaded with INIR_REGION_DEBUG=1.
-    property bool debugQuickControlsOpen: false
-    property bool debugLayoutProbeActive: false
-    property int debugLayoutProbeX: 0
-    property int debugLayoutProbeY: 0
     // Supports nested configEntryName like "custom.my-widget"
     // Custom widget data lives in Config.customWidgetData (outside adapter).
     property var configEntry: Config.getNestedValue(root._configPath, ({}))
@@ -774,30 +770,6 @@ AbstractWidget {
         canvas.promoteDesktopWidget(root.editInstanceKey, root.layerKey)
     }
 
-    readonly property string editControlsGeometryReport: {
-        const requestedX = root.debugLayoutProbeActive ? root.debugLayoutProbeX : root.x;
-        const requestedY = root.debugLayoutProbeActive ? root.debugLayoutProbeY : root.y;
-        const geometry = root._resolveEditControlsGeometry(
-            requestedX, requestedY, editPopoverPanel.open,
-            root._editPlacementSide, root._popoverReserve, root._popoverReserveWidth);
-        return JSON.stringify({
-            widget: root.configEntryName,
-            screen: { width: root.scaledScreenWidth, height: root.scaledScreenHeight },
-            probe: root.debugLayoutProbeActive,
-            requested: { x: Math.round(requestedX), y: Math.round(requestedY) },
-            position: { x: Math.round(geometry.widgetX), y: Math.round(geometry.widgetY) },
-            below: geometry.below,
-            side: geometry.side,
-            toolbar: { x: Math.round(geometry.toolbarX), y: Math.round(geometry.toolbarY), width: Math.round(editToolbar.width), height: Math.round(editToolbar.height) },
-            popover: { visible: editPopoverPanel.open, x: Math.round(geometry.popoverX), y: Math.round(geometry.popoverY), width: Math.round(editPopoverPanel.width), height: Math.round(editPopoverPanel.height) },
-            inBounds: geometry.inBounds
-        });
-    }
-
-    onDebugQuickControlsOpenChanged: {
-        if (Quickshell.env("INIR_REGION_DEBUG") === "1")
-            editPopoverPanel.open = root.debugQuickControlsOpen;
-    }
     // Locking keeps the sheet on the page that can unlock it.
     onLockedChanged: if (root.locked && editPopoverPanel.open) root._quickTab = root._arrangeTab
     onEditSelectedChanged: {
@@ -1048,8 +1020,7 @@ AbstractWidget {
     readonly property bool _editEngaged: GlobalStates.widgetEditMode
         && (root.editSelected || toolbarEditHover.hovered
             || root.containsPress || root.isDragging || root._isResizing
-            || editPopoverPanel.open
-            || root.debugQuickControlsOpen)
+            || editPopoverPanel.open)
     property bool _editControlsShown: false
     on_EditEngagedChanged: {
         if (root._editEngaged) {
@@ -2259,13 +2230,13 @@ AbstractWidget {
     readonly property string irisFaceUrl: root.irisFacePart.length > 0 ? Plugins.part("iris", "widgetFace." + root.irisFacePart)
         : root.irisDesignPart.length > 0 && FamilyStyle.facePrints[root.irisDesignPrint] ? Plugins.part("iris", "designFace") : ""
     readonly property bool hasIrisFace: root.irisFaceUrl.length > 0
-    readonly property bool irisOnly: DesktopWidgetRegistry.irisOnly(root.configEntryName)
+    readonly property bool familyFaced: DesktopWidgetRegistry.entry(root.configEntryName)?.familyFace ?? false
     readonly property var designChoices: {
         const list = []
         const family = Config.options?.panelFamily ?? "ii"
         if (family !== "iris" && family !== "ii") return list
         if (family === "iris" && root.hasIrisFace) list.push({ value: "iris", icon: "auto_awesome", label: Translation.tr("iRiS") })
-        if (family === "ii" || !root.irisOnly) list.push({ value: "material", icon: "widgets", label: Translation.tr("Material") })
+        if (family === "ii" || !root.familyFaced) list.push({ value: "material", icon: "widgets", label: Translation.tr("Material") })
         if (DesktopWidgetDesign.supports(root.configEntryName)) {
             list.push({ value: "instrument", icon: "avg_pace", label: Translation.tr("iNstrument") })
             list.push({ value: "readout", icon: "view_agenda", label: Translation.tr("Readout") })
@@ -2273,7 +2244,7 @@ AbstractWidget {
         return list
     }
     readonly property string irisDesign: root._designResolved.face
-        || (root.irisOnly && root.widgetSharedDesign === "individual") ? "iris" : "material"
+        || (root.familyFaced && root.widgetSharedDesign === "individual") ? "iris" : "material"
     // The design this widget shows, as the global picker names it.
     readonly property string widgetDesign: root.irisDesign === "iris" ? "iris"
         : root.widgetSharedDesign === "individual" ? "material" : root.widgetSharedDesign

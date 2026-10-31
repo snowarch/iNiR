@@ -168,12 +168,7 @@ AbstractBackgroundWidget {
     property bool adaptDigitalToWallpaper: root._readConfigKey("digital.adaptToWallpaper") ?? true
     readonly property bool shellLocked: GlobalStates.screenLocked && Config.options?.panelFamily !== "iris"
     property bool forceCenter: (root.shellLocked && (Config.family?.lock?.centerClock ?? false))
-    property bool wallpaperSafetyTriggered: false
-    property bool debugRegionActive: false
-    property color debugRegionColor: "transparent"
-    property real debugRegionBrightness: -1
-    property real debugRegionSpread: 0
-    property string cookieDiagnostics: "{}"
+    readonly property bool wallpaperSafetyTriggered: root.desktop?.wallpaperSafetyTriggered ?? false
     needsColText: root.clockStyle === "instrument"
         || (root.textClockStyle && (root.adaptDigitalToWallpaper || root.widgetHasSurface))
     visibleWhenLocked: true
@@ -287,22 +282,8 @@ AbstractBackgroundWidget {
     // the analyzed wallpaper region otherwise (theme surface until the analysis
     // lands, so nothing re-tones on first paint).
     readonly property bool _digitalCard: root.textClockStyle && root.widgetHasSurface
-    readonly property bool _digitalHasBrightness: root.debugRegionActive
-        ? root.debugRegionBrightness >= 0 : root._hasBrightness
-    readonly property color _digitalRegionColor: root.debugRegionActive
-        ? root.debugRegionColor : root.dominantColor
-    readonly property real _digitalRegionBrightness: root.debugRegionActive
-        ? root.debugRegionBrightness : root.regionBrightness
-    readonly property color _digitalRegionBg: {
-        const dominant = Qt.color(root._digitalRegionColor);
-        // The sample's mean colour is the backdrop as drawn; rebuilding it from the gamma level as HSL lightness made a
-        // sunset read darker than it is and kept white digits on it at under 3:1 (10-30 gallery).
-        if (!root._digitalHasBrightness || !root.debugRegionActive) return dominant;
-        return Qt.hsla(dominant.hslHue, dominant.hslSaturation,
-            root._digitalRegionBrightness, 1.0);
-    }
     readonly property color _inkBackdrop: root._digitalCard ? root.widgetPlateColor
-        : root._digitalHasBrightness ? root._digitalRegionBg
+        : root._hasBrightness ? Qt.color(root.dominantColor)
         : Appearance.colors.colLayer0
     readonly property color _digitalBackdrop: root.adaptDigitalToWallpaper
         ? root._inkBackdrop : Appearance.colors.colLayer0
@@ -316,52 +297,6 @@ AbstractBackgroundWidget {
         root.widgetTertiaryRole, root._digitalBackdrop, 4.5)
     readonly property color digitalStatusColor: root.widgetSemanticForeground(
         root.widgetSignalRole, root._digitalBackdrop, 4.5)
-
-    readonly property string debugPaletteReport: JSON.stringify({
-        style: root.clockStyle,
-        globalStyle: Appearance.globalStyle,
-        adaptive: root.adaptDigitalToWallpaper,
-        appearance: {
-            colorMode: root.colorMode,
-            dimAmount: root.dimAmount,
-            widgetOpacity: root.widgetOpacity,
-            effectiveOpacity: root.opacity,
-            useBlur: root.useBlur,
-            blurAvailable: root.blurAvailable,
-            effectiveBlur: root.effectiveBlur,
-            hasSurface: root.widgetHasSurface,
-            plate: String(root.widgetPlateColor),
-            surfaceInk: String(root.widgetSurfaceInk),
-            surface: JSON.parse(clockSurface.surfaceReport)
-        },
-        region: {
-            injected: root.debugRegionActive,
-            dominant: String(root._digitalRegionColor),
-            regionBackdrop: String(root._inkBackdrop),
-            displayBackdrop: String(root._digitalBackdrop),
-            brightness: root._digitalRegionBrightness
-        },
-        cookie: {
-            face: String(root.cookieFace),
-            ink: String(root.cookieInk),
-            info: String(root.cookieInfo),
-            hourHand: String(root.handPrimary),
-            minuteHand: String(root.handTertiary),
-            inkContrast: ColorUtils.contrastRatio(root.cookieInk, root.cookieFace),
-            infoContrast: ColorUtils.contrastRatio(root.cookieInfo, root.cookieFace),
-            renderer: root.cookieDiagnostics
-        },
-        digital: {
-            time: String(root.digitalTimeColor),
-            date: String(root.digitalDateColor),
-            quote: String(root.digitalMetaColor),
-            status: String(root.digitalStatusColor),
-            timeContrast: ColorUtils.contrastRatio(root.digitalTimeColor, root._digitalBackdrop),
-            dateContrast: ColorUtils.contrastRatio(root.digitalDateColor, root._digitalBackdrop),
-            quoteContrast: ColorUtils.contrastRatio(root.digitalMetaColor, root._digitalBackdrop),
-            statusContrast: ColorUtils.contrastRatio(root.digitalStatusColor, root._digitalBackdrop)
-        }
-    })
 
     // Card background (mainly for digital mode)
     WidgetSurface {

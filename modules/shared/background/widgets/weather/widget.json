@@ -1,0 +1,12 @@
+{
+  "name": "Weather",
+  "group": "Weather",
+  "main": "WeatherWidget.qml",
+  "icon": "cloud",
+  "tint": "#0a84ff",
+  "category": "today",
+  "keywords": "forecast temperature rain sun wind climate",
+  "sizes": ["small", "medium", "large"],
+  "lock": true,
+  "palette": true
+}

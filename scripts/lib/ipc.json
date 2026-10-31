@@ -239,7 +239,7 @@
    "name": "background",
    "family": "shared",
    "description": "Desktop background and widget controls.",
-   "notes": "The mutating diagnostic functions require the supervised shell to be loaded with `INIR_REGION_DEBUG=1`. They\nsnapshot the clock's relevant config on first use; always finish a diagnostic run with `clockDebugRestore`\nbefore removing the environment flag.\n\n```kdl\nSuper+W { spawn \"inir\" \"background\" \"toggleEditMode\"; }\n```",
+   "notes": "```kdl\nSuper+W { spawn \"inir\" \"background\" \"toggleEditMode\"; }\n```",
    "example": "Super+W { spawn \"inir\" \"background\" \"toggleEditMode\"; }",
    "functions": [
     {
@@ -518,47 +518,6 @@
       "enabled"
      ],
      "description": "Enable or disable a built-in desktop widget",
-     "values": []
-    },
-    {
-     "name": "clockDebugState",
-     "args": [],
-     "description": "Report clock palette, renderer and quick-control geometry diagnostics",
-     "values": []
-    },
-    {
-     "name": "clockDebugSetMode",
-     "args": [
-      "style",
-      "adaptToWallpaper"
-     ],
-     "description": "Temporarily select a diagnostic clock mode",
-     "values": []
-    },
-    {
-     "name": "clockDebugSetRegion",
-     "args": [
-      "color",
-      "brightness",
-      "spread"
-     ],
-     "description": "Inject a temporary wallpaper-region sample",
-     "values": []
-    },
-    {
-     "name": "clockDebugSetLayout",
-     "args": [
-      "x",
-      "y",
-      "quickControlsOpen"
-     ],
-     "description": "Probe quick-control geometry at a hypothetical clock position without moving the widget",
-     "values": []
-    },
-    {
-     "name": "clockDebugRestore",
-     "args": [],
-     "description": "Restore the config captured by clock diagnostics",
      "values": []
     }
    ]

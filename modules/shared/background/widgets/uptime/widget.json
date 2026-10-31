@@ -1,0 +1,12 @@
+{
+  "name": "Uptime",
+  "group": "System uptime",
+  "main": "UptimeWidget.qml",
+  "icon": "avg_pace",
+  "tint": "#5e5ce6",
+  "category": "system",
+  "keywords": "boot session running",
+  "sizes": ["small", "medium", "large"],
+  "lock": true,
+  "palette": true
+}

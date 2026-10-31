@@ -1,0 +1,12 @@
+{
+  "name": "Timers",
+  "group": "Timers",
+  "main": "TimerWidget.qml",
+  "icon": "timer",
+  "tint": "#ff9f0a",
+  "category": "today",
+  "keywords": "timer stopwatch countdown alarm pomodoro",
+  "sizes": ["medium", "small", "large"],
+  "lock": true,
+  "palette": true
+}
