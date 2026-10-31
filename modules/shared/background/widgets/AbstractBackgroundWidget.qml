@@ -337,135 +337,22 @@ AbstractWidget {
         NumberAnimation { duration: Appearance.animation.elementMove.duration; easing.type: Appearance.animation.elementMove.type; easing.bezierCurve: Appearance.animation.elementMove.bezierCurve }
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    // CHAOS MODE — physics responses to mascot impacts (MascotChaos bus)
-    // ══════════════════════════════════════════════════════════════════════
-    // Impacts animate a visual transform only; the position machinery above
-    // is never touched mid-flight. On landing the displacement either
-    // persists (one config write, free-mode only) or springs back home.
-    property real _chaosDX: 0
-    property real _chaosDY: 0
-    property real _chaosAngle: 0
-    property real _flingX: 0
-    property real _flingY: 0
-    property real _flingRise: 120
-    property real _flingSpin: 0
-    property bool _flingPersist: false
-    property bool _flingWreck: false
-
     transform: [
-        Rotation { origin.x: root.width / 2; origin.y: root.height / 2; angle: root._chaosAngle },
-        Translate { x: root._chaosDX; y: root._chaosDY },
+        Rotation { origin.x: root.width / 2; origin.y: root.height / 2; angle: chaos.item?.angle ?? 0 },
+        Translate { x: chaos.item?.dx ?? 0; y: chaos.item?.dy ?? 0 },
         Scale { xScale: root._shelfScale; yScale: root._shelfScale },
         Translate { x: root._shelfDX + root._glideX * root._glide; y: root._shelfDY + root._glideY * root._glide }
     ]
 
-    // Live geometry report so the romp knows where to aim (chaos-gated)
-    readonly property bool _chaosWatch: MascotChaos.enabled && root.visible
-    Timer {
-        id: _chaosReportDebounce
-        interval: 250
-        onTriggered: MascotChaos.report(root.editInstanceKey, root.x, root.y, root.width, root.height, root.outputName, root.configEntryName)
-        // widgets born while chaos is already on still need a first report
-        Component.onCompleted: if (root._chaosWatch) restart()
-    }
-    on_ChaosWatchChanged: {
-        if (_chaosWatch) _chaosReportDebounce.restart()
-        else MascotChaos.unreport(root.editInstanceKey)
-    }
-    Connections {
-        target: root
-        enabled: root._chaosWatch
-        function onXChanged() { _chaosReportDebounce.restart() }
-        function onYChanged() { _chaosReportDebounce.restart() }
-        function onWidthChanged() { _chaosReportDebounce.restart() }
-        function onHeightChanged() { _chaosReportDebounce.restart() }
-    }
-
-    SequentialAnimation {
-        id: _chaosFling
-        ParallelAnimation {
-            NumberAnimation { target: root; property: "_chaosDX"; to: root._flingX; duration: 700; easing.type: Easing.OutCubic }
-            NumberAnimation { target: root; property: "_chaosAngle"; to: root._flingSpin; duration: 700; easing.type: Easing.OutCubic }
-            SequentialAnimation {
-                NumberAnimation { target: root; property: "_chaosDY"; to: -root._flingRise; duration: 260; easing.type: Easing.OutQuad }
-                NumberAnimation { target: root; property: "_chaosDY"; to: root._flingY; duration: 440; easing.type: Easing.InQuad }
-                NumberAnimation { target: root; property: "_chaosDY"; to: root._flingY - 14; duration: 120; easing.type: Easing.OutQuad }
-                NumberAnimation { target: root; property: "_chaosDY"; to: root._flingY; duration: 140; easing.type: Easing.InQuad }
-            }
-        }
-        onStopped: root._chaosSettle()
-    }
-    ParallelAnimation {
-        id: _chaosReturn
-        NumberAnimation { target: root; property: "_chaosDX"; to: 0; duration: 550; easing.type: Easing.OutBack }
-        NumberAnimation { target: root; property: "_chaosDY"; to: 0; duration: 550; easing.type: Easing.OutBack }
-        NumberAnimation { target: root; property: "_chaosAngle"; to: 0; duration: 550; easing.type: Easing.OutBack }
-    }
-    NumberAnimation { id: _chaosStraighten; target: root; property: "_chaosAngle"; to: 0; duration: 300; easing.type: Easing.OutQuad }
-
-    function _chaosSettle(): void {
-        if (root._flingWreck) {
-            // stays face-down on the floor until tidy() picks it back up
-            return
-        }
-        if (root._flingPersist) {
-            const nx = root._clampX(root.x + root._chaosDX)
-            const ny = root._clampY(root.y + root._chaosDY)
-            root._chaosDX = 0
-            root._chaosDY = 0
-            root._setOutputValues({ x: Math.round(nx), y: Math.round(ny) })
-            root.syncFreePositionFromConfig()
-            _chaosStraighten.restart()
-        } else {
-            _chaosReturn.restart()
-        }
-    }
-
-    Connections {
-        target: MascotChaos
-        function onImpact(widgetKey, vx, vy, mode) {
-            if (!MascotChaos.enabled || widgetKey !== root.editInstanceKey) return
-            if (MascotChaos.suppressed || !root.visible || root.locked) return
-            _chaosFling.stop()
-            _chaosReturn.stop()
-            root._flingWreck = MascotChaos.allowRearrange && (mode === "wreck" || mode === "vanish")
-            root._flingPersist = MascotChaos.allowRearrange && mode === "persist" && root.placementStrategy === "free" && !root.locked
-            if (root._flingPersist) MascotChaos.rememberOriginal(root.editInstanceKey, root.x, root.y)
-            root._flingX = vx
-            if (mode === "vanish" && root._flingWreck) {
-                // stolen: carried clean off the screen edge until tidy
-                root._flingX = vx >= 0
-                    ? root.scaledScreenWidth - root.x + root.width
-                    : -(root.x + root.width * 2)
-                root._flingY = 0
-                root._flingRise = 30
-                root._flingSpin = 0
-            } else if (root._flingWreck) {
-                // knocked out: drop to the floor and lie there, badly
-                root._flingY = Math.max(0, root.scaledScreenHeight - root.y - root.height - 8)
-                root._flingRise = 40 + Math.random() * 40
-                root._flingSpin = (vx >= 0 ? 1 : -1) * (60 + Math.random() * 30)
-            } else {
-                root._flingY = root._flingPersist ? vy : 0
-                root._flingRise = 90 + Math.random() * 70
-                root._flingSpin = (vx >= 0 ? 1 : -1) * (8 + Math.random() * 14)
-            }
-            _chaosFling.restart()
-        }
-        function onTidied() {
-            root._flingPersist = false
-            root._flingWreck = false
-            _chaosFling.stop()
-            _chaosReturn.stop()
-            root._flingWreck = false
-            // ease everything back upright instead of teleporting
-            _chaosReturn.restart()
-        }
+    // Only while the mascot can romp: a dozen objects per widget otherwise, for nobody.
+    Loader {
+        id: chaos
+        active: MascotChaos.enabled
+        sourceComponent: WidgetChaos { widget: root }
     }
 
     visible: opacity > 0
-    // iRiS dims the face only, so its edit toolbar and sheet stay legible over a dimmed widget.
+    // A family face dims itself, so its edit toolbar and sheet stay legible over a dimmed widget.
     opacity: ((GlobalStates.screenLocked && !visibleWhenLocked) ? 0 : 1)
         * (root.familyFaced ? 1 : root.widgetOpacity * root.dimOpacity)
         * (root.stackPresent ? 1 : 0)
