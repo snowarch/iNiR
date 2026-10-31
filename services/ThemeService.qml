@@ -143,7 +143,7 @@ Singleton {
     // silently inherited material's corner style.
 
     function cornerStyleForGlobalStyle(styleId: string): int {
-        const styles = Config.options?.material?.style?.globalStyleCornerStyles
+        const styles = Appearance.styleConfig?.globalStyleCornerStyles
         switch (styleId) {
         case "cards": return styles?.cards ?? 3
         case "aurora": return styles?.aurora ?? 1
@@ -164,12 +164,18 @@ Singleton {
         // Hug (0) leaves no float gap for angel's escalonado shadows to land in.
         if (styleId === "angel" && cornerStyle === 0)
             cornerStyle = 1
-        Config.setNestedValues({
-            "material.style.globalStyle": styleId,
-            "material.dock.cardStyle": cards,
-            "material.sidebar.cardStyle": cards,
-            "material.bar.cornerStyle": cornerStyle
-        })
+        // The style lives where the active family keeps it (plugin.json settings.globalStyle); its cards and corner
+        // presets go to the bar, dock and sidebars of the family that owns that style.
+        const styleKey = Plugins.settingKey(Plugins.active, "globalStyle")
+        if (styleKey.length === 0)
+            return
+        const owner = styleKey.split(".")[0]
+        const values = {}
+        values[`${styleKey}.globalStyle`] = styleId
+        values[`${owner}.dock.cardStyle`] = cards
+        values[`${owner}.sidebar.cardStyle`] = cards
+        values[`${owner}.bar.cornerStyle`] = cornerStyle
+        Config.setNestedValues(values)
     }
 
     readonly property var globalStyles: ["material", "cards", "aurora", "inir", "angel", "regalia", "zzz", "cookie", "editorial"]
@@ -191,7 +197,7 @@ Singleton {
             return id
         }
         /// Return the active style
-        function get(): string { return Config.options?.material?.style?.globalStyle ?? "material" }
+        function get(): string { return Appearance.globalStyle }
         /// List the styles
         function list(): string { return root.globalStyles.join(", ") }
     }

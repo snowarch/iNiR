@@ -44,6 +44,8 @@ Singleton {
     function setting(id: string, slot: string, otherwise: var): var {
         const spec = root.manifests[id]?.settings?.[slot]
         if (!spec?.key) return otherwise
+        // `when`: a key of the family's own that switches the slot off (Waffle's "Take style from Material")
+        if (spec.when && !Config.getNestedValue(String(spec.when), false)) return spec.fallback ?? otherwise
         const value = Config.getNestedValue(String(spec.key), undefined)
         return value === undefined || value === null || value === "" ? (spec.fallback ?? otherwise) : value
     }

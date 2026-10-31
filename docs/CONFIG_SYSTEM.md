@@ -46,6 +46,10 @@ sections:
 - **One section per family** holds only how that family looks: `material` (bar, sidebars, dock, control panel,
   dashboard and the global style under `material.style`), `waffles` and `iris`. A family never reads another
   family's section, so tuning Material's bar can't move anything in iRiS.
+- **Taking from another family is a visible switch.** Material's global style (Aurora, Angel, Zzz... and its
+  transparency) reaches the shared screens only under Material, and under Waffle while **Take style from Material**
+  (`waffles.theming.styleFromMaterial`) is on. Each family declares it in its `plugin.json` (`settings.globalStyle`,
+  with `when` naming the switch); under iRiS, or Waffle with the switch off, the shared screens use plain defaults.
 
 Older files (from before this split, with `bar`, `sidebar`, `dock` or `material.style.globalStyle` at the top) are
 moved into place the first time the shell starts. Your values come along; nothing to do by hand.

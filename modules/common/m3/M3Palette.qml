@@ -72,7 +72,7 @@ QtObject {
     readonly property color secondaryContainerActive: ColorUtils.mix(secondaryContainer, secondaryContainerForeground, 0.80)
 
     function pillContainer(name: string): color {
-        if ((Config.options?.material?.bar?.m3?.cornerStyle ?? 0) !== 3)
+        if ((Config.family?.bar?.m3?.cornerStyle ?? 0) !== 3)
             return primaryContainer
 
         if (neutralDialect) {
@@ -103,7 +103,7 @@ QtObject {
     }
 
     function pillInk(name: string): color {
-        if ((Config.options?.material?.bar?.m3?.cornerStyle ?? 0) !== 3)
+        if ((Config.family?.bar?.m3?.cornerStyle ?? 0) !== 3)
             return primaryContainerForeground
 
         if (neutralDialect) {

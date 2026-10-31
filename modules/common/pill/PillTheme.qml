@@ -114,9 +114,9 @@ Singleton {
     readonly property real openCorner: Math.max(0, Math.round((islandRadius + 4) * cornerScale))
 
     readonly property real pillOpacity: islandOpacity
-    readonly property bool showGlyphs: Config.options?.material?.bar?.pill?.showGlyphs ?? true
-    readonly property bool clockSeconds: Config.options?.material?.bar?.pill?.clockSeconds ?? false
-    readonly property bool time12h: Config.options?.material?.bar?.pill?.time12h ?? false
+    readonly property bool showGlyphs: Config.family?.bar?.pill?.showGlyphs ?? true
+    readonly property bool clockSeconds: Config.family?.bar?.pill?.clockSeconds ?? false
+    readonly property bool time12h: Config.family?.bar?.pill?.time12h ?? false
 
     readonly property string font: Appearance.font.family.main
     readonly property string fontJp: "Zen Kaku Gothic New"
@@ -133,7 +133,7 @@ Singleton {
         launcher: "探", clipboardSearch: "控", workspaces: "場", settings: "設"
     })
     function glyph(key) {
-        const o = Config.options?.material?.bar?.pill?.glyphs?.[key];
+        const o = Config.family?.bar?.pill?.glyphs?.[key];
         return (o !== undefined && o !== null && String(o).length > 0)
             ? String(o) : (glyphDefaults[key] ?? "");
     }

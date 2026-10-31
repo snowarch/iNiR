@@ -41,7 +41,8 @@ Config           -> Plugins.part(family, "config")        the schema of its own 
 ```
 
 The base never names a family. What it honours for one is declared in that family's `plugin.json` (panels, settings
-slots, flags, its config subtree) or answered by the family's verbs (`GlobalStates.familyVerb`). A family may use
+slots, each one a config key the base reads through `Plugins.setting`, optionally held by a `when` key of the family's
+own; flags, its config subtree) or answered by the family's verbs (`GlobalStates.familyVerb`). A family may use
 `modules/shared`, `modules/common` and `services`; nothing uses a family. Each family's config subtree (`material.*`,
 `waffles.*`, `iris.*`) ships with it and is kept untouched while it is not installed; the shell's own sections hold
 what every family shares. A shared surface that needs the active family's version of a setting reads
