@@ -80,22 +80,10 @@ Scope {
             return DesktopWidgetDesign.apply(name)
         }
 
-        /// iRiS: `status` reports the shared widget material and how many widgets chose their own material or surface
+        /// `status` reports the shared widget material and how many widgets chose their own material or surface
         /// opacity in Look; `match` puts them back on the shared ones; `toggle`, `clear` and `glass` take every
         /// widget's plate away or bring it back (returns the material now).
-        function widgetMaterial(action: string): string {
-            if (action === "match") return DesktopWidgetDesign.matchSurfaces()
-            if (action === "toggle" || action === "clear" || action === "glass") {
-                const now = String(Config.options?.iris?.widgets?.material ?? "glass")
-                const next = action !== "toggle" ? action : now === "clear" ? "glass" : "clear"
-                Config.setNestedValue("iris.widgets.material", next)
-                return next
-            }
-            if (action === "status")
-                return String(Config.options?.iris?.widgets?.material ?? "glass") + " · "
-                    + DesktopWidgetDesign.ownSurfaceCount + " widgets with their own material or opacity"
-            return "Use status, match, toggle, clear or glass"
-        }
+        function widgetMaterial(action: string): string { return DesktopWidgetLook.look.materialAction(action) }
 
         // Every widget's plate, outline, ink or lock at once (Material, iNstrument, Readout; a face's surface is widgetMaterial).
         /// Every Material, iNstrument and Readout widget at once: `plate on|off` (the background), `outline on|off`,
@@ -128,8 +116,8 @@ Scope {
         /// `next`/`previous` to move the selection, `take` to add or show the selected widget, `close`. Ctrl+F opens
         /// it
         function widgetSearch(query: string): string {
-            if ((Config.options?.panelFamily ?? "ii") !== "iris")
-                return "the widget search is part of the iRiS widget bar"
+            if (!Plugins.flag(Plugins.active, "widgetSearch"))
+                return "this family's widget bar has no search"
             if (query === "close") {
                 GlobalStates.widgetSearchOpen = false
                 GlobalStates.widgetSearchText = ""
@@ -355,13 +343,13 @@ Scope {
                 .find(item => item.configEntryName === name) ?? null
             if (!widget)
                 return "select a widget first: focusWidget <name> true"
-            const pages = widget.irisFaced ? ["widget", "look", "arrange"].concat(widget.stacked ? ["stack"] : [])
+            const pages = widget.familyFaced ? ["widget", "look", "arrange"].concat(widget.stacked ? ["stack"] : [])
                 : ["widget", "colors", "layout"].concat(widget.hasOptionRows ? ["options"] : [])
-            const aliases = ({ look: widget.irisFaced ? "look" : "colors", colors: widget.irisFaced ? "look" : "colors",
+            const aliases = ({ look: widget.familyFaced ? "look" : "colors", colors: widget.familyFaced ? "look" : "colors",
                 arrange: widget._arrangeTab, layout: widget._arrangeTab, widget: "widget", stack: "stack", options: "options" })
             const target = aliases[String(page ?? "").trim()] ?? ""
             if (!pages.includes(target))
-                return "pages: widget, look, arrange" + (widget.stacked ? ", stack" : "") + (!widget.irisFaced && widget.hasOptionRows ? ", options" : "")
+                return "pages: widget, look, arrange" + (widget.stacked ? ", stack" : "") + (!widget.familyFaced && widget.hasOptionRows ? ", options" : "")
             widget.openQuickControls(target)
             return JSON.stringify({ widget: key, page: target })
         }
@@ -404,9 +392,9 @@ Scope {
                         darkInk: widget.inkOnLight,
                         plate: widget.widgetHasSurface,
                         shadow: widget._legibleShadow ? Math.round(widget._legibleShadowOpacity * 100) / 100 : 0,
-                        face: widget.irisFaced ? { lightBackdrop: widget.irisFaceView?.lightBackdrop ?? null,
-                            veil: Math.round((widget.irisFaceView?.veil ?? -1) * 100) / 100,
-                            material: widget.irisFaceView?.material ?? "" } : false,
+                        face: widget.familyFaced ? { lightBackdrop: widget.faceView?.lightBackdrop ?? null,
+                            veil: Math.round((widget.faceView?.veil ?? -1) * 100) / 100,
+                            material: widget.faceView?.material ?? "" } : false,
                         ink: String(widget.widgetInk),
                         accent: String(widget.widgetAccent)
                     })
@@ -818,10 +806,10 @@ Scope {
             return Wallpapers.internalPreviewFor(monitorName, configuredPath)
         }
         readonly property bool enableAnimation: bgRoot.backgroundOptions.enableAnimation ?? true
-        // True while ii is the family actually painting the screen. The family
+        // True while a family that wears this background is actually painting the screen. The family
         // LazyLoader can retain the inactive tree, so every heavy source in here
         // has to ask, not assume.
-        readonly property bool _familyOwnsScreen: ["ii", "iris"].includes(Config.options?.panelFamily ?? "ii")
+        readonly property bool _familyOwnsScreen: Plugins.flag(Plugins.active, "sharedDesktop")
         property bool wallpaperIsVideo: wallpaperPathRaw.endsWith(".mp4") || wallpaperPathRaw.endsWith(".webm") || wallpaperPathRaw.endsWith(".mkv") || wallpaperPathRaw.endsWith(".avi") || wallpaperPathRaw.endsWith(".mov")
         property bool wallpaperIsGif: wallpaperPathRaw.toLowerCase().endsWith(".gif")
         property string wallpaperPath: bgRoot.wallpaperPathRaw
@@ -2646,15 +2634,13 @@ Scope {
                         id: guides
                         readonly property bool here: DesktopArrange.dragOutput === bgRoot.screenName && DesktopArrange.phase !== "idle"
                         readonly property var carry: DesktopEditStage.carry?.output === bgRoot.screenName ? DesktopEditStage.carry : null
-                        readonly property bool iris: (Config.options?.panelFamily ?? "ii") === "iris"
-                        readonly property color ink: guides.iris ? FamilyStyle.accent : Appearance.colors.colPrimary
-                        readonly property color paper: guides.iris ? FamilyStyle.raised : Appearance.colors.colPrimaryContainer
-                        readonly property color paperInk: guides.iris ? FamilyStyle.text : Appearance.colors.colOnPrimaryContainer
+                        readonly property var look: DesktopWidgetLook.look
+                        readonly property color ink: FamilyStyle.accent
+                        readonly property color paper: guides.look.tagFill
+                        readonly property color paperInk: guides.look.tagInk
                         // One screen pixel, and type at its true size, while the desktop is a card.
                         readonly property real hair: 1 / Math.max(0.2, bgRoot.editCard.s)
-                        readonly property real radius: guides.iris
-                            ? Math.round(Math.max(0, Math.min(40, Config.options?.iris?.widgets?.radius ?? 22)) * FamilyStyle.density)
-                            : Appearance.rounding.small
+                        readonly property real radius: guides.look.guideRadius
                         readonly property real strength: !guides.here ? 0 : DesktopArrange.phase === "drag" ? 0.6
                             : DesktopArrange.phase === "confirm" ? 1 : 0
                         readonly property bool moving: (guides.here && DesktopArrange.phase === "drag") || guides.carry !== null
@@ -2704,7 +2690,7 @@ Scope {
                             width: guides.carry?.width ?? 0
                             height: guides.carry?.height ?? 0
                             radius: guides.radius
-                            color: guides.iris ? FamilyStyle.tintFill(FamilyStyle.accent) : CF.ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.08)
+                            color: guides.look.guideFill
                             border.width: guides.hair
                             border.color: guides.ink
                             Behavior on x { NumberAnimation { duration: 90; easing.type: Easing.OutCubic } }
@@ -2751,7 +2737,7 @@ Scope {
                                     visible: DesktopArrange.phase !== "drag" && name.text.length > 0
                                     width: nameText.implicitWidth + 14 * guides.hair
                                     height: nameText.implicitHeight + 6 * guides.hair
-                                    radius: guides.iris ? height / 2 : Appearance.rounding.full
+                                    radius: height / 2
                                     color: guides.paper
                                     border.width: guides.hair
                                     border.color: guides.ink
@@ -2776,8 +2762,8 @@ Scope {
                                         anchors.centerIn: parent
                                         text: name.text
                                         color: guides.paperInk
-                                        font.family: guides.iris ? FamilyStyle.fontMain : Appearance.font.family.main
-                                        font.pixelSize: (guides.iris ? FamilyStyle.typeFootnote : Appearance.font.pixelSize.smaller) * guides.hair
+                                        font.family: FamilyStyle.fontMain
+                                        font.pixelSize: guides.look.tagSize * guides.hair
                                         font.weight: Font.DemiBold
                                     }
                                 }

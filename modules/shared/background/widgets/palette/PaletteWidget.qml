@@ -17,9 +17,7 @@ AbstractBackgroundWidget {
     defaultConfig: ({
         placementStrategy: "free", widgetScale: 100, cornerRadius: -1, x: 120, y: 600
     })
-
-    irisFacePart: "palette"
-    irisOptions: [
+    familyOptions: [
         { key: "source", label: Translation.tr("Colours from"), fallback: "wallpaper", choices: [
             { label: Translation.tr("Wallpaper"), icon: "wallpaper", value: "wallpaper" },
             { label: Translation.tr("Music"), icon: "album", value: "music" },
@@ -29,9 +27,9 @@ AbstractBackgroundWidget {
     widgetSurfaceEnabled: false
     needsColText: false
 
-    readonly property string colourSource: String(root.irisOption("source", "wallpaper"))
-    readonly property var kept: Array.from(root.irisOption("kept", []) ?? [])
-    readonly property var drawn: Array.from(root.irisOption("drawn", []) ?? [])
+    readonly property string colourSource: String(root.familyOption("source", "wallpaper"))
+    readonly property var kept: Array.from(root.familyOption("kept", []) ?? [])
+    readonly property var drawn: Array.from(root.familyOption("drawn", []) ?? [])
     readonly property var player: MprisController.activePlayer
     // Music with nothing playing reads the wallpaper and says so.
     readonly property bool coverRead: root.colourSource === "music" && artwork.displaySource.length > 0
@@ -102,12 +100,12 @@ AbstractBackgroundWidget {
     function keep(index: int): void {
         const next = [0, 1, 2, 3, 4].map(i => String(root.kept[i] ?? ""))
         next[index] = next[index].length > 0 ? "" : root.colours[index]
-        root.setIrisOption("kept", next)
+        root.setFamilyOption("kept", next)
     }
     function copy(text: string): void {
         Quickshell.clipboardText = text
     }
     // A first turn to Random deals a hand; written after the change settles, never inside it.
     onColourSourceChanged: if (root.colourSource === "random" && root.drawn.length < 5)
-        Qt.callLater(() => root.setIrisOption("drawn", root.harmony()))
+        Qt.callLater(() => root.setFamilyOption("drawn", root.harmony()))
 }

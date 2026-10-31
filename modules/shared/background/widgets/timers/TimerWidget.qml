@@ -39,8 +39,6 @@ AbstractBackgroundWidget {
     readonly property real cardWidth: Math.floor((root.footprintWidth - root.sizedPad * 2 - root.cardSpacing * (root.sizedColumns - 1)) / root.sizedColumns)
     readonly property real cardHeight: Math.floor((root.footprintHeight - root.sizedPad * 2 - root.cardSpacing * (root.sizedRows - 1)) / root.sizedRows)
     readonly property real cardSpacing: Math.round(12 * root.scaleFactor)
-
-    irisFacePart: "timer"
     visibleWhenLocked: true
     needsColText: true
     draggable: GlobalStates.widgetEditMode && !GlobalStates.screenLocked && !root.locked
@@ -396,7 +394,7 @@ AbstractBackgroundWidget {
         id: timerGrid
         anchors.centerIn: parent
         opacity: 1
-        visible: !root.irisFaced
+        visible: !root.familyFaced
         enabled: !GlobalStates.widgetEditMode
         move: Transition {
             enabled: root.animateGeometry

@@ -8,5 +8,6 @@
   "keywords": "agenda events next up",
   "sizes": ["medium", "small", "large"],
   "lock": true,
-  "palette": true
+  "palette": true,
+  "face": "agenda"
 }

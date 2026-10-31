@@ -30,8 +30,6 @@ AbstractBackgroundWidget {
         x: 80, y: 80
     })
 
-    irisFacePart: "notes"
-
     visibleWhenLocked: false
     needsColText: true
     resizeMinWidth: 120
@@ -157,22 +155,22 @@ AbstractBackgroundWidget {
                 title: Translation.tr("Text size")
                 from: 10; to: 48; stepSize: 1; unit: " px"
                 value: Number(root._readConfigKey("fontSize") ?? 14)
-                onMoved: v => root.previewIrisValue("fontSize", v)
-                onCommitted: v => root.commitIrisValue("fontSize", v)
+                onMoved: v => root.previewValue("fontSize", v)
+                onCommitted: v => root.commitValue("fontSize", v)
             }
         }
     }
 
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             WidgetSurface {
                 widget: root
                 anchors.fill: parent
                 surfaceRadius: root.cornerRadiusOverride >= 0
                     ? root.cornerRadiusOverride : root.cardRadius
-                shown: !root.irisFaced && !root.instrument && (root.backgroundOpacity > 0 || root.borderWidth > 0
+                shown: !root.familyFaced && !root.instrument && (root.backgroundOpacity > 0 || root.borderWidth > 0
                     || root.effectiveBlur)
             }
         }
@@ -180,11 +178,11 @@ AbstractBackgroundWidget {
 
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             Rectangle {
                 anchors.fill: parent
-                visible: !root.irisFaced
+                visible: !root.familyFaced
                 color: "transparent"
                 radius: root.cornerRadiusOverride >= 0
                     ? root.cornerRadiusOverride : root.cardRadius
@@ -215,7 +213,7 @@ AbstractBackgroundWidget {
         x: 16 * root.scaleFactor
         y: 14 * root.scaleFactor
         width: root.width - 32 * root.scaleFactor
-        visible: !root.irisFaced && root.height >= 120 * root.scaleFactor
+        visible: !root.familyFaced && root.height >= 120 * root.scaleFactor
         spacing: 6 * root.scaleFactor
         MaterialSymbol {
             visible: !root.instrument
@@ -263,8 +261,8 @@ AbstractBackgroundWidget {
     Flickable {
         id: editorFlick
         anchors.fill: parent
-        anchors.margins: root.irisFaced ? root.sizeGutter : Math.round(14 * root.scaleFactor)
-        anchors.topMargin: root.irisFaced ? Math.round(root.sizeGutter * 2.75)
+        anchors.margins: root.familyFaced ? root.sizeGutter : Math.round(14 * root.scaleFactor)
+        anchors.topMargin: root.familyFaced ? Math.round(root.sizeGutter * 2.75)
             : noteHeading.visible ? noteHeading.y + noteHeading.height + 10 * root.scaleFactor : anchors.margins
         clip: true
         contentWidth: width
@@ -367,7 +365,7 @@ AbstractBackgroundWidget {
         // A blank page is an invitation, not a stub line (iRiS draws its own, IrisNotesFace).
         WidgetBlank {
             anchors.fill: parent
-            visible: !root.irisFaced && textEdit.text.length === 0 && !textEdit.activeFocus
+            visible: !root.familyFaced && textEdit.text.length === 0 && !textEdit.activeFocus
                 && height >= 70 * root.scaleFactor
             widget: root
             icon: "edit_note"
@@ -382,7 +380,7 @@ AbstractBackgroundWidget {
                 leftMargin: 2
                 rightMargin: 2
             }
-            visible: !root.irisFaced && textEdit.text.length === 0 && !textEdit.activeFocus
+            visible: !root.familyFaced && textEdit.text.length === 0 && !textEdit.activeFocus
                 && parent.height < 70 * root.scaleFactor
             text: Translation.tr("Write a note…")
             color: root.widgetInkSubtle

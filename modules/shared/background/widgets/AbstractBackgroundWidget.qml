@@ -14,13 +14,13 @@ AbstractWidget {
     id: root
 
     required property string configEntryName
-    readonly property bool widgetIrisFamily: (Config.options?.panelFamily ?? "ii") === "iris"
-    // iRiS only: the iRiS face, which an iRiS Design (AIRISU) may draw its own way (`designFaceKey`); the other widget
-    // designs (Material, iNstrument, Readout) keep drawing themselves under any Design.
+    // The family's face, which one of its Designs (AIRISU) may draw its own way (`designFaceKey`); the other widget designs
+    // keep drawing themselves under any Design.
     property string designFaceKey: ""
-    readonly property bool widgetIris: root.widgetIrisFamily && root.irisDesign === "iris"
-    // Wearing the family's own design, so its plate goes under the widget.
-    readonly property bool wearsFamily: !root.widgetIrisFamily || root.widgetIris
+    // Wearing the family's own faces. A family with none (`wearsFamily` alone) still lays its plate under the base drawing.
+    readonly property bool familyDesign: DesktopWidgetDesign.faceDesign.length > 0
+        && (root._designResolved.face || (root.faceOnly && root.widgetSharedDesign === "individual"))
+    readonly property bool wearsFamily: DesktopWidgetDesign.faceDesign.length === 0 || root.familyDesign
     // How this family's widgets read: colours, type, shapes (its part `widgetLook`).
     readonly property var look: DesktopWidgetLook.look
     // The Background it sits on; a host with no desktop behind it (the lock) sets these itself.
@@ -39,7 +39,7 @@ AbstractWidget {
         // A style picked on one widget while a design covers it makes that widget an exception.
         if (root.widgetSharedDesign !== "individual"
                 && (values.style !== undefined || values.displayMode !== undefined))
-            values = Object.assign({}, values, root.widgetIrisFamily ? { "iris.design": "material" } : { design: "individual" })
+            values = Object.assign({}, values, { [DesktopWidgetDesign.spec.key]: DesktopWidgetDesign.spec.plain })
         if (root.outputName.length > 0) {
             DesktopWidgetLayout.setValues(root.outputName, root.configEntryName, values)
             return
@@ -67,7 +67,7 @@ AbstractWidget {
     // 0 while this page is shown; a page's length away (+1 below, -1 above) while it waits or leaves.
     property real stackPos: 0
     readonly property bool stackMoving: stackSlide.running
-    readonly property bool stackPresent: root.stackShown || (root.stackMoving && root.irisFaced)
+    readonly property bool stackPresent: root.stackShown || (root.stackMoving && root.familyFaced)
     readonly property bool stackLeaving: root.stacked && !root.stackShown && root.stackPresent
     // A stack sits in the layer order as one.
     readonly property string layerKey: root.stacked ? root.outputName + "::stack:" + root.stack.id : root.editInstanceKey
@@ -104,7 +104,7 @@ AbstractWidget {
     // widget as soon as it was selected.
     property bool _isResizing: false
     property bool _sizing: false
-    property bool _irisPreviewing: false
+    property bool _previewing: false
     property var _resizePreviewValues: ({})
     readonly property real scaleFactor: root._baseScale * (root.fits ? root._fit : 1)
     property bool _geometryReady: false
@@ -467,7 +467,7 @@ AbstractWidget {
     visible: opacity > 0
     // iRiS dims the face only, so its edit toolbar and sheet stay legible over a dimmed widget.
     opacity: ((GlobalStates.screenLocked && !visibleWhenLocked) ? 0 : 1)
-        * (root.irisFaced ? 1 : root.widgetOpacity * root.dimOpacity)
+        * (root.familyFaced ? 1 : root.widgetOpacity * root.dimOpacity)
         * (root.stackPresent ? 1 : 0)
         * (1 - root.absorb)
     enabled: !GlobalStates.screenLocked
@@ -937,7 +937,7 @@ AbstractWidget {
     }
 
     // Carrying one widget over another lights the other as a drop target; letting go stacks them.
-    readonly property bool stackable: root.irisFaced && DesktopWidgetStacks.live && !root.locked
+    readonly property bool stackable: root.familyFaced && DesktopWidgetStacks.live && !root.locked
         && !root.outputName.startsWith("lock:")
     readonly property var _canvas: root.parent?.parent ?? null
     readonly property bool stackDropHint: root._canvas !== null && root._canvas.stackHint === root.editInstanceKey
@@ -1026,7 +1026,7 @@ AbstractWidget {
         const before = root._stackMemo
         root._stackMemo = memo
         const turned = before.length > 0 && memo.length > 0 && before.slice(0, -1) === memo.slice(0, -1)
-        if (!turned || !root.animationsActive || !root.irisFaced || !root.visible && memo.endsWith("-")) {
+        if (!turned || !root.animationsActive || !root.familyFaced || !root.visible && memo.endsWith("-")) {
             stackSlide.stop()
             root.stackPos = 0
             return
@@ -1110,7 +1110,7 @@ AbstractWidget {
     readonly property string identityGlyph: DesktopWidgetRegistry.glyph(root.configEntryName)
     readonly property color identityTint: FamilyStyle.identityOf(DesktopWidgetRegistry.tint(root.configEntryName))
     // The page that holds position, lock and removal: "arrange" in an iRiS face's sheet, "layout" otherwise.
-    readonly property string _arrangeTab: root.irisFaced ? "arrange" : "layout"
+    readonly property string _arrangeTab: root.familyFaced ? "arrange" : "layout"
 
     function openQuickControls(tab: string): void {
         root._quickTab = tab
@@ -1150,8 +1150,7 @@ AbstractWidget {
 
     // Read a possibly-nested key from configEntry (e.g. "cookie.size" → configEntry.cookie.size)
     readonly property var _designResolved: DesktopWidgetDesign.resolve(root.configEntryName,
-        String(root._storedConfigKey("iris.design") ?? "auto"), String(root._storedConfigKey("design") ?? "auto"),
-        root.hasIrisFace)
+        String(root._storedConfigKey(DesktopWidgetDesign.spec.key) ?? "auto"), root.hasFamilyFace)
     readonly property string widgetSharedDesign: root._designResolved.design
     readonly property var widgetDesignValues: DesktopWidgetDesign.values(root.configEntryName, root.widgetSharedDesign)
     function _readConfigKey(key: string): var {
@@ -1160,7 +1159,7 @@ AbstractWidget {
         return root._storedConfigKey(key)
     }
     function _storedConfigKey(key: string): var {
-        if ((root._isResizing || root._sizing || root._irisPreviewing)
+        if ((root._isResizing || root._sizing || root._previewing)
                 && Object.prototype.hasOwnProperty.call(root._resizePreviewValues, key))
             return root._resizePreviewValues[key]
         return DesktopWidgetLayout.value(root.outputName, root.configEntryName,
@@ -1190,7 +1189,7 @@ AbstractWidget {
         _placementLater.restart();
         root._shownSize = root.sizeClass
         if (!root.outputName.startsWith("lock:"))
-            DesktopWidgetStacks.report(root.configEntryName, root.sizes, root.sizes[0] ?? "", root.hasIrisFace)
+            DesktopWidgetStacks.report(root.configEntryName, root.sizes, root.sizes[0] ?? "", root.hasFamilyFace)
         root._stackMemo = root._stackKey()
     }
     function resetToDefaults(): void {
@@ -1207,11 +1206,7 @@ AbstractWidget {
         updates["palette.signal"] = "signal"
         updates["palette.surface"] = "surface"
         Object.assign(updates, { sizeClass: root.sizes[0] ?? "", freeWidth: 0, freeHeight: 0 })
-        if (root.widgetIrisFamily && root.hasIrisFace) {
-            updates["iris.material"] = "auto"
-            updates["iris.design"] = "auto"
-            updates["iris.opacity"] = -1
-        }
+        Object.assign(updates, root.look.resetValues(root))
         root._setOutputValues(updates);
         syncFreePositionFromConfig();
         refreshPlacementIfNeeded();
@@ -1222,7 +1217,7 @@ AbstractWidget {
     // (his 10-30: light ink vanished on a white wallpaper with adaptation off). The switches keep their colours. A
     // widget with no plate reads it whether it asked or not: the image converter's captions took the scheme's ink and
     // went dark on a dark mountain in light mode.
-    readonly property bool _regionSampling: root.needsColText || root.look.readsRegion(root) || (!root.widgetHasSurface && !root.irisFaced)
+    readonly property bool _regionSampling: root.needsColText || root.look.readsRegion(root) || (!root.widgetHasSurface && !root.familyFaced)
     readonly property bool positionColorAdaptationEnabled: root.look.adaptsToWallpaper
     property color dominantColor: Appearance.colors.colPrimary
     // Wallpaper region brightness (0-1, gamma-encoded luma). -1 = not yet analyzed.
@@ -1379,31 +1374,27 @@ AbstractWidget {
         });
     }
 
-    // An iRiS face is named (`irisFacePart: "clock"`, a part widgetFace.clock in modules/iris/plugin.json), or the worn
-    // Design's print of the widget (`irisDesignPart`) when the Design prints one for `irisDesignPrint`.
-    property string irisFacePart: ""
-    property string irisDesignPart: ""
-    property string irisDesignPrint: ""
-    readonly property string irisFaceUrl: root.irisFacePart.length > 0 ? Plugins.part("iris", "widgetFace." + root.irisFacePart)
-        : root.irisDesignPart.length > 0 && FamilyStyle.facePrints[root.irisDesignPrint] ? Plugins.part("iris", "designFace") : ""
-    readonly property bool hasIrisFace: root.irisFaceUrl.length > 0
-    readonly property bool familyFaced: DesktopWidgetRegistry.entry(root.configEntryName)?.familyFace ?? false
+    // The family's face (`face` in the widget's manifest, a part `widgetFace.<face>`), or the worn Design's print of the
+    // widget (`printPart`) when the Design prints one for `printKey`.
+    property string facePart: DesktopWidgetRegistry.entry(root.configEntryName)?.face ?? ""
+    property string printPart: ""
+    property string printKey: ""
+    readonly property string faceUrl: root.facePart.length > 0 ? Plugins.part(Plugins.active, "widgetFace." + root.facePart)
+        : root.printPart.length > 0 && FamilyStyle.facePrints[root.printKey] ? Plugins.part(Plugins.active, "designFace") : ""
+    readonly property bool hasFamilyFace: root.faceUrl.length > 0
+    readonly property bool faceOnly: DesktopWidgetRegistry.entry(root.configEntryName)?.faceOnly ?? false
     readonly property var designChoices: {
         const list = []
-        const family = Config.options?.panelFamily ?? "ii"
-        if (family !== "iris" && family !== "ii") return list
-        if (family === "iris" && root.hasIrisFace) list.push({ value: "iris", icon: "auto_awesome", label: Translation.tr("iRiS") })
-        if (family === "ii" || !root.familyFaced) list.push({ value: "material", icon: "widgets", label: Translation.tr("Material") })
+        const spec = DesktopWidgetDesign.spec
+        if (root.hasFamilyFace && spec.face) list.push({ value: spec.face, icon: "auto_awesome", label: Translation.tr(spec.faceLabel) })
+        if (!spec.face || !root.faceOnly) list.push({ value: "material", icon: "widgets", label: Translation.tr("Material") })
         if (DesktopWidgetDesign.supports(root.configEntryName)) {
             list.push({ value: "instrument", icon: "avg_pace", label: Translation.tr("iNstrument") })
             list.push({ value: "readout", icon: "view_agenda", label: Translation.tr("Readout") })
         }
         return list
     }
-    readonly property string irisDesign: root._designResolved.face
-        || (root.familyFaced && root.widgetSharedDesign === "individual") ? "iris" : "material"
-    // The design this widget shows, as the global picker names it.
-    readonly property string widgetDesign: root.irisDesign === "iris" ? "iris"
+    readonly property string widgetDesign: root.familyDesign ? DesktopWidgetDesign.faceDesign
         : root.widgetSharedDesign === "individual" ? "material" : root.widgetSharedDesign
     readonly property bool widgetDesignShared: root.widgetDesign === DesktopWidgetDesign.current
     readonly property bool widgetDesignMatchable: !root.widgetDesignShared || DesktopWidgetDesign.exceptionCount > 0
@@ -1411,15 +1402,11 @@ AbstractWidget {
     function pickDesign(value: string): void {
         if (root.stacked)
             return
-        if (!root.widgetIrisFamily) {
-            root._setOutputValue("design", value === DesktopWidgetDesign.current ? "auto"
-                : value === "material" ? "individual" : value)
-            return
-        }
-        root._setOutputValue("iris.design", value === DesktopWidgetDesign.current ? "auto" : value)
+        root._setOutputValue(DesktopWidgetDesign.spec.key, value === DesktopWidgetDesign.current ? "auto"
+            : value === "material" ? DesktopWidgetDesign.spec.plain : value)
     }
-    property var irisOptions: []
-    readonly property bool irisFaced: root.widgetIris && root.hasIrisFace
+    property var familyOptions: []
+    readonly property bool familyFaced: root.familyDesign && root.hasFamilyFace
     // One size per instance (`sizeClass`), from the classes the widget's manifest lists: every family and design draws
     // the same footprint, so changing family leaves the desktop as it was arranged. A stack keeps the classes all its
     // pages have. Where the family's faces take any box (`widgetFreeSize` in its plugin.json) a free width and height lie
@@ -1499,7 +1486,7 @@ AbstractWidget {
     property real fitPadding: 14
     property real fitMax: 1.6
     property bool fitted: false
-    readonly property bool fits: root.fitted && root.sized && !root.irisFaced
+    readonly property bool fits: root.fitted && root.sized && !root.familyFaced
     property real _fit: 1
     function _refit(): void {
         if (!root.fits || root.drawnWidth <= 0 || root.drawnHeight <= 0) {
@@ -1533,56 +1520,56 @@ AbstractWidget {
         if (was.length > 0 && !root._sizing)
             _sizeSettle.restart()
     }
-    function irisOption(key: string, fallback: var): var {
-        const value = root._readConfigKey("iris." + key)
+    function familyOption(key: string, fallback: var): var {
+        const value = root._readConfigKey(DesktopWidgetDesign.spec.prefix + "." + key)
         return value === undefined || value === null ? fallback : value
     }
-    function setIrisOption(key: string, value: var): void {
-        root._setOutputValue("iris." + key, value)
+    function setFamilyOption(key: string, value: var): void {
+        root._setOutputValue(DesktopWidgetDesign.spec.prefix + "." + key, value)
     }
     // The sheet's own slider: not a gesture, so the sheet stays under the pointer that drags it.
-    function previewIrisScale(percent: int): void {
-        root.previewIrisValue("widgetScale", percent)
+    function previewScale(percent: int): void {
+        root.previewValue("widgetScale", percent)
     }
-    function previewIrisValue(key: string, value: var): void {
+    function previewValue(key: string, value: var): void {
         const preview = ({})
         preview[key] = value
         root._resizePreviewValues = preview
-        root._irisPreviewing = true
+        root._previewing = true
     }
-    function commitIrisValue(key: string, value: var): void {
+    function commitValue(key: string, value: var): void {
         root._setOutputValue(key, value)
-        _irisPreviewSettle.restart()
+        _previewSettle.restart()
     }
     Timer {
-        id: _irisPreviewSettle
+        id: _previewSettle
         interval: 140
         onTriggered: {
             root._resizePreviewValues = ({})
-            root._irisPreviewing = false
+            root._previewing = false
         }
     }
     function commitIrisScale(percent: int): void {
-        root.commitIrisValue("widgetScale", percent)
+        root.commitValue("widgetScale", percent)
         _sizeSettle.restart()
     }
 
-    readonly property Item irisFaceView: irisFaceLoader.item
+    readonly property Item faceView: faceLoader.item
     Loader {
-        id: irisFaceLoader
+        id: faceLoader
         anchors.fill: parent
-        active: root.irisFaced
+        active: root.familyFaced
         // A face answers to its own rows (Material, Opacity in iRiS Settings); Material's Opacity and Dimming are hidden
         // while a face is drawn, and a value left there from before faded it to a ghost with no row to undo it.
         opacity: 1
         function loadNamed(): void {
-            if (root.irisFaceUrl.length > 0)
-                setSource(root.irisFaceUrl, root.irisFacePart.length > 0 ? { widget: root } : { widget: root, part: root.irisDesignPart })
+            if (root.faceUrl.length > 0)
+                setSource(root.faceUrl, root.printPart.length > 0 ? { widget: root, part: root.printPart } : { widget: root })
         }
         Component.onCompleted: loadNamed()
         Connections {
             target: root
-            function onIrisFaceUrlChanged(): void { irisFaceLoader.loadNamed() }
+            function onFaceUrlChanged(): void { faceLoader.loadNamed() }
         }
     }
 
@@ -1742,7 +1729,7 @@ AbstractWidget {
     readonly property color _legibleShadowColor: root._inkIsLight ? Qt.rgba(0, 0, 0, 1) : Qt.rgba(1, 1, 1, 1)
     // Where the family shadows bare widgets, and one bare by design (bareShadow, Day's dial): the rest keep their own text halo.
     property bool bareShadow: false
-    readonly property bool _legibleShadow: (root.look.shadowsBare || root.bareShadow) && root.needsColText && !root.widgetHasSurface && !root.irisFaced
+    readonly property bool _legibleShadow: (root.look.shadowsBare || root.bareShadow) && root.needsColText && !root.widgetHasSurface && !root.familyFaced
         && !GlobalStates.widgetEditMode && root._legibleShadowOpacity > 0.06
     readonly property color colHalo: root.inkOnLight && !root.forceDarkInk
         ? Qt.rgba(1, 1, 1, 0.12 + 0.3 * root._haloBusy)

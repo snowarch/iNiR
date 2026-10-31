@@ -17,8 +17,8 @@ ColumnLayout {
     property int maxColumns: 3
     signal picked(var value, var entry)
 
-    readonly property bool iris: (Config.options?.panelFamily ?? "ii") === "iris"
-    readonly property real gap: Math.round(4 * (root.iris ? FamilyStyle.density : 1))
+    readonly property var look: DesktopWidgetLook.look
+    readonly property real gap: Math.round(4 * root.look.density)
     readonly property var entries: Array.from(root.model ?? []).filter(entry => entry && entry.visible !== false)
     readonly property int columns: {
         const n = root.entries.length

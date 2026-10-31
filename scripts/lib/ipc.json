@@ -263,7 +263,7 @@
      "args": [
       "action"
      ],
-     "description": "iRiS: `status` reports the shared widget material and how many widgets chose their own material or surface opacity in Look; `match` puts them back on the shared ones; `toggle`, `clear` and `glass` take every widget's plate away or bring it back (returns the material now).",
+     "description": "`status` reports the shared widget material and how many widgets chose their own material or surface opacity in Look; `match` puts them back on the shared ones; `toggle`, `clear` and `glass` take every widget's plate away or bring it back (returns the material now).",
      "values": [
       "status",
       "match",

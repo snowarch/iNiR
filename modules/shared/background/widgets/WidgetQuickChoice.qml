@@ -18,44 +18,25 @@ Rectangle {
     property string tooltip: ""
     signal clicked()
 
-    readonly property bool iris: (Config.options?.panelFamily ?? "ii") === "iris"
-    readonly property real d: root.iris ? FamilyStyle.density : 1
+    readonly property var look: DesktopWidgetLook.look
+    readonly property real d: root.look.density
     property real sidePadding: Math.round(12 * root.d)
-    readonly property color ink: root.iris
-        ? (root.selected ? FamilyStyle.text : FamilyStyle.textSecondary)
-        : Appearance.zzzEverywhere ? (root.selected ? Appearance.zzz.onSticker : Appearance.zzz.ink)
-        : Appearance.regaliaEverywhere ? (root.selected ? Appearance.regalia.primaryPlateInk : Appearance.regalia.onColor)
-        : root.selected ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer2
-    readonly property color dangerInk: root.iris ? FamilyStyle.danger : Appearance.colors.colError
-    readonly property color glyphInk: root.danger ? root.dangerInk : root.iris && root.selected ? FamilyStyle.accent : root.ink
+    readonly property color ink: root.look.chipInk(root.selected)
+    readonly property color dangerInk: FamilyStyle.danger
+    readonly property color glyphInk: root.danger ? root.dangerInk : root.look.chipGlyphInk(root.selected)
 
-    implicitWidth: content.implicitWidth + root.sidePadding * 2
-    implicitHeight: Math.round(34 * root.d)
-    radius: root.iris ? height / 2
-        : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
-        : Appearance.regaliaEverywhere ? Appearance.regalia.controlRadius
-        : Appearance.editorialEverywhere ? Appearance.rounding.small
-        : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-        : height / 2
-    color: root.iris
-        ? (root.selected ? FamilyStyle.tintFill(FamilyStyle.accent) : hover.hovered ? FamilyStyle.fillHover : FamilyStyle.fillQuiet)
-        : root.selected
-            ? (Appearance.zzzEverywhere ? Appearance.zzz.sticker
-                : Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlate
-                // the chosen key is the accent, as Settings' button groups and these quick tabs: the secondary
-                // container sat a hair off the idle keys in a dark scheme
-                : hover.hovered ? Appearance.colors.colPrimaryHover : Appearance.colors.colPrimary)
-            : ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, hover.hovered ? 0.1 : 0.055)
-    border.width: root.iris && root.selected ? 1 : Appearance.editorialEverywhere && root.selected ? 1 : 0
-    border.color: root.iris ? FamilyStyle.tintBorder(FamilyStyle.accent) : Appearance.editorialEverywhere ? Appearance.editorial.edge : "transparent"
-    scale: tap.pressed ? (root.iris ? FamilyStyle.pressScale(0.97) : 0.97) : 1
+    radius: root.look.chipRadius(height)
+    color: root.look.chipFill(root.selected, hover.hovered)
+    border.width: root.selected ? root.look.chipEdge : 0
+    border.color: root.look.chipEdgeColor
+    scale: tap.pressed ? FamilyStyle.pressScale(0.97) : 1
     Behavior on color {
-        enabled: root.iris ? FamilyStyle.motionEnabled : Appearance.animationsEnabled
-        ColorAnimation { duration: root.iris ? FamilyStyle.feedbackDuration : Appearance.animation.elementMoveFast.duration }
+        enabled: FamilyStyle.motionEnabled
+        ColorAnimation { duration: root.look.feedbackDuration }
     }
     Behavior on scale {
-        enabled: root.iris ? FamilyStyle.motionEnabled : Appearance.animationsEnabled
-        NumberAnimation { duration: root.iris ? FamilyStyle.feedbackDuration : Appearance.animation.elementMoveFast.duration }
+        enabled: FamilyStyle.motionEnabled
+        NumberAnimation { duration: root.look.feedbackDuration }
     }
 
     Row {
@@ -80,8 +61,8 @@ Rectangle {
             text: root.label
             elide: Text.ElideRight
             color: root.danger ? root.dangerInk : root.ink
-            font.family: root.iris ? FamilyStyle.fontMain : Appearance.font.family.main
-            font.pixelSize: root.iris ? FamilyStyle.typeLabel : Appearance.font.pixelSize.smaller
+            font.family: FamilyStyle.fontMain
+            font.pixelSize: root.look.labelSize
             font.weight: root.selected ? Font.DemiBold : Font.Medium
         }
     }

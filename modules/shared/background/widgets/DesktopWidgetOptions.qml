@@ -19,10 +19,9 @@ QtObject {
     id: root
 
     readonly property string output: String((GlobalStates.focusedScreen ?? Quickshell.screens[0])?.name ?? "")
-    // Widgets that have an iRiS face (`irisFace`), and the ones on by default.
-    readonly property var faced: ["clock", "weather", "battery", "monthCalendar", "calendarUpcoming", "controls", "dateBadge",
-        "dayProgress", "newsTicker", "notes", "mediaControls", "userCard", "screenTime", "timers", "todo", "uptime",
-        "systemMonitor", "worldClock", "palette", "lyrics"]
+    // Widgets the active family draws a face for, and the ones on by default.
+    readonly property var faced: DesktopWidgetRegistry.entries.filter(entry => DesktopWidgetRegistry.hasFace(entry.key, Plugins.active))
+        .map(entry => entry.key)
     readonly property var onByDefault: ["clock"]
 
     function value(widget: string, key: string, fallback: var): var {
@@ -35,10 +34,9 @@ QtObject {
     }
     function resolved(widget: string): var {
         Config.revision
-        return DesktopWidgetDesign.resolve(widget, String(root.value(widget, "iris.design", "auto")), String(root.value(widget, "design", "auto")),
-            root.faced.includes(widget))
+        return DesktopWidgetDesign.resolve(widget, String(root.value(widget, DesktopWidgetDesign.spec.key, "auto")), root.faced.includes(widget))
     }
-    // The iRiS face draws it.
+    // The family's face draws it.
     function face(widget: string): bool { return root.on(widget) && root.resolved(widget).face }
     // The widget's own Material drawing, with no design laid over it: its style rows mean something.
     function material(widget: string): bool {
@@ -95,11 +93,11 @@ QtObject {
     }
     function closing(widget: string, plate: bool): var {
         const designs = [["auto", "Same as every widget"]]
-        if (root.faced.includes(widget)) designs.push(["iris", "iRiS"])
+        if (root.faced.includes(widget)) designs.push([DesktopWidgetDesign.faceDesign, DesktopWidgetDesign.spec.faceLabel])
         designs.push(["material", "Material"])
         if (DesktopWidgetDesign.supports(widget)) designs.push(["instrument", "iNstrument"], ["readout", "Readout"])
         const out = [
-            root.row(widget, "iris.design", "Design", "choice", "auto", { tune: true, choices: root.choices(designs),
+            root.row(widget, DesktopWidgetDesign.spec.key, "Design", "choice", "auto", { tune: true, choices: root.choices(designs),
                 when: () => designs.length > 2, keywords: ["design", "look", "style", "material", "instrument", "readout"] }),
             root.row(widget, "iris.material", "Material", "choice", "auto", { tune: true,
                 when: () => root.face(widget) && Boolean(root.value(widget, "showBackground", true)),

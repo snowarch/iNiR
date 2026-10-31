@@ -8,15 +8,15 @@ SelectionGroupButton {
     id: root
     // iRiS: quiet translucent choices on black, the accent marks the selected one
     // (the same pairing as the edit toolbar's committing action).
-    readonly property bool iris: (Config.options?.panelFamily ?? "ii") === "iris"
+    readonly property var look: DesktopWidgetLook.look
     implicitHeight: 32
 
     // Override the inherited family-aware bindings only while iRiS owns this
     // control. Restore them verbatim when the panel family changes at runtime.
-    Binding { target: root; property: "colBackground"; value: ColorUtils.applyAlpha(FamilyStyle.text, 0.08); when: root.iris; restoreMode: Binding.RestoreBinding }
-    Binding { target: root; property: "colBackgroundHover"; value: ColorUtils.applyAlpha(FamilyStyle.text, 0.14); when: root.iris; restoreMode: Binding.RestoreBinding }
-    Binding { target: root; property: "colBackgroundActive"; value: ColorUtils.applyAlpha(FamilyStyle.text, 0.2); when: root.iris; restoreMode: Binding.RestoreBinding }
-    Binding { target: root; property: "colBackgroundToggled"; value: FamilyStyle.accent; when: root.iris; restoreMode: Binding.RestoreBinding }
-    Binding { target: root; property: "colBackgroundToggledHover"; value: Qt.lighter(FamilyStyle.accent, 1.08); when: root.iris; restoreMode: Binding.RestoreBinding }
+    Binding { target: root; property: "colBackground"; value: ColorUtils.applyAlpha(FamilyStyle.text, 0.08); when: root.look.tintedKeys; restoreMode: Binding.RestoreBinding }
+    Binding { target: root; property: "colBackgroundHover"; value: ColorUtils.applyAlpha(FamilyStyle.text, 0.14); when: root.look.tintedKeys; restoreMode: Binding.RestoreBinding }
+    Binding { target: root; property: "colBackgroundActive"; value: ColorUtils.applyAlpha(FamilyStyle.text, 0.2); when: root.look.tintedKeys; restoreMode: Binding.RestoreBinding }
+    Binding { target: root; property: "colBackgroundToggled"; value: FamilyStyle.accent; when: root.look.tintedKeys; restoreMode: Binding.RestoreBinding }
+    Binding { target: root; property: "colBackgroundToggledHover"; value: Qt.lighter(FamilyStyle.accent, 1.08); when: root.look.tintedKeys; restoreMode: Binding.RestoreBinding }
     StyledToolTip { text: root.buttonText }
 }

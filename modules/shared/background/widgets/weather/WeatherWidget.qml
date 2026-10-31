@@ -87,8 +87,7 @@ AbstractBackgroundWidget {
     drawnWidth: root.forecastFace ? 0 : root.weatherStyle === "detail" ? Math.round(shapeSize * 2.2)
         : root.weatherStyle === "dial" ? Math.round(shapeSize * 1.4) : shapeSize
     drawnHeight: root.forecastFace ? 0 : root.weatherStyle === "detail" ? Math.round(shapeSize * 0.95) : shapeSize
-    irisFacePart: "weather"
-    irisOptions: [
+    familyOptions: [
         { key: "showLocation", raw: true, label: Translation.tr("Location"), icon: "location_on", fallback: true }
     ]
     resizeMinWidth: root.weatherStyle === "detail" ? 280
@@ -242,11 +241,11 @@ AbstractBackgroundWidget {
     // a loaded item is never the pill's sibling, so the Loader takes the pill's place and the shadow fills it
     Loader {
         anchors.fill: pillBackground
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: StyledDropShadow {
             anchors.fill: undefined
             target: pillBackground
-            visible: !root.irisFaced && pillBackground.visible && !Appearance.zzzEverywhere
+            visible: !root.familyFaced && pillBackground.visible && !Appearance.zzzEverywhere
         }
     }
 
@@ -257,10 +256,10 @@ AbstractBackgroundWidget {
     // shape behind the fill in the hairline colour.
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             MaterialShape {
-                visible: !root.irisFaced && !root.forecastFace && root.weatherStyle === "pill" && Appearance.zzzEverywhere
+                visible: !root.familyFaced && !root.forecastFace && root.weatherStyle === "pill" && Appearance.zzzEverywhere
                 anchors.centerIn: parent
                 shape: root.pillShapeEnum
                 color: Appearance.zzz.hairlineStrong
@@ -271,10 +270,10 @@ AbstractBackgroundWidget {
 
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             MaterialShape {
-                visible: !root.irisFaced && !root.forecastFace && root.weatherStyle === "pill" && (Appearance.inirEverywhere || Appearance.angelEverywhere)
+                visible: !root.familyFaced && !root.forecastFace && root.weatherStyle === "pill" && (Appearance.inirEverywhere || Appearance.angelEverywhere)
                 anchors.centerIn: parent
                 shape: root.pillShapeEnum
                 color: Appearance.inirEverywhere ? Appearance.inir.colBorder : Appearance.angel.colCardBorder
@@ -285,7 +284,7 @@ AbstractBackgroundWidget {
 
     MaterialShape {
         id: pillBackground
-        visible: !root.irisFaced && !root.forecastFace && root.weatherStyle === "pill"
+        visible: !root.familyFaced && !root.forecastFace && root.weatherStyle === "pill"
         anchors.centerIn: parent
         width: root.fits ? root.drawnWidth : parent.width
         height: root.fits ? root.drawnHeight : parent.height
@@ -297,12 +296,12 @@ AbstractBackgroundWidget {
     // ── Card mode ──
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             WidgetSurface {
                 widget: root
                 id: cardBackground
-                shown: !root.irisFaced && (root.forecastFace || root.weatherStyle === "card" || root.weatherStyle === "detail")
+                shown: !root.familyFaced && (root.forecastFace || root.weatherStyle === "card" || root.weatherStyle === "detail")
                     && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
                 anchors.centerIn: parent
                 width: root.fits ? root.drawnWidth : parent.width
@@ -315,11 +314,11 @@ AbstractBackgroundWidget {
 
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             ColumnLayout {
                 id: detailLayout
-                visible: !root.irisFaced && !root.forecastFace && root.weatherStyle === "detail"
+                visible: !root.familyFaced && !root.forecastFace && root.weatherStyle === "detail"
                 anchors.centerIn: parent
                 width: (root.fits ? root.drawnWidth : parent.width) - Math.round(32 * root.scaleFactor)
                 height: (root.fits ? root.drawnHeight : parent.height) - Math.round(32 * root.scaleFactor)
@@ -435,13 +434,13 @@ AbstractBackgroundWidget {
 
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             Item {
                 anchors.centerIn: parent
                 width: root.fits ? root.drawnWidth : parent.width
                 height: root.fits ? root.drawnHeight : parent.height
-                visible: !root.irisFaced && !root.forecastFace && root.weatherStyle !== "detail" && root.weatherStyle !== "dial"
+                visible: !root.familyFaced && !root.forecastFace && root.weatherStyle !== "detail" && root.weatherStyle !== "dial"
 
                 MaterialSymbol {
                     visible: root.visibleContentCount === 0
@@ -530,7 +529,7 @@ AbstractBackgroundWidget {
 
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced && root.forecastFace
+        active: !root.familyFaced && root.forecastFace
         visible: active
         sourceComponent: WeatherForecast {
             widget: root
@@ -544,7 +543,7 @@ AbstractBackgroundWidget {
     // that sky stage instead of becoming an unexplained rule under the widget.
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             Item {
                 id: instrumentArea
@@ -552,7 +551,7 @@ AbstractBackgroundWidget {
                 width: root.fits ? root.drawnWidth : parent.width
                 height: root.fits ? root.drawnHeight : parent.height
                 opacity: root.weatherStyle === "dial" ? 1 : 0
-                visible: !root.irisFaced && opacity > 0
+                visible: !root.familyFaced && opacity > 0
                 enabled: root.weatherStyle === "dial"
                 Behavior on opacity {
                     enabled: root.animationsActive
@@ -723,7 +722,7 @@ AbstractBackgroundWidget {
                                     color: root.widgetInkMuted
                                     font.pixelSize: Math.max(10, Math.round(10 * root.scaleFactor))
                                     font.weight: Font.DemiBold
-                                    font.letterSpacing: root.widgetIris ? 0 : Math.round(1.1 * root.scaleFactor)
+                                    font.letterSpacing: root.familyDesign ? 0 : Math.round(1.1 * root.scaleFactor)
                                 }
                                 StyledText {
                                     text: Weather.data?.sunrise ?? ""
@@ -746,7 +745,7 @@ AbstractBackgroundWidget {
                                     color: root.widgetInkMuted
                                     font.pixelSize: Math.max(10, Math.round(10 * root.scaleFactor))
                                     font.weight: Font.DemiBold
-                                    font.letterSpacing: root.widgetIris ? 0 : Math.round(1.1 * root.scaleFactor)
+                                    font.letterSpacing: root.familyDesign ? 0 : Math.round(1.1 * root.scaleFactor)
                                 }
                                 StyledText {
                                     Layout.alignment: Qt.AlignRight

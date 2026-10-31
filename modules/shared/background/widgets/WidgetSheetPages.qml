@@ -29,7 +29,7 @@ WidgetQuickControlsLayout {
         { value: "widget", label: Translation.tr("Widget"), visible: root.widget._widgetSpecificPopover !== null && !root.widget.locked },
         { value: "options", label: Translation.tr("Options"), visible: root.widget.hasOptionRows && !root.widget.locked },
         { value: "colors", label: Translation.tr("Look"), visible: (root.widget.semanticPaletteQuickControls
-            || (root.widget.widgetIrisFamily && root.widget.hasIrisFace)) && !root.widget.locked },
+            || root.widget.hasFamilyFace) && !root.widget.locked },
         { value: "layout", label: Translation.tr("Arrange") }
     ]
     readonly property string page: {
@@ -38,7 +38,7 @@ WidgetQuickControlsLayout {
     }
 
     WidgetQuickTabs {
-        visible: !root.widget.widgetIrisFamily && root.pages.filter(entry => entry.visible !== false).length > 1
+        visible: quickTabsPart.url.length === 0 && root.pages.filter(entry => entry.visible !== false).length > 1
         current: root.page
         model: root.pages
         onPicked: value => root.widget._quickTab = value
@@ -46,7 +46,7 @@ WidgetQuickControlsLayout {
     FamilyPart {
         id: quickTabsPart
         visible: when
-        when: root.widget.widgetIrisFamily && root.pages.filter(entry => entry.visible !== false).length > 1
+        when: root.pages.filter(entry => entry.visible !== false).length > 1
         Layout.fillWidth: true
         part: "control.segmented"
         props: ({ options: root.pages.filter(entry => entry.visible !== false), current: root.page,
@@ -82,7 +82,7 @@ WidgetQuickControlsLayout {
             active: root.page === "options"
             sourceComponent: WidgetOptionList {
                 widget: root.widget.configEntryName
-                exclude: ["sizeClass", "iris.design", "iris.material", "placementStrategy", "locked"]
+                exclude: ["sizeClass", DesktopWidgetDesign.spec.key, "iris.material", "placementStrategy", "locked"]
             }
         }
     }

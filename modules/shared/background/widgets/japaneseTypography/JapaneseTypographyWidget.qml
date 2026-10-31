@@ -79,8 +79,8 @@ AbstractBackgroundWidget {
     })
 
     // Under an iRiS Design that prints this widget (AIRISU), the print is its face; elsewhere it draws itself.
-    irisDesignPart: "widgetJapanese"
-    irisDesignPrint: "japaneseTypography"
+    printPart: "widgetJapanese"
+    printKey: "japaneseTypography"
     resizeMinWidth: 220
     resizeMinHeight: 320
     resizeMaxWidth: 720
@@ -311,10 +311,10 @@ AbstractBackgroundWidget {
 
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             WidgetSurface {
-                visible: !root.irisFaced
+                visible: !root.familyFaced
                 widget: root
                 anchors.fill: parent
                 surfaceColor: root.widgetPlateColor
@@ -324,7 +324,7 @@ AbstractBackgroundWidget {
     }
 
     Item {
-        visible: !root.irisFaced
+        visible: !root.familyFaced
         id: editorialComposition
         anchors.fill: parent
         anchors.margins: root.outerPad

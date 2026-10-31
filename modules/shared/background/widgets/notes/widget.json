@@ -8,5 +8,6 @@
   "keywords": "sticky memo text write",
   "sizes": ["medium", "small", "large"],
   "lock": true,
-  "palette": true
+  "palette": true,
+  "face": "notes"
 }

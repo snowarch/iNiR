@@ -132,7 +132,7 @@ complete -c inir -n '__inir_at_function autostart' -a reload -d 'Force re-read t
 complete -c inir -n '__inir_at_target' -a background -d 'Desktop background and widget controls'
 complete -c inir -n '__inir_at_function background' -a widgetDesign -d 'Put every desktop widget on iris, material, individual, ins…'
 complete -c inir -n '__inir_at_value 1 widgetDesign background' -a 'iris material individual instrument readout undo status'
-complete -c inir -n '__inir_at_function background' -a widgetMaterial -d 'iRiS: status reports the shared widget material and how man…'
+complete -c inir -n '__inir_at_function background' -a widgetMaterial -d 'status reports the shared widget material and how many widg…'
 complete -c inir -n '__inir_at_value 1 widgetMaterial background' -a 'status match toggle clear glass'
 complete -c inir -n '__inir_at_function background' -a everyWidget -d 'Every Material, iNstrument and Readout widget at once: plat…'
 complete -c inir -n '__inir_at_function background' -a everyWidgetStatus -d 'Each of those as the value every widget on the desktop shar…'

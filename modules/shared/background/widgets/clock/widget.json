@@ -9,5 +9,6 @@
   "sizes": ["medium", "small", "large"],
   "defaultOn": true,
   "lock": true,
-  "palette": true
+  "palette": true,
+  "face": "clock"
 }

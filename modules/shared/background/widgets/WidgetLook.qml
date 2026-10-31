@@ -8,6 +8,8 @@ import qs.modules.common.functions
 // widget it is handed. A family says what it does differently through its part `widgetLook`, a WidgetLook; these are the
 // plain generated tones and shell fonts for a family that says nothing.
 QtObject {
+    id: base
+
     // Over the wallpaper
     property bool adaptsToWallpaper: true
     property bool schemeInk: false
@@ -35,6 +37,42 @@ QtObject {
     function metadataTracking(widget: var): real { return 0 }
     function capitalization(widget: var): int { return Font.AllUppercase }
     function caseOf(widget: var, text: string): string { return text.toUpperCase() }
+
+    // The sheet's keys, rows and labels, and the arranging guides
+    property real density: 1
+    property real labelSize: Appearance.font.pixelSize.smaller
+    property real metaSize: Appearance.font.pixelSize.smallest
+    property real valueSize: Appearance.font.pixelSize.smaller
+    property real sheetTitleSize: Appearance.font.pixelSize.normal
+    property int metaCapitalization: Font.AllUppercase
+    property real metaSpacing: 1
+    property color controlInk: Appearance.colors.colOnLayer2
+    property color valueInk: Appearance.colors.colOnLayer2
+    property color quietInk: Appearance.colors.colSubtext
+    property int feedbackDuration: Appearance.animation.elementMoveFast.duration
+    property real rowRadius: Appearance.rounding.small
+    property bool tintedKeys: false
+    property real chipEdge: 0
+    property color chipEdgeColor: "transparent"
+    property color tagFill: Appearance.colors.colPrimaryContainer
+    property color tagInk: Appearance.colors.colOnPrimaryContainer
+    property real tagSize: Appearance.font.pixelSize.smaller
+    property real guideRadius: Appearance.rounding.small
+    property color guideFill: ColorUtils.applyAlpha(Appearance.colors.colPrimary, 0.08)
+    function rowFill(hovered: bool): color { return ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, hovered ? 0.09 : 0.045) }
+    function markRadius(size: real): real { return Appearance.rounding.small }
+    function chipRadius(height: real): real { return height / 2 }
+    function chipInk(selected: bool): color { return selected ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer2 }
+    function chipGlyphInk(selected: bool): color { return base.chipInk(selected) }
+    // The chosen key is the accent, as in Settings' button groups: the secondary container sat a hair off the idle keys.
+    function chipFill(selected: bool, hovered: bool): color {
+        return selected ? (hovered ? Appearance.colors.colPrimaryHover : Appearance.colors.colPrimary)
+            : ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, hovered ? 0.1 : 0.055)
+    }
+
+    // What resetting a widget also clears, and the verbs over a shared widget material, where the family has one.
+    function resetValues(widget: var): var { return ({}) }
+    function materialAction(action: string): string { return "This family has no shared widget material" }
 
     // Shape and plate
     function controlRadius(widget: var): real { return Appearance.rounding.normal }

@@ -48,7 +48,7 @@ AbstractBackgroundWidget {
         "expandingLyrics": { w: 400, h: 128 },
         "instrument": { w: 380, h: 116 }
     })
-    readonly property bool instrument: !root.irisFaced && root._readConfigKey("style") === "instrument"
+    readonly property bool instrument: !root.familyFaced && root._readConfigKey("style") === "instrument"
     readonly property var sizedGeometry: root.instrument ? root.presetGeometry["instrument"]
         : root.presetGeometry[root.effectiveSizedPreset] ?? root.presetGeometry["full"]
 
@@ -133,7 +133,7 @@ AbstractBackgroundWidget {
         }
     }
 
-    readonly property bool nativeIrisPlayer: root.widgetIris && ["full", "compact", "minimal", "classic"].includes(root.effectiveRenderedPreset)
+    readonly property bool nativeIrisPlayer: root.familyDesign && ["full", "compact", "minimal", "classic"].includes(root.effectiveRenderedPreset)
 
     readonly property real widgetHeight: root.footprintHeight
 
@@ -147,7 +147,7 @@ AbstractBackgroundWidget {
     // A player draws its own plate; the resting mark sits bare on the wallpaper and reads against it.
     accentBackdrop: root.hasPlayer ? root.mediaPlate
         : root._hasBrightness ? root._regionBg
-        : root.widgetIrisFamily ? root._inkDark : Appearance.colors.colLayer0
+        : root.look.restBackdrop
     readonly property color mediaSurfaceInk: root.forceLightInk ? root._inkLight
         : root.forceDarkInk ? root._inkDark
         // a title is the scheme's own text (M3 onSurface): the role helper takes the first tone past 4.5, a pale grey
@@ -349,9 +349,9 @@ AbstractBackgroundWidget {
     // What plays is kept so the widget at rest shows the song that played last (the iRiS face keeps it itself).
     PlayerBase {
         id: rememberBase
-        player: root.irisFaced ? null : root.meaningfulPlayer
+        player: root.familyFaced ? null : root.meaningfulPlayer
         positionUpdatesActive: false
-        readonly property string key: root.irisFaced || !rememberBase.effectiveIsPlaying ? ""
+        readonly property string key: root.familyFaced || !rememberBase.effectiveIsPlaying ? ""
             : [rememberBase.effectiveTitle, rememberBase.effectiveArtist, rememberBase.displayedArtFilePath].join("\u0001")
         onKeyChanged: {
             if (rememberBase.key.length === 0 || rememberBase.effectiveTitle.length === 0) return
@@ -364,16 +364,14 @@ AbstractBackgroundWidget {
             last.entry = String(root.meaningfulPlayer?.desktopEntry ?? "")
             last.at = Date.now()
         }
-        onEffectiveIsPlayingChanged: if (!root.irisFaced && !rememberBase.effectiveIsPlaying
+        onEffectiveIsPlayingChanged: if (!root.familyFaced && !rememberBase.effectiveIsPlaying
                 && Persistent.states.lastPlayed.title === rememberBase.effectiveTitle) Persistent.states.lastPlayed.at = Date.now()
     }
     readonly property MprisPlayer meaningfulPlayer: MprisController.activePlayer
     readonly property var meaningfulPlayers: root.meaningfulPlayer
         ? [root.meaningfulPlayer] : []
     readonly property bool hasPlayer: root.meaningfulPlayers.length > 0
-
-    irisFacePart: "nowPlaying"
-    irisOptions: [
+    familyOptions: [
         { key: "lyrics", label: Translation.tr("Synced lyrics"), icon: "lyrics", fallback: true },
         { key: "rest", label: Translation.tr("Rest when paused"), icon: "bedtime", fallback: false }
     ]
@@ -386,7 +384,7 @@ AbstractBackgroundWidget {
     // true. Rechecking the global base would incorrectly disable Cava for a
     // widget enabled only on this monitor.
     // Frozen (covered, paused for power) the field shows its last frame: nothing reads the audio then.
-    readonly property bool visualizerActive: !root.irisFaced && !root.instrument && root.vizPosition !== "none"
+    readonly property bool visualizerActive: !root.familyFaced && !root.instrument && root.vizPosition !== "none"
         && root.visible && root.motionActive && MprisController.isPlaying
 
     CavaProcess {
@@ -414,10 +412,9 @@ AbstractBackgroundWidget {
     }
     
     Component {
-        id: irisPlayerComponent
+        id: familyPlayerComponent
         FamilyPart {
             property var player: null
-            family: "iris"
             part: "mediaCard"
             props: ({ compact: ["compact", "minimal"].includes(root.effectiveRenderedPreset), active: root.visible && root.powerActive,
                 showBackground: false, player: player })
@@ -476,17 +473,17 @@ AbstractBackgroundWidget {
 
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             ColumnLayout {
                 id: playerColumnLayout
                 anchors.fill: parent
-                visible: !root.irisFaced
+                visible: !root.familyFaced
                 spacing: -Appearance.sizes.elevationMargin
 
                 Repeater {
                     model: ScriptModel {
-                        values: root.irisFaced ? [] : root.meaningfulPlayers
+                        values: root.familyFaced ? [] : root.meaningfulPlayers
                     }
                     delegate: Item {
                         id: delegateRoot
@@ -519,7 +516,7 @@ AbstractBackgroundWidget {
                             z: -2
                             target: playerLoader
                             radius: root.popupRounding
-                            visible: !root.widgetIris && !root.instrument && (root.vizType !== "organic" || root.vizPosition === "none")
+                            visible: !root.familyDesign && !root.instrument && (root.vizType !== "organic" || root.vizPosition === "none")
                         }
 
                         Loader {
@@ -528,7 +525,7 @@ AbstractBackgroundWidget {
                             anchors.fill: parent
                             active: root.presetLoaderActive
                             sourceComponent: root.instrument ? instrumentPlayerComponent
-                                : root.nativeIrisPlayer ? irisPlayerComponent : root.presetComponent
+                                : root.nativeIrisPlayer ? familyPlayerComponent : root.presetComponent
 
                             onLoaded: {
                                 item.player = delegateRoot.modelData
@@ -586,8 +583,7 @@ AbstractBackgroundWidget {
                     }
                     FamilyPart {
                         anchors.centerIn: parent
-                        when: root.widgetIris
-                        family: "iris"
+                        when: root.familyDesign
                         part: "artwork"
                         width: Math.min(parent.width, parent.height) * 0.6
                         height: width
@@ -597,7 +593,7 @@ AbstractBackgroundWidget {
                     WidgetSurface {
                         widget: root
                         anchors.fill: parent
-                        shown: !root.irisFaced
+                        shown: !root.familyFaced
                         surfaceColor: root.widgetInk
                     }
                     MediaRest {

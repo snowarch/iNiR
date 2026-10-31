@@ -14,10 +14,10 @@ import qs.services
 //   2. Its `widget.json`. `main` is that file. `name` is what people call it (shelf, gallery), `group` its Settings
 //      heading; both go to every catalogue in translations/. `lock`: offered on the lock screen and in the iRiS gallery.
 //   `palette`: it has the semantic palette roles (`background.widgets.<key>.palette`). `sizes`: default first.
-//      `familyFace`: it draws nothing of its own, so only a family with a `widgetFace.<key>` part offers it.
+//      `face`: the name of the family faces that draw it (a family's part `widgetFace.<face>`). `faceOnly`: it draws
+//      nothing of its own, so only a family with that part offers it.
 //   3. Its config block in modules/common/Config.qml (`background.widgets.<key>`, `enable` at `defaultOn`).
-//   4. A family's own face stays that family's: an iRiS face is `widgetFace.<part>` in modules/iris/plugin.json and
-//      `irisFacePart: "<part>"` on the widget; with `lock`, its Component in modules/iris/lock/IrisLockWidgets.qml.
+//   4. A family's own face stays that family's, in its plugin.json parts; with `lock`, its Component in the family's lock.
 // The iRiS gallery keeps its own order (IrisFaceData.order, a widget it lacks goes last).
 Singleton {
     id: root
@@ -76,7 +76,11 @@ Singleton {
     function has(key: string): bool { return root.byKey[key] !== undefined }
     // A widget with no face of its own exists only where a family draws it.
     function offered(key: string, family: string): bool {
-        return !root.byKey[key]?.familyFace || Plugins.part(family, "widgetFace." + key).length > 0
+        return !root.byKey[key]?.faceOnly || root.hasFace(key, family)
+    }
+    function hasFace(key: string, family: string): bool {
+        const face = root.byKey[key]?.face ?? ""
+        return face.length > 0 && Plugins.part(family, "widgetFace." + face).length > 0
     }
     function entriesFor(family: string): var { return root.entries.filter(entry => root.offered(entry.key, family)) }
     function entry(key: string): var { return root.byKey[key] ?? null }

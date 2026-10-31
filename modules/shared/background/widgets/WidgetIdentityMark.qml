@@ -12,14 +12,14 @@ Rectangle {
     property string glyph: "widgets"
     property color tint: FamilyStyle.accent
 
-    readonly property bool iris: (Config.options?.panelFamily ?? "ii") === "iris"
-    readonly property real d: root.iris ? FamilyStyle.density : 1
+    readonly property var look: DesktopWidgetLook.look
+    readonly property real d: root.look.density
 
     implicitWidth: Math.round(28 * root.d)
     implicitHeight: implicitWidth
-    radius: root.iris ? FamilyStyle.iconRadius(width) : Appearance.rounding.small
-    color: root.iris ? root.tint : Appearance.colors.colSecondaryContainer
-    gradient: root.iris ? tintGradient : null
+    radius: root.look.markRadius(width)
+    color: root.look.tintedKeys ? root.tint : Appearance.colors.colSecondaryContainer
+    gradient: root.look.tintedKeys ? tintGradient : null
 
     Gradient {
         id: tintGradient
@@ -32,6 +32,6 @@ Rectangle {
         text: root.glyph
         fill: 1
         iconSize: Math.round(17 * root.d)
-        color: root.iris ? FamilyStyle.onTint : Appearance.colors.colOnSecondaryContainer
+        color: root.look.tintedKeys ? FamilyStyle.onTint : Appearance.colors.colOnSecondaryContainer
     }
 }

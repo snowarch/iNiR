@@ -20,8 +20,6 @@ AbstractBackgroundWidget {
         borderWidth: 0, borderOpacity: 0.2, cornerRadius: -1, useBlur: false,
         x: 80, y: 260
     })
-
-    irisFacePart: "day"
     resizeMinWidth: 190
     resizeMinHeight: 190
     needsColText: true
@@ -152,7 +150,7 @@ AbstractBackgroundWidget {
 
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             // ── Medium: the dial with the sun in it, the time and what the sun does next beside it ──
             Item {
@@ -334,8 +332,8 @@ AbstractBackgroundWidget {
                 title: Translation.tr("Text size")
                 from: 60; to: 180; stepSize: 10; unit: "%"
                 value: Math.round(root.textScale * 100)
-                onMoved: v => root.previewIrisValue("fontScale", v)
-                onCommitted: v => root.commitIrisValue("fontScale", v)
+                onMoved: v => root.previewValue("fontScale", v)
+                onCommitted: v => root.commitValue("fontScale", v)
             }
         }
     }

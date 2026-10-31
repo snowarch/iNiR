@@ -21,8 +21,8 @@ ColumnLayout {
     property real regularWidth: 360
     signal closeRequested()
 
-    readonly property bool iris: (Config.options?.panelFamily ?? "ii") === "iris"
-    readonly property real d: root.iris ? FamilyStyle.density : 1
+    readonly property var look: DesktopWidgetLook.look
+    readonly property real d: root.look.density
     readonly property bool dense: availableHeight < 760
     readonly property bool wideDense: dense && availableWidth >= 480
     readonly property int optionColumns: wideDense ? 4 : 3
@@ -52,10 +52,10 @@ ColumnLayout {
             Layout.fillWidth: true
             text: root.title
             elide: Text.ElideRight
-            color: root.iris ? FamilyStyle.text : Appearance.colors.colOnLayer2
-            font.family: root.iris ? FamilyStyle.fontTitle : Appearance.font.family.title
-            font.pixelSize: root.iris ? FamilyStyle.typeTitle : Appearance.font.pixelSize.normal
-            font.weight: root.iris ? FamilyStyle.weight(Font.DemiBold) : Font.DemiBold
+            color: root.look.controlInk
+            font.family: FamilyStyle.fontTitle
+            font.pixelSize: root.look.sheetTitleSize
+            font.weight: FamilyStyle.weight(Font.DemiBold)
         }
         WidgetEditAction {
             iconName: "close"

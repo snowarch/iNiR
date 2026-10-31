@@ -8,5 +8,6 @@
   "keywords": "date day today",
   "sizes": ["small", "medium", "large"],
   "lock": true,
-  "palette": true
+  "palette": true,
+  "face": "date"
 }

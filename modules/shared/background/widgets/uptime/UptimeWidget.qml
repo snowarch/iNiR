@@ -36,9 +36,7 @@ AbstractBackgroundWidget {
     }
     // Session day is an ordinal; elapsed duration remains the primary value.
     readonly property int sessionDay: Math.max(1, Math.floor(root.sessionSeconds / 86400) + 1)
-
-    irisFacePart: "uptime"
-    irisOptions: [
+    familyOptions: [
         { key: "showSince", raw: true, label: Translation.tr("Start time"), icon: "login", fallback: true }
     ]
     resizeMinWidth: root.instrument ? Math.round(260 * scaleFactor) : 190
@@ -79,12 +77,12 @@ AbstractBackgroundWidget {
 
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             WidgetSurface {
                 widget: root
                 anchors.fill: parent
-                shown: !root.irisFaced
+                shown: !root.familyFaced
                     && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
                 surfaceColor: root.surfaceInk
                 surfaceAccent: root.widgetAccent3
@@ -105,18 +103,18 @@ AbstractBackgroundWidget {
     }
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             UptimeDay {
                 anchors.fill: parent
-                visible: !root.irisFaced && !root.instrument && !root.isSmall
+                visible: !root.familyFaced && !root.instrument && !root.isSmall
                 widget: root
                 large: root.isLarge
             }
         }
     }
     ColumnLayout {
-        visible: !root.irisFaced && !root.instrument && root.isSmall
+        visible: !root.familyFaced && !root.instrument && root.isSmall
         anchors.fill: parent
         anchors.margins: Math.round(16 * root.scaleFactor)
         spacing: Math.round(2 * root.scaleFactor)
@@ -178,11 +176,11 @@ AbstractBackgroundWidget {
 
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             RowLayout {
                 opacity: root.instrument ? 0 : 1
-                visible: !root.irisFaced && !opacity > 0
+                visible: !root.familyFaced && !opacity > 0
                 enabled: !root.instrument
                 Behavior on opacity {
                     enabled: root.animationsActive
@@ -229,14 +227,14 @@ AbstractBackgroundWidget {
     // session day and boot time are annotations, not competing hero values.
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             Item {
                 id: instrumentArea
                 anchors.fill: parent
                 anchors.margins: Math.round(13 * root.scaleFactor)
                 opacity: root.instrument ? 1 : 0
-                visible: !root.irisFaced && opacity > 0
+                visible: !root.familyFaced && opacity > 0
                 enabled: root.instrument
 
                 Behavior on opacity {

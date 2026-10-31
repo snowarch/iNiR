@@ -8,5 +8,6 @@
   "keywords": "day sun hours",
   "sizes": ["small", "medium", "large"],
   "lock": true,
-  "palette": true
+  "palette": true,
+  "face": "day"
 }

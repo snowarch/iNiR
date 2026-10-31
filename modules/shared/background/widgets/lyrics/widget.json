@@ -8,5 +8,6 @@
   "keywords": "lyrics words song sing karaoke music lines",
   "sizes": ["medium", "small", "large"],
   "lock": true,
-  "familyFace": true
+  "faceOnly": true,
+  "face": "lyrics"
 }

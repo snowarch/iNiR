@@ -14,8 +14,8 @@ ColumnLayout {
     required property var widget
     property bool wide: false
 
-    readonly property bool iris: (Config.options?.panelFamily ?? "ii") === "iris"
-    readonly property real d: root.iris ? FamilyStyle.density : 1
+    readonly property var look: DesktopWidgetLook.look
+    readonly property real d: root.look.density
     readonly property var zoneGlyphs: ({ topLeft: "north_west", topCenter: "north", topRight: "north_east",
         centerLeft: "west", center: "filter_center_focus", centerRight: "east",
         bottomLeft: "south_west", bottomCenter: "south", bottomRight: "south_east" })
@@ -66,16 +66,16 @@ ColumnLayout {
         title: Translation.tr("Scale")
         from: 50; to: 200; stepSize: 5; unit: "%"
         value: Math.round(root.widget._baseScale * 100)
-        onMoved: v => root.widget.previewIrisValue("widgetScale", v)
-        onCommitted: v => root.widget.commitIrisValue("widgetScale", v)
+        onMoved: v => root.widget.previewValue("widgetScale", v)
+        onCommitted: v => root.widget.commitValue("widgetScale", v)
     }
 
     WidgetQuickSlider {
         title: Translation.tr("Opacity")
         from: 10; to: 100; stepSize: 5; unit: "%"
         value: Math.round(root.widget.widgetOpacity * 100)
-        onMoved: v => root.widget.previewIrisValue("widgetOpacity", v)
-        onCommitted: v => root.widget.commitIrisValue("widgetOpacity", v)
+        onMoved: v => root.widget.previewValue("widgetOpacity", v)
+        onCommitted: v => root.widget.commitValue("widgetOpacity", v)
     }
 
     WidgetQuickSection {

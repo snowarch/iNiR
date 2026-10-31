@@ -15,21 +15,17 @@ Rectangle {
     property bool checked: false
     signal toggled()
 
-    readonly property bool iris: (Config.options?.panelFamily ?? "ii") === "iris"
-    readonly property real d: root.iris ? FamilyStyle.density : 1
+    readonly property var look: DesktopWidgetLook.look
+    readonly property real d: root.look.density
 
     opacity: root.enabled ? 1 : 0.45
     implicitWidth: Math.round(200 * root.d)
     implicitHeight: Math.round(38 * root.d)
-    radius: root.iris ? FamilyStyle.radiusRow
-        : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
-        : Appearance.regaliaEverywhere ? Appearance.regalia.controlRadius
-        : Appearance.rounding.small
-    color: root.iris ? (hover.hovered ? FamilyStyle.fillHover : FamilyStyle.fillQuiet)
-        : ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, hover.hovered ? 0.09 : 0.045)
+    radius: root.look.rowRadius
+    color: root.look.rowFill(hover.hovered)
     Behavior on color {
-        enabled: root.iris ? FamilyStyle.motionEnabled : Appearance.animationsEnabled
-        ColorAnimation { duration: root.iris ? FamilyStyle.feedbackDuration : Appearance.animation.elementMoveFast.duration }
+        enabled: FamilyStyle.motionEnabled
+        ColorAnimation { duration: root.look.feedbackDuration }
     }
 
     MaterialSymbol {
@@ -41,8 +37,7 @@ Rectangle {
         text: root.iconName
         fill: root.checked ? 1 : 0
         iconSize: Math.round(17 * root.d)
-        color: root.iris ? (root.checked ? FamilyStyle.text : FamilyStyle.textSecondary)
-            : root.checked ? Appearance.colors.colOnLayer2 : Appearance.colors.colSubtext
+        color: root.checked ? root.look.controlInk : FamilyStyle.textSecondary
     }
     StyledText {
         anchors.left: glyph.visible ? glyph.right : parent.left
@@ -52,9 +47,9 @@ Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         text: root.label
         elide: Text.ElideRight
-        color: root.iris ? FamilyStyle.text : Appearance.colors.colOnLayer2
-        font.family: root.iris ? FamilyStyle.fontMain : Appearance.font.family.main
-        font.pixelSize: root.iris ? FamilyStyle.typeLabel : Appearance.font.pixelSize.smaller
+        color: root.look.controlInk
+        font.family: FamilyStyle.fontMain
+        font.pixelSize: root.look.labelSize
     }
 
     HoverHandler { id: hover; cursorShape: Qt.PointingHandCursor }
@@ -71,24 +66,23 @@ Rectangle {
         anchors.right: parent.right
         anchors.rightMargin: Math.round(9 * root.d)
         anchors.verticalCenter: parent.verticalCenter
-        width: root.iris ? irisSwitch.width : materialSwitch.width
-        height: root.iris ? irisSwitch.height : materialSwitch.height
+        width: familySwitch.url.length > 0 ? familySwitch.width : materialSwitch.width
+        height: familySwitch.url.length > 0 ? familySwitch.height : materialSwitch.height
 
         FamilyPart {
-            id: irisSwitch
-            visible: root.iris
-            when: root.iris
+            id: familySwitch
+            visible: familySwitch.url.length > 0
             anchors.centerIn: parent
             part: "control.switch"
             props: ({ on: root.checked, name: root.label })
             Connections {
-                target: irisSwitch.item
+                target: familySwitch.item
                 function onToggled(): void { answer.restart() }
             }
         }
         StyledSwitch {
             id: materialSwitch
-            visible: !root.iris
+            visible: familySwitch.url.length === 0
             anchors.centerIn: parent
             checked: root.checked
             onClicked: {

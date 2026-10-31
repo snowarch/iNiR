@@ -12,8 +12,6 @@ AbstractBackgroundWidget {
     defaultConfig: ({
         placementStrategy: "free", widgetScale: 100, cornerRadius: -1, x: 520, y: 600
     })
-
-    irisFacePart: "lyrics"
     semanticPaletteControls: false
     widgetSurfaceEnabled: false
     needsColText: false

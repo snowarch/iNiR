@@ -36,9 +36,7 @@ AbstractBackgroundWidget {
             x: 80,
             y: 200
         })
-
-    irisFacePart: "worldClock"
-    irisOptions: [
+    familyOptions: [
         { key: "showNames", raw: true, label: Translation.tr("City names"), icon: "label", fallback: true },
         { key: "showOffsets", raw: true, label: Translation.tr("Time difference"), icon: "schedule", fallback: true }
     ]
@@ -187,14 +185,14 @@ AbstractBackgroundWidget {
 
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             WidgetSurface {
                 widget: root
                 anchors.fill: parent
                 surfaceColor: root.surfaceInk
                 surfaceAccent: root.widgetAccent3
-                shown: !root.irisFaced && !root.instrument
+                shown: !root.familyFaced && !root.instrument
                     && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
             }
         }
@@ -205,14 +203,14 @@ AbstractBackgroundWidget {
     // not cloned cards: hierarchy communicates what the user is comparing.
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             ColumnLayout {
                 anchors.fill: parent
                 // a sized card keeps its readings off the edge as the plated faces do
                 anchors.margins: Math.round(12 * root.scaleFactor)
                 opacity: root.instrument ? 1 : 0
-                visible: !root.irisFaced && opacity > 0
+                visible: !root.familyFaced && opacity > 0
                 enabled: root.instrument
                 spacing: Math.round(5 * root.scaleFactor)
 
@@ -378,7 +376,7 @@ AbstractBackgroundWidget {
                                             font.pixelSize: Math.max(11, Math.round(11 * root.scaleFactor))
                                             font.weight: root.widgetLabelWeight
                                             font.letterSpacing: root.widgetMetadataTracking
-                                            font.capitalization: root.widgetIris ? Font.MixedCase : Font.AllUppercase
+                                            font.capitalization: root.familyDesign ? Font.MixedCase : Font.AllUppercase
                                         }
                                         RowLayout {
                                             Layout.fillWidth: true
@@ -403,7 +401,7 @@ AbstractBackgroundWidget {
                                                 font.pixelSize: Math.max(10, Math.round(10 * root.scaleFactor))
                                                 font.weight: Font.Medium
                                                 font.letterSpacing: root.widgetMetadataTracking
-                                                font.capitalization: root.widgetIris ? Font.MixedCase : Font.AllUppercase
+                                                font.capitalization: root.familyDesign ? Font.MixedCase : Font.AllUppercase
                                             }
                                             StyledText {
                                                 visible: root.showOffsets
@@ -488,7 +486,7 @@ AbstractBackgroundWidget {
                                         font.pixelSize: Math.max(8, Math.round(9 * root.scaleFactor))
                                         font.weight: index === 0 ? root.widgetLabelWeight : Font.Medium
                                         font.letterSpacing: root.widgetMetadataTracking
-                                        font.capitalization: root.widgetIris ? Font.MixedCase : Font.AllUppercase
+                                        font.capitalization: root.familyDesign ? Font.MixedCase : Font.AllUppercase
                                     }
                                     RowLayout {
                                         Layout.fillWidth: true
@@ -513,7 +511,7 @@ AbstractBackgroundWidget {
                                             font.pixelSize: Math.max(7, Math.round(8 * root.scaleFactor))
                                             font.weight: Font.Medium
                                             font.letterSpacing: root.widgetMetadataTracking
-                                            font.capitalization: root.widgetIris ? Font.MixedCase : Font.AllUppercase
+                                            font.capitalization: root.familyDesign ? Font.MixedCase : Font.AllUppercase
                                         }
                                         StyledText {
                                             visible: root.showOffsets
@@ -552,11 +550,11 @@ AbstractBackgroundWidget {
     }
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             ColumnLayout {
                 opacity: root.instrument ? 0 : 1
-                visible: !root.irisFaced && opacity > 0
+                visible: !root.familyFaced && opacity > 0
                 enabled: !root.instrument
                 Behavior on opacity {
                     enabled: root.animationsActive

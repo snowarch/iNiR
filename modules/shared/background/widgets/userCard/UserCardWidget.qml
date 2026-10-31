@@ -35,9 +35,7 @@ AbstractBackgroundWidget {
             x: 80,
             y: 420
         })
-
-    irisFacePart: "profile"
-    irisOptions: [
+    familyOptions: [
         { key: "showAvatar", raw: true, label: Translation.tr("Picture"), icon: "account_circle", fallback: true },
         { key: "showWeather", raw: true, label: Translation.tr("Weather"), icon: "partly_cloudy_day", fallback: true },
         { key: "showHostname", raw: true, label: Translation.tr("Computer name"), icon: "computer", fallback: true }
@@ -138,21 +136,21 @@ AbstractBackgroundWidget {
 
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             WidgetSurface {
                 widget: root
                 anchors.fill: parent
                 surfaceColor: root.surfaceInk
                 surfaceAccent: root.widgetAccent3
-                shown: !root.irisFaced && !root.instrument && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
+                shown: !root.familyFaced && !root.instrument && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
             }
         }
     }
 
     ColumnLayout {
         id: cardColumn
-        visible: !root.irisFaced && opacity > 0
+        visible: !root.familyFaced && opacity > 0
         opacity: root.instrument ? 0 : 1
         enabled: !root.instrument
         Behavior on opacity {
@@ -437,14 +435,14 @@ AbstractBackgroundWidget {
 
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             RowLayout {
                 id: instrumentPlate
                 anchors.fill: parent
                 anchors.margins: Math.round(12 * root.scaleFactor)
                 spacing: Math.round(12 * root.scaleFactor)
-                visible: !root.irisFaced && opacity > 0
+                visible: !root.familyFaced && opacity > 0
                 opacity: root.instrument ? 1 : 0
                 enabled: root.instrument
                 Behavior on opacity {
@@ -503,7 +501,7 @@ AbstractBackgroundWidget {
                     StyledText {
                         visible: root.showHostname && root.hostname.length > 0
                         Layout.fillWidth: true
-                        text: root.widgetIris ? root.hostname : root.hostname.toUpperCase()
+                        text: root.familyDesign ? root.hostname : root.hostname.toUpperCase()
                         color: root.widgetInkMuted
                         elide: Text.ElideRight
                         font.family: Appearance.font.family.monospace

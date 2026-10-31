@@ -25,8 +25,6 @@ AbstractBackgroundWidget {
         cornerRadius: -1, colorMode: "auto", dim: 0,
         x: 420, y: 120
     })
-
-    irisFacePart: "calendar"
     visibleWhenLocked: true
     needsColText: true
     resizeMinWidth: 252
@@ -224,12 +222,12 @@ AbstractBackgroundWidget {
 
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             WidgetSurface {
                 widget: root
                 anchors.fill: parent
-                shown: !root.irisFaced && !root.instrument
+                shown: !root.familyFaced && !root.instrument
                     && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
             }
         }
@@ -237,10 +235,10 @@ AbstractBackgroundWidget {
 
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             ColumnLayout {
-                visible: !root.irisFaced
+                visible: !root.familyFaced
                 anchors.fill: parent
                 anchors.margins: Math.round((root.compact ? 12 : 14) * root.scaleFactor)
                 spacing: Math.round((root.compact ? 4 : 8) * root.scaleFactor)
@@ -344,7 +342,7 @@ AbstractBackgroundWidget {
                             color: weekend ? root.widgetAccentVisible : root.inkMuted
                             font.pixelSize: Math.round((root.compact ? Appearance.font.pixelSize.smallest : Appearance.font.pixelSize.smaller) * root.scaleFactor)
                             font.weight: Font.DemiBold
-                            font.capitalization: root.instrument && !root.widgetIris ? Font.AllUppercase : Font.MixedCase
+                            font.capitalization: root.instrument && !root.familyDesign ? Font.AllUppercase : Font.MixedCase
                             font.letterSpacing: root.instrument
                                 ? Math.round(1.4 * root.scaleFactor) : 0
                         }

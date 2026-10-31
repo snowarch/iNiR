@@ -13,8 +13,8 @@ ColumnLayout {
     property string detail: ""
     default property alias content: body.data
 
-    readonly property bool iris: (Config.options?.panelFamily ?? "ii") === "iris"
-    readonly property real d: root.iris ? FamilyStyle.density : 1
+    readonly property var look: DesktopWidgetLook.look
+    readonly property real d: root.look.density
 
     Layout.fillWidth: true
     spacing: Math.round(7 * root.d)
@@ -28,20 +28,20 @@ ColumnLayout {
             Layout.fillWidth: true
             text: root.title
             elide: Text.ElideRight
-            color: root.iris ? FamilyStyle.textSecondary : Appearance.colors.colSubtext
-            font.family: root.iris ? FamilyStyle.fontMain : Appearance.font.family.main
-            font.pixelSize: root.iris ? FamilyStyle.typeMeta : Appearance.font.pixelSize.smallest
-            font.weight: root.iris ? FamilyStyle.weight(Font.DemiBold) : Font.DemiBold
-            font.capitalization: root.iris || Appearance.editorialEverywhere ? Font.MixedCase : Font.AllUppercase
-            font.letterSpacing: root.iris ? 0 : 1
+            color: FamilyStyle.textSecondary
+            font.family: FamilyStyle.fontMain
+            font.pixelSize: root.look.metaSize
+            font.weight: FamilyStyle.weight(Font.DemiBold)
+            font.capitalization: root.look.metaCapitalization
+            font.letterSpacing: root.look.metaSpacing
         }
         StyledText {
             visible: root.detail.length > 0
             text: root.detail
-            color: root.iris ? FamilyStyle.textTertiary : Appearance.colors.colSubtext
-            font.family: root.iris ? FamilyStyle.fontNumbers : Appearance.font.family.numbers
+            color: root.look.quietInk
+            font.family: FamilyStyle.fontNumbers
             font.features: ({ "tnum": 1 })
-            font.pixelSize: root.iris ? FamilyStyle.typeMeta : Appearance.font.pixelSize.smallest
+            font.pixelSize: root.look.metaSize
         }
     }
 

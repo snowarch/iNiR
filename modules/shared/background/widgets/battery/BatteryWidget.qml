@@ -28,8 +28,7 @@ AbstractBackgroundWidget {
     fitted: true
     drawnWidth: Math.round((root.displayMode === "instrument" ? 220 : 160) * scaleFactor)
     drawnHeight: Math.round((root.displayMode === "instrument" ? 140 : 104) * scaleFactor)
-    irisFacePart: "battery"
-    irisOptions: [
+    familyOptions: [
         { key: "showTime", raw: true, label: Translation.tr("Time remaining"), icon: "timer", fallback: true }
     ]
 
@@ -114,13 +113,13 @@ AbstractBackgroundWidget {
     // ── Card background ───────────────────────────────────────
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             WidgetSurface {
                 widget: root
                 anchors.fill: parent
                 surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.cardRadius
-                shown: !root.irisFaced && root.displayMode !== "instrument"
+                shown: !root.familyFaced && root.displayMode !== "instrument"
                     && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
             }
         }
@@ -130,11 +129,11 @@ AbstractBackgroundWidget {
     readonly property bool noBattery: !Battery.available
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             WidgetBlank {
                 anchors.fill: parent
-                visible: !root.irisFaced && root.noBattery
+                visible: !root.familyFaced && root.noBattery
                 widget: root
                 icon: "power"
                 title: Translation.tr("On mains power")
@@ -146,13 +145,13 @@ AbstractBackgroundWidget {
     // ── Instrument: energy reserve, not a clock face ─────────
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             Item {
                 id: instrumentArea
                 anchors.fill: parent
                 opacity: root.displayMode === "instrument" ? 1 : 0
-                visible: !root.irisFaced && !root.noBattery && opacity > 0
+                visible: !root.familyFaced && !root.noBattery && opacity > 0
                 enabled: root.displayMode === "instrument"
                 Behavior on opacity {
                     enabled: root.animationsActive
@@ -173,7 +172,7 @@ AbstractBackgroundWidget {
                             font.family: root.widgetBodyFamily
                             font.pixelSize: Math.round(11 * root.scaleFactor)
                             font.weight: Font.DemiBold
-                            font.capitalization: root.widgetIris ? Font.MixedCase : Font.AllUppercase
+                            font.capitalization: root.familyDesign ? Font.MixedCase : Font.AllUppercase
                             font.letterSpacing: root.scaleFactor
                         }
                         MaterialSymbol {
@@ -242,13 +241,13 @@ AbstractBackgroundWidget {
     // ── Ring mode ─────────────────────────────────────────────
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             Item {
                 anchors.fill: parent
                 anchors.margins: Appearance.angelEverywhere || Appearance.inirEverywhere ? 4 : 0
                 opacity: root.displayMode === "ring" ? 1 : 0
-                visible: !root.irisFaced && !root.noBattery && opacity > 0
+                visible: !root.familyFaced && !root.noBattery && opacity > 0
                 enabled: root.displayMode === "ring"
                 Behavior on opacity {
                     enabled: root.animationsActive
@@ -299,13 +298,13 @@ AbstractBackgroundWidget {
     // ── Bars mode (VU meter style) ────────────────────────────
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             Item {
                 anchors.fill: parent
                 anchors.margins: Appearance.angelEverywhere || Appearance.inirEverywhere ? 4 : 0
                 opacity: root.displayMode === "bars" ? 1 : 0
-                visible: !root.irisFaced && !root.noBattery && opacity > 0
+                visible: !root.familyFaced && !root.noBattery && opacity > 0
                 enabled: root.displayMode === "bars"
                 Behavior on opacity {
                     enabled: root.animationsActive
@@ -389,13 +388,13 @@ AbstractBackgroundWidget {
     // ── Pill mode (minimal horizontal bar) ────────────────────
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             Item {
                 anchors.fill: parent
                 anchors.margins: Appearance.angelEverywhere || Appearance.inirEverywhere ? 8 : 4
                 opacity: root.displayMode === "pill" ? 1 : 0
-                visible: !root.irisFaced && !root.noBattery && opacity > 0
+                visible: !root.familyFaced && !root.noBattery && opacity > 0
                 enabled: root.displayMode === "pill"
                 Behavior on opacity {
                     enabled: root.animationsActive

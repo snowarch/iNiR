@@ -46,9 +46,8 @@ AbstractBackgroundWidget {
     readonly property int meterRows: Math.ceil(root._resourceModel.length / root.meterColumns)
     visibleWhenLocked: false
     needsColText: true
-    irisFacePart: "vitals"
     designFaceKey: "widgetVitals"
-    irisOptions: [
+    familyOptions: [
         { key: "showCpu", raw: true, label: Translation.tr("CPU"), icon: "memory", fallback: true },
         { key: "showMemory", raw: true, label: Translation.tr("Memory"), icon: "storage", fallback: true },
         { key: "showGpu", raw: true, label: Translation.tr("GPU"), icon: "developer_board", fallback: true },
@@ -204,7 +203,7 @@ AbstractBackgroundWidget {
 
     function _tileShape(key: string): int {
         // iRiS keeps glyph badges plain round; expressive shapes are Material's.
-        if (root.widgetIris) return MaterialShape.Shape.Circle
+        if (root.familyDesign) return MaterialShape.Shape.Circle
         switch (key) {
             case "cpu": return MaterialShape.Shape.Gem;
             case "mem": return MaterialShape.Shape.Cookie4Sided;
@@ -370,13 +369,13 @@ AbstractBackgroundWidget {
 
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             WidgetSurface {
                 widget: root
                 anchors.fill: parent
                 surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.cardRadius
-                shown: !root.irisFaced
+                shown: !root.familyFaced
                     && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
             }
         }
@@ -388,12 +387,12 @@ AbstractBackgroundWidget {
     // ══════════════════════════════════════════════════════════
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             ColumnLayout {
                 anchors.fill: parent
                 anchors.margins: root._innerMargin
-                visible: !root.irisFaced && root.displayMode === "instrument" && root.meterLedger
+                visible: !root.familyFaced && root.displayMode === "instrument" && root.meterLedger
                 spacing: Math.round((ledger.tight ? 4 : 6) * root.scaleFactor)
                 // past four meters a row is one line (name, scale, figure) or the last ones fall off the box
                 QtObject {
@@ -475,13 +474,13 @@ AbstractBackgroundWidget {
 
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             Grid {
                 id: instrumentBody
                 anchors.centerIn: parent
                 opacity: root.displayMode === "instrument" && !root.meterLedger ? 1 : 0
-                visible: !root.irisFaced && opacity > 0
+                visible: !root.familyFaced && opacity > 0
                 enabled: root.displayMode === "instrument"
                 Behavior on opacity {
                     enabled: root.animationsActive
@@ -552,7 +551,7 @@ AbstractBackgroundWidget {
                                 text: root._getDisplayText(resourceMeter.modelData.key)
                                 color: root.widgetInk
                                 font {
-                                    family: root.widgetIris ? FamilyStyle.fontMain : root.widgetNumbersFamily
+                                    family: root.familyDesign ? FamilyStyle.fontMain : root.widgetNumbersFamily
                                     pixelSize: Math.round(resourceMeter.side * 0.29)
                                     weight: Font.Bold
                                     features: ({ "tnum": 1 })
@@ -572,7 +571,7 @@ AbstractBackgroundWidget {
                                     pixelSize: Math.max(10, Math.round(resourceMeter.side * 0.075))
                                     weight: Font.DemiBold
                                     letterSpacing: Math.round(1.4 * root.scaleFactor)
-                                    capitalization: root.widgetIris ? Font.MixedCase : Font.AllUppercase
+                                    capitalization: root.familyDesign ? Font.MixedCase : Font.AllUppercase
                                 }
                             }
                         }
@@ -587,7 +586,7 @@ AbstractBackgroundWidget {
     // ══════════════════════════════════════════════════════════
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             ColumnLayout {
                 id: barsBody
@@ -595,7 +594,7 @@ AbstractBackgroundWidget {
                 anchors.margins: root._innerMargin
                 spacing: Appearance.sizes.spacingSmall ?? 4
                 opacity: root.displayMode === "bars" ? 1 : 0
-                visible: !root.irisFaced && opacity > 0
+                visible: !root.familyFaced && opacity > 0
                 enabled: root.displayMode === "bars"
                 Behavior on opacity {
                     enabled: root.animationsActive
@@ -657,7 +656,7 @@ AbstractBackgroundWidget {
                             color: barRow._liveColor
                             font {
                                 pixelSize: barRow.big > 0 ? Math.round(barRow.big * 0.8) : Appearance.font.pixelSize.smaller
-                                family: root.widgetIris ? FamilyStyle.fontMain : root.widgetNumbersFamily
+                                family: root.familyDesign ? FamilyStyle.fontMain : root.widgetNumbersFamily
                                 weight: barRow.big > 0 ? Font.DemiBold : Font.Normal
                             }
                             horizontalAlignment: Text.AlignRight
@@ -675,13 +674,13 @@ AbstractBackgroundWidget {
     // ══════════════════════════════════════════════════════════
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             Item {
                 anchors.fill: parent
                 anchors.margins: root._innerMargin
                 opacity: root.displayMode === "graph" ? 1 : 0
-                visible: !root.irisFaced && opacity > 0
+                visible: !root.familyFaced && opacity > 0
                 enabled: root.displayMode === "graph"
                 Behavior on opacity {
                     enabled: root.animationsActive
@@ -710,7 +709,7 @@ AbstractBackgroundWidget {
                             StyledText {
                                 text: root._getDisplayText(modelData.key)
                                 color: root._graphColor(modelData.key)
-                                font { pixelSize: Appearance.font.pixelSize.smaller; family: root.widgetIris ? FamilyStyle.fontMain : root.widgetNumbersFamily }
+                                font { pixelSize: Appearance.font.pixelSize.smaller; family: root.familyDesign ? FamilyStyle.fontMain : root.widgetNumbersFamily }
                                 anchors.verticalCenter: parent.verticalCenter
                             }
                         }
@@ -728,7 +727,7 @@ AbstractBackgroundWidget {
                         required property var modelData
                         text: modelData.label
                         color: root._metricSubtext
-                        font { pixelSize: Appearance.font.pixelSize.smaller - 2; family: root.widgetIris ? FamilyStyle.fontMain : root.widgetNumbersFamily }
+                        font { pixelSize: Appearance.font.pixelSize.smaller - 2; family: root.familyDesign ? FamilyStyle.fontMain : root.widgetNumbersFamily }
                         anchors.right: parent.right
                         anchors.rightMargin: 2
                         y: parent._legendH + (parent.height - parent._legendH) * (1.0 - modelData.pct) - height / 2
@@ -795,14 +794,14 @@ AbstractBackgroundWidget {
     // ══════════════════════════════════════════════════════════
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             Row {
                 id: ringsBody
                 anchors.centerIn: parent
                 spacing: Appearance.sizes.spacingNormal ?? 8
                 opacity: root.displayMode === "rings" ? 1 : 0
-                visible: !root.irisFaced && opacity > 0
+                visible: !root.familyFaced && opacity > 0
                 enabled: root.displayMode === "rings"
                 Behavior on opacity {
                     enabled: root.animationsActive
@@ -859,7 +858,7 @@ AbstractBackgroundWidget {
                                 color: ringCol._liveColor
                                 font {
                                     pixelSize: Math.max(10, Math.round(ringCol._ringSize * 0.26))
-                                    family: root.widgetIris ? FamilyStyle.fontMain : root.widgetNumbersFamily
+                                    family: root.familyDesign ? FamilyStyle.fontMain : root.widgetNumbersFamily
                                     weight: Font.DemiBold
                                 }
                             }
@@ -901,13 +900,13 @@ AbstractBackgroundWidget {
     // ══════════════════════════════════════════════════════════
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             Flow {
                 anchors.centerIn: parent
                 spacing: Appearance.sizes.spacingSmall ?? 4
                 opacity: root.displayMode === "text" ? 1 : 0
-                visible: !root.irisFaced && opacity > 0
+                visible: !root.familyFaced && opacity > 0
                 enabled: root.displayMode === "text"
                 Behavior on opacity {
                     enabled: root.animationsActive
@@ -955,7 +954,7 @@ AbstractBackgroundWidget {
                                 color: textChip._liveColor
                                 font {
                                     pixelSize: Math.round(Appearance.font.pixelSize.normal * root.scaleFactor)
-                                    family: root.widgetIris ? FamilyStyle.fontMain : root.widgetNumbersFamily
+                                    family: root.familyDesign ? FamilyStyle.fontMain : root.widgetNumbersFamily
                                     weight: Font.DemiBold
                                 }
                                 anchors.verticalCenter: parent.verticalCenter
@@ -969,14 +968,14 @@ AbstractBackgroundWidget {
 
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             GridLayout {
                 id: tileGrid
                 anchors.fill: parent
                 anchors.margins: root._innerMargin
                 opacity: root.displayMode === "tiles" && root._resourceModel.length > 0 ? 1 : 0
-                visible: !root.irisFaced && opacity > 0
+                visible: !root.familyFaced && opacity > 0
                 enabled: root.displayMode === "tiles"
                 Behavior on opacity {
                     enabled: root.animationsActive
@@ -1021,7 +1020,7 @@ AbstractBackgroundWidget {
                         StyledRectangularShadow {
                             target: tile
                             z: -2
-                            visible: !root.widgetIris && !Appearance.zzzEverywhere && !Appearance.inirEverywhere
+                            visible: !root.familyDesign && !Appearance.zzzEverywhere && !Appearance.inirEverywhere
                                 && !Appearance.regaliaEverywhere
                         }
 
@@ -1054,7 +1053,7 @@ AbstractBackgroundWidget {
                                         Math.round(Appearance.font.pixelSize.hugeass * root.scaleFactor),
                                         Math.round(tile.height * 0.30),
                                         Math.round(tile.width * 0.34)))
-                                    family: root.widgetIris ? FamilyStyle.fontMain : root.widgetNumbersFamily
+                                    family: root.familyDesign ? FamilyStyle.fontMain : root.widgetNumbersFamily
                                     weight: Font.Bold
                                 }
                             }
@@ -1080,10 +1079,10 @@ AbstractBackgroundWidget {
 
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             Column {
-                visible: !root.irisFaced && root._resourceModel.length === 0
+                visible: !root.familyFaced && root._resourceModel.length === 0
                 anchors.centerIn: parent
                 spacing: Math.round((Appearance.sizes.spacingSmall ?? 8) / 2)
 

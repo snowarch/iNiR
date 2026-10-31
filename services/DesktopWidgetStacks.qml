@@ -32,8 +32,15 @@ Singleton {
     readonly property int defaultInterval: 20
     readonly property string prefix: "stack:"
 
-    readonly property bool live: (Config.options?.panelFamily ?? "ii") === "iris"
-        && !["material", "instrument", "readout"].includes(String(Config.options?.iris?.widgets?.design ?? "iris"))
+    // Stacks are a family's own faces, so they live while every widget wears them.
+    readonly property var _design: Plugins.manifests[Plugins.active]?.widgetDesign ?? ({})
+    readonly property bool live: {
+        void Config.revision
+        const face = root._design.face ?? ""
+        if (face.length === 0) return false
+        const shared = String(Config.getNestedValue(root._design.shared, face))
+        return shared === face || !root._design.choices.includes(shared)
+    }
 
     readonly property var stacks: {
         const raw = Config.options?.background?.widgets?.stacks ?? []
@@ -351,17 +358,18 @@ Singleton {
         return id
     }
 
-    // A stack shows its pages in the iRiS design; a widget that chose another look for itself gives it up.
+    // A stack shows its pages in the family's design; a widget that chose another look for itself gives it up.
     function _ownDesign(key: string): void {
+        const own = String(root._design.key ?? "design")
         const updates = ({})
-        if (Config.getNestedValue("background.widgets." + key + ".iris.design", "auto") !== "auto")
-            updates["background.widgets." + key + ".iris.design"] = "auto"
+        if (Config.getNestedValue("background.widgets." + key + "." + own, "auto") !== "auto")
+            updates["background.widgets." + key + "." + own] = "auto"
         if (Object.keys(updates).length > 0)
             Config.setNestedValues(updates)
         for (const record of (Config.options?.background?.widgets?.outputOverrides ?? [])) {
-            const own = record?.widgets?.[key]?.["iris.design"]
-            if (own !== undefined && own !== "auto")
-                DesktopWidgetLayout.setValue(String(record.output), key, "iris.design", "auto")
+            const value = record?.widgets?.[key]?.[own]
+            if (value !== undefined && value !== "auto")
+                DesktopWidgetLayout.setValue(String(record.output), key, own, "auto")
         }
     }
 

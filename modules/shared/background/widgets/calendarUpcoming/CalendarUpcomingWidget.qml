@@ -30,9 +30,7 @@ AbstractBackgroundWidget {
         cornerRadius: -1, colorMode: "auto", dim: 0,
         x: 80, y: 80
     })
-
-    irisFacePart: "agenda"
-    irisOptions: [
+    familyOptions: [
         { key: "groupByDay", raw: true, label: Translation.tr("Group by day"), icon: "event_list", fallback: true },
         { key: "showLocation", raw: true, label: Translation.tr("Location"), icon: "location_on", fallback: false }
     ]
@@ -182,13 +180,13 @@ AbstractBackgroundWidget {
     // ── Card background ────────────────────────────────────────
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             WidgetSurface {
                 widget: root
                 anchors.fill: parent
                 surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.cardRadius
-                shown: !root.irisFaced && !root.instrument && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
+                shown: !root.familyFaced && !root.instrument && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
             }
         }
     }
@@ -196,10 +194,10 @@ AbstractBackgroundWidget {
     // ── Content ────────────────────────────────────────────────
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             ColumnLayout {
-                visible: !root.irisFaced
+                visible: !root.familyFaced
                 anchors.fill: parent
                 anchors.margins: Math.round(12 * root.scaleFactor)
                 clip: true

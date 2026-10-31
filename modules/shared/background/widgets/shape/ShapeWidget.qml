@@ -81,8 +81,8 @@ AbstractBackgroundWidget {
                 title: Translation.tr("Rotation")
                 from: 0; to: 360; stepSize: 15; unit: "°"
                 value: root.angle
-                onMoved: v => root.previewIrisValue("angle", v)
-                onCommitted: v => root.commitIrisValue("angle", v)
+                onMoved: v => root.previewValue("angle", v)
+                onCommitted: v => root.commitValue("angle", v)
             }
         }
     }

@@ -20,8 +20,8 @@ ColumnLayout {
     signal moved(real value)
     signal committed(real value)
 
-    readonly property bool iris: (Config.options?.panelFamily ?? "ii") === "iris"
-    readonly property real d: root.iris ? FamilyStyle.density : 1
+    readonly property var look: DesktopWidgetLook.look
+    readonly property real d: root.look.density
     readonly property real span: Math.max(0.0001, root.to - root.from)
     property real live: NaN
     readonly property real shown: Number.isNaN(root.live) ? root.value : root.live
@@ -43,26 +43,25 @@ ColumnLayout {
             Layout.fillWidth: true
             text: root.title
             elide: Text.ElideRight
-            color: root.iris ? FamilyStyle.textSecondary : Appearance.colors.colSubtext
-            font.family: root.iris ? FamilyStyle.fontMain : Appearance.font.family.main
-            font.pixelSize: root.iris ? FamilyStyle.typeMeta : Appearance.font.pixelSize.smallest
+            color: FamilyStyle.textSecondary
+            font.family: FamilyStyle.fontMain
+            font.pixelSize: root.look.metaSize
             font.weight: Font.DemiBold
-            font.capitalization: root.iris || Appearance.editorialEverywhere ? Font.MixedCase : Font.AllUppercase
-            font.letterSpacing: root.iris ? 0 : 1
+            font.capitalization: root.look.metaCapitalization
+            font.letterSpacing: root.look.metaSpacing
         }
         StyledText {
             text: root.label(root.shown)
-            color: root.iris ? FamilyStyle.textSecondary : Appearance.colors.colOnLayer2
-            font.family: root.iris ? FamilyStyle.fontNumbers : Appearance.font.family.numbers
+            color: root.look.valueInk
+            font.family: FamilyStyle.fontNumbers
             font.features: ({ "tnum": 1 })
-            font.pixelSize: root.iris ? FamilyStyle.typeMeta : Appearance.font.pixelSize.smaller
+            font.pixelSize: root.look.valueSize
         }
     }
 
     FamilyPart {
         id: familyScrubber
-        visible: root.iris
-        when: root.iris
+        visible: familyScrubber.url.length > 0
         Layout.fillWidth: true
         part: "control.scrubber"
         props: ({ knob: true, fillColor: FamilyStyle.accent, stepSize: root.stepSize / root.span, value: (root.value - root.from) / root.span })
@@ -82,7 +81,7 @@ ColumnLayout {
 
     StyledSlider {
         id: materialSlider
-        visible: !root.iris
+        visible: familyScrubber.url.length === 0
         Layout.fillWidth: true
         enableSettingsSearch: false
         configuration: StyledSlider.Configuration.XS

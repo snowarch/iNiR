@@ -8,5 +8,6 @@
   "keywords": "toggles wifi bluetooth volume brightness quick settings",
   "sizes": ["medium", "small", "large"],
   "lock": true,
-  "familyFace": true
+  "faceOnly": true,
+  "face": "controls"
 }

@@ -35,8 +35,8 @@ AbstractBackgroundWidget {
     })
 
     // Under an iRiS Design that prints this widget (AIRISU), the print is its face; elsewhere it draws itself.
-    irisDesignPart: "widgetVisualizer"
-    irisDesignPrint: "visualizer"
+    printPart: "widgetVisualizer"
+    printKey: "visualizer"
     // What a print reads: the spectrum, whether it is moving, and its ceiling.
     readonly property var printPoints: cavaProcess.points
     readonly property bool printLive: root._active && cavaProcess.audioSignalActive
@@ -56,7 +56,7 @@ AbstractBackgroundWidget {
         || root.paletteMode === "primary"
     readonly property var spectrumPalette: {
         // iRiS draws its widgets from one solved palette; Cava's colours are Material's.
-        if (root.paletteMode === "accent" || (root.widgetIris && root.paletteMode === "cava"))
+        if (root.paletteMode === "accent" || (root.familyDesign && root.paletteMode === "cava"))
             return [root.widgetAccentVisible, root.widgetAccent2Visible, root.widgetAccent3Visible]
         if (root.paletteMode === "primary")
             return [root.widgetAccent]
@@ -348,7 +348,7 @@ AbstractBackgroundWidget {
 
     // ── Card background ────────────────────────────────────────
     WidgetSurface {
-        visible: !root.irisFaced
+        visible: !root.familyFaced
         widget: root
         id: cardBg
         anchors.centerIn: parent
@@ -363,10 +363,10 @@ AbstractBackgroundWidget {
     // order, so a still widget does not repaint the whole desktop every frame. The card stays in the host, below.
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             LiveLayer {
-                visible: !root.irisFaced
+                visible: !root.familyFaced
                 anchors.fill: parent
                 live: root.motionActive && (root.vizType === "organic"
                     ? root._organicPresent

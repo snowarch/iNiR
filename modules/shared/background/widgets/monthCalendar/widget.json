@@ -8,5 +8,6 @@
   "keywords": "calendar month date days",
   "sizes": ["large", "small", "medium"],
   "lock": true,
-  "palette": true
+  "palette": true,
+  "face": "calendar"
 }

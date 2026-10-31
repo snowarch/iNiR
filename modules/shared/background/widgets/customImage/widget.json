@@ -7,5 +7,6 @@
   "category": "decor",
   "keywords": "picture photo image",
   "sizes": ["medium", "small", "large"],
-  "palette": true
+  "palette": true,
+  "face": "photo"
 }

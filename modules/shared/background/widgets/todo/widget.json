@@ -8,5 +8,6 @@
   "keywords": "tasks checklist list",
   "sizes": ["large", "small", "medium"],
   "lock": true,
-  "palette": true
+  "palette": true,
+  "face": "todo"
 }

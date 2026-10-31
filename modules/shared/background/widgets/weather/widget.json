@@ -8,5 +8,6 @@
   "keywords": "forecast temperature rain sun wind climate",
   "sizes": ["small", "medium", "large"],
   "lock": true,
-  "palette": true
+  "palette": true,
+  "face": "weather"
 }

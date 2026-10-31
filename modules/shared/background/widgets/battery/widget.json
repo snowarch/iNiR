@@ -8,5 +8,6 @@
   "keywords": "power charge",
   "sizes": ["small", "medium", "large"],
   "lock": true,
-  "palette": true
+  "palette": true,
+  "face": "battery"
 }

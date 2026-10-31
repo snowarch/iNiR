@@ -8,5 +8,6 @@
   "keywords": "colours colors swatches hex wallpaper cover accent theme",
   "sizes": ["medium", "small", "large"],
   "lock": true,
-  "familyFace": true
+  "faceOnly": true,
+  "face": "palette"
 }

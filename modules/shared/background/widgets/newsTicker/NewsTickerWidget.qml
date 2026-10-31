@@ -29,9 +29,7 @@ AbstractBackgroundWidget {
         { label: Translation.tr("2 min"), value: 120 },
         { label: Translation.tr("5 min"), value: 300 }
     ]
-
-    irisFacePart: "news"
-    irisOptions: [
+    familyOptions: [
         { key: "showMeta", raw: true, label: Translation.tr("Source and time"), icon: "info", fallback: true },
         { key: "rotateSeconds", raw: true, label: Translation.tr("Change every"), fallback: 45,
             choices: root.rotateChoices }
@@ -193,12 +191,12 @@ AbstractBackgroundWidget {
 
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             WidgetSurface {
                 widget: root
                 anchors.fill: parent
-                shown: !root.irisFaced && !root.instrument && (root.backgroundOpacity > 0 || root.borderWidth > 0
+                shown: !root.familyFaced && !root.instrument && (root.backgroundOpacity > 0 || root.borderWidth > 0
                     || root.effectiveBlur)
             }
         }
@@ -207,7 +205,7 @@ AbstractBackgroundWidget {
     HoverHandler { id: newsHover }
 
     RowLayout {
-        visible: !root.irisFaced
+        visible: !root.familyFaced
         anchors.fill: parent
         anchors.margins: Math.round((14) * root.scaleFactor)
         spacing: Math.round(9 * root.scaleFactor)

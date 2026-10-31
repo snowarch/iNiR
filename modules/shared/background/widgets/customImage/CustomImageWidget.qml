@@ -36,15 +36,14 @@ AbstractBackgroundWidget {
         x: 120,
         y: 320
     })
-    irisFacePart: "photo"
-    irisOptions: [
+    familyOptions: [
         { key: "fitMode", raw: true, label: Translation.tr("Picture"), fallback: "cover", choices: [
             { label: Translation.tr("Fill"), icon: "crop", value: "cover" },
             { label: Translation.tr("Whole"), icon: "fit_screen", value: "contain" }] }
     ]
     // The iRiS face lends its own clip: the media slots draw inside it instead of under a Material shape.
     property Item irisPhotoHost: null
-    readonly property bool _hosted: root.irisFaced && root.irisPhotoHost !== null
+    readonly property bool _hosted: root.familyFaced && root.irisPhotoHost !== null
 
     readonly property string sourceMode: root._readConfigKey("sourceMode") === "folder" ? "folder" : "file"
     readonly property string mediaPath: String(root._readConfigKey("path") ?? "")
@@ -591,7 +590,7 @@ AbstractBackgroundWidget {
 
     StyledDropShadow {
         target: shadowShape
-        visible: root.currentPath.length > 0 && !root.irisFaced
+        visible: root.currentPath.length > 0 && !root.familyFaced
     }
 
     Item {

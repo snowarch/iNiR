@@ -25,9 +25,7 @@ AbstractBackgroundWidget {
         cornerRadius: -1, colorMode: "auto", dim: 0,
         x: 120, y: 180
     })
-
-    irisFacePart: "todo"
-    irisOptions: [
+    familyOptions: [
         { key: "showCompleted", raw: true, label: Translation.tr("Show completed"), icon: "task_alt", fallback: true }
     ]
 
@@ -172,12 +170,12 @@ AbstractBackgroundWidget {
 
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             WidgetSurface {
                 widget: root
                 anchors.fill: parent
-                shown: !root.irisFaced && !root.instrument
+                shown: !root.familyFaced && !root.instrument
                     && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
             }
         }
@@ -185,7 +183,7 @@ AbstractBackgroundWidget {
 
     Item {
         id: stage
-        visible: !root.irisFaced
+        visible: !root.familyFaced
         anchors.fill: parent
         anchors.margins: root.inset
 
@@ -254,7 +252,7 @@ AbstractBackgroundWidget {
                         font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
                         font.letterSpacing: root.instrument
                             ? Math.round(1.2 * root.scaleFactor) : 0
-                        font.capitalization: root.instrument && !root.widgetIris ? Font.AllUppercase : Font.MixedCase
+                        font.capitalization: root.instrument && !root.familyDesign ? Font.AllUppercase : Font.MixedCase
                     }
                 }
 

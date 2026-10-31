@@ -15,8 +15,8 @@ AbstractBackgroundWidget {
         backgroundOpacity: 0.12, borderWidth: 1, borderOpacity: 0.2,
         cornerRadius: -1, useBlur: false, x: 100, y: 300 })
     // Under an iRiS Design that prints this widget (AIRISU), the print is its face; elsewhere it draws itself.
-    irisDesignPart: "widgetEditorial"
-    irisDesignPrint: "editorial"
+    printPart: "widgetEditorial"
+    printKey: "editorial"
     resizeMinWidth: 180
     resizeMinHeight: 140
     needsColText: true
@@ -30,10 +30,10 @@ AbstractBackgroundWidget {
 
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             WidgetSurface {
-                visible: !root.irisFaced
+                visible: !root.familyFaced
                 widget: root
                 anchors.fill: parent
                 surfaceColor: root.widgetInk
@@ -42,7 +42,7 @@ AbstractBackgroundWidget {
     }
 
     Rectangle {
-        visible: root.showAccent && root.composition === "label" && !root.irisFaced
+        visible: root.showAccent && root.composition === "label" && !root.familyFaced
         x: root.inset; y: root.inset
         width: 3 * root.scaleFactor
         height: parent.height - root.inset * 2
@@ -52,10 +52,10 @@ AbstractBackgroundWidget {
 
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             ColumnLayout {
-                visible: !root.irisFaced
+                visible: !root.familyFaced
                 anchors.fill: parent
                 anchors.margins: root.inset
                 anchors.leftMargin: root.composition === "label" ? root.inset * 2 : root.inset

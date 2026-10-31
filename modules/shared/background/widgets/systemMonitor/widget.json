@@ -8,5 +8,6 @@
   "keywords": "vitals cpu gpu ram memory temperature performance",
   "sizes": ["medium", "small", "large"],
   "lock": true,
-  "palette": true
+  "palette": true,
+  "face": "vitals"
 }

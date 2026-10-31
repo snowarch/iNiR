@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import qs.modules.common
+import qs.services
 
 QtObject {
     id: root
@@ -10,15 +11,17 @@ QtObject {
     // A design overlays only presentation keys; stored sizes, content and each widget's own styles
     // stay in the config. Choosing a design moves every widget onto it and keeps the exceptions it
     // cleared in `background.widgets.designUndo`, so the change can be taken back.
-    readonly property string family: Config.options?.panelFamily ?? "ii"
-    readonly property string shared: Config.options?.background?.widgets?.design ?? "individual"
-    readonly property var irisDesigns: ["iris", "material", "instrument", "readout"]
-    readonly property string irisGlobal: {
-        const own = String(Config.options?.iris?.widgets?.design ?? "iris")
-        return root.irisDesigns.includes(own) ? own : "iris"
+    // The active family's designs (`widgetDesign` in its plugin.json): the key one widget picks with, the key they all
+    // share, the design that is its own faces if it has them, and what it calls the base drawing.
+    readonly property var spec: Plugins.manifests[Plugins.active]?.widgetDesign
+        ?? ({ key: "design", shared: "background.widgets.design", plain: "individual", choices: ["individual"] })
+    readonly property string faceDesign: root.spec.face ?? ""
+    readonly property string shared: {
+        void Config.revision
+        const own = String(Config.getNestedValue(root.spec.shared, ""))
+        return root.spec.choices.includes(own) ? own : root.faceDesign || root.spec.plain
     }
-    readonly property string current: root.family === "iris" ? root.irisGlobal
-        : root.shared === "individual" ? "material" : root.shared
+    readonly property string current: root.shared === "individual" ? "material" : root.shared
     readonly property var choices: [
         { label: "Individual", value: "individual", icon: "widgets" },
         { label: "iNstrument", value: "instrument", icon: "avg_pace" },
@@ -51,54 +54,44 @@ QtObject {
         return ({})
     }
 
-    // What one widget draws: `face` is the iRiS face, `design` the overlay on the Material widget.
-    function resolve(widget: string, ownIris: string, ownShared: string, hasFace: bool): var {
-        if (root.family === "iris") {
-            const design = root.irisDesigns.includes(ownIris) ? ownIris : root.irisGlobal
-            const overlaid = ["instrument", "readout"].includes(design)
-            if (overlaid && !root.supports(widget) && hasFace) return { face: true, design: "individual" }
-            return { face: design === "iris", design: overlaid ? design : "individual" }
-        }
-        if (!["ii"].includes(root.family)) return { face: false, design: "individual" }
-        return { face: false, design: ["individual", "instrument", "readout"].includes(ownShared) ? ownShared : root.shared }
+    // What one widget draws: `face` is the family's face, `design` the overlay on the base drawing.
+    function resolve(widget: string, own: string, hasFace: bool): var {
+        const design = root.spec.choices.includes(own) ? own : root.shared
+        const overlaid = ["instrument", "readout"].includes(design)
+        if (overlaid && !root.supports(widget) && hasFace) return { face: true, design: "individual" }
+        return { face: root.faceDesign.length > 0 && design === root.faceDesign, design: overlaid ? design : "individual" }
     }
 
-    // Per-widget exceptions: the look one widget chose for itself, which a design change clears.
-    readonly property var exceptionKeys: root.family === "iris" ? ["iris.design"] : ["design"]
-    function _own(value): bool {
-        return value !== undefined && value !== null && String(value) !== "auto" && String(value) !== ""
-    }
-    readonly property var exceptions: {
+    // Every place a widget keeps its own value for these keys: its entry, and each screen's.
+    function scan(keys: var, isOwn: var): var {
         void Config.revision
         const found = []
         const base = Config.options?.background?.widgets ?? {}
-        for (const widget of Object.keys(root.instruments)) {
-            for (const key of root.exceptionKeys) {
+        for (const widget of Object.keys(base)) {
+            if (widget === "outputOverrides" || !base[widget] || typeof base[widget] !== "object" || Array.isArray(base[widget])) continue
+            for (const key of keys) {
                 const value = Config.getNestedValue("background.widgets." + widget + "." + key, undefined)
-                if (root._own(value)) found.push({ output: "", widget: widget, key: key, value: value })
+                if (isOwn(key, value)) found.push({ output: "", widget: widget, key: key, value: value })
             }
         }
         for (const record of (base.outputOverrides ?? [])) {
             const widgets = record?.widgets ?? {}
             for (const widget of Object.keys(widgets)) {
-                for (const key of root.exceptionKeys) {
+                for (const key of keys) {
                     const value = widgets[widget]?.[key]
-                    if (root._own(value)) found.push({ output: String(record.output), widget: widget, key: key, value: value })
+                    if (isOwn(key, value)) found.push({ output: String(record.output), widget: widget, key: key, value: value })
                 }
             }
         }
         return found
     }
-    readonly property int exceptionCount: root.exceptions.length
-    readonly property var undoList: Config.options?.background?.widgets?.designUndo ?? []
-    readonly property bool canUndo: root.undoList.length > 0
-
-    function _clearExceptions(list): var {
+    // The config writes that drop what `scan` found.
+    function cleared(list: var, reset: var): var {
         const records = JSON.parse(JSON.stringify(Config.options?.background?.widgets?.outputOverrides ?? []))
         const updates = ({})
         for (const entry of list) {
             if (entry.output === "") {
-                updates["background.widgets." + entry.widget + "." + entry.key] = "auto"
+                updates["background.widgets." + entry.widget + "." + entry.key] = reset(entry.key)
                 continue
             }
             for (const record of records) {
@@ -111,72 +104,31 @@ QtObject {
         return updates
     }
 
+    // Per-widget exceptions: the look one widget chose for itself, which a design change clears.
+    readonly property var exceptions: root.scan([root.spec.key],
+        (key, value) => value !== undefined && value !== null && String(value) !== "auto" && String(value) !== "")
+        .filter(entry => entry.output !== "" || root.supports(entry.widget))
+    readonly property int exceptionCount: root.exceptions.length
+    readonly property var undoList: Config.options?.background?.widgets?.designUndo ?? []
+    readonly property bool canUndo: root.undoList.length > 0
+
     function apply(design: string): string {
-        const name = design === "individual" && root.family === "iris" ? "material" : design
-        if (!["iris", "material", "individual", "instrument", "readout"].includes(name))
-            return "Choose iris, material, individual, instrument or readout"
-        if (name === "iris" && root.family !== "iris") return "iRiS faces need the iRiS family"
+        const name = design === "individual" || design === "material" ? root.spec.plain : design
+        if (!root.spec.choices.includes(name))
+            return "Choose " + root.spec.choices.join(", ")
         const cleared = root.exceptions
-        const updates = root._clearExceptions(cleared)
+        const updates = root.cleared(cleared, () => "auto")
         const undo = cleared.slice()
-        const iris = root.family === "iris"
-        const key = iris ? "iris.widgets.design" : "background.widgets.design"
-        const before = iris ? String(Config.options?.iris?.widgets?.design ?? "iris") : root.shared
+        const key = root.spec.shared
+        const before = String(Config.getNestedValue(key, root.faceDesign || root.spec.plain))
         undo.push({ output: "", widget: "", key: key, value: before })
-        updates[key] = iris ? (name === "individual" ? "material" : name)
-            : ["instrument", "readout"].includes(name) ? name : "individual"
+        updates[key] = name
         const changed = cleared.length > 0 || updates[key] !== before
         // Trying designs one after another keeps the first snapshot: undo returns to the looks from
         // before the first change, not to the previous try.
         if (changed && (cleared.length > 0 || !root.canUndo)) updates["background.widgets.designUndo"] = undo
         Config.setNestedValues(updates)
         return name
-    }
-
-    readonly property var surfaceKeys: ["iris.material", "iris.opacity"]
-    function _ownSurface(key: string, value): bool {
-        if (key === "iris.opacity") return Number(value) >= 20
-        return ["glass", "clear", "solid", "tinted"].includes(String(value))
-    }
-    readonly property var ownSurfaces: {
-        void Config.revision
-        const found = []
-        const base = Config.options?.background?.widgets ?? {}
-        for (const widget of Object.keys(base)) {
-            const entry = base[widget]
-            if (!entry || typeof entry !== "object" || Array.isArray(entry)) continue
-            for (const key of root.surfaceKeys)
-                if (root._ownSurface(key, entry[key])) found.push({ output: "", widget: widget, key: key })
-        }
-        for (const record of (base.outputOverrides ?? [])) {
-            const widgets = record?.widgets ?? {}
-            for (const widget of Object.keys(widgets))
-                for (const key of root.surfaceKeys)
-                    if (root._ownSurface(key, widgets[widget]?.[key]))
-                        found.push({ output: String(record.output), widget: widget, key: key })
-        }
-        return found
-    }
-    readonly property int ownSurfaceCount: new Set(root.ownSurfaces.map(entry => entry.output + "::" + entry.widget)).size
-    function matchSurfaces(): string {
-        const list = root.ownSurfaces
-        const count = root.ownSurfaceCount
-        if (list.length === 0) return "Every widget already follows the shared material"
-        const records = JSON.parse(JSON.stringify(Config.options?.background?.widgets?.outputOverrides ?? []))
-        const updates = ({})
-        for (const entry of list) {
-            if (entry.output === "") {
-                updates["background.widgets." + entry.widget + "." + entry.key] = entry.key === "iris.opacity" ? -1 : "auto"
-                continue
-            }
-            for (const record of records)
-                if (String(record?.output) === entry.output && record.widgets?.[entry.widget])
-                    delete record.widgets[entry.widget][entry.key]
-        }
-        if (list.some(entry => entry.output !== ""))
-            updates["background.widgets.outputOverrides"] = records
-        Config.setNestedValues(updates)
-        return "matched " + count
     }
 
     // Puts back the design and every widget's own look from before the designs were tried.

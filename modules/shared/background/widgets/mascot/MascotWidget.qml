@@ -297,7 +297,7 @@ AbstractBackgroundWidget {
                         StyledText {
                             Layout.fillWidth: true
                             text: root.customPath.length > 0 ? Translation.tr("Custom image") : root._poseLabel(root.pose)
-                            color: root.widgetIrisFamily ? FamilyStyle.text : Appearance.colors.colOnLayer2
+                            color: root.look.controlInk
                             font.pixelSize: Appearance.font.pixelSize.small
                             font.weight: Font.DemiBold
                             wrapMode: Text.NoWrap

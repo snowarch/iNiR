@@ -22,61 +22,60 @@ IconToolbarButton {
     readonly property bool showLabel: !compact && label.length > 0
     // iRiS draws edit controls in the Island's material: quiet translucent
     // states on black, the accent reserved for the one committing action.
-    readonly property bool iris: (Config.options?.panelFamily ?? "ii") === "iris"
-    // iRiS widget rail: each widget is an app-icon-shaped tile in its category
+    readonly property var look: DesktopWidgetLook.look
+    readonly property bool tinted: root.look.tintedKeys
+    // A widget rail: each widget is an app-icon-shaped tile in its category
     // tint, lit when the widget is on; the fill carries the state, nothing else does.
     property color tileTint: "transparent"
-    readonly property bool irisTile: root.iris && root.tileTint.a > 0
-    readonly property real d: root.iris ? FamilyStyle.density : 1
-    // Buttons keep their own height in iRiS: the base fills the row, which made "Done" as tall as the bar.
-    Layout.fillHeight: !root.iris
+    readonly property bool tile: root.tinted && root.tileTint.a > 0
+    readonly property real d: root.look.density
+    // Tinted keys keep their own height: the base fills the row, which made "Done" as tall as the bar.
+    Layout.fillHeight: !root.tinted
     Layout.alignment: Qt.AlignVCenter
-    implicitWidth: root.irisTile ? Math.round(30 * root.d) : showLabel ? Math.ceil(labelMetrics.width) + iconSize + 34 : implicitHeight
-    implicitHeight: root.irisTile ? Math.round(38 * root.d) : Math.round((root.inPill ? 30 : 38) * root.d)
+    implicitWidth: root.tile ? Math.round(30 * root.d) : showLabel ? Math.ceil(labelMetrics.width) + iconSize + 34 : implicitHeight
+    implicitHeight: root.tile ? Math.round(38 * root.d) : Math.round((root.inPill ? 30 : 38) * root.d)
     iconSize: Math.round(18 * root.d)
     width: implicitWidth
     height: implicitHeight
     toggled: primary
     opacity: enabled ? 1 : 0.38
 
-    // Do not bind a property to itself for the non-iRiS branch. These temporary
-    // overrides preserve the inherited Material/Waffle bindings and restore them
-    // if the family changes without rebuilding the component.
-    Binding { target: root; property: "buttonRadius"; value: root.height / 2; when: root.iris; restoreMode: Binding.RestoreBinding }
+    // Overrides over the inherited bindings, restored if the family changes without rebuilding this.
+    Binding { target: root; property: "buttonRadius"; value: root.height / 2; when: root.tinted; restoreMode: Binding.RestoreBinding }
     Binding {
-        target: root; property: "colBackground"; when: root.iris; restoreMode: Binding.RestoreBinding
+        target: root; property: "colBackground"; when: root.tinted; restoreMode: Binding.RestoreBinding
         value: root.plate ? FamilyStyle.fillQuiet : "transparent"
     }
     Binding {
-        target: root; property: "colBackgroundHover"; when: root.iris; restoreMode: Binding.RestoreBinding
-        value: root.irisTile ? "transparent" : FamilyStyle.fillHover
+        target: root; property: "colBackgroundHover"; when: root.tinted; restoreMode: Binding.RestoreBinding
+        value: root.tile ? "transparent" : FamilyStyle.fillHover
     }
     Binding {
-        target: root; property: "colBackgroundToggled"; when: root.iris; restoreMode: Binding.RestoreBinding
-        value: root.irisTile ? "transparent" : root.primary ? FamilyStyle.accent : FamilyStyle.fillActive
+        target: root; property: "colBackgroundToggled"; when: root.tinted; restoreMode: Binding.RestoreBinding
+        value: root.tile ? "transparent" : root.primary ? FamilyStyle.accent : FamilyStyle.fillActive
     }
     Binding {
-        target: root; property: "colBackgroundToggledHover"; when: root.iris; restoreMode: Binding.RestoreBinding
-        value: root.irisTile ? "transparent" : root.primary ? Qt.lighter(FamilyStyle.accent, 1.08) : FamilyStyle.fillActive
+        target: root; property: "colBackgroundToggledHover"; when: root.tinted; restoreMode: Binding.RestoreBinding
+        value: root.tile ? "transparent" : root.primary ? Qt.lighter(FamilyStyle.accent, 1.08) : FamilyStyle.fillActive
     }
     Binding {
-        target: root; property: "colText"; when: root.iris; restoreMode: Binding.RestoreBinding
+        target: root; property: "colText"; when: root.tinted; restoreMode: Binding.RestoreBinding
         value: root.primary ? FamilyStyle.inkOnAccent : root.toggled ? FamilyStyle.text : FamilyStyle.subtext
     }
 
     TextMetrics {
         id: labelMetrics
         text: root.label
-        font.family: root.iris ? FamilyStyle.fontMain : Appearance.font.family.main
+        font.family: FamilyStyle.fontMain
         font.pixelSize: Appearance.font.pixelSize.smaller
-        font.weight: Appearance.editorialEverywhere ? Appearance.editorial.labelWeight : Font.Medium
+        font.weight: root.look.labelWeight(null)
     }
     contentItem: Item {
-        clip: !root.irisTile
+        clip: !root.tile
 
         Rectangle {
             id: tile
-            visible: root.irisTile
+            visible: root.tile
             anchors.centerIn: parent
             width: Math.round(30 * root.d)
             height: width
@@ -114,7 +113,7 @@ IconToolbarButton {
             }
         }
         Row {
-            visible: !root.irisTile
+            visible: !root.tile
             anchors.centerIn: parent
             spacing: root.showLabel ? 6 : 0
             MaterialSymbol {
@@ -131,9 +130,9 @@ IconToolbarButton {
                 width: Math.ceil(labelMetrics.width)
                 horizontalAlignment: Text.AlignHCenter
                 text: root.label
-                font.family: root.iris ? FamilyStyle.fontMain : Appearance.font.family.main
+                font.family: FamilyStyle.fontMain
                 font.pixelSize: Appearance.font.pixelSize.smaller
-                font.weight: Appearance.editorialEverywhere ? Appearance.editorial.labelWeight : Font.Medium
+                font.weight: root.look.labelWeight(null)
                 color: root.colText
             }
         }

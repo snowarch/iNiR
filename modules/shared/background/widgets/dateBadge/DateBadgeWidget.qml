@@ -15,8 +15,7 @@ AbstractBackgroundWidget {
         colorMode: "auto", dim: 0, showBackground: true, showBorder: true,
         backgroundOpacity: 0.16, borderWidth: 1, borderOpacity: 0.2,
         cornerRadius: -1, useBlur: false, x: 260, y: 80 })
-    irisFacePart: "date"
-    irisOptions: [
+    familyOptions: [
         { key: "showWeekday", raw: true, label: Translation.tr("Weekday"), icon: "calendar_view_week", fallback: true },
         { key: "showYear", raw: true, label: Translation.tr("Year"), icon: "event", fallback: true },
         { key: "showOrdinal", raw: true, label: Translation.tr("Day of the year"), icon: "linear_scale", fallback: true }
@@ -48,12 +47,12 @@ AbstractBackgroundWidget {
 
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             WidgetSurface {
                 widget: root
                 anchors.fill: parent
-                shown: !root.irisFaced && root.badgeStyle !== "seal"
+                shown: !root.familyFaced && root.badgeStyle !== "seal"
                 surfaceColor: root.widgetInk
             }
         }
@@ -61,12 +60,12 @@ AbstractBackgroundWidget {
 
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             MaterialShape {
                 anchors.centerIn: parent
                 implicitSize: Math.min(root.width, root.height)
-                visible: !root.irisFaced && root.badgeStyle === "seal"
+                visible: !root.familyFaced && root.badgeStyle === "seal"
                 shape: MaterialShape.Shape.Cookie12Sided
                 color: ColorUtils.applyAlpha(root.widgetPlateColor, root.backgroundOpacity)
                 strokeColor: ColorUtils.applyAlpha(root.widgetAccent, root.borderOpacity)
@@ -77,10 +76,10 @@ AbstractBackgroundWidget {
 
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             Rectangle {
-                visible: !root.irisFaced && root.badgeStyle === "ticket" && root.horizontal
+                visible: !root.familyFaced && root.badgeStyle === "ticket" && root.horizontal
                 x: 10 * root.scaleFactor
                 y: 10 * root.scaleFactor
                 width: root.width * 0.36
@@ -93,10 +92,10 @@ AbstractBackgroundWidget {
 
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             Rectangle {
-                visible: !root.irisFaced && root.badgeStyle === "stacked" && root.showBackground
+                visible: !root.familyFaced && root.badgeStyle === "stacked" && root.showBackground
                 x: 16 * root.scaleFactor
                 y: 12 * root.scaleFactor
                 width: root.width - 32 * root.scaleFactor
@@ -109,11 +108,11 @@ AbstractBackgroundWidget {
 
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             StyledText {
                 id: dayNumber
-                visible: !root.irisFaced && !root.instrument
+                visible: !root.familyFaced && !root.instrument
                 x: root.horizontal ? 10 * root.scaleFactor : 0
                 y: root.horizontal ? (root.height - height) / 2 : root.height * (root.isLarge ? 0.08 : 0.14)
                 width: root.horizontal ? root.width * 0.36 : root.width
@@ -134,10 +133,10 @@ AbstractBackgroundWidget {
 
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             ColumnLayout {
-                visible: !root.irisFaced && !root.instrument
+                visible: !root.familyFaced && !root.instrument
                 x: root.horizontal ? root.width * 0.36 + 24 * root.scaleFactor : root.width * 0.14
                 y: root.horizontal ? (root.height - implicitHeight) / 2 : root.height * (root.isLarge ? 0.49 : 0.59)
                 width: root.horizontal ? root.width - x - 14 * root.scaleFactor : root.width * 0.72
@@ -170,10 +169,10 @@ AbstractBackgroundWidget {
     // day falls in the year.
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             ColumnLayout {
-                visible: !root.irisFaced && !root.instrument && root.isLarge
+                visible: !root.familyFaced && !root.instrument && root.isLarge
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
@@ -240,11 +239,11 @@ AbstractBackgroundWidget {
     // an address in the year, not another progress gauge or clock face.
     Loader {
         anchors.fill: parent
-        active: !root.irisFaced
+        active: !root.familyFaced
         sourceComponent: Item {
             Item {
                 anchors.fill: parent
-                visible: !root.irisFaced && opacity > 0
+                visible: !root.familyFaced && opacity > 0
                 opacity: root.instrument ? 1 : 0
                 enabled: root.instrument
                 Behavior on opacity {
@@ -335,8 +334,8 @@ AbstractBackgroundWidget {
                                 family: root.widgetBodyFamily
                                 pixelSize: Math.max(9, Math.round(10 * root.scaleFactor))
                                 weight: Font.DemiBold
-                                letterSpacing: root.widgetIris ? 0 : Math.round(1.5 * root.scaleFactor)
-                                capitalization: root.widgetIris ? Font.MixedCase : Font.AllUppercase
+                                letterSpacing: root.familyDesign ? 0 : Math.round(1.5 * root.scaleFactor)
+                                capitalization: root.familyDesign ? Font.MixedCase : Font.AllUppercase
                             }
                         }
 
@@ -380,8 +379,8 @@ AbstractBackgroundWidget {
                                     family: root.widgetBodyFamily
                                     pixelSize: Math.max(8, Math.round(9 * root.scaleFactor))
                                     weight: Font.DemiBold
-                                    letterSpacing: root.widgetIris ? 0 : Math.round(1.0 * root.scaleFactor)
-                                    capitalization: root.widgetIris ? Font.MixedCase : Font.AllUppercase
+                                    letterSpacing: root.familyDesign ? 0 : Math.round(1.0 * root.scaleFactor)
+                                    capitalization: root.familyDesign ? Font.MixedCase : Font.AllUppercase
                                 }
                             }
                         }

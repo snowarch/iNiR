@@ -59,9 +59,8 @@ AbstractBackgroundWidget {
     fitted: true
     drawnWidth: Math.max(root.activeClockWidth,
         root.statusShown ? statusText.implicitWidth : 0)
-    irisFacePart: "clock"
     designFaceKey: "widgetClock"
-    irisOptions: [
+    familyOptions: [
         { key: "face", label: Translation.tr("Face"), fallback: "analog", choices: [
             { label: Translation.tr("Analog"), icon: "schedule", value: "analog" },
             { label: Translation.tr("Digital"), icon: "timer_10", value: "digital" }] },
@@ -166,7 +165,7 @@ AbstractBackgroundWidget {
     readonly property bool textClockStyle: root.clockStyle === "digital"
         || root.clockStyle === "androidStacked"
     property bool adaptDigitalToWallpaper: root._readConfigKey("digital.adaptToWallpaper") ?? true
-    readonly property bool shellLocked: GlobalStates.screenLocked && Config.options?.panelFamily !== "iris"
+    readonly property bool shellLocked: GlobalStates.screenLocked && Plugins.part(Plugins.active, "lockSurface").length === 0
     property bool forceCenter: (root.shellLocked && (Config.family?.lock?.centerClock ?? false))
     readonly property bool wallpaperSafetyTriggered: root.desktop?.wallpaperSafetyTriggered ?? false
     needsColText: root.clockStyle === "instrument"
@@ -220,7 +219,7 @@ AbstractBackgroundWidget {
     readonly property bool clockMotion: root.motionActive || (root.shellLocked && root.powerActive)
     SystemClock {
         id: displayClock
-        precision: !root.irisFaced && (root.showSeconds || root.clockStyle === "instrument"
+        precision: !root.familyFaced && (root.showSeconds || root.clockStyle === "instrument"
             || GlobalStates.screenLocked) && root.clockMotion
             ? SystemClock.Seconds : SystemClock.Minutes
     }
@@ -305,13 +304,13 @@ AbstractBackgroundWidget {
         anchors.fill: parent
         surfaceRadius: root.cornerRadiusOverride >= 0 ? root.cornerRadiusOverride : root.cardRadius
         surfaceColor: root.widgetPlateColor
-        shown: !root.irisFaced && root.textClockStyle
+        shown: !root.familyFaced && root.textClockStyle
             && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
     }
 
     Column {
         id: contentColumn
-        visible: !root.irisFaced
+        visible: !root.familyFaced
         anchors.centerIn: parent
         width: root.fits ? root.drawnWidth : root.implicitWidth
         height: root.fits ? root.drawnHeight : root.implicitHeight
@@ -320,7 +319,7 @@ AbstractBackgroundWidget {
         FadeLoader {
             id: cookieClockLoader
             x: Math.round((parent.width - width) / 2)
-            shown: !root.irisFaced && root.clockStyle === "cookie"
+            shown: !root.familyFaced && root.clockStyle === "cookie"
             width: item?.desiredImplicitWidth ?? 0
             height: item?.desiredImplicitHeight ?? 0
             sourceComponent: Column {
@@ -357,7 +356,7 @@ AbstractBackgroundWidget {
         FadeLoader {
             id: digitalClockLoader
             x: Math.round((parent.width - width) / 2)
-            shown: !root.irisFaced && root.clockStyle === "digital"
+            shown: !root.familyFaced && root.clockStyle === "digital"
             width: item?.desiredImplicitWidth ?? 0
             height: item?.desiredImplicitHeight ?? 0
             sourceComponent: ColumnLayout {
@@ -419,7 +418,7 @@ AbstractBackgroundWidget {
         FadeLoader {
             id: instrumentClockLoader
             x: Math.round((parent.width - width) / 2)
-            shown: !root.irisFaced && root.clockStyle === "instrument"
+            shown: !root.familyFaced && root.clockStyle === "instrument"
             // Known before Loader construction: no zero-size frame on entry.
             width: Math.round(230 * root.scaleFactor * root.timeScale / 100)
             height: width
@@ -566,7 +565,7 @@ AbstractBackgroundWidget {
                             family: root.widgetBodyFamily
                             pixelSize: Math.round(Math.max(9, dialClock.side * 0.048))
                             weight: root.widgetLabelWeight
-                            letterSpacing: root.widgetIris ? 0 : Math.max(1, Math.round(1.6 * root.scaleFactor))
+                            letterSpacing: root.familyDesign ? 0 : Math.max(1, Math.round(1.6 * root.scaleFactor))
                             capitalization: root.widgetCapitalization
                         }
                     }
@@ -577,7 +576,7 @@ AbstractBackgroundWidget {
         FadeLoader {
             id: androidStackedClockLoader
             x: Math.round((parent.width - width) / 2)
-            shown: !root.irisFaced && root.clockStyle === "androidStacked"
+            shown: !root.familyFaced && root.clockStyle === "androidStacked"
             width: item?.desiredImplicitWidth ?? 0
             height: item?.desiredImplicitHeight ?? 0
             sourceComponent: AndroidStackedClock {
@@ -599,7 +598,7 @@ AbstractBackgroundWidget {
         FadeLoader {
             id: pixelClockLoader
             x: Math.round((parent.width - width) / 2)
-            shown: !root.irisFaced && root.clockStyle === "pixel"
+            shown: !root.familyFaced && root.clockStyle === "pixel"
             width: item?.desiredImplicitWidth ?? 0
             height: item?.desiredImplicitHeight ?? 0
             sourceComponent: PixelClock {
