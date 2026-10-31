@@ -15,7 +15,8 @@ GroupButton {
     bounce: false
     property string buttonIcon
     property string buttonPreviewKind: ""
-    property real maxTextWidth: 180
+    // Room for a long name in a wide face too: at 180 the inir style's mono cut "Auto (first available)".
+    property real maxTextWidth: Math.round(240 * Appearance.fontSizeScale)
     property bool leftmost: false
     property bool rightmost: false
     readonly property bool showZzzPreview: Appearance.zzzEverywhere && buttonPreviewKind.length > 0
