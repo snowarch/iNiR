@@ -175,23 +175,8 @@ AbstractBackgroundWidget {
         active: !root.irisFaced
         sourceComponent: Item {
             WidgetSurface {
-                irisPresentation: root.widgetIris
+                widget: root
                 anchors.fill: parent
-                regionBrightness: root.regionBrightness
-                surfaceRadius: root.cornerRadiusOverride >= 0
-                    ? root.cornerRadiusOverride : root.widgetCardRadius
-                surfaceOpacity: root.backgroundOpacity
-                surfaceBorderWidth: root.borderWidth
-                surfaceBorderOpacity: root.borderOpacity
-                surfaceColor: root.widgetSurfaceInk
-                colorMode: root.colorMode
-                surfaceAccent: root.widgetAccent
-                surfaceFill: root.widgetPlateColor
-                surfaceUseBlur: root.effectiveBlur
-                screenX: root.x
-                screenY: root.y
-                screenWidth: root.scaledScreenWidth
-                screenHeight: root.scaledScreenHeight
                 shown: !root.irisFaced && !root.instrument
                     && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
             }

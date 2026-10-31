@@ -19,6 +19,8 @@ AbstractWidget {
     // designs (Material, iNstrument, Readout) keep drawing themselves under any Design.
     property string designFaceKey: ""
     readonly property bool widgetIris: root.widgetIrisFamily && root.irisDesign === "iris"
+    // Wearing the family's own design, so its plate goes under the widget.
+    readonly property bool wearsFamily: !root.widgetIrisFamily || root.widgetIris
     // How this family's widgets read: colours, type, shapes (its part `widgetLook`).
     readonly property var look: DesktopWidgetLook.look
     // The Background it sits on; a host with no desktop behind it (the lock) sets these itself.

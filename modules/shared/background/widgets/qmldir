@@ -5,6 +5,7 @@ WidgetChoiceButton 1.0 WidgetChoiceButton.qml
 WidgetEditAction 1.0 WidgetEditAction.qml
 WidgetPlacementControls 1.0 WidgetPlacementControls.qml
 WidgetSurface 1.0 WidgetSurface.qml
+WidgetPlate 1.0 WidgetPlate.qml
 WidgetSheetPages 1.0 WidgetSheetPages.qml
 WidgetLook 1.0 WidgetLook.qml
 singleton DesktopWidgetLook 1.0 DesktopWidgetLook.qml
