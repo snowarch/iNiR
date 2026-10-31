@@ -36,12 +36,16 @@ shell.qml        -> Plugins.part(family, "panels")        everything else
 settings.qml     -> Plugins.part(family, "settingsApp")   its Settings window (iRiS keeps Settings in the shell)
 welcome.qml      -> Plugins.part(family, "welcome")       its own steps in the first-run wizard
 shared surfaces  -> Plugins.part(family, "lockSurface")   what a family draws on a shared surface
+ShellLayoutController -> Plugins.part(family, "layout")  where its bar, dock and sidebars sit, the room they take
+Config           -> Plugins.part(family, "config")        the schema of its own config section
 ```
 
 The base never names a family. What it honours for one is declared in that family's `plugin.json` (panels, settings
 slots, flags, its config subtree) or answered by the family's verbs (`GlobalStates.familyVerb`). A family may use
-`modules/shared`, `modules/common` and `services`; nothing uses a family. Each family's config subtree (`iris.*`,
-`waffles.*`) ships with it and is kept untouched while it is not installed.
+`modules/shared`, `modules/common` and `services`; nothing uses a family. Each family's config subtree (`material.*`,
+`waffles.*`, `iris.*`) ships with it and is kept untouched while it is not installed; the shell's own sections hold
+what every family shares. A shared surface that needs the active family's version of a setting reads
+`Config.family` (that family's subtree), never another family's keys.
 
 ## Where code goes
 

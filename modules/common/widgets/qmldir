@@ -1,9 +1,6 @@
 AddressBar 1.0 AddressBar.qml
 AddressBreadcrumb 1.0 AddressBreadcrumb.qml
 AngelPartialBorder 1.0 AngelPartialBorder.qml
-BarModuleOrderEditor 1.0 BarModuleOrderEditor.qml
-BarWidgetSwitcher 1.0 BarWidgetSwitcher.qml
-BarWidgetSwitcherArea 1.0 BarWidgetSwitcherArea.qml
 ButtonGroup 1.0 ButtonGroup.qml
 CalendarView 1.0 CalendarView.qml
 CavaProcess 1.0 CavaProcess.qml

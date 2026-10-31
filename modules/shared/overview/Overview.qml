@@ -1119,25 +1119,14 @@ Scope {
                         const ov = Config?.options?.overview;
                         const respectBar = ov && ov.respectBar !== undefined ? ov.respectBar : true;
                         
-                        // Calculate bar/dock offset at top
-                        let barOffset = 0;
-                        if (respectBar && !(Config.options?.material?.bar?.bottom ?? false)) {
-                            barOffset = Appearance.sizes.barHeight + Appearance.rounding.screenRounding;
-                        }
-                        const dock = Config.options?.material?.dock;
-                        if (dock?.enable && dock?.position === "top") {
-                            barOffset += (dock.height ?? 60) + 20;
-                        }
-                        
-                        // Calculate bar/dock offset at bottom
-                        let bottomOffset = 8;
-                        if (respectBar && (Config.options?.material?.bar?.bottom ?? false)) {
-                            bottomOffset += Appearance.sizes.barHeight + Appearance.rounding.screenRounding;
-                        }
-                        if (dock?.enable && dock?.position === "bottom") {
-                            bottomOffset += (dock.height ?? 60) + 20;
-                        }
-                        
+                        // What the active family keeps on each edge: its bar (when the overview respects it)
+                        // and its dock.
+                        const insets = ShellLayoutController.desktopInsets(String(root.screen?.name ?? ""));
+                        const edgeRoom = edge => (respectBar && insets.barEdge === edge ? insets.barThickness : 0)
+                            + (insets.dockEdge === edge ? insets.dockThickness : 0);
+                        const barOffset = edgeRoom("top");
+                        const bottomOffset = 8 + edgeRoom("bottom");
+
                         // Center the content vertically in available space
                         const availableHeight = root.height - barOffset - bottomOffset;
                         const contentHeight = columnLayout.implicitHeight;

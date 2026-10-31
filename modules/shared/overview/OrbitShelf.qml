@@ -60,7 +60,7 @@ Item {
         && Appearance.effectsEnabled
         && !GameMode.active
         && Math.max(0, Math.min(100, orbitOptions.backdropBlurStrength ?? 72)) > 0
-    readonly property bool ricelinGlassEnabled: Config.options?.material?.style?.island?.glass ?? true
+    readonly property bool ricelinGlassEnabled: Appearance.island?.glass ?? true
     readonly property string trailScope: ["output", "workspace"].includes(shelfOptions.trailScope)
         ? shelfOptions.trailScope : "output"
     readonly property string locatorLabel: ["auto", "index", "name"].includes(shelfOptions.locatorLabel)
@@ -277,7 +277,7 @@ Item {
         islandSkin: root.ricelinSurface
         surfaceDialect: root.ricelinSurface ? "island" : ""
         radiusOverride: root.ricelinSurface
-            ? Math.min(height / 2, Config.options?.material?.style?.island?.radius ?? height / 2)
+            ? Math.min(height / 2, Appearance.island?.radius ?? height / 2)
             : height / 2
         wallpaperBackdrop: root.ricelinSurface && !root.hostBackdropBlurActive && root.ricelinGlassEnabled
     }
@@ -322,7 +322,7 @@ Item {
                     cardStyle: root.layoutMode === "islands" && !root.ricelinSurface
                     radiusOverride: root.layoutMode === "islands" && root.ricelinSurface
                         ? Math.min(root.groupRadius,
-                            Config.options?.material?.style?.island?.radius ?? root.groupRadius)
+                            Appearance.island?.radius ?? root.groupRadius)
                         : -1
                     elevation: 1
                     outlined: root.layoutMode === "islands"

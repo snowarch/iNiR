@@ -490,7 +490,7 @@ Item {
             let deltaY = event.angleDelta.y
             let pixelY = event.pixelDelta.y
 
-            if (Config.options?.material?.bar?.workspaces?.invertScroll ?? false) {
+            if (Config.options?.interactions?.scrolling?.invertWorkspaces ?? false) {
                 deltaY = -deltaY
                 pixelY = -pixelY
             }
@@ -646,7 +646,7 @@ Item {
                             property bool workspaceAtTop: row.index === 0
                             property bool workspaceAtBottom: row.index === root.overviewRows - 1
                             property real orbitWorkspaceRadius: (root.orbitSurfaceStyle === "ricelin"
-                                ? (Config.options?.material?.style?.island?.radius ?? 18)
+                                ? (Appearance.island?.radius ?? 18)
                                 : Appearance.rounding.normal) * root.orbitSurfaceRadiusScale
                             property real largeWorkspaceRadius: root.orbitMode ? orbitWorkspaceRadius
                                 : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
@@ -1633,7 +1633,7 @@ Item {
                 property bool workspaceAtTop: rowIndex === 0
                 property bool workspaceAtBottom: rowIndex === root.overviewRows - 1
                 property real orbitWorkspaceRadius: (root.orbitSurfaceStyle === "ricelin"
-                    ? (Config.options?.material?.style?.island?.radius ?? 18)
+                    ? (Appearance.island?.radius ?? 18)
                     : Appearance.rounding.normal) * root.orbitSurfaceRadiusScale
                 property real largeWorkspaceRadius: root.orbitMode ? orbitWorkspaceRadius
                     : Appearance.angelEverywhere ? Appearance.angel.roundingNormal

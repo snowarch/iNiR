@@ -983,7 +983,8 @@
             "fasterTouchpadScroll": false,
             "mouseScrollDeltaThreshold": 120,
             "mouseScrollFactor": 120,
-            "touchpadScrollFactor": 450
+            "touchpadScrollFactor": 450,
+            "invertWorkspaces": false
         }
     },
     "language": {
@@ -1333,7 +1334,13 @@
     },
     "resources": {
         "updateInterval": 3000,
-        "monitorGpu": true
+        "monitorGpu": true,
+        "tempCautionThreshold": 65,
+        "tempWarningThreshold": 80,
+        "memoryWarningThreshold": 95,
+        "swapWarningThreshold": 85,
+        "cpuWarningThreshold": 90,
+        "gpuWarningThreshold": 90
     },
     "shelf": {
         "enable": true,
@@ -3199,13 +3206,7 @@
                 "alwaysShowCpu": true,
                 "alwaysShowGpu": true,
                 "alwaysShowSwap": true,
-                "alwaysShowTemp": true,
-                "tempCautionThreshold": 65,
-                "tempWarningThreshold": 80,
-                "cpuWarningThreshold": 90,
-                "gpuWarningThreshold": 90,
-                "memoryWarningThreshold": 95,
-                "swapWarningThreshold": 85
+                "alwaysShowTemp": true
             },
             "screenList": [],
             "showBackground": true,
@@ -3255,7 +3256,6 @@
                 ],
                 "perMonitor": true,
                 "scrollBehavior": "workspace",
-                "invertScroll": false,
                 "showAppIcons": false,
                 "showNumberDelay": 300,
                 "shown": 5,
@@ -3269,17 +3269,6 @@
         "sidebar": {
             "ai": {
                 "textFadeIn": true
-            },
-            "cornerOpen": {
-                "bottom": false,
-                "clickless": false,
-                "clicklessCornerEnd": true,
-                "clicklessCornerVerticalOffset": 1,
-                "cornerRegionHeight": 2,
-                "cornerRegionWidth": 60,
-                "enable": false,
-                "valueScroll": true,
-                "visualize": true
             },
             "edgeOpen": {
                 "enable": false,
@@ -3583,5 +3572,16 @@
             "position": "topRight",
             "edgeMargin": 4
         }
+    },
+    "cornerOpen": {
+        "bottom": false,
+        "clickless": false,
+        "clicklessCornerEnd": true,
+        "clicklessCornerVerticalOffset": 1,
+        "cornerRegionHeight": 2,
+        "cornerRegionWidth": 60,
+        "enable": false,
+        "valueScroll": true,
+        "visualize": true
     }
 }

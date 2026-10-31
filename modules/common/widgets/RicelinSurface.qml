@@ -10,10 +10,10 @@ import qs.services
 Item {
     id: root
 
-    property bool shadow: Config.options?.material?.style?.island?.shadow ?? true
+    property bool shadow: Appearance.island?.shadow ?? true
     property real shadowOffset: 3
     property int shadowRadius: 16
-    property real radius: Config.options?.material?.style?.island?.radius ?? 18
+    property real radius: Appearance.island?.radius ?? 18
     property real topLeftRadiusOverride: -1
     property real topRightRadiusOverride: -1
     property real bottomLeftRadiusOverride: -1
@@ -26,7 +26,7 @@ Item {
     property real glassScreenWidth: -1
     property real glassScreenHeight: -1
 
-    readonly property real fillOpacity: Config.options?.material?.style?.island?.opacity ?? 1
+    readonly property real fillOpacity: Appearance.island?.opacity ?? 1
     readonly property real topLeftRadius: topLeftRadiusOverride >= 0 ? topLeftRadiusOverride : radius
     readonly property real topRightRadius: topRightRadiusOverride >= 0 ? topRightRadiusOverride : radius
     readonly property real bottomLeftRadius: bottomLeftRadiusOverride >= 0 ? bottomLeftRadiusOverride : radius
@@ -74,7 +74,7 @@ Item {
     readonly property string wallpaperUrl: WallpaperListener.wallpaperUrlForScreen(root._screen)
     readonly property string glassBackend: Appearance.blurBackendFor("islands", Appearance.blurTopology.roundedRectangle)
     readonly property bool editorialGlassActive: Appearance.editorialEverywhere && Appearance.editorial.glassActive
-    readonly property bool islandGlassRequested: (Config.options?.material?.style?.island?.glass ?? true)
+    readonly property bool islandGlassRequested: (Appearance.island?.glass ?? true)
         && root.fillOpacity < 0.999
     readonly property bool glassRequested: root.editorialGlassActive || root.islandGlassRequested
     readonly property bool glassActive: root.visible
@@ -126,7 +126,7 @@ Item {
             // Blurred anyway: a quarter of the screen looks the same and every surface kept a full copy (8 MB each).
             readonly property real grain: blur >= 0.3 ? 0.25 : 1
             readonly property real blur: root.editorialGlassActive ? Appearance.editorial.glassBlur
-                : (Config.options?.material?.style?.island?.glassBlur ?? 1)
+                : (Appearance.island?.glassBlur ?? 1)
             sourceSize.width: Math.round(root._screenWidth * grain)
             sourceSize.height: Math.round(root._screenHeight * grain)
 
@@ -165,7 +165,7 @@ Item {
             anchors.leftMargin: root.radius * 0.6
             anchors.rightMargin: root.radius * 0.6
             height: 1
-            visible: !Appearance.editorialEverywhere && (Config.options?.material?.style?.island?.sheen ?? true)
+            visible: !Appearance.editorialEverywhere && (Appearance.island?.sheen ?? true)
             color: Qt.alpha(Appearance.colors.colOnLayer0, 0.07)
         }
     }

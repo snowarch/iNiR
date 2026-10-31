@@ -150,8 +150,8 @@ AbstractWidget {
         && (Appearance.angelEverywhere
             || (Appearance.auroraEverywhere && !Appearance.inirEverywhere)
             || (root._widgetIslandStyle
-                && (Config.options?.material?.style?.island?.glass ?? true)
-                && (Config.options?.material?.style?.island?.opacity ?? 1) < 0.999))
+                && (Appearance.island?.glass ?? true)
+                && (Appearance.island?.opacity ?? 1) < 0.999))
     readonly property bool effectiveBlur: root.showBackground && root.useBlur && root.blurAvailable
     readonly property bool showBorder: root._readConfigKey("showBorder") ?? true
     // Granular card controls — override booleans when present

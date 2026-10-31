@@ -37,7 +37,16 @@ const moves = [
     ["dock", "material.dock"],
     ["controlPanel", "material.controlPanel"],
     ["dashboard", "material.dashboard"],
-    ["settingsUi", "material.settingsUi"]
+    ["settingsUi", "material.settingsUi"],
+    // behaviour that stayed inside Material's sections after the first split (10-31)
+    ["material.bar.resources.tempCautionThreshold", "resources.tempCautionThreshold"],
+    ["material.bar.resources.tempWarningThreshold", "resources.tempWarningThreshold"],
+    ["material.bar.resources.memoryWarningThreshold", "resources.memoryWarningThreshold"],
+    ["material.bar.resources.swapWarningThreshold", "resources.swapWarningThreshold"],
+    ["material.bar.resources.cpuWarningThreshold", "resources.cpuWarningThreshold"],
+    ["material.bar.resources.gpuWarningThreshold", "resources.gpuWarningThreshold"],
+    ["material.bar.workspaces.invertScroll", "interactions.scrolling.invertWorkspaces"],
+    ["material.sidebar.cornerOpen", "cornerOpen"]
 ];
 
 // [from, [to...]]: a look two families shared becomes one value each, both starting from the shared one.

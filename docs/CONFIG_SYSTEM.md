@@ -47,5 +47,5 @@ sections:
   dashboard and the global style under `material.style`), `waffles` and `iris`. A family never reads another
   family's section, so tuning Material's bar can't move anything in iRiS.
 
-Older files (from before this split, with `bar`, `sidebar`, `dock` or `appearance.globalStyle` at the top) are
+Older files (from before this split, with `bar`, `sidebar`, `dock` or `material.style.globalStyle` at the top) are
 moved into place the first time the shell starts. Your values come along; nothing to do by hand.

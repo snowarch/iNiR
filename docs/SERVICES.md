@@ -36,7 +36,7 @@ IpcHandler {
 | `NiriKeybinds` | Niri keybinds, parsed by `inir-accel niri-keybinds` | |
 | `CompositorService` | Picks Niri or Hyprland from the socket environment | |
 | `HyprlandData`, `HyprlandKeybinds`, `HyprlandXkb` | Legacy Hyprland paths, not maintained | |
-| `ShellLayoutController` | Bar, dock and sidebar placement | |
+| `ShellLayoutController` | Where the active family keeps its bar, dock and sidebars, and the room they take; each family answers through its `layout` part | |
 | `ShellEditSession` | Edit mode for moving shell pieces to the edges | `shellLayout` |
 | `MinimizedWindows` | Minimised windows, moved to a separate workspace | `minimize` |
 | `TaskbarApps`, `WindowPreviewService` | Dock and taskbar apps; window previews | |

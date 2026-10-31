@@ -491,7 +491,7 @@ Singleton {
             category: "tools",
             keywords: ["notepad", "notes", "write", "text", "memo"],
             execute: () => {
-                const enabledWidgets = Config.options?.material?.sidebar?.right?.enabledWidgets ?? ["calendar", "todo", "notepad", "calculator", "sysmon", "timer"]
+                const enabledWidgets = Config.family?.sidebar?.right?.enabledWidgets ?? ["calendar", "todo", "notepad", "calculator", "sysmon", "timer"]
                 const notepadIndex = Math.max(0, enabledWidgets.indexOf("notepad"))
                 GlobalStates.openSidebarRight("")
                 if (Persistent?.states?.sidebar?.bottomGroup) {
@@ -679,8 +679,10 @@ Singleton {
             category: "settings",
             keywords: ["bar", "autohide", "hide", "panel"],
             execute: () => {
-                const current = Config.options?.material?.bar?.autoHide?.enable ?? false
-                Config.setNestedValue("material.bar.autoHide.enable", !current)
+                // the active family says which of its keys hides its bar (plugin.json settings.barAutoHide)
+                const key = Plugins.settingKey(Plugins.active, "barAutoHide")
+                if (key.length > 0)
+                    Config.setNestedValue(key, !Plugins.setting(Plugins.active, "barAutoHide", false))
             }
         },
         {
@@ -691,8 +693,9 @@ Singleton {
             category: "settings",
             keywords: ["dock", "taskbar", "bottom", "panel"],
             execute: () => {
-                const current = Config.options?.material?.dock?.enable ?? true
-                Config.setNestedValue("material.dock.enable", !current)
+                const key = Plugins.settingKey(Plugins.active, "dockEnabled")
+                if (key.length > 0)
+                    Config.setNestedValue(key, !Plugins.setting(Plugins.active, "dockEnabled", true))
             }
         },
         {

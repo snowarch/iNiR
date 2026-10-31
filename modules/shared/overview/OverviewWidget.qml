@@ -88,7 +88,7 @@ Item {
             if (deltaY === 0)
                 return
 
-            if (Config.options?.material?.bar?.workspaces?.invertScroll ?? false)
+            if (Config.options?.interactions?.scrolling?.invertWorkspaces ?? false)
                 deltaY = -deltaY
 
             // Requerir varios pasos de rueda antes de cambiar de workspace

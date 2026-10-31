@@ -58,6 +58,9 @@ Singleton {
 
     // Global style - centralized style detection (reactive bindings)
     readonly property string globalStyle: Config?.options?.material?.style?.globalStyle ?? "material"
+    // Material's island skin (islands bar, island dock and sidebars, search, desktop plates): shared surfaces take it
+    // from here, never from the config.
+    readonly property var island: Config?.options?.material?.style?.island ?? null
     readonly property string iiMotionProfile: Config?.options?.material?.style?.iiMotionProfile ?? "classic"
     readonly property bool contextualMotionProfile: iiMotionProfile === "contextual"
     readonly property bool inirEverywhere: globalStyle === "inir"

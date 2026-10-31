@@ -1615,6 +1615,7 @@ JsonAdapter {
             property int mouseScrollDeltaThreshold: 120 // delta >= this then it gets detected as mouse scroll rather than touchpad
             property int mouseScrollFactor: 120
             property int touchpadScrollFactor: 450
+            property bool invertWorkspaces: false // Invert scroll direction
         }
         property JsonObject deadPixelWorkaround: JsonObject { // Hyprland leaves out 1 pixel on the right for interactions
             property bool enable: false
@@ -2010,6 +2011,12 @@ JsonAdapter {
     property JsonObject resources: JsonObject {
         property int updateInterval: 3000
         property bool monitorGpu: true
+        property int tempCautionThreshold: 65
+        property int tempWarningThreshold: 80
+        property int memoryWarningThreshold: 95
+        property int swapWarningThreshold: 85
+        property int cpuWarningThreshold: 90
+        property int gpuWarningThreshold: 90
     }
 
     property JsonObject musicRecognition: JsonObject {
@@ -2357,6 +2364,17 @@ JsonAdapter {
         property bool enable: false
         property int pollIntervalSeconds: 5
         property int retentionDays: 30
+    }
+    property JsonObject cornerOpen: JsonObject {
+        property bool enable: false
+        property bool bottom: false
+        property bool valueScroll: true
+        property bool clickless: false
+        property int cornerRegionWidth: 250
+        property int cornerRegionHeight: 5
+        property bool visualize: false
+        property bool clicklessCornerEnd: true
+        property int clicklessCornerVerticalOffset: 1
     }
     // Plugins' own parts of the config, under their key: Config puts the plugin's schema here (plugin.json
     // `configKey`, part `config`), or a holder that keeps the subtree as it is when the plugin is not installed.

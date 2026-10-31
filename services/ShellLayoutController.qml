@@ -6,67 +6,27 @@ import Quickshell
 import qs
 import qs.modules.common
 
+// Where the shell's persistent surfaces sit (bar, dock, sidebars...), what can change about them, and the room they
+// take on the desktop. The engine is here; every surface belongs to the active family's `layout` part (plugin.json),
+// which answers for its own config:
+//   surfaces, rebuilds               descriptors, and the ones a move rebuilds
+//   surfaceState(id, desc, output)   where it is now ({ ok, slot, ... })
+//   occupant?(id, slot, output)      the surface on that slot a move swaps with
+//   moveSurface(id, slot, output, swapWith) -> bool
+//   setProperty?(id, key, value, output) -> { ok, effectiveValue } or a failure
+//   resetSurface?(id, output) or resetSlot?(id)
+//   desktopInsets?(output, result)   barEdge, barThickness, dockEdge, dockThickness and the four insets
+//   sidebarAssignments?()            which side each sidebar role takes
+//   frameBand?(), frameCorners?()    a frame's band and cut corners
 Singleton {
     id: root
 
     readonly property string activeFamily: Config.options?.panelFamily ?? "ii"
     readonly property int desktopWidgetOuterGap: 12
 
-    // The active family's own layout part (plugin.json part `layout`): its persistent surfaces with their state, moves
-    // and resets, and the room its chrome takes on the desktop. Material's surfaces are the base's below.
     FamilyPartLoader { id: familyLayout; part: "layout" }
     readonly property var _family: familyLayout.item
-    readonly property var _descriptors: root._baseDescriptors.concat(Array.from(root._family?.surfaces ?? []))
-    readonly property var _baseDescriptors: [
-        {
-            id: "featureSidebar",
-            families: ["ii"],
-            kind: "edge",
-            labelKey: "Feature sidebar",
-            icon: "left_panel_open",
-            layoutScope: "global",
-            slots: ["left", "right"],
-            editableProperties: ["sizeMode", "height", "thickness"],
-            collisionPolicy: "swap-sidebar",
-            resetScopes: ["surface", "family"]
-        },
-        {
-            id: "systemSidebar",
-            families: ["ii"],
-            kind: "edge",
-            labelKey: "System sidebar",
-            icon: "right_panel_open",
-            layoutScope: "global",
-            slots: ["left", "right"],
-            editableProperties: ["sizeMode", "height", "thickness"],
-            collisionPolicy: "swap-sidebar",
-            resetScopes: ["surface", "family"]
-        },
-        {
-            id: "iiBar",
-            families: ["ii"],
-            kind: "edge",
-            labelKey: "Bar",
-            icon: "toolbar",
-            layoutScope: "enabledOutputs",
-            slots: ["top", "right", "bottom", "left"],
-            editableProperties: [],
-            collisionPolicy: "swap-edge",
-            resetScopes: ["surface", "family"]
-        },
-        {
-            id: "iiDock",
-            families: ["ii"],
-            kind: "edge",
-            labelKey: "Dock",
-            icon: "dock_to_bottom",
-            layoutScope: "enabledOutputs",
-            slots: ["top", "right", "bottom", "left"],
-            editableProperties: ["thickness"],
-            collisionPolicy: "swap-edge",
-            resetScopes: ["surface", "family"]
-        }
-    ]
+    readonly property var _descriptors: Array.from(root._family?.surfaces ?? [])
 
     function _clone(value: var): var {
         return JSON.parse(JSON.stringify(value))
@@ -83,36 +43,8 @@ Singleton {
         }
     }
 
-    function _sidebarRoleKey(surfaceId: string): string {
-        if (surfaceId === "featureSidebar")
-            return "feature"
-        if (surfaceId === "systemSidebar")
-            return "system"
-        return ""
-    }
-
-    function _validSidebarSlot(value: var, fallback: string): string {
-        const slot = String(value ?? "")
-        return slot === "left" || slot === "right" ? slot : fallback
-    }
-
     function sidebarAssignments(): var {
-        const configuredFeature = root._validSidebarSlot(
-            Config.options?.material?.sidebar?.shellLayout?.feature?.slot, "left")
-        const configuredSystem = root._validSidebarSlot(
-            Config.options?.material?.sidebar?.shellLayout?.system?.slot, "right")
-        if (configuredFeature !== configuredSystem) {
-            return {
-                featureSidebar: configuredFeature,
-                systemSidebar: configuredSystem,
-                sanitized: false
-            }
-        }
-        return {
-            featureSidebar: configuredFeature,
-            systemSidebar: configuredFeature === "left" ? "right" : "left",
-            sanitized: true
-        }
+        return root._family?.sidebarAssignments?.() ?? { featureSidebar: "left", systemSidebar: "right", sanitized: false }
     }
 
     function sidebarRoleForSlot(slot: string): string {
@@ -161,28 +93,6 @@ Singleton {
             !root.sidebarOpenAtSlot(slot, outputName), outputName)
     }
 
-    function _sidebarSizeState(surfaceId: string): var {
-        const roleKey = root._sidebarRoleKey(surfaceId)
-        if (roleKey.length === 0)
-            return ({})
-        const role = Config.options?.material?.sidebar?.shellLayout?.[roleKey]
-        const configuredMode = String(role?.sizeMode ?? "full")
-        const sizeMode = ["full", "fit", "custom"].includes(configuredMode)
-            ? configuredMode : "full"
-        const customHeight = Math.max(320, Math.min(2160,
-            Number(role?.customHeight ?? 720)))
-        const width = Math.max(320, Math.min(900,
-            Number(role?.width ?? 460)))
-        return {
-            sizeMode: sizeMode,
-            customHeight: Math.round(customHeight),
-            width: Math.round(width),
-            legacyFitEnabled: surfaceId === "featureSidebar"
-                ? (Config.options?.material?.sidebar?.collapseWidgetsTab ?? false)
-                : (Config.options?.material?.sidebar?.collapseEmptyNotifications ?? false)
-        }
-    }
-
     function descriptor(surfaceId: string): var {
         const found = root._descriptors.find(item => item.id === surfaceId)
         return found ? root._clone(found) : null
@@ -214,9 +124,9 @@ Singleton {
         insets[edge] = Math.max(insets[edge], Math.max(0, Math.round(thickness)))
     }
 
-    // Physical desktop space occupied by persistent shell surfaces. Free
-    // desktop placement can overlap it deliberately; automatic zone placement
-    // and shell-layout diagnostics use it to keep snapped widgets visible.
+    // Physical desktop space the active family's persistent surfaces take on an output, and where its bar and dock
+    // sit. Free desktop placement can overlap it deliberately; zone placement, diagnostics and shared surfaces that
+    // keep clear of the bar (overview, picker, media controls, the mascot) read it.
     function desktopInsets(outputName: string): var {
         const result = {
             left: 0,
@@ -225,74 +135,10 @@ Singleton {
             bottom: 0,
             barEdge: "",
             barThickness: 0,
-            dockEdge: ""
+            dockEdge: "",
+            dockThickness: 0
         }
-        if (root._family?.desktopInsets)
-            return root._family.desktopInsets(outputName, result)
-        if (root.activeFamily !== "ii")
-            return result
-
-        const barVertical = Config.options?.material?.bar?.vertical ?? false
-        const barIdentifier = barVertical ? "iiVerticalBar" : "iiBar"
-        const barOutputs = Config.options?.material?.bar?.screenList ?? []
-        if (root.panelEnabled(barIdentifier)
-                && root.outputEnabled(barOutputs, outputName)
-                && (GlobalStates.barOpen ?? true)) {
-            const barState = root.currentState("iiBar", outputName)
-            const appearanceStyle = Config.options?.material?.bar?.appearanceStyle ?? "classic"
-            let thickness = 0
-            if (appearanceStyle === "pill" && !barVertical) {
-                const screen = Quickshell.screens.find(item => (item?.name ?? "") === outputName)
-                    ?? Quickshell.screens[0]
-                const shortEdge = Math.min(screen?.width ?? 1920, screen?.height ?? 1080)
-                const resolutionScale = Math.max(0.78, Math.min(1.6, shortEdge / 1080))
-                const scale = resolutionScale * 1.1 * (Config.options?.material?.bar?.pill?.scale ?? 1)
-                const restHeight = (Config.options?.material?.bar?.pill?.barMode ?? false)
-                    ? Math.max(58, Config.options?.material?.bar?.pill?.expandedHeight ?? 66) * scale
-                    : Math.max(38, Config.options?.material?.bar?.pill?.restHeight ?? 44) * scale
-                const topGap = 8 * (Config.options?.material?.bar?.pill?.topGap ?? 1) * scale
-                const appGap = Config.options?.material?.bar?.pill?.appGap ?? 1
-                thickness = Math.max(0, restHeight + topGap - 12 * (1 - appGap) * scale)
-            } else if (barVertical) {
-                thickness = Appearance.sizes.verticalBarWidth + Appearance.rounding.screenRounding
-            } else if (appearanceStyle === "m3") {
-                // M3Bar's layer surface includes the rounded screen decorator;
-                // reserve its visual extent, not only the exclusive-zone core.
-                thickness = Appearance.sizes.barHeight + Appearance.rounding.screenRounding
-            } else {
-                const showBackground = Config.options?.material?.bar?.showBackground ?? true
-                const cornerStyle = Config.options?.material?.bar?.cornerStyle ?? 0
-                const detachedZzz = Appearance.zzzEverywhere
-                    && Appearance.zzz.round
-                    && appearanceStyle === "classic"
-                    && showBackground
-                    && ([1, 3].includes(cornerStyle))
-                const hugCorners = !Appearance.zzzEverywhere
-                    && appearanceStyle === "classic"
-                    && showBackground
-                    && cornerStyle === 0
-                thickness = detachedZzz
-                    ? Appearance.sizes.baseBarHeight + Appearance.sizes.elevationMargin * 2
-                    : Appearance.sizes.barHeight
-                        + (hugCorners ? Appearance.rounding.screenRounding : 0)
-            }
-            result.barEdge = barState.ok ? barState.slot : ""
-            result.barThickness = Math.max(0, Math.round(thickness))
-            root.applyInset(result, result.barEdge, thickness)
-        }
-
-        const dockOutputs = Config.options?.material?.dock?.screenList ?? []
-        if (root.panelEnabled("iiDock")
-                && (Config.options?.material?.dock?.enable ?? true)
-                && root.outputEnabled(dockOutputs, outputName)) {
-            const dockState = root.currentState("iiDock", outputName)
-            result.dockEdge = dockState.ok ? dockState.slot : ""
-            root.applyInset(result, result.dockEdge,
-                (Config.options?.material?.dock?.height ?? 70)
-                    + Appearance.sizes.elevationMargin
-                    + Appearance.sizes.hyprlandGapsOut)
-        }
-        return result
+        return root._family?.desktopInsets ? root._family.desktopInsets(String(outputName ?? ""), result) : result
     }
 
     function _workAreaFromInsets(insets: var, screenWidth: real,
@@ -346,56 +192,8 @@ Singleton {
         const desc = root.descriptor(surfaceId)
         if (!desc)
             return root._failure("unknown-surface", "Unknown shell surface")
-
-        switch (surfaceId) {
-        case "featureSidebar":
-        case "systemSidebar": {
-            const assignments = root.sidebarAssignments()
-            const sizeState = root._sidebarSizeState(surfaceId)
-            return {
-                ok: true,
-                id: surfaceId,
-                slot: assignments[surfaceId],
-                scope: desc.layoutScope,
-                outputName: outputName,
-                sizeMode: sizeState.sizeMode,
-                customHeight: sizeState.customHeight,
-                width: sizeState.width,
-                legacyFitEnabled: sizeState.legacyFitEnabled,
-                sanitizedAssignment: assignments.sanitized,
-                source: "material.sidebar.shellLayout"
-            }
-        }
-        case "iiBar": {
-            const vertical = Config.options?.material?.bar?.vertical ?? false
-            const alternateEdge = Config.options?.material?.bar?.bottom ?? false
-            return {
-                ok: true,
-                id: surfaceId,
-                slot: vertical ? (alternateEdge ? "right" : "left")
-                    : (alternateEdge ? "bottom" : "top"),
-                scope: desc.layoutScope,
-                outputName: outputName,
-                enabledOutputs: Config.options?.material?.bar?.screenList ?? [],
-                source: "bar.vertical+bar.bottom"
-            }
-        }
-        case "iiDock":
-            return {
-                ok: true,
-                id: surfaceId,
-                slot: Config.options?.material?.dock?.position ?? "bottom",
-                enabled: Config.options?.material?.dock?.enable ?? true,
-                thickness: Math.round(Config.options?.material?.dock?.height ?? 60),
-                scope: desc.layoutScope,
-                outputName: outputName,
-                enabledOutputs: Config.options?.material?.dock?.screenList ?? [],
-                source: "material.dock.position"
-            }
-        default:
-            return root._family?.surfaceState?.(surfaceId, desc, outputName)
-                ?? root._failure("unsupported-surface", "Surface state adapter is unavailable")
-        }
+        return root._family?.surfaceState?.(surfaceId, desc, outputName)
+            ?? root._failure("unsupported-surface", "Surface state adapter is unavailable")
     }
 
     function legalSlots(surfaceId: string, outputName: string): var {
@@ -403,23 +201,6 @@ Singleton {
         if (!desc)
             return []
         return root._clone(desc.slots)
-    }
-
-    function _occupiedFoundationSurface(surfaceId: string, slot: string,
-            outputName: string): string {
-        if (root.activeFamily !== "ii")
-            return ""
-        if (surfaceId === "iiBar") {
-            const dock = root.currentState("iiDock", outputName)
-            if (dock.ok && dock.enabled && dock.slot === slot)
-                return "iiDock"
-        }
-        if (surfaceId === "iiDock") {
-            const bar = root.currentState("iiBar", outputName)
-            if (bar.ok && bar.slot === slot)
-                return "iiBar"
-        }
-        return ""
     }
 
     function validatePlacement(surfaceId: string, slot: string, outputName: string): var {
@@ -431,29 +212,10 @@ Singleton {
         if (!desc.slots.includes(slot))
             return root._failure("invalid-slot", "Surface does not support that slot")
 
+        // Surfaces exchange edges: dropping one on another's slot is an atomic swap, never a silent overlap.
         const current = root.currentState(surfaceId, outputName)
-        if (surfaceId === "featureSidebar" || surfaceId === "systemSidebar") {
-            const otherId = surfaceId === "featureSidebar"
-                ? "systemSidebar" : "featureSidebar"
-            const other = root.currentState(otherId, outputName)
-            return {
-                ok: true,
-                code: "",
-                message: "",
-                effectiveSlot: slot,
-                scope: desc.layoutScope,
-                outputName: outputName,
-                occupiedBy: other.ok && other.slot === slot ? otherId : "",
-                swapWith: other.ok && other.slot === slot ? otherId : "",
-                changed: !(current.ok && current.slot === slot),
-                requiresRebuild: true
-            }
-        }
-
-        // Bar and dock exchange edges like the sidebars do: dropping one on
-        // the other's edge is an atomic swap, never a silent overlap.
-        const occupiedBy = current.ok && current.slot === slot
-            ? "" : root._occupiedFoundationSurface(surfaceId, slot, outputName)
+        const changed = !(current.ok && current.slot === slot)
+        const occupiedBy = changed ? String(root._family?.occupant?.(surfaceId, slot, outputName) ?? "") : ""
         return {
             ok: true,
             code: "",
@@ -463,65 +225,17 @@ Singleton {
             outputName: outputName,
             occupiedBy: occupiedBy,
             swapWith: occupiedBy,
-            changed: !(current.ok && current.slot === slot),
-            requiresRebuild: surfaceId === "iiBar" || surfaceId === "iiDock" || Array.from(root._family?.rebuilds ?? []).includes(surfaceId)
-        }
-    }
-
-    function _barKeyUpdates(slot: string): var {
-        return {
-            "material.bar.vertical": slot === "left" || slot === "right",
-            "material.bar.bottom": slot === "bottom" || slot === "right"
+            changed: changed,
+            requiresRebuild: Array.from(root._family?.rebuilds ?? []).includes(surfaceId)
         }
     }
 
     function moveSurface(surfaceId: string, slot: string, outputName: string): var {
         const validation = root.validatePlacement(surfaceId, slot, outputName)
-        if (!validation.ok)
+        if (!validation.ok || !validation.changed)
             return validation
-        if (!validation.changed)
-            return validation
-
-        switch (surfaceId) {
-        case "featureSidebar":
-        case "systemSidebar": {
-            const targetRole = root._sidebarRoleKey(surfaceId)
-            const otherRole = targetRole === "feature" ? "system" : "feature"
-            const oppositeSlot = slot === "left" ? "right" : "left"
-            const updates = {}
-            updates["material.sidebar.shellLayout." + targetRole + ".slot"] = slot
-            updates["material.sidebar.shellLayout." + otherRole + ".slot"] = oppositeSlot
-            Config.setNestedValues(updates)
-            break
-        }
-        case "iiBar": {
-            const updates = root._barKeyUpdates(slot)
-            if ((validation.swapWith ?? "") === "iiDock") {
-                const barState = root.currentState("iiBar", outputName)
-                updates["material.dock.position"] = barState.ok ? barState.slot : "bottom"
-            }
-            Config.setNestedValues(updates)
-            break
-        }
-        case "iiDock": {
-            if ((validation.swapWith ?? "") === "iiBar") {
-                const dockState = root.currentState("iiDock", outputName)
-                const updates = root._barKeyUpdates(
-                    dockState.ok ? dockState.slot : "top")
-                updates["material.dock.position"] = slot
-                Config.setNestedValues(updates)
-            } else {
-                Config.setNestedValue("material.dock.position", slot)
-            }
-            break
-        }
-        default:
-            if (root._family?.moveSurface?.(surfaceId, slot) === true)
-                break
-            return root._failure("mutation-not-ready",
-                "Placement mutation is not available for this surface yet")
-        }
-
+        if (root._family?.moveSurface?.(surfaceId, slot, outputName, validation.swapWith ?? "") !== true)
+            return root._failure("mutation-not-ready", "Placement mutation is not available for this surface yet")
         Config.flushWrites()
         const result = root._clone(validation)
         result.changed = true
@@ -535,64 +249,18 @@ Singleton {
             return root._failure("unknown-surface", "Unknown shell surface")
         if (!desc.editableProperties.includes(key))
             return root._failure("unsupported-property", "Surface does not expose that property")
-
-        if (surfaceId === "iiDock" && key === "thickness") {
-            const numeric = Number(value)
-            if (!Number.isFinite(numeric))
-                return root._failure("invalid-value", "Invalid dock size")
-            const clamped = Math.round(Math.max(40, Math.min(200, numeric)))
-            Config.setNestedValue("material.dock.height", clamped)
-            Config.flushWrites()
-            return {
-                ok: true,
-                code: "",
-                message: "",
-                property: key,
-                effectiveValue: clamped,
-                scope: desc.layoutScope,
-                outputName: outputName,
-                persisted: true,
-                requiresRebuild: false
-            }
-        }
-
-        const roleKey = root._sidebarRoleKey(surfaceId)
-        if (roleKey.length === 0)
-            return root._failure("mutation-not-ready",
-                "Property mutation is not available for this surface yet")
-
-        let path = ""
-        let effectiveValue = value
-        if (key === "sizeMode") {
-            const mode = String(value ?? "")
-            if (!["full", "fit", "custom"].includes(mode))
-                return root._failure("invalid-value", "Invalid sidebar size mode")
-            path = "material.sidebar.shellLayout." + roleKey + ".sizeMode"
-            effectiveValue = mode
-        } else if (key === "height") {
-            const numeric = Number(value)
-            if (!Number.isFinite(numeric))
-                return root._failure("invalid-value", "Invalid sidebar height")
-            path = "material.sidebar.shellLayout." + roleKey + ".customHeight"
-            effectiveValue = Math.round(Math.max(320, Math.min(2160, numeric)))
-        } else if (key === "thickness") {
-            const numeric = Number(value)
-            if (!Number.isFinite(numeric))
-                return root._failure("invalid-value", "Invalid sidebar width")
-            path = "material.sidebar.shellLayout." + roleKey + ".width"
-            effectiveValue = Math.round(Math.max(320, Math.min(900, numeric)))
-        }
-
-        if (path.length === 0)
-            return root._failure("unsupported-property", "Unsupported sidebar property")
-        Config.setNestedValue(path, effectiveValue)
+        const done = root._family?.setProperty?.(surfaceId, key, value, outputName)
+        if (!done)
+            return root._failure("mutation-not-ready", "Property mutation is not available for this surface yet")
+        if (!done.ok)
+            return root._failure(done.code ?? "invalid-value", done.message ?? "")
         Config.flushWrites()
         return {
             ok: true,
             code: "",
             message: "",
             property: key,
-            effectiveValue: effectiveValue,
+            effectiveValue: done.effectiveValue,
             scope: desc.layoutScope,
             outputName: outputName,
             persisted: true,
@@ -603,42 +271,13 @@ Singleton {
     function resetSurface(surfaceId: string, outputName: string): var {
         if (!root.descriptor(surfaceId))
             return root._failure("unknown-surface", "Unknown shell surface")
-        switch (surfaceId) {
-        case "featureSidebar":
-        case "systemSidebar": {
-            const roleKey = root._sidebarRoleKey(surfaceId)
-            const defaultSlot = surfaceId === "featureSidebar" ? "left" : "right"
-            const placement = root.moveSurface(surfaceId, defaultSlot, outputName)
-            if (!placement.ok)
-                return placement
-            const updates = {}
-            updates["material.sidebar.shellLayout." + roleKey + ".sizeMode"] = "full"
-            updates["material.sidebar.shellLayout." + roleKey + ".customHeight"] = 720
-            updates["material.sidebar.shellLayout." + roleKey + ".width"] = 460
-            Config.setNestedValues(updates)
-            Config.flushWrites()
-            const result = root._clone(placement)
-            result.reset = true
-            return result
-        }
-        case "iiBar":
-            return root.moveSurface(surfaceId, "top", outputName)
-        case "iiDock": {
-            const placement = root.moveSurface(surfaceId, "bottom", outputName)
-            if (!placement.ok)
-                return placement
-            Config.setNestedValue("material.dock.height", 60)
-            Config.flushWrites()
-            const result = root._clone(placement)
-            result.reset = true
-            return result
-        }
-        default:
-            if (root._family?.resetSlot?.(surfaceId))
-                return root.moveSurface(surfaceId, root._family.resetSlot(surfaceId), outputName)
-            return root._failure("reset-not-ready",
-                "Reset is not available for this surface yet")
-        }
+        const reset = root._family?.resetSurface?.(surfaceId, outputName)
+        if (reset)
+            return reset
+        const slot = root._family?.resetSlot?.(surfaceId) ?? ""
+        if (slot)
+            return root.moveSurface(surfaceId, slot, outputName)
+        return root._failure("reset-not-ready", "Reset is not available for this surface yet")
     }
 
     function diagnosticState(outputName: string): var {

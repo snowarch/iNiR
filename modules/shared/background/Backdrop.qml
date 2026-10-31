@@ -506,12 +506,14 @@ Variants {
             // Vignette effect at bar level
             Rectangle {
                 id: barVignette
-                readonly property bool isVertical: Config.options?.material?.bar?.vertical ?? false
-                readonly property bool isBarAtTop: !isVertical && !(Config.options?.material?.bar?.bottom ?? false)
-                readonly property bool isBarAtLeft: isVertical && !(Config.options?.material?.bar?.bottom ?? false)
-                readonly property bool barVignetteEnabled: Config.options?.material?.bar?.vignette?.enabled ?? false
-                readonly property real barVignetteIntensity: Config.options?.material?.bar?.vignette?.intensity ?? 0.6
-                readonly property real barVignetteRadius: Config.options?.material?.bar?.vignette?.radius ?? 0.5
+                // the active family's bar edge, and its own vignette setting (a family without one shows none)
+                readonly property string barEdge: ShellLayoutController.desktopInsets(String(backdropWindow.modelData?.name ?? "")).barEdge || "top"
+                readonly property bool isVertical: barEdge === "left" || barEdge === "right"
+                readonly property bool isBarAtTop: barEdge === "top"
+                readonly property bool isBarAtLeft: barEdge === "left"
+                readonly property bool barVignetteEnabled: Config.family?.bar?.vignette?.enabled ?? false
+                readonly property real barVignetteIntensity: Config.family?.bar?.vignette?.intensity ?? 0.6
+                readonly property real barVignetteRadius: Config.family?.bar?.vignette?.radius ?? 0.5
 
                 anchors {
                     left: isVertical ? (isBarAtLeft ? parent.left : undefined) : parent.left

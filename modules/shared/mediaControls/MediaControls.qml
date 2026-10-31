@@ -35,7 +35,6 @@ Scope {
     readonly property real osdWidth: Appearance.sizes.osdWidth
     readonly property real widgetWidth: Appearance.sizes.mediaControlsWidth
     readonly property real widgetHeight: Appearance.sizes.mediaControlsHeight
-    readonly property real dockHeight: Config.options?.material?.dock?.height ?? 60
     readonly property real dockMargin: Appearance.sizes.elevationMargin + Appearance.sizes.hyprlandGapsOut
     property real popupRounding: Appearance.zzzEverywhere ? Appearance.zzz.panelRadius
         : Appearance.inirEverywhere ? Appearance.inir.roundingLarge : Appearance.rounding.large
@@ -161,8 +160,10 @@ Scope {
                     // through the whole output. The bounded offset keeps the
                     // entrance coherent for every player preset and stack height.
                     readonly property real screenH: mediaControlsRoot.screen?.height ?? 1080
+                    // clear of whatever the active family keeps on the bottom edge (its dock, a bottom bar)
+                    readonly property real bottomInset: ShellLayoutController.desktopInsets(String(mediaControlsRoot.screen?.name ?? "")).bottom
                     readonly property real targetY: Math.max(root.dockMargin,
-                        screenH - height - root.dockHeight - root.dockMargin - 5)
+                        screenH - height - Math.max(bottomInset, root.dockMargin) - 5)
                     readonly property real revealDistance: Math.min(72,
                         Math.max(36, height * 0.12))
                     readonly property real hiddenY: targetY + revealDistance

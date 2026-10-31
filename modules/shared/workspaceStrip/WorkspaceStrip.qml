@@ -179,7 +179,7 @@ Scope {
             readonly property bool islandChrome: !Appearance.zzzEverywhere
                 && (chromeStyle === "island"
                     || (chromeStyle === "auto"
-                        && (Config.options?.material?.bar?.appearanceStyle ?? "classic") === "pill"))
+                        && (Config.family?.bar?.appearanceStyle ?? "classic") === "pill"))
             readonly property bool perMonitor: (Config.options?.workspaceStrip?.perMonitor ?? true) && CompositorService.isNiri
             readonly property bool scrollNavigation: Config.options?.workspaceStrip?.scrollNavigation ?? false
             readonly property bool scrollNavigationSwitchWorkspace: Config.options?.workspaceStrip?.scrollNavigationSwitchWorkspace ?? true
