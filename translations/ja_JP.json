@@ -10130,5 +10130,7 @@
   "Pinned apps join the other open apps, in the order you opened them.": "ピン留めしたアプリもほかの開いているアプリに加わり、開いた順に並ぶ。",
   "What a tap on a bubble does.": "バブルをタップすると何が起きるか。",
   "It grows into a card of its own.": "専用のカードに育つ。",
-  "The Island page or panel it stands for (level bubbles then mute).": "それが表すアイランドのページやパネル(レベルのバブルはミュート)。"
+  "The Island page or panel it stands for (level bubbles then mute).": "それが表すアイランドのページやパネル(レベルのバブルはミュート)。",
+  "Take style from Material": "Material のスタイルを使う",
+  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle は Material のグローバルスタイルと透明度を使います。オフ: 独自の Fluent の外観。"
 }

@@ -10130,5 +10130,7 @@
   "Pinned apps join the other open apps, in the order you opened them.": "पिन किए ऐप बाकी खुले ऐप में, आपके खोलने के क्रम में जुड़ते हैं।",
   "What a tap on a bubble does.": "बबल पर टैप क्या करता है।",
   "It grows into a card of its own.": "वह अपना कार्ड बन जाता है।",
-  "The Island page or panel it stands for (level bubbles then mute).": "द्वीप का वह पेज या पैनल जिसका वह प्रतिनिधि है (स्तर बबल तब म्यूट करते हैं)।"
+  "The Island page or panel it stands for (level bubbles then mute).": "द्वीप का वह पेज या पैनल जिसका वह प्रतिनिधि है (स्तर बबल तब म्यूट करते हैं)।",
+  "Take style from Material": "Material से शैली लें",
+  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle, Material की ग्लोबल शैली और पारदर्शिता अपनाता है। बंद होने पर: उसका अपना Fluent रूप।"
 }

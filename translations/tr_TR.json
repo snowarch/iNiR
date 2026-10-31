@@ -10130,5 +10130,7 @@
   "Pinned apps join the other open apps, in the order you opened them.": "Sabitlenen uygulamalar diğer açık uygulamalara, açtığın sırayla katılır.",
   "What a tap on a bubble does.": "Bir baloncuğa dokunmanın ne yaptığı.",
   "It grows into a card of its own.": "Kendi kartına dönüşür.",
-  "The Island page or panel it stands for (level bubbles then mute).": "Temsil ettiği Ada sayfası ya da paneli (seviye baloncukları sonra sesi kapatır)."
+  "The Island page or panel it stands for (level bubbles then mute).": "Temsil ettiği Ada sayfası ya da paneli (seviye baloncukları sonra sesi kapatır).",
+  "Take style from Material": "Stili Material'dan al",
+  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle, Material'ın genel stilini ve saydamlığını kullanır. Kapalıyken: kendi Fluent görünümü."
 }

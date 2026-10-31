@@ -10130,5 +10130,7 @@
   "Pinned apps join the other open apps, in the order you opened them.": "Ứng dụng đã ghim nhập vào các ứng dụng đang mở khác, theo thứ tự bạn mở.",
   "What a tap on a bubble does.": "Chạm vào bong bóng làm gì.",
   "It grows into a card of its own.": "Nó lớn thành một thẻ riêng.",
-  "The Island page or panel it stands for (level bubbles then mute).": "Trang hoặc bảng của Đảo mà nó đại diện (bong bóng mức khi đó tắt tiếng)."
+  "The Island page or panel it stands for (level bubbles then mute).": "Trang hoặc bảng của Đảo mà nó đại diện (bong bóng mức khi đó tắt tiếng).",
+  "Take style from Material": "Lấy phong cách từ Material",
+  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle dùng phong cách chung và độ trong suốt của Material. Tắt: giao diện Fluent riêng của nó."
 }

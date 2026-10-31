@@ -10130,5 +10130,7 @@
   "Pinned apps join the other open apps, in the order you opened them.": "固定的应用也并入其他打开的应用，按打开顺序排列。",
   "What a tap on a bubble does.": "点一下气泡会怎样。",
   "It grows into a card of its own.": "它长成自己的卡片。",
-  "The Island page or panel it stands for (level bubbles then mute).": "它所代表的岛屿页面或面板（等级气泡则静音）。"
+  "The Island page or panel it stands for (level bubbles then mute).": "它所代表的岛屿页面或面板（等级气泡则静音）。",
+  "Take style from Material": "沿用 Material 的样式",
+  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle 使用 Material 的全局样式和透明度。关闭时：使用它自己的 Fluent 外观。"
 }

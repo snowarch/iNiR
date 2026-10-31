@@ -105,8 +105,6 @@ RoundCorner 1.0 RoundCorner.qml
 ScrollEdgeFade 1.0 ScrollEdgeFade.qml
 SecondaryTabBar 1.0 SecondaryTabBar.qml
 SecondaryTabButton 1.0 SecondaryTabButton.qml
-SidebarHeightPreview 1.0 SidebarHeightPreview.qml
-SidebarLayoutEditor 1.0 SidebarLayoutEditor.qml
 SelectionDialog 1.0 SelectionDialog.qml
 SelectionGroupButton 1.0 SelectionGroupButton.qml
 ShellEditDropTarget 1.0 ShellEditDropTarget.qml

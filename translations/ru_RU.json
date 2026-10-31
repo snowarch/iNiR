@@ -10130,5 +10130,7 @@
   "Pinned apps join the other open apps, in the order you opened them.": "Закреплённые приложения встают к остальным открытым, в порядке открытия.",
   "What a tap on a bubble does.": "Что делает касание пузыря.",
   "It grows into a card of its own.": "Он вырастает в собственную карточку.",
-  "The Island page or panel it stands for (level bubbles then mute).": "Страница или панель Острова, которую он представляет (пузыри уровней тогда выключают звук)."
+  "The Island page or panel it stands for (level bubbles then mute).": "Страница или панель Острова, которую он представляет (пузыри уровней тогда выключают звук).",
+  "Take style from Material": "Брать стиль из Material",
+  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle использует глобальный стиль и прозрачность Material. Выключено: собственный вид Fluent."
 }

@@ -10130,5 +10130,7 @@
   "Pinned apps join the other open apps, in the order you opened them.": "Las apps fijadas se suman a las otras abiertas, en el orden en que las abriste.",
   "What a tap on a bubble does.": "Qué hace un toque en una burbuja.",
   "It grows into a card of its own.": "Crece en una tarjeta propia.",
-  "The Island page or panel it stands for (level bubbles then mute).": "La página o el panel de la Isla que representa (las burbujas de nivel silencian)."
+  "The Island page or panel it stands for (level bubbles then mute).": "La página o el panel de la Isla que representa (las burbujas de nivel silencian).",
+  "Take style from Material": "Tomar el estilo de Material",
+  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle usa el estilo global y la transparencia de Material. Apagado: su propio aspecto Fluent."
 }

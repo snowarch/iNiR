@@ -10130,5 +10130,7 @@
   "Pinned apps join the other open apps, in the order you opened them.": "Закріплені застосунки стають до інших відкритих, у порядку відкриття.",
   "What a tap on a bubble does.": "Що робить дотик до бульбашки.",
   "It grows into a card of its own.": "Вона виростає у власну картку.",
-  "The Island page or panel it stands for (level bubbles then mute).": "Сторінка чи панель Острова, яку вона представляє (бульбашки рівнів тоді вимикають звук)."
+  "The Island page or panel it stands for (level bubbles then mute).": "Сторінка чи панель Острова, яку вона представляє (бульбашки рівнів тоді вимикають звук).",
+  "Take style from Material": "Брати стиль із Material",
+  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle використовує глобальний стиль і прозорість Material. Вимкнено: власний вигляд Fluent."
 }

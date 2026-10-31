@@ -10130,5 +10130,7 @@
   "Pinned apps join the other open apps, in the order you opened them.": "고정한 앱도 다른 열린 앱에 합류해 연 순서대로 놓입니다.",
   "What a tap on a bubble does.": "버블을 탭하면 일어나는 일.",
   "It grows into a card of its own.": "자기만의 카드로 커집니다.",
-  "The Island page or panel it stands for (level bubbles then mute).": "그것이 나타내는 아일랜드 페이지나 패널 (레벨 버블은 음소거)."
+  "The Island page or panel it stands for (level bubbles then mute).": "그것이 나타내는 아일랜드 페이지나 패널 (레벨 버블은 음소거).",
+  "Take style from Material": "Material에서 스타일 가져오기",
+  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle이 Material의 전역 스타일과 투명도를 사용합니다. 끄면: 고유한 Fluent 모양."
 }

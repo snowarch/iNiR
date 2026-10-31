@@ -10130,5 +10130,7 @@
   "Pinned apps join the other open apps, in the order you opened them.": "التطبيقات المثبتة تنضم إلى بقية المفتوحة، بترتيب فتحك لها.",
   "What a tap on a bubble does.": "ماذا تفعل نقرة على فقاعة.",
   "It grows into a card of its own.": "تكبر إلى بطاقة خاصة بها.",
-  "The Island page or panel it stands for (level bubbles then mute).": "صفحة الجزيرة أو اللوحة التي تمثّلها (فقاعات المستوى تكتم الصوت حينها)."
+  "The Island page or panel it stands for (level bubbles then mute).": "صفحة الجزيرة أو اللوحة التي تمثّلها (فقاعات المستوى تكتم الصوت حينها).",
+  "Take style from Material": "أخذ النمط من Material",
+  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "يستخدم Waffle النمط العام والشفافية من Material. عند الإيقاف: مظهر Fluent الخاص به."
 }
