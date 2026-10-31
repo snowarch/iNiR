@@ -19,6 +19,8 @@ AbstractWidget {
     // designs (Material, iNstrument, Readout) keep drawing themselves under any Design.
     property string designFaceKey: ""
     readonly property bool widgetIris: root.widgetIrisFamily && root.irisDesign === "iris"
+    // How this family's widgets read: colours, type, shapes (its part `widgetLook`).
+    readonly property var look: DesktopWidgetLook.look
     // The Background it sits on; a host with no desktop behind it (the lock) sets these itself.
     property var desktop: null
     property int screenWidth: root.desktop?.screen?.width ?? 0
@@ -129,15 +131,7 @@ AbstractWidget {
     readonly property real dimOpacity: 1.0 - root.dimAmount * 0.6
     readonly property bool showBackground: root._readConfigKey("showBackground") ?? true
     readonly property bool useBlur: root._readConfigKey("useBlur") ?? false
-    readonly property bool _widgetIslandStyle: !Appearance.zzzEverywhere && !Appearance.cookieEverywhere
-        && !Appearance.angelEverywhere && !Appearance.auroraEverywhere && !Appearance.inirEverywhere
-        && (Config.options?.background?.widgets?.style ?? "panel") === "island"
-    readonly property bool blurAvailable: !root.widgetIris && Appearance.effectsEnabled
-        && (Appearance.angelEverywhere
-            || (Appearance.auroraEverywhere && !Appearance.inirEverywhere)
-            || (root._widgetIslandStyle
-                && (Appearance.island?.glass ?? true)
-                && (Appearance.island?.opacity ?? 1) < 0.999))
+    readonly property bool blurAvailable: root.look.blurAvailable(root)
     readonly property bool effectiveBlur: root.showBackground && root.useBlur && root.blurAvailable
     readonly property bool showBorder: root._readConfigKey("showBorder") ?? true
     // Granular card controls — override booleans when present
@@ -495,7 +489,7 @@ AbstractWidget {
 
     // Eased transitions follow motionActive: behind windows a value snaps instead. Every animation that starts
     // makes Qt's threaded loop request a frame from every shell window (QSGThreadedRenderLoop::animationStarted).
-    readonly property bool animationsActive: (root.widgetIris ? FamilyStyle.motionEnabled : Appearance.animationsEnabled) && root.motionActive
+    readonly property bool animationsActive: FamilyStyle.motionEnabled && root.motionActive
 
     // Visual feedback when paused - desaturation + slight dim
     // Config option to disable visual effect if user only wants GPU savings
@@ -1112,8 +1106,7 @@ AbstractWidget {
     readonly property bool hasOptionRows: DesktopWidgetOptions.widgetRows.some(spec => spec.widget === root.configEntryName && !spec.widgetEnable)
     property string _quickTab: "widget"
     readonly property string identityGlyph: DesktopWidgetRegistry.glyph(root.configEntryName)
-    readonly property color identityTint: root.widgetIrisFamily ? FamilyStyle.identityOf(DesktopWidgetRegistry.tint(root.configEntryName))
-        : DesktopWidgetRegistry.tint(root.configEntryName)
+    readonly property color identityTint: FamilyStyle.identityOf(DesktopWidgetRegistry.tint(root.configEntryName))
     // The page that holds position, lock and removal: "arrange" in an iRiS face's sheet, "layout" otherwise.
     readonly property string _arrangeTab: root.irisFaced ? "arrange" : "layout"
 
@@ -1227,11 +1220,8 @@ AbstractWidget {
     // (his 10-30: light ink vanished on a white wallpaper with adaptation off). The switches keep their colours. A
     // widget with no plate reads it whether it asked or not: the image converter's captions took the scheme's ink and
     // went dark on a dark mountain in light mode.
-    readonly property bool _regionSampling: root.needsColText || root.irisReadsRegion || (!root.widgetHasSurface && !root.irisFaced)
-    // iRiS glass turns to frost over a bright wallpaper only when asked (off, the glass darkens instead); everything
-    // else follows the wallpaper always.
-    readonly property bool positionColorAdaptationEnabled: !root.widgetIrisFamily
-        || Boolean(Config.getNestedValue("iris.widgets.brightWallpapers", false))
+    readonly property bool _regionSampling: root.needsColText || root.look.readsRegion(root) || (!root.widgetHasSurface && !root.irisFaced)
+    readonly property bool positionColorAdaptationEnabled: root.look.adaptsToWallpaper
     property color dominantColor: Appearance.colors.colPrimary
     // Wallpaper region brightness (0-1, gamma-encoded luma). -1 = not yet analyzed.
     property real regionBrightness: -1
@@ -1293,22 +1283,13 @@ AbstractWidget {
     }
 
     readonly property color _regionBg: root._hasBrightness ? root.dominantColor : Appearance.colors.colLayer0
-    // Ink is chosen by the backdrop, never by the shell's mode: iRiS speaks its own light and dark ink;
-    // elsewhere the generated tone for each polarity, taken toward white or black while keeping its
-    // hue, since light mode's inverse tone is a mid grey and dark mode's a mid grey the other way.
-    readonly property color _inkLight: root.widgetIrisFamily ? FamilyStyle.inkOnDark
-        : Appearance.m3colors.darkmode ? Appearance.colors.colOnLayer0
-        : ColorUtils.mix(Appearance.m3colors.m3inverseOnSurface, Qt.rgba(1, 1, 1, 1), 0.3)
-    readonly property color _inkDark: root.widgetIrisFamily ? FamilyStyle.inkOnLight
-        : Appearance.m3colors.darkmode
-        ? ColorUtils.mix(Appearance.m3colors.m3inverseOnSurface, Qt.rgba(0, 0, 0, 1), 0.55)
-        : Appearance.colors.colOnLayer0
+    // Ink is chosen by the backdrop, never by the shell's mode: the family says its light and dark ink.
+    readonly property color _inkLight: root.look.inkLight
+    readonly property color _inkDark: root.look.inkDark
     readonly property bool forceLightInk: root.colorMode === "light"
     readonly property bool forceDarkInk: root.colorMode === "dark"
-    // Dark ink on this widget's own backdrop: the wallpaper under it reads light. Under iRiS with *On bright wallpapers*
-    // off the scheme keeps its own ink and accents and Lume's shadow carries them: bare faces turned black over every
-    // light patch (and their accents with them) against that switch, so the colours changed as widgets moved (10-31).
-    readonly property bool _schemeInk: root.widgetIrisFamily && !root.positionColorAdaptationEnabled
+    // Dark ink on this widget's own backdrop: the wallpaper under it reads light, unless the family keeps its scheme's.
+    readonly property bool _schemeInk: root.look.schemeInk
     readonly property bool inkOnLight: root.forceDarkInk ? true : root.forceLightInk ? false
         : root._onBlurredLock ? false
         : root._schemeInk ? FamilyStyle.light
@@ -1318,21 +1299,19 @@ AbstractWidget {
         : root._onBlurredLock ? false
         : root.positionColorAdaptationEnabled && root._hasBrightness && root.backdropIsBright
     readonly property bool _onBlurredLock: GlobalStates.screenLocked && (Config.family?.lock?.blur?.enable ?? false)
-    // With the wallpaper unread, iRiS keeps its light ink (the contract of *On bright wallpapers*
-    // off); the shell's light mode says nothing about the wallpaper under a plate-less widget.
-    readonly property bool _unreadIsLight: !root.widgetIrisFamily && !Appearance.m3colors.darkmode
+    readonly property bool _unreadIsLight: root.look.unreadIsLight
     property color colText: {
         if (root.forceLightInk) return root._inkLight
         if (root.forceDarkInk) return root._inkDark
         if (root._schemeInk)
             return root.inkOnLight ? root._inkDark : root._inkLight
         if (root._onBlurredLock || !root._hasBrightness)
-            return root.widgetIrisFamily ? root._inkLight : Appearance.colors.colOnLayer0
+            return root.look.unreadInk
         return root.inkOnLight ? root._inkDark : root._inkLight
     }
     Behavior on colText {
         enabled: root.animationsActive
-        ColorAnimation { duration: root.widgetIris ? FamilyStyle.revealDuration : Appearance.animation.elementMoveFast.duration }
+        ColorAnimation { duration: FamilyStyle.revealDuration }
     }
 
     // ── Centralized desktop-widget semantic palette ──────────────────────────
@@ -1398,34 +1377,6 @@ AbstractWidget {
         });
     }
 
-    // iRiS widgets keep the black Island material but can borrow the wallpaper:
-    // its generated hues are lifted into a range that reads on black, and the
-    // plate can carry a trace of the same hue. Greyscale seeds keep iRiS blue.
-    readonly property var irisWidgetOptions: Config.options?.iris?.widgets ?? ({})
-    readonly property bool irisRim: Boolean(root.irisWidgetOptions.rim ?? false)
-    readonly property string irisOutline: {
-        if (!root.showBorder) return "none"
-        const value = String(root.irisWidgetOptions.outline ?? "auto")
-        return ["auto", "always", "none"].includes(value) ? value : "auto"
-    }
-    readonly property real irisSurfaceOpacity: {
-        const own = Number(root._readConfigKey("iris.opacity") ?? -1)
-        const value = own >= 20 ? own : Number(root.irisWidgetOptions.opacity ?? 100)
-        return Math.max(0, Math.min(100, Number.isFinite(value) ? value : 100)) / 100
-    }
-    readonly property string irisPaletteName: {
-        const name = String(root.irisWidgetOptions.tint ?? "wallpaper")
-        return FamilyStyle.widgetPaletteNames.includes(name) ? name : "wallpaper"
-    }
-    readonly property bool irisWallpaperTint: root.irisPaletteName === "wallpaper"
-    readonly property real irisVibrance: Math.max(0, Math.min(100, Number(root.irisWidgetOptions.vibrance ?? 85))) / 100
-    readonly property var irisPalette: FamilyStyle.widgetPalette(root.irisPaletteName, root.irisVibrance)
-    readonly property color irisAccent: root.irisPalette[0]
-    readonly property color irisAccent2: root.irisPalette[1]
-    readonly property color irisAccent3: root.irisPalette[2]
-    readonly property color irisTintedPlate: ColorUtils.mix(FamilyStyle.surface, root.irisAccent, 0.82)
-    readonly property color irisPlate: root.irisMaterial === "tinted" ? root.irisTintedPlate : FamilyStyle.surface
-
     // An iRiS face is named (`irisFacePart: "clock"`, a part widgetFace.clock in modules/iris/plugin.json), or the worn
     // Design's print of the widget (`irisDesignPart`) when the Design prints one for `irisDesignPrint`.
     property string irisFacePart: ""
@@ -1467,15 +1418,6 @@ AbstractWidget {
     }
     property var irisOptions: []
     readonly property bool irisFaced: root.widgetIris && root.hasIrisFace
-    readonly property var irisMaterials: ["glass", "clear", "solid", "tinted"]
-    readonly property string irisMaterial: {
-        // the widget's Background switch, the same one every family's edit mode turns off for all
-        if (!root.showBackground) return "clear"
-        const own = String(root._readConfigKey("iris.material") ?? "auto")
-        const shared = String(root.irisWidgetOptions.material ?? "glass")
-        return root.irisMaterials.includes(own) ? own : root.irisMaterials.includes(shared) ? shared : "glass"
-    }
-    readonly property bool irisReadsRegion: root.irisFaced && (root.irisMaterial === "glass" || root.irisMaterial === "clear")
     // One size per instance (`sizeClass`), from the classes the widget's manifest lists: every family and design draws
     // the same footprint, so changing family leaves the desktop as it was arranged. A stack keeps the classes all its
     // pages have. Where the family's faces take any box (`widgetFreeSize` in its plugin.json) a free width and height lie
@@ -1642,86 +1584,7 @@ AbstractWidget {
         }
     }
 
-    function widgetSemanticSet(role: string): var {
-        if (root.widgetIris) {
-            const lifted = role === "surface" ? FamilyStyle.text
-                : role === "signal" ? FamilyStyle.danger
-                : role === "success" ? FamilyStyle.success
-                : role === "warning" ? FamilyStyle.secondaryAccent
-                : role === "tertiary" ? root.irisAccent3
-                : role === "secondary" ? root.irisAccent2 : root.irisAccent;
-            const onLight = root.inkOnLight && !root.widgetHasSurface
-            const sample = root.widgetHasSurface || root.regionBrightness < 0 || !root.positionColorAdaptationEnabled ? null
-                : { level: root.regionBrightness, spread: root.regionBrightnessSpread }
-            const foreground = role === "surface" ? (onLight ? FamilyStyle.inkOnLight : lifted)
-                : sample ? FamilyStyle.markOn(lifted, sample, onLight, 3)
-                : onLight ? FamilyStyle.deepAccent(lifted, FamilyStyle.inkOnLight) : lifted;
-            return { color: foreground, onColor: FamilyStyle.surface,
-                container: role === "surface" ? root.irisPlate : ColorUtils.mix(root.irisPlate, FamilyStyle.text, 0.9),
-                onContainer: FamilyStyle.text };
-        }
-        // Bare Material widgets under iRiS (iNstrument, Readout) draw with the same three accents as the faces.
-        // Their neutral is the ink itself and their states the Island's, never the Material scheme's
-        // tones, which follow the shell's mode rather than the wallpaper. With adaptation off the
-        // accents keep their hue and the Lume shadow holds them, instead of fading toward the ink.
-        if (root.widgetIrisFamily && !root.widgetHasSurface) {
-            const onLight = root.inkOnLight
-            if (role === "surface")
-                return { color: root.colText, onColor: onLight ? FamilyStyle.inkOnDark : FamilyStyle.inkOnLight,
-                    container: ColorUtils.mix(FamilyStyle.surface, root.colText, 0.9), onContainer: FamilyStyle.text };
-            const seed = role === "signal" ? FamilyStyle.dangerOnMedia : role === "warning" ? FamilyStyle.highlightOnMedia
-                : role === "success" ? (FamilyStyle.light ? Lume.mark(FamilyStyle.success, 0.35, 0, false, 3) : FamilyStyle.success)
-                : role === "tertiary" ? root.irisAccent3 : role === "secondary" ? root.irisAccent2 : root.irisAccent
-            const sample = root.regionBrightness < 0 || !root.positionColorAdaptationEnabled ? null
-                : { level: root.regionBrightness, spread: root.regionBrightnessSpread }
-            const shown = sample ? FamilyStyle.markOn(seed, sample, onLight, 3)
-                : onLight ? FamilyStyle.deepAccent(seed, FamilyStyle.inkOnLight) : seed
-            return { color: shown, onColor: FamilyStyle.onTintFor(seed),
-                container: ColorUtils.mix(FamilyStyle.surface, seed, 0.78), onContainer: FamilyStyle.text };
-        }
-        const c = Appearance.colors;
-        // Bare on a light region in a dark theme, an accent takes its container tone: the same
-        // generated hue, deep enough to read on the wallpaper instead of the pastel meant for dark.
-        const deep = root._accentsOnLight
-        switch (role) {
-        case "secondary":
-            return { color: deep ? c.colSecondaryContainer : c.colSecondary, onColor: c.colOnSecondary,
-                container: c.colSecondaryContainer, onContainer: c.colOnSecondaryContainer };
-        case "tertiary":
-            return { color: deep ? c.colTertiaryContainer : c.colTertiary, onColor: c.colOnTertiary,
-                container: c.colTertiaryContainer, onContainer: c.colOnTertiaryContainer };
-        case "warning":
-            return { color: deep ? c.colWarningContainer : c.colWarning, onColor: c.colOnTertiary,
-                container: c.colWarningContainer, onContainer: c.colOnWarningContainer };
-        case "signal":
-            return {
-                color: deep ? c.colErrorContainer : Appearance.zzzEverywhere ? Appearance.zzz.signal
-                    : Appearance.inirEverywhere ? Appearance.inir.colError : c.colError,
-                onColor: Appearance.zzzEverywhere ? Appearance.zzz.onSignal : c.colOnError,
-                container: c.colErrorContainer,
-                onContainer: c.colOnErrorContainer
-            };
-        case "surface":
-            return {
-                color: c.colOnSurfaceVariant,
-                onColor: c.colLayer2,
-                container: Appearance.zzzEverywhere ? Appearance.zzz.chrome
-                    : Appearance.cookieEverywhere ? c.colLayer2
-                    : Appearance.angelEverywhere ? Appearance.angel.colGlassCard
-                    : Appearance.inirEverywhere ? Appearance.inir.colLayer1
-                    : Appearance.auroraEverywhere ? Appearance.aurora.colSubSurface
-                    : c.colLayer1,
-                onContainer: Appearance.zzzEverywhere ? Appearance.zzz.onBg
-                    : Appearance.cookieEverywhere ? Appearance.cookie.onColor
-                    : c.colOnLayer1
-            };
-        default:
-            return { color: deep ? c.colPrimaryContainer : c.colPrimary, onColor: c.colOnPrimary,
-                container: c.colPrimaryContainer, onContainer: c.colOnPrimaryContainer };
-        }
-    }
-    readonly property bool _accentsOnLight: root.inkOnLight && !root.widgetHasSurface
-        && Appearance.m3colors.darkmode
+    function widgetSemanticSet(role: string): var { return root.look.semanticSet(root, role) }
 
     function widgetSemanticColor(role: string): color {
         return root.widgetSemanticSet(role).color;
@@ -1745,8 +1608,7 @@ AbstractWidget {
     property bool widgetSurfaceEnabled: true
     // A plate shows behind the face: what a lifted widget's shadow belongs under. Bare, the shadow filled the box
     // with a dark square while it was dragged.
-    readonly property bool platedNow: root.irisFaced ? root.irisMaterial !== "clear"
-        : root.widgetHasSurface && (root.backgroundOpacity > 0 || root.effectiveBlur)
+    readonly property bool platedNow: root.look.plated(root)
     readonly property bool widgetHasSurface: root.widgetSurfaceEnabled
         && (root.backgroundOpacity > 0 || root.effectiveBlur)
     readonly property bool regionIsBright: root._hasBrightness
@@ -1754,10 +1616,7 @@ AbstractWidget {
 
     // Surfaces use semantic containers directly. This removes the old HSL
     // wallpaper-region re-toning that could turn generated warm palettes muddy.
-    readonly property color widgetPlateColor: root.widgetIris && root.forceDarkInk
-        ? ColorUtils.mix(FamilyStyle.text, FamilyStyle.accent, 0.98)
-        : root.widgetIris && root.forceLightInk ? FamilyStyle.surface
-        : root.widgetSemanticContainer(root.widgetSurfaceRole)
+    readonly property color widgetPlateColor: root.look.plateColor(root)
     readonly property bool widgetPlateIsDark: ColorUtils.relativeLuminance(root.widgetPlateColor) < 0.38
     readonly property color widgetSurfaceInk: root.forceLightInk ? root._inkLight
         : root.forceDarkInk ? root._inkDark
@@ -1786,43 +1645,24 @@ AbstractWidget {
             : Math.max(0, root.regionBrightness - root.regionBrightnessSpread)
         return Qt.rgba(v, v, v, 1)
     }
-    readonly property bool widgetEditorial: !root.widgetIris && Appearance.editorialEverywhere
-    // Family-owned type: iRiS widgets speak the Island's typeface; every other
-    // family keeps the shell fonts it always used.
-    readonly property string widgetBodyFamily: root.widgetIris ? FamilyStyle.fontMain : Appearance.font.family.main
-    readonly property string widgetNumbersFamily: root.widgetIrisFamily ? FamilyStyle.fontNumbers : Appearance.font.family.numbers
-    // Metadata labels: shouting caps are Material/Instrument grammar; iRiS uses
-    // sentence case (first letter up, the rest as written by the locale).
-    function widgetCase(text): string {
-        const value = String(text ?? "")
-        return root.widgetIris ? value.charAt(0).toUpperCase() + value.slice(1) : value.toUpperCase()
-    }
-    readonly property int widgetCapitalization: root.widgetIris ? Font.MixedCase : Font.AllUppercase
-    readonly property string widgetTitleFamily: root.widgetIris ? FamilyStyle.fontMain : root.widgetEditorial
-        ? Appearance.editorial.displayFamily : Appearance.font.family.main
-    // iRiS display type: one chosen weight for titles and figures, with the
-    // slight negative tracking large system numerals use.
-    readonly property int widgetTitleWeight: root.widgetIris
-        ? ({ light: Font.Light, regular: Font.Medium, bold: Font.Bold })[String(root.irisWidgetOptions.weight ?? "regular")] ?? Font.Medium
-        : root.widgetEditorial ? Appearance.editorial.titleWeight : Font.DemiBold
-    readonly property real widgetTitleTracking: root.widgetIris ? -0.4
-        : root.widgetEditorial ? Appearance.editorial.titleTracking : 0
-    readonly property real widgetTitleScale: root.widgetEditorial
-        ? Appearance.editorial.titleScale : 1
-    readonly property real widgetSpacingScale: root.widgetEditorial
-        ? Appearance.editorial.spacing : 1
-    readonly property int widgetLabelWeight: root.widgetEditorial ? Appearance.editorial.labelWeight : Font.Medium
-    readonly property real widgetMetadataTracking: root.widgetEditorial ? Appearance.editorial.metadataTracking : 0
-    readonly property real widgetControlRadius: root.widgetIris ? Math.round(12 * FamilyStyle.density) : root.widgetEditorial ? Appearance.rounding.small : Appearance.rounding.normal
-    readonly property real widgetCardRadius: root.widgetIris ? Math.round(Math.max(0, Math.min(40, Config.options?.iris?.widgets?.radius ?? 22)) * FamilyStyle.density) : root.widgetEditorial ? Appearance.editorial.radius : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
-        : Appearance.cookieEverywhere ? Appearance.cookie.roundLarge
-        : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
-        : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
-        : Appearance.rounding.extralarge
+    readonly property bool widgetEditorial: root.look.editorial
+    readonly property string widgetBodyFamily: root.look.bodyFamily(root)
+    readonly property string widgetNumbersFamily: root.look.numbersFamily(root)
+    function widgetCase(text): string { return root.look.caseOf(root, String(text ?? "")) }
+    readonly property int widgetCapitalization: root.look.capitalization(root)
+    readonly property string widgetTitleFamily: root.look.titleFamily(root)
+    readonly property int widgetTitleWeight: root.look.titleWeight(root)
+    readonly property real widgetTitleTracking: root.look.titleTracking(root)
+    readonly property real widgetTitleScale: root.look.titleScale(root)
+    readonly property real widgetSpacingScale: root.look.spacingScale(root)
+    readonly property int widgetLabelWeight: root.look.labelWeight(root)
+    readonly property real widgetMetadataTracking: root.look.metadataTracking(root)
+    readonly property real widgetControlRadius: root.look.controlRadius(root)
+    readonly property real widgetCardRadius: root.look.cardRadius(root)
 
     property color accentBackdrop: root.widgetHasSurface ? root.widgetPlateColor
         : root._hasBrightness ? root._regionBg
-        : root.widgetIrisFamily ? root._inkDark : Appearance.colors.colLayer0
+        : root.look.restBackdrop
 
     // Pick only among existing generated semantic tokens. Movement can therefore
     // change polarity when required, but cannot manufacture a brown/gray/red hue.
@@ -1880,7 +1720,7 @@ AbstractWidget {
     // Legibility shadow behind plate-less text, scaled by how busy the region is. Light ink gets a
     // dark shadow; dark ink on a light region gets only a faint light lift over its darker patches,
     // since a dark shadow under dark text reads as a smear and a strong light one as a glow.
-    readonly property bool legibleAlways: root.widgetIrisFamily && Boolean(root.irisWidgetOptions.legibleAlways ?? false)
+    readonly property bool legibleAlways: root.look.legibleAlways
     readonly property real _haloBusy: root.legibleAlways ? 1 : Math.min(1, root.regionBrightnessSpread / 0.28)
     // The same held by the whole bare widget (Lume's third step for content with no plate): a soft dark
     // shadow under light ink as the region's brightest part climbs toward the ink, a faint light lift
@@ -1898,9 +1738,9 @@ AbstractWidget {
         return Math.max(0, Math.min(0.55, (0.62 - darkest) / 0.35 * 0.55))
     }
     readonly property color _legibleShadowColor: root._inkIsLight ? Qt.rgba(0, 0, 0, 1) : Qt.rgba(1, 1, 1, 1)
-    // iRiS, and a Material widget bare by design (bareShadow, Day's dial): the rest keep their own text halo.
+    // Where the family shadows bare widgets, and one bare by design (bareShadow, Day's dial): the rest keep their own text halo.
     property bool bareShadow: false
-    readonly property bool _legibleShadow: (root.widgetIrisFamily || root.bareShadow) && root.needsColText && !root.widgetHasSurface && !root.irisFaced
+    readonly property bool _legibleShadow: (root.look.shadowsBare || root.bareShadow) && root.needsColText && !root.widgetHasSurface && !root.irisFaced
         && !GlobalStates.widgetEditMode && root._legibleShadowOpacity > 0.06
     readonly property color colHalo: root.inkOnLight && !root.forceDarkInk
         ? Qt.rgba(1, 1, 1, 0.12 + 0.3 * root._haloBusy)
@@ -2010,8 +1850,8 @@ AbstractWidget {
             , "--screen-height", Math.round(root.scaledScreenHeight)
             , "--width", contentWidth
             , "--height", contentHeight
-            , "--horizontal-padding", root._analysisPadding
-            , "--vertical-padding", root._analysisPadding
+            , "--horizontal-padding", 48
+            , "--vertical-padding", 48
             , root.wallpaperPath
             , ...(root.placementStrategy === "mostBusy" ? ["--busiest"] : [])
         ]

@@ -81,14 +81,14 @@ Rectangle {
         ? (root._island ? 1 : root._editorial ? (root._glass ? Appearance.editorial.glassOpacity : Math.min(1, 0.86 + root._surfaceStrength * 0.14)) : Math.min(0.96, 0.86 + root._surfaceStrength * 0.6)) : 0
     // The owning widget's own Look material and opacity win over the shared row (AbstractBackgroundWidget resolves
     // both), so a widget made Transparent in its Look controls drops its plate whichever design draws it.
-    readonly property string _irisMaterialName: String(parent?.irisMaterial ?? Config.options?.iris?.widgets?.material ?? "glass")
+    readonly property string _irisMaterialName: String(parent?.look?.material?.(parent) ?? Config.options?.iris?.widgets?.material ?? "glass")
     readonly property bool _irisGlass: root._iris && root._backgroundVisible && root._irisMaterialName === "glass"
     readonly property bool _irisClear: root._iris && root._irisMaterialName === "clear"
-    readonly property string _irisOutline: String(parent?.irisOutline ?? Config.options?.iris?.widgets?.outline ?? "auto")
+    readonly property string _irisOutline: String(parent?.look?.outline?.(parent) ?? Config.options?.iris?.widgets?.outline ?? "auto")
     // Arranging draws its own selection outline around the widget; the widget's outline stays as set.
     readonly property bool _irisRimHidden: root._iris && (root._irisOutline === "none"
         || (root._irisOutline !== "always" && root._irisClear && !Boolean(Config.options?.iris?.widgets?.rim ?? false)))
-    readonly property real _irisStrength: Math.max(0, Math.min(1, Number(parent?.irisSurfaceOpacity
+    readonly property real _irisStrength: Math.max(0, Math.min(1, Number(parent?.look?.surfaceOpacity?.(parent)
         ?? (Config.options?.iris?.widgets?.opacity ?? 100) / 100)))
     readonly property bool _glass: root._irisGlass || !root._iris && !root._island && root._backgroundVisible
         && Appearance.blurBackendFor("widgets", Appearance.blurTopology.unsupported) === "wallpaper"

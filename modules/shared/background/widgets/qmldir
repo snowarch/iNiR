@@ -6,6 +6,8 @@ WidgetEditAction 1.0 WidgetEditAction.qml
 WidgetPlacementControls 1.0 WidgetPlacementControls.qml
 WidgetSurface 1.0 WidgetSurface.qml
 WidgetSheetPages 1.0 WidgetSheetPages.qml
+WidgetLook 1.0 WidgetLook.qml
+singleton DesktopWidgetLook 1.0 DesktopWidgetLook.qml
 DesktopWidgetSlot 1.0 DesktopWidgetSlot.qml
 OrganicEdgeWidget 1.0 OrganicEdgeWidget.qml
 WidgetQuickControlsLayout 1.0 WidgetQuickControlsLayout.qml
