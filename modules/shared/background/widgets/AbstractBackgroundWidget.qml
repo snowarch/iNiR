@@ -2960,6 +2960,10 @@ AbstractWidget {
     // Presentation owns whether the configured plate is actually rendered.
     // Borderless variants must sample wallpaper, even when the saved card is on.
     property bool widgetSurfaceEnabled: true
+    // A plate shows behind the face: what a lifted widget's shadow belongs under. Bare, the shadow filled the box
+    // with a dark square while it was dragged.
+    readonly property bool platedNow: root.irisFaced ? root.irisMaterial !== "clear"
+        : root.widgetHasSurface && (root.backgroundOpacity > 0 || root.effectiveBlur)
     readonly property bool widgetHasSurface: root.widgetSurfaceEnabled
         && (root.backgroundOpacity > 0 || root.effectiveBlur)
     readonly property bool regionIsBright: root._hasBrightness
