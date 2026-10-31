@@ -8,13 +8,11 @@ import qs.modules.common
 import qs.services
 import "japaneseTypography/JapaneseTypographyPresets.js" as JapanesePresets
 
-// Every desktop widget's own options, one group per widget: iRiS Settings › Widgets and the iRiS edit sheet draw them as
-// rows, Material's quick controls as its own controls. A row names its widget and
-// key (`widget`, `key`) instead of a path: it reads what the screen in front shows and writes the base value with every
-// screen's own copy cleared (`DesktopWidgetLayout.setEverywhere`), so a value once set from the quick controls never
-// silently beats the row. Rows for what only the Material drawing reads show only while that widget draws Material;
-// the face's own choices only while it draws its iRiS face. Every group opens on "On the desktop"; the rest shows
-// while the widget is there.
+// Every desktop widget's options as rows: Settings and the edit sheets draw them. A widget lists its own in `options` of
+// its widget.json and a family its rows in `widgetOptions` of its plugin.json; this file adds what every widget carries
+// (being on the desktop, size, design, plate, position) and answers the conditions. A row names its widget and key: it
+// reads what the screen in front shows and writes the base value with every screen's own copy cleared
+// (`DesktopWidgetLayout.setEverywhere`), so a value set from the quick controls never silently beats the row.
 QtObject {
     id: root
 

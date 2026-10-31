@@ -16,6 +16,8 @@ import qs.services
 //   `palette`: it has the semantic palette roles (`background.widgets.<key>.palette`). `sizes`: default first.
 //      `face`: the name of the family faces that draw it (a family's part `widgetFace.<face>`). `faceOnly`: it draws
 //      nothing of its own, so only a family with that part offers it.
+//      `options`: its rows for Settings and the edit sheet (DesktopWidgetOptions has the `when` language). `bare`: it
+//      stands with no plate by default. `plate: false`: it draws its own card, so the plate rows leave.
 //   3. Its config block in modules/common/Config.qml (`background.widgets.<key>`, `enable` at `defaultOn`).
 //   4. A family's own face stays that family's, in its plugin.json parts; with `lock`, its Component in the family's lock.
 // The iRiS gallery keeps its own order (IrisFaceData.order, a widget it lacks goes last).
