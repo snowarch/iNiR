@@ -356,7 +356,6 @@ AbstractBackgroundWidget {
                     colHourHand: root.handPrimary
                     colMinuteHand: root.handTertiary
                     colSecondHand: root.cookieInk
-                    onDiagnosticReportChanged: root.cookieDiagnostics = diagnosticReport
                 }
                 FadeLoader {
                     id: cookieQuote

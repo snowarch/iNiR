@@ -1,0 +1,3 @@
+# People's own widgets from v2.33 import the engine from here, where it used to live.
+module qs.modules.background.widgets
+import qs.modules.shared.background.widgets

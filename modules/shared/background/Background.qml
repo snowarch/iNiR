@@ -366,14 +366,6 @@ Scope {
             return JSON.stringify({ widget: key, page: target })
         }
 
-        /// Report where the selected widget's toolbar and quick-controls sheet sit, as JSON
-        function quickControlsGeometry(): string {
-            const [output, name] = GlobalStates.selectedDesktopWidget.split("::")
-            const widget = (backgroundScope.widgetCanvases[output]?._loadedDesktopWidgets() ?? [])
-                .find(item => item.configEntryName === name) ?? null
-            return widget ? widget.editControlsGeometryReport : "{}"
-        }
-
         /// Save one desktop widget, as it renders now, to a PNG (offscreen: works while windows cover the desktop).
         function widgetSnapshot(widgetName: string, path: string): string {
             const target = String(path ?? "").trim()
@@ -2098,9 +2090,6 @@ Scope {
             WidgetCanvas {
                 id: widgetCanvas
                 z: 20
-                // Each widget's edit toolbar and quick-controls sheet live here, above every widget and
-                // outside the widget's own opacity and dim, so they stay opaque and on top.
-                readonly property Item editChromeLayer: widgetChromeLayer
                 Component.onDestruction: {
                     delete backgroundScope.widgetCanvases[bgRoot.screenName]
                     DesktopArrange.setRoom(bgRoot.screenName, null)
@@ -2599,51 +2588,6 @@ Scope {
                     function onHeightChanged(): void { outputLayoutTimer.restart() }
                 }
 
-                function overlappingDesktopWidgets(instanceKey: string): var {
-                    const widgets = widgetCanvas._loadedDesktopWidgets()
-                    const current = widgets.find(item => item.editInstanceKey === instanceKey)
-                    if (!current || current.width <= 0 || current.height <= 0)
-                        return []
-                    // The pages of one stack are one layer, not several piled up.
-                    const matches = widgets.filter(item => item.width > 0 && item.height > 0
-                        && (item === current || !current.stacked || item.stack?.id !== current.stack.id)
-                        && item.x < current.x + current.width
-                        && item.x + item.width > current.x
-                        && item.y < current.y + current.height
-                        && item.y + item.height > current.y)
-                    // Topmost first. The selected widget has a temporary edit z,
-                    // so use the persistent z when deciding which underlying
-                    // widget should be promoted next.
-                    matches.sort((a, b) => {
-                        const order = Number(b.desktopPersistentZ ?? b.widgetIndex ?? 0)
-                            - Number(a.desktopPersistentZ ?? a.widgetIndex ?? 0)
-                        return order !== 0 ? order
-                            : String(a.editInstanceKey).localeCompare(String(b.editInstanceKey))
-                    })
-                    return matches
-                }
-
-                function overlappingDesktopWidgetCount(instanceKey: string): int {
-                    return widgetCanvas.overlappingDesktopWidgets(instanceKey).length
-                }
-
-                function cycleOverlappingDesktopWidget(instanceKey: string): string {
-                    const matches = widgetCanvas.overlappingDesktopWidgets(instanceKey)
-                    if (matches.length < 2)
-                        return instanceKey
-                    const current = matches.findIndex(item => item.editInstanceKey === instanceKey)
-                    if (current < 0)
-                        return instanceKey
-                    const next = matches[(current + 1) % matches.length]
-                    const nextKey = String(next?.editInstanceKey ?? instanceKey)
-                    backgroundScope.promoteDesktopWidgetKey(nextKey)
-                    GlobalStates.selectDesktopWidget(nextKey)
-                    if (Quickshell.env("INIR_REGION_DEBUG") === "1")
-                        console.debug("[WidgetEdit] layer promote", instanceKey, "->", nextKey,
-                            "overlaps=", matches.length)
-                    return nextKey
-                }
-
                 function promoteDesktopWidget(instanceKey: string, layerKey: string): string {
                     const key = String(instanceKey ?? "")
                     if (!key)
@@ -2687,12 +2631,6 @@ Scope {
                     enabled: GlobalStates.widgetEditMode
                     acceptedButtons: Qt.LeftButton
                     onClicked: GlobalStates.clearDesktopWidgetSelection()
-                }
-
-                Item {
-                    id: widgetChromeLayer
-                    anchors.fill: parent
-                    z: 15000
                 }
 
                 // Arranging, drawn over every widget in the card's space (DesktopArrange): the grid while a widget is

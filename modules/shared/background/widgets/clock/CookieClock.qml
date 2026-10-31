@@ -178,32 +178,6 @@ Item {
         }
     }
 
-    readonly property string diagnosticReport: JSON.stringify({
-        renderer: root.useSineCookie ? "sine" : "material",
-        direct: root._drawFaceDirectly,
-        faceLoaded: root.useSineCookie
-            ? sineCookieLoader.item !== null : roundedPolygonCookieLoader.item !== null,
-        faceVisible: root._drawFaceDirectly
-            ? (root.useSineCookie ? sineCookieLoader.visible : roundedPolygonCookieLoader.visible)
-            : faceShadow.visible,
-        parts: {
-            dial: root.dialNumberStyle,
-            hourMarks: root.hourMarks,
-            timeIndicators: root.timeIndicators,
-            minuteHand: root.minuteHandStyle,
-            hourHand: root.hourHandStyle,
-            secondHand: root.secondHandStyle,
-            date: root.dateStyle
-        },
-        contrast: {
-            marks: ColorUtils.contrastRatio(root.colOnBackground, root.colBackground),
-            info: ColorUtils.contrastRatio(root.colBackgroundInfo, root.colBackground),
-            hourHand: ColorUtils.contrastRatio(root.colHourHand, root.colBackground),
-            minuteHand: ColorUtils.contrastRatio(root.colMinuteHand, root.colBackground),
-            secondHand: ColorUtils.contrastRatio(root.colSecondHand, root.colBackground)
-        }
-    })
-
     // Hour/minutes numbers/dots/lines
     MinuteMarks {
         anchors.fill: parent

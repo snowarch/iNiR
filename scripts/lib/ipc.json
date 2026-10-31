@@ -449,12 +449,6 @@
      "values": []
     },
     {
-     "name": "quickControlsGeometry",
-     "args": [],
-     "description": "Report where the selected widget's toolbar and quick-controls sheet sit, as JSON",
-     "values": []
-    },
-    {
      "name": "widgetSnapshot",
      "args": [
       "widgetName",

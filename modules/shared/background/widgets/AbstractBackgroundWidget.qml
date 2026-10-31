@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Layouts
 import QtQuick.Effects
 import Quickshell
 import Quickshell.Io
@@ -182,11 +181,6 @@ AbstractWidget {
         "centerLeft", "center", "centerRight",
         "bottomLeft", "bottomCenter", "bottomRight"
     ]
-    readonly property var _snapZoneLabels: ({
-        topLeft: "↖", topCenter: "↑", topRight: "↗",
-        centerLeft: "←", center: "⊙", centerRight: "→",
-        bottomLeft: "↙", bottomCenter: "↓", bottomRight: "↘"
-    })
     // Free placement spans the complete output. Zone placement separately
     // respects the live bar/dock edge so an automatic snap stays visible after
     // edit mode restores those movable surfaces.
@@ -205,7 +199,6 @@ AbstractWidget {
     readonly property real _zoneSafeRight: root._zoneWorkArea.right ?? root._safeRight
     readonly property real _zoneSafeBottom: root._zoneWorkArea.bottom ?? root._safeBottom
     readonly property int _zoneMargin: 16
-    readonly property int _analysisPadding: 48
 
     function _getZonePosition(zone: string): point {
         const left = root._zoneSafeLeft + root._zoneMargin
@@ -235,25 +228,6 @@ AbstractWidget {
         root._setOutputValues({placementStrategy: "free",
             x: root._snapToPixel(root._clampX(root.x + dx)),
             y: root._snapToPixel(root._clampY(root.y + dy))})
-    }
-
-    function _cycleSnapZone(): void {
-        const current = root.placementStrategy;
-        const idx = root._snapZones.indexOf(current);
-        const next = root._snapZones[(idx + 1) % root._snapZones.length];
-        root.snapToZone(next);
-    }
-
-    function _toggleZonePlacement(): void {
-        if (root._isZonePlacement) {
-            root._setOutputValues({
-                placementStrategy: "free",
-                x: root._snapToPixel(root.x),
-                y: root._snapToPixel(root.y)
-            })
-            return;
-        }
-        root.snapToZone(root._nearestZone(root.x, root.y));
     }
 
     function snapToZone(zone: string): void {
@@ -588,179 +562,12 @@ AbstractWidget {
     }
 
 
-    readonly property int _editScreenMargin: 8
-    readonly property int _editToolbarGap: 12
-    readonly property int _editPopoverGap: 6
-    // Edit chrome keeps clear of the bar and the edit toolbar (the zone work area), even where a free
-    // widget itself sits under them.
-    readonly property real quickControlsAvailableWidth: Math.max(0,
-        root._zoneSafeRight - root._zoneSafeLeft - 2 * root._editScreenMargin)
-    readonly property real quickControlsAvailableHeight: Math.max(0,
-        root._zoneSafeBottom - root._zoneSafeTop - editToolbar.height
-            - root._editPopoverGap)
-    readonly property bool quickControlsDense:
-        root.quickControlsAvailableHeight < 760
-    readonly property bool quickControlsWide: root.quickControlsDense
-        && root.quickControlsAvailableWidth >= 480
-    // The sheet is placed once and stays there. Its height is animated and its
-    // pages differ in size, so resolving the side from the live height made the
-    // toolbar and the sheet chase every content change and flip edges mid-frame.
-    function _resolveEditControlsGeometry(widgetX: real, widgetY: real, popoverVisible: bool,
-            latchedSide: string, reservedHeight: real, reservedWidth: real): var {
-        const leftBound = root._zoneSafeLeft + root._editScreenMargin
-        const topBound = root._zoneSafeTop + root._editScreenMargin
-        const rightBound = root._zoneSafeRight - root._editScreenMargin
-        const bottomBound = root._zoneSafeBottom - root._editScreenMargin
-        const safeX = root._clampX(widgetX)
-        const safeY = root._clampY(widgetY)
-        const popoverHeight = popoverVisible
-            ? Math.max(reservedHeight, editPopoverPanel.height) : 0
-        const stackHeight = editToolbar.height
-            + (popoverVisible ? popoverHeight + root._editPopoverGap : 0)
-        const spaceAbove = Math.max(0, safeY - topBound - root._editToolbarGap)
-        const spaceBelow = Math.max(0,
-            bottomBound - safeY - root.height - root._editToolbarGap)
-        const fitsAbove = spaceAbove >= stackHeight
-        const fitsBelow = spaceBelow >= stackHeight
-        const spaceLeft = Math.max(0,
-            safeX - leftBound - root._editToolbarGap)
-        const spaceRight = Math.max(0,
-            rightBound - safeX - root.width - root._editToolbarGap)
-        const fitsLeft = popoverVisible
-            && spaceLeft >= editPopoverPanel.width
-        const fitsRight = popoverVisible
-            && spaceRight >= editPopoverPanel.width
-        const useSide = !fitsAbove && !fitsBelow && (fitsLeft || fitsRight)
-        const natural = useSide
-            ? (fitsLeft && fitsRight
-                ? (spaceRight >= spaceLeft ? "right" : "left")
-                : fitsRight ? "right" : "left")
-            : (fitsAbove ? "above" : fitsBelow ? "below"
-                : spaceBelow > spaceAbove ? "below" : "above")
-        const latchUsable = latchedSide.length > 0
-            && (latchedSide === "above" ? spaceAbove >= stackHeight
-                : latchedSide === "below" ? spaceBelow >= stackHeight
-                : latchedSide === "left" ? spaceLeft >= editPopoverPanel.width
-                : spaceRight >= editPopoverPanel.width)
-        const side = latchUsable ? latchedSide : natural
-        const below = side === "below"
-        const sideways = side === "left" || side === "right"
-        const toolbarMaxX = Math.max(leftBound, rightBound - editToolbar.width)
-        const toolbarX = Math.max(leftBound, Math.min(toolbarMaxX,
-            safeX + (root.width - editToolbar.width) / 2))
-        // The toolbar hugs the widget whatever the sheet does; the sheet then
-        // hangs off the toolbar, growing away from it.
-        const toolbarTop = Math.max(topBound,
-            Math.min(bottomBound - editToolbar.height,
-                safeY - root._editToolbarGap - editToolbar.height))
-        const toolbarBottom = Math.max(topBound,
-            Math.min(bottomBound - editToolbar.height,
-                safeY + root.height + root._editToolbarGap))
-        const toolbarY = sideways
-            ? (safeY - root._editToolbarGap - editToolbar.height >= topBound
-                ? toolbarTop : toolbarBottom)
-            : below ? toolbarBottom : toolbarTop
-        let popoverX
-        let popoverY
-        if (sideways) {
-            popoverX = side === "left"
-                ? safeX - root._editToolbarGap - editPopoverPanel.width
-                : safeX + root.width + root._editToolbarGap
-            popoverY = Math.max(topBound, Math.min(
-                bottomBound - editPopoverPanel.height,
-                safeY + (root.height - editPopoverPanel.height) / 2))
-        } else {
-            const slotWidth = Math.max(reservedWidth, editPopoverPanel.width)
-            const popoverMaxX = Math.max(leftBound, rightBound - slotWidth)
-            popoverX = Math.max(leftBound, Math.min(popoverMaxX,
-                toolbarX + (editToolbar.width - slotWidth) / 2))
-            popoverY = below
-                ? toolbarY + editToolbar.height + root._editPopoverGap
-                : toolbarY - root._editPopoverGap - editPopoverPanel.height
-            popoverY = Math.max(topBound,
-                Math.min(bottomBound - editPopoverPanel.height, popoverY))
-        }
-        const toolbarInBounds = toolbarX >= leftBound && toolbarY >= topBound
-            && toolbarX + editToolbar.width <= rightBound
-            && toolbarY + editToolbar.height <= bottomBound
-        const popoverInBounds = !popoverVisible || (popoverX >= leftBound && popoverY >= topBound
-            && popoverX + editPopoverPanel.width <= rightBound
-            && popoverY + editPopoverPanel.height <= bottomBound)
-        return {
-            widgetX: safeX,
-            widgetY: safeY,
-            below: below,
-            side: side,
-            naturalSide: natural,
-            toolbarX: toolbarX,
-            toolbarY: toolbarY,
-            popoverX: popoverX,
-            popoverY: popoverY,
-            inBounds: toolbarInBounds && popoverInBounds
-        };
-    }
-
-    // Latched while the sheet is open: the edge it grew from, and the tallest
-    // page it has shown, so switching pages resizes the sheet without moving it.
-    property string _editPlacementSide: ""
-    // iRiS: the toolbar and the sheet step out while the widget is carried or resized and come back
-    // where it lands, instead of chasing every frame of the gesture.
-    readonly property bool _irisGesture: root.irisFaced
-        && ((root.containsPress && root.dragMoved) || root._isResizing || root._sizing)
-    on_IrisGestureChanged: {
-        if (root._irisGesture || !editPopoverPanel.open) return
-        root._editPlacementSide = ""
-        root._popoverReserve = 0
-        root._popoverReserveWidth = 0
-        root._latchEditPlacement()
-    }
-    property real _popoverReserve: 0
-    property real _popoverReserveWidth: 0
-    function _latchEditPlacement(): void {
-        const target = editPopoverPanel.targetHeight
-        if (target <= 0)
-            return
-        root._popoverReserve = Math.max(root._popoverReserve, target)
-        root._popoverReserveWidth = Math.max(root._popoverReserveWidth, editPopoverPanel.width)
-        if (root._editPlacementSide.length === 0)
-            root._editPlacementSide = root._editControlsGeometry.naturalSide
-    }
-    readonly property var _editControlsGeometry: root._resolveEditControlsGeometry(
-        root.x, root.y, editPopoverPanel.open, root._editPlacementSide, root._popoverReserve,
-        root._popoverReserveWidth)
-    readonly property bool _editControlsBelow: root._editControlsGeometry.below
+    // Sheets keep clear of the bar and the edit toolbar (the zone work area), even where a free widget sits under them.
+    readonly property real quickControlsAvailableWidth: Math.max(0, root._zoneSafeRight - root._zoneSafeLeft - 16)
+    readonly property real quickControlsAvailableHeight: Math.max(0, root._zoneSafeBottom - root._zoneSafeTop - 64)
 
     function containsEditPoint(point: point): bool {
-        const inRect = (x, y, width, height) => point.x >= x && point.y >= y
-            && point.x < x + width && point.y < y + height
-        if (inRect(-12, -12, root.width + 24, root.height + 24))
-            return true
-        if (!root._editControlsShown || editToolbar.hosted)
-            return false
-        // Hit testing follows the rendered rectangles, not the animation's
-        // destination. Controls remain clickable while the widget reflows.
-        return inRect(editToolbar.x, editToolbar.y, editToolbar.width, editToolbar.height)
-            || (editPopoverPanel.open && inRect(editToolbar.x + editPopoverPanel.x,
-                editToolbar.y + editPopoverPanel.y, editPopoverPanel.width, editPopoverPanel.height))
-    }
-
-    readonly property int overlappingLayerCount: {
-        Config.revision
-        root.x
-        root.y
-        root.width
-        root.height
-        const canvas = root.parent?.parent ?? null
-        if (!canvas || typeof canvas.overlappingDesktopWidgetCount !== "function")
-            return 1
-        return canvas.overlappingDesktopWidgetCount(root.editInstanceKey)
-    }
-
-    function _cycleOverlappingWidget(): void {
-        const canvas = root.parent?.parent ?? null
-        if (!canvas || typeof canvas.cycleOverlappingDesktopWidget !== "function")
-            return
-        canvas.cycleOverlappingDesktopWidget(root.editInstanceKey)
+        return point.x >= -12 && point.y >= -12 && point.x < root.width + 12 && point.y < root.height + 12
     }
 
     function _bringToFront(): void {
@@ -771,35 +578,22 @@ AbstractWidget {
     }
 
     // Locking keeps the sheet on the page that can unlock it.
-    onLockedChanged: if (root.locked && editPopoverPanel.open) root._quickTab = root._arrangeTab
-    onEditSelectedChanged: {
-        _editDisengageTimer.stop()
-        if (root.editSelected) {
-            root._editControlsShown = true
-        } else {
-            editPopoverPanel.open = false
-            // Selection is explicit. Releasing the previous toolbar and its
-            // containment mask immediately lets the newly selected layer own
-            // the next pointer event instead of blocking it for 350 ms.
-            root._editControlsShown = false
-        }
-    }
+    onLockedChanged: if (root.locked && root.quickControlsOpen) root._quickTab = root._arrangeTab
+    onEditSelectedChanged: if (!root.editSelected) root.quickControlsOpen = false
 
     Connections {
         target: GlobalStates
         function onWidgetEditModeChanged(): void {
             if (!GlobalStates.widgetEditMode)
-                editPopoverPanel.open = false
+                root.quickControlsOpen = false
             _geometryPlacementDebounce.restart()
         }
         function onDesktopWidgetQuickControlsChanged(): void {
-            if (GlobalStates.desktopWidgetQuickControls !== root.editInstanceKey || root._effectivePopover === null)
+            if (GlobalStates.desktopWidgetQuickControls !== root.editInstanceKey)
                 return
-            _editDisengageTimer.stop()
             if (root.locked)
                 root._quickTab = root._arrangeTab
-            root._editControlsShown = true
-            editPopoverPanel.open = true
+            root.quickControlsOpen = true
         }
     }
 
@@ -979,9 +773,9 @@ AbstractWidget {
         target: root
         property: "_shelf"
         to: 1
-        duration: root.widgetIrisFamily ? FamilyStyle.duration(380) : Appearance.animation.elementMoveEnter.duration
+        duration: FamilyStyle.duration(380)
         easing.type: Easing.BezierSpline
-        easing.bezierCurve: root.widgetIrisFamily ? FamilyStyle.morphCurve : Appearance.animation.elementMoveEnter.bezierCurve
+        easing.bezierCurve: FamilyStyle.morphCurve
     }
     NumberAnimation {
         id: shelfShrink
@@ -1000,9 +794,9 @@ AbstractWidget {
         target: root
         property: "_glide"
         to: 0
-        duration: root.widgetIrisFamily ? FamilyStyle.duration(420) : Appearance.animation.elementMove.duration
+        duration: FamilyStyle.duration(420)
         easing.type: Easing.BezierSpline
-        easing.bezierCurve: root.widgetIrisFamily ? FamilyStyle.morphCurve : Appearance.animation.elementMove.bezierCurve
+        easing.bezierCurve: FamilyStyle.morphCurve
     }
     // Taking a widget away while a shelf is out sends it into its picture there.
     function takeAway(): void {
@@ -1013,42 +807,22 @@ AbstractWidget {
             DesktopWidgetLayout.setGloballyEnabled(root.configEntryName, false)
     }
 
-    // ── Edit engagement ──────────────────────────────────────
-    // Heavy controls belong to the explicit selection, never to incidental
-    // pointer travel. Hover only previews the outline/name; pressing promotes
-    // that widget to the active editing layer.
+    // Heavy controls belong to the explicit selection, never to incidental pointer travel.
     readonly property bool _editEngaged: GlobalStates.widgetEditMode
-        && (root.editSelected || toolbarEditHover.hovered
-            || root.containsPress || root.isDragging || root._isResizing
-            || editPopoverPanel.open)
-    property bool _editControlsShown: false
-    on_EditEngagedChanged: {
-        if (root._editEngaged) {
-            _editDisengageTimer.stop()
-            root._editControlsShown = true
-        } else {
-            _editDisengageTimer.restart()
-        }
-    }
-    onVisibleChanged: { if (!root.visible) root._editControlsShown = false; root._report() }
-
-    Timer {
-        id: _editDisengageTimer
-        interval: 350
-        onTriggered: root._editControlsShown = false
-    }
+        && (root.editSelected || root.containsPress || root.isDragging || root._isResizing || root.quickControlsOpen)
+    onVisibleChanged: root._report()
 
     HoverHandler {
         id: widgetEditHover
         enabled: GlobalStates.widgetEditMode
     }
     readonly property bool editHovered: widgetEditHover.hovered
-    readonly property bool quickControlsOpen: editPopoverPanel.open
-    // The family draws this widget's controls beside the card at true size (DesktopEditStage.inspected).
-    // iRiS's host draws only its own faces' controls; Material's draws any widget's.
-    readonly property bool _sheetHosted: (root.irisFaced || !root.widgetIrisFamily) && GlobalStates.widgetEditMode
+    // The family's edit desk draws this widget's controls at true size (DesktopEditStage.inspected).
+    property bool quickControlsOpen: false
+    onQuickControlsOpenChanged: if (!root.quickControlsOpen && GlobalStates.desktopWidgetQuickControls === root.editInstanceKey)
+        GlobalStates.desktopWidgetQuickControls = ""
+    readonly property bool _handsSheet: root.quickControlsOpen && GlobalStates.widgetEditMode
         && DesktopEditStage.hostsSheet(root.outputName)
-    readonly property bool _handsSheet: root._sheetHosted && editPopoverPanel.open
     on_HandsSheetChanged: DesktopEditStage.inspect(root.outputName, root, root._handsSheet)
     // Its outfit too: chosen or under the pointer, the host draws it over the card where the card cannot clip it.
     readonly property bool _outfitHosted: root._outfitted && DesktopEditStage.hostsSheet(root.outputName)
@@ -1058,8 +832,7 @@ AbstractWidget {
     on_PointedOutChanged: DesktopEditStage.point(root.outputName, root, root._pointedOut)
     readonly property string quickTab: root._quickTab
 
-    // What the widget wears while arranging, when the family draws it (its part `widgetOutfit`): then the engine's own
-    // toolbar, name and outline step aside and only its sheet of controls stays.
+    // What the widget wears while arranging: its family's part `widgetOutfit`.
     readonly property string _outfitPart: Plugins.part(Plugins.active, "widgetOutfit")
     readonly property bool _outfitted: GlobalStates.widgetEditMode && root._outfitPart.length > 0
     Loader {
@@ -1090,7 +863,7 @@ AbstractWidget {
             return
         const step = event.modifiers & Qt.ShiftModifier ? 10 : 1
         if (event.key === Qt.Key_Escape) {
-            if (editPopoverPanel.open) editPopoverPanel.open = false
+            if (root.quickControlsOpen) root.quickControlsOpen = false
             else GlobalStates.clearDesktopWidgetSelection()
         } else if (event.key === Qt.Key_Left) root.nudge(-step, 0)
         else if (event.key === Qt.Key_Right) root.nudge(step, 0)
@@ -1129,389 +902,11 @@ AbstractWidget {
         }
     }
 
-    // ── Edit mode toolbar (proper Material action bar) ─────────
-    // Toolbar is in screen-pixel space (no Item.scale on widget)
-    readonly property Item _chromeHost: root.parent?.parent?.editChromeLayer ?? null
-    Item {
-        id: editToolbar
-        parent: root._chromeHost ?? root
-        readonly property bool hosted: editToolbar.parent !== root
-        z: root.editSelected ? 2 : 1
-        visible: opacity > 0
-        opacity: GlobalStates.widgetEditMode && root._editControlsShown && !root._irisGesture ? 1 : 0
-        enabled: GlobalStates.widgetEditMode && root._editControlsShown && !root._irisGesture
-
-        HoverHandler {
-            id: toolbarEditHover
-            enabled: GlobalStates.widgetEditMode
-        }
-        x: root._editControlsGeometry.toolbarX - (editToolbar.hosted ? 0 : root.x)
-        y: root._editControlsGeometry.toolbarY - (editToolbar.hosted ? 0 : root.y)
-        width: Math.min(root.quickControlsAvailableWidth, (toolbarLoader.item?.naturalWidth ?? 0) + 16)
-        height: (toolbarLoader.item?.implicitHeight ?? 0) + 16
-
-        Behavior on x {
-            enabled: Appearance.animationsEnabled && !root._irisGesture && editToolbar.opacity > 0
-            NumberAnimation {
-                duration: Appearance.animation.elementMoveFast.duration
-                easing.type: Appearance.animation.elementMoveFast.type
-                easing.bezierCurve: Appearance.animationCurves.standardDecel
-            }
-        }
-        Behavior on y {
-            enabled: Appearance.animationsEnabled && !root._irisGesture && editToolbar.opacity > 0
-            NumberAnimation {
-                duration: Appearance.animation.elementMoveFast.duration
-                easing.type: Appearance.animation.elementMoveFast.type
-                easing.bezierCurve: Appearance.animationCurves.standardDecel
-            }
-        }
-
-        Behavior on opacity {
-            enabled: Appearance.animationsEnabled
-            NumberAnimation {
-                duration: Appearance.animation.elementMoveFast.duration
-                easing.type: Appearance.animation.elementMoveFast.type
-                easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
-            }
-        }
-
-        // Prevent drag from starting on toolbar clicks
-        MouseArea {
-            anchors.fill: parent
-            z: -1
-            acceptedButtons: Qt.AllButtons
-            propagateComposedEvents: false
-        }
-
-        // The action bar exists only in edit mode: every desktop widget built its own
-        // (glass toolbar and three buttons) for a mode most sessions never enter.
-        Loader {
-            id: toolbarLoader
-            anchors.fill: parent
-            active: GlobalStates.widgetEditMode && !root._outfitted
-            sourceComponent: Item {
-                readonly property real naturalWidth: toolbarRow.naturalWidth
-                implicitHeight: toolbarRow.implicitHeight
-
-                Toolbar {
-                    anchors.fill: parent
-                    padding: 0
-                    spacing: 0
-                    transparent: root.widgetIrisFamily
-                    screenX: (editToolbar.hosted ? 0 : root.x) + editToolbar.x
-                    screenY: (editToolbar.hosted ? 0 : root.y) + editToolbar.y
-                }
-                Rectangle {
-                    anchors.fill: parent
-                    visible: root.widgetIrisFamily
-                    radius: height / 2
-                    color: FamilyStyle.surface
-                    border.width: 1
-                    border.color: FamilyStyle.hairlineStrong
-                }
-
-                Flow {
-                    id: toolbarRow
-                    anchors.centerIn: parent
-                    readonly property real naturalWidth: lockAction.implicitWidth + moreAction.implicitWidth + 4
-                        + (root.locked ? 0 : styleAction.implicitWidth + 4)
-                    width: Math.min(root.quickControlsAvailableWidth - 16, naturalWidth)
-                    spacing: 4
-
-                    WidgetEditAction {
-                        id: lockAction
-                        iconName: root.locked ? "lock" : "lock_open"
-                        label: root.locked ? Translation.tr("Unlock") : Translation.tr("Lock")
-                        compact: true
-                        toggled: root.locked
-                        onClicked: root._setOutputValue("locked", !root.locked)
-                    }
-                    WidgetEditAction {
-                        id: styleAction
-                        visible: !root.locked
-                        iconName: "tune"
-                        label: Translation.tr("Edit")
-                        compact: root.quickControlsAvailableWidth < 380
-                        toggled: editPopoverPanel.open && root._quickTab !== root._arrangeTab
-                        onClicked: {
-                            if (toggled)
-                                root.closeQuickControls()
-                            else
-                                root.openQuickControls("widget")
-                        }
-                    }
-                    WidgetEditAction {
-                        id: moreAction
-                        iconName: "more_horiz"
-                        label: Translation.tr("More actions")
-                        compact: true
-                        toggled: editPopoverPanel.open && root._quickTab === root._arrangeTab
-                        onClicked: {
-                            if (toggled)
-                                root.closeQuickControls()
-                            else
-                                root.openQuickControls(root._arrangeTab)
-                        }
-                    }
-                }
-            }
-        }
-
-        // Inline popover panel follows the toolbar to whichever side has room.
-        Item {
-            id: editPopoverPanel
-            property bool open: false
-            readonly property real targetHeight: popoverLoader.item ? popoverLoader.item.implicitHeight + 24 : 0
-            // Every family fits each page: the tallest each has shown (so a toggle never shrinks its own page), and
-            // the sheet grows or shrinks to the page in view on the move curve, away from the toolbar.
-            property var pageHeights: ({})
-            readonly property real pageHeight: Math.max(editPopoverPanel.targetHeight,
-                editPopoverPanel.pageHeights[root._quickTab] ?? 0)
-            property bool settled: false
-            Timer { id: sheetSettle; interval: 240; onTriggered: editPopoverPanel.settled = true }
-            onOpenChanged: {
-                if (open) {
-                    editPopoverPanel.pageHeights = ({})
-                    editPopoverPanel.settled = false
-                    sheetSettle.restart()
-                    root._latchEditPlacement()
-                } else {
-                    editPopoverPanel.settled = false
-                    root._editPlacementSide = ""
-                    root._popoverReserve = 0
-                    root._popoverReserveWidth = 0
-                }
-                if (!open && GlobalStates.desktopWidgetQuickControls === root.editInstanceKey)
-                    GlobalStates.desktopWidgetQuickControls = ""
-            }
-            onTargetHeightChanged: if (open) {
-                const seen = Object.assign({}, editPopoverPanel.pageHeights)
-                seen[root._quickTab] = Math.max(seen[root._quickTab] ?? 0, editPopoverPanel.targetHeight)
-                editPopoverPanel.pageHeights = seen
-                root._latchEditPlacement()
-            }
-            onWidthChanged: if (open) root._latchEditPlacement()
-            visible: opacity > 0 && !root._sheetHosted
-            enabled: open && !root._irisGesture && !root._sheetHosted
-            opacity: open && !root._irisGesture ? 1 : 0
-            x: root._editControlsGeometry.popoverX - root._editControlsGeometry.toolbarX
-            y: root._editControlsGeometry.popoverY - root._editControlsGeometry.toolbarY
-            width: Math.min(root.quickControlsAvailableWidth,
-                popoverLoader.item ? (popoverLoader.item.resolvedWidth ?? popoverLoader.item.implicitWidth) + 24 : 344)
-            height: editPopoverPanel.pageHeight
-            clip: true
-
-            Behavior on height {
-                enabled: editPopoverPanel.settled && (root.irisFaced ? FamilyStyle.motionEnabled : Appearance.animationsEnabled)
-                NumberAnimation {
-                    duration: root.irisFaced ? FamilyStyle.moveDuration : Appearance.animation.elementMove.duration
-                    easing.type: Easing.BezierSpline
-                    easing.bezierCurve: root.irisFaced ? FamilyStyle.moveCurve : Appearance.animation.elementMove.bezierCurve
-                }
-            }
-
-            Behavior on opacity {
-                enabled: Appearance.animationsEnabled
-                NumberAnimation {
-                    duration: Appearance.animation.elementMoveFast.duration
-                    easing.type: Appearance.animation.elementMoveFast.type
-                    easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
-                }
-            }
-            Behavior on x {
-                enabled: Appearance.animationsEnabled
-                NumberAnimation {
-                    duration: Appearance.animation.elementMoveFast.duration
-                    easing.type: Appearance.animation.elementMoveFast.type
-                    easing.bezierCurve: Appearance.animationCurves.standardDecel
-                }
-            }
-            Behavior on y {
-                enabled: Appearance.animationsEnabled
-                NumberAnimation {
-                    duration: Appearance.animation.elementMoveFast.duration
-                    easing.type: Appearance.animation.elementMoveFast.type
-                    easing.bezierCurve: Appearance.animationCurves.standardDecel
-                }
-            }
-            MouseArea {
-                anchors.fill: parent
-                z: -1
-                acceptedButtons: Qt.AllButtons
-                propagateComposedEvents: false
-            }
-
-            // Its plate exists only while it shows: one per widget sat built all day (10-25).
-            Loader {
-                anchors.fill: parent
-                active: editPopoverPanel.visible
-                sourceComponent: Item {
-                    Rectangle {
-                        anchors.fill: parent
-                        visible: root.widgetIrisFamily && !FamilyStyle.fieldChamfer
-                        radius: FamilyStyle.radiusCard
-                        color: FamilyStyle.surface
-                        border.width: 1
-                        border.color: FamilyStyle.hairlineStrong
-                    }
-                    // Under a chamfered Design the sheet takes the cut like every other body.
-                    FamilyPart {
-                        anchors.fill: parent
-                        when: root.widgetIrisFamily && FamilyStyle.fieldChamfer
-                        part: "cutPlate"
-                        props: ({ color: FamilyStyle.surface, stroke: FamilyStyle.hairlineStrong, strokeWidth: 1 })
-                    }
-                    PanelSurface {
-                        id: editPopoverSurface
-                        anchors.fill: parent
-                        visible: !root.widgetIrisFamily
-                        elevation: 2
-                        // Floats straight on the wallpaper like the widget manager panel:
-                        // without a backdrop the aurora/angel fill is a hole, not glass.
-                        wallpaperBackdrop: true
-                        readonly property point _screenPos: {
-                            void root.x; void root.y;
-                            void editPopoverPanel.x; void editPopoverPanel.y;
-                            void editPopoverPanel.width; void editPopoverPanel.height;
-                            return editPopoverSurface.mapToItem(null, 0, 0)
-                        }
-                        backdropScreenX: _screenPos.x
-                        backdropScreenY: _screenPos.y
-                        backdropScreenWidth: root.screenWidth
-                        backdropScreenHeight: root.screenHeight
-                        radiusOverride: Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
-                            : Appearance.angelEverywhere ? Appearance.angel.roundingSmall
-                            : Appearance.inirEverywhere ? Appearance.inir.roundingNormal
-                            : Appearance.rounding.small
-                    }
-                }
-            }
-
-            Loader {
-                id: popoverLoader
-                anchors.left: parent.left
-                anchors.top: parent.top
-                anchors.margins: 12
-                width: editPopoverPanel.width - 24
-                sourceComponent: root._effectivePopover
-                // `visible` is effective visibility and inherits the parent chain;
-                // using it as Loader state can latch this popover unloaded forever.
-                active: (editPopoverPanel.open || editPopoverPanel.opacity > 0)
-                    && root._effectivePopover !== null && !root._sheetHosted
-            }
-        }
-    }
-
-    // ── Edit mode widget name label ─────────────────────────
-    // The name sits on the side the toolbar leaves free; where that side runs into a screen edge or
-    // the bar, it takes the other one unless the toolbar is there, and otherwise stays hidden.
-    Loader {
-        z: 200
-        active: GlobalStates.widgetEditMode
-        sourceComponent: Row {
-            id: editNameLabel
-            readonly property bool toolbarAbove: root._editControlsShown && !root._editControlsBelow
-            readonly property bool toolbarBelow: root._editControlsShown && root._editControlsBelow
-            readonly property bool roomBelow: root.y + root.height + 6 + height <= root._zoneSafeBottom
-            readonly property bool roomAbove: root.y - 6 - height >= root._zoneSafeTop
-            readonly property string side: !editNameLabel.toolbarBelow && editNameLabel.roomBelow ? "below"
-                : !editNameLabel.toolbarAbove && editNameLabel.roomAbove ? "above" : ""
-            visible: GlobalStates.widgetEditMode && !root._outfitted && (root.editSelected || widgetEditHover.hovered) && side.length > 0
-            opacity: root.editSelected ? 1 : 0.78
-            x: Math.round((root.width - width) / 2)
-            y: editNameLabel.side === "above" ? -height - 6 : root.height + 6
-            spacing: 4
-
-            Behavior on opacity {
-                enabled: Appearance.animationsEnabled
-                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
-            }
-
-            Behavior on y {
-                enabled: Appearance.animationsEnabled
-                NumberAnimation {
-                    duration: Appearance.animation.elementMoveFast.duration
-                    easing.type: Appearance.animation.elementMoveFast.type
-                    easing.bezierCurve: Appearance.animationCurves.standardDecel
-                }
-            }
-
-            // Placement strategy badge
-            Rectangle {
-                visible: root.placementStrategy !== "free"
-                anchors.verticalCenter: parent.verticalCenter
-                width: strategyIcon.implicitWidth + 6
-                height: strategyIcon.implicitHeight + 4
-                radius: Appearance.rounding.small
-                color: ColorUtils.applyAlpha(
-                    root.locked ? Appearance.colors.colError
-                        : root._isZonePlacement ? Appearance.colors.colPrimary
-                        : Appearance.colors.colTertiary, 0.18)
-                MaterialSymbol {
-                    id: strategyIcon
-                    anchors.centerIn: parent
-                    iconSize: 10
-                    text: root.locked ? "lock"
-                        : root._isZonePlacement ? "grid_on"
-                        : root._isAutoPlacement ? "auto_awesome" : ""
-                    color: root.locked ? Appearance.colors.colError
-                        : root._isZonePlacement ? Appearance.colors.colPrimary
-                        : Appearance.colors.colTertiary
-                }
-            }
-
-            StyledText {
-                anchors.verticalCenter: parent.verticalCenter
-                readonly property string name: root.configEntryName.split(".").pop().replace(/([A-Z])/g, " $1").toLowerCase().trim()
-                text: root.widgetIrisFamily ? name.charAt(0).toUpperCase() + name.slice(1) : name
-                font.family: root.widgetIrisFamily ? FamilyStyle.fontMain : Appearance.font.family.main
-                font.pixelSize: Appearance.font.pixelSize.smaller
-                font.weight: root.widgetIrisFamily ? Font.DemiBold : Font.Normal
-                font.capitalization: root.widgetIrisFamily ? Font.MixedCase : Font.Capitalize
-                color: root.widgetIrisFamily ? FamilyStyle.text : Appearance.colors.colOnLayer0
-                style: root.widgetIrisFamily ? Text.Raised : Text.Normal
-                styleColor: root.widgetIrisFamily ? FamilyStyle.plateShadow : "transparent"
-            }
-        }
-    }
-
-    // ── Edit mode selection outline ──────────────────────────
-    Rectangle {
-        z: 199
-        anchors.fill: parent
-        anchors.margins: -4
-        visible: GlobalStates.widgetEditMode && !root._outfitted && (root.editSelected || widgetEditHover.hovered)
-        color: "transparent"
-        radius: root.widgetIris ? Math.round(root.widgetCardRadius * root.scaleFactor) + 4 : Appearance.rounding.small + 4
-        border {
-            width: root.editSelected || root.locked ? 2 : 1
-            color: ColorUtils.applyAlpha(root.locked
-                    ? (root.widgetIrisFamily ? FamilyStyle.danger : Appearance.colors.colError)
-                    : (root.widgetIrisFamily ? FamilyStyle.accent : Appearance.colors.colPrimary),
-                root.locked ? (root.editSelected ? 0.86 : 0.42)
-                    : root.editSelected ? 0.88 : widgetEditHover.hovered ? 0.62 : 0.26)
-        }
-        Behavior on border.color {
-            enabled: Appearance.animationsEnabled
-            ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
-        }
-    }
-
     FamilyPart {
         z: 202
-        when: GlobalStates.widgetEditMode && root.irisFaced && root.sizeChoices.length > 1 && !root.locked
-        family: "iris"
+        when: GlobalStates.widgetEditMode && root.sizeChoices.length > 1 && !root.locked
         part: "widget.sizeGrip"
         props: ({ widget: root, visible: root.editSelected || root._gripHover || root._sizing })
-    }
-    Loader {
-        z: 202
-        active: GlobalStates.widgetEditMode && !root.irisFaced && root.sizeChoices.length > 1 && !root.locked
-        sourceComponent: WidgetSizeGrip {
-            widget: root
-            visible: root.editSelected || root._gripHover || root._sizing
-        }
     }
     // The grip reads the hover a tick late: hiding it under the pointer re-delivers hover at once and
     // re-entered its own visibility (a binding loop while editing).
@@ -1664,10 +1059,10 @@ AbstractWidget {
         anchors.centerIn: parent
         active: root._isResizing
         valueText: Math.round(root.width) + " × " + Math.round(root.height) + " px"
-        accentColor: root.widgetIrisFamily ? FamilyStyle.accent : Appearance.colors.colPrimary
-        surfaceColor: root.widgetIrisFamily ? FamilyStyle.surface : Appearance.colors.colLayer2
-        textColor: root.widgetIrisFamily ? FamilyStyle.text : Appearance.colors.colOnLayer2
-        fontFamily: root.widgetIrisFamily ? FamilyStyle.fontNumbers : Appearance.font.family.main
+        accentColor: FamilyStyle.accent
+        surfaceColor: FamilyStyle.surfaceHigh
+        textColor: FamilyStyle.text
+        fontFamily: FamilyStyle.fontNumbers
         fontPixelSize: Appearance.font.pixelSize.smaller
     }
 
@@ -1700,7 +1095,7 @@ AbstractWidget {
         root._setOutputValues(updates)
     }
 
-    // ── Inline popover for quick controls ─────────────────────
+    // ── Quick controls ─────────────────────
     // Widget-specific controls stay primary. Color customization uses the same
     // preset-card language as Settings; detailed role remapping lives there.
     property Component editPopoverContent: null
@@ -1713,23 +1108,19 @@ AbstractWidget {
         return Object.keys(keys).map(k => ({ key: k, spec: keys[k] }));
     }
     property Component _autoPopoverComponent: _manifestKeyList.length > 0 ? _autoPopoverRef : null
-    readonly property Component _widgetSpecificPopover: root.editPopoverContent
+    readonly property Component _widgetSpecificPopover: root.editPopoverContent ?? root._autoPopoverComponent
     readonly property bool hasOptionRows: DesktopWidgetOptions.widgetRows.some(spec => spec.widget === root.configEntryName && !spec.widgetEnable)
-        ?? (root._manifestKeyList.length > 0 ? root._autoPopoverComponent : null)
     property string _quickTab: "widget"
     readonly property string identityGlyph: DesktopWidgetRegistry.glyph(root.configEntryName)
     readonly property color identityTint: root.widgetIrisFamily ? FamilyStyle.identityOf(DesktopWidgetRegistry.tint(root.configEntryName))
         : DesktopWidgetRegistry.tint(root.configEntryName)
     // The page that holds position, lock and removal: "arrange" in an iRiS face's sheet, "layout" otherwise.
     readonly property string _arrangeTab: root.irisFaced ? "arrange" : "layout"
-    readonly property Component _effectivePopover: root.irisFaced ? _irisPopoverRef : root._semanticPalettePopover
 
     function openQuickControls(tab: string): void {
         root._quickTab = tab
         _closeQuickControlsLater.stop()
-        _editDisengageTimer.stop()
-        root._editControlsShown = true
-        editPopoverPanel.open = true
+        root.quickControlsOpen = true
     }
     // Closed a tick later: the close button lives in the sheet, and unloading the sheet inside that
     // button's own click (no fade without animations) loses the next click.
@@ -1739,19 +1130,7 @@ AbstractWidget {
     Timer {
         id: _closeQuickControlsLater
         interval: 0
-        onTriggered: editPopoverPanel.open = false
-    }
-
-    Component {
-        id: _irisPopoverRef
-        // Its plates lie 12 px inside the sheet's corner (popoverLoader's margins).
-        FamilyPart {
-            readonly property real resolvedWidth: item?.resolvedWidth ?? implicitWidth
-            family: "iris"
-            part: "widget.controls"
-            props: ({ widget: root, plateRadius: FamilyStyle.concentric(FamilyStyle.radiusCard, 12, FamilyStyle.radiusChip),
-                plateCut: FamilyStyle.nestedCut(FamilyStyle.chamferCut, 12) })
-        }
+        onTriggered: root.quickControlsOpen = false
     }
 
     Component {
@@ -1763,186 +1142,11 @@ AbstractWidget {
         }
     }
 
-    property Component _semanticPalettePopover: Component {
-        WidgetQuickControlsLayout {
-            id: semanticQuickRoot
-            availableWidth: root.quickControlsAvailableWidth - 24
-            availableHeight: root.quickControlsAvailableHeight - 24
-            title: {
-                const words = root.configEntryName.split(".").pop().replace(/([A-Z])/g, " $1").toLowerCase().trim()
-                return Translation.tr(words.charAt(0).toUpperCase() + words.slice(1))
-            }
-            glyph: root.identityGlyph
-            tint: root.identityTint
-            regularWidth: Math.max(Math.round(340 * semanticQuickRoot.d),
-                specificQuickLoader.item?.implicitWidth ?? 0)
-            onCloseRequested: root.closeQuickControls()
-
-            readonly property var pages: [
-                { value: "widget", label: Translation.tr("Widget"), visible: root._widgetSpecificPopover !== null && !root.locked },
-                { value: "options", label: Translation.tr("Options"), visible: root.hasOptionRows && !root.locked },
-                { value: "colors", label: Translation.tr("Look"), visible: (root.semanticPaletteQuickControls
-                    || (root.widgetIrisFamily && root.hasIrisFace)) && !root.locked },
-                { value: "layout", label: Translation.tr("Arrange") }
-            ]
-            readonly property string page: {
-                const open = semanticQuickRoot.pages.filter(entry => entry.visible !== false).map(entry => entry.value)
-                return open.includes(root._quickTab) ? root._quickTab : open[0]
-            }
-
-            WidgetQuickTabs {
-                visible: !root.widgetIrisFamily && semanticQuickRoot.pages.filter(entry => entry.visible !== false).length > 1
-                current: semanticQuickRoot.page
-                model: semanticQuickRoot.pages
-                onPicked: value => root._quickTab = value
-            }
-            FamilyPart {
-                id: quickTabsPart
-                visible: when
-                when: root.widgetIrisFamily && semanticQuickRoot.pages.filter(entry => entry.visible !== false).length > 1
-                Layout.fillWidth: true
-                part: "control.segmented"
-                props: ({ options: semanticQuickRoot.pages.filter(entry => entry.visible !== false), current: semanticQuickRoot.page,
-                    accessibleName: Translation.tr("Quick controls") })
-                Connections {
-                    target: quickTabsPart.item
-                    function onPicked(value: var): void { root._quickTab = value }
-                }
-            }
-
-            Loader {
-                id: specificQuickLoader
-                active: root._widgetSpecificPopover !== null && semanticQuickRoot.page === "widget"
-                visible: active
-                sourceComponent: root._widgetSpecificPopover
-                Layout.fillWidth: true
-                Layout.preferredHeight: item?.implicitHeight ?? 0
-            }
-
-            // Everything Settings has for this widget, scrolled when the screen has less room than the list.
-            Flickable {
-                visible: semanticQuickRoot.page === "options"
-                Layout.fillWidth: true
-                Layout.preferredHeight: Math.min(contentHeight, Math.max(Math.round(200 * semanticQuickRoot.d),
-                    semanticQuickRoot.availableHeight - Math.round(140 * semanticQuickRoot.d)))
-                contentHeight: optionsLoader.item?.implicitHeight ?? 0
-                interactive: contentHeight > height
-                boundsBehavior: Flickable.StopAtBounds
-                clip: true
-                Loader {
-                    id: optionsLoader
-                    width: parent.width
-                    active: semanticQuickRoot.page === "options"
-                    sourceComponent: WidgetOptionList {
-                        widget: root.configEntryName
-                        exclude: ["sizeClass", "iris.design", "iris.material", "placementStrategy", "locked"]
-                    }
-                }
-            }
-
-            ColumnLayout {
-                visible: semanticQuickRoot.page === "colors"
-                Layout.fillWidth: true
-                spacing: Math.round(14 * semanticQuickRoot.d)
-
-                WidgetQuickSection {
-                    visible: root.designChoices.length > 1
-                    title: Translation.tr("Design")
-                    detail: root.widgetDesignShared ? Translation.tr("Same as every widget") : Translation.tr("This widget only")
-                    WidgetQuickChoices {
-                        current: root.widgetDesign
-                        model: root.designChoices
-                        onPicked: value => root.pickDesign(value)
-                    }
-                    WidgetEditAction {
-                        visible: root.widgetDesignMatchable
-                        Layout.fillWidth: true
-                        iconName: "select_all"
-                        label: Translation.tr("Use on every widget")
-                        onClicked: root.useDesignEverywhere()
-                    }
-                }
-
-                WidgetQuickSection {
-                    visible: root.semanticPaletteQuickControls
-                    title: Translation.tr("Colors")
-                    detail: root.widgetPalettePresetLabel
-
-                    GridLayout {
-                        Layout.fillWidth: true
-                        columns: 2
-                        columnSpacing: 4
-                        rowSpacing: 4
-
-                        Repeater {
-                            model: root.widgetPalettePresets
-
-                            delegate: WidgetQuickChoice {
-                                id: palettePresetButton
-                                required property var modelData
-                                Layout.fillWidth: true
-                                Layout.preferredWidth: 1
-                                Layout.maximumWidth: Number.POSITIVE_INFINITY
-                                label: modelData.label
-                                selected: root.widgetPalettePreset === modelData.value
-                                sidePadding: Math.round(12 * semanticQuickRoot.d) + swatches.width + 6
-                                onClicked: root.applyWidgetPalettePreset(modelData.value)
-
-                                Row {
-                                    id: swatches
-                                    anchors.left: parent.left
-                                    anchors.leftMargin: Math.round(10 * semanticQuickRoot.d)
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    spacing: -3
-                                    Repeater {
-                                        model: palettePresetButton.modelData.roles
-                                        Rectangle {
-                                            required property var modelData
-                                            required property int index
-                                            width: 12
-                                            height: 12
-                                            radius: 6
-                                            color: root.widgetSemanticColor(modelData)
-                                            border.width: 1
-                                            border.color: Qt.rgba(0, 0, 0, 0.25)
-                                            z: 3 - index
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            WidgetQuickSection {
-                visible: semanticQuickRoot.page === "layout" && root.sizeChoices.length > 1 && !root.locked
-                Layout.fillWidth: true
-                title: Translation.tr("Size")
-                detail: root.sizeLabels[root.sizeClass] ?? ""
-                WidgetQuickChoices {
-                    maxColumns: 3
-                    current: root.sizeClass
-                    model: ["small", "medium", "large"].filter(size => root.sizeChoices.includes(size))
-                        .map(size => ({ value: size, label: root.sizeLabels[size] }))
-                    onPicked: value => root.commitSize(value)
-                }
-            }
-
-            WidgetPlacementControls {
-                visible: semanticQuickRoot.page === "layout"
-                Layout.fillWidth: true
-                widget: root
-                wide: semanticQuickRoot.wideDense
-            }
-        }
+    readonly property Component sheetPages: Component {
+        WidgetSheetPages { widget: root }
     }
 
-    // ── Resize handles system ─────────────────────────────────
-    // Override in subclasses to enable resize in edit mode.
-    // Keys: "width", "height" → config key name for that axis
-    // Or: "uniform" → single config key for aspect-locked resize
-    // People's own widgets from before size classes still set it (v2.33's example); nothing reads it.
+    // People's own widgets from before size classes still set these (v2.33's example); nothing reads them.
     property var resizableAxes: ({})
     property int resizeMinWidth: 60
     property int resizeMinHeight: 40
@@ -2715,7 +1919,7 @@ AbstractWidget {
     onIsDraggingChanged: {
         // A sheet that chases the widget across the screen re-decides its edge
         // on every frame of the drag. Moving the widget puts it away instead.
-        if (root.isDragging && editPopoverPanel.open)
+        if (root.isDragging && root.quickControlsOpen)
             root.closeQuickControls()
         if (root.isDragging && root._arranging)
             DesktopArrange.begin(root.outputName, root.editInstanceKey)

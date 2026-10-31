@@ -159,7 +159,6 @@ complete -c inir -n '__inir_at_function background' -a applyOrganicEdgeResponse 
 complete -c inir -n '__inir_at_function background' -a organicEdgeState -d 'Report each Organic Edge output, selected edges, frame, aud…'
 complete -c inir -n '__inir_at_function background' -a setOrganicEdgeEnabled -d 'Enable or disable the independent Organic Edge screen field'
 complete -c inir -n '__inir_at_function background' -a quickControlsPage -d 'Show a page of the selected widget\'s quick controls: widget…'
-complete -c inir -n '__inir_at_function background' -a quickControlsGeometry -d 'Report where the selected widget\'s toolbar and quick-contro…'
 complete -c inir -n '__inir_at_function background' -a widgetSnapshot -d 'Save one desktop widget, as it renders now, to a PNG (offsc…'
 complete -c inir -n '__inir_at_function background' -a legibilityState -d 'Report what each desktop widget reads under itself (brightn…'
 complete -c inir -n '__inir_at_function background' -a desktopItemsState -d 'Report desktop-item persistence, availability, item count,…'
