@@ -9987,8 +9987,6 @@
   "Picker": "选择器",
   "Glyph": "Glyph",
   "The corners of every icon plate.": "The corners of every icon plate.",
-  "Glyph colour": "Glyph colour",
-  "The ink of the text, or each area's own colour.": "The ink of the text, or each area's own colour.",
   "Auto fills glyphs on plates and outlines them alone.": "Auto fills glyphs on plates and outlines them alone.",
   "Outlined": "Outlined",
   "How heavy every glyph's line is.": "How heavy every glyph's line is.",
@@ -10099,7 +10097,6 @@
   "The Island's material, opaque.": "岛屿的材质，不透明。",
   "The Island's material with a touch of your accent.": "岛屿的材质，带一点你的强调色。",
   "How iRiS draws its icons.": "iRiS 如何绘制图标。",
-  "On a tinted plate.": "放在着色的底板上。",
   "On an app-icon tile.": "放在应用图标方块上。",
   "The glyph alone, as Folio's index.": "只有字形，像 Folio 的索引。",
   "How a level shows in its pill.": "等级在胶囊里如何显示。",
@@ -10132,5 +10129,8 @@
   "It grows into a card of its own.": "它长成自己的卡片。",
   "The Island page or panel it stands for (level bubbles then mute).": "它所代表的岛屿页面或面板（等级气泡则静音）。",
   "Take style from Material": "沿用 Material 的样式",
-  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle 使用 Material 的全局样式和透明度。关闭时：使用它自己的 Fluent 外观。"
+  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle 使用 Material 的全局样式和透明度。关闭时：使用它自己的 Fluent 外观。",
+  "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "自动：底板用各区域的颜色，单独的字形保持墨色。",
+  "The set every glyph is drawn from.": "所有字形取自的字体集。",
+  "On a plate.": "放在底板上。"
 }

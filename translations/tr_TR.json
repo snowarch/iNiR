@@ -9987,8 +9987,6 @@
   "Picker": "Seçici",
   "Glyph": "Glyph",
   "The corners of every icon plate.": "The corners of every icon plate.",
-  "Glyph colour": "Glyph colour",
-  "The ink of the text, or each area's own colour.": "The ink of the text, or each area's own colour.",
   "Auto fills glyphs on plates and outlines them alone.": "Auto fills glyphs on plates and outlines them alone.",
   "Outlined": "Outlined",
   "How heavy every glyph's line is.": "How heavy every glyph's line is.",
@@ -10099,7 +10097,6 @@
   "The Island's material, opaque.": "Ada'nın malzemesi, opak.",
   "The Island's material with a touch of your accent.": "Ada'nın malzemesi, vurgu renginden bir dokunuşla.",
   "How iRiS draws its icons.": "iRiS'in simgelerini nasıl çizdiği.",
-  "On a tinted plate.": "Renkli bir plaka üzerinde.",
   "On an app-icon tile.": "Uygulama simgesi karosu üzerinde.",
   "The glyph alone, as Folio's index.": "Yalnızca glif, Folio'nun dizini gibi.",
   "How a level shows in its pill.": "Bir seviyenin hapında nasıl göründüğü.",
@@ -10132,5 +10129,8 @@
   "It grows into a card of its own.": "Kendi kartına dönüşür.",
   "The Island page or panel it stands for (level bubbles then mute).": "Temsil ettiği Ada sayfası ya da paneli (seviye baloncukları sonra sesi kapatır).",
   "Take style from Material": "Stili Material'dan al",
-  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle, Material'ın genel stilini ve saydamlığını kullanır. Kapalıyken: kendi Fluent görünümü."
+  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle, Material'ın genel stilini ve saydamlığını kullanır. Kapalıyken: kendi Fluent görünümü.",
+  "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "Otomatik, plakaları her alanın rengine boyar; plakasız bir glifi mürekkep renginde bırakır.",
+  "The set every glyph is drawn from.": "Her glifin çizildiği set.",
+  "On a plate.": "Bir plaka üzerinde."
 }

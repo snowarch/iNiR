@@ -9987,8 +9987,6 @@
   "Picker": "ピッカー",
   "Glyph": "Glyph",
   "The corners of every icon plate.": "The corners of every icon plate.",
-  "Glyph colour": "Glyph colour",
-  "The ink of the text, or each area's own colour.": "The ink of the text, or each area's own colour.",
   "Auto fills glyphs on plates and outlines them alone.": "Auto fills glyphs on plates and outlines them alone.",
   "Outlined": "Outlined",
   "How heavy every glyph's line is.": "How heavy every glyph's line is.",
@@ -10099,7 +10097,6 @@
   "The Island's material, opaque.": "アイランドの素材、不透明。",
   "The Island's material with a touch of your accent.": "アイランドの素材にアクセントカラーをひとさじ。",
   "How iRiS draws its icons.": "iRiS がアイコンをどう描くか。",
-  "On a tinted plate.": "色付きのプレートの上に。",
   "On an app-icon tile.": "アプリアイコンのタイルの上に。",
   "The glyph alone, as Folio's index.": "グリフのみ。Folio の索引のように。",
   "How a level shows in its pill.": "レベルがピルの中でどう見えるか。",
@@ -10132,5 +10129,8 @@
   "It grows into a card of its own.": "専用のカードに育つ。",
   "The Island page or panel it stands for (level bubbles then mute).": "それが表すアイランドのページやパネル(レベルのバブルはミュート)。",
   "Take style from Material": "Material のスタイルを使う",
-  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle は Material のグローバルスタイルと透明度を使います。オフ: 独自の Fluent の外観。"
+  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle は Material のグローバルスタイルと透明度を使います。オフ: 独自の Fluent の外観。",
+  "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "自動では、プレートを各エリアの色で塗り、プレートのないグリフはインクの色のままにします。",
+  "The set every glyph is drawn from.": "すべてのグリフを描くセット。",
+  "On a plate.": "プレートの上に。"
 }

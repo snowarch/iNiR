@@ -9987,8 +9987,6 @@
   "Picker": "Выбор обоев",
   "Glyph": "Glyph",
   "The corners of every icon plate.": "The corners of every icon plate.",
-  "Glyph colour": "Glyph colour",
-  "The ink of the text, or each area's own colour.": "The ink of the text, or each area's own colour.",
   "Auto fills glyphs on plates and outlines them alone.": "Auto fills glyphs on plates and outlines them alone.",
   "Outlined": "Outlined",
   "How heavy every glyph's line is.": "How heavy every glyph's line is.",
@@ -10099,7 +10097,6 @@
   "The Island's material, opaque.": "Материал Острова, непрозрачный.",
   "The Island's material with a touch of your accent.": "Материал Острова с оттенком вашего акцента.",
   "How iRiS draws its icons.": "Как iRiS рисует свои значки.",
-  "On a tinted plate.": "На тонированной плашке.",
   "On an app-icon tile.": "На плитке значка приложения.",
   "The glyph alone, as Folio's index.": "Только глиф, как в указателе Folio.",
   "How a level shows in its pill.": "Как уровень показывается в своей таблетке.",
@@ -10132,5 +10129,8 @@
   "It grows into a card of its own.": "Он вырастает в собственную карточку.",
   "The Island page or panel it stands for (level bubbles then mute).": "Страница или панель Острова, которую он представляет (пузыри уровней тогда выключают звук).",
   "Take style from Material": "Брать стиль из Material",
-  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle использует глобальный стиль и прозрачность Material. Выключено: собственный вид Fluent."
+  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle использует глобальный стиль и прозрачность Material. Выключено: собственный вид Fluent.",
+  "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "«Авто» красит плашки в цвет каждого раздела, а глиф без плашки оставляет цветом текста.",
+  "The set every glyph is drawn from.": "Набор, из которого рисуется каждый глиф.",
+  "On a plate.": "На плашке."
 }

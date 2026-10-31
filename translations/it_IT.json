@@ -9987,8 +9987,6 @@
   "Picker": "Selettore",
   "Glyph": "Glifo",
   "The corners of every icon plate.": "Gli angoli di ogni placca delle icone.",
-  "Glyph colour": "Colore del glifo",
-  "The ink of the text, or each area's own colour.": "L'inchiostro del testo, o il colore proprio di ogni area.",
   "Auto fills glyphs on plates and outlines them alone.": "Auto riempie i glifi sulle placche e contorna quelli da soli.",
   "Outlined": "Contorno",
   "How heavy every glyph's line is.": "Quanto è spesso il tratto di ogni glifo.",
@@ -10099,7 +10097,6 @@
   "The Island's material, opaque.": "Il materiale dell'Isola, opaco.",
   "The Island's material with a touch of your accent.": "Il materiale dell'Isola con un tocco del tuo accento.",
   "How iRiS draws its icons.": "Come iRiS disegna le sue icone.",
-  "On a tinted plate.": "Su una placca colorata.",
   "On an app-icon tile.": "Su una tessera da icona d'app.",
   "The glyph alone, as Folio's index.": "Solo il glifo, come l'indice di Folio.",
   "How a level shows in its pill.": "Come appare un livello nella sua pillola.",
@@ -10132,5 +10129,8 @@
   "It grows into a card of its own.": "Diventa una scheda tutta sua.",
   "The Island page or panel it stands for (level bubbles then mute).": "La pagina o il pannello dell'Isola che rappresenta (le bolle di livello poi silenziano).",
   "Take style from Material": "Prendi lo stile da Material",
-  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle usa lo stile globale e la trasparenza di Material. Disattivato: il suo aspetto Fluent."
+  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle usa lo stile globale e la trasparenza di Material. Disattivato: il suo aspetto Fluent.",
+  "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "Auto colora le placche con il colore di ogni area e lascia un glifo da solo nell'inchiostro.",
+  "The set every glyph is drawn from.": "Il set da cui è disegnato ogni glifo.",
+  "On a plate.": "Su una placca."
 }

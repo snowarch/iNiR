@@ -9987,8 +9987,6 @@
   "Picker": "Selector",
   "Glyph": "Glifo",
   "The corners of every icon plate.": "Las esquinas de cada placa de ícono.",
-  "Glyph colour": "Color del glifo",
-  "The ink of the text, or each area's own colour.": "La tinta del texto, o el color propio de cada área.",
   "Auto fills glyphs on plates and outlines them alone.": "Automático rellena los glifos sobre placas y los contornea cuando van solos.",
   "Outlined": "Contorno",
   "How heavy every glyph's line is.": "Qué tan grueso es el trazo de cada glifo.",
@@ -10099,7 +10097,6 @@
   "The Island's material, opaque.": "El material de la Isla, opaco.",
   "The Island's material with a touch of your accent.": "El material de la Isla con un toque de tu acento.",
   "How iRiS draws its icons.": "Cómo dibuja iRiS sus íconos.",
-  "On a tinted plate.": "Sobre una placa teñida.",
   "On an app-icon tile.": "Sobre un mosaico de ícono de app.",
   "The glyph alone, as Folio's index.": "Solo el glifo, como el índice de Folio.",
   "How a level shows in its pill.": "Cómo se muestra un nivel en su píldora.",
@@ -10132,5 +10129,8 @@
   "It grows into a card of its own.": "Crece en una tarjeta propia.",
   "The Island page or panel it stands for (level bubbles then mute).": "La página o el panel de la Isla que representa (las burbujas de nivel silencian).",
   "Take style from Material": "Tomar el estilo de Material",
-  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle usa el estilo global y la transparencia de Material. Apagado: su propio aspecto Fluent."
+  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle usa el estilo global y la transparencia de Material. Apagado: su propio aspecto Fluent.",
+  "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "Auto pinta las placas con el color de cada área y deja en tinta un glifo sin placa.",
+  "The set every glyph is drawn from.": "El conjunto del que sale cada glifo.",
+  "On a plate.": "Sobre una placa."
 }

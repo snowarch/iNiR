@@ -9987,8 +9987,6 @@
   "Picker": "선택기",
   "Glyph": "Glyph",
   "The corners of every icon plate.": "The corners of every icon plate.",
-  "Glyph colour": "Glyph colour",
-  "The ink of the text, or each area's own colour.": "The ink of the text, or each area's own colour.",
   "Auto fills glyphs on plates and outlines them alone.": "Auto fills glyphs on plates and outlines them alone.",
   "Outlined": "Outlined",
   "How heavy every glyph's line is.": "How heavy every glyph's line is.",
@@ -10099,7 +10097,6 @@
   "The Island's material, opaque.": "아일랜드의 소재, 불투명.",
   "The Island's material with a touch of your accent.": "아일랜드의 소재에 강조색을 살짝.",
   "How iRiS draws its icons.": "iRiS가 아이콘을 그리는 방식.",
-  "On a tinted plate.": "색이 입혀진 플레이트 위에.",
   "On an app-icon tile.": "앱 아이콘 타일 위에.",
   "The glyph alone, as Folio's index.": "글리프만, Folio의 색인처럼.",
   "How a level shows in its pill.": "레벨이 알약 안에서 보이는 방식.",
@@ -10132,5 +10129,8 @@
   "It grows into a card of its own.": "자기만의 카드로 커집니다.",
   "The Island page or panel it stands for (level bubbles then mute).": "그것이 나타내는 아일랜드 페이지나 패널 (레벨 버블은 음소거).",
   "Take style from Material": "Material에서 스타일 가져오기",
-  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle이 Material의 전역 스타일과 투명도를 사용합니다. 끄면: 고유한 Fluent 모양."
+  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle이 Material의 전역 스타일과 투명도를 사용합니다. 끄면: 고유한 Fluent 모양.",
+  "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "자동은 플레이트를 각 영역의 색으로 칠하고, 플레이트 없는 글리프는 잉크 색으로 둡니다.",
+  "The set every glyph is drawn from.": "모든 글리프를 그리는 세트.",
+  "On a plate.": "플레이트 위에."
 }

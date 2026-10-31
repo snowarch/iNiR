@@ -9987,8 +9987,6 @@
   "Picker": "Auswahl",
   "Glyph": "Zeichen",
   "The corners of every icon plate.": "Die Ecken jeder Symbolplatte.",
-  "Glyph colour": "Zeichenfarbe",
-  "The ink of the text, or each area's own colour.": "Die Tinte des Textes oder die eigene Farbe jedes Bereichs.",
   "Auto fills glyphs on plates and outlines them alone.": "Automatisch füllt Zeichen auf Platten und zeigt freie als Umriss.",
   "Outlined": "Umriss",
   "How heavy every glyph's line is.": "Wie kräftig die Linie jedes Zeichens ist.",
@@ -10099,7 +10097,6 @@
   "The Island's material, opaque.": "Das Material der Insel, deckend.",
   "The Island's material with a touch of your accent.": "Das Material der Insel mit einem Hauch deiner Akzentfarbe.",
   "How iRiS draws its icons.": "Wie iRiS seine Symbole zeichnet.",
-  "On a tinted plate.": "Auf einer getönten Platte.",
   "On an app-icon tile.": "Auf einer App-Symbol-Kachel.",
   "The glyph alone, as Folio's index.": "Nur das Zeichen, wie Folios Index.",
   "How a level shows in its pill.": "Wie ein Pegel in seiner Pille erscheint.",
@@ -10132,5 +10129,8 @@
   "It grows into a card of its own.": "Sie wächst zu einer eigenen Karte.",
   "The Island page or panel it stands for (level bubbles then mute).": "Die Inselseite oder das Panel, für das sie steht (Pegelblasen schalten dann stumm).",
   "Take style from Material": "Stil von Material übernehmen",
-  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle trägt den globalen Stil und die Transparenz von Material. Aus: sein eigener Fluent-Look."
+  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle trägt den globalen Stil und die Transparenz von Material. Aus: sein eigener Fluent-Look.",
+  "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "Auto färbt Platten in der Farbe jedes Bereichs und lässt ein Symbol ohne Platte in Tinte.",
+  "The set every glyph is drawn from.": "Der Satz, aus dem jedes Symbol gezeichnet wird.",
+  "On a plate.": "Auf einer Platte."
 }

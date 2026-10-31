@@ -9987,8 +9987,6 @@
   "Picker": "Sélecteur",
   "Glyph": "Glyphe",
   "The corners of every icon plate.": "Les coins de chaque plaque d'icône.",
-  "Glyph colour": "Couleur du glyphe",
-  "The ink of the text, or each area's own colour.": "L'encre du texte, ou la couleur propre de chaque zone.",
   "Auto fills glyphs on plates and outlines them alone.": "Auto remplit les glyphes sur plaque et détoure ceux qui sont seuls.",
   "Outlined": "Contour",
   "How heavy every glyph's line is.": "L'épaisseur du trait de chaque glyphe.",
@@ -10099,7 +10097,6 @@
   "The Island's material, opaque.": "La matière de l'Îlot, opaque.",
   "The Island's material with a touch of your accent.": "La matière de l'Îlot avec une touche de ton accent.",
   "How iRiS draws its icons.": "Comment iRiS dessine ses icônes.",
-  "On a tinted plate.": "Sur une plaque teintée.",
   "On an app-icon tile.": "Sur une tuile d'icône d'app.",
   "The glyph alone, as Folio's index.": "Le glyphe seul, comme l'index de Folio.",
   "How a level shows in its pill.": "Comment un niveau s'affiche dans sa pilule.",
@@ -10132,5 +10129,8 @@
   "It grows into a card of its own.": "Elle devient une carte à elle.",
   "The Island page or panel it stands for (level bubbles then mute).": "La page ou le panneau de l'Îlot qu'elle représente (les bulles de niveau coupent alors le son).",
   "Take style from Material": "Reprendre le style de Material",
-  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle adopte le style global et la transparence de Material. Désactivé : son propre look Fluent."
+  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle adopte le style global et la transparence de Material. Désactivé : son propre look Fluent.",
+  "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "Auto peint les plaques de la couleur de chaque zone et laisse un glyphe seul à l'encre.",
+  "The set every glyph is drawn from.": "Le jeu dont chaque glyphe est tiré.",
+  "On a plate.": "Sur une plaque."
 }

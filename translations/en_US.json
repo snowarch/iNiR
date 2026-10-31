@@ -9987,8 +9987,6 @@
   "Picker": "Picker",
   "Glyph": "Glyph",
   "The corners of every icon plate.": "The corners of every icon plate.",
-  "Glyph colour": "Glyph colour",
-  "The ink of the text, or each area's own colour.": "The ink of the text, or each area's own colour.",
   "Auto fills glyphs on plates and outlines them alone.": "Auto fills glyphs on plates and outlines them alone.",
   "Outlined": "Outlined",
   "How heavy every glyph's line is.": "How heavy every glyph's line is.",
@@ -10099,7 +10097,6 @@
   "The Island's material, opaque.": "The Island's material, opaque.",
   "The Island's material with a touch of your accent.": "The Island's material with a touch of your accent.",
   "How iRiS draws its icons.": "How iRiS draws its icons.",
-  "On a tinted plate.": "On a tinted plate.",
   "On an app-icon tile.": "On an app-icon tile.",
   "The glyph alone, as Folio's index.": "The glyph alone, as Folio's index.",
   "How a level shows in its pill.": "How a level shows in its pill.",
@@ -10132,5 +10129,8 @@
   "It grows into a card of its own.": "It grows into a card of its own.",
   "The Island page or panel it stands for (level bubbles then mute).": "The Island page or panel it stands for (level bubbles then mute).",
   "Take style from Material": "Take style from Material",
-  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle wears Material's global style and transparency. Off: its own Fluent look."
+  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle wears Material's global style and transparency. Off: its own Fluent look.",
+  "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "Auto paints plates in each area's colour and leaves a glyph alone in ink.",
+  "The set every glyph is drawn from.": "The set every glyph is drawn from.",
+  "On a plate.": "On a plate."
 }

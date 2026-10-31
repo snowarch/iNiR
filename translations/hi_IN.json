@@ -9987,8 +9987,6 @@
   "Picker": "पिकर",
   "Glyph": "Glyph",
   "The corners of every icon plate.": "The corners of every icon plate.",
-  "Glyph colour": "Glyph colour",
-  "The ink of the text, or each area's own colour.": "The ink of the text, or each area's own colour.",
   "Auto fills glyphs on plates and outlines them alone.": "Auto fills glyphs on plates and outlines them alone.",
   "Outlined": "Outlined",
   "How heavy every glyph's line is.": "How heavy every glyph's line is.",
@@ -10099,7 +10097,6 @@
   "The Island's material, opaque.": "द्वीप की सामग्री, अपारदर्शी।",
   "The Island's material with a touch of your accent.": "द्वीप की सामग्री, आपके एक्सेंट के हल्के स्पर्श के साथ।",
   "How iRiS draws its icons.": "iRiS अपने आइकन कैसे बनाता है।",
-  "On a tinted plate.": "रंगी हुई प्लेट पर।",
   "On an app-icon tile.": "ऐप-आइकन टाइल पर।",
   "The glyph alone, as Folio's index.": "सिर्फ़ ग्लिफ़, Folio के इंडेक्स की तरह।",
   "How a level shows in its pill.": "स्तर अपनी गोली में कैसे दिखता है।",
@@ -10132,5 +10129,8 @@
   "It grows into a card of its own.": "वह अपना कार्ड बन जाता है।",
   "The Island page or panel it stands for (level bubbles then mute).": "द्वीप का वह पेज या पैनल जिसका वह प्रतिनिधि है (स्तर बबल तब म्यूट करते हैं)।",
   "Take style from Material": "Material से शैली लें",
-  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle, Material की ग्लोबल शैली और पारदर्शिता अपनाता है। बंद होने पर: उसका अपना Fluent रूप।"
+  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle, Material की ग्लोबल शैली और पारदर्शिता अपनाता है। बंद होने पर: उसका अपना Fluent रूप।",
+  "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "ऑटो प्लेटों को हर क्षेत्र के रंग में रंगता है और अकेले ग्लिफ़ को स्याही के रंग में छोड़ता है।",
+  "The set every glyph is drawn from.": "वह सेट जिससे हर ग्लिफ़ बनता है।",
+  "On a plate.": "प्लेट पर।"
 }

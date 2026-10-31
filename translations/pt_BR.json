@@ -9987,8 +9987,6 @@
   "Picker": "Seletor",
   "Glyph": "Glifo",
   "The corners of every icon plate.": "Os cantos de cada placa de ícone.",
-  "Glyph colour": "Cor do glifo",
-  "The ink of the text, or each area's own colour.": "A tinta do texto, ou a cor própria de cada área.",
   "Auto fills glyphs on plates and outlines them alone.": "Automático preenche glifos em placas e contorna os soltos.",
   "Outlined": "Contorno",
   "How heavy every glyph's line is.": "Quão grosso é o traço de cada glifo.",
@@ -10099,7 +10097,6 @@
   "The Island's material, opaque.": "O material da Ilha, opaco.",
   "The Island's material with a touch of your accent.": "O material da Ilha com um toque do seu destaque.",
   "How iRiS draws its icons.": "Como o iRiS desenha seus ícones.",
-  "On a tinted plate.": "Sobre uma placa tingida.",
   "On an app-icon tile.": "Sobre um bloco de ícone de app.",
   "The glyph alone, as Folio's index.": "Só o glifo, como o índice do Folio.",
   "How a level shows in its pill.": "Como um nível aparece na sua pílula.",
@@ -10132,5 +10129,8 @@
   "It grows into a card of its own.": "Ela vira um cartão próprio.",
   "The Island page or panel it stands for (level bubbles then mute).": "A página ou o painel da Ilha que ela representa (bolhas de nível então silenciam).",
   "Take style from Material": "Usar o estilo do Material",
-  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "O Waffle usa o estilo global e a transparência do Material. Desligado: seu próprio visual Fluent."
+  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "O Waffle usa o estilo global e a transparência do Material. Desligado: seu próprio visual Fluent.",
+  "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "Auto pinta as placas com a cor de cada área e deixa um glifo sozinho na cor da tinta.",
+  "The set every glyph is drawn from.": "O conjunto de onde cada glifo é desenhado.",
+  "On a plate.": "Sobre uma placa."
 }

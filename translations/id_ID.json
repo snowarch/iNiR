@@ -9987,8 +9987,6 @@
   "Picker": "Pemilih",
   "Glyph": "Glyph",
   "The corners of every icon plate.": "The corners of every icon plate.",
-  "Glyph colour": "Glyph colour",
-  "The ink of the text, or each area's own colour.": "The ink of the text, or each area's own colour.",
   "Auto fills glyphs on plates and outlines them alone.": "Auto fills glyphs on plates and outlines them alone.",
   "Outlined": "Outlined",
   "How heavy every glyph's line is.": "How heavy every glyph's line is.",
@@ -10099,7 +10097,6 @@
   "The Island's material, opaque.": "Bahan Pulau, buram pekat.",
   "The Island's material with a touch of your accent.": "Bahan Pulau dengan sentuhan aksenmu.",
   "How iRiS draws its icons.": "Cara iRiS menggambar ikonnya.",
-  "On a tinted plate.": "Di atas pelat berwarna.",
   "On an app-icon tile.": "Di atas ubin ikon aplikasi.",
   "The glyph alone, as Folio's index.": "Glifnya saja, seperti indeks Folio.",
   "How a level shows in its pill.": "Cara level tampil di pilnya.",
@@ -10132,5 +10129,8 @@
   "It grows into a card of its own.": "Ia tumbuh menjadi kartu sendiri.",
   "The Island page or panel it stands for (level bubbles then mute).": "Halaman atau panel Pulau yang diwakilinya (gelembung level lalu membisukan).",
   "Take style from Material": "Ambil gaya dari Material",
-  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle memakai gaya global dan transparansi Material. Mati: tampilan Fluent miliknya sendiri."
+  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle memakai gaya global dan transparansi Material. Mati: tampilan Fluent miliknya sendiri.",
+  "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "Otomatis mewarnai pelat dengan warna tiap area dan membiarkan glif tanpa pelat dalam warna tinta.",
+  "The set every glyph is drawn from.": "Set yang dipakai untuk menggambar setiap glif.",
+  "On a plate.": "Di atas pelat."
 }

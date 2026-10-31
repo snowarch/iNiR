@@ -9987,8 +9987,6 @@
   "Picker": "Bộ chọn",
   "Glyph": "Glyph",
   "The corners of every icon plate.": "The corners of every icon plate.",
-  "Glyph colour": "Glyph colour",
-  "The ink of the text, or each area's own colour.": "The ink of the text, or each area's own colour.",
   "Auto fills glyphs on plates and outlines them alone.": "Auto fills glyphs on plates and outlines them alone.",
   "Outlined": "Outlined",
   "How heavy every glyph's line is.": "How heavy every glyph's line is.",
@@ -10099,7 +10097,6 @@
   "The Island's material, opaque.": "Chất liệu của Đảo, đục.",
   "The Island's material with a touch of your accent.": "Chất liệu của Đảo với chút màu nhấn của bạn.",
   "How iRiS draws its icons.": "Cách iRiS vẽ biểu tượng.",
-  "On a tinted plate.": "Trên một tấm nhuộm màu.",
   "On an app-icon tile.": "Trên một ô biểu tượng ứng dụng.",
   "The glyph alone, as Folio's index.": "Chỉ glyph, như mục lục của Folio.",
   "How a level shows in its pill.": "Cách một mức hiện trong viên thuốc của nó.",
@@ -10132,5 +10129,8 @@
   "It grows into a card of its own.": "Nó lớn thành một thẻ riêng.",
   "The Island page or panel it stands for (level bubbles then mute).": "Trang hoặc bảng của Đảo mà nó đại diện (bong bóng mức khi đó tắt tiếng).",
   "Take style from Material": "Lấy phong cách từ Material",
-  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle dùng phong cách chung và độ trong suốt của Material. Tắt: giao diện Fluent riêng của nó."
+  "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle dùng phong cách chung và độ trong suốt của Material. Tắt: giao diện Fluent riêng của nó.",
+  "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "Tự động tô tấm theo màu của từng khu vực và để biểu tượng đứng riêng theo màu mực.",
+  "The set every glyph is drawn from.": "Bộ dùng để vẽ mọi biểu tượng.",
+  "On a plate.": "Trên một tấm."
 }
