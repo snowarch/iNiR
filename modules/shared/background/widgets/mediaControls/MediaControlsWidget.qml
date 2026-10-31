@@ -144,15 +144,28 @@ AbstractBackgroundWidget {
         (root.sizedGeometry.hBare ?? root.sizedGeometry.h) * Appearance.fontSizeScale * scaleFactor)
         + root.lyricsSheetHeight + root.lyricsPanelHeight
 
+    // The plate a player draws. Aurora's and Angel's glass is a tint over the blurred wallpaper, so the words read
+    // against that mix: light glass over a dark wallpaper is mid grey and took light ink (2.3:1).
+    readonly property bool mediaGlass: Appearance.auroraEverywhere && !Appearance.inirEverywhere && !Appearance.zzzEverywhere
+    readonly property color mediaPlate: root.mediaGlass
+        ? ColorUtils.mix(Appearance.colors.colLayer0Base, root._regionBg,
+            1 - (Appearance.angelEverywhere ? Appearance.angel.overlayOpacity : Appearance.aurora.popupTransparentize))
+        : Appearance.colors.colLayer0
     // A player draws its own plate; the resting mark sits bare on the wallpaper and reads against it.
-    accentBackdrop: root.hasPlayer ? Appearance.colors.colLayer0
+    accentBackdrop: root.hasPlayer ? root.mediaPlate
         : root._hasBrightness ? root._regionBg
         : root.widgetIrisFamily ? root._inkDark : Appearance.colors.colLayer0
     readonly property color mediaSurfaceInk: root.forceLightInk ? root._inkLight
         : root.forceDarkInk ? root._inkDark
-        : root.widgetSemanticForeground(root.widgetSurfaceRole,
-            Appearance.colors.colLayer0, 4.5)
-    readonly property color mediaSurfaceInkMuted: ColorUtils.applyAlpha(root.mediaSurfaceInk, 0.66)
+        // a title is the scheme's own text (M3 onSurface): the role helper takes the first tone past 4.5, a pale grey
+        : ColorUtils.ensureReadable(root.widgetSurfaceRole === "surface" ? Appearance.colors.colOnLayer0
+            : root.widgetSemanticForeground(root.widgetSurfaceRole, root.mediaPlate, 4.5), root.mediaPlate, 4.5)
+    // the artist and times are body text: a step toward the plate like M3 onSurfaceVariant (two thirds alpha gave 2.7)
+    readonly property color mediaSurfaceInkMuted: root.forceLightInk || root.forceDarkInk
+        ? ColorUtils.applyAlpha(root.mediaSurfaceInk, 0.72)
+        // glass keeps a margin: the cover art under it, a fifth of the mix, is not in the estimate
+        : ColorUtils.ensureReadable(ColorUtils.mix(root.mediaSurfaceInk, root.mediaPlate, 0.8), root.mediaPlate,
+            root.mediaGlass ? 6 : 4.5)
     readonly property QtObject _desktopInkOverride: QtObject {
         property color colOnLayer0: root.mediaSurfaceInk
         property color colSubtext: root.mediaSurfaceInkMuted
