@@ -97,13 +97,34 @@ function snapAxis(pos, size, t, grid, lo, hi) {
     return { pos: Math.round(cur), kind: kind }
 }
 
+// A frame that cuts the room's corners at 45° (`room.corners`: [tl, tr, br, bl], each the least sum of the
+// two gaps a rect keeps there) holds a rect off the cut: it steps out along the diagonal, half on each axis.
+function cornered(x, y, w, h, room) {
+    var keep = room.corners
+    if (!keep)
+        return { x: x, y: y }
+    var l = x - room.left, t = y - room.top, r = room.right - x - w, b = room.bottom - y - h
+    var gaps = [[l, t, 1, 1], [r, t, -1, 1], [r, b, -1, -1], [l, b, 1, -1]]
+    for (var i = 0; i < 4; i++) {
+        var need = (keep[i] || 0) - gaps[i][0] - gaps[i][1]
+        if (need > 0) {
+            x += gaps[i][2] * need / 2
+            y += gaps[i][3] * need / 2
+        }
+    }
+    var bx = bounds(room, "x", w)
+    var by = bounds(room, "y", h)
+    return { x: Math.round(clamp(x, bx.lo, bx.hi)), y: Math.round(clamp(y, by.lo, by.hi)) }
+}
+
 // Where a carried rect goes. `grid` 0 turns the lattice off (neighbours and the screen still pull).
 function snap(rect, others, room, grid, gap) {
     var bx = bounds(room, "x", rect.w)
     var by = bounds(room, "y", rect.h)
     var sx = snapAxis(rect.x, rect.w, targets("x", others, room, gap), grid, bx.lo, bx.hi)
     var sy = snapAxis(rect.y, rect.h, targets("y", others, room, gap), grid, by.lo, by.hi)
-    return { x: sx.pos, y: sy.pos, kindX: sx.kind, kindY: sy.kind }
+    var c = cornered(sx.pos, sy.pos, rect.w, rect.h, room)
+    return { x: c.x, y: c.y, kindX: c.x === sx.pos ? sx.kind : "", kindY: c.y === sy.pos ? sy.kind : "" }
 }
 
 function near(a, b) {
@@ -266,18 +287,22 @@ function free(rect, others, gap) {
 function settle(rect, others, room, gap) {
     var bx = bounds(room, "x", rect.w)
     var by = bounds(room, "y", rect.h)
-    var here = { x: clamp(rect.x, bx.lo, bx.hi), y: clamp(rect.y, by.lo, by.hi), w: rect.w, h: rect.h }
+    var cx = clamp(rect.x, bx.lo, bx.hi), cy = clamp(rect.y, by.lo, by.hi)
+    var at = cornered(cx, cy, rect.w, rect.h, room)
+    var here = { x: at.x, y: at.y, w: rect.w, h: rect.h }
+    var stepped = Math.round(cx) !== at.x || Math.round(cy) !== at.y
     // Touching counts as free; a hair less than the gutter is what a placed pair keeps.
     var test = Math.max(0, gap - 1)
     var blocking = []
     for (var b = 0; b < others.length; b++)
         if (overlaps(here, others[b], 0)) blocking.push(others[b])
     if (blocking.length === 0)
-        return { x: Math.round(here.x), y: Math.round(here.y), moved: false }
+        return { x: Math.round(here.x), y: Math.round(here.y), moved: stepped }
     var best = null
     var bestD = Infinity
     function consider(x, y) {
-        var c = { x: clamp(x, bx.lo, bx.hi), y: clamp(y, by.lo, by.hi), w: rect.w, h: rect.h }
+        var p = cornered(clamp(x, bx.lo, bx.hi), clamp(y, by.lo, by.hi), rect.w, rect.h, room)
+        var c = { x: p.x, y: p.y, w: rect.w, h: rect.h }
         if (!free(c, others, test))
             return
         var d = (c.x - here.x) * (c.x - here.x) + (c.y - here.y) * (c.y - here.y)

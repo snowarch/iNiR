@@ -317,10 +317,10 @@ Singleton {
     function desktopWorkArea(outputName: string, screenWidth: real,
             screenHeight: real): var {
         const panelInsets = root.desktopInsets(outputName)
-        // Free placement reaches the screen's edge, or a family frame's inner edge (under iRiS's band a widget is cut by
-        // the chassis). The shell's own bodies are kept clear by arranging (DesktopArrange.bodies), not by bands.
+        // Free placement reaches the screen's edge, or where a family's frame lets widgets rest (iRiS: a breath inside
+        // its band). The shell's own bodies are kept clear by arranging (DesktopArrange.bodies), not by bands.
         const band = root._family?.frameBand ? root._family.frameBand() : 0
-        return root._workAreaFromInsets({
+        const area = root._workAreaFromInsets({
             left: band,
             top: band,
             right: band,
@@ -328,6 +328,9 @@ Singleton {
             barEdge: panelInsets.barEdge ?? "",
             dockEdge: panelInsets.dockEdge ?? ""
         }, screenWidth, screenHeight, 0)
+        // A frame that cuts its corners: [tl, tr, br, bl], the least sum of a widget's two gaps there (ArrangeMath).
+        area.corners = root._family?.frameCorners ? root._family.frameCorners() : null
+        return area
     }
 
     // Zone placement is intentionally panel-aware while free placement spans

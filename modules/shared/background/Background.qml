@@ -2514,7 +2514,8 @@ Scope {
                 readonly property var arrangeRoom: ({ w: widgetCanvas.width, h: widgetCanvas.height,
                     left: Number(bgRoot.desktopFreeWorkArea?.left ?? 0), top: Number(bgRoot.desktopFreeWorkArea?.top ?? 0),
                     right: Number(bgRoot.desktopFreeWorkArea?.right ?? widgetCanvas.width),
-                    bottom: Number(bgRoot.desktopFreeWorkArea?.bottom ?? widgetCanvas.height) })
+                    bottom: Number(bgRoot.desktopFreeWorkArea?.bottom ?? widgetCanvas.height),
+                    corners: bgRoot.desktopFreeWorkArea?.corners ?? null })
                 onArrangeRoomChanged: DesktopArrange.setRoom(bgRoot.screenName, widgetCanvas.arrangeRoom)
 
                 // A widget that grew (resized, a larger size class) moves the neighbours it now covers aside, each to
