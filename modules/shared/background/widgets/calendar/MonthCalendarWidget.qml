@@ -58,8 +58,13 @@ AbstractBackgroundWidget {
     readonly property color ink: root.widgetInk
     readonly property color inkMuted: root.widgetHasSurface
         ? ColorUtils.applyAlpha(root.widgetSurfaceInk, 0.58) : root.widgetInkMuted
-    readonly property color accentMark: root.instrument ? root.widgetAccentVisible : root.accentFace
-    readonly property color accentMarkInk: root.instrument ? root.widgetAccentVisible : root.accentInk
+    // Today is the accent's solid fill on a plate too: the container sank into Aurora's, Regalia's and Editorial's
+    // plates. Off a plate the mark already picks whichever stands 3:1 off the wallpaper.
+    readonly property var primarySet: root.widgetSemanticSet(root.widgetPrimaryRole)
+    readonly property color todayFace: root.widgetHasSurface ? root.primarySet.color : root.accentFace
+    readonly property color todayInk: root.widgetHasSurface ? root.primarySet.onColor : root.accentInk
+    readonly property color accentMark: root.instrument ? root.widgetAccentVisible : root.todayFace
+    readonly property color accentMarkInk: root.instrument ? root.widgetAccentVisible : root.todayInk
     // a picked day is tonal, a step under today's accent
     readonly property color pickFace: root.instrument ? ColorUtils.applyAlpha(root.widgetAccentVisible, 0.16)
         : root.widgetSemanticContainer(root.widgetSecondaryRole)
@@ -326,7 +331,7 @@ AbstractBackgroundWidget {
                                 text: modelData.icon
                                 iconSize: Math.round((root.instrument ? 15 : 17) * root.scaleFactor)
                                 color: modelData.delta === 0 && root.monthShift === 0
-                                    ? root.accentMarkInk : root.ink
+                                    ? (root.instrument ? root.accentMarkInk : root.accentInk) : root.ink
                             }
                             StyledToolTip { text: Translation.tr(modelData.tip) }
                         }
@@ -410,7 +415,7 @@ AbstractBackgroundWidget {
                                 // a size over the cell reads round, but a gapless small month has no room for it
                                 implicitSize: Math.round(Math.min(parent.width, parent.height, Math.round(36 * root.scaleFactor)) * (root.compact ? 1 : 1.1))
                                 shape: MaterialShape.Shape.Pentagon
-                                color: root.accentFace
+                                color: root.todayFace
                             }
                             Rectangle {
                                 anchors.centerIn: parent
