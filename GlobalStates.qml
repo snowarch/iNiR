@@ -453,9 +453,8 @@ Singleton {
 
     readonly property string overviewPresentationOutput:
         root.resolveOutputName(root.overviewTargetOutput, [])
-    // Material's screen list for the side panels; a family with its own (`sidebarsAnyScreen`) ignores it.
-    readonly property var sidebarScreenList: Plugins.flag(Plugins.active, "sidebarsAnyScreen")
-        ? [] : (Config.options?.material?.sidebar?.screenList ?? [])
+    // The screens the active family's side panels may open on (plugin.json settings.sidebarScreens); none listed, any.
+    readonly property var sidebarScreenList: Array.from(Plugins.setting(Plugins.active, "sidebarScreens", []) ?? [])
     readonly property string sidebarLeftPresentationOutput:
         root.resolveOutputName(root.sidebarLeftTargetOutput,
             root.sidebarScreenList)

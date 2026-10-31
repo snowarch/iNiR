@@ -175,7 +175,7 @@ complete -c inir -n '__inir_at_function background' -a clockDebugSetRegion -d 'I
 complete -c inir -n '__inir_at_function background' -a clockDebugSetLayout -d 'Probe quick-control geometry at a hypothetical clock positi…'
 complete -c inir -n '__inir_at_function background' -a clockDebugRestore -d 'Restore the config captured by clock diagnostics'
 complete -c inir -n '__inir_at_target' -a bar -d 'Top bar visibility'
-complete -c inir -n '__inir_at_function bar' -a mediaWidth -d 'How wide the song title gets in Material\'s bar, 120 to 640…'
+complete -c inir -n '__inir_at_function bar' -a mediaWidth -d 'How wide the song title gets in the active family\'s bar, 12…'
 complete -c inir -n '__inir_at_function bar' -a toggle -d 'Show/hide bar'
 complete -c inir -n '__inir_at_function bar' -a close -d 'Hide bar'
 complete -c inir -n '__inir_at_function bar' -a open -d 'Show bar'

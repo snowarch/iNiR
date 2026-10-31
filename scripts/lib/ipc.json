@@ -575,7 +575,7 @@
      "args": [
       "px"
      ],
-     "description": "How wide the song title gets in Material's bar, 120 to 640 px (the window title gives way); empty to read it",
+     "description": "How wide the song title gets in the active family's bar, 120 to 640 px (the window title gives way); empty to read it",
      "values": []
     },
     {

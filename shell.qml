@@ -361,13 +361,15 @@ ShellRoot {
     /// Top bar visibility.
     IpcHandler {
         target: "bar"
-        /// How wide the song title gets in Material's bar, 120 to 640 px (the window title gives way); empty to read
-        /// it
+        /// How wide the song title gets in the active family's bar, 120 to 640 px (the window title gives way); empty
+        /// to read it
         function mediaWidth(px: string): string {
+            const key = Plugins.settingKey(Plugins.active, "barMediaWidth")
+            if (key.length === 0) return "This family's bar shows no song title"
             const value = parseInt(px)
-            if (value >= 120 && value <= 640) Config.setNestedValue("material.bar.media.maxWidth", value)
+            if (value >= 120 && value <= 640) Config.setNestedValue(key, value)
             else if (px.length > 0) return "Use a width from 120 to 640 px"
-            return String(value >= 120 && value <= 640 ? value : (Config.options?.material?.bar?.media?.maxWidth ?? 220))
+            return String(value >= 120 && value <= 640 ? value : Plugins.setting(Plugins.active, "barMediaWidth", 220))
         }
         /// Show/hide bar
         function toggle(): void {
@@ -888,28 +890,20 @@ ShellRoot {
             if (verb) verb()
             return verb !== null
         }
-        function _usePillLauncher(): bool {
-            return (Config.options?.panelFamily ?? "ii") === "ii"
-                && (Config.options?.material?.bar?.appearanceStyle ?? "classic") === "pill"
-                && (Config.options?.material?.bar?.pill?.superSpaceLauncher ?? "overview") === "pill"
-        }
         /// Open/close overview
         function toggle(): void {
             if (_family("toggle")) return
-            if (_usePillLauncher()) { GlobalStates.pillSurfaceCommand("toggle", "launcher"); return }
             GlobalStates.overviewSearchPrefix = ""
             GlobalStates.toggleOverview("")
         }
         /// Close overview
         function close(): void {
             if (_family("close")) return
-            if (_usePillLauncher()) { GlobalStates.pillSurfaceCommand("close", "launcher"); return }
             GlobalStates.overviewOpen = false
         }
         /// Open overview
         function open(): void {
             if (_family("open")) return
-            if (_usePillLauncher()) { GlobalStates.pillSurfaceCommand("open", "launcher"); return }
             GlobalStates.overviewSearchPrefix = ""
             GlobalStates.openOverview("")
         }
