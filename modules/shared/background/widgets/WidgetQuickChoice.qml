@@ -25,7 +25,7 @@ Rectangle {
         ? (root.selected ? FamilyStyle.text : FamilyStyle.textSecondary)
         : Appearance.zzzEverywhere ? (root.selected ? Appearance.zzz.onSticker : Appearance.zzz.ink)
         : Appearance.regaliaEverywhere ? (root.selected ? Appearance.regalia.primaryPlateInk : Appearance.regalia.onColor)
-        : root.selected ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnLayer2
+        : root.selected ? Appearance.colors.colOnPrimary : Appearance.colors.colOnLayer2
     readonly property color dangerInk: root.iris ? FamilyStyle.danger : Appearance.colors.colError
     readonly property color glyphInk: root.danger ? root.dangerInk : root.iris && root.selected ? FamilyStyle.accent : root.ink
 
@@ -42,7 +42,9 @@ Rectangle {
         : root.selected
             ? (Appearance.zzzEverywhere ? Appearance.zzz.sticker
                 : Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlate
-                : hover.hovered ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colSecondaryContainer)
+                // the chosen key is the accent, as Settings' button groups and these quick tabs: the secondary
+                // container sat a hair off the idle keys in a dark scheme
+                : hover.hovered ? Appearance.colors.colPrimaryHover : Appearance.colors.colPrimary)
             : ColorUtils.applyAlpha(Appearance.colors.colOnLayer2, hover.hovered ? 0.1 : 0.055)
     border.width: root.iris && root.selected ? 1 : Appearance.editorialEverywhere && root.selected ? 1 : 0
     border.color: root.iris ? FamilyStyle.tintBorder(FamilyStyle.accent) : Appearance.editorialEverywhere ? Appearance.editorial.edge : "transparent"
