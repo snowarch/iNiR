@@ -260,6 +260,8 @@ Slider {
             }
             width: Math.max(0, root.visualPosition * root.effectiveDraggingWidth - handle.implicitWidth / 2)
             height: root.trackWidth
+            // a fill shorter than half the handle reads as a stray dash beside it (a song's first seconds on a 2 px wave)
+            visible: width >= Math.max(root.trackWidth, root.handleHeight / 2)
             active: !root.usesWaveTrack
             sourceComponent: Rectangle {
                 color: root.highlightColor
@@ -291,6 +293,7 @@ Slider {
             }
             width: Math.max(0, root.visualPosition * root.effectiveDraggingWidth - handle.implicitWidth / 2)
             height: root.trackWidth * (1 + 2 * Math.max(0.5, Math.abs(root.waveAmplitudeMultiplier)))
+            visible: width >= Math.max(root.trackWidth, root.handleHeight / 2)
             active: root.usesWaveTrack
             sourceComponent: WavyLine {
                 anchors.fill: parent
