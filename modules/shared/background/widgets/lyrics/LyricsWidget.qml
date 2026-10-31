@@ -9,9 +9,6 @@ AbstractBackgroundWidget {
     id: root
 
     configEntryName: "lyrics"
-    defaultConfig: ({
-        placementStrategy: "free", widgetScale: 100, cornerRadius: -1, x: 520, y: 600
-    })
     semanticPaletteControls: false
     widgetSurfaceEnabled: false
     needsColText: false

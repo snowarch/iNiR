@@ -7,5 +7,26 @@
   "category": "decor",
   "keywords": "pet character companion",
   "sizes": ["large", "small"],
-  "palette": true
+  "palette": true,
+  "defaultConfig": {
+    "placementStrategy": "free",
+    "widgetScale": 100,
+    "widgetOpacity": 100,
+    "colorMode": "auto",
+    "dim": 0,
+    "showBackground": false,
+    "showBorder": false,
+    "backgroundOpacity": 0.16,
+    "borderWidth": 1,
+    "borderOpacity": 0.2,
+    "cornerRadius": -1,
+    "useBlur": false,
+    "pose": "reading",
+    "poseFilter": "all",
+    "posePickerMode": "buttons",
+    "customPath": "",
+    "anchorWidget": "",
+    "x": 120,
+    "y": 320
+  }
 }

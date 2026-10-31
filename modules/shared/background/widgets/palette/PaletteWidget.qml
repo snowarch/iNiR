@@ -14,9 +14,6 @@ AbstractBackgroundWidget {
     id: root
 
     configEntryName: "palette"
-    defaultConfig: ({
-        placementStrategy: "free", widgetScale: 100, cornerRadius: -1, x: 120, y: 600
-    })
     familyOptions: [
         { key: "source", label: Translation.tr("Colours from"), fallback: "wallpaper", choices: [
             { label: Translation.tr("Wallpaper"), icon: "wallpaper", value: "wallpaper" },

@@ -16,26 +16,6 @@ AbstractBackgroundWidget {
     id: root
 
     configEntryName: "customImage"
-    defaultConfig: ({
-        enable: false,
-        locked: false,
-        placementStrategy: "free",
-        sourceMode: "file",
-        path: "",
-        folder: "",
-        mediaFilter: "all",
-        intervalSeconds: 30,
-        order: "sequential",
-        transitionDuration: 450,
-        shape: "Cookie4Sided",
-        fitMode: "cover",
-        size: 220,
-        dim: 0,
-        widgetScale: 100,
-        widgetOpacity: 100,
-        x: 120,
-        y: 320
-    })
     familyOptions: [
         { key: "fitMode", raw: true, label: Translation.tr("Picture"), fallback: "cover", choices: [
             { label: Translation.tr("Fill"), icon: "crop", value: "cover" },

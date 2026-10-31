@@ -15,26 +15,6 @@ AbstractBackgroundWidget {
     id: root
 
     configEntryName: "userCard"
-    defaultConfig: ({
-            placementStrategy: "free",
-            widgetScale: 100,
-            widgetOpacity: 100,
-            colorMode: "auto",
-            dim: 0,
-            showBackground: true,
-            showBorder: true,
-            backgroundOpacity: 0.16,
-            borderWidth: 1,
-            borderOpacity: 0.2,
-            cornerRadius: -1,
-            useBlur: false,
-            style: "card",
-            showAvatar: true,
-            showWeather: true,
-            showHostname: true,
-            x: 80,
-            y: 420
-        })
     familyOptions: [
         { key: "showAvatar", raw: true, label: Translation.tr("Picture"), icon: "account_circle", fallback: true },
         { key: "showWeather", raw: true, label: Translation.tr("Weather"), icon: "partly_cloudy_day", fallback: true },

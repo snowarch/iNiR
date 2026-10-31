@@ -13,17 +13,6 @@ AbstractBackgroundWidget {
     id: root
 
     configEntryName: "weather"
-    defaultConfig: ({
-        placementStrategy: "free", preset: "default", style: "pill", shape: "pill",
-        size: 200, tempSize: 80, iconSize: 80,
-        showTemp: true, showIcon: true, showCondition: false, showMetrics: true,
-        showSunPath: true, showSunTimes: true, showLocation: true,
-        padding: 20, tempFontWeight: 500, conditionOpacity: 0.7,
-        widgetScale: 100, widgetOpacity: 100, colorMode: "auto", dim: 0,
-        showBackground: true, useBlur: false, showBorder: true,
-        backgroundOpacity: 0.16, borderWidth: 1, borderOpacity: 0.2, cornerRadius: -1,
-        x: 100, y: 200
-    })
 
     readonly property string weatherStyle: root._readConfigKey("style") ?? "pill"
     // Material's Medium and Large add the hours (and the days) to what the chosen style shows; the dial keeps its own.

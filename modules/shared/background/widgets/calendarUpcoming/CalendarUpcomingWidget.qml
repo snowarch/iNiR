@@ -15,21 +15,6 @@ AbstractBackgroundWidget {
     id: root
 
     configEntryName: "calendarUpcoming"
-    defaultConfig: ({
-        placementStrategy: "free",
-        
-        maxEvents: 5,
-        showDate: true,
-        showTime: true,
-        showLocation: false,
-        groupByDay: true,
-        style: "card",
-        widgetScale: 100, widgetOpacity: 100,
-        showBackground: true, useBlur: false, showBorder: true,
-        backgroundOpacity: 0.10, borderWidth: 1, borderOpacity: 0.12,
-        cornerRadius: -1, colorMode: "auto", dim: 0,
-        x: 80, y: 80
-    })
     familyOptions: [
         { key: "groupByDay", raw: true, label: Translation.tr("Group by day"), icon: "event_list", fallback: true },
         { key: "showLocation", raw: true, label: Translation.tr("Location"), icon: "location_on", fallback: false }

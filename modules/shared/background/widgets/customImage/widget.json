@@ -8,5 +8,25 @@
   "keywords": "picture photo image",
   "sizes": ["medium", "small", "large"],
   "palette": true,
-  "face": "photo"
+  "face": "photo",
+  "defaultConfig": {
+    "enable": false,
+    "locked": false,
+    "placementStrategy": "free",
+    "sourceMode": "file",
+    "path": "",
+    "folder": "",
+    "mediaFilter": "all",
+    "intervalSeconds": 30,
+    "order": "sequential",
+    "transitionDuration": 450,
+    "shape": "Cookie4Sided",
+    "fitMode": "cover",
+    "size": 220,
+    "dim": 0,
+    "widgetScale": 100,
+    "widgetOpacity": 100,
+    "x": 120,
+    "y": 320
+  }
 }

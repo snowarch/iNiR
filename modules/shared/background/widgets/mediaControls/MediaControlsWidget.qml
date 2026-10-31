@@ -20,21 +20,6 @@ AbstractBackgroundWidget {
 
     configEntryName: "mediaControls"
     designFaceKey: "widgetNowPlaying"
-    defaultConfig: ({
-        placementStrategy: "free", playerPreset: "full",
-        visualizerType: "wave", visualizerPosition: "bottom",
-        visualizerPaletteMode: "cava", visualizerOpacity: 55,
-        visualizerSmoothing: 2, visualizerFrequencyProfile: "flat",
-        visualizerAccentStrength: 70, visualizerRange: 88, visualizerBarCount: 32,
-        organicSensitivity: 35, organicPulse: 150, organicMotionSpeed: 250,
-        organicIdleMotion: 40, organicGlow: 100, organicOpacity: 100,
-        organicReach: 35, organicRange: 20, organicCompression: 0,
-        lyricsExpanded: false,
-        widgetScale: 100, widgetOpacity: 100, colorMode: "auto", dim: 0,
-        showBackground: true, useBlur: false, showBorder: true,
-        backgroundOpacity: 0.16, borderWidth: 1, borderOpacity: 0.2, cornerRadius: -1,
-        x: 240, y: 240
-    })
 
     readonly property var presetGeometry: ({
         "full": { w: 380, h: 150 },

@@ -12,30 +12,6 @@ AbstractBackgroundWidget {
     id: root
 
     configEntryName: "worldClock"
-    defaultConfig: ({
-            placementStrategy: "free",
-            widgetScale: 100,
-            widgetOpacity: 100,
-            colorMode: "auto",
-            dim: 0,
-            showBackground: true,
-            showBorder: true,
-            backgroundOpacity: 0.16,
-            borderWidth: 1,
-            borderOpacity: 0.2,
-            cornerRadius: -1,
-            useBlur: false,
-            style: "cards",
-            instrumentLayout: "grid",
-            showNames: true,
-            showOffsets: true,
-            showDate: true,
-            showDayState: true,
-            pulseSeparator: false,
-            timezones: ["Asia/Tokyo", "Europe/London", "America/New_York"],
-            x: 80,
-            y: 200
-        })
     familyOptions: [
         { key: "showNames", raw: true, label: Translation.tr("City names"), icon: "label", fallback: true },
         { key: "showOffsets", raw: true, label: Translation.tr("Time difference"), icon: "schedule", fallback: true }

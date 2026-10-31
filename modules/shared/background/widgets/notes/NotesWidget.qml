@@ -14,21 +14,6 @@ AbstractBackgroundWidget {
     id: root
 
     configEntryName: "notes"
-    defaultConfig: ({
-        placementStrategy: "free",
-        
-        text: "",
-        fontSize: 14,
-        fontFamily: "sans",
-        textAlign: "left",
-        style: "card",
-        showRules: true,
-        widgetScale: 100, widgetOpacity: 100,
-        showBackground: true, useBlur: false, showBorder: true,
-        backgroundOpacity: 0.10, borderWidth: 1, borderOpacity: 0.12,
-        cornerRadius: -1, colorMode: "auto", dim: 0,
-        x: 80, y: 80
-    })
 
     visibleWhenLocked: false
     needsColText: true

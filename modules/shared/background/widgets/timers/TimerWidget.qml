@@ -14,15 +14,6 @@ AbstractBackgroundWidget {
     id: root
 
     configEntryName: "timers"
-    defaultConfig: ({
-        placementStrategy: "free", vertical: false, style: "cards", glow: true,
-        showProgress: true, showState: true, showHundredths: true,
-        widgetScale: 100, widgetOpacity: 100,
-        showBackground: false, useBlur: false, showBorder: false,
-        backgroundOpacity: 0, borderWidth: 0, borderOpacity: 0.16,
-        cornerRadius: -1, colorMode: "auto", dim: 0,
-        x: 360, y: 420
-    })
 
     readonly property bool vertical: Boolean(root._readConfigKey("vertical") ?? false)
     readonly property bool instrument: String(root._readConfigKey("style") ?? "cards") === "instrument"

@@ -17,15 +17,6 @@ AbstractBackgroundWidget {
     id: root
 
     configEntryName: "mascot"
-    defaultConfig: ({
-        placementStrategy: "free",
-        widgetScale: 100, widgetOpacity: 100, colorMode: "auto", dim: 0,
-        showBackground: false, showBorder: false, backgroundOpacity: 0.16,
-        borderWidth: 1, borderOpacity: 0.2, cornerRadius: -1, useBlur: false,
-        pose: "reading", poseFilter: "all", posePickerMode: "buttons",
-        customPath: "", anchorWidget: "",
-        x: 120, y: 320
-    })
 
     // She's an image — no ink to adapt — but her optional card is the shared
     // region-aware plate, so run the analysis only while the card is on.

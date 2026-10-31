@@ -8,12 +8,6 @@ import qs.modules.shared.background.widgets
 AbstractBackgroundWidget {
     id: root
     configEntryName: "editorial"
-    defaultConfig: ({ placementStrategy: "free", 
-        title: "Make room for wonder.", caption: "A LITTLE EVERY DAY", footer: "YOUR OWN PERSPECTIVE",
-        style: "poster", showAccent: true, widgetScale: 100, widgetOpacity: 100,
-        colorMode: "auto", dim: 0, showBackground: false, showBorder: false,
-        backgroundOpacity: 0.12, borderWidth: 1, borderOpacity: 0.2,
-        cornerRadius: -1, useBlur: false, x: 100, y: 300 })
     // Under an iRiS Design that prints this widget (AIRISU), the print is its face; elsewhere it draws itself.
     printPart: "widgetEditorial"
     printKey: "editorial"

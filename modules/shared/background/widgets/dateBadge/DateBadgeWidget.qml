@@ -9,12 +9,6 @@ import qs.modules.shared.background.widgets
 AbstractBackgroundWidget {
     id: root
     configEntryName: "dateBadge"
-    defaultConfig: ({ placementStrategy: "free", 
-        style: "ticket", showYear: true, showWeekday: true, showOrdinal: true,
-        instrumentMarks: true, widgetScale: 100, widgetOpacity: 100,
-        colorMode: "auto", dim: 0, showBackground: true, showBorder: true,
-        backgroundOpacity: 0.16, borderWidth: 1, borderOpacity: 0.2,
-        cornerRadius: -1, useBlur: false, x: 260, y: 80 })
     familyOptions: [
         { key: "showWeekday", raw: true, label: Translation.tr("Weekday"), icon: "calendar_view_week", fallback: true },
         { key: "showYear", raw: true, label: Translation.tr("Year"), icon: "event", fallback: true },

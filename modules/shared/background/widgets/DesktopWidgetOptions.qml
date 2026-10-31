@@ -22,7 +22,7 @@ QtObject {
     // Widgets the active family draws a face for, and the ones on by default.
     readonly property var faced: DesktopWidgetRegistry.entries.filter(entry => DesktopWidgetRegistry.hasFace(entry.key, Plugins.active))
         .map(entry => entry.key)
-    readonly property var onByDefault: ["clock"]
+    readonly property var onByDefault: DesktopWidgetRegistry.entries.filter(entry => entry.defaultOn).map(entry => entry.key)
 
     function value(widget: string, key: string, fallback: var): var {
         Config.revision

@@ -6,9 +6,6 @@ AbstractBackgroundWidget {
     id: root
 
     configEntryName: "controls"
-    defaultConfig: ({
-        placementStrategy: "free", widgetScale: 100, cornerRadius: -1, x: 120, y: 420
-    })
     semanticPaletteControls: false
     widgetSurfaceEnabled: false
     needsColText: !root.familyFaced

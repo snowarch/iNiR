@@ -17,22 +17,6 @@ AbstractBackgroundWidget {
     id: root
 
     configEntryName: "visualizer"
-    defaultConfig: ({
-        placementStrategy: "free", preset: "default", vizType: "bars", waveOpacity: -1,
-        paletteMode: "cava", barsOrigin: "bottom", waveMode: "fill",
-        frequencyProfile: "flat", smoothing: 2, fillRatio: 90, barOpacity: 100,
-        organicSensitivity: 25, organicPulse: 150, organicMotionSpeed: 250, organicIdleMotion: 18,
-        organicOpacity: 100, organicGlow: 100, organicCoverSize: 51, organicRange: 20,
-        organicCompression: 0,
-        barCount: 48, barSpacing: 2, barRadius: 2, barMinHeight: 1,
-        lineWidth: 2, edgeInset: 0, edgeSoftness: 28, accentStrength: 70,
-        dim: 0,
-        widgetScale: 100, widgetOpacity: 100, colorMode: "auto",
-        // A visualizer is drawn on the wallpaper itself: a plate and an outline only box the music in.
-        showBackground: false, useBlur: false, showBorder: false,
-        backgroundOpacity: 0, borderWidth: 1, borderOpacity: 0.2,
-        cornerRadius: -1, x: 100, y: 100
-    })
 
     // Under an iRiS Design that prints this widget (AIRISU), the print is its face; elsewhere it draws itself.
     printPart: "widgetVisualizer"

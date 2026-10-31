@@ -15,16 +15,6 @@ AbstractBackgroundWidget {
     id: root
 
     configEntryName: "monthCalendar"
-    defaultConfig: ({
-        placementStrategy: "free",
-        
-        weekStart: 1, showAdjacentDays: true, style: "card", instrumentRule: true,
-        widgetScale: 100, widgetOpacity: 100,
-        showBackground: true, useBlur: false, showBorder: true,
-        backgroundOpacity: 0.14, borderWidth: 1, borderOpacity: 0.16,
-        cornerRadius: -1, colorMode: "auto", dim: 0,
-        x: 420, y: 120
-    })
     visibleWhenLocked: true
     needsColText: true
     resizeMinWidth: 252

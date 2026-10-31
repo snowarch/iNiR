@@ -15,16 +15,6 @@ AbstractBackgroundWidget {
     id: root
 
     configEntryName: "todo"
-    defaultConfig: ({
-        placementStrategy: "free",
-        
-        widgetScale: 100, widgetOpacity: 100, style: "card", instrumentRules: true,
-        showCompleted: true,
-        showBackground: true, useBlur: false, showBorder: true,
-        backgroundOpacity: 0.14, borderWidth: 1, borderOpacity: 0.16,
-        cornerRadius: -1, colorMode: "auto", dim: 0,
-        x: 120, y: 180
-    })
     familyOptions: [
         { key: "showCompleted", raw: true, label: Translation.tr("Show completed"), icon: "task_alt", fallback: true }
     ]

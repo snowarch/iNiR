@@ -15,18 +15,6 @@ AbstractBackgroundWidget {
     id: root
 
     configEntryName: "systemMonitor"
-    defaultConfig: ({
-        placementStrategy: "free", preset: "default", displayMode: "bars",
-        barCount: 32, barSpacing: 2, trackAlpha: 0.08,
-        fillOpacity: 0.7, graphFillOpacity: 0.3,
-        showCpu: true, showMemory: true, showGpu: true,
-        showTemp: false, showGpuTemp: false, showDisk: false, showLabels: true,
-        dim: 0,
-        widgetScale: 100, widgetOpacity: 100, colorMode: "auto",
-        showBackground: true, useBlur: false, showBorder: true,
-        backgroundOpacity: 0.16, borderWidth: 1, borderOpacity: 0.2,
-        cornerRadius: -1, x: 50, y: 400
-    })
 
     // a sized card takes the column count that gives each meter the most room: three across a large card left
     // a band of small meters in the middle of it

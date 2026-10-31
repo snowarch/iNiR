@@ -13,25 +13,6 @@ AbstractBackgroundWidget {
     id: root
 
     configEntryName: "imageConverter"
-    defaultConfig: ({
-        enable: false,
-        locked: false,
-        placementStrategy: "free",
-        selectedFormat: "webp",
-        widgetScale: 100,
-        widgetOpacity: 100,
-        colorMode: "auto",
-        dim: 0,
-        showBackground: true,
-        useBlur: false,
-        showBorder: true,
-        backgroundOpacity: 0.22,
-        borderWidth: 1,
-        borderOpacity: 0.22,
-        cornerRadius: -1,
-        x: 120,
-        y: 360
-    })
 
     readonly property var formatOptions: [
         { displayName: "PNG", icon: "image", value: "png" },

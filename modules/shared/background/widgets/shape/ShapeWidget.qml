@@ -9,11 +9,6 @@ import qs.modules.shared.background.widgets
 AbstractBackgroundWidget {
     id: root
     configEntryName: "shape"
-    defaultConfig: ({ placementStrategy: "free", 
-        shape: "Flower", treatment: "flat", outline: false, angle: 0, strokeWidth: 3,
-        widgetScale: 100, widgetOpacity: 100, colorMode: "auto", dim: 0,
-        showBackground: false, showBorder: false, backgroundOpacity: 0,
-        borderWidth: 0, borderOpacity: 0.2, cornerRadius: -1, useBlur: false, x: 80, y: 240 })
     resizeMinWidth: 64
     resizeMinHeight: 64
     readonly property string shapeName: String(root._readConfigKey("shape") ?? "Flower")

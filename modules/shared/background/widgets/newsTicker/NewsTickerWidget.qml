@@ -15,14 +15,6 @@ AbstractBackgroundWidget {
     id: root
 
     configEntryName: "newsTicker"
-    defaultConfig: ({
-        placementStrategy: "free", 
-        widgetScale: 100, widgetOpacity: 100, colorMode: "auto", dim: 0,
-        showBackground: true, showBorder: true, backgroundOpacity: 0.16,
-        borderWidth: 1, borderOpacity: 0.2, cornerRadius: -1, useBlur: false,
-        style: "card", showMeta: true, rotateSeconds: 45,
-        x: 100, y: 260
-    })
     readonly property var rotateChoices: [
         { label: Translation.tr("15 s"), value: 15 },
         { label: Translation.tr("45 s"), value: 45 },

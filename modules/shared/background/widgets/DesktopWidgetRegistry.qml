@@ -11,7 +11,7 @@ import qs.services
 // Adding a widget:
 //   1. Its folder here, named as its key, with a qmldir and `<Name>Widget.qml` (an AbstractBackgroundWidget with
 //      `configEntryName: "<key>"`), and its line in `widgets.list`.
-//   2. Its `widget.json`. `main` is that file. `name` is what people call it (shelf, gallery), `group` its Settings
+//   2. Its `widget.json`. `main` is that file. `defaultConfig`: what a fresh instance starts with. `name` is what people call it (shelf, gallery), `group` its Settings
 //      heading; both go to every catalogue in translations/. `lock`: offered on the lock screen and in the iRiS gallery.
 //   `palette`: it has the semantic palette roles (`background.widgets.<key>.palette`). `sizes`: default first.
 //      `face`: the name of the family faces that draw it (a family's part `widgetFace.<face>`). `faceOnly`: it draws
@@ -61,7 +61,9 @@ Singleton {
         return Qt.size(size === "small" ? root.unit : root.unit * 2 + root.gap, size === "large" ? root.unit * 2 + root.gap : root.unit)
     }
     // Extra mascots are the mascot; a person's own widget says its sizes in its manifest, or keeps the size it draws.
-    function sizesOf(key: string): var { return root.byKey[String(key).startsWith("mascotInstances.") ? "mascot" : key]?.sizes ?? [] }
+    function defaultsOf(key: string): var { return root.byKey[root.baseKey(key)]?.defaultConfig ?? ({}) }
+    function baseKey(key: string): string { return String(key).startsWith("mascotInstances.") ? "mascot" : key }
+    function sizesOf(key: string): var { return root.byKey[root.baseKey(key)]?.sizes ?? [] }
 
     readonly property var keys: root.entries.map(entry => entry.key)
     readonly property var byKey: root.entries.reduce((all, entry) => { all[entry.key] = entry; return all }, ({}))

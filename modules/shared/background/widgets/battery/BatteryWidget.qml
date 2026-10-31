@@ -15,15 +15,6 @@ AbstractBackgroundWidget {
     id: root
 
     configEntryName: "battery"
-    defaultConfig: ({
-        placementStrategy: "free", preset: "default", displayMode: "ring",
-        showTime: true, showRate: true, ringSize: 72, ringLineWidth: 6,
-        barCount: 20, barSpacing: 2, barRadius: 2, pillHeight: 12,
-        dim: 0, widgetScale: 100, widgetOpacity: 100, colorMode: "auto",
-        showBackground: true, useBlur: false, showBorder: true,
-        backgroundOpacity: 0.16, borderWidth: 1, borderOpacity: 0.2,
-        cornerRadius: -1, x: 50, y: 50
-    })
 
     fitted: true
     drawnWidth: Math.round((root.displayMode === "instrument" ? 220 : 160) * scaleFactor)

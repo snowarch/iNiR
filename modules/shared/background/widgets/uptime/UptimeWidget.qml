@@ -12,14 +12,6 @@ AbstractBackgroundWidget {
     id: root
 
     configEntryName: "uptime"
-    defaultConfig: ({
-        placementStrategy: "free", 
-        widgetScale: 100, widgetOpacity: 100, colorMode: "auto", dim: 0,
-        style: "row", showSince: true, showBreakdown: true,
-        showBackground: true, showBorder: true, backgroundOpacity: 0.16,
-        borderWidth: 1, borderOpacity: 0.2, cornerRadius: -1, useBlur: false,
-        x: 80, y: 80
-    })
 
     readonly property string uptimeStyle: String(root._readConfigKey("style") ?? "row")
     readonly property bool instrument: root.uptimeStyle === "instrument"

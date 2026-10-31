@@ -9,5 +9,27 @@
   "sizes": ["medium", "small", "large"],
   "lock": true,
   "palette": true,
-  "face": "agenda"
+  "face": "agenda",
+  "defaultConfig": {
+    "placementStrategy": "free",
+    "maxEvents": 5,
+    "showDate": true,
+    "showTime": true,
+    "showLocation": false,
+    "groupByDay": true,
+    "style": "card",
+    "widgetScale": 100,
+    "widgetOpacity": 100,
+    "showBackground": true,
+    "useBlur": false,
+    "showBorder": true,
+    "backgroundOpacity": 0.1,
+    "borderWidth": 1,
+    "borderOpacity": 0.12,
+    "cornerRadius": -1,
+    "colorMode": "auto",
+    "dim": 0,
+    "x": 80,
+    "y": 80
+  }
 }

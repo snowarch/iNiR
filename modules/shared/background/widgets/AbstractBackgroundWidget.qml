@@ -1166,8 +1166,8 @@ AbstractWidget {
             key, Config.getNestedValue(root._configPath + "." + key, undefined))
     }
 
-    // Override in subclasses with widget-specific default values
-    property var defaultConfig: ({})
+    // The manifest's defaults; a person's own widget sets them itself.
+    property var defaultConfig: DesktopWidgetRegistry.defaultsOf(root.configEntryName)
     // Seed defaults into Config on first load when config entry is empty
     function _seedDefaultsIfNeeded(): void {
         if (!Config.ready) return;

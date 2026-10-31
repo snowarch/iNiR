@@ -12,14 +12,6 @@ AbstractBackgroundWidget {
     id: root
 
     configEntryName: "dayProgress"
-    defaultConfig: ({
-        placementStrategy: "free", 
-        widgetScale: 100, widgetOpacity: 100, colorMode: "auto", dim: 0,
-        style: "ring", comet: true, showIcon: true, showDate: true, hourLabels: true, fontScale: 100,
-        showBackground: false, showBorder: false, backgroundOpacity: 0,
-        borderWidth: 0, borderOpacity: 0.2, cornerRadius: -1, useBlur: false,
-        x: 80, y: 260
-    })
     resizeMinWidth: 190
     resizeMinHeight: 190
     needsColText: true
