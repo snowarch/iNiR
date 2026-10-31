@@ -158,9 +158,10 @@ AbstractBackgroundWidget {
                 width: root.horizontal ? root.width - x - 14 * root.scaleFactor : root.width * 0.72
                 spacing: 2 * root.scaleFactor
 
+                // large's week strip names the day in its lit cell: the line would say it twice
                 StyledText {
                     Layout.fillWidth: true
-                    visible: root.showWeekday
+                    visible: root.showWeekday && !(root.materialLarge && !root.instrument)
                     text: Translation.locale.toString(root.today, "dddd")
                     horizontalAlignment: root.horizontal ? Text.AlignLeft : Text.AlignHCenter
                     color: root.widgetInk
