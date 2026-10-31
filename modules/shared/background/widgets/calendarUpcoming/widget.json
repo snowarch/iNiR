@@ -31,5 +31,13 @@
     "dim": 0,
     "x": 80,
     "y": 80
-  }
+  },
+  "options": [
+    {"key":"groupByDay","label":"Group by day","type":"switch","default":true},
+    {"key":"showLocation","label":"Location","type":"switch","default":false},
+    {"key":"showDate","label":"Show date","type":"switch","default":true,"when":"plain"},
+    {"key":"showTime","label":"Show time","type":"switch","default":true,"when":"plain"},
+    {"key":"maxEvents","label":"Maximum events","type":"range","default":5,"when":"plain","min":1,"max":12},
+    {"key":"style","label":"Presentation","type":"choice","default":"card","when":"material","choices":[["card","Card"],["instrument","Instrument"]]}
+  ]
 }

@@ -98,21 +98,18 @@ QtObject {
         if (DesktopWidgetDesign.supports(widget)) designs.push(["instrument", "iNstrument"], ["readout", "Readout"])
         const out = [
             root.row(widget, DesktopWidgetDesign.spec.key, "Design", "choice", "auto", { tune: true, choices: root.choices(designs),
-                when: () => designs.length > 2, keywords: ["design", "look", "style", "material", "instrument", "readout"] }),
-            root.row(widget, "iris.material", "Material", "choice", "auto", { tune: true,
-                when: () => root.face(widget) && Boolean(root.value(widget, "showBackground", true)),
-                choices: root.choices([["auto", "Same as every widget"], ["glass", "Glass"], ["clear", "Transparent"], ["solid", "Solid"], ["tinted", "Tinted"]]),
-                keywords: ["glass", "transparent", "background", "plate", "fondo", "vidrio"] })
+                when: () => designs.length > 2, keywords: ["design", "look", "style", "material", "instrument", "readout"] })
         ]
+        out.push(...(root.familyOptions["*"] ?? []).map(option => root._row(widget, option)))
         // A widget that draws its own card in Material (plate false) still wears the iRiS plate as a face.
         const plated = () => root.on(widget) && (plate || root.face(widget))
         out.push(
             // switched on over a strength of 0 (a plateless widget's default) the plate stayed invisible: it comes with one
             root.row(widget, "showBackground", "Background", "switch", root.plateDefault(widget), { tune: false, when: plated,
-                // a face set to Transparent has no plate either: showing the background brings its material back
+                // a family's own plate choice can hide it too: showing the background brings it back
                 apply: next => Object.assign(next && Number(root.value(widget, "backgroundOpacity", 0.16)) <= 0
                     ? { showBackground: true, backgroundOpacity: 0.16 } : { showBackground: next },
-                    next && String(root.value(widget, "iris.material", "auto")) === "clear" ? { "iris.material": "auto" } : {}),
+                    next ? DesktopWidgetLook.look.plateShown((key, fallback) => root.value(widget, key, fallback)) : {}),
                 description: "The plate behind the widget.", keywords: ["background", "plate", "card", "surface", "fondo", "superficie"] }),
             root.row(widget, "showBorder", "Outline", "switch", root.plateDefault(widget), { when: plated,
                 apply: next => Object.assign({ showBorder: next }, next && Number(root.value(widget, "borderOpacity", 0.08)) <= 0 ? { borderOpacity: 0.2 } : {},
@@ -142,12 +139,9 @@ QtObject {
         return out
     }
     // Material's medium and large weather is the forecast face: the pill's own sizes and parts mean nothing there.
-    function weatherForecast(): bool {
-        return ["medium", "large"].includes(String(root.value("weather", "sizeClass", "small")))
-            && !root.is("weather", "style", "pill", "dial")
-    }
+    function weatherForecast(): bool { return root.holds("weather", "forecast") }
     function plateDefault(widget: string): bool {
-        return !["clock", "visualizer", "japaneseTypography", "shape", "editorial", "dayProgress", "mascot"].includes(widget)
+        return !DesktopWidgetRegistry.byKey[widget]?.bare
     }
     // Every widget at once, from its own row (so the plate still comes on with a visible strength): a face's surface
     // stays iRiS's. The state reads the widgets on the desktop: one shared value, or "mixed".
@@ -166,10 +160,10 @@ QtObject {
     }
     function everyState(key: string): string {
         Config.revision
-        // an iRiS face wears its plate and outline unless told otherwise
-        // a face set to Transparent shows no plate, whatever its switch says
+        // a face wears its plate and outline unless told otherwise, and its family can hide the plate, whatever the switch says
         const seen = root._everyRows(key).filter(spec => root.on(spec.widget))
-            .map(spec => key === "showBackground" && root.face(spec.widget) && String(root.value(spec.widget, "iris.material", "auto")) === "clear"
+            .map(spec => key === "showBackground" && root.face(spec.widget)
+                    && DesktopWidgetLook.look.plateHidden((name, fallback) => root.value(spec.widget, name, fallback))
                 ? "false" : String(root.value(spec.widget, key, root.face(spec.widget) ? true : spec.fallback)))
         if (seen.length === 0)
             return ""
@@ -188,430 +182,93 @@ QtObject {
             choices: root.choices(["small", "medium", "large"].filter(size => sizes.includes(size)).map(size => [size, labels[size]])),
             keywords: ["size", "small", "medium", "large", "tamaño"] })
     }
-    // A preset that writes several keys at once reads as its name until one of them is changed by hand.
-    function preset(widget: string, label: string, fallback: string, list: var, when: var): var {
-        return root.row(widget, "preset", label, "choice", fallback, { when: when,
-            choices: list.map(entry => ({ label: entry[1], value: entry[0] })),
-            apply: next => Object.assign({ preset: next }, (list.find(entry => entry[0] === next) ?? [])[2] ?? {}) })
+    // A family's own rows for a widget (`widgetOptions` in its plugin.json; "*": for every widget it wears).
+    readonly property var familyOptions: Plugins.manifests[Plugins.active]?.widgetOptions ?? ({})
+    readonly property var widgetRows: DesktopWidgetRegistry.entries.reduce((all, entry) => all.concat(root._rowsOf(entry)), [])
+    function _rowsOf(entry: var): var {
+        const widget = entry.key
+        const rows = list => (list ?? []).map(option => root._row(widget, option))
+        return root.opening(widget).concat([root.size(widget)], rows(root.familyOptions[widget]), rows(entry.options),
+            root.closing(widget, entry.plate !== false))
     }
-
-    readonly property var widgetRows: [
-        // ── Clock ──
-        ...root.opening("clock"),
-        root.size("clock"),
-        root.row("clock", "iris.face", "Face", "choice", "analog", { when: () => root.face("clock"), choices: root.choices([["analog", "Analog", "schedule"], ["digital", "Digital", "timer_10"]]) }),
-        root.row("clock", "iris.seconds", "Second hand", "switch", true, { when: () => root.face("clock") && root.is("clock", "iris.face", "analog", "analog") }),
-        root.row("clock", "iris.week", "Week strip", "switch", true, { when: () => root.face("clock") && !root.is("clock", "sizeClass", "medium", "small") }),
-        root.row("clock", "style", "Clock style", "choice", "digital", { when: () => root.material("clock"),
-            choices: root.choices([["digital", "Digital"], ["androidStacked", "Android stacked"], ["cookie", "Cookie"], ["pixel", "Pixel"], ["instrument", "Instrument"]]) }),
-        root.row("clock", "pixel.orientation", "Orientation", "choice", "horizontal", { when: () => root.material("clock") && root.is("clock", "style", "digital", "pixel"),
-            choices: root.choices([["horizontal", "Horizontal"], ["vertical", "Vertical"]]) }),
-        root.row("clock", "timeFormat", "Time format", "choice", "system", { when: () => (root.material("clock") && ["digital", "androidStacked"].includes(String(root.effective("clock", "style", "digital"))))
-                || (root.face("clock") && root.is("clock", "iris.face", "analog", "digital")),
-            choices: root.choices([["system", "System"], ["24h", "24h"], ["12h", "12h"]]) }),
-        root.row("clock", "dateStyle", "Date style", "choice", "long", { tune: true, when: () => root.material("clock") && root.is("clock", "style", "digital", "digital"),
-            choices: root.choices([["long", "Long"], ["minimal", "Minimal"], ["weekday", "Weekday"], ["numeric", "Numeric"]]) }),
-        root.row("clock", "digital.preset", "Digital preset", "choice", "default", { tune: true, when: () => root.material("clock") && root.is("clock", "style", "digital", "digital"),
-            choices: root.choices([["default", "Default"], ["light", "Light"], ["bold", "Bold"], ["mono", "Mono"]]),
-            apply: next => ({ "digital.preset": next, "digital.fontWeight": { default: 600, light: 300, bold: 800, mono: 500 }[next], "digital.spacing": { default: 6, light: 8, bold: 4, mono: 2 }[next] }) }),
-        root.row("clock", "showSeconds", "Seconds", "switch", false, { when: () => root.plain("clock") && ["digital", "androidStacked", "instrument"].includes(String(root.effective("clock", "style", "digital"))) }),
-        root.row("clock", "showDate", "Date", "switch", true, { when: () => root.plain("clock") && ["digital", "androidStacked", "instrument"].includes(String(root.effective("clock", "style", "digital"))) }),
-        root.row("clock", "showShadow", "Shadow", "switch", true, { tune: true, when: () => root.material("clock") && ["digital", "androidStacked"].includes(String(root.effective("clock", "style", "digital"))) }),
-        root.row("clock", "digital.animateChange", "Animate", "switch", true, { tune: true, when: () => root.material("clock") && ["digital", "androidStacked"].includes(String(root.effective("clock", "style", "digital"))) }),
-        root.row("clock", "digital.adaptToWallpaper", "Adapt digital clock locally", "switch", true, { tune: true, when: () => root.material("clock") && root.is("clock", "style", "digital", "digital") }),
-        root.row("clock", "digital.fontWeight", "Font weight", "range", 600, { min: 100, max: 900, step: 100, when: () => root.material("clock") && root.is("clock", "style", "digital", "digital") }),
-        root.row("clock", "digital.spacing", "Spacing", "range", 6, { min: 0, max: 20, unit: " px", when: () => root.material("clock") && root.is("clock", "style", "digital", "digital") }),
-        root.row("clock", "timeScale", "Time scale", "range", 100, { min: 50, max: 200, step: 5, unit: " %", when: () => root.plain("clock") }),
-        root.row("clock", "dateScale", "Date scale", "range", 100, { min: 50, max: 200, step: 5, unit: " %", when: () => root.material("clock") }),
-        root.row("clock", "fontFamily", "Clock font", "text", "Space Grotesk", { tune: true, placeholder: "Space Grotesk", when: () => root.material("clock") && ["digital", "androidStacked"].includes(String(root.effective("clock", "style", "digital"))) }),
-        root.row("clock", "cookie.preset", "Preset", "choice", "default", { when: () => root.material("clock") && root.is("clock", "style", "digital", "cookie"),
-            choices: root.choices([["default", "Default"], ["compact", "Compact"], ["large", "Large"], ["minimal", "Minimal"]]),
-            apply: next => ({ "cookie.preset": next,
-                "cookie.size": { default: 230, compact: 160, large: 300, minimal: 200 }[next], "cookie.sides": { default: 15, compact: 12, large: 18, minimal: 6 }[next],
-                "cookie.dialNumberStyle": { default: "full", compact: "dots", large: "numbers", minimal: "none" }[next],
-                "cookie.hourHandStyle": { default: "hollow", compact: "fill", large: "classic", minimal: "fill" }[next] }) }),
-        root.row("clock", "cookie.size", "Size", "range", 230, { min: 100, max: 400, step: 10, unit: " px", when: () => root.material("clock") && root.is("clock", "style", "digital", "cookie") }),
-        root.row("clock", "cookie.sides", "Sides", "range", 15, { min: 3, max: 30, when: () => root.material("clock") && root.is("clock", "style", "digital", "cookie") }),
-        root.row("clock", "cookie.useSineCookie", "Sine wave shape", "switch", false, { tune: true, when: () => root.material("clock") && root.is("clock", "style", "digital", "cookie") }),
-        root.row("clock", "cookie.constantlyRotate", "Constant rotation", "switch", false, { tune: true, when: () => root.material("clock") && root.is("clock", "style", "digital", "cookie") }),
-        root.row("clock", "cookie.dialNumberStyle", "Dial style", "choice", "full", { tune: true, when: () => root.material("clock") && root.is("clock", "style", "digital", "cookie"),
-            choices: root.choices([["full", "Lines"], ["dots", "Dots"], ["numbers", "Numbers"], ["none", "None"]]) }),
-        root.row("clock", "cookie.hourMarks", "Hour marks", "switch", false, { tune: true, when: () => root.material("clock") && root.is("clock", "style", "digital", "cookie") }),
-        root.row("clock", "cookie.timeIndicators", "Time column", "switch", false, { tune: true, when: () => root.material("clock") && root.is("clock", "style", "digital", "cookie") }),
-        root.row("clock", "cookie.hourHandStyle", "Hour hand", "choice", "hollow", { tune: true, when: () => root.material("clock") && root.is("clock", "style", "digital", "cookie"),
-            choices: root.choices([["fill", "Fill"], ["hollow", "Hollow"], ["classic", "Classic"], ["hide", "Hide"]]) }),
-        root.row("clock", "cookie.minuteHandStyle", "Minute hand", "choice", "hide", { tune: true, when: () => root.material("clock") && root.is("clock", "style", "digital", "cookie"),
-            choices: root.choices([["bold", "Bold"], ["medium", "Medium"], ["thin", "Thin"], ["hide", "Hide"]]) }),
-        root.row("clock", "cookie.secondHandStyle", "Second hand", "choice", "hide", { tune: true, when: () => root.material("clock") && root.is("clock", "style", "digital", "cookie"),
-            choices: root.choices([["classic", "Classic"], ["dot", "Dot"], ["line", "Line"], ["hide", "Hide"]]) }),
-        root.row("clock", "cookie.dateStyle", "Date indicator", "choice", "bubble", { tune: true, when: () => root.material("clock") && root.is("clock", "style", "digital", "cookie"),
-            choices: root.choices([["bubble", "Bubble"], ["rect", "Rectangle"], ["border", "Border"], ["hide", "Hide"]]) }),
-        root.row("clock", "cookie.aiStyling", "Auto-style from wallpaper", "switch", false, { tune: true, when: () => root.material("clock") && root.is("clock", "style", "digital", "cookie") }),
-        root.row("clock", "instrumentTrail", "Minute trail", "switch", true, { when: () => root.plain("clock") && root.is("clock", "style", "digital", "instrument") }),
-        root.row("clock", "instrumentNumerals", "Numerals", "switch", true, { when: () => root.plain("clock") && root.is("clock", "style", "digital", "instrument") }),
-        root.row("clock", "instrumentTrailLength", "Trail length", "range", 6, { min: 2, max: 15, when: () => root.plain("clock") && root.is("clock", "style", "digital", "instrument") && Boolean(root.value("clock", "instrumentTrail", true)) }),
-        root.row("clock", "quote.enable", "Show quote", "switch", false, { tune: true, when: () => root.material("clock") && ["digital", "cookie"].includes(String(root.effective("clock", "style", "digital"))) }),
-        root.row("clock", "quote.text", "Quote", "text", "", { placeholder: "Enter a quote or message...", when: () => root.material("clock") && Boolean(root.value("clock", "quote.enable", false)) }),
-        ...root.closing("clock", true),
-
-        // ── World clock ──
-        ...root.opening("worldClock"),
-        root.size("worldClock"),
-        root.row("worldClock", "timezones", "Cities", "pieces", ["Asia/Tokyo", "Europe/London", "America/New_York"], { choicesFrom: "timezones",
-            description: "Up to four, in the order you switch them on.", keywords: ["city", "cities", "timezone", "time zone", "zona horaria", "ciudad"] }),
-        root.row("worldClock", "showNames", "City names", "switch", true, { when: () => root.face("worldClock") }),
-        root.row("worldClock", "showOffsets", "Time difference", "switch", true, {}),
-        root.row("worldClock", "style", "Style", "choice", "cards", { when: () => root.material("worldClock"), choices: root.choices([["cards", "List"], ["instrument", "Instrument"]]) }),
-        root.row("worldClock", "instrumentLayout", "Instrument layout", "choice", "grid", { when: () => root.plain("worldClock") && root.is("worldClock", "style", "cards", "instrument"), choices: root.choices([["grid", "Atlas"], ["rows", "Strip"]]) }),
-        root.row("worldClock", "showDate", "Date", "switch", true, { tune: true, when: () => root.plain("worldClock") && root.is("worldClock", "style", "cards", "instrument") }),
-        root.row("worldClock", "showDayState", "Day/Night", "switch", true, { tune: true, when: () => root.plain("worldClock") && root.is("worldClock", "style", "cards", "instrument") }),
-        ...root.closing("worldClock", true),
-
-        // ── Month calendar ──
-        ...root.opening("monthCalendar"),
-        root.size("monthCalendar"),
-        root.row("monthCalendar", "weekStart", "Week starts on", "choice", 1, { choices: root.choices([[1, "Monday"], [0, "Sunday"]]) }),
-        root.row("monthCalendar", "showAdjacentDays", "Show adjacent month days", "switch", true, {}),
-        root.row("monthCalendar", "style", "Style", "choice", "card", { when: () => root.material("monthCalendar"), choices: root.choices([["card", "Card"], ["instrument", "Instrument"]]) }),
-        root.row("monthCalendar", "instrumentRule", "Header rule", "switch", true, { tune: true, when: () => root.plain("monthCalendar") && root.is("monthCalendar", "style", "card", "instrument") }),
-        ...root.closing("monthCalendar", true),
-
-        // ── Upcoming events ──
-        ...root.opening("calendarUpcoming"),
-        root.size("calendarUpcoming"),
-        root.row("calendarUpcoming", "groupByDay", "Group by day", "switch", true, {}),
-        root.row("calendarUpcoming", "showLocation", "Location", "switch", false, {}),
-        root.row("calendarUpcoming", "showDate", "Show date", "switch", true, { when: () => root.plain("calendarUpcoming") }),
-        root.row("calendarUpcoming", "showTime", "Show time", "switch", true, { when: () => root.plain("calendarUpcoming") }),
-        root.row("calendarUpcoming", "maxEvents", "Maximum events", "range", 5, { min: 1, max: 12, when: () => root.plain("calendarUpcoming") }),
-        root.row("calendarUpcoming", "style", "Presentation", "choice", "card", { when: () => root.material("calendarUpcoming"), choices: root.choices([["card", "Card"], ["instrument", "Instrument"]]) }),
-        ...root.closing("calendarUpcoming", true),
-
-        // ── Date badge ──
-        ...root.opening("dateBadge"),
-        root.size("dateBadge"),
-        root.row("dateBadge", "showWeekday", "Weekday", "switch", true, {}),
-        root.row("dateBadge", "showYear", "Year", "switch", true, {}),
-        root.row("dateBadge", "showOrdinal", "Day of the year", "switch", true, {}),
-        root.row("dateBadge", "style", "Style", "choice", "ticket", { when: () => root.material("dateBadge"),
-            choices: root.choices([["ticket", "Ticket"], ["stacked", "Stacked"], ["seal", "Seal"], ["instrument", "Instrument"]]) }),
-        root.row("dateBadge", "instrumentMarks", "Marks", "switch", true, { tune: true, when: () => root.plain("dateBadge") && root.is("dateBadge", "style", "ticket", "instrument") }),
-        ...root.closing("dateBadge", true),
-
-        // ── Day progress ──
-        ...root.opening("dayProgress"),
-        root.size("dayProgress"),
-        root.row("dayProgress", "style", "Style", "choice", "ring", { when: () => root.material("dayProgress"), choices: root.choices([["ring", "Ring"], ["arc", "Arc"], ["ticks", "Ticks"]]) }),
-        root.row("dayProgress", "comet", "Comet tail", "switch", true, { when: () => root.plain("dayProgress") }),
-        root.row("dayProgress", "showIcon", "Sun icon", "switch", true, { when: () => root.plain("dayProgress") }),
-        root.row("dayProgress", "showDate", "Show date", "switch", true, { when: () => root.plain("dayProgress") }),
-        root.row("dayProgress", "hourLabels", "Hour labels", "switch", true, { tune: true, when: () => root.plain("dayProgress") }),
-        root.row("dayProgress", "fontScale", "Text size", "range", 100, { min: 60, max: 180, step: 10, unit: " %", when: () => root.plain("dayProgress") }),
-        ...root.closing("dayProgress", true),
-
-        // ── Timers ──
-        ...root.opening("timers"),
-        root.size("timers"),
-        root.row("timers", "style", "Style", "choice", "cards", { when: () => root.material("timers"), choices: root.choices([["cards", "Cards"], ["instrument", "Instrument"]]) }),
-        root.row("timers", "vertical", "Orientation", "choice", false, { when: () => root.plain("timers"), choices: root.choices([[false, "Horizontal"], [true, "Vertical"]]) }),
-        root.row("timers", "glow", "Active pulse", "switch", true, { tune: true, when: () => root.plain("timers") && root.is("timers", "style", "cards", "instrument") }),
-        root.row("timers", "showProgress", "Progress", "switch", true, { tune: true, when: () => root.plain("timers") && root.is("timers", "style", "cards", "instrument") }),
-        root.row("timers", "showState", "Details", "switch", true, { tune: true, when: () => root.plain("timers") && root.is("timers", "style", "cards", "instrument") }),
-        root.row("timers", "showHundredths", "Hundredths", "switch", true, { tune: true, when: () => root.plain("timers") && root.is("timers", "style", "cards", "instrument") }),
-        ...root.closing("timers", true),
-
-        // ── Uptime ──
-        ...root.opening("uptime"),
-        root.size("uptime"),
-        root.row("uptime", "showSince", "Start time", "switch", true, {}),
-        root.row("uptime", "style", "Style", "choice", "row", { when: () => root.material("uptime"), choices: root.choices([["row", "Row"], ["instrument", "Instrument"]]) }),
-        root.row("uptime", "showBreakdown", "Breakdown", "switch", true, { tune: true, when: () => root.plain("uptime") && root.is("uptime", "style", "row", "instrument") }),
-        ...root.closing("uptime", true),
-
-        // ── Media controls ──
-        ...root.opening("mediaControls"),
-        root.size("mediaControls"),
-        root.row("mediaControls", "iris.lyrics", "Synced lyrics", "switch", true, { when: () => root.face("mediaControls") }),
-        root.row("mediaControls", "iris.rest", "Rest when paused", "switch", true, { when: () => root.face("mediaControls") }),
-        root.row("mediaControls", "playerPreset", "Player style", "choice", "full", { when: () => root.material("mediaControls"),
-            choices: root.choices([["full", "Full"], ["compact", "Compact"], ["minimal", "Minimal"], ["albumart", "Album Art"], ["visualizer", "Visualizer"], ["classic", "Classic"], ["lyrics", "Lyrics"], ["lyricsSplit", "Lyrics wide"], ["expandingLyrics", "Cover"]]) }),
-        root.row("mediaControls", "visualizerType", "Visualizer", "choice", "wave", { when: () => root.material("mediaControls"),
-            choices: root.choices([["wave", "Wave"], ["bars", "Bars"], ["organic", "Organic"]]),
-            apply: next => next === "organic" && String(root.value("mediaControls", "visualizerPosition", "bottom")) === "none" ? { visualizerType: next, visualizerPosition: "fill" } : { visualizerType: next } }),
-        root.row("mediaControls", "visualizerPosition", "Placement", "choice", "bottom", { when: () => root.material("mediaControls"),
-            choices: root.choices([["bottom", "Bottom"], ["top", "Top"], ["fill", "Fill"], ["none", "Off"]]) }),
-        root.row("mediaControls", "visualizerPaletteMode", "Colors", "choice", "cava", { tune: true, when: () => root.material("mediaControls"),
-            choices: root.choices([["cava", "Cava palette"], ["accent", "Accent"], ["player", "Album"]]) }),
-        root.row("mediaControls", "visualizerFrequencyProfile", "Response", "choice", "flat", { tune: true, when: () => root.material("mediaControls"),
-            choices: root.choices([["flat", "Flat"], ["bass", "Bass"], ["warm", "Warm"], ["vocal", "Vocal"], ["treble", "Treble"], ["smile", "Smile"]]) }),
-        root.row("mediaControls", "visualizerAccentStrength", "Accent strength", "range", 70, { min: 0, max: 100, step: 5, unit: " %", when: () => root.material("mediaControls") && !root.is("mediaControls", "visualizerFrequencyProfile", "flat", "flat") }),
-        root.row("mediaControls", "visualizerSmoothing", "Smoothing", "range", 2, { min: 0, max: 8, when: () => root.material("mediaControls") }),
-        root.row("mediaControls", "visualizerOpacity", "Visualizer opacity", "range", 55, { min: 5, max: 100, step: 5, unit: " %", when: () => root.material("mediaControls") && !root.is("mediaControls", "visualizerType", "wave", "organic") }),
-        root.row("mediaControls", "visualizerRange", "Motion range", "range", 88, { min: 10, max: 100, step: 5, unit: " %", when: () => root.material("mediaControls") && !root.is("mediaControls", "visualizerType", "wave", "organic") }),
-        root.row("mediaControls", "visualizerBarCount", "Bar count", "range", 32, { min: 8, max: 128, step: 4, when: () => root.material("mediaControls") && root.is("mediaControls", "visualizerType", "wave", "bars") }),
-        ...[["organicSensitivity", "Sensitivity", 35, 25, 200], ["organicPulse", "Pulse", 150, 0, 150], ["organicCompression", "Compression", 0, 0, 100],
-            ["organicMotionSpeed", "Motion speed", 250, 20, 250], ["organicGlow", "Glow", 100, 0, 100], ["organicReach", "Reach", 35, 20, 140],
-            ["organicIdleMotion", "Idle motion", 40, 0, 100], ["organicOpacity", "Presence", 100, 10, 100], ["organicRange", "Range", 20, 20, 100]]
-            .map(entry => root.row("mediaControls", entry[0], entry[1], "range", entry[2], { min: entry[3], max: entry[4], step: 5, unit: " %",
-                when: () => root.material("mediaControls") && root.is("mediaControls", "visualizerType", "wave", "organic") })),
-        ...root.closing("mediaControls", true),
-        ...root.opening("lyrics"),
-        root.size("lyrics"),
-        ...root.closing("lyrics", false),
-
-        // ── Visualizer ──
-        ...root.opening("visualizer"),
-        root.size("visualizer"),
-        root.preset("visualizer", "Preset", "default", [["default", "Default", { barRadius: 2, barMinHeight: 1, barCount: 48, barSpacing: 2 }],
-            ["dense", "Dense", { barRadius: 1, barMinHeight: 2, barCount: 64, barSpacing: 1 }],
-            ["minimal", "Minimal", { barRadius: 4, barMinHeight: 1, barCount: 24, barSpacing: 3 }],
-            ["wide", "Wide", { barRadius: 2, barMinHeight: 1, barCount: 80, barSpacing: 2 }]], () => !root.is("visualizer", "vizType", "bars", "organic")),
-        root.row("visualizer", "vizType", "Type", "choice", "bars", { choices: root.choices([["bars", "Bars", "bar_chart"], ["wave", "Wave", "waves"], ["organic", "Organic", "bubble_chart"]]) }),
-        root.row("visualizer", "paletteMode", "Colors", "choice", "cava", { choices: root.choices([["cava", "Cava"], ["accent", "Accent"], ["primary", "Primary"], ["album", "Album"]]) }),
-        root.row("visualizer", "barsOrigin", "Bars rise from", "choice", "bottom", { when: () => root.is("visualizer", "vizType", "bars", "bars"),
-            choices: root.choices([["bottom", "Bottom"], ["top", "Top"], ["center", "Center rise"], ["mirror", "Mirrored"]]) }),
-        root.row("visualizer", "waveMode", "Wave", "choice", "fill", { when: () => root.is("visualizer", "vizType", "bars", "wave"), choices: root.choices([["fill", "Fill"], ["line", "Line"], ["ribbon", "Ribbon"]]) }),
-        root.row("visualizer", "barCount", "Bar count", "range", 48, { min: 8, max: 128, step: 4, when: () => root.is("visualizer", "vizType", "bars", "bars") }),
-        root.row("visualizer", "barSpacing", "Bar spacing", "range", 2, { min: 0, max: 8, unit: " px", when: () => root.is("visualizer", "vizType", "bars", "bars") }),
-        root.row("visualizer", "barRadius", "Bar radius", "range", 2, { min: 0, max: 16, unit: " px", when: () => root.is("visualizer", "vizType", "bars", "bars") }),
-        root.row("visualizer", "barMinHeight", "Min height", "range", 1, { min: 0, max: 16, unit: " px", when: () => root.is("visualizer", "vizType", "bars", "bars") }),
-        root.row("visualizer", "barOpacity", "Bar opacity", "range", 100, { min: 5, max: 100, step: 5, unit: " %", when: () => root.is("visualizer", "vizType", "bars", "bars") }),
-        root.row("visualizer", "waveOpacity", "Wave opacity", "range", 30, { min: 5, max: 100, step: 5, unit: " %", when: () => root.is("visualizer", "vizType", "bars", "wave") }),
-        root.row("visualizer", "lineWidth", "Line width", "range", 2, { min: 1, max: 8, unit: " px", when: () => root.is("visualizer", "vizType", "bars", "wave") }),
-        root.row("visualizer", "frequencyProfile", "Response", "choice", "flat", { tune: true,
-            choices: root.choices([["flat", "Flat"], ["bass", "Bass"], ["warm", "Warm"], ["vocal", "Vocal"], ["treble", "Treble"], ["smile", "Smile"]]) }),
-        root.row("visualizer", "accentStrength", "Frequency accent strength", "range", 70, { min: 0, max: 100, step: 5, unit: " %", when: () => !root.is("visualizer", "frequencyProfile", "flat", "flat") }),
-        root.row("visualizer", "smoothing", "Smoothing", "range", 2, { min: 0, max: 8 }),
-        ...[["organicSensitivity", "Sensitivity", 25, 25, 200, 5], ["organicPulse", "Pulse", 150, 0, 150, 5], ["organicCompression", "Compression", 0, 0, 100, 5],
-            ["organicMotionSpeed", "Motion speed", 250, 20, 250, 5], ["organicIdleMotion", "Idle motion", 18, 0, 100, 5], ["organicOpacity", "Halo opacity", 100, 10, 100, 5],
-            ["organicGlow", "Glow", 100, 0, 100, 5], ["organicCoverSize", "Cover size", 51, 30, 90, 1], ["organicRange", "Motion range", 20, 20, 100, 5]]
-            .map(entry => root.row("visualizer", entry[0], entry[1], "range", entry[2], { min: entry[3], max: entry[4], step: entry[5], unit: " %",
-                when: () => root.is("visualizer", "vizType", "bars", "organic") })),
-        root.row("visualizer", "fillRatio", "Spectrum height", "range", 90, { min: 10, max: 100, step: 5, unit: " %", when: () => !root.is("visualizer", "vizType", "bars", "organic") }),
-        root.row("visualizer", "edgeInset", "Edge inset", "range", 0, { min: 0, max: 32, unit: " px", when: () => !root.is("visualizer", "vizType", "bars", "organic") }),
-        root.row("visualizer", "edgeSoftness", "Curve headroom", "range", 28, { min: 0, max: 100, step: 5, unit: " %", when: () => !root.is("visualizer", "vizType", "bars", "organic") }),
-        ...root.closing("visualizer", true),
-
-        // ── System monitor ──
-        ...root.opening("systemMonitor"),
-        root.size("systemMonitor"),
-        root.row("systemMonitor", "iris.lead", "Main", "choice", "auto", { when: () => root.face("systemMonitor"),
-            choices: root.choices([["auto", "Auto"], ["cpu", "Processor", "memory"], ["mem", "Memory", "memory_alt"], ["gpu", "Graphics", "developer_board"],
-                ["temp", "CPU heat", "thermostat"], ["gpuTemp", "GPU heat", "thermostat"]]), keywords: ["lead", "main", "first", "big"] }),
-        ...[["showCpu", "CPU", true], ["showMemory", "Memory", true], ["showGpu", "GPU", true], ["showTemp", "CPU heat", false], ["showGpuTemp", "GPU heat", false], ["showDisk", "Disk", false]]
-            .map(entry => root.row("systemMonitor", entry[0], entry[1], "switch", entry[2], { keywords: ["monitor", "usage", "temperature", "temp"] })),
-        root.row("systemMonitor", "showLabels", "Labels and percentages", "switch", true, { when: () => root.plain("systemMonitor") }),
-        root.row("systemMonitor", "displayMode", "Display mode", "choice", "bars", { when: () => root.material("systemMonitor"),
-            choices: root.choices([["bars", "Bars"], ["graph", "Graph"], ["rings", "Rings"], ["text", "Text"], ["tiles", "Tiles"], ["instrument", "Instrument"]]) }),
-        root.row("systemMonitor", "trackAlpha", "Track opacity", "range", 0.08, { min: 0, max: 0.5, step: 0.02, scale: 100, unit: " %", when: () => root.material("systemMonitor") }),
-        root.row("systemMonitor", "fillOpacity", "Fill opacity", "range", 0.7, { min: 0.1, max: 1, step: 0.05, scale: 100, unit: " %", when: () => root.material("systemMonitor") }),
-        root.row("systemMonitor", "graphFillOpacity", "Graph fill opacity", "range", 0.3, { min: 0, max: 1, step: 0.05, scale: 100, unit: " %", when: () => root.material("systemMonitor") && root.is("systemMonitor", "displayMode", "bars", "graph") }),
-        ...root.closing("systemMonitor", true),
-
-        // ── Battery ──
-        ...root.opening("battery"),
-        root.size("battery"),
-        root.row("battery", "showTime", "Time remaining", "switch", true, {}),
-        root.row("battery", "displayMode", "Display", "choice", "ring", { when: () => root.material("battery"), choices: root.choices([["ring", "Ring"], ["bars", "Bars"], ["pill", "Pill"], ["instrument", "Instrument"]]) }),
-        root.preset("battery", "Preset", "default", [["default", "Default", { ringLineWidth: 6, barCount: 20, pillHeight: 12 }], ["thin", "Thin", { ringLineWidth: 3, barCount: 20, pillHeight: 8 }],
-            ["thick", "Thick", { ringLineWidth: 10, barCount: 12, pillHeight: 16 }], ["dense", "Dense", { ringLineWidth: 6, barCount: 32, pillHeight: 12 }]], () => root.material("battery")),
-        root.row("battery", "showRate", "Show power draw", "switch", true, { when: () => root.plain("battery") && root.is("battery", "displayMode", "ring", "instrument") }),
-        root.row("battery", "ringSize", "Ring size", "range", 72, { min: 40, max: 120, step: 4, unit: " px", when: () => root.material("battery") && root.is("battery", "displayMode", "ring", "ring") }),
-        root.row("battery", "ringLineWidth", "Line width", "range", 6, { min: 1, max: 16, unit: " px", when: () => root.material("battery") && root.is("battery", "displayMode", "ring", "ring") }),
-        root.row("battery", "barCount", "Bar count", "range", 20, { min: 4, max: 48, step: 2, when: () => root.material("battery") && root.is("battery", "displayMode", "ring", "bars") }),
-        root.row("battery", "barSpacing", "Bar spacing", "range", 2, { min: 0, max: 8, unit: " px", when: () => root.material("battery") && root.is("battery", "displayMode", "ring", "bars") }),
-        root.row("battery", "barRadius", "Bar radius", "range", 2, { min: 0, max: 12, unit: " px", when: () => root.material("battery") && root.is("battery", "displayMode", "ring", "bars") }),
-        root.row("battery", "pillHeight", "Pill height", "range", 12, { min: 4, max: 32, step: 2, unit: " px", when: () => root.material("battery") && root.is("battery", "displayMode", "ring", "pill") }),
-        ...root.closing("battery", true),
-
-        // ── Controls and Screen time (iRiS widgets) ──
-        ...root.opening("controls"),
-        root.size("controls"),
-        // the keys it keeps, in this order: small and medium show the first four, large eight
-        ...[["wifi", "Wi-Fi"], ["bluetooth", "Bluetooth"], ["focus", "Focus"], ["nightLight", "Night light"], ["awake", "Keep awake"],
-            ["gameMode", "Game mode"], ["mic", "Microphone"], ["darkMode", "Dark mode"]]
-            .map(entry => root.row("controls", "iris.tile." + entry[0], entry[1], "switch", true, { tune: false, keywords: ["keys", "tiles", "toggle"] })),
-        root.row("controls", "iris.sliders", "Volume and brightness", "switch", true, { tune: false, when: () => !root.is("controls", "sizeClass", "medium", "small") }),
-        ...root.closing("controls", false),
-        ...root.opening("screenTime"),
-        root.size("screenTime"),
-        ...root.closing("screenTime", false),
-        ...root.opening("palette"),
-        root.size("palette"),
-        root.row("palette", "iris.source", "Colours from", "choice", "wallpaper", { choices: root.choices([["wallpaper", "Wallpaper"], ["music", "Music"], ["random", "Random"]]) }),
-        ...root.closing("palette", false),
-
-        // ── Weather ──
-        ...root.opening("weather"),
-        root.size("weather"),
-        root.row("weather", "showLocation", "Location", "switch", true, {}),
-        root.row("weather", "iris.details", "Details", "switch", true, { when: () => root.face("weather") && root.is("weather", "sizeClass", "medium", "large"),
-            keywords: ["humidity", "wind", "uv", "air"] }),
-        root.row("weather", "style", "Style", "choice", "pill", { when: () => root.material("weather"),
-            choices: root.choices([["pill", "Shape"], ["card", "Card"], ["detail", "Detail"], ["dial", "Instrument"]]) }),
-        root.row("weather", "shape", "Shape", "choice", "pill", { when: () => !root.weatherForecast() && root.material("weather") && root.is("weather", "style", "pill", "pill"),
-            choices: root.choices([["pill", "Pill"], ["circle", "Circle"], ["oval", "Oval"], ["diamond", "Diamond"], ["heart", "Heart"], ["flower", "Flower"], ["cookie4", "Cookie"],
-                ["sunny", "Sunny"], ["clover", "Clover"], ["softBurst", "Burst"], ["gem", "Gem"], ["puffy", "Puffy"]]) }),
-        root.preset("weather", "Preset", "default", [["default", "Default", { size: 200, tempSize: 80, iconSize: 80, showTemp: true, showIcon: true, showCondition: false }],
-            ["compact", "Compact", { size: 140, tempSize: 50, iconSize: 50, showTemp: true, showIcon: true, showCondition: false }],
-            ["iconOnly", "Icon only", { size: 120, showTemp: false, showIcon: true, showCondition: false }],
-            ["textOnly", "Text only", { size: 160, showTemp: true, showIcon: false, showCondition: true }]], () => root.material("weather") && !root.weatherForecast()),
-        root.row("weather", "showTemp", "Temperature", "switch", true, { when: () => !root.weatherForecast() && root.plain("weather") }),
-        root.row("weather", "showIcon", "Icon", "switch", true, { when: () => !root.weatherForecast() && root.plain("weather") }),
-        root.row("weather", "showCondition", "Condition text", "switch", false, { when: () => !root.weatherForecast() && root.plain("weather") && !root.is("weather", "style", "pill", "detail") }),
-        root.row("weather", "showMetrics", "Metric chips", "switch", true, { when: () => root.plain("weather") && root.is("weather", "style", "pill", "detail") }),
-        root.row("weather", "showSunPath", "Sun path", "switch", true, { when: () => root.plain("weather") && root.is("weather", "style", "pill", "dial") }),
-        root.row("weather", "showSunTimes", "Sun times", "switch", true, { when: () => root.plain("weather") && root.is("weather", "style", "pill", "dial") && Boolean(root.value("weather", "showSunPath", true)) }),
-        root.row("weather", "size", "Widget size", "range", 200, { min: 80, max: 400, step: 10, unit: " px", when: () => !root.weatherForecast() && root.material("weather") }),
-        root.row("weather", "tempSize", "Temp size", "range", 80, { min: 20, max: 200, step: 5, unit: " px", when: () => !root.weatherForecast() && root.material("weather") }),
-        root.row("weather", "iconSize", "Icon size", "range", 80, { min: 20, max: 200, step: 5, unit: " px", when: () => !root.weatherForecast() && root.material("weather") }),
-        root.row("weather", "padding", "Padding", "range", 20, { min: 0, max: 60, step: 2, unit: " px", when: () => !root.weatherForecast() && root.material("weather") }),
-        root.row("weather", "tempFontWeight", "Temp font weight", "range", 500, { min: 100, max: 900, step: 100, when: () => !root.weatherForecast() && root.material("weather") }),
-        root.row("weather", "conditionOpacity", "Condition opacity", "range", 0.7, { min: 0, max: 1, step: 0.05, scale: 100, unit: " %", when: () => !root.weatherForecast() && root.material("weather") && Boolean(root.value("weather", "showCondition", false)) }),
-        ...root.closing("weather", true),
-
-        // ── News ──
-        ...root.opening("newsTicker"),
-        root.size("newsTicker"),
-        root.row("newsTicker", "showMeta", "Source and time", "switch", true, {}),
-        root.row("newsTicker", "rotateSeconds", "Change every", "choice", 45, { when: () => root.face("newsTicker"),
-            choices: root.choices([[15, "15 s"], [45, "45 s"], [120, "2 min"], [300, "5 min"]]) }),
-        root.row("newsTicker", "style", "Presentation", "choice", "card", { when: () => root.material("newsTicker"), choices: root.choices([["card", "Card"], ["instrument", "Instrument"]]) }),
-        ...root.closing("newsTicker", true),
-
-        // ── Notes ──
-        ...root.opening("notes"),
-        root.size("notes"),
-        root.row("notes", "style", "Presentation", "choice", "card", { when: () => root.material("notes"), choices: root.choices([["card", "Card"], ["instrument", "Instrument"]]) }),
-        root.row("notes", "showRules", "Writing guides", "switch", true, { when: () => root.plain("notes") && root.is("notes", "style", "card", "instrument") }),
-        root.row("notes", "fontFamily", "Font", "choice", "sans", { when: () => root.plain("notes"), choices: root.choices([["sans", "Sans"], ["mono", "Mono"]]) }),
-        root.row("notes", "textAlign", "Alignment", "choice", "left", { tune: true, when: () => root.plain("notes"),
-            choices: root.choices([["left", "Left", "format_align_left"], ["center", "Center", "format_align_center"], ["right", "Right", "format_align_right"]]) }),
-        root.row("notes", "fontSize", "Font size", "range", 14, { min: 10, max: 48, unit: " px", when: () => root.plain("notes") }),
-        ...root.closing("notes", true),
-
-        // ── Todo ──
-        ...root.opening("todo"),
-        root.size("todo"),
-        root.row("todo", "showCompleted", "Show completed tasks", "switch", true, {}),
-        root.row("todo", "style", "Presentation", "choice", "card", { when: () => root.material("todo"), choices: root.choices([["card", "Card"], ["instrument", "Instrument"]]) }),
-        root.row("todo", "instrumentRules", "Row rules", "switch", true, { tune: true, when: () => root.plain("todo") && root.is("todo", "style", "card", "instrument") }),
-        ...root.closing("todo", true),
-
-        // ── User card ──
-        ...root.opening("userCard"),
-        root.size("userCard"),
-        root.row("userCard", "showAvatar", "Picture", "switch", true, {}),
-        // the weather shows on iRiS's large face and Material's medium one
-        root.row("userCard", "showWeather", "Weather", "switch", true, { when: () => root.face("userCard")
-            ? root.is("userCard", "sizeClass", "medium", "large") : !root.is("userCard", "sizeClass", "medium", "small") }),
-        root.row("userCard", "showHostname", "Computer name", "switch", true, { when: () => root.face("userCard") || !root.is("userCard", "sizeClass", "medium", "small") }),
-        root.row("userCard", "style", "Presentation", "choice", "card", { when: () => root.material("userCard"), choices: root.choices([["card", "Card"], ["instrument", "Instrument"]]) }),
-        ...root.closing("userCard", true),
-
-        // ── Custom image ──
-        ...root.opening("customImage"),
-        root.size("customImage"),
-        root.row("customImage", "sourceMode", "Source type", "choice", "file", { choices: root.choices([["file", "Single file", "image"], ["folder", "Folder gallery", "photo_library"]]) }),
-        root.row("customImage", "path", "Media file", "text", "", { placeholder: "Image, GIF, or video", when: () => root.is("customImage", "sourceMode", "file", "file"),
-            keywords: ["image", "picture", "photo", "gif", "video", "path", "file", "imagen"] }),
-        root.row("customImage", "folder", "Media folder", "text", "", { placeholder: "Folder containing images or videos", when: () => root.is("customImage", "sourceMode", "file", "folder") }),
-        root.row("customImage", "mediaFilter", "Media type", "choice", "all", { when: () => root.is("customImage", "sourceMode", "file", "folder"),
-            choices: root.choices([["all", "All media"], ["images", "Images only"], ["gifs", "GIF"], ["videos", "Videos only"]]) }),
-        root.row("customImage", "order", "Order", "choice", "sequential", { when: () => root.is("customImage", "sourceMode", "file", "folder"), choices: root.choices([["sequential", "Sequential"], ["random", "Random"]]) }),
-        root.row("customImage", "intervalSeconds", "Change every", "range", 30, { min: 3, max: 3600, step: 1, unit: " s", when: () => root.is("customImage", "sourceMode", "file", "folder") }),
-        root.row("customImage", "shape", "Shape", "choice", "Cookie4Sided", { choicesFrom: "shapes", keywords: ["shape", "mask", "cookie", "circle", "forma"] }),
-        root.row("customImage", "fitMode", "Fit", "choice", "cover", { choices: root.choices([["cover", "Crop to fill"], ["contain", "Show full media"]]) }),
-        root.row("customImage", "size", "Size", "range", 220, { min: 80, max: 1200, step: 10, unit: " px" }),
-        root.row("customImage", "transitionDuration", "Transition", "range", 450, { min: 0, max: 2000, step: 50, unit: " ms", zeroLabel: "Off" }),
-        ...root.closing("customImage", false),
-
-        // ── Image converter ──
-        ...root.opening("imageConverter"),
-        root.size("imageConverter"),
-        root.row("imageConverter", "selectedFormat", "Convert to", "choice", "webp", {
-            choices: root.choices([["png", "PNG"], ["jpg", "JPG"], ["webp", "WEBP"], ["avif", "AVIF"], ["bmp", "BMP"], ["tiff", "TIFF"], ["pdf", "PDF"]]) }),
-        ...root.closing("imageConverter", true),
-
-        // ── Decorative shape ──
-        ...root.opening("shape"),
-        root.size("shape"),
-        root.row("shape", "shape", "Shape", "choice", "Flower", { choicesFrom: "shapes" }),
-        root.row("shape", "outline", "Fill", "choice", false, { choices: root.choices([[false, "Filled"], [true, "Outline"]]) }),
-        root.row("shape", "treatment", "Treatment", "choice", "flat", { when: () => !Boolean(root.value("shape", "outline", false)),
-            choices: root.choices([["flat", "Solid"], ["inset", "Inset"], ["duotone", "Duotone"]]) }),
-        root.row("shape", "angle", "Rotation", "range", 0, { min: 0, max: 360, step: 15, unit: "°" }),
-        ...root.closing("shape", false),
-
-        // ── Japanese typography ──
-        ...root.opening("japaneseTypography"),
-        root.size("japaneseTypography"),
-        root.row("japaneseTypography", "preset", "Layout presets", "choice", "exhibition", {
-            choices: root.choices([["exhibition", "Exhibition"], ["magazine", "Magazine"], ["minimal", "Minimal"], ["traditional", "Traditional"]]),
-            apply: next => root.relative("japaneseTypography", JapanesePresets.composition("background.widgets.japaneseTypography", next)) }),
-        ...[["primaryText", "Lead title", "夏の記憶"], ["secondaryText", "Secondary vertical copy", "潮風と、あの子と、終わらない夏"], ["sealText", "Seal text", "特別展"],
-            ["footerText", "Footer label", "PACIFIC DRIVE-IN"], ["dateText", "Date or edition line", "7.12 — 8.31"]]
-            .map(entry => root.row("japaneseTypography", entry[0], entry[1], "text", entry[2], { placeholder: entry[2] })),
-        ...[["showSecondary", "Show secondary vertical copy", true], ["showSeal", "Show exhibition seal", true], ["showFooter", "Show footer and date", true],
-            ["showRule", "Show editorial rule", true], ["mirrorLayout", "Mirror composition", false], ["rotateLatin", "Rotate Latin characters vertically", false]]
-            .map(entry => root.row("japaneseTypography", entry[0], entry[1], "switch", entry[2], { tune: entry[0] === "rotateLatin" || entry[0] === "mirrorLayout",
-                when: entry[0] === "showRule" ? () => Boolean(root.value("japaneseTypography", "showFooter", true)) : undefined,
-                apply: next => root.relative("japaneseTypography", JapanesePresets.setValue("background.widgets.japaneseTypography", entry[0], next, "composition")) })),
-        root.row("japaneseTypography", "fontPreset", "Type direction", "choice", "mincho", { choices: root.choices([["mincho", "Mincho"], ["mixed", "Mixed"], ["gothic", "Gothic"]]),
-            apply: next => root.relative("japaneseTypography", JapanesePresets.font("background.widgets.japaneseTypography", next)) }),
-        root.row("japaneseTypography", "palettePreset", "Color source", "choice", "adaptive", {
-            choices: root.choices([["adaptive", "Wallpaper adaptive"], ["sumi", "Sumi"], ["ivory", "Ivory"], ["sunset", "Sunset"], ["cinema", "Cinema"], ["custom", "Manual roles"]]),
-            apply: next => next === "custom" ? { palettePreset: "custom", paletteMode: "manual" }
-                : root.relative("japaneseTypography", JapanesePresets.palette("background.widgets.japaneseTypography", next)) }),
-        ...[["primaryColor", "Lead title", "#E7D4B2"], ["secondaryColor", "Secondary copy", "#CDB48D"], ["sealColor", "Seal", "#A64B39"], ["detailColor", "Footer and date", "#D0B996"], ["ruleColor", "Editorial rule", "#C18A53"]]  // iris-literal: the widget's stored default colours, shown as placeholders
-            .map(entry => root.row("japaneseTypography", entry[0], entry[1], "text", entry[2], { placeholder: entry[2], part: "Colours", tune: true,
-                when: () => root.is("japaneseTypography", "paletteMode", "adaptive", "manual"),
-                apply: next => root.relative("japaneseTypography", JapanesePresets.setValue("background.widgets.japaneseTypography", entry[0], next, "palette")) })),
-        root.row("japaneseTypography", "fontFamily", "Lead title font", "text", "serif", { placeholder: "serif", tune: true, part: "Type",
-            apply: next => root.relative("japaneseTypography", JapanesePresets.setValue("background.widgets.japaneseTypography", "fontFamily", next, "font")) }),
-        root.row("japaneseTypography", "secondaryFontFamily", "Secondary font", "choice", "", { tune: true, part: "Type",
-            choices: root.choices([["", "Same as title"], ["serif", "Serif / Mincho"], ["sans-serif", "Sans / Gothic"], ["monospace", "Monospace"]]),
-            apply: next => root.relative("japaneseTypography", JapanesePresets.setValue("background.widgets.japaneseTypography", "secondaryFontFamily", next, "font")) }),
-        root.row("japaneseTypography", "latinFontFamily", "Footer font", "choice", "", { tune: true, part: "Type",
-            choices: root.choices([["", "Interface font"], ["serif", "Serif"], ["sans-serif", "Sans"], ["monospace", "Monospace"]]),
-            apply: next => root.relative("japaneseTypography", JapanesePresets.setValue("background.widgets.japaneseTypography", "latinFontFamily", next, "font")) }),
-        ...[["primaryWeight", "Lead weight", 500, 100, 900, 100, "", "font"], ["secondaryWeight", "Secondary weight", 400, 100, 900, 100, "", "font"], ["latinWeight", "Footer weight", 600, 100, 900, 100, "", "font"],
-            ["primarySize", "Lead size", 72, 28, 140, 2, " px", "composition"], ["secondarySize", "Secondary size", 18, 10, 48, 1, " px", "composition"],
-            ["footerSize", "Footer size", 14, 8, 32, 1, " px", "composition"], ["dateSize", "Date size", 12, 8, 28, 1, " px", "composition"],
-            ["primaryColumns", "Lead columns", 2, 1, 4, 1, "", "composition"], ["secondaryColumns", "Secondary columns", 2, 1, 5, 1, "", "composition"],
-            ["columnGap", "Column gap", 14, 4, 48, 1, " px", "composition"], ["letterSpacing", "Lead spacing", 2, 0, 20, 1, " px", "font"],
-            ["secondaryLetterSpacing", "Secondary spacing", 1, 0, 20, 1, " px", "font"],
-            ["primaryOpacity", "Lead opacity", 100, 10, 100, 5, " %", "palette"], ["secondaryOpacity", "Secondary opacity", 78, 10, 100, 5, " %", "palette"],
-            ["sealOpacity", "Seal opacity", 100, 10, 100, 5, " %", "palette"], ["detailOpacity", "Detail opacity", 72, 10, 100, 5, " %", "palette"],
-            ["ruleOpacity", "Rule opacity", 78, 10, 100, 5, " %", "palette"], ["ruleThickness", "Rule thickness", 1, 1, 6, 1, " px", "composition"],
-            ["sealFillOpacity", "Seal fill", 0, 0, 100, 5, " %", "palette"], ["shadowStrength", "Wallpaper shadow", 35, 0, 100, 5, " %", "palette"],
-            ["outlineOpacity", "Text outline", 0, 0, 100, 5, " %", "palette"]]
-            .map(entry => root.row("japaneseTypography", entry[0], entry[1], "range", entry[2], { min: entry[3], max: entry[4], step: entry[5], unit: entry[6],
-                part: entry[7] === "palette" ? "Colours" : "Type",
-                apply: next => root.relative("japaneseTypography", JapanesePresets.setValue("background.widgets.japaneseTypography", entry[0], next, entry[7])) })),
-        root.row("japaneseTypography", "outlineColor", "Outline color", "text", "#000000", { placeholder: "#000000", part: "Colours",  // iris-literal: the stored default outline colour
-            when: () => Number(root.value("japaneseTypography", "outlineOpacity", 0)) > 0 }),
-        ...root.closing("japaneseTypography", true),
-
-        // ── Editorial ──
-        ...root.opening("editorial"),
-        root.size("editorial"),
-        root.row("editorial", "style", "Style", "choice", "poster", { choices: root.choices([["poster", "Poster"], ["quote", "Quote"], ["label", "Label"]]) }),
-        root.row("editorial", "title", "Title", "text", "Make room for wonder.", { placeholder: "Title" }),
-        root.row("editorial", "caption", "Caption", "text", "A LITTLE EVERY DAY", { placeholder: "Caption" }),
-        root.row("editorial", "footer", "Footer", "text", "YOUR OWN PERSPECTIVE", { placeholder: "Footer" }),
-        root.row("editorial", "showAccent", "Accents", "choice", true, { choices: root.choices([[true, "Decorative accents"], [false, "Text only"]]) }),
-        ...root.closing("editorial", true),
-
-        // ── Mascot ──
-        ...root.opening("mascot"),
-        root.size("mascot"),
-        root.row("mascot", "poseFilter", "Poses", "choice", "all", { tune: true,
-            choices: root.choices([["all", "All"], ["featured", "Featured"], ["pixel", "Pixel"], ["street", "Street"], ["chibi", "Chibi"], ["loops", "Loops"], ["manual", "Manual"]]) }),
-        root.row("mascot", "pose", "Pose on the desktop", "choice", "reading", { choicesFrom: "mascotPoses", when: () => String(root.value("mascot", "customPath", "")).length === 0 }),
-        root.row("mascot", "customPath", "Custom image", "text", "", { placeholder: "Path to any image or GIF (empty = pose above)" }),
-        ...root.closing("mascot", true)
-    ]
+    function _row(widget: string, option: var): var {
+        const extra = Object.assign({}, option)
+        for (const field of ["key", "label", "type", "default", "when", "sets", "write"])
+            delete extra[field]
+        if (option.choices)
+            extra.choices = root.choices(option.choices)
+        if (option.when !== undefined)
+            extra.when = () => root.holds(widget, option.when)
+        const writer = root.writers[option.write]
+        if (writer)
+            extra.apply = next => writer(widget, option.key, next)
+        else if (option.sets)
+            extra.apply = next => root._sets(widget, option, next)
+        return root.row(widget, option.key, option.label, option.type, option.default, extra)
+    }
+    // A manifest's `when`: "face", "material", "plain", a name from its `conditions`, { key: value or values }, { key:
+    // { above: n } }, { key: { is: value, otherwise: value while unset } }, a list (all of them), { any: [...] }, { not: ... }.
+    function holds(widget: string, when: var): bool {
+        if (when === undefined)
+            return true
+        if (Array.isArray(when))
+            return when.every(part => root.holds(widget, part))
+        if (typeof when === "string") {
+            if (when === "face") return root.face(widget)
+            if (when === "material") return root.material(widget)
+            if (when === "plain") return root.plain(widget)
+            return root.holds(widget, DesktopWidgetRegistry.byKey[widget]?.conditions?.[when])
+        }
+        if (when.any)
+            return when.any.some(part => root.holds(widget, part))
+        if (when.not !== undefined)
+            return !root.holds(widget, when.not)
+        return Object.keys(when).every(key => {
+            const wanted = when[key]
+            const seen = root.effective(widget, key, wanted?.otherwise !== undefined ? wanted.otherwise : root._default(widget, key))
+            return root._matches(seen, wanted?.is !== undefined ? wanted.is : wanted)
+        })
+    }
+    function _matches(seen: var, wanted: var): bool {
+        if (Array.isArray(wanted))
+            return wanted.some(one => root._matches(seen, one))
+        if (typeof wanted === "boolean")
+            return Boolean(seen) === wanted
+        if (wanted?.above !== undefined)
+            return Number(seen) > wanted.above
+        return String(seen) === String(wanted)
+    }
+    function _default(widget: string, key: string): var {
+        if (key === "sizeClass")
+            return DesktopWidgetRegistry.sizesOf(widget)[0]
+        const entry = DesktopWidgetRegistry.byKey[widget]
+        const option = (entry?.options ?? []).concat(root.familyOptions[widget] ?? []).find(row => row.key === key)
+        return option ? option.default : entry?.defaultConfig?.[key]
+    }
+    // A choice that writes more: `sets` by value; { if, to } changes a key only while it holds that value.
+    function _sets(widget: string, option: var, next: var): var {
+        const out = { [option.key]: next }
+        const also = option.sets[String(next)] ?? {}
+        for (const key of Object.keys(also)) {
+            const entry = also[key]
+            if (entry?.to === undefined)
+                out[key] = entry
+            else if (String(root.value(widget, key, root._default(widget, key))) === String(entry.if))
+                out[key] = entry.to
+        }
+        return out
+    }
+    // Japanese typography keeps a preset's values together, so its rows write through it (`write` in the manifest).
+    readonly property string _japanese: "background.widgets.japaneseTypography"
+    readonly property var writers: ({
+        "japanese.layout": (widget, key, next) => root.relative(widget, JapanesePresets.composition(root._japanese, next)),
+        "japanese.type": (widget, key, next) => root.relative(widget, JapanesePresets.font(root._japanese, next)),
+        "japanese.colours": (widget, key, next) => next === "custom" ? { palettePreset: "custom", paletteMode: "manual" }
+            : root.relative(widget, JapanesePresets.palette(root._japanese, next)),
+        "japanese.composition": (widget, key, next) => root.relative(widget, JapanesePresets.setValue(root._japanese, key, next, "composition")),
+        "japanese.font": (widget, key, next) => root.relative(widget, JapanesePresets.setValue(root._japanese, key, next, "font")),
+        "japanese.palette": (widget, key, next) => root.relative(widget, JapanesePresets.setValue(root._japanese, key, next, "palette"))
+    })
     // What a row shows and what it writes (IrisOptions.currentValue / commit route `spec.widget` rows here).
     function read(spec: var): var {
         if (spec.widgetEnable) return root.on(spec.widget)

@@ -28,5 +28,13 @@
     "useBlur": false,
     "x": 100,
     "y": 300
-  }
+  },
+  "bare": true,
+  "options": [
+    {"key":"style","label":"Style","type":"choice","default":"poster","choices":[["poster","Poster"],["quote","Quote"],["label","Label"]]},
+    {"key":"title","label":"Title","type":"text","default":"Make room for wonder.","placeholder":"Title"},
+    {"key":"caption","label":"Caption","type":"text","default":"A LITTLE EVERY DAY","placeholder":"Caption"},
+    {"key":"footer","label":"Footer","type":"text","default":"YOUR OWN PERSPECTIVE","placeholder":"Footer"},
+    {"key":"showAccent","label":"Accents","type":"choice","default":true,"choices":[[true,"Decorative accents"],[false,"Text only"]]}
+  ]
 }

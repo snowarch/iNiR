@@ -45,5 +45,26 @@
     "cornerRadius": -1,
     "x": 240,
     "y": 240
-  }
+  },
+  "options": [
+    {"key":"playerPreset","label":"Player style","type":"choice","default":"full","when":"material","choices":[["full","Full"],["compact","Compact"],["minimal","Minimal"],["albumart","Album Art"],["visualizer","Visualizer"],["classic","Classic"],["lyrics","Lyrics"],["lyricsSplit","Lyrics wide"],["expandingLyrics","Cover"]]},
+    {"key":"visualizerType","label":"Visualizer","type":"choice","default":"wave","when":"material","choices":[["wave","Wave"],["bars","Bars"],["organic","Organic"]],"sets":{"organic":{"visualizerPosition":{"if":"none","to":"fill"}}}},
+    {"key":"visualizerPosition","label":"Placement","type":"choice","default":"bottom","when":"material","choices":[["bottom","Bottom"],["top","Top"],["fill","Fill"],["none","Off"]]},
+    {"key":"visualizerPaletteMode","label":"Colors","type":"choice","default":"cava","when":"material","tune":true,"choices":[["cava","Cava palette"],["accent","Accent"],["player","Album"]]},
+    {"key":"visualizerFrequencyProfile","label":"Response","type":"choice","default":"flat","when":"material","tune":true,"choices":[["flat","Flat"],["bass","Bass"],["warm","Warm"],["vocal","Vocal"],["treble","Treble"],["smile","Smile"]]},
+    {"key":"visualizerAccentStrength","label":"Accent strength","type":"range","default":70,"when":["material",{"not":{"visualizerFrequencyProfile":"flat"}}],"min":0,"max":100,"step":5,"unit":" %"},
+    {"key":"visualizerSmoothing","label":"Smoothing","type":"range","default":2,"when":"material","min":0,"max":8},
+    {"key":"visualizerOpacity","label":"Visualizer opacity","type":"range","default":55,"when":["material",{"not":{"visualizerType":"organic"}}],"min":5,"max":100,"step":5,"unit":" %"},
+    {"key":"visualizerRange","label":"Motion range","type":"range","default":88,"when":["material",{"not":{"visualizerType":"organic"}}],"min":10,"max":100,"step":5,"unit":" %"},
+    {"key":"visualizerBarCount","label":"Bar count","type":"range","default":32,"when":["material",{"visualizerType":"bars"}],"min":8,"max":128,"step":4},
+    {"key":"organicSensitivity","label":"Sensitivity","type":"range","default":35,"when":["material",{"visualizerType":"organic"}],"min":25,"max":200,"step":5,"unit":" %"},
+    {"key":"organicPulse","label":"Pulse","type":"range","default":150,"when":["material",{"visualizerType":"organic"}],"min":0,"max":150,"step":5,"unit":" %"},
+    {"key":"organicCompression","label":"Compression","type":"range","default":0,"when":["material",{"visualizerType":"organic"}],"min":0,"max":100,"step":5,"unit":" %"},
+    {"key":"organicMotionSpeed","label":"Motion speed","type":"range","default":250,"when":["material",{"visualizerType":"organic"}],"min":20,"max":250,"step":5,"unit":" %"},
+    {"key":"organicGlow","label":"Glow","type":"range","default":100,"when":["material",{"visualizerType":"organic"}],"min":0,"max":100,"step":5,"unit":" %"},
+    {"key":"organicReach","label":"Reach","type":"range","default":35,"when":["material",{"visualizerType":"organic"}],"min":20,"max":140,"step":5,"unit":" %"},
+    {"key":"organicIdleMotion","label":"Idle motion","type":"range","default":40,"when":["material",{"visualizerType":"organic"}],"min":0,"max":100,"step":5,"unit":" %"},
+    {"key":"organicOpacity","label":"Presence","type":"range","default":100,"when":["material",{"visualizerType":"organic"}],"min":10,"max":100,"step":5,"unit":" %"},
+    {"key":"organicRange","label":"Range","type":"range","default":20,"when":["material",{"visualizerType":"organic"}],"min":20,"max":100,"step":5,"unit":" %"}
+  ]
 }

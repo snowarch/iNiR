@@ -28,5 +28,10 @@
     "rotateSeconds": 45,
     "x": 100,
     "y": 260
-  }
+  },
+  "options": [
+    {"key":"showMeta","label":"Source and time","type":"switch","default":true},
+    {"key":"rotateSeconds","label":"Change every","type":"choice","default":45,"when":"face","choices":[[15,"15 s"],[45,"45 s"],[120,"2 min"],[300,"5 min"]]},
+    {"key":"style","label":"Presentation","type":"choice","default":"card","when":"material","choices":[["card","Card"],["instrument","Instrument"]]}
+  ]
 }

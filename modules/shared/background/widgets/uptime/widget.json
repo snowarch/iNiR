@@ -28,5 +28,10 @@
     "useBlur": false,
     "x": 80,
     "y": 80
-  }
+  },
+  "options": [
+    {"key":"showSince","label":"Start time","type":"switch","default":true},
+    {"key":"style","label":"Style","type":"choice","default":"row","when":"material","choices":[["row","Row"],["instrument","Instrument"]]},
+    {"key":"showBreakdown","label":"Breakdown","type":"switch","default":true,"when":["plain",{"style":"instrument"}],"tune":true}
+  ]
 }

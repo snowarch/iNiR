@@ -39,5 +39,18 @@
     "cornerRadius": -1,
     "x": 50,
     "y": 400
-  }
+  },
+  "options": [
+    {"key":"showCpu","label":"CPU","type":"switch","default":true,"keywords":["monitor","usage","temperature","temp"]},
+    {"key":"showMemory","label":"Memory","type":"switch","default":true,"keywords":["monitor","usage","temperature","temp"]},
+    {"key":"showGpu","label":"GPU","type":"switch","default":true,"keywords":["monitor","usage","temperature","temp"]},
+    {"key":"showTemp","label":"CPU heat","type":"switch","default":false,"keywords":["monitor","usage","temperature","temp"]},
+    {"key":"showGpuTemp","label":"GPU heat","type":"switch","default":false,"keywords":["monitor","usage","temperature","temp"]},
+    {"key":"showDisk","label":"Disk","type":"switch","default":false,"keywords":["monitor","usage","temperature","temp"]},
+    {"key":"showLabels","label":"Labels and percentages","type":"switch","default":true,"when":"plain"},
+    {"key":"displayMode","label":"Display mode","type":"choice","default":"bars","when":"material","choices":[["bars","Bars"],["graph","Graph"],["rings","Rings"],["text","Text"],["tiles","Tiles"],["instrument","Instrument"]]},
+    {"key":"trackAlpha","label":"Track opacity","type":"range","default":0.08,"when":"material","min":0,"max":0.5,"step":0.02,"scale":100,"unit":" %"},
+    {"key":"fillOpacity","label":"Fill opacity","type":"range","default":0.7,"when":"material","min":0.1,"max":1,"step":0.05,"scale":100,"unit":" %"},
+    {"key":"graphFillOpacity","label":"Graph fill opacity","type":"range","default":0.3,"when":["material",{"displayMode":"graph"}],"min":0,"max":1,"step":0.05,"scale":100,"unit":" %"}
+  ]
 }

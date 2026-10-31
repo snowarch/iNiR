@@ -29,5 +29,11 @@
     "dim": 0,
     "x": 420,
     "y": 120
-  }
+  },
+  "options": [
+    {"key":"weekStart","label":"Week starts on","type":"choice","default":1,"choices":[[1,"Monday"],[0,"Sunday"]]},
+    {"key":"showAdjacentDays","label":"Show adjacent month days","type":"switch","default":true},
+    {"key":"style","label":"Style","type":"choice","default":"card","when":"material","choices":[["card","Card"],["instrument","Instrument"]]},
+    {"key":"instrumentRule","label":"Header rule","type":"switch","default":true,"when":["plain",{"style":"instrument"}],"tune":true}
+  ]
 }

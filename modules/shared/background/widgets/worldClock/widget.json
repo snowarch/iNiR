@@ -33,5 +33,14 @@
     "timezones": ["Asia/Tokyo", "Europe/London", "America/New_York"],
     "x": 80,
     "y": 200
-  }
+  },
+  "options": [
+    {"key":"timezones","label":"Cities","type":"pieces","default":["Asia/Tokyo","Europe/London","America/New_York"],"choicesFrom":"timezones","description":"Up to four, in the order you switch them on.","keywords":["city","cities","timezone","time zone","zona horaria","ciudad"]},
+    {"key":"showNames","label":"City names","type":"switch","default":true,"when":"face"},
+    {"key":"showOffsets","label":"Time difference","type":"switch","default":true},
+    {"key":"style","label":"Style","type":"choice","default":"cards","when":"material","choices":[["cards","List"],["instrument","Instrument"]]},
+    {"key":"instrumentLayout","label":"Instrument layout","type":"choice","default":"grid","when":["plain",{"style":"instrument"}],"choices":[["grid","Atlas"],["rows","Strip"]]},
+    {"key":"showDate","label":"Date","type":"switch","default":true,"when":["plain",{"style":"instrument"}],"tune":true},
+    {"key":"showDayState","label":"Day/Night","type":"switch","default":true,"when":["plain",{"style":"instrument"}],"tune":true}
+  ]
 }

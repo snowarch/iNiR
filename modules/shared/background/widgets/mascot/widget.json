@@ -28,5 +28,11 @@
     "anchorWidget": "",
     "x": 120,
     "y": 320
-  }
+  },
+  "bare": true,
+  "options": [
+    {"key":"poseFilter","label":"Poses","type":"choice","default":"all","tune":true,"choices":[["all","All"],["featured","Featured"],["pixel","Pixel"],["street","Street"],["chibi","Chibi"],["loops","Loops"],["manual","Manual"]]},
+    {"key":"pose","label":"Pose on the desktop","type":"choice","default":"reading","when":{"customPath":""},"choicesFrom":"mascotPoses"},
+    {"key":"customPath","label":"Custom image","type":"text","default":"","placeholder":"Path to any image or GIF (empty = pose above)"}
+  ]
 }

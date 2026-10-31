@@ -28,5 +28,13 @@
     "useBlur": false,
     "x": 80,
     "y": 240
-  }
+  },
+  "bare": true,
+  "plate": false,
+  "options": [
+    {"key":"shape","label":"Shape","type":"choice","default":"Flower","choicesFrom":"shapes"},
+    {"key":"outline","label":"Fill","type":"choice","default":false,"choices":[[false,"Filled"],[true,"Outline"]]},
+    {"key":"treatment","label":"Treatment","type":"choice","default":"flat","when":{"not":{"outline":true}},"choices":[["flat","Solid"],["inset","Inset"],["duotone","Duotone"]]},
+    {"key":"angle","label":"Rotation","type":"range","default":0,"min":0,"max":360,"step":15,"unit":"°"}
+  ]
 }

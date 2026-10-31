@@ -50,5 +50,35 @@
     "cornerRadius": -1,
     "x": 100,
     "y": 100
-  }
+  },
+  "bare": true,
+  "options": [
+    {"key":"preset","label":"Preset","type":"choice","default":"default","when":{"not":{"vizType":"organic"}},"choices":[["default","Default"],["dense","Dense"],["minimal","Minimal"],["wide","Wide"]],"sets":{"default":{"barRadius":2,"barMinHeight":1,"barCount":48,"barSpacing":2},"dense":{"barRadius":1,"barMinHeight":2,"barCount":64,"barSpacing":1},"minimal":{"barRadius":4,"barMinHeight":1,"barCount":24,"barSpacing":3},"wide":{"barRadius":2,"barMinHeight":1,"barCount":80,"barSpacing":2}}},
+    {"key":"vizType","label":"Type","type":"choice","default":"bars","choices":[["bars","Bars","bar_chart"],["wave","Wave","waves"],["organic","Organic","bubble_chart"]]},
+    {"key":"paletteMode","label":"Colors","type":"choice","default":"cava","choices":[["cava","Cava"],["accent","Accent"],["primary","Primary"],["album","Album"]]},
+    {"key":"barsOrigin","label":"Bars rise from","type":"choice","default":"bottom","when":{"vizType":"bars"},"choices":[["bottom","Bottom"],["top","Top"],["center","Center rise"],["mirror","Mirrored"]]},
+    {"key":"waveMode","label":"Wave","type":"choice","default":"fill","when":{"vizType":"wave"},"choices":[["fill","Fill"],["line","Line"],["ribbon","Ribbon"]]},
+    {"key":"barCount","label":"Bar count","type":"range","default":48,"when":{"vizType":"bars"},"min":8,"max":128,"step":4},
+    {"key":"barSpacing","label":"Bar spacing","type":"range","default":2,"when":{"vizType":"bars"},"min":0,"max":8,"unit":" px"},
+    {"key":"barRadius","label":"Bar radius","type":"range","default":2,"when":{"vizType":"bars"},"min":0,"max":16,"unit":" px"},
+    {"key":"barMinHeight","label":"Min height","type":"range","default":1,"when":{"vizType":"bars"},"min":0,"max":16,"unit":" px"},
+    {"key":"barOpacity","label":"Bar opacity","type":"range","default":100,"when":{"vizType":"bars"},"min":5,"max":100,"step":5,"unit":" %"},
+    {"key":"waveOpacity","label":"Wave opacity","type":"range","default":30,"when":{"vizType":"wave"},"min":5,"max":100,"step":5,"unit":" %"},
+    {"key":"lineWidth","label":"Line width","type":"range","default":2,"when":{"vizType":"wave"},"min":1,"max":8,"unit":" px"},
+    {"key":"frequencyProfile","label":"Response","type":"choice","default":"flat","tune":true,"choices":[["flat","Flat"],["bass","Bass"],["warm","Warm"],["vocal","Vocal"],["treble","Treble"],["smile","Smile"]]},
+    {"key":"accentStrength","label":"Frequency accent strength","type":"range","default":70,"when":{"not":{"frequencyProfile":"flat"}},"min":0,"max":100,"step":5,"unit":" %"},
+    {"key":"smoothing","label":"Smoothing","type":"range","default":2,"min":0,"max":8},
+    {"key":"organicSensitivity","label":"Sensitivity","type":"range","default":25,"when":{"vizType":"organic"},"min":25,"max":200,"step":5,"unit":" %"},
+    {"key":"organicPulse","label":"Pulse","type":"range","default":150,"when":{"vizType":"organic"},"min":0,"max":150,"step":5,"unit":" %"},
+    {"key":"organicCompression","label":"Compression","type":"range","default":0,"when":{"vizType":"organic"},"min":0,"max":100,"step":5,"unit":" %"},
+    {"key":"organicMotionSpeed","label":"Motion speed","type":"range","default":250,"when":{"vizType":"organic"},"min":20,"max":250,"step":5,"unit":" %"},
+    {"key":"organicIdleMotion","label":"Idle motion","type":"range","default":18,"when":{"vizType":"organic"},"min":0,"max":100,"step":5,"unit":" %"},
+    {"key":"organicOpacity","label":"Halo opacity","type":"range","default":100,"when":{"vizType":"organic"},"min":10,"max":100,"step":5,"unit":" %"},
+    {"key":"organicGlow","label":"Glow","type":"range","default":100,"when":{"vizType":"organic"},"min":0,"max":100,"step":5,"unit":" %"},
+    {"key":"organicCoverSize","label":"Cover size","type":"range","default":51,"when":{"vizType":"organic"},"min":30,"max":90,"step":1,"unit":" %"},
+    {"key":"organicRange","label":"Motion range","type":"range","default":20,"when":{"vizType":"organic"},"min":20,"max":100,"step":5,"unit":" %"},
+    {"key":"fillRatio","label":"Spectrum height","type":"range","default":90,"when":{"not":{"vizType":"organic"}},"min":10,"max":100,"step":5,"unit":" %"},
+    {"key":"edgeInset","label":"Edge inset","type":"range","default":0,"when":{"not":{"vizType":"organic"}},"min":0,"max":32,"unit":" px"},
+    {"key":"edgeSoftness","label":"Curve headroom","type":"range","default":28,"when":{"not":{"vizType":"organic"}},"min":0,"max":100,"step":5,"unit":" %"}
+  ]
 }

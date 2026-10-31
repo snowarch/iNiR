@@ -16,5 +16,6 @@
     "cornerRadius": -1,
     "x": 120,
     "y": 600
-  }
+  },
+  "plate": false
 }

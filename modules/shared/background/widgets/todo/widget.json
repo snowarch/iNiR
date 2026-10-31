@@ -28,5 +28,10 @@
     "dim": 0,
     "x": 120,
     "y": 180
-  }
+  },
+  "options": [
+    {"key":"showCompleted","label":"Show completed tasks","type":"switch","default":true},
+    {"key":"style","label":"Presentation","type":"choice","default":"card","when":"material","choices":[["card","Card"],["instrument","Instrument"]]},
+    {"key":"instrumentRules","label":"Row rules","type":"switch","default":true,"when":["plain",{"style":"instrument"}],"tune":true}
+  ]
 }

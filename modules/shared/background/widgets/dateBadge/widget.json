@@ -30,5 +30,12 @@
     "useBlur": false,
     "x": 260,
     "y": 80
-  }
+  },
+  "options": [
+    {"key":"showWeekday","label":"Weekday","type":"switch","default":true},
+    {"key":"showYear","label":"Year","type":"switch","default":true},
+    {"key":"showOrdinal","label":"Day of the year","type":"switch","default":true},
+    {"key":"style","label":"Style","type":"choice","default":"ticket","when":"material","choices":[["ticket","Ticket"],["stacked","Stacked"],["seal","Seal"],["instrument","Instrument"]]},
+    {"key":"instrumentMarks","label":"Marks","type":"switch","default":true,"when":["plain",{"style":"instrument"}],"tune":true}
+  ]
 }

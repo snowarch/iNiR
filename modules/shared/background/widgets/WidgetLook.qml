@@ -91,6 +91,9 @@ QtObject {
 
     // What resetting a widget also clears, and the verbs over a shared widget material, where the family has one.
     function resetValues(widget: var): var { return ({}) }
+    // A family's own setting can hide a plate the Background switch says is on; showing it clears that. `read(key, fallback)`.
+    function plateHidden(read: var): bool { return false }
+    function plateShown(read: var): var { return ({}) }
     function materialAction(action: string): string { return "This family has no shared widget material" }
 
     // Shape and plate

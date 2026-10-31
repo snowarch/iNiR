@@ -82,7 +82,7 @@ WidgetQuickControlsLayout {
             active: root.page === "options"
             sourceComponent: WidgetOptionList {
                 widget: root.widget.configEntryName
-                exclude: ["sizeClass", DesktopWidgetDesign.spec.key, "iris.material", "placementStrategy", "locked"]
+                exclude: ["sizeClass", DesktopWidgetDesign.spec.key, ...(DesktopWidgetOptions.familyOptions["*"] ?? []).map(option => option.key), "placementStrategy", "locked"]
             }
         }
     }

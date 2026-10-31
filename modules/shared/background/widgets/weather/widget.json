@@ -41,5 +41,24 @@
     "cornerRadius": -1,
     "x": 100,
     "y": 200
-  }
+  },
+  "conditions": {"forecast":[{"sizeClass":["medium","large"]},{"not":{"style":"dial"}}]},
+  "options": [
+    {"key":"showLocation","label":"Location","type":"switch","default":true},
+    {"key":"style","label":"Style","type":"choice","default":"pill","when":"material","choices":[["pill","Shape"],["card","Card"],["detail","Detail"],["dial","Instrument"]]},
+    {"key":"shape","label":"Shape","type":"choice","default":"pill","when":[{"not":"forecast"},"material",{"style":"pill"}],"choices":[["pill","Pill"],["circle","Circle"],["oval","Oval"],["diamond","Diamond"],["heart","Heart"],["flower","Flower"],["cookie4","Cookie"],["sunny","Sunny"],["clover","Clover"],["softBurst","Burst"],["gem","Gem"],["puffy","Puffy"]]},
+    {"key":"preset","label":"Preset","type":"choice","default":"default","when":["material",{"not":"forecast"}],"choices":[["default","Default"],["compact","Compact"],["iconOnly","Icon only"],["textOnly","Text only"]],"sets":{"default":{"size":200,"tempSize":80,"iconSize":80,"showTemp":true,"showIcon":true,"showCondition":false},"compact":{"size":140,"tempSize":50,"iconSize":50,"showTemp":true,"showIcon":true,"showCondition":false},"iconOnly":{"size":120,"showTemp":false,"showIcon":true,"showCondition":false},"textOnly":{"size":160,"showTemp":true,"showIcon":false,"showCondition":true}}},
+    {"key":"showTemp","label":"Temperature","type":"switch","default":true,"when":[{"not":"forecast"},"plain"]},
+    {"key":"showIcon","label":"Icon","type":"switch","default":true,"when":[{"not":"forecast"},"plain"]},
+    {"key":"showCondition","label":"Condition text","type":"switch","default":false,"when":[{"not":"forecast"},"plain",{"not":{"style":"detail"}}]},
+    {"key":"showMetrics","label":"Metric chips","type":"switch","default":true,"when":["plain",{"style":"detail"}]},
+    {"key":"showSunPath","label":"Sun path","type":"switch","default":true,"when":["plain",{"style":"dial"}]},
+    {"key":"showSunTimes","label":"Sun times","type":"switch","default":true,"when":["plain",{"style":"dial"},{"showSunPath":true}]},
+    {"key":"size","label":"Widget size","type":"range","default":200,"when":[{"not":"forecast"},"material"],"min":80,"max":400,"step":10,"unit":" px"},
+    {"key":"tempSize","label":"Temp size","type":"range","default":80,"when":[{"not":"forecast"},"material"],"min":20,"max":200,"step":5,"unit":" px"},
+    {"key":"iconSize","label":"Icon size","type":"range","default":80,"when":[{"not":"forecast"},"material"],"min":20,"max":200,"step":5,"unit":" px"},
+    {"key":"padding","label":"Padding","type":"range","default":20,"when":[{"not":"forecast"},"material"],"min":0,"max":60,"step":2,"unit":" px"},
+    {"key":"tempFontWeight","label":"Temp font weight","type":"range","default":500,"when":[{"not":"forecast"},"material"],"min":100,"max":900,"step":100},
+    {"key":"conditionOpacity","label":"Condition opacity","type":"range","default":0.7,"when":[{"not":"forecast"},"material",{"showCondition":true}],"min":0,"max":1,"step":0.05,"scale":100,"unit":" %"}
+  ]
 }

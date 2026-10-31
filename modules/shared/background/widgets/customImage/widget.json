@@ -28,5 +28,18 @@
     "widgetOpacity": 100,
     "x": 120,
     "y": 320
-  }
+  },
+  "plate": false,
+  "options": [
+    {"key":"sourceMode","label":"Source type","type":"choice","default":"file","choices":[["file","Single file","image"],["folder","Folder gallery","photo_library"]]},
+    {"key":"path","label":"Media file","type":"text","default":"","when":{"sourceMode":"file"},"placeholder":"Image, GIF, or video","keywords":["image","picture","photo","gif","video","path","file","imagen"]},
+    {"key":"folder","label":"Media folder","type":"text","default":"","when":{"sourceMode":"folder"},"placeholder":"Folder containing images or videos"},
+    {"key":"mediaFilter","label":"Media type","type":"choice","default":"all","when":{"sourceMode":"folder"},"choices":[["all","All media"],["images","Images only"],["gifs","GIF"],["videos","Videos only"]]},
+    {"key":"order","label":"Order","type":"choice","default":"sequential","when":{"sourceMode":"folder"},"choices":[["sequential","Sequential"],["random","Random"]]},
+    {"key":"intervalSeconds","label":"Change every","type":"range","default":30,"when":{"sourceMode":"folder"},"min":3,"max":3600,"step":1,"unit":" s"},
+    {"key":"shape","label":"Shape","type":"choice","default":"Cookie4Sided","choicesFrom":"shapes","keywords":["shape","mask","cookie","circle","forma"]},
+    {"key":"fitMode","label":"Fit","type":"choice","default":"cover","choices":[["cover","Crop to fill"],["contain","Show full media"]]},
+    {"key":"size","label":"Size","type":"range","default":220,"min":80,"max":1200,"step":10,"unit":" px"},
+    {"key":"transitionDuration","label":"Transition","type":"range","default":450,"min":0,"max":2000,"step":50,"unit":" ms","zeroLabel":"Off"}
+  ]
 }

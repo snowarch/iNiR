@@ -26,5 +26,8 @@
     "cornerRadius": -1,
     "x": 120,
     "y": 360
-  }
+  },
+  "options": [
+    {"key":"selectedFormat","label":"Convert to","type":"choice","default":"webp","choices":[["png","PNG"],["jpg","JPG"],["webp","WEBP"],["avif","AVIF"],["bmp","BMP"],["tiff","TIFF"],["pdf","PDF"]]}
+  ]
 }

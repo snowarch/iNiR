@@ -35,5 +35,17 @@
     "cornerRadius": -1,
     "x": 50,
     "y": 50
-  }
+  },
+  "options": [
+    {"key":"showTime","label":"Time remaining","type":"switch","default":true},
+    {"key":"displayMode","label":"Display","type":"choice","default":"ring","when":"material","choices":[["ring","Ring"],["bars","Bars"],["pill","Pill"],["instrument","Instrument"]]},
+    {"key":"preset","label":"Preset","type":"choice","default":"default","when":"material","choices":[["default","Default"],["thin","Thin"],["thick","Thick"],["dense","Dense"]],"sets":{"default":{"ringLineWidth":6,"barCount":20,"pillHeight":12},"thin":{"ringLineWidth":3,"barCount":20,"pillHeight":8},"thick":{"ringLineWidth":10,"barCount":12,"pillHeight":16},"dense":{"ringLineWidth":6,"barCount":32,"pillHeight":12}}},
+    {"key":"showRate","label":"Show power draw","type":"switch","default":true,"when":["plain",{"displayMode":"instrument"}]},
+    {"key":"ringSize","label":"Ring size","type":"range","default":72,"when":["material",{"displayMode":"ring"}],"min":40,"max":120,"step":4,"unit":" px"},
+    {"key":"ringLineWidth","label":"Line width","type":"range","default":6,"when":["material",{"displayMode":"ring"}],"min":1,"max":16,"unit":" px"},
+    {"key":"barCount","label":"Bar count","type":"range","default":20,"when":["material",{"displayMode":"bars"}],"min":4,"max":48,"step":2},
+    {"key":"barSpacing","label":"Bar spacing","type":"range","default":2,"when":["material",{"displayMode":"bars"}],"min":0,"max":8,"unit":" px"},
+    {"key":"barRadius","label":"Bar radius","type":"range","default":2,"when":["material",{"displayMode":"bars"}],"min":0,"max":12,"unit":" px"},
+    {"key":"pillHeight","label":"Pill height","type":"range","default":12,"when":["material",{"displayMode":"pill"}],"min":4,"max":32,"step":2,"unit":" px"}
+  ]
 }

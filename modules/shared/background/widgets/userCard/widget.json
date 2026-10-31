@@ -29,5 +29,11 @@
     "showHostname": true,
     "x": 80,
     "y": 420
-  }
+  },
+  "options": [
+    {"key":"showAvatar","label":"Picture","type":"switch","default":true},
+    {"key":"showWeather","label":"Weather","type":"switch","default":true,"when":{"any":[["face",{"sizeClass":"large"}],[{"not":"face"},{"not":{"sizeClass":"small"}}]]}},
+    {"key":"showHostname","label":"Computer name","type":"switch","default":true,"when":{"any":["face",{"not":{"sizeClass":"small"}}]}},
+    {"key":"style","label":"Presentation","type":"choice","default":"card","when":"material","choices":[["card","Card"],["instrument","Instrument"]]}
+  ]
 }

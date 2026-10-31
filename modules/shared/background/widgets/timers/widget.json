@@ -31,5 +31,13 @@
     "dim": 0,
     "x": 360,
     "y": 420
-  }
+  },
+  "options": [
+    {"key":"style","label":"Style","type":"choice","default":"cards","when":"material","choices":[["cards","Cards"],["instrument","Instrument"]]},
+    {"key":"vertical","label":"Orientation","type":"choice","default":false,"when":"plain","choices":[[false,"Horizontal"],[true,"Vertical"]]},
+    {"key":"glow","label":"Active pulse","type":"switch","default":true,"when":["plain",{"style":"instrument"}],"tune":true},
+    {"key":"showProgress","label":"Progress","type":"switch","default":true,"when":["plain",{"style":"instrument"}],"tune":true},
+    {"key":"showState","label":"Details","type":"switch","default":true,"when":["plain",{"style":"instrument"}],"tune":true},
+    {"key":"showHundredths","label":"Hundredths","type":"switch","default":true,"when":["plain",{"style":"instrument"}],"tune":true}
+  ]
 }
