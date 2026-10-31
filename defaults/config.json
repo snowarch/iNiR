@@ -1690,7 +1690,8 @@
                 "style": "iris",
                 "plate": "black",
                 "shape": "auto",
-                "ink": "ink",
+                "colour": "auto",
+                "glyphs": "rounded",
                 "fill": "auto",
                 "weight": "regular"
             },
