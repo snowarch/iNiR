@@ -2474,9 +2474,13 @@ AbstractWidget {
         : Appearance.colors.colOnLayer0
     readonly property bool forceLightInk: root.colorMode === "light"
     readonly property bool forceDarkInk: root.colorMode === "dark"
-    // Dark ink on this widget's own backdrop: the wallpaper under it reads light.
+    // Dark ink on this widget's own backdrop: the wallpaper under it reads light. Under iRiS with *On bright wallpapers*
+    // off the scheme keeps its own ink and accents and Lume's shadow carries them: bare faces turned black over every
+    // light patch (and their accents with them) against that switch, so the colours changed as widgets moved (10-31).
+    readonly property bool _schemeInk: root.widgetIrisFamily && !root.positionColorAdaptationEnabled
     readonly property bool inkOnLight: root.forceDarkInk ? true : root.forceLightInk ? false
         : root._onBlurredLock ? false
+        : root._schemeInk ? FamilyStyle.light
         : root._hasBrightness && root.backdropIsLight
     // The same for content on glass (iRiS faces).
     readonly property bool glassInkOnLight: root.forceDarkInk ? true : root.forceLightInk ? false
@@ -2489,6 +2493,8 @@ AbstractWidget {
     property color colText: {
         if (root.forceLightInk) return root._inkLight
         if (root.forceDarkInk) return root._inkDark
+        if (root._schemeInk)
+            return root.inkOnLight ? root._inkDark : root._inkLight
         if (root._onBlurredLock || !root._hasBrightness)
             return root.widgetIrisFamily ? root._inkLight : Appearance.colors.colOnLayer0
         return root.inkOnLight ? root._inkDark : root._inkLight
@@ -2868,7 +2874,7 @@ AbstractWidget {
                 : role === "tertiary" ? root.irisAccent3
                 : role === "secondary" ? root.irisAccent2 : root.irisAccent;
             const onLight = root.inkOnLight && !root.widgetHasSurface
-            const sample = root.widgetHasSurface || root.regionBrightness < 0 ? null
+            const sample = root.widgetHasSurface || root.regionBrightness < 0 || !root.positionColorAdaptationEnabled ? null
                 : { level: root.regionBrightness, spread: root.regionBrightnessSpread }
             const foreground = role === "surface" ? (onLight ? FamilyStyle.inkOnLight : lifted)
                 : sample ? FamilyStyle.markOn(lifted, sample, onLight, 3)
@@ -2889,7 +2895,7 @@ AbstractWidget {
             const seed = role === "signal" ? FamilyStyle.dangerOnMedia : role === "warning" ? FamilyStyle.highlightOnMedia
                 : role === "success" ? (FamilyStyle.light ? Lume.mark(FamilyStyle.success, 0.35, 0, false, 3) : FamilyStyle.success)
                 : role === "tertiary" ? root.irisAccent3 : role === "secondary" ? root.irisAccent2 : root.irisAccent
-            const sample = root.regionBrightness < 0 ? null
+            const sample = root.regionBrightness < 0 || !root.positionColorAdaptationEnabled ? null
                 : { level: root.regionBrightness, spread: root.regionBrightnessSpread }
             const shown = sample ? FamilyStyle.markOn(seed, sample, onLight, 3)
                 : onLight ? FamilyStyle.deepAccent(seed, FamilyStyle.inkOnLight) : seed
