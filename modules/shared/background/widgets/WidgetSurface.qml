@@ -362,6 +362,17 @@ Rectangle {
         }
     }
 
+    // Angel's stepped platform, the one its panels stand on (StyledRectangularShadow's escalonado): without it a
+    // widget plate read as a flat dark square. It sits beside the plate, under it: inside, the clip and the glass
+    // mask would cut it away.
+    StyledRectangularShadow {
+        parent: root.parent
+        z: root.z - 1
+        target: root
+        radius: root.radius
+        visible: root._angel && root._backgroundVisible && root.visible && !Appearance.gameModeMinimal
+    }
+
     // Inset glow — angel only
     Rectangle {
         anchors { top: parent.top; left: parent.left; right: parent.right }
