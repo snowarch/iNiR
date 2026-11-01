@@ -109,7 +109,11 @@ QtObject {
             root.row(widget, "showBorder", "Outline", "switch", root.plateDefault(widget), { page: "look", when: plated,
                 apply: next => Object.assign({ showBorder: next }, next && Number(root.value(widget, "borderOpacity", 0.08)) <= 0 ? { borderOpacity: 0.2 } : {},
                     next && Number(root.value(widget, "borderWidth", 1)) <= 0 ? { borderWidth: 1 } : {}),
-                keywords: ["outline", "border", "line", "borde"] }))
+                keywords: ["outline", "border", "line", "borde"] }),
+            root.row(widget, "borderOpacity", "Outline strength", "range", 0.08, { page: "look", tune: true, min: 0, max: 1, step: 0.02, scale: 100, unit: " %",
+                when: () => plated() && Boolean(root.value(widget, "showBorder", root.plateDefault(widget))) }),
+            root.row(widget, "borderWidth", "Outline width", "range", 1, { page: "look", tune: true, min: 0, max: 8, step: 1, unit: " px",
+                when: () => plated() && Boolean(root.value(widget, "showBorder", root.plateDefault(widget))) }))
         if (plate) out.push(
             root.row(widget, "backgroundOpacity", "Background strength", "range", root.plateDefault(widget) ? 0.16 : 0, { page: "look", min: 0, max: 1, step: 0.02, scale: 100, unit: " %",
                 when: () => root.plain(widget) && Boolean(root.value(widget, "showBackground", root.plateDefault(widget))) }),

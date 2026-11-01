@@ -156,6 +156,14 @@ function _contentSize(key, entry) {
         delete entry[from];
         changed = true;
     });
+    // The image's width and height fell back to `size`, 220 unless the person set it.
+    if (key === "customImage" && entry.size !== undefined) {
+        if (entry.size !== 220)
+            for (const side of ["freeWidth", "freeHeight"])
+                if (entry[side] === undefined) entry[side] = entry.size;
+        delete entry.size;
+        changed = true;
+    }
     return changed;
 }
 
