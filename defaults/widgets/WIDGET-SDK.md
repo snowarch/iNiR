@@ -65,6 +65,9 @@ Or copy the reference widget from `defaults/widgets/example-widget/`.
 }
 ```
 
+`configKeys` become the rows of the widget's sheet and of Settings, so you never write a settings page. In the manifest,
+`"bare": true` means no plate unless the person asks for one, and `"plate": false` means this widget never has one.
+
 Supported configKey types: `bool`, `int`, `real`, `string`.
 
 Optional faces for the other families:
@@ -390,7 +393,8 @@ Your widget inherits these from AbstractBackgroundWidget:
 | `scaledScreenWidth` | int | Scaled screen dimensions |
 | `scaledScreenHeight` | int | |
 | `resizableAxes` | var | `{}`, `{uniform: "key"}`, or `{width: "key", height: "key"}` |
-| `editPopoverContent` | Component | Quick controls shown in edit mode toolbar |
+| `editPopoverContent` | Component | Your own controls, drawn on the sheet's Widget page instead of the rows from `configKeys` |
+| `ownControlKeys` | list | The keys `editPopoverContent` answers for (default: every `configKeys` key). List fewer and the rest stay as rows |
 | `defaultConfig` | var | Object of default values for resetToDefaults() |
 
 ### Functions

@@ -28,6 +28,9 @@ Some things are easier to change where they sit.
 - Material: **Settings › Shell Layout** moves the bar, the dock and the sidebars right on the desktop.
   **Settings › Widgets › Edit Mode** arranges the desktop widgets, with a grid to snap to. The desktop shrinks into
   a card while you do; turn off **Shrink the desktop while editing** to arrange them in place, at full size.
+  Picking a widget opens its sheet beside it, with the same three pages in Material and iRiS: **Widget** (what it
+  shows), **Look** (background, corners, colours) and **Arrange** (scale, position, lock). A stack adds its own page. The
+  background key on the widget's capsule turns its plate on and off, and it's the same setting as the Look page.
 - Waffle: **Waffle Settings › Shell Layout** places the taskbar.
 
 While you drag anything (a widget, a window in the overview, a row in a Settings editor), **Esc** puts it back where
