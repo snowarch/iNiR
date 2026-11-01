@@ -14,15 +14,7 @@ AbstractBackgroundWidget {
 
     configEntryName: "imageConverter"
 
-    readonly property var formatOptions: [
-        { displayName: "PNG", icon: "image", value: "png" },
-        { displayName: "JPG", icon: "photo", value: "jpg" },
-        { displayName: "WEBP", icon: "motion_photos_on", value: "webp" },
-        { displayName: "AVIF", icon: "hd", value: "avif" },
-        { displayName: "BMP", icon: "grid_on", value: "bmp" },
-        { displayName: "TIFF", icon: "photo_library", value: "tiff" },
-        { displayName: "PDF", icon: "picture_as_pdf", value: "pdf" }
-    ]
+    readonly property var formats: ["png", "jpg", "webp", "avif", "bmp", "tiff", "pdf"]
     readonly property var acceptedExtensions: [
         "png", "jpg", "jpeg", "webp", "avif", "bmp", "gif", "tiff", "tif"
     ]
@@ -178,6 +170,12 @@ AbstractBackgroundWidget {
         }
     }
 
+    readonly property color bodyInk: root.widgetHasSurface ? root.widgetInk : root.widgetSemanticOnContainer("surface")
+    readonly property color bodyColor: {
+        const c = Qt.color(root.widgetHasSurface ? root.widgetPlateColor : root.widgetSemanticContainer("surface"))
+        return Qt.rgba(c.r, c.g, c.b, 1)
+    }
+
     WidgetSurface {
         widget: root
         anchors.fill: parent
@@ -185,50 +183,31 @@ AbstractBackgroundWidget {
         shown: root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur
     }
 
+    // Plate off, it still stands on one opaque body: a place to drop things can't float loose on a wallpaper.
+    Rectangle {
+        anchors.fill: parent
+        visible: !root.widgetHasSurface
+        radius: root.widgetCardRadius
+        color: root.bodyColor
+    }
+
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: Math.round(14 * root.scaleFactor)
-        spacing: Math.round(10 * root.scaleFactor)
-
-        StyledText {
-            Layout.fillWidth: true
-            horizontalAlignment: Text.AlignHCenter
-            text: "PNG · JPG · WEBP · AVIF · BMP · TIFF · PDF"
-            color: root.widgetInkSubtle
-            font.pixelSize: Math.round(Appearance.font.pixelSize.smallest * root.scaleFactor)
-        }
+        anchors.margins: Math.round(12 * root.scaleFactor)
+        spacing: Math.round(8 * root.scaleFactor)
 
         Rectangle {
             id: dropZone
-            // With no plate the zone is its own opaque card (Material's container, as Settings draws one): a 6 % veil
-            // over a snowy ridge left its words unreadable (10-30 gallery).
-            readonly property bool card: !root.widgetHasSurface
-            readonly property color base: {
-                const c = Qt.color(root.widgetSemanticContainer("surface"))
-                return dropZone.card ? Qt.rgba(c.r, c.g, c.b, 1) : ColorUtils.applyAlpha(root.widgetInk, 0.06)
-            }
-            readonly property color ink: dropZone.card ? root.widgetSemanticOnContainer("surface") : root.widgetInk
             Layout.fillWidth: true
             Layout.fillHeight: true
-            radius: Math.max(10, root.widgetCardRadius - 5)
+            radius: Math.max(8, root.widgetCardRadius - Math.round(12 * root.scaleFactor))
             color: {
-                const tint = (seed, a) => dropZone.card ? ColorUtils.mix(seed, dropZone.base, a) : ColorUtils.applyAlpha(seed, a)
                 switch (root.conversionState) {
-                case "hover": return tint(root.widgetAccent, 0.18)
-                case "converting": return tint(root.widgetAccent2, 0.18)
-                case "done": return tint(root.widgetAccent3, 0.18)
-                case "error": return tint(root.widgetSignal, 0.14)
-                default: return dropZone.base
-                }
-            }
-            border.width: root.conversionState === "hover" ? 2 : 1
-            border.color: {
-                switch (root.conversionState) {
-                case "hover": return root.widgetAccent
-                case "converting": return root.widgetAccent2
-                case "done": return root.widgetAccent3
-                case "error": return root.widgetSignal
-                default: return ColorUtils.applyAlpha(dropZone.ink, 0.20)
+                case "hover": return ColorUtils.applyAlpha(root.widgetAccent, 0.24)
+                case "converting": return ColorUtils.applyAlpha(root.widgetAccent2, 0.2)
+                case "done": return ColorUtils.applyAlpha(root.widgetAccent3, 0.2)
+                case "error": return ColorUtils.applyAlpha(root.widgetSignal, 0.18)
+                default: return ColorUtils.applyAlpha(root.bodyInk, 0.06)
                 }
             }
 
@@ -236,53 +215,56 @@ AbstractBackgroundWidget {
                 enabled: Appearance.animationsEnabled
                 ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
             }
-            Behavior on border.color {
-                enabled: Appearance.animationsEnabled
-                ColorAnimation { duration: Appearance.animation.elementMoveFast.duration }
-            }
 
-            MaterialLoadingIndicator {
+            ColumnLayout {
                 anchors.centerIn: parent
-                anchors.verticalCenterOffset: -16 * root.scaleFactor
-                visible: root.conversionState === "converting"
-                loading: visible
-                implicitSize: Math.round(44 * root.scaleFactor)
-            }
+                width: parent.width - Math.round(24 * root.scaleFactor)
+                spacing: Math.round(6 * root.scaleFactor)
 
-            MaterialSymbol {
-                anchors.centerIn: parent
-                anchors.verticalCenterOffset: -16 * root.scaleFactor
-                visible: root.conversionState !== "converting"
-                text: {
-                    switch (root.conversionState) {
-                    case "hover": return "download"
-                    case "done": return "check_circle"
-                    case "error": return "error"
-                    default: return root.selectedFormat === "pdf" ? "picture_as_pdf" : "image"
+                Item {
+                    Layout.alignment: Qt.AlignHCenter
+                    implicitWidth: Math.round(36 * root.scaleFactor)
+                    implicitHeight: implicitWidth
+
+                    MaterialLoadingIndicator {
+                        anchors.centerIn: parent
+                        visible: root.conversionState === "converting"
+                        loading: visible
+                        implicitSize: parent.width
+                    }
+
+                    MaterialSymbol {
+                        anchors.centerIn: parent
+                        visible: root.conversionState !== "converting"
+                        text: {
+                            switch (root.conversionState) {
+                            case "hover": return "download"
+                            case "done": return "check_circle"
+                            case "error": return "error"
+                            default: return root.selectedFormat === "pdf" ? "picture_as_pdf" : "image"
+                            }
+                        }
+                        fill: root.conversionState === "done" ? 1 : 0
+                        iconSize: Math.round(32 * root.scaleFactor)
+                        // The zone's fill is translucent: contrast is read on the body under it.
+                        color: root.widgetSemanticForeground(root.conversionState === "error"
+                            ? root.widgetSignalRole : root.widgetPrimaryRole, root.bodyColor)
                     }
                 }
-                fill: root.conversionState === "done" ? 1 : 0
-                iconSize: Math.round(34 * root.scaleFactor)
-                color: root.conversionState === "error"
-                    ? root.widgetSemanticForeground(root.widgetSignalRole, dropZone.color)
-                    : root.widgetSemanticForeground(root.widgetPrimaryRole, dropZone.color)
-            }
 
-            StyledText {
-                anchors.centerIn: parent
-                anchors.verticalCenterOffset: 25 * root.scaleFactor
-                width: parent.width - 24 * root.scaleFactor
-                horizontalAlignment: Text.AlignHCenter
-                wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                color: root.conversionState === "error"
-                    ? root.widgetSemanticForeground(root.widgetSignalRole, dropZone.color, 4.5) : dropZone.ink
-                opacity: root.conversionState === "idle" ? 0.78 : 1
-                font.pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
-                text: {
-                    switch (root.conversionState) {
-                    case "idle": return Translation.tr("Drop images here to convert to %1").arg(root.selectedFormat.toUpperCase())
-                    case "hover": return Translation.tr("Release to convert to %1").arg(root.selectedFormat.toUpperCase())
-                    default: return root.statusMessage
+                StyledText {
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                    color: root.conversionState === "error"
+                        ? root.widgetSemanticForeground(root.widgetSignalRole, root.bodyColor, 4.5) : root.bodyInk
+                    font.pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
+                    text: {
+                        switch (root.conversionState) {
+                        case "idle": return Translation.tr("Drop images here to convert to %1").arg(root.selectedFormat.toUpperCase())
+                        case "hover": return Translation.tr("Release to convert to %1").arg(root.selectedFormat.toUpperCase())
+                        default: return root.statusMessage
+                        }
                     }
                 }
             }
@@ -310,29 +292,27 @@ AbstractBackgroundWidget {
             }
         }
 
+        // Every format a key: one press picks it, seven presses of one button only went round them.
         RowLayout {
             Layout.fillWidth: true
-            spacing: Math.round(8 * root.scaleFactor)
+            Layout.fillHeight: false
+            spacing: Math.round(2 * root.scaleFactor)
 
-            StyledText {
-                text: Translation.tr("Convert to")
-                color: root.widgetInkMuted
-                font.pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
-            }
+            Repeater {
+                model: root.formats
 
-            WidgetChoiceButton {
-                Layout.fillWidth: true
-                leftmost: true
-                rightmost: true
-                buttonIcon: root.selectedFormat === "pdf" ? "picture_as_pdf" : "image"
-                buttonText: root.selectedFormat.toUpperCase()
-                onClicked: {
-                    const index = root.formatOptions.findIndex(item => item.value === root.selectedFormat)
-                    const next = root.formatOptions[(index + 1) % root.formatOptions.length]
-                    root.setFormat(next.value)
-                }
-                StyledToolTip {
-                    text: Translation.tr("Click to choose the next output format")
+                WidgetChoiceButton {
+                    required property string modelData
+                    required property int index
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    Layout.minimumWidth: 0
+                    horizontalPadding: 2
+                    leftmost: index === 0
+                    rightmost: index === root.formats.length - 1
+                    toggled: root.selectedFormat === modelData
+                    buttonText: modelData.toUpperCase()
+                    onClicked: root.setFormat(modelData)
                 }
             }
         }
