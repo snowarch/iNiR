@@ -21,8 +21,6 @@
     "widgetOpacity": 100,
     "colorMode": "auto",
     "dim": 0,
-    "showBackground": true,
-    "showBorder": true,
     "backgroundOpacity": 0.16,
     "borderWidth": 1,
     "borderOpacity": 0.2,

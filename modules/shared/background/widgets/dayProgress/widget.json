@@ -22,8 +22,6 @@
     "showDate": true,
     "hourLabels": true,
     "fontScale": 100,
-    "showBackground": false,
-    "showBorder": false,
     "backgroundOpacity": 0,
     "borderWidth": 0,
     "borderOpacity": 0.2,

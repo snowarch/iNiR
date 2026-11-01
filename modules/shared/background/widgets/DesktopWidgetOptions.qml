@@ -69,7 +69,7 @@ QtObject {
     readonly property var order: root.clusters.reduce((all, cluster) => all.concat(cluster.groups), [])
 
     function row(widget: string, key: string, label: string, kind: string, fallback: var, extra: var): var {
-        const spec = Object.assign({ section: "widgets", group: root.groups[widget], widget: widget, key: key,
+        const spec = Object.assign({ section: "widgets", group: root.groups[widget], page: "widget", widget: widget, key: key,
             path: "background.widgets." + widget + "." + key, label: label, kind: kind, fallback: fallback }, extra ?? {})
         // A run of switches is the wall the page must not be: a widget's switches refine it, so they wait behind its
         // Fine-tune unless a row says `tune: false` (the plate, which people come to turn off).
@@ -95,74 +95,69 @@ QtObject {
         designs.push(["material", "Material"])
         if (DesktopWidgetDesign.supports(widget)) designs.push(["instrument", "iNstrument"], ["readout", "Readout"])
         const out = [
-            root.row(widget, DesktopWidgetDesign.spec.key, "Design", "choice", "auto", { tune: true, choices: root.choices(designs),
+            root.row(widget, DesktopWidgetDesign.spec.key, "Design", "choice", "auto", { page: "look", tune: true, choices: root.choices(designs),
                 when: () => designs.length > 2, keywords: ["design", "look", "style", "material", "instrument", "readout"] })
         ]
         out.push(...(root.familyOptions["*"] ?? []).map(option => root._row(widget, option)))
+        const look = { page: "look" }
         // A widget that draws its own card in Material (plate false) still wears the iRiS plate as a face.
         const plated = () => root.on(widget) && (plate || root.face(widget))
         out.push(
-            // switched on over a strength of 0 (a plateless widget's default) the plate stayed invisible: it comes with one
-            root.row(widget, "showBackground", "Background", "switch", root.plateDefault(widget), { tune: false, when: plated,
-                // a family's own plate choice can hide it too: showing the background brings it back
-                apply: next => Object.assign(next && Number(root.value(widget, "backgroundOpacity", 0.16)) <= 0
-                    ? { showBackground: true, backgroundOpacity: 0.16 } : { showBackground: next },
-                    next ? DesktopWidgetLook.look.plateShown((key, fallback) => root.value(widget, key, fallback)) : {}),
+            root.row(widget, "showBackground", "Background", "switch", root.plateDefault(widget), { page: "look", tune: false, when: plated,
+                apply: next => root.plateValues(next, root.value(widget, "backgroundOpacity", 0.16)),
                 description: "The plate behind the widget.", keywords: ["background", "plate", "card", "surface", "fondo", "superficie"] }),
-            root.row(widget, "showBorder", "Outline", "switch", root.plateDefault(widget), { when: plated,
+            root.row(widget, "showBorder", "Outline", "switch", root.plateDefault(widget), { page: "look", when: plated,
                 apply: next => Object.assign({ showBorder: next }, next && Number(root.value(widget, "borderOpacity", 0.08)) <= 0 ? { borderOpacity: 0.2 } : {},
                     next && Number(root.value(widget, "borderWidth", 1)) <= 0 ? { borderWidth: 1 } : {}),
                 keywords: ["outline", "border", "line", "borde"] }))
         if (plate) out.push(
-            root.row(widget, "backgroundOpacity", "Background strength", "range", root.plateDefault(widget) ? 0.16 : 0, { min: 0, max: 1, step: 0.02, scale: 100, unit: " %",
+            root.row(widget, "backgroundOpacity", "Background strength", "range", root.plateDefault(widget) ? 0.16 : 0, { page: "look", min: 0, max: 1, step: 0.02, scale: 100, unit: " %",
                 when: () => root.plain(widget) && Boolean(root.value(widget, "showBackground", root.plateDefault(widget))) }),
             // Settings kept these two; the edit sheet lost them when it took over the widget manager (his 10-30)
-            root.row(widget, "useBlur", "Blur background", "switch", false, { tune: true,
+            root.row(widget, "useBlur", "Blur background", "switch", false, { page: "look", tune: true,
                 when: () => root.plain(widget) && Boolean(root.value(widget, "showBackground", root.plateDefault(widget))),
                 keywords: ["blur", "frosted", "glass", "desenfoque"] }),
-            root.row(widget, "cornerRadius", "Corners", "range", -1, { tune: true, min: -1, max: 48, step: 1, unit: " px", lowLabel: "Theme",
+            root.row(widget, "cornerRadius", "Corners", "range", -1, { page: "look", tune: true, min: -1, max: 48, step: 1, unit: " px", lowLabel: "Theme",
                 when: () => root.plain(widget) && (Boolean(root.value(widget, "showBackground", root.plateDefault(widget)))
                     || Boolean(root.value(widget, "showBorder", root.plateDefault(widget)))),
                 keywords: ["corner", "radius", "round", "esquinas", "redondeo"] }))
         out.push(
-            root.row(widget, "colorMode", "Ink", "choice", "auto", { tune: true, when: () => root.plain(widget),
+            root.row(widget, "colorMode", "Ink", "choice", "auto", { page: "look", tune: true, when: () => root.plain(widget),
                 choices: root.choices([["auto", "Auto"], ["light", "Light ink"], ["dark", "Dark ink"]]), keywords: ["ink", "text", "colour", "color", "contrast"] }),
-            root.row(widget, "widgetScale", "Scale", "range", 100, { min: 50, max: 200, step: 10, unit: " %", keywords: ["size", "scale", "zoom", "tamaño"] }),
-            root.row(widget, "widgetOpacity", "Opacity", "range", 100, { min: 10, max: 100, step: 5, unit: " %", when: () => root.plain(widget) }),
-            root.row(widget, "dim", "Dimming", "range", 0, { min: 0, max: 100, step: 5, unit: " %", zeroLabel: "Off", when: () => root.plain(widget) }),
-            root.row(widget, "placementStrategy", "Position", "choice", "free", { tune: true,
+            root.row(widget, "widgetScale", "Scale", "range", 100, { page: "arrange", min: 50, max: 200, step: 10, unit: " %", keywords: ["size", "scale", "zoom", "tamaño"] }),
+            root.row(widget, "widgetOpacity", "Opacity", "range", 100, { page: "look", min: 10, max: 100, step: 5, unit: " %", when: () => root.plain(widget) }),
+            root.row(widget, "dim", "Dimming", "range", 0, { page: "look", min: 0, max: 100, step: 5, unit: " %", zeroLabel: "Off", when: () => root.plain(widget) }),
+            root.row(widget, "placementStrategy", "Position", "choice", "free", { page: "arrange", tune: true,
                 choices: root.choices([["free", "Free position"], ["leastBusy", "Quietest spot"], ["mostBusy", "Busiest spot"]]),
                 keywords: ["position", "place", "auto", "quiet", "busy", "posición"] }),
-            root.row(widget, "locked", "Lock position", "switch", false, { tune: true, keywords: ["lock", "pin", "fixed", "bloquear"] }))
+            root.row(widget, "locked", "Lock position", "switch", false, { page: "arrange", tune: true, keywords: ["lock", "pin", "fixed", "bloquear"] }))
         return out
     }
     // Material's medium and large weather is the forecast face: the pill's own sizes and parts mean nothing there.
     function weatherForecast(): bool { return root.holds("weather", "forecast") }
-    function plateDefault(widget: string): bool {
-        return !DesktopWidgetRegistry.byKey[widget]?.bare
+    // Switched on over a strength of 0 (a bare widget's default) the plate stayed invisible: it comes with one.
+    function plateValues(on: bool, strength: var): var {
+        return on && Number(strength) <= 0 ? { showBackground: true, backgroundOpacity: 0.16 } : { showBackground: on }
     }
-    // Every widget at once, from its own row (so the plate still comes on with a visible strength): a face's surface
-    // stays iRiS's. The state reads the widgets on the desktop: one shared value, or "mixed".
-    // Background and outline mean one thing on every design, an iRiS face included: "every background off" in any
-    // family's edit mode leaves no plate in any family (10-30: hidden in Material, iRiS kept drawing its glass).
+    function plateDefault(widget: string): bool {
+        return DesktopWidgetLook.look.plateByDefault({ bare: DesktopWidgetRegistry.byKey[widget]?.bare ?? false })
+    }
+    // Every widget at once, from its own row (so the plate still comes on with a visible strength). The state reads the
+    // widgets on the desktop: one shared value, or "mixed". Background and outline mean one thing on every design.
     function _everyRows(key: string): var {
         const shared = ["showBackground", "showBorder"].includes(key)
-        return root.widgetRows.filter(spec => spec.key === key && spec.widget
+        return root.widgetRows.concat(root.customRows).filter(spec => spec.key === key && spec.widget
             && (shared || !root.resolved(spec.widget).face) && spec.showIf() && !root._bare(spec.widget, key))
     }
     // A widget drawn bare by default (the clock, the art) counts for its plate only while it shows one: showing every
     // background put a card behind the mascot, and the factory desktop read as mixed.
     function _bare(widget: string, key: string): bool {
         const plate = key === "showBorder" ? "showBorder" : ["showBackground", "backgroundOpacity"].includes(key) ? "showBackground" : ""
-        return plate !== "" && !root.face(widget) && !root.plateDefault(widget) && !Boolean(root.value(widget, plate, false))
+        return plate !== "" && Boolean(DesktopWidgetRegistry.byKey[widget]?.bare) && !Boolean(root.value(widget, plate, false))
     }
     function everyState(key: string): string {
         Config.revision
-        // a face wears its plate and outline unless told otherwise, and its family can hide the plate, whatever the switch says
-        const seen = root._everyRows(key).filter(spec => root.on(spec.widget))
-            .map(spec => key === "showBackground" && root.face(spec.widget)
-                    && DesktopWidgetLook.look.plateHidden((name, fallback) => root.value(spec.widget, name, fallback))
-                ? "false" : String(root.value(spec.widget, key, root.face(spec.widget) ? true : spec.fallback)))
+        const seen = root._everyRows(key).filter(spec => root.on(spec.widget)).map(spec => String(root.read(spec)))
         if (seen.length === 0)
             return ""
         return seen.every(v => v === seen[0]) ? seen[0] : "mixed"
@@ -188,6 +183,22 @@ QtObject {
         const rows = list => (list ?? []).map(option => root._row(widget, option))
         return root.opening(widget).concat([root.size(widget)], rows(root.familyOptions[widget]), rows(entry.options),
             root.closing(widget, entry.plate !== false))
+    }
+    // A person's own widget: its `configKeys` as rows, the same as a manifest's options.
+    readonly property var customRows: CustomWidgets.widgets.reduce((all, entry) => all.concat(
+        Object.keys(entry.configKeys ?? {}).map(key => root._customRow("custom." + entry.id, key, entry.configKeys[key])),
+        root.closing("custom." + entry.id, true)), [])
+    function _customRow(widget: string, key: string, option: var): var {
+        const number = option.type === "int" || option.type === "real"
+        const ranged = number && option.min !== undefined && option.max !== undefined
+        return root.row(widget, key, option.label ?? key, option.type === "bool" ? "switch" : ranged ? "range" : "text", option.default,
+            ranged ? { min: option.min, max: option.max, step: option.step ?? (option.type === "int" ? 1 : 0.1) } : {})
+    }
+    // A sheet's page of a widget's rows, minus the keys it draws itself.
+    function sheetRows(widget: string, page: string, exclude: var): var {
+        Config.revision
+        return root.widgetRows.concat(root.customRows).filter(spec => spec.widget === widget && spec.page === page && !spec.widgetEnable
+            && !(exclude ?? []).includes(spec.key))
     }
     function _row(widget: string, option: var): var {
         const extra = Object.assign({}, option)
@@ -239,6 +250,8 @@ QtObject {
     function _default(widget: string, key: string): var {
         if (key === "sizeClass")
             return DesktopWidgetRegistry.sizesOf(widget)[0]
+        if (key === "showBackground" || key === "showBorder")
+            return root.plateDefault(widget)
         const entry = DesktopWidgetRegistry.byKey[widget]
         const option = (entry?.options ?? []).concat(root.familyOptions[widget] ?? []).find(row => row.key === key)
         return option ? option.default : entry?.defaultConfig?.[key]
@@ -272,7 +285,7 @@ QtObject {
         if (spec.widgetEnable) return root.on(spec.widget)
         if (spec.key === "sizeClass")
             return root.value(spec.widget, "sizeClass", undefined) ?? DesktopWidgetStacks.reported[spec.widget]?.size ?? spec.fallback
-        return root.value(spec.widget, spec.key, spec.fallback)
+        return root.value(spec.widget, spec.key, spec.key === "showBackground" ? root.plateDefault(spec.widget) : spec.fallback)
     }
     function write(spec: var, next: var): void {
         if (spec.widgetEnable) { DesktopWidgetLayout.setGloballyEnabled(spec.widget, Boolean(next)); return }

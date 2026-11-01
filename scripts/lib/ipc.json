@@ -445,7 +445,7 @@
      "args": [
       "page"
      ],
-     "description": "Show a page of the selected widget's quick controls: widget, look or arrange (and stack, for a widget in a stack; options, every option Settings has, where the widget draws its Material face)",
+     "description": "Show a page of the selected widget's quick controls: widget, look or arrange (and stack, for a widget in a stack)",
      "values": []
     },
     {

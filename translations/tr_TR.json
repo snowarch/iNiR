@@ -10132,5 +10132,6 @@
   "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle, Material'ın genel stilini ve saydamlığını kullanır. Kapalıyken: kendi Fluent görünümü.",
   "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "Otomatik, plakaları her alanın rengine boyar; plakasız bir glifi mürekkep renginde bırakır.",
   "The set every glyph is drawn from.": "Her glifin çizildiği set.",
-  "On a plate.": "Bir plaka üzerinde."
+  "On a plate.": "Bir plaka üzerinde.",
+  "Hide background": "Arka planı gizle"
 }

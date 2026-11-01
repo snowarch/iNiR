@@ -132,6 +132,18 @@ function _oneSize(entry, irisActive) {
     return changed;
 }
 
+// A widget's plate has one switch. iRiS's per-widget "Transparent" was a second one; the shared material keeps its
+// own Transparent, which only says what widgets that never chose do.
+function _onePlate(entry) {
+    if (!_isObject(entry)) return false;
+    const nested = _isObject(entry.iris) ? entry.iris.material : undefined;
+    if ((entry["iris.material"] ?? nested) !== "clear") return false;
+    entry.showBackground = false;
+    delete entry["iris.material"];
+    if (_isObject(entry.iris)) delete entry.iris.material;
+    return true;
+}
+
 function _widgetSizes(obj) {
     const widgets = _get(obj, "background.widgets");
     if (!_isObject(widgets)) return false;
@@ -141,7 +153,7 @@ function _widgetSizes(obj) {
         if (_isObject(group)) entries.push(...Object.values(group));
     for (const record of Array.isArray(widgets.outputOverrides) ? widgets.outputOverrides : [])
         if (_isObject(record?.widgets)) entries.push(...Object.values(record.widgets));
-    return entries.map(entry => _oneSize(entry, irisActive)).some(moved => moved);
+    return entries.map(entry => [_oneSize(entry, irisActive), _onePlate(entry)].some(moved => moved)).some(moved => moved);
 }
 
 // Moves the keys of a parsed config.json to their owners in place; true when anything moved.

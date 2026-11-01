@@ -40,45 +40,4 @@ AbstractBackgroundWidget {
         rotation: root.angle
     }
 
-    editPopoverContent: Component {
-        ColumnLayout {
-            spacing: 14
-            WidgetQuickSection {
-                title: Translation.tr("Shape")
-                WidgetShapePicker {
-                    Layout.fillWidth: true
-                    selectedShape: root.shapeName
-                    onShapeSelected: name => root._setOutputValue("shape", name)
-                }
-            }
-            WidgetQuickSection {
-                title: Translation.tr("Fill")
-                WidgetQuickChoices {
-                    current: root.outline
-                    model: [
-                        { value: false, icon: "circle", label: Translation.tr("Filled") },
-                        { value: true, icon: "radio_button_unchecked", label: Translation.tr("Outline") }
-                    ]
-                    onPicked: value => root._setOutputValue("outline", value)
-                }
-                WidgetQuickChoices {
-                    visible: !root.outline
-                    current: root.treatment
-                    model: [
-                        { value: "flat", label: Translation.tr("Solid") },
-                        { value: "inset", label: Translation.tr("Inset") },
-                        { value: "duotone", label: Translation.tr("Duotone") }
-                    ]
-                    onPicked: value => Config.setNestedValue("background.widgets.shape.treatment", value)
-                }
-            }
-            WidgetQuickSlider {
-                title: Translation.tr("Rotation")
-                from: 0; to: 360; stepSize: 15; unit: "°"
-                value: root.angle
-                onMoved: v => root.previewValue("angle", v)
-                onCommitted: v => root.commitValue("angle", v)
-            }
-        }
-    }
 }

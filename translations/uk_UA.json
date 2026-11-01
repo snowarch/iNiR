@@ -10132,5 +10132,6 @@
   "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle використовує глобальний стиль і прозорість Material. Вимкнено: власний вигляд Fluent.",
   "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "«Авто» фарбує плашки в колір кожного розділу, а гліф без плашки залишає кольором тексту.",
   "The set every glyph is drawn from.": "Набір, з якого малюється кожен гліф.",
-  "On a plate.": "На плашці."
+  "On a plate.": "На плашці.",
+  "Hide background": "Сховати задній фон"
 }

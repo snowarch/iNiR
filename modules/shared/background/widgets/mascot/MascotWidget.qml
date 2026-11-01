@@ -238,7 +238,8 @@ AbstractBackgroundWidget {
         Config.addMascotInstance(copy)
     }
 
-    editPopoverContent: Component {
+    ownControlKeys: ["poseFilter", "pose", "customPath"]
+    ownControls: Component {
         ColumnLayout {
             id: mascotQuickControls
             property bool browserOpen: false

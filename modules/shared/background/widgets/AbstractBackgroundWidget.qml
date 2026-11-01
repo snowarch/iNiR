@@ -137,12 +137,19 @@ AbstractWidget {
         return Math.max(0, Math.min(1, Number.isFinite(v) ? v / 100 : 0));
     }
     readonly property real dimOpacity: 1.0 - root.dimAmount * 0.6
-    readonly property bool showBackground: root._readConfigKey("showBackground") ?? true
+    // The plate: one switch, the same in every family and design; the manifest says who stands bare by default.
+    readonly property bool bare: DesktopWidgetRegistry.entry(root.configEntryName)?.bare ?? false
+    readonly property bool showBackground: root._readConfigKey("showBackground") ?? root.look.plateByDefault(root)
     readonly property bool useBlur: root._readConfigKey("useBlur") ?? false
     readonly property bool blurAvailable: root.look.blurAvailable(root)
     readonly property bool effectiveBlur: root.showBackground && root.useBlur && root.blurAvailable
-    readonly property bool showBorder: root._readConfigKey("showBorder") ?? true
+    readonly property bool showBorder: root._readConfigKey("showBorder") ?? !root.bare
     // Granular card controls — override booleans when present
+    // Whether a plate can show at all: a widget that draws its own card in the base design has none to take away.
+    readonly property bool plateOffered: root.familyFaced || DesktopWidgetRegistry.entry(root.configEntryName)?.plate !== false
+    function setPlate(on: bool): void {
+        root._setOutputValues(DesktopWidgetOptions.plateValues(on, root._readConfigKey("backgroundOpacity") ?? 0.16))
+    }
     readonly property real backgroundOpacity: {
         if (!showBackground) return 0;
         const v = root._readConfigKey("backgroundOpacity");
@@ -574,25 +581,18 @@ AbstractWidget {
     }
 
     // ── Quick controls ─────────────────────
-    // Widget-specific controls stay primary. Color customization uses the same
-    // preset-card language as Settings; detailed role remapping lives there.
-    property Component editPopoverContent: null
-    property var manifestConfigKeys: ({})
+    // A widget's options are rows in its manifest (`DesktopWidgetOptions`); both families' sheets draw them. `ownControls`
+    // is for what a row can't draw, and `ownControlKeys` are the keys it answers for.
+    property Component ownControls: null
+    property var ownControlKeys: []
     property bool semanticPaletteControls: !root.configEntryName.startsWith("custom.")
     property bool semanticPaletteQuickControls: semanticPaletteControls
-    readonly property var _manifestKeyList: {
-        const keys = root.manifestConfigKeys;
-        if (!keys || typeof keys !== "object") return [];
-        return Object.keys(keys).map(k => ({ key: k, spec: keys[k] }));
-    }
-    property Component _autoPopoverComponent: _manifestKeyList.length > 0 ? _autoPopoverRef : null
-    readonly property Component _widgetSpecificPopover: root.editPopoverContent ?? root._autoPopoverComponent
-    readonly property bool hasOptionRows: DesktopWidgetOptions.widgetRows.some(spec => spec.widget === root.configEntryName && !spec.widgetEnable)
     property string _quickTab: "widget"
     readonly property string identityGlyph: DesktopWidgetRegistry.glyph(root.configEntryName)
+    readonly property string displayName: DesktopWidgetRegistry.displayName(root.configEntryName)
     readonly property color identityTint: FamilyStyle.identityOf(DesktopWidgetRegistry.tint(root.configEntryName))
     // The page that holds position, lock and removal: "arrange" in an iRiS face's sheet, "layout" otherwise.
-    readonly property string _arrangeTab: root.familyFaced ? "arrange" : "layout"
+    readonly property string _arrangeTab: "arrange"
 
     function openQuickControls(tab: string): void {
         root._quickTab = tab
@@ -608,15 +608,6 @@ AbstractWidget {
         id: _closeQuickControlsLater
         interval: 0
         onTriggered: root.quickControlsOpen = false
-    }
-
-    Component {
-        id: _autoPopoverRef
-        ManifestPopover {
-            configEntryName: root.configEntryName
-            manifestKeys: root._manifestKeyList
-            readConfigKey: (key) => root._readConfigKey(key)
-        }
     }
 
     readonly property Component sheetPages: Component {
@@ -645,28 +636,14 @@ AbstractWidget {
                 && Object.prototype.hasOwnProperty.call(root._resizePreviewValues, key))
             return root._resizePreviewValues[key]
         return DesktopWidgetLayout.value(root.outputName, root.configEntryName,
-            key, Config.getNestedValue(root._configPath + "." + key, undefined))
+            key, Config.getNestedValue(root._configPath + "." + key, root.defaultConfig[key]))
     }
 
-    // The manifest's defaults; a person's own widget sets them itself.
+    // The manifest's defaults, read and never copied into a person's config; a person's own widget sets them itself.
     property var defaultConfig: DesktopWidgetRegistry.defaultsOf(root.configEntryName)
-    // Seed defaults into Config on first load when config entry is empty
-    function _seedDefaultsIfNeeded(): void {
-        if (!Config.ready) return;
-        if (Object.keys(root.defaultConfig).length === 0) return;
-        const prefix = root._configPath;
-        let updates = {};
-        for (const key in root.defaultConfig) {
-            if (Config.getNestedValue(prefix + "." + key, undefined) === undefined)
-                updates[prefix + "." + key] = root.defaultConfig[key];
-        }
-        if (Object.keys(updates).length > 0)
-            Config.setNestedValues(updates);
-    }
     Component.onCompleted: {
         Qt.callLater(() => root._geometryReady = true)
         root._applyBackdropSample()
-        _seedDefaultsIfNeeded();
         root.placement.syncStrategy();
         root.placement.applyLater();
         root._shownSize = root.sizeClass
@@ -893,12 +870,13 @@ AbstractWidget {
     // pages have. Where the family's faces take any box (`widgetFreeSize` in its plugin.json) a free width and height lie
     // over the class, which follows to the nearest one; S, M or L clears them.
     readonly property var sizes: DesktopWidgetRegistry.sizesOf(root.configEntryName)
-    readonly property var sizeChoices: root.stacked ? root.stack.sizes : root.sizes
+    // Always small to large; the manifest's first is only the default.
+    readonly property var sizeChoices: DesktopWidgetRegistry.sizeOrder.filter(size => (root.stacked ? root.stack.sizes : root.sizes).includes(size))
     readonly property string sizeClass: {
         const chosen = String(root._readConfigKey("sizeClass") ?? "")
         if (root.sizeChoices.includes(chosen)) return chosen
         if (root.stacked && root.sizeChoices.includes(root.stack.size)) return root.stack.size
-        return root.sizeChoices[0] ?? ""
+        return root.sizeChoices.includes(root.sizes[0]) ? root.sizes[0] : root.sizeChoices[0] ?? ""
     }
     readonly property bool sized: root.sizeClass.length > 0
     readonly property bool isSmall: root.sizeClass === "small"
@@ -1236,7 +1214,6 @@ AbstractWidget {
     Connections {
         target: Config
         function onReadyChanged() {
-            root._seedDefaultsIfNeeded();
             root.placement.apply();
         }
     }

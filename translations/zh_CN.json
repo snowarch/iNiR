@@ -10132,5 +10132,6 @@
   "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle 使用 Material 的全局样式和透明度。关闭时：使用它自己的 Fluent 外观。",
   "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "自动：底板用各区域的颜色，单独的字形保持墨色。",
   "The set every glyph is drawn from.": "所有字形取自的字体集。",
-  "On a plate.": "放在底板上。"
+  "On a plate.": "放在底板上。",
+  "Hide background": "隐藏背景"
 }

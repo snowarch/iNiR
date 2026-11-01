@@ -94,58 +94,6 @@ AbstractBackgroundWidget {
         onTriggered: root._commitText()
     }
 
-    editPopoverContent: Component {
-        ColumnLayout {
-            spacing: 14
-            WidgetQuickSection {
-                title: Translation.tr("Style")
-                WidgetQuickChoices {
-                    current: root.noteStyle
-                    model: [
-                        { label: Translation.tr("Card"), icon: "sticky_note_2", value: "card" },
-                        { label: Translation.tr("Instrument"), icon: "avg_pace", value: "instrument" }
-                    ]
-                    onPicked: value => root._setOutputValue("style", value)
-                }
-            }
-            WidgetQuickSection {
-                title: Translation.tr("Text")
-                WidgetQuickChoices {
-                    current: root.fontFamily
-                    model: [
-                        { label: Translation.tr("Sans"), icon: "text_fields", value: "sans" },
-                        { label: Translation.tr("Mono"), icon: "code", value: "mono" }
-                    ]
-                    onPicked: value => root._setOutputValue("fontFamily", value)
-                }
-                WidgetQuickChoices {
-                    current: root.textAlign
-                    model: [
-                        { icon: "format_align_left", value: "left", tooltip: Translation.tr("Align left") },
-                        { icon: "format_align_center", value: "center", tooltip: Translation.tr("Center") },
-                        { icon: "format_align_right", value: "right", tooltip: Translation.tr("Align right") }
-                    ]
-                    onPicked: value => root._setOutputValue("textAlign", value)
-                }
-                WidgetQuickToggle {
-                    visible: root.instrument
-                    Layout.fillWidth: true
-                    iconName: "horizontal_rule"
-                    label: Translation.tr("Writing guides")
-                    checked: root.showRules
-                    onToggled: root._setOutputValue("showRules", !root.showRules)
-                }
-            }
-            WidgetQuickSlider {
-                title: Translation.tr("Text size")
-                from: 10; to: 48; stepSize: 1; unit: " px"
-                value: Number(root._readConfigKey("fontSize") ?? 14)
-                onMoved: v => root.previewValue("fontSize", v)
-                onCommitted: v => root.commitValue("fontSize", v)
-            }
-        }
-    }
-
     Loader {
         anchors.fill: parent
         active: !root.familyFaced

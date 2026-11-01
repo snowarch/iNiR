@@ -15,22 +15,22 @@ WidgetQuickControlsLayout {
     required property var widget
     availableWidth: root.widget.quickControlsAvailableWidth - 24
     availableHeight: root.widget.quickControlsAvailableHeight - 24
-    title: {
-        const words = root.widget.configEntryName.split(".").pop().replace(/([A-Z])/g, " $1").toLowerCase().trim()
-        return Translation.tr(words.charAt(0).toUpperCase() + words.slice(1))
-    }
+    title: root.widget.displayName
     glyph: root.widget.identityGlyph
     tint: root.widget.identityTint
-    regularWidth: Math.max(Math.round(340 * root.d),
-        specificQuickLoader.item?.implicitWidth ?? 0)
+    regularWidth: Math.round(340 * root.d)
     onCloseRequested: root.widget.closeQuickControls()
 
+    // Keys a page draws itself: the size above the rows, the design, the placement controls.
+    readonly property var drawn: ["sizeClass", DesktopWidgetDesign.spec.key, "placementStrategy", "locked", "widgetScale", ...root.widget.ownControlKeys]
+    readonly property var widgetRows: DesktopWidgetOptions.sheetRows(root.widget.configEntryName, "widget", root.drawn).filter(spec => spec.showIf())
+    readonly property var lookRows: DesktopWidgetOptions.sheetRows(root.widget.configEntryName, "look", root.drawn).filter(spec => spec.showIf())
     readonly property var pages: [
-        { value: "widget", label: Translation.tr("Widget"), visible: root.widget._widgetSpecificPopover !== null && !root.widget.locked },
-        { value: "options", label: Translation.tr("Options"), visible: root.widget.hasOptionRows && !root.widget.locked },
-        { value: "colors", label: Translation.tr("Look"), visible: (root.widget.semanticPaletteQuickControls
-            || root.widget.hasFamilyFace) && !root.widget.locked },
-        { value: "layout", label: Translation.tr("Arrange") }
+        { value: "widget", label: Translation.tr("Widget"), visible: !root.widget.locked
+            && (root.widget.sizeChoices.length > 1 || root.widget.ownControls !== null || root.widgetRows.length > 0) },
+        { value: "look", label: Translation.tr("Look"), visible: !root.widget.locked && (root.widget.designChoices.length > 1
+            || root.widget.semanticPaletteQuickControls || root.lookRows.length > 0) },
+        { value: "arrange", label: Translation.tr("Arrange") }
     ]
     readonly property string page: {
         const open = root.pages.filter(entry => entry.visible !== false).map(entry => entry.value)
@@ -57,38 +57,35 @@ WidgetQuickControlsLayout {
         }
     }
 
+    WidgetQuickSection {
+        visible: root.page === "widget" && root.widget.sizeChoices.length > 1
+        Layout.fillWidth: true
+        title: Translation.tr("Size")
+        detail: root.widget.sizeLabels[root.widget.sizeClass] ?? ""
+        WidgetQuickChoices {
+            maxColumns: 3
+            current: root.widget.sizeClass
+            model: root.widget.sizeChoices.map(size => ({ value: size, label: root.widget.sizeLabels[size] }))
+            onPicked: value => root.widget.commitSize(value)
+        }
+    }
     Loader {
-        id: specificQuickLoader
-        active: root.widget._widgetSpecificPopover !== null && root.page === "widget"
+        active: root.widget.ownControls !== null && root.page === "widget"
         visible: active
-        sourceComponent: root.widget._widgetSpecificPopover
+        sourceComponent: root.widget.ownControls
         Layout.fillWidth: true
         Layout.preferredHeight: item?.implicitHeight ?? 0
     }
-
-    // Everything Settings has for this widget, scrolled when the screen has less room than the list.
-    Flickable {
-        visible: root.page === "options"
+    // The widget's own rows, scrolled by the sheet when the screen has less room than the list.
+    Loader {
+        active: root.page === "widget"
+        visible: active
         Layout.fillWidth: true
-        Layout.preferredHeight: Math.min(contentHeight, Math.max(Math.round(200 * root.d),
-            root.availableHeight - Math.round(140 * root.d)))
-        contentHeight: optionsLoader.item?.implicitHeight ?? 0
-        interactive: contentHeight > height
-        boundsBehavior: Flickable.StopAtBounds
-        clip: true
-        Loader {
-            id: optionsLoader
-            width: parent.width
-            active: root.page === "options"
-            sourceComponent: WidgetOptionList {
-                widget: root.widget.configEntryName
-                exclude: ["sizeClass", DesktopWidgetDesign.spec.key, ...(DesktopWidgetOptions.familyOptions["*"] ?? []).map(option => option.key), "placementStrategy", "locked"]
-            }
-        }
+        sourceComponent: WidgetOptionList { specs: root.widgetRows }
     }
 
     ColumnLayout {
-        visible: root.page === "colors"
+        visible: root.page === "look"
         Layout.fillWidth: true
         spacing: Math.round(14 * root.d)
 
@@ -162,22 +159,15 @@ WidgetQuickControlsLayout {
         }
     }
 
-    WidgetQuickSection {
-        visible: root.page === "layout" && root.widget.sizeChoices.length > 1 && !root.widget.locked
+    Loader {
+        active: root.page === "look"
+        visible: active
         Layout.fillWidth: true
-        title: Translation.tr("Size")
-        detail: root.widget.sizeLabels[root.widget.sizeClass] ?? ""
-        WidgetQuickChoices {
-            maxColumns: 3
-            current: root.widget.sizeClass
-            model: ["small", "medium", "large"].filter(size => root.widget.sizeChoices.includes(size))
-                .map(size => ({ value: size, label: root.widget.sizeLabels[size] }))
-            onPicked: value => root.widget.commitSize(value)
-        }
+        sourceComponent: WidgetOptionList { specs: root.lookRows }
     }
 
     WidgetPlacementControls {
-        visible: root.page === "layout"
+        visible: root.page === "arrange"
         Layout.fillWidth: true
         widget: root.widget
         wide: root.wideDense

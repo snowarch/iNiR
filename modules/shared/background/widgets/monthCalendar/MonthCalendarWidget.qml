@@ -164,52 +164,6 @@ AbstractBackgroundWidget {
     onCompactChanged: if (root.compact || root.strip) root.monthShift = 0
     onStripChanged: if (root.compact || root.strip) root.monthShift = 0
 
-    editPopoverContent: Component {
-        ColumnLayout {
-            spacing: 14
-            WidgetQuickSection {
-                title: Translation.tr("Style")
-                WidgetQuickChoices {
-                    current: root.instrument ? "instrument" : "card"
-                    model: [
-                        { label: Translation.tr("Card"), icon: "crop_landscape", value: "card" },
-                        { label: Translation.tr("Instrument"), icon: "avg_pace", value: "instrument" }
-                    ]
-                    onPicked: value => root._setOutputValue("style", value)
-                }
-            }
-            WidgetQuickSection {
-                title: Translation.tr("Week starts on")
-                WidgetQuickChoices {
-                    current: root.weekStart
-                    model: [
-                        { label: Translation.tr("Monday"), value: 1 },
-                        { label: Translation.tr("Sunday"), value: 0 }
-                    ]
-                    onPicked: value => root._setOutputValue("weekStart", value)
-                }
-            }
-            WidgetQuickSection {
-                title: Translation.tr("Show")
-                WidgetQuickToggle {
-                    Layout.fillWidth: true
-                    iconName: "date_range"
-                    label: Translation.tr("Adjacent days")
-                    checked: root.showAdjacentDays
-                    onToggled: root._setOutputValue("showAdjacentDays", !root.showAdjacentDays)
-                }
-                WidgetQuickToggle {
-                    visible: root.instrument
-                    Layout.fillWidth: true
-                    iconName: "horizontal_rule"
-                    label: Translation.tr("Header rule")
-                    checked: root.instrumentRule
-                    onToggled: root._setOutputValue("instrumentRule", !root.instrumentRule)
-                }
-            }
-        }
-    }
-
     Loader {
         anchors.fill: parent
         active: !root.familyFaced

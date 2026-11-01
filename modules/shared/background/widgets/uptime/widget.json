@@ -19,8 +19,6 @@
     "style": "row",
     "showSince": true,
     "showBreakdown": true,
-    "showBackground": true,
-    "showBorder": true,
     "backgroundOpacity": 0.16,
     "borderWidth": 1,
     "borderOpacity": 0.2,

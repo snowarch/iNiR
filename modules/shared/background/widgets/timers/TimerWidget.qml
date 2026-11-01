@@ -55,53 +55,6 @@ AbstractBackgroundWidget {
         TimerService.adjustCountdownDuration(minutes * 60)
     }
 
-    editPopoverContent: Component {
-        ColumnLayout {
-            spacing: 14
-            WidgetQuickSection {
-                title: Translation.tr("Style")
-                WidgetQuickChoices {
-                    current: root.instrument ? "instrument" : "cards"
-                    model: [
-                        { label: Translation.tr("Cards"), icon: "dashboard_2", value: "cards" },
-                        { label: Translation.tr("Instrument"), icon: "timer", value: "instrument" }
-                    ]
-                    onPicked: value => root._setOutputValue("style", value)
-                }
-            }
-            WidgetQuickSection {
-                title: Translation.tr("Layout")
-                WidgetQuickChoices {
-                    current: root.vertical
-                    model: [
-                        { label: Translation.tr("Horizontal"), icon: "view_week", value: false },
-                        { label: Translation.tr("Vertical"), icon: "view_agenda", value: true }
-                    ]
-                    onPicked: value => root._setOutputValue("vertical", value)
-                }
-            }
-            WidgetQuickSection {
-                visible: root.instrument
-                title: Translation.tr("Show")
-                Repeater {
-                    model: [
-                        { label: Translation.tr("Progress"), icon: "linear_scale", key: "showProgress", fallback: true },
-                        { label: Translation.tr("Details"), icon: "label", key: "showState", fallback: true },
-                        { label: Translation.tr("Hundredths"), icon: "timer_10_alt_1", key: "showHundredths", fallback: true }
-                    ]
-                    WidgetQuickToggle {
-                        required property var modelData
-                        Layout.fillWidth: true
-                        iconName: modelData.icon
-                        label: modelData.label
-                        checked: Boolean(root._readConfigKey(modelData.key) ?? modelData.fallback)
-                        onToggled: root._setOutputValue(modelData.key, !checked)
-                    }
-                }
-            }
-        }
-    }
-
     component TimerCard: Rectangle {
         id: timerCard
         property string cardKey: ""

@@ -390,38 +390,4 @@ AbstractBackgroundWidget {
         }
     }
 
-    editPopoverContent: Component {
-        ColumnLayout {
-            spacing: 14
-            WidgetQuickSection {
-                title: Translation.tr("Style")
-                WidgetQuickChoices {
-                    current: root.uptimeStyle
-                    model: [
-                        { label: Translation.tr("Row"), icon: "table_rows", value: "row" },
-                        { label: Translation.tr("Instrument"), icon: "avg_pace", value: "instrument" }
-                    ]
-                    onPicked: value => root._setOutputValue("style", value)
-                }
-            }
-            WidgetQuickSection {
-                visible: root.instrument
-                title: Translation.tr("Show")
-                Repeater {
-                    model: [
-                        { label: Translation.tr("Since"), icon: "schedule", key: "showSince", fallback: true },
-                        { label: Translation.tr("Breakdown"), icon: "view_agenda", key: "showBreakdown", fallback: true }
-                    ]
-                    WidgetQuickToggle {
-                        required property var modelData
-                        Layout.fillWidth: true
-                        iconName: modelData.icon
-                        label: modelData.label
-                        checked: Boolean(root._readConfigKey(modelData.key) ?? modelData.fallback)
-                        onToggled: root._setOutputValue(modelData.key, !checked)
-                    }
-                }
-            }
-        }
-    }
 }

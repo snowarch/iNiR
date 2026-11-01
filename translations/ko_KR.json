@@ -10132,5 +10132,6 @@
   "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle이 Material의 전역 스타일과 투명도를 사용합니다. 끄면: 고유한 Fluent 모양.",
   "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "자동은 플레이트를 각 영역의 색으로 칠하고, 플레이트 없는 글리프는 잉크 색으로 둡니다.",
   "The set every glyph is drawn from.": "모든 글리프를 그리는 세트.",
-  "On a plate.": "플레이트 위에."
+  "On a plate.": "플레이트 위에.",
+  "Hide background": "배경 숨기기"
 }

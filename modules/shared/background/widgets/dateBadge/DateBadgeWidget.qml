@@ -384,46 +384,4 @@ AbstractBackgroundWidget {
         }
     }
 
-    editPopoverContent: Component {
-        ColumnLayout {
-            spacing: 14
-            WidgetQuickSection {
-                title: Translation.tr("Style")
-                WidgetQuickChoices {
-                    current: root.badgeStyle
-                    model: [
-                        { value: "ticket", icon: "confirmation_number", label: Translation.tr("Ticket") },
-                        { value: "stacked", icon: "view_day", label: Translation.tr("Stacked") },
-                        { value: "seal", icon: "verified", label: Translation.tr("Seal") },
-                        { value: "instrument", icon: "avg_pace", label: Translation.tr("Instrument") }
-                    ]
-                    onPicked: value => root._setOutputValue("style", value)
-                }
-            }
-            WidgetQuickSection {
-                title: Translation.tr("Show")
-                WidgetQuickToggle {
-                    Layout.fillWidth: true
-                    iconName: "event"
-                    label: Translation.tr("Year")
-                    checked: root.showYear
-                    onToggled: root._setOutputValue("showYear", !root.showYear)
-                }
-                Repeater {
-                    model: [
-                        { label: Translation.tr("Weekday"), icon: "calendar_view_week", key: "showWeekday", fallback: true },
-                        { label: Translation.tr("Day of the year"), icon: "tag", key: "showOrdinal", fallback: true }
-                    ].concat(root.instrument ? [{ label: Translation.tr("Marks"), icon: "crop_free", key: "instrumentMarks", fallback: true }] : [])
-                    WidgetQuickToggle {
-                        required property var modelData
-                        Layout.fillWidth: true
-                        iconName: modelData.icon
-                        label: modelData.label
-                        checked: Boolean(root._readConfigKey(modelData.key) ?? modelData.fallback)
-                        onToggled: root._setOutputValue(modelData.key, !checked)
-                    }
-                }
-            }
-        }
-    }
 }

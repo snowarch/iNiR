@@ -73,47 +73,6 @@ AbstractBackgroundWidget {
         Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "lock", "activate"]);
     }
 
-    editPopoverContent: Component {
-        ColumnLayout {
-            spacing: 14
-            WidgetQuickSection {
-                title: Translation.tr("Style")
-                WidgetQuickChoices {
-                    current: root.cardStyle
-                    model: [
-                        { label: Translation.tr("Card"), icon: "badge", value: "card" },
-                        { label: Translation.tr("Instrument"), icon: "avg_pace", value: "instrument" }
-                    ]
-                    onPicked: value => root._setOutputValue("style", value)
-                }
-            }
-            WidgetQuickSection {
-                title: Translation.tr("Show")
-                WidgetQuickToggle {
-                    Layout.fillWidth: true
-                    iconName: "person"
-                    label: Translation.tr("Avatar")
-                    checked: root.showAvatar
-                    onToggled: root._setOutputValue("showAvatar", !root.showAvatar)
-                }
-                WidgetQuickToggle {
-                    Layout.fillWidth: true
-                    iconName: "cloud"
-                    label: Translation.tr("Weather")
-                    checked: root.showWeather
-                    onToggled: root._setOutputValue("showWeather", !root.showWeather)
-                }
-                WidgetQuickToggle {
-                    Layout.fillWidth: true
-                    iconName: "computer"
-                    label: Translation.tr("Host name")
-                    checked: root.showHostname
-                    onToggled: root._setOutputValue("showHostname", !root.showHostname)
-                }
-            }
-        }
-    }
-
     Loader {
         anchors.fill: parent
         active: !root.familyFaced

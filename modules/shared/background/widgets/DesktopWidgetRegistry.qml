@@ -17,7 +17,7 @@ import qs.services
 //      `face`: the name of the family faces that draw it (a family's part `widgetFace.<face>`). `faceOnly`: it draws
 //      nothing of its own, so only a family with that part offers it.
 //      `options`: its rows for Settings and the edit sheet (DesktopWidgetOptions has the `when` language). `bare`: it
-//      stands with no plate by default. `plate: false`: it draws its own card, so the plate rows leave.
+//      stands with no plate by default (its `showBackground` and `showBorder` start off). `plate: false`: it draws its own card, so the plate rows leave.
 //   3. Its config block in modules/common/Config.qml (`background.widgets.<key>`, `enable` at `defaultOn`).
 //   4. A family's own face stays that family's, in its plugin.json parts; with `lock`, its Component in the family's lock.
 // The iRiS gallery keeps its own order (IrisFaceData.order, a widget it lacks goes last).
@@ -89,6 +89,13 @@ Singleton {
     function entriesFor(family: string): var { return root.entries.filter(entry => root.offered(entry.key, family)) }
     function entry(key: string): var { return root.byKey[key] ?? null }
     function nameOf(key: string): string { return root.byKey[key]?.name ?? key }
+    // What people call it, on every sheet, tag and shelf.
+    function displayName(key: string): string {
+        if (key.startsWith("custom."))
+            return CustomWidgets.widgets.find(widget => "custom." + widget.id === key)?.name ?? key.slice(7)
+        return Translation.tr(root.nameOf(root.baseKey(key)))
+    }
+    readonly property var sizeOrder: ["small", "medium", "large"]
     function groupOf(key: string): string { return root.byKey[key]?.group ?? key }
     function defaultOn(key: string): bool { return root.byKey[key]?.defaultOn ?? false }
     function glyph(key: string): string { return root.byKey[key]?.icon ?? "widgets" }

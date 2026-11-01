@@ -48,68 +48,6 @@ AbstractBackgroundWidget {
     resizeMinHeight: root.displayMode === "tiles" ? 100
         : root.displayMode === "instrument" ? 150 : 60
 
-    // ── Popover: mode + resource toggles ──
-    editPopoverContent: Component {
-        ColumnLayout {
-            spacing: 14
-
-            WidgetQuickSection {
-                title: Translation.tr("Style")
-                WidgetQuickChoices {
-                    current: root.displayMode
-                    model: [
-                        { label: Translation.tr("Bars"), icon: "bar_chart", value: "bars" },
-                        { label: Translation.tr("Graph"), icon: "show_chart", value: "graph" },
-                        { label: Translation.tr("Rings"), icon: "donut_large", value: "rings" },
-                        { label: Translation.tr("Text"), icon: "text_fields", value: "text" },
-                        { label: Translation.tr("Tiles"), icon: "grid_view", value: "tiles" },
-                        { label: Translation.tr("Instrument"), icon: "equalizer", value: "instrument" }
-                    ]
-                    onPicked: value => root._setOutputValue("displayMode", value)
-                }
-            }
-
-            WidgetQuickSection {
-                title: Translation.tr("Metrics")
-                GridLayout {
-                    Layout.fillWidth: true
-                    columns: 2
-                    columnSpacing: 4
-                    rowSpacing: 4
-                    Repeater {
-                        model: [
-                            { label: Translation.tr("CPU"), icon: "memory", key: "showCpu", fallback: true },
-                            { label: Translation.tr("RAM"), icon: "storage", key: "showMemory", fallback: true },
-                            { label: Translation.tr("GPU"), icon: "developer_board", key: "showGpu", fallback: true },
-                            { label: Translation.tr("Disk"), icon: "hard_drive", key: "showDisk", fallback: false },
-                            { label: Translation.tr("CPU temp"), icon: "thermostat", key: "showTemp", fallback: false },
-                            { label: Translation.tr("GPU temp"), icon: "device_thermostat", key: "showGpuTemp", fallback: false }
-                        ]
-                        WidgetQuickToggle {
-                            required property var modelData
-                            Layout.fillWidth: true
-                            Layout.preferredWidth: 1
-                            Layout.maximumWidth: Number.POSITIVE_INFINITY
-                            implicitWidth: 150
-                            iconName: modelData.icon
-                            label: modelData.label
-                            checked: Boolean(root._readConfigKey(modelData.key) ?? modelData.fallback)
-                            enabled: !checked || root._resourceModel.length > 1
-                            onToggled: root._setOutputValue(modelData.key, !checked)
-                        }
-                    }
-                }
-                WidgetQuickToggle {
-                    Layout.fillWidth: true
-                    iconName: "label"
-                    label: Translation.tr("Labels")
-                    checked: root.showLabels
-                    onToggled: root._setOutputValue("showLabels", !root.showLabels)
-                }
-            }
-        }
-    }
-
     // ── Config properties ──
     // The loader already represents the effective per-output enabled state.
     // Rechecking the global base here breaks output-local overrides and can

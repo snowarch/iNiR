@@ -13,15 +13,8 @@ import qs.modules.common.widgets
 ColumnLayout {
     id: root
 
-    required property string widget
-    // Keys another page of the controls already sets (size, design, place).
-    property var exclude: []
-    readonly property var specs: {
-        Config.revision
-        return DesktopWidgetOptions.widgetRows.filter(spec => spec.widget === root.widget && !spec.widgetEnable
-            && !root.exclude.includes(spec.key) && ["switch", "choice", "range", "text"].includes(spec.kind)
-            && (!spec.showIf || spec.showIf()))
-    }
+    // The rows to draw, from `DesktopWidgetOptions.sheetRows`.
+    property var specs: []
     function valueOf(spec: var): var {
         Config.revision
         return DesktopWidgetOptions.read(spec)
@@ -31,7 +24,7 @@ ColumnLayout {
     spacing: 10
 
     Repeater {
-        model: ScriptModel { objectProp: "path"; values: root.specs }
+        model: ScriptModel { objectProp: "path"; values: root.specs.filter(spec => ["switch", "choice", "range", "text"].includes(spec.kind)) }
         delegate: Loader {
             id: row
             required property var modelData
@@ -65,7 +58,8 @@ ColumnLayout {
             title: root.label(choice.spec.label)
             detail: root.label(choice.picks.find(pick => String(pick.value) === String(choice.current))?.label ?? "")
             WidgetQuickChoices {
-                maxColumns: choice.picks.length === 4 ? 2 : 3
+                // A long name takes a wider cell: names fit, never cut.
+                maxColumns: choice.picks.length === 4 || choice.picks.some(pick => root.label(pick.label).length > 13) ? 2 : 3
                 current: choice.current
                 isSelected: entry => String(entry.value) === String(choice.current)
                 model: choice.picks.map(pick => ({ value: pick.value, label: root.label(pick.label), icon: pick.glyph ?? "" }))

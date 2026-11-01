@@ -118,49 +118,4 @@ AbstractBackgroundWidget {
         }
     }
 
-    editPopoverContent: Component {
-        ColumnLayout {
-            spacing: 14
-            WidgetQuickSection {
-                title: Translation.tr("Composition")
-                WidgetQuickChoices {
-                    current: root.composition
-                    model: [
-                        { value: "poster", icon: "view_quilt", label: Translation.tr("Poster") },
-                        { value: "quote", icon: "format_quote", label: Translation.tr("Quote") },
-                        { value: "label", icon: "label", label: Translation.tr("Label") }
-                    ]
-                    onPicked: value => root._setOutputValue("style", value)
-                }
-            }
-            WidgetQuickSection {
-                title: Translation.tr("Words")
-                MaterialTextField {
-                    Layout.fillWidth: true
-                    placeholderText: Translation.tr("Title")
-                    text: String(root._readConfigKey("title") ?? "Make room for wonder.")
-                    onEditingFinished: root._setOutputValue("title", text)
-                }
-                MaterialTextField {
-                    Layout.fillWidth: true
-                    placeholderText: Translation.tr("Caption")
-                    text: String(root._readConfigKey("caption") ?? "A LITTLE EVERY DAY")
-                    onEditingFinished: root._setOutputValue("caption", text)
-                }
-                MaterialTextField {
-                    Layout.fillWidth: true
-                    placeholderText: Translation.tr("Footer")
-                    text: String(root._readConfigKey("footer") ?? "YOUR OWN PERSPECTIVE")
-                    onEditingFinished: root._setOutputValue("footer", text)
-                }
-            }
-            WidgetQuickToggle {
-                Layout.fillWidth: true
-                iconName: "auto_awesome"
-                label: Translation.tr("Decorative accents")
-                checked: root.showAccent
-                onToggled: root._setOutputValue("showAccent", !root.showAccent)
-            }
-        }
-    }
 }

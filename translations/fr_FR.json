@@ -10132,5 +10132,6 @@
   "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle adopte le style global et la transparence de Material. Désactivé : son propre look Fluent.",
   "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "Auto peint les plaques de la couleur de chaque zone et laisse un glyphe seul à l'encre.",
   "The set every glyph is drawn from.": "Le jeu dont chaque glyphe est tiré.",
-  "On a plate.": "Sur une plaque."
+  "On a plate.": "Sur une plaque.",
+  "Hide background": "Masquer l'arrière-plan"
 }

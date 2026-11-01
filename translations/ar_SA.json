@@ -10132,5 +10132,6 @@
   "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "يستخدم Waffle النمط العام والشفافية من Material. عند الإيقاف: مظهر Fluent الخاص به.",
   "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "تلوّن «تلقائي» اللوحات بلون كل منطقة وتترك الرمز المنفرد بلون الحبر.",
   "The set every glyph is drawn from.": "المجموعة التي تُرسم منها كل الرموز.",
-  "On a plate.": "على لوحة."
+  "On a plate.": "على لوحة.",
+  "Hide background": "إخفاء الخلفية"
 }

@@ -334,8 +334,7 @@ Scope {
             return enabled ? "Organic edge enabled" : "Organic edge disabled"
         }
 
-        /// Show a page of the selected widget's quick controls: widget, look or arrange (and stack, for a widget in a
-        /// stack; options, every option Settings has, where the widget draws its Material face)
+        /// Show a page of the selected widget's quick controls: widget, look or arrange (and stack, for a widget in a stack)
         function quickControlsPage(page: string): string {
             const key = GlobalStates.selectedDesktopWidget
             const [output, name] = key.split("::")
@@ -343,13 +342,10 @@ Scope {
                 .find(item => item.configEntryName === name) ?? null
             if (!widget)
                 return "select a widget first: focusWidget <name> true"
-            const pages = widget.familyFaced ? ["widget", "look", "arrange"].concat(widget.stacked ? ["stack"] : [])
-                : ["widget", "colors", "layout"].concat(widget.hasOptionRows ? ["options"] : [])
-            const aliases = ({ look: widget.familyFaced ? "look" : "colors", colors: widget.familyFaced ? "look" : "colors",
-                arrange: widget._arrangeTab, layout: widget._arrangeTab, widget: "widget", stack: "stack", options: "options" })
-            const target = aliases[String(page ?? "").trim()] ?? ""
+            const pages = ["widget", "look", "arrange"].concat(widget.stacked ? ["stack"] : [])
+            const target = String(page ?? "").trim()
             if (!pages.includes(target))
-                return "pages: widget, look, arrange" + (widget.stacked ? ", stack" : "") + (!widget.familyFaced && widget.hasOptionRows ? ", options" : "")
+                return "pages: " + pages.join(", ")
             widget.openQuickControls(target)
             return JSON.stringify({ widget: key, page: target })
         }
@@ -2889,8 +2885,6 @@ Scope {
                         desktop: bgRoot
                         file: modelData.qmlPath
                         order: 200 + index
-                        props: Object.keys(modelData.configKeys ?? {}).length > 0
-                            ? ({ manifestConfigKeys: modelData.configKeys }) : ({})
                         shown: {
                             void Config.revision;
                             return bgRoot._widgetEnabled(instance,

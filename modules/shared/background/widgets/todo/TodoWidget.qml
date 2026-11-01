@@ -118,41 +118,6 @@ AbstractBackgroundWidget {
         }
     }
 
-    editPopoverContent: Component {
-        ColumnLayout {
-            spacing: 14
-            WidgetQuickSection {
-                title: Translation.tr("Style")
-                WidgetQuickChoices {
-                    current: root.instrument ? "instrument" : "card"
-                    model: [
-                        { label: Translation.tr("Card"), icon: "crop_landscape", value: "card" },
-                        { label: Translation.tr("Instrument"), icon: "avg_pace", value: "instrument" }
-                    ]
-                    onPicked: value => root._setOutputValue("style", value)
-                }
-            }
-            WidgetQuickSection {
-                title: Translation.tr("Show")
-                WidgetQuickToggle {
-                    Layout.fillWidth: true
-                    iconName: "done_all"
-                    label: Translation.tr("Finished tasks")
-                    checked: root.showCompleted
-                    onToggled: root._setOutputValue("showCompleted", !root.showCompleted)
-                }
-                WidgetQuickToggle {
-                    visible: root.instrument
-                    Layout.fillWidth: true
-                    iconName: "horizontal_rule"
-                    label: Translation.tr("Row rules")
-                    checked: root.instrumentRules
-                    onToggled: root._setOutputValue("instrumentRules", !root.instrumentRules)
-                }
-            }
-        }
-    }
-
     Item {
         id: taskFocusSink
         focus: false

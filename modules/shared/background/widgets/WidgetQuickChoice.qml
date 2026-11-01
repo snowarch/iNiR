@@ -25,6 +25,8 @@ Rectangle {
     readonly property color dangerInk: FamilyStyle.danger
     readonly property color glyphInk: root.danger ? root.dangerInk : root.look.chipGlyphInk(root.selected)
 
+    implicitWidth: content.implicitWidth + root.sidePadding * 2
+    implicitHeight: Math.round(34 * root.d)
     radius: root.look.chipRadius(height)
     color: root.look.chipFill(root.selected, hover.hovered)
     border.width: root.selected ? root.look.chipEdge : 0

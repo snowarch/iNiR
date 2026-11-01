@@ -123,64 +123,6 @@ AbstractBackgroundWidget {
         }
     }
 
-    editPopoverContent: Component {
-        ColumnLayout {
-            spacing: 14
-            WidgetQuickSection {
-                title: Translation.tr("Style")
-                WidgetQuickChoices {
-                    current: root.tickerStyle
-                    model: [
-                        { label: Translation.tr("Card"), icon: "crop_landscape", value: "card" },
-                        { label: Translation.tr("Instrument"), icon: "avg_pace", value: "instrument" }
-                    ]
-                    onPicked: value => root._setOutputValue("style", value)
-                }
-            }
-            WidgetQuickSection {
-                title: Translation.tr("Headlines")
-                detail: root.articleCount > 0
-                    ? ((root.headlineIndex % root.articleCount) + 1) + " / " + root.articleCount
-                    : (NewsService.loading ? Translation.tr("Loading…") : Translation.tr("No news"))
-                WidgetQuickChoices {
-                    maxColumns: 5
-                    isSelected: entry => entry.value === "pause" && root.rotationPaused
-                    model: [
-                        { value: "previous", icon: "chevron_left", tooltip: Translation.tr("Previous"), visible: root.articleCount > 1 },
-                        { value: "pause", icon: root.rotationPaused ? "play_arrow" : "pause",
-                            tooltip: root.rotationPaused ? Translation.tr("Resume") : Translation.tr("Pause") },
-                        { value: "next", icon: "chevron_right", tooltip: Translation.tr("Next"), visible: root.articleCount > 1 },
-                        { value: "refresh", icon: "refresh", tooltip: Translation.tr("Refresh"), visible: !NewsService.loading },
-                        { value: "open", icon: "open_in_new", tooltip: Translation.tr("Open article"), visible: root.displayedArticle !== null }
-                    ]
-                    onPicked: value => {
-                        if (value === "previous") root._moveHeadline(-1)
-                        else if (value === "next") root._moveHeadline(1)
-                        else if (value === "pause") root.rotationPaused = !root.rotationPaused
-                        else if (value === "refresh") root._fetch(true)
-                        else if (value === "open") root._openArticle()
-                    }
-                }
-                WidgetQuickToggle {
-                    Layout.fillWidth: true
-                    iconName: "label"
-                    label: Translation.tr("Source and time")
-                    checked: root.showMeta
-                    onToggled: root._setOutputValue("showMeta", !root.showMeta)
-                }
-            }
-            WidgetQuickSection {
-                title: Translation.tr("Change every")
-                WidgetQuickChoices {
-                    maxColumns: 4
-                    current: root.rotateSeconds
-                    model: root.rotateChoices
-                    onPicked: value => root._setOutputValue("rotateSeconds", value)
-                }
-            }
-        }
-    }
-
     Loader {
         anchors.fill: parent
         active: !root.familyFaced

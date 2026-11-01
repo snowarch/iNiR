@@ -10132,5 +10132,6 @@
   "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle dùng phong cách chung và độ trong suốt của Material. Tắt: giao diện Fluent riêng của nó.",
   "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "Tự động tô tấm theo màu của từng khu vực và để biểu tượng đứng riêng theo màu mực.",
   "The set every glyph is drawn from.": "Bộ dùng để vẽ mọi biểu tượng.",
-  "On a plate.": "Trên một tấm."
+  "On a plate.": "Trên một tấm.",
+  "Hide background": "Ẩn nền"
 }

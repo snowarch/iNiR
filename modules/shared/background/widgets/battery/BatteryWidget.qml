@@ -28,43 +28,6 @@ AbstractBackgroundWidget {
     resizeMinWidth: 40
     resizeMinHeight: 40
 
-    editPopoverContent: Component {
-        ColumnLayout {
-            spacing: 14
-            WidgetQuickSection {
-                title: Translation.tr("Style")
-                WidgetQuickChoices {
-                    current: root.displayMode
-                    model: [
-                        { label: Translation.tr("Ring"), icon: "donut_large", value: "ring" },
-                        { label: Translation.tr("Bars"), icon: "bar_chart", value: "bars" },
-                        { label: Translation.tr("Pill"), icon: "horizontal_rule", value: "pill" },
-                        { label: Translation.tr("Instrument"), icon: "battery_charging_full", value: "instrument" }
-                    ]
-                    onPicked: value => root._setOutputValue("displayMode", value)
-                }
-            }
-            WidgetQuickSection {
-                title: Translation.tr("Show")
-                WidgetQuickToggle {
-                    Layout.fillWidth: true
-                    iconName: "timer"
-                    label: Translation.tr("Time left")
-                    checked: root.showTimeEstimate
-                    onToggled: root._setOutputValue("showTime", !root.showTimeEstimate)
-                }
-                WidgetQuickToggle {
-                    visible: root.displayMode === "instrument"
-                    Layout.fillWidth: true
-                    iconName: "electric_bolt"
-                    label: Translation.tr("Power draw")
-                    checked: root.showEnergyRate
-                    onToggled: root._setOutputValue("showRate", !root.showEnergyRate)
-                }
-            }
-        }
-    }
-
     readonly property string displayMode: root._readConfigKey("displayMode") ?? "ring"
     readonly property bool showTimeEstimate: root._readConfigKey("showTime") ?? true
     readonly property bool showEnergyRate: root._readConfigKey("showRate") ?? true

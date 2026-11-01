@@ -10132,5 +10132,6 @@
   "Waffle wears Material's global style and transparency. Off: its own Fluent look.": "Waffle, Material की ग्लोबल शैली और पारदर्शिता अपनाता है। बंद होने पर: उसका अपना Fluent रूप।",
   "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "ऑटो प्लेटों को हर क्षेत्र के रंग में रंगता है और अकेले ग्लिफ़ को स्याही के रंग में छोड़ता है।",
   "The set every glyph is drawn from.": "वह सेट जिससे हर ग्लिफ़ बनता है।",
-  "On a plate.": "प्लेट पर।"
+  "On a plate.": "प्लेट पर।",
+  "Hide background": "पृष्ठभूमि छिपाएँ"
 }
