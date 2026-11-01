@@ -7227,7 +7227,6 @@
   "Focus and Today, arranged around your workflow": "פוקוס והיום, מסודרים סביב אופן העבודה שלך",
   "Focus sections": "מקטעי פוקוס",
   "Focus timer": "טיימר פוקוס",
-  "Focus · left": "פוקוס · שמאל",
   "Follow %1": "לעקוב אחר %1",
   "Forecast": "תחזית",
   "Four round controls on one plate; pick them on the Panel page.": "ארבע בקרות עגולות על לוחית אחת; בחר אותן בעמוד הלוח.",
@@ -7728,7 +7727,6 @@
   "Titles and figures": "כותרות וספרות",
   "Today sections": "מקטעי היום",
   "Today · %1": "היום · %1",
-  "Today · right": "היום · ימין",
   "Top hit": "התוצאה המובילה",
   "Touch": "מגע",
   "Touch the fingerprint reader or enter your password": "גע בקורא טביעות האצבע או הזן סיסמה",
@@ -10133,5 +10131,9 @@
   "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "אוטומטי צובע לוחיות בצבע של כל אזור ומשאיר סמל בודד בצבע הדיו.",
   "The set every glyph is drawn from.": "הסט שממנו מצויר כל סמל.",
   "On a plate.": "על לוחית.",
-  "Hide background": "הסתר רקע"
+  "Hide background": "הסתר רקע",
+  "Sections": "מקטעים",
+  "Side panels off": "לוחות צד כבויים",
+  "One section": "מקטע אחד",
+  "%1 sections": "%1 מקטעים"
 }

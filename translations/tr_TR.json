@@ -7227,7 +7227,6 @@
   "Focus and Today, arranged around your workflow": "İş akışınıza göre düzenlenmiş Odak ve Bugün",
   "Focus sections": "Odak bölümleri",
   "Focus timer": "Odak zamanlayıcısı",
-  "Focus · left": "Odak · sol",
   "Follow %1": "%1 izle",
   "Forecast": "Tahmin",
   "Four round controls on one plate; pick them on the Panel page.": "Tek plakada dört yuvarlak denetim; onları Panel sayfasında seçin.",
@@ -7728,7 +7727,6 @@
   "Titles and figures": "Başlıklar ve rakamlar",
   "Today sections": "Bugün bölümleri",
   "Today · %1": "Bugün · %1",
-  "Today · right": "Bugün · sağ",
   "Top hit": "En iyi sonuç",
   "Touch": "Dokunma",
   "Touch the fingerprint reader or enter your password": "Parmak izi okuyucusuna dokunun ya da parolanızı girin",
@@ -10133,5 +10131,9 @@
   "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "Otomatik, plakaları her alanın rengine boyar; plakasız bir glifi mürekkep renginde bırakır.",
   "The set every glyph is drawn from.": "Her glifin çizildiği set.",
   "On a plate.": "Bir plaka üzerinde.",
-  "Hide background": "Arka planı gizle"
+  "Hide background": "Arka planı gizle",
+  "Sections": "Bölümler",
+  "Side panels off": "Yan paneller kapalı",
+  "One section": "Bir bölüm",
+  "%1 sections": "%1 bölüm"
 }

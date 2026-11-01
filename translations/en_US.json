@@ -7222,7 +7222,6 @@
   "Focus and Today, arranged around your workflow": "Focus and Today, arranged around your workflow",
   "Focus sections": "Focus sections",
   "Focus timer": "Focus timer",
-  "Focus · left": "Focus · left",
   "Follow %1": "Follow %1",
   "Forecast": "Forecast",
   "Four round controls on one plate; pick them on the Panel page.": "Four round controls on one plate; pick them on the Panel page.",
@@ -7725,7 +7724,6 @@
   "Titles and figures": "Titles and figures",
   "Today sections": "Today sections",
   "Today · %1": "Today · %1",
-  "Today · right": "Today · right",
   "Top hit": "Top hit",
   "Touch": "Touch",
   "Touch the fingerprint reader or enter your password": "Touch the fingerprint reader or enter your password",
@@ -10133,5 +10131,9 @@
   "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "Auto paints plates in each area's colour and leaves a glyph alone in ink.",
   "The set every glyph is drawn from.": "The set every glyph is drawn from.",
   "On a plate.": "On a plate.",
-  "Hide background": "Hide background"
+  "Hide background": "Hide background",
+  "Sections": "Sections",
+  "Side panels off": "Side panels off",
+  "One section": "One section",
+  "%1 sections": "%1 sections"
 }

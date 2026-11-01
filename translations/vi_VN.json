@@ -7227,7 +7227,6 @@
   "Focus and Today, arranged around your workflow": "Tập trung và Hôm nay, sắp theo cách bạn làm việc",
   "Focus sections": "Các mục Tập trung",
   "Focus timer": "Hẹn giờ tập trung",
-  "Focus · left": "Tập trung · trái",
   "Follow %1": "Theo %1",
   "Forecast": "Dự báo",
   "Four round controls on one plate; pick them on the Panel page.": "Bốn điều khiển tròn trên một tấm; chọn chúng ở trang Bảng.",
@@ -7728,7 +7727,6 @@
   "Titles and figures": "Tiêu đề và chữ số",
   "Today sections": "Mục Hôm nay",
   "Today · %1": "Hôm nay · %1",
-  "Today · right": "Hôm nay · phải",
   "Top hit": "Kết quả hàng đầu",
   "Touch": "Chạm",
   "Touch the fingerprint reader or enter your password": "Chạm vào đầu đọc vân tay hoặc nhập mật khẩu",
@@ -10133,5 +10131,9 @@
   "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "Tự động tô tấm theo màu của từng khu vực và để biểu tượng đứng riêng theo màu mực.",
   "The set every glyph is drawn from.": "Bộ dùng để vẽ mọi biểu tượng.",
   "On a plate.": "Trên một tấm.",
-  "Hide background": "Ẩn nền"
+  "Hide background": "Ẩn nền",
+  "Sections": "Các mục",
+  "Side panels off": "Đã tắt bảng bên",
+  "One section": "Một mục",
+  "%1 sections": "%1 mục"
 }

@@ -7227,7 +7227,6 @@
   "Focus and Today, arranged around your workflow": "작업 흐름에 맞춰 배치한 포커스와 오늘",
   "Focus sections": "포커스 섹션",
   "Focus timer": "포커스 타이머",
-  "Focus · left": "포커스 · 왼쪽",
   "Follow %1": "%1 따르기",
   "Forecast": "예보",
   "Four round controls on one plate; pick them on the Panel page.": "플레이트 하나에 둥근 컨트롤 네 개. 패널 페이지에서 고르세요.",
@@ -7728,7 +7727,6 @@
   "Titles and figures": "제목과 숫자",
   "Today sections": "오늘 섹션",
   "Today · %1": "오늘 · %1",
-  "Today · right": "오늘 · 오른쪽",
   "Top hit": "최상위 결과",
   "Touch": "터치",
   "Touch the fingerprint reader or enter your password": "지문 리더를 터치하거나 비밀번호를 입력하세요",
@@ -10133,5 +10131,9 @@
   "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "자동은 플레이트를 각 영역의 색으로 칠하고, 플레이트 없는 글리프는 잉크 색으로 둡니다.",
   "The set every glyph is drawn from.": "모든 글리프를 그리는 세트.",
   "On a plate.": "플레이트 위에.",
-  "Hide background": "배경 숨기기"
+  "Hide background": "배경 숨기기",
+  "Sections": "섹션",
+  "Side panels off": "사이드 패널 꺼짐",
+  "One section": "섹션 1개",
+  "%1 sections": "섹션 %1개"
 }

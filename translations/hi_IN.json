@@ -7227,7 +7227,6 @@
   "Focus and Today, arranged around your workflow": "आपके काम के ढंग के हिसाब से फ़ोकस और आज",
   "Focus sections": "फ़ोकस सेक्शन",
   "Focus timer": "फ़ोकस टाइमर",
-  "Focus · left": "फ़ोकस · बायाँ",
   "Follow %1": "%1 का पालन करें",
   "Forecast": "पूर्वानुमान",
   "Four round controls on one plate; pick them on the Panel page.": "एक प्लेट पर चार गोल कंट्रोल; उन्हें पैनल पेज पर चुनें।",
@@ -7728,7 +7727,6 @@
   "Titles and figures": "शीर्षक और अंक",
   "Today sections": "आज के सेक्शन",
   "Today · %1": "आज · %1",
-  "Today · right": "आज · दायाँ",
   "Top hit": "सबसे अच्छा नतीजा",
   "Touch": "स्पर्श",
   "Touch the fingerprint reader or enter your password": "फ़िंगरप्रिंट रीडर छुएँ या अपना पासवर्ड दर्ज करें",
@@ -10133,5 +10131,9 @@
   "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "ऑटो प्लेटों को हर क्षेत्र के रंग में रंगता है और अकेले ग्लिफ़ को स्याही के रंग में छोड़ता है।",
   "The set every glyph is drawn from.": "वह सेट जिससे हर ग्लिफ़ बनता है।",
   "On a plate.": "प्लेट पर।",
-  "Hide background": "पृष्ठभूमि छिपाएँ"
+  "Hide background": "पृष्ठभूमि छिपाएँ",
+  "Sections": "अनुभाग",
+  "Side panels off": "साइड पैनल बंद",
+  "One section": "एक अनुभाग",
+  "%1 sections": "%1 अनुभाग"
 }

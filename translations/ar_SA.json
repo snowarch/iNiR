@@ -7227,7 +7227,6 @@
   "Focus and Today, arranged around your workflow": "التركيز واليوم، مرتّبان حول طريقة عملك",
   "Focus sections": "أقسام التركيز",
   "Focus timer": "مؤقت التركيز",
-  "Focus · left": "التركيز · يسار",
   "Follow %1": "اتباع %1",
   "Forecast": "التوقعات",
   "Four round controls on one plate; pick them on the Panel page.": "أربعة عناصر تحكم مستديرة على لوحة واحدة؛ اخترها من صفحة اللوحة.",
@@ -7728,7 +7727,6 @@
   "Titles and figures": "العناوين والأرقام",
   "Today sections": "أقسام اليوم",
   "Today · %1": "اليوم · %1",
-  "Today · right": "اليوم · يمين",
   "Top hit": "أفضل نتيجة",
   "Touch": "لمس",
   "Touch the fingerprint reader or enter your password": "المس قارئ البصمة أو أدخل كلمة المرور",
@@ -10133,5 +10131,9 @@
   "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "تلوّن «تلقائي» اللوحات بلون كل منطقة وتترك الرمز المنفرد بلون الحبر.",
   "The set every glyph is drawn from.": "المجموعة التي تُرسم منها كل الرموز.",
   "On a plate.": "على لوحة.",
-  "Hide background": "إخفاء الخلفية"
+  "Hide background": "إخفاء الخلفية",
+  "Sections": "الأقسام",
+  "Side panels off": "اللوحات الجانبية متوقفة",
+  "One section": "قسم واحد",
+  "%1 sections": "%1 أقسام"
 }

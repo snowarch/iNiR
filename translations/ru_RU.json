@@ -7227,7 +7227,6 @@
   "Focus and Today, arranged around your workflow": "Фокус и Сегодня, выстроенные вокруг вашей работы",
   "Focus sections": "Разделы Фокуса",
   "Focus timer": "Таймер фокуса",
-  "Focus · left": "Фокус · слева",
   "Follow %1": "Следовать %1",
   "Forecast": "Прогноз",
   "Four round controls on one plate; pick them on the Panel page.": "Четыре круглых элемента на одной плашке; выберите их на странице «Панель».",
@@ -7728,7 +7727,6 @@
   "Titles and figures": "Заголовки и цифры",
   "Today sections": "Разделы «Сегодня»",
   "Today · %1": "Сегодня · %1",
-  "Today · right": "Сегодня · справа",
   "Top hit": "Лучший результат",
   "Touch": "Прикосновение",
   "Touch the fingerprint reader or enter your password": "Приложите палец к сканеру или введите пароль",
@@ -10133,5 +10131,9 @@
   "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "«Авто» красит плашки в цвет каждого раздела, а глиф без плашки оставляет цветом текста.",
   "The set every glyph is drawn from.": "Набор, из которого рисуется каждый глиф.",
   "On a plate.": "На плашке.",
-  "Hide background": "Скрыть фон"
+  "Hide background": "Скрыть фон",
+  "Sections": "Разделы",
+  "Side panels off": "Боковые панели выключены",
+  "One section": "Один раздел",
+  "%1 sections": "Разделов: %1"
 }

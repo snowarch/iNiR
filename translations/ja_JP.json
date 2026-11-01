@@ -7227,7 +7227,6 @@
   "Focus and Today, arranged around your workflow": "作業に合わせて並べたフォーカスと今日",
   "Focus sections": "フォーカスのセクション",
   "Focus timer": "フォーカスタイマー",
-  "Focus · left": "フォーカス · 左",
   "Follow %1": "%1 に従う",
   "Forecast": "予報",
   "Four round controls on one plate; pick them on the Panel page.": "1枚のプレートに丸いコントロールが4つ。パネルページで選びます。",
@@ -7728,7 +7727,6 @@
   "Titles and figures": "タイトルと数字",
   "Today sections": "今日のセクション",
   "Today · %1": "今日 · %1",
-  "Today · right": "今日 · 右",
   "Top hit": "トップヒット",
   "Touch": "タッチ",
   "Touch the fingerprint reader or enter your password": "指紋リーダーに触れるか、パスワードを入力してください",
@@ -10133,5 +10131,9 @@
   "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "自動では、プレートを各エリアの色で塗り、プレートのないグリフはインクの色のままにします。",
   "The set every glyph is drawn from.": "すべてのグリフを描くセット。",
   "On a plate.": "プレートの上に。",
-  "Hide background": "背景を非表示"
+  "Hide background": "背景を非表示",
+  "Sections": "セクション",
+  "Side panels off": "サイドパネルはオフ",
+  "One section": "1 セクション",
+  "%1 sections": "%1 セクション"
 }

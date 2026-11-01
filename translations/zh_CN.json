@@ -7227,7 +7227,6 @@
   "Focus and Today, arranged around your workflow": "围绕你的工作方式排列的专注和今天",
   "Focus sections": "专注分区",
   "Focus timer": "专注计时器",
-  "Focus · left": "专注 · 左侧",
   "Follow %1": "跟随 %1",
   "Forecast": "预报",
   "Four round controls on one plate; pick them on the Panel page.": "一块铭牌上的四个圆形控件；在“面板”页面中选择。",
@@ -7728,7 +7727,6 @@
   "Titles and figures": "标题和数字",
   "Today sections": "“今天”分区",
   "Today · %1": "今天 · %1",
-  "Today · right": "今天 · 右侧",
   "Top hit": "最佳匹配",
   "Touch": "触摸",
   "Touch the fingerprint reader or enter your password": "请触摸指纹识别器或输入密码",
@@ -10133,5 +10131,9 @@
   "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "自动：底板用各区域的颜色，单独的字形保持墨色。",
   "The set every glyph is drawn from.": "所有字形取自的字体集。",
   "On a plate.": "放在底板上。",
-  "Hide background": "隐藏背景"
+  "Hide background": "隐藏背景",
+  "Sections": "分区",
+  "Side panels off": "侧边栏已关闭",
+  "One section": "1 个分区",
+  "%1 sections": "%1 个分区"
 }

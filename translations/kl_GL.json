@@ -8207,7 +8207,6 @@
   "Focus and Today, arranged around your workflow": "Focus Today-lu, suliassatit malillugit inissiikkat",
   "Focus sections": "Focus-ip immikkoortui",
   "Focus timer": "Focus-ip timer-ia",
-  "Focus · left": "Focus · saamerleq",
   "Follow %1": "%1 malittaruk",
   "Four round controls on one plate; pick them on the Panel page.": "Aqutsissutit ammalortut sisamat plate ataatsimi; Panel-ip quppernerani toqqakkit.",
   "Full in %1": "%1-mi ulikkaarpoq",
@@ -8610,7 +8609,6 @@
   "Tints the expanded Island and media cards with the cover.": "Island siaruarsimasoq media-llu card-ii cover-imik qalipaasertarpai.",
   "Titles and figures": "Qulequtat kisitsisillu",
   "Today sections": "Today-p immikkoortui",
-  "Today · right": "Today · talerpiup",
   "Top hit": "Inernerit pingaarnerpaat",
   "Touch": "Attorneq",
   "Touch the fingerprint reader or enter your password": "Inuaasaarnermi atuaaserineq attoruk imaluunniit isissutit allaguk",
@@ -10133,5 +10131,9 @@
   "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "Auto paints plates in each area's colour and leaves a glyph alone in ink.",
   "The set every glyph is drawn from.": "The set every glyph is drawn from.",
   "On a plate.": "On a plate.",
-  "Hide background": "Background toqqoruk"
+  "Hide background": "Background toqqoruk",
+  "Sections": "Immikkoortut",
+  "Side panels off": "Saaffiginneqarfiit qamipput",
+  "One section": "Immikkoortoq ataaseq",
+  "%1 sections": "Immikkoortut %1"
 }

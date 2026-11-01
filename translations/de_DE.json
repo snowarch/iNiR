@@ -7227,7 +7227,6 @@
   "Focus and Today, arranged around your workflow": "Fokus und Heute, rund um deinen Arbeitsablauf",
   "Focus sections": "Fokus-Abschnitte",
   "Focus timer": "Fokus-Timer",
-  "Focus · left": "Fokus · links",
   "Follow %1": "%1 folgen",
   "Forecast": "Vorhersage",
   "Four round controls on one plate; pick them on the Panel page.": "Vier runde Steuerelemente auf einer Platte; wähle sie auf der Panel-Seite.",
@@ -7728,7 +7727,6 @@
   "Titles and figures": "Titel und Ziffern",
   "Today sections": "Heute-Abschnitte",
   "Today · %1": "Heute · %1",
-  "Today · right": "Heute · rechts",
   "Top hit": "Bester Treffer",
   "Touch": "Berühren",
   "Touch the fingerprint reader or enter your password": "Berühre den Fingerabdruckleser oder gib dein Passwort ein",
@@ -10133,5 +10131,9 @@
   "Auto paints plates in each area's colour and leaves a glyph alone in ink.": "Auto färbt Platten in der Farbe jedes Bereichs und lässt ein Symbol ohne Platte in Tinte.",
   "The set every glyph is drawn from.": "Der Satz, aus dem jedes Symbol gezeichnet wird.",
   "On a plate.": "Auf einer Platte.",
-  "Hide background": "Hintergrund ausblenden"
+  "Hide background": "Hintergrund ausblenden",
+  "Sections": "Abschnitte",
+  "Side panels off": "Seitenleisten aus",
+  "One section": "Ein Abschnitt",
+  "%1 sections": "%1 Abschnitte"
 }
