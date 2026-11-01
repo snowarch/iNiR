@@ -25,7 +25,8 @@ Rectangle {
     readonly property color dangerInk: FamilyStyle.danger
     readonly property color glyphInk: root.danger ? root.dangerInk : root.look.chipGlyphInk(root.selected)
 
-    implicitWidth: content.implicitWidth + root.sidePadding * 2
+    // Read from the name's own width: a Row's follows the cell it was squeezed into and could never ask for more.
+    implicitWidth: (glyph.visible ? glyph.implicitWidth + content.spacing : 0) + (name.visible ? Math.ceil(name.implicitWidth) : 0) + root.sidePadding * 2
     implicitHeight: Math.round(34 * root.d)
     radius: root.look.chipRadius(height)
     color: root.look.chipFill(root.selected, hover.hovered)
@@ -57,6 +58,7 @@ Rectangle {
             color: root.glyphInk
         }
         StyledText {
+            id: name
             visible: root.label.length > 0
             anchors.verticalCenter: parent.verticalCenter
             width: Math.min(Math.ceil(implicitWidth), Math.max(0, content.room - (glyph.visible ? glyph.width + content.spacing : 0)))
