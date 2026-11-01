@@ -17,7 +17,6 @@ AbstractBackgroundWidget {
 
     readonly property bool vertical: Boolean(root._readConfigKey("vertical") ?? false)
     readonly property bool instrument: String(root._readConfigKey("style") ?? "cards") === "instrument"
-    readonly property bool pulse: Boolean(root._readConfigKey("glow") ?? true)
     readonly property bool showProgress: Boolean(root._readConfigKey("showProgress") ?? true)
     readonly property bool showState: Boolean(root._readConfigKey("showState") ?? true)
     readonly property bool showHundredths: Boolean(root._readConfigKey("showHundredths") ?? true)

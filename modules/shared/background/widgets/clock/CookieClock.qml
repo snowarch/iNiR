@@ -35,7 +35,6 @@ Item {
 
     // ── Style-dispatched colors (overridable from parent) ──
     readonly property color _primaryColor: Appearance.colors.colPrimary
-    readonly property color _secondaryColor: Appearance.colors.colSecondary
     readonly property color _tertiaryColor: Appearance.colors.colTertiary
     readonly property color _primaryContainerColor: Appearance.colors.colPrimaryContainer
 

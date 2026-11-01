@@ -56,9 +56,6 @@ AbstractBackgroundWidget {
     property int activeSlot: 0
     property string _pendingSource: ""
     property string currentPath: ""
-    readonly property bool currentIsVideo: Images.isValidVideoByName(root.currentPath)
-    readonly property bool currentIsAnimatedImage:
-        root.currentPath.toLowerCase().endsWith(".gif")
     readonly property int mediaCount: root.sourceMode === "folder"
         ? root.mediaPaths.length : (Images.isValidMediaByName(root.mediaPath) ? 1 : 0)
     readonly property int folderMediaCount: root.folderAllPaths.length
@@ -68,8 +65,6 @@ AbstractBackgroundWidget {
     readonly property string currentName: FileUtils.fileNameForPath(root.currentPath)
     readonly property bool activeFailed: root.activeSlot === 0 ? mediaSlotA.failed : mediaSlotB.failed
     readonly property int shapeEnum: root.shapeForName(root.shapeName)
-    readonly property string activeSourceChoice:
-        root.sourceMode === "file" ? "file" : root.mediaFilter
 
     property bool dropHover: false
 
@@ -206,32 +201,6 @@ AbstractBackgroundWidget {
             root.currentIndex = (current + direction + count) % count
         }
         root.currentPath = String(root.mediaPaths[root.currentIndex] ?? "")
-        rotationTimer.restart()
-    }
-
-    function activateSourceChoice(choice: string): void {
-        const updates = {}
-        if (choice === "file") {
-            if (!Images.isValidMediaByName(root.mediaPath)) return
-            updates[root._configPath + ".sourceMode"] = "file"
-        } else {
-            const count = choice === "images" ? root.folderImageCount
-                : choice === "gifs" ? root.folderGifCount
-                : choice === "videos" ? root.folderVideoCount
-                : root.folderMediaCount
-            if (count === 0) return
-            updates[root._configPath + ".sourceMode"] = "folder"
-            updates[root._configPath + ".mediaFilter"] = choice
-        }
-        root.rotationPaused = false
-        root.mediaPlaybackPaused = false
-        Config.setNestedValues(updates)
-        Qt.callLater(rotationTimer.restart)
-    }
-
-    function setInterval(seconds: int): void {
-        Config.setNestedValue(root._configPath + ".intervalSeconds",
-            Math.max(3, Math.min(3600, seconds)))
         rotationTimer.restart()
     }
 

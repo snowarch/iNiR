@@ -24,25 +24,8 @@ AbstractBackgroundWidget {
     resizeMaxHeight: 1000
     needsColText: true
 
-    readonly property string compositionPreset: Config.getNestedValue("background.widgets.japaneseTypography.preset", "exhibition")
     readonly property string palettePreset: Config.getNestedValue("background.widgets.japaneseTypography.palettePreset", "adaptive")
     readonly property string fontPreset: Config.getNestedValue("background.widgets.japaneseTypography.fontPreset", "mincho")
-
-    function applyCompositionPreset(preset: string): void {
-        Config.setNestedValues(JapanesePresets.composition(root._configPath, preset));
-    }
-
-    function applyPalettePreset(preset: string): void {
-        Config.setNestedValues(JapanesePresets.palette(root._configPath, preset));
-    }
-
-    function applyFontPreset(preset: string): void {
-        Config.setNestedValues(JapanesePresets.font(root._configPath, preset));
-    }
-
-    function setCompositionOption(key: string, value: var): void {
-        Config.setNestedValues(JapanesePresets.setValue(root._configPath, key, value, "composition"));
-    }
 
     readonly property string primaryText: Config.getNestedValue("background.widgets.japaneseTypography.primaryText", "夏の記憶")
     readonly property string secondaryText: Config.getNestedValue("background.widgets.japaneseTypography.secondaryText", "潮風と、あの子と、終わらない夏")

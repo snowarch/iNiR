@@ -111,22 +111,6 @@ AbstractBackgroundWidget {
     // ── Style tokens ──
     readonly property real cardRadius: root.widgetCardRadius
 
-    // Shape options for popover
-    readonly property var _shapeOptions: [
-        { label: Translation.tr("Pill"), value: "pill" },
-        { label: Translation.tr("Circle"), value: "circle" },
-        { label: Translation.tr("Oval"), value: "oval" },
-        { label: Translation.tr("Diamond"), value: "diamond" },
-        { label: Translation.tr("Heart"), value: "heart" },
-        { label: Translation.tr("Flower"), value: "flower" },
-        { label: Translation.tr("Cookie"), value: "cookie4" },
-        { label: Translation.tr("Sunny"), value: "sunny" },
-        { label: Translation.tr("Clover"), value: "clover" },
-        { label: Translation.tr("Burst"), value: "softBurst" },
-        { label: Translation.tr("Gem"), value: "gem" },
-        { label: Translation.tr("Puffy"), value: "puffy" }
-    ]
-
     // Derived colors per style mode. Shared widget dimming is applied once by
     // AbstractBackgroundWidget, so these roles keep their intended contrast.
     readonly property color weatherIconColor: weatherStyle === "pill"

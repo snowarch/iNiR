@@ -25,7 +25,6 @@ Item {
     readonly property int columnsByWidth: Math.max(1, Math.floor((root.width + root.columnGap) / (root.cellSize + root.columnGap)))
     readonly property int visibleColumnLimit: Math.max(1, Math.min(root.maxColumns, root.columnsByWidth))
     readonly property var columns: root._buildColumns()
-    readonly property bool overflowed: root._allColumnCount() > root.visibleColumnLimit
 
     clip: true
 

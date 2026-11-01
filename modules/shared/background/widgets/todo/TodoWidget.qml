@@ -53,8 +53,6 @@ AbstractBackgroundWidget {
     readonly property color primaryInk: root.widgetSemanticOnContainer(root.widgetPrimaryRole)
     readonly property color secondaryFace: root.widgetSemanticContainer(root.widgetSecondaryRole)
     readonly property color secondaryInk: root.widgetSemanticOnContainer(root.widgetSecondaryRole)
-    readonly property color tertiaryFace: root.widgetSemanticContainer(root.widgetTertiaryRole)
-    readonly property color tertiaryInk: root.widgetSemanticOnContainer(root.widgetTertiaryRole)
     readonly property real inset: Math.round(12 * root.scaleFactor)
     // medium holds two whole rows under its head: at 48 the second missed its room by 4 px and the card said
     // "2 tasks left" over one

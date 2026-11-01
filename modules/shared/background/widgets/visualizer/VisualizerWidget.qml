@@ -132,12 +132,6 @@ AbstractBackgroundWidget {
             return palette[1]
         return root._organicPrimary
     }
-    readonly property color _organicTertiary: {
-        const palette = root.spectrumPalette ?? []
-        if (palette.length > 2)
-            return palette[palette.length - 1]
-        return root._organicSecondary
-    }
 
     MediaArtworkResolver {
         id: organicArtworkResolver

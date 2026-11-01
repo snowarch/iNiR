@@ -81,7 +81,6 @@ AbstractBackgroundWidget {
     // ── Accent colors ── from the shared desktop-widget identity (AbstractBackgroundWidget)
     // so the clock reads as the same family as weather/sysmon/etc., wallpaper-generated.
     readonly property color accentPrimary: root.widgetAccent
-    readonly property color accentSecondary: root.widgetAccent2
     readonly property color accentTertiary: root.widgetAccent3
     // One semantic palette for both renderers. Global-style dispatch already
     // happens in Appearance; ZZZ must keep its primary-container sticker face,
@@ -316,7 +315,6 @@ AbstractBackgroundWidget {
                 // Precision time instrument: a live minute track surrounds a
                 // typographic readout. It is intentionally not an analog clock.
                 readonly property real side: Math.round(230 * root.scaleFactor * root.timeScale / 100)
-                readonly property real desiredImplicitSize: side
                 readonly property real minutePosition: displayClock.date.getMinutes()
                     + displayClock.date.getSeconds() / 60
                 readonly property bool secondsLive: root.showSeconds && root.clockMotion

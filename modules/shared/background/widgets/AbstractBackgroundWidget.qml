@@ -584,7 +584,9 @@ AbstractWidget {
     // A widget's options are rows in its manifest (`DesktopWidgetOptions`); both families' sheets draw them. `ownControls`
     // is for what a row can't draw, and `ownControlKeys` are the keys it answers for.
     property Component ownControls: null
-    property var ownControlKeys: []
+    // The name a person's widget from v2.33 knows it by.
+    property alias editPopoverContent: root.ownControls
+    property var ownControlKeys: root.ownControls ? Object.keys(DesktopWidgetRegistry.customEntry(root.configEntryName)?.configKeys ?? {}) : []
     property bool semanticPaletteControls: !root.configEntryName.startsWith("custom.")
     property bool semanticPaletteQuickControls: semanticPaletteControls
     property string _quickTab: "widget"

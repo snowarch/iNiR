@@ -172,8 +172,6 @@ AbstractBackgroundWidget {
     }
     readonly property int _tileRows: Math.ceil(
         Math.max(1, root._resourceModel.length) / Math.max(1, root._tileColumns))
-    readonly property real _tilesMinHeight: root._tileRows * root._tileUnit
-        + (root._tileRows - 1) * root._tileGap + root._innerMargin * 2
 
     // ── Style tokens ──
     readonly property real cardRadius: root.widgetCardRadius
@@ -926,7 +924,6 @@ AbstractBackgroundWidget {
 
                         Loader {
                             readonly property real plateRadius: tile.radius
-                            readonly property color plateFill: tile.role.bg
                             anchors.fill: parent
                             z: -1
                             active: root.look.tilePlate !== null

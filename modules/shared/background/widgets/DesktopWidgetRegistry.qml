@@ -90,9 +90,10 @@ Singleton {
     function entry(key: string): var { return root.byKey[key] ?? null }
     function nameOf(key: string): string { return root.byKey[key]?.name ?? key }
     // What people call it, on every sheet, tag and shelf.
+    function customEntry(key: string): var { return CustomWidgets.widgets.find(widget => "custom." + widget.id === key) ?? null }
     function displayName(key: string): string {
         if (key.startsWith("custom."))
-            return CustomWidgets.widgets.find(widget => "custom." + widget.id === key)?.name ?? key.slice(7)
+            return root.customEntry(key)?.name ?? key.slice(7)
         return Translation.tr(root.nameOf(root.baseKey(key)))
     }
     readonly property var sizeOrder: ["small", "medium", "large"]

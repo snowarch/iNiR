@@ -132,6 +132,33 @@ function _oneSize(entry, irisActive) {
     return changed;
 }
 
+// v2.33's resize handles wrote `contentWidth/Height` over these factory sizes; a size that moved stays a free size.
+const _factorySizes = {
+    calendarUpcoming: [280, 240],
+    dateBadge: [220, 140],
+    dayProgress: [240, 240],
+    editorial: [360, 240],
+    japaneseTypography: [330, 600],
+    mascot: [200, 0],
+    newsTicker: [320, 92],
+    notes: [240, 160],
+    shape: [160, 160],
+    systemMonitor: [320, 120],
+    uptime: [250, 96],
+    visualizer: [304, 104]
+};
+function _contentSize(key, entry) {
+    if (!_isObject(entry)) return false;
+    let changed = false;
+    [["contentWidth", "freeWidth"], ["contentHeight", "freeHeight"]].forEach(([from, to], axis) => {
+        if (entry[from] === undefined) return;
+        if (entry[to] === undefined && entry[from] > 0 && entry[from] !== _factorySizes[key]?.[axis]) entry[to] = entry[from];
+        delete entry[from];
+        changed = true;
+    });
+    return changed;
+}
+
 // A widget's plate has one switch. iRiS's per-widget "Transparent" was a second one; the shared material keeps its
 // own Transparent, which only says what widgets that never chose do.
 function _onePlate(entry) {
@@ -148,12 +175,13 @@ function _widgetSizes(obj) {
     const widgets = _get(obj, "background.widgets");
     if (!_isObject(widgets)) return false;
     const irisActive = obj.panelFamily === "iris";
-    const entries = Object.values(widgets);
-    for (const group of [widgets.custom, widgets.mascotInstances])
-        if (_isObject(group)) entries.push(...Object.values(group));
+    const pairs = Object.entries(widgets);
+    if (_isObject(widgets.custom)) pairs.push(...Object.entries(widgets.custom));
+    if (_isObject(widgets.mascotInstances)) pairs.push(...Object.values(widgets.mascotInstances).map(entry => ["mascot", entry]));
     for (const record of Array.isArray(widgets.outputOverrides) ? widgets.outputOverrides : [])
-        if (_isObject(record?.widgets)) entries.push(...Object.values(record.widgets));
-    return entries.map(entry => [_oneSize(entry, irisActive), _onePlate(entry)].some(moved => moved)).some(moved => moved);
+        if (_isObject(record?.widgets)) pairs.push(...Object.entries(record.widgets));
+    return pairs.map(([key, entry]) => [_oneSize(entry, irisActive), _contentSize(key, entry), _onePlate(entry)]
+        .some(moved => moved)).some(moved => moved);
 }
 
 // Moves the keys of a parsed config.json to their owners in place; true when anything moved.

@@ -208,10 +208,6 @@ AbstractBackgroundWidget {
         { key: "lyrics", label: Translation.tr("Synced lyrics"), icon: "lyrics", fallback: true },
         { key: "rest", label: Translation.tr("Rest when paused"), icon: "bedtime", fallback: false }
     ]
-    readonly property real placeholderWidth: Math.round(
-        (root.instrument ? 220 : 96) * Appearance.fontSizeScale * scaleFactor)
-    readonly property real placeholderHeight: Math.round(
-        (root.instrument ? 56 : 96) * Appearance.fontSizeScale * scaleFactor)
 
     // This instance only exists when its effective output-local enable state is
     // true. Rechecking the global base would incorrectly disable Cava for a

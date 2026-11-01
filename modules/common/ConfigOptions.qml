@@ -594,8 +594,6 @@ JsonAdapter {
                 property string shape: "Cookie4Sided"
                 property string fitMode: "cover"
                 property int size: 220
-                property int contentWidth: 0
-                property int contentHeight: 0
                 property int dim: 0
                 property int widgetScale: 100
                 property int widgetOpacity: 100
@@ -615,8 +613,6 @@ JsonAdapter {
                 property bool locked: false
                 property string placementStrategy: "free"
                 property string selectedFormat: "webp"
-                property int contentWidth: 292
-                property int contentHeight: 260
                 property int widgetScale: 100
                 property int widgetOpacity: 100
                 property string colorMode: "auto"
@@ -716,8 +712,6 @@ JsonAdapter {
                 property int edgeInset: 0
                 property int edgeSoftness: 28
                 property int accentStrength: 70
-                property int contentWidth: 304
-                property int contentHeight: 104
                 property int dim: 0
                 property int widgetScale: 100
                 property int widgetOpacity: 100
@@ -757,8 +751,6 @@ JsonAdapter {
                 property bool showGpuTemp: false
                 property bool showDisk: false
                 property bool showLabels: true
-                property int contentWidth: 320
-                property int contentHeight: 120
                 property string preset: "default"
                 property int dim: 0
                 property int widgetScale: 100
@@ -828,8 +820,6 @@ JsonAdapter {
                 property string textAlign: "left"
                 property string style: "card" // "card" | "instrument" (ruled field note)
                 property bool showRules: true
-                property int contentWidth: 240
-                property int contentHeight: 160
                 property int dim: 0
                 property int widgetScale: 100
                 property int widgetOpacity: 100
@@ -901,8 +891,6 @@ JsonAdapter {
                 property string outlineColor: "#000000"
                 property int outlineOpacity: 0
                 property int shadowStrength: 35
-                property int contentWidth: 330
-                property int contentHeight: 600
                 property int dim: 10
                 property int widgetScale: 100
                 property int widgetOpacity: 100
@@ -935,8 +923,6 @@ JsonAdapter {
                 property bool showLocation: false
                 property bool groupByDay: true
                 property string style: "card" // "card" | "instrument" (agenda ledger)
-                property int contentWidth: 280
-                property int contentHeight: 240
                 property int dim: 0
                 property int widgetScale: 100
                 property int widgetOpacity: 100
@@ -963,8 +949,6 @@ JsonAdapter {
                 property bool enable: false
                 property bool locked: false
                 property string placementStrategy: "free"
-                property int contentWidth: 300
-                property int contentHeight: 340
                 property int weekStart: 1 // 0 Sunday, 1 Monday
                 property bool showAdjacentDays: true
                 property string style: "card" // "card" | "instrument" (readout on wallpaper ink)
@@ -995,8 +979,6 @@ JsonAdapter {
                 property bool enable: false
                 property bool locked: false
                 property string placementStrategy: "free"
-                property int contentWidth: 300
-                property int contentHeight: 276
                 property string style: "card" // "card" | "instrument" (readout on wallpaper ink)
                 property bool instrumentRules: true
                 property bool showCompleted: true
@@ -1058,8 +1040,6 @@ JsonAdapter {
                 property bool enable: false
                 property bool locked: false
                 property string placementStrategy: "free"
-                property int contentWidth: 240
-                property int contentHeight: 240
                 property int widgetScale: 100
                 property int widgetOpacity: 100
                 property bool showBackground: false
@@ -1095,8 +1075,6 @@ JsonAdapter {
                 property bool showSince: true
                 property bool showBreakdown: true
                 property string placementStrategy: "free"
-                property int contentWidth: 250
-                property int contentHeight: 96
                 property int widgetScale: 100
                 property int widgetOpacity: 100
                 property bool showBackground: true
@@ -1168,8 +1146,6 @@ JsonAdapter {
                 property real strokeWidth: 3
                 property bool locked: false
                 property string placementStrategy: "free"
-                property int contentWidth: 160
-                property int contentHeight: 160
                 property int widgetScale: 100
                 property int widgetOpacity: 100
                 property bool showBackground: false
@@ -1201,8 +1177,6 @@ JsonAdapter {
                 property bool showAccent: true
                 property bool locked: false
                 property string placementStrategy: "free"
-                property int contentWidth: 360
-                property int contentHeight: 240
                 property int widgetScale: 100
                 property int widgetOpacity: 100
                 property bool showBackground: false
@@ -1234,8 +1208,6 @@ JsonAdapter {
                 property bool instrumentMarks: true
                 property bool locked: false
                 property string placementStrategy: "free"
-                property int contentWidth: 220
-                property int contentHeight: 140
                 property int widgetScale: 100
                 property int widgetOpacity: 100
                 property bool showBackground: true
@@ -1262,8 +1234,6 @@ JsonAdapter {
                 property bool enable: false
                 property bool locked: false
                 property string placementStrategy: "free"
-                property int contentWidth: 300
-                property int contentHeight: 210
                 property int widgetScale: 100
                 property int widgetOpacity: 100
                 property bool showBackground: true
@@ -1298,8 +1268,6 @@ JsonAdapter {
                 property bool enable: false
                 property bool locked: false
                 property string placementStrategy: "free"
-                property int contentWidth: 280
-                property int contentHeight: 176
                 property int widgetScale: 100
                 property int widgetOpacity: 100
                 property bool showBackground: true
@@ -1330,7 +1298,6 @@ JsonAdapter {
                 property bool enable: false
                 property bool locked: false
                 property string placementStrategy: "free"
-                property int contentWidth: 200
                 property int widgetScale: 100
                 property int widgetOpacity: 100
                 property bool showBackground: false
@@ -1362,8 +1329,6 @@ JsonAdapter {
                 property bool enable: false
                 property bool locked: false
                 property string placementStrategy: "free"
-                property int contentWidth: 320
-                property int contentHeight: 92
                 property int widgetScale: 100
                 property int widgetOpacity: 100
                 property bool showBackground: true
