@@ -284,24 +284,27 @@ install-font-from-url(){
   fi
 }
 
-install-material-symbols-rounded(){
-  if fc-list | grep -qi "Material Symbols Rounded"; then
-    log_success "Material Symbols Rounded already installed"
-    return 0
-  fi
-
-  install-font-from-url "MaterialSymbolsRounded" \
-    "https://raw.githubusercontent.com/google/material-design-icons/master/variablefont/MaterialSymbolsRounded%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf"
-}
-
-install-material-symbols-outlined(){
-  if fc-list | grep -qi "Material Symbols Outlined"; then
-    log_success "Material Symbols Outlined already installed"
-    return 0
-  fi
-
-  install-font-from-url "MaterialSymbolsOutlined" \
-    "https://raw.githubusercontent.com/google/material-design-icons/master/variablefont/MaterialSymbolsOutlined%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf"
+# The three glyph sets a person can pick. Rounded draws the shell, so only its loss is worth failing for.
+install-material-symbols(){
+  local set url font_dir="${HOME}/.local/share/fonts" missing=0
+  mkdir -p "$font_dir"
+  for set in Rounded Outlined Sharp; do
+    if fc-list | grep -qi "Material Symbols ${set}"; then
+      continue
+    fi
+    url="https://raw.githubusercontent.com/google/material-design-icons/master/variablefont/MaterialSymbols${set}%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf"
+    log_info "Downloading Material Symbols ${set}..."
+    if curl -fsSL --connect-timeout 10 --speed-limit 1024 --speed-time 30 -o "$font_dir/MaterialSymbols${set}.ttf" "$url"; then
+      log_success "Material Symbols ${set} installed"
+    elif [[ "$set" == Rounded ]]; then
+      log_error "Could not download Material Symbols, so UI icons will be broken; once online run: ./setup install"
+      missing=1
+    else
+      log_warning "Could not download Material Symbols ${set}; the Rounded set stays"
+    fi
+  done
+  fc-cache -f "$font_dir" 2>/dev/null
+  return "$missing"
 }
 
 install-jetbrains-mono-nerd(){

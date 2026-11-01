@@ -988,6 +988,12 @@ AbstractWidget {
     function setFamilyOption(key: string, value: var): void {
         root._setOutputValue(DesktopWidgetDesign.spec.prefix + "." + key, value)
     }
+    function setFamilyOptions(values: var): void {
+        const stored = {}
+        for (const key of Object.keys(values))
+            stored[DesktopWidgetDesign.spec.prefix + "." + key] = values[key]
+        root._setOutputValues(stored)
+    }
     // The sheet's own slider: not a gesture, so the sheet stays under the pointer that drags it.
     function previewScale(percent: int): void {
         root.previewValue("widgetScale", percent)

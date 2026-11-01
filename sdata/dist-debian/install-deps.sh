@@ -618,28 +618,7 @@ if ! fc-list | grep -qi "JetBrainsMono Nerd"; then
   rm -rf "$TEMP_DIR"
 fi
 
-# Material Symbols fonts (CRITICAL - UI icons)
-if ! fc-list | grep -qi "Material Symbols Rounded"; then
-  log_info "Downloading Material Symbols Rounded font..."
-  
-  MATERIAL_URL="https://raw.githubusercontent.com/google/material-design-icons/master/variablefont/MaterialSymbolsRounded%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf"
-  
-  if curl -fsSL -o "$FONT_DIR/MaterialSymbolsRounded.ttf" "$MATERIAL_URL"; then
-    log_success "Material Symbols Rounded font installed"
-  else
-    log_error "Could not download Material Symbols, so UI icons will be broken; once online run: ./setup install"
-  fi
-fi
-
-if ! fc-list | grep -qi "Material Symbols Outlined"; then
-  log_info "Downloading Material Symbols Outlined font..."
-  
-  MATERIAL_URL="https://raw.githubusercontent.com/google/material-design-icons/master/variablefont/MaterialSymbolsOutlined%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf"
-  
-  if curl -fsSL -o "$FONT_DIR/MaterialSymbolsOutlined.ttf" "$MATERIAL_URL"; then
-    log_success "Material Symbols Outlined font installed"
-  fi
-fi
+install-material-symbols || true
 
 # Refresh font cache
 fc-cache -f "$FONT_DIR" 2>/dev/null

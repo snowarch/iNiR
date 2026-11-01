@@ -879,13 +879,10 @@ _try_install_font_package() {
     mkdir -p "$font_dir"
 
     case "$display_name" in
-        "Material Symbols Rounded")
-            curl -fsSL -o "$font_dir/MaterialSymbolsRounded.ttf" \
-                "https://raw.githubusercontent.com/google/material-design-icons/master/variablefont/MaterialSymbolsRounded%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf" 2>/dev/null && return 0
-            ;;
-        "Material Symbols Outlined")
-            curl -fsSL -o "$font_dir/MaterialSymbolsOutlined.ttf" \
-                "https://raw.githubusercontent.com/google/material-design-icons/master/variablefont/MaterialSymbolsOutlined%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf" 2>/dev/null && return 0
+        "Material Symbols "*)
+            local glyph_set="${display_name##* }"
+            curl -fsSL -o "$font_dir/MaterialSymbols${glyph_set}.ttf" \
+                "https://raw.githubusercontent.com/google/material-design-icons/master/variablefont/MaterialSymbols${glyph_set}%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf" 2>/dev/null
             ;;
         "JetBrainsMono Nerd Font")
             local tmp_nf="/tmp/nerdfonts-$$"

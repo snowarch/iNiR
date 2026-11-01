@@ -16,6 +16,8 @@ CAPITAINE_SHA256="60114cf857902a9907780bdcfa995d600618cf14b37f90776565c9de7e5add
 CAPITAINE_URL="https://github.com/sainnhe/capitaine-cursors/releases/download/${CAPITAINE_VERSION}/Linux.zip"
 MATERIAL_SYMBOLS_COMMIT="40a7a292a79d9394157e1ea24f83d52d5e17c556"
 MATERIAL_SYMBOLS_SHA256="f1472f172c0fc4a922be22972e4752ccc54fe795ed82564ab6f6b097782f2dbc"
+MATERIAL_SYMBOLS_OUTLINED_SHA256="bf4c94b08c06c6b17e9d1a2d54a68c3f2c3435454761d487768df137a81f851d"
+MATERIAL_SYMBOLS_SHARP_SHA256="53f7747272a09f35171452c5cab6f147f32a7e6df30d684b2a5010ad8810eb7c"
 ROBOTO_FLEX_VERSION="3.200"
 ROBOTO_FLEX_SHA256="6b2b14e11308c7d3e8388b623cf740c46b872e7519198e0cff8062e52b75239b"
 ROBOTO_FLEX_FONT_SHA256="a55c1e67f6dcf27f2bb71dc3e4c03d3abcbc5054411aac943b2f94985195825e"
@@ -332,6 +334,17 @@ install_void_font_providers() {
     "https://raw.githubusercontent.com/google/material-design-icons/${MATERIAL_SYMBOLS_COMMIT}/variablefont/MaterialSymbolsRounded%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf" \
     "$MATERIAL_SYMBOLS_SHA256" \
     "$font_dir/MaterialSymbolsRounded.ttf" || return 1
+  # The other two glyph sets are a person's pick, never worth failing the install for.
+  install_void_verified_font_file \
+    "Material Symbols Outlined" \
+    "https://raw.githubusercontent.com/google/material-design-icons/${MATERIAL_SYMBOLS_COMMIT}/variablefont/MaterialSymbolsOutlined%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf" \
+    "$MATERIAL_SYMBOLS_OUTLINED_SHA256" \
+    "$font_dir/MaterialSymbolsOutlined.ttf" || true
+  install_void_verified_font_file \
+    "Material Symbols Sharp" \
+    "https://raw.githubusercontent.com/google/material-design-icons/${MATERIAL_SYMBOLS_COMMIT}/variablefont/MaterialSymbolsSharp%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf" \
+    "$MATERIAL_SYMBOLS_SHARP_SHA256" \
+    "$font_dir/MaterialSymbolsSharp.ttf" || true
   install_void_roboto_flex || return 1
   install_void_verified_font_file \
     "Gabarito" \

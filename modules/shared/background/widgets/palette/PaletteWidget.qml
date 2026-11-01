@@ -92,7 +92,7 @@ AbstractBackgroundWidget {
     readonly property bool ready: root.colours.every(entry => entry.length > 0)
 
     function shuffle(): void {
-        root._setOutputValues({ "iris.source": "random", "iris.drawn": root.harmony() })
+        root.setFamilyOptions({ "source": "random", "drawn": root.harmony() })
     }
     function keep(index: int): void {
         const next = [0, 1, 2, 3, 4].map(i => String(root.kept[i] ?? ""))
