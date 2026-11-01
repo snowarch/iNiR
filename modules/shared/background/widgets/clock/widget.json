@@ -77,7 +77,7 @@
     {"key":"dateScale","label":"Date scale","type":"range","default":100,"when":"material","min":50,"max":200,"step":5,"unit":" %"},
     {"key":"fontFamily","label":"Clock font","type":"text","default":"Space Grotesk","when":["material",{"style":["digital","androidStacked"]}],"tune":true,"placeholder":"Space Grotesk"},
     {"key":"cookie.preset","label":"Preset","type":"choice","default":"default","when":["material",{"style":"cookie"}],"choices":[["default","Default"],["compact","Compact"],["large","Large"],["minimal","Minimal"]],"sets":{"default":{"cookie.size":230,"cookie.sides":15,"cookie.dialNumberStyle":"full","cookie.hourHandStyle":"hollow"},"compact":{"cookie.size":160,"cookie.sides":12,"cookie.dialNumberStyle":"dots","cookie.hourHandStyle":"fill"},"large":{"cookie.size":300,"cookie.sides":18,"cookie.dialNumberStyle":"numbers","cookie.hourHandStyle":"classic"},"minimal":{"cookie.size":200,"cookie.sides":6,"cookie.dialNumberStyle":"none","cookie.hourHandStyle":"fill"}}},
-    {"key":"cookie.size","label":"Size","type":"range","default":230,"when":["material",{"style":"cookie"}],"min":100,"max":400,"step":10,"unit":" px"},
+    {"key":"cookie.size","label":"Dial size","type":"range","default":230,"when":["material",{"style":"cookie"}],"min":100,"max":400,"step":10,"unit":" px"},
     {"key":"cookie.sides","label":"Sides","type":"range","default":15,"when":["material",{"style":"cookie"}],"min":3,"max":30},
     {"key":"cookie.useSineCookie","label":"Sine wave shape","type":"switch","default":false,"when":["material",{"style":"cookie"}],"tune":true},
     {"key":"cookie.constantlyRotate","label":"Constant rotation","type":"switch","default":false,"when":["material",{"style":"cookie"}],"tune":true},
