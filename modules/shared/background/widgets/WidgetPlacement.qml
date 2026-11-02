@@ -206,7 +206,7 @@ Item {
             Process {
                 id: search
                 readonly property real scale: Math.max(root.widget.wallpaperScale, 0.001)
-                command: [Quickshell.shellPath("scripts/images/least-busy-region-venv.sh"),
+                command: [Quickshell.shellPath("scripts/lib/accel-run"), "region",
                     "--screen-width", Math.round(root.widget.scaledScreenWidth),
                     "--screen-height", Math.round(root.widget.scaledScreenHeight),
                     "--width", Math.max(1, Math.round(root.widget.width / search.scale)),

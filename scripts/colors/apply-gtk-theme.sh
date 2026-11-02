@@ -82,7 +82,7 @@ CHOSEN_ICON_THEME=$(jq -r '.appearance.iconTheme // empty' "$SHELL_CONFIG_FILE" 
 [[ -z "$CHOSEN_ICON_THEME" ]] && CHOSEN_ICON_THEME=$(interface_setting icon-theme || true)
 APPLIED_ICON_THEME=""
 if [[ -n "$CHOSEN_ICON_THEME" ]]; then
-    APPLIED_ICON_THEME=$("$SCRIPT_DIR/icon-theme-for-mode.sh" "$CHOSEN_ICON_THEME" "$THEME_MODE" 2>/dev/null || echo "$CHOSEN_ICON_THEME")
+    APPLIED_ICON_THEME=$("$SCRIPT_DIR/../lib/accel-run" icon-theme "$CHOSEN_ICON_THEME" "$THEME_MODE" 2>/dev/null || echo "$CHOSEN_ICON_THEME")
     if [[ "$(gsettings get org.gnome.desktop.interface icon-theme 2>/dev/null | tr -d "'")" != "$APPLIED_ICON_THEME" ]]; then
         gsettings set org.gnome.desktop.interface icon-theme "$APPLIED_ICON_THEME" 2>/dev/null || true
     fi
@@ -276,7 +276,7 @@ generate_kdeglobals() {
     fi
     if [[ -z "$icon_theme" ]]; then
         if [[ -d "$HOME/.local/share/icons/WhiteSur-dark" || -d "/usr/share/icons/WhiteSur-dark" ]]; then
-            icon_theme=$("$SCRIPT_DIR/icon-theme-for-mode.sh" WhiteSur-dark "$THEME_MODE")
+            icon_theme=$("$SCRIPT_DIR/../lib/accel-run" icon-theme WhiteSur-dark "$THEME_MODE")
         else
             icon_theme="Adwaita"
         fi
@@ -1041,7 +1041,7 @@ CURRENT_ICON_THEME="$APPLIED_ICON_THEME"
 [[ -z "$CURRENT_ICON_THEME" ]] && CURRENT_ICON_THEME=$(grep '^icon_theme=' "$QT6CT_CONF" 2>/dev/null | cut -d= -f2 || true)
 if [[ -z "$CURRENT_ICON_THEME" ]]; then
     if [[ -d "$HOME/.local/share/icons/WhiteSur-dark" || -d "/usr/share/icons/WhiteSur-dark" ]]; then
-        CURRENT_ICON_THEME=$("$SCRIPT_DIR/icon-theme-for-mode.sh" WhiteSur-dark "$THEME_MODE")
+        CURRENT_ICON_THEME=$("$SCRIPT_DIR/../lib/accel-run" icon-theme WhiteSur-dark "$THEME_MODE")
     else
         CURRENT_ICON_THEME="Adwaita"
     fi

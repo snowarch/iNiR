@@ -217,7 +217,7 @@ Singleton {
         property string themeName: ""
         property bool skipRestart: false
         property string resolved: ""
-        command: ["/usr/bin/bash", Quickshell.shellPath("scripts/colors/icon-theme-for-mode.sh"),
+        command: [Quickshell.shellPath("scripts/lib/accel-run"), "icon-theme",
             variantProc.themeName, Appearance.m3colors.darkmode ? "dark" : "light"]
         onStarted: variantProc.resolved = ""
         stdout: SplitParser {

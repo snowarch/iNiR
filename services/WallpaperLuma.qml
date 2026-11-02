@@ -112,7 +112,7 @@ Singleton {
         proc.job = job
         proc.streamDone = false
         proc.exitedDone = false
-        proc.command = [Quickshell.shellPath("scripts/images/least-busy-region-venv.sh"),
+        proc.command = [Quickshell.shellPath("scripts/lib/accel-run"), "region",
             "--luma-grid", String(root.cell),
             "--screen-width", String(job.width), "--screen-height", String(job.height),
             "--screen-mode", String(job.mode ?? "fill"),

@@ -18,7 +18,7 @@ Singleton {
     property bool _scanDone: false
     // Raised by every reload. Qt keeps what it compiled per URL for the life of the engine, so a widget
     // updated in its folder would keep running its old code; each reload loads widgets through a new
-    // folder of links (scan-widgets.sh), and the .qml, its .js and imports compile again.
+    // folder of links (`inir-accel scan-widgets`), and the .qml, its .js and imports compile again.
     property int _generation: 0
 
     Component.onCompleted: _scan()
@@ -46,7 +46,7 @@ Singleton {
     // Single process that finds and reads all manifests, outputs JSON array
     Process {
         id: _scanProcess
-        command: [Directories.scriptsPath + "/scan-widgets.sh", root.widgetsDir, String(root._generation)]
+        command: [Directories.scriptsPath + "/lib/accel-run", "scan-widgets", root.widgetsDir, String(root._generation)]
         running: false
 
         stdout: StdioCollector {
