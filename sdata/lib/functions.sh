@@ -522,7 +522,21 @@ repair_legacy_niri_shell_startup() {
 # (only on the first update off v2, while its migrations.json is still there) the clock faded at Dimming 70.
 repair_v2_leftovers() {
   INIR_V2_LEFTOVERS_REPAIRED=0
-  local niri="${XDG_CONFIG_HOME:-$HOME/.config}/niri" conf state file rules line tmp accel
+  local niri="${XDG_CONFIG_HOME:-$HOME/.config}/niri" conf state file rules line tmp accel dest shell
+  # `inir completions install` linked into scripts/completions, which left the base: the binary writes its own.
+  for dest in "${XDG_DATA_HOME:-$HOME/.local/share}/bash-completion/completions/inir" \
+      "${XDG_DATA_HOME:-$HOME/.local/share}/zsh/site-functions/_inir" \
+      "${XDG_CONFIG_HOME:-$HOME/.config}/fish/completions/inir.fish"; do
+    [[ -L "$dest" && "$(readlink "$dest")" == */scripts/completions/inir.* ]] || continue
+    case "$dest" in
+      */bash-completion/*) shell=bash ;;
+      */_inir) shell=zsh ;;
+      *) shell=fish ;;
+    esac
+    rm -f "$dest"
+    "${XDG_DATA_HOME:-$HOME/.local/share}/inir/cli/inir" completions install "$shell" >/dev/null 2>&1 || true
+    ((INIR_V2_LEFTOVERS_REPAIRED++)) || true
+  done
   declare -F inir_config_file >/dev/null || source "${REPO_ROOT}/scripts/lib/config-path.sh"
   conf="$(inir_config_file)"
   state="$(inir_config_dir)/migrations.json"

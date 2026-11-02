@@ -3642,51 +3642,6 @@ XF86AudioLowerVolume|audio volumeDown|Quieter|all'
     printf '\nAny other call works the same way; tab completion lists them all.\n'
 }
 
-# Links the completion file for a shell where that shell loads completions by itself. A link, so an
-# update of iNiR updates the completions too. zsh has no per-user directory on its path by default:
-# the one used is reported with the line to add when it is not there.
-install_completions() {
-    local shell="${1:-$(basename "${SHELL:-bash}")}" source="" candidate dest
-    for candidate in \
-        "$script_dir/completions/inir.${shell}" \
-        "$launcher_root/share/quickshell/inir/scripts/completions/inir.${shell}" \
-        "$user_config_dir/scripts/completions/inir.${shell}"; do
-        [[ -f "$candidate" ]] && { source="$(readlink -f "$candidate")"; break; }
-    done
-    case "$shell" in
-        bash) dest="${XDG_DATA_HOME:-$HOME/.local/share}/bash-completion/completions/inir" ;;
-        zsh) dest="${XDG_DATA_HOME:-$HOME/.local/share}/zsh/site-functions/_inir" ;;
-        fish) dest="${XDG_CONFIG_HOME:-$HOME/.config}/fish/completions/inir.fish" ;;
-        *) printf 'Completions exist for bash, zsh and fish, not %s.\n' "$shell" >&2; return 1 ;;
-    esac
-    if [[ -z "$source" ]]; then
-        printf 'The %s completion file was not found next to inir.\n' "$shell" >&2
-        return 1
-    fi
-    # The inir binary writes its own script there, marked; that one is ours too.
-    if [[ -e "$dest" && ! -L "$dest" ]] && ! grep -qsF 'answered by the inir binary on every Tab' "$dest"; then
-        printf 'Left %s as it is: it is a file of your own, not a link inir made.\n' "$dest"
-        return 0
-    fi
-    mkdir -p "$(dirname "$dest")"
-    ln -sfn "$source" "$dest"
-    printf 'Installed %s completions: %s\n' "$shell" "$dest"
-    case "$shell" in
-        bash)
-            if ! [[ -f /usr/share/bash-completion/bash_completion || -f /etc/bash_completion ]]; then
-                printf 'bash-completion is not installed; install it (package bash-completion) so bash loads them.\n'
-            fi
-            printf 'Open a new terminal to use them.\n' ;;
-        zsh)
-            if command -v zsh >/dev/null 2>&1 && ! zsh -ic 'print -l -- $fpath' 2>/dev/null | grep -qxF "$(dirname "$dest")"; then
-                printf 'Add this line to ~/.zshrc before compinit, then open a new terminal:\n  fpath=(%s $fpath)\n' "$(dirname "$dest")"
-            else
-                printf 'Open a new terminal to use them.\n'
-            fi ;;
-        fish) printf 'fish loads them in new terminals.\n' ;;
-    esac
-}
-
 run_bind_command() {
     local mode=preview
     case "${1:-}" in
@@ -4833,57 +4788,8 @@ case "$command_name" in
         run_bind_command "$@"
         ;;
     completions)
-        _comp_shell="${1:-}"
-        if [[ "$_comp_shell" == install ]]; then
-            install_completions "${2:-}"
-            exit $?
-        fi
-        case "$_comp_shell" in
-            bash|zsh|fish)
-                _comp_candidates=(
-                    "$script_dir/completions/inir.${_comp_shell}"
-                    "$launcher_root/share/quickshell/inir/scripts/completions/inir.${_comp_shell}"
-                    "$user_config_dir/scripts/completions/inir.${_comp_shell}"
-                    "$system_config_dir/scripts/completions/inir.${_comp_shell}"
-                    "$fallback_system_config_dir/scripts/completions/inir.${_comp_shell}"
-                )
-                _comp_file=""
-                for _cand in "${_comp_candidates[@]}"; do
-                    if [[ -f "$_cand" ]]; then
-                        _comp_file="$_cand"
-                        break
-                    fi
-                done
-                if [[ -n "$_comp_file" ]]; then
-                    cat "$_comp_file"
-                else
-                    printf "Error: %s completion file not found. Searched:\n" "$_comp_shell" >&2
-                    for _cand in "${_comp_candidates[@]}"; do
-                        printf "  %s\n" "$_cand" >&2
-                    done
-                    exit 1
-                fi
-                ;;
-            "")
-                printf "Usage: inir completions <bash|zsh|fish>\n\n"
-                printf "Print shell completion script to stdout.\n\n"
-                printf "Examples:\n"
-                printf "  eval \"\$(inir completions bash)\"     # Add to .bashrc\n"
-                printf "  inir completions zsh > ~/.zsh/completions/_inir\n"
-                printf "  inir completions fish | source        # Add to config.fish\n\n"
-                printf "Or let inir put them where your shell looks:\n"
-                printf "  inir completions install [bash|zsh|fish]\n"
-                ;;
-            *)
-                printf "Unknown shell: '%s'. Supported: bash, zsh, fish\n" "$_comp_shell" >&2
-                exit 1
-                ;;
-        esac
-        ;;
-    help|-h|--help|"")
-        usage_short
-        printf '\n'
-        usage
+        printf 'Completions come from the inir binary, which is missing here. Run: inir update\n' >&2
+        exit 1
         ;;
     *)
         # Pre-validate: if registry is available and target is completely unknown,
