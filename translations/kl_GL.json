@@ -10149,5 +10149,14 @@
   "Grow from the corner": "Teqeqqumit naggorlugu",
   "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Teqeqqumi pupput killeqarfiup ingerlaarneranit ataatsimik killeqarfittut anisarput, sinaa malillugu qanoq ungasitsigisumut apuuppataluunniit.",
   "in %1": "in %1",
-  "%1 h": "%1 t"
+  "%1 h": "%1 t",
+  "Approach": "Approach/*keep*/",
+  "Regulator": "Regulator/*keep*/",
+  "Board": "Board/*keep*/",
+  "The Island is the sky outside: sun, moon and weather.": "The Island is the sky outside: sun, moon and weather./*keep*/",
+  "The next three hours, your events coming toward the needle.": "The next three hours, your events coming toward the needle./*keep*/",
+  "A heavy hour; the minutes gain weight as it goes by.": "A heavy hour; the minutes gain weight as it goes by./*keep*/",
+  "The hour, and the minutes on a gauge with a real needle.": "The hour, and the minutes on a gauge with a real needle./*keep*/",
+  "A split-flap board: the time and one line of your day.": "A split-flap board: the time and one line of your day./*keep*/",
+  "Nothing ahead": "Nothing ahead/*keep*/"
 }

@@ -10149,5 +10149,14 @@
   "Grow from the corner": "Nacer de la esquina",
   "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Las burbujas de una esquina salen de la curva del marco como un solo contorno, por lejos que lleguen sobre el borde.",
   "in %1": "en %1",
-  "%1 h": "%1 h"
+  "%1 h": "%1 h",
+  "Approach": "Próximo",
+  "Regulator": "Regulador",
+  "Board": "Tablero",
+  "The Island is the sky outside: sun, moon and weather.": "La Isla es el cielo de afuera: sol, luna y clima.",
+  "The next three hours, your events coming toward the needle.": "Las próximas tres horas, tus eventos acercándose a la aguja.",
+  "A heavy hour; the minutes gain weight as it goes by.": "Una hora pesada; los minutos ganan peso a medida que pasa.",
+  "The hour, and the minutes on a gauge with a real needle.": "La hora, y los minutos en un indicador con aguja real.",
+  "A split-flap board: the time and one line of your day.": "Un tablero de paletas: la hora y una línea de tu día.",
+  "Nothing ahead": "Nada por delante"
 }

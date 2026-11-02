@@ -10149,5 +10149,14 @@
   "Grow from the corner": "Рости з кута",
   "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Бульбашки в куті виходять із вигину рамки одним контуром, хоч би як далеко вздовж краю вони сягали.",
   "in %1": "за %1",
-  "%1 h": "%1 год"
+  "%1 h": "%1 год",
+  "Approach": "Наближення",
+  "Regulator": "Регулятор",
+  "Board": "Табло",
+  "The Island is the sky outside: sun, moon and weather.": "Острів — це небо надворі: сонце, місяць і погода.",
+  "The next three hours, your events coming toward the needle.": "Наступні три години, події рухаються до стрілки.",
+  "A heavy hour; the minutes gain weight as it goes by.": "Важка година; хвилини набирають ваги, поки вона минає.",
+  "The hour, and the minutes on a gauge with a real needle.": "Година й хвилини на шкалі зі справжньою стрілкою.",
+  "A split-flap board: the time and one line of your day.": "Перекидне табло: час і один рядок вашого дня.",
+  "Nothing ahead": "Попереду нічого"
 }

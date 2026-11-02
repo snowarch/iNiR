@@ -10149,5 +10149,14 @@
   "Grow from the corner": "从角落长出",
   "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "角落里的气泡无论沿边缘延伸多远，都会从边框的弧线中以一条连续的轮廓长出。",
   "in %1": "%1后",
-  "%1 h": "%1 小时"
+  "%1 h": "%1 小时",
+  "Approach": "临近",
+  "Regulator": "调节器",
+  "Board": "翻牌",
+  "The Island is the sky outside: sun, moon and weather.": "灵动岛就是窗外的天空：太阳、月亮和天气。",
+  "The next three hours, your events coming toward the needle.": "接下来三小时，日程向指针靠近。",
+  "A heavy hour; the minutes gain weight as it goes by.": "小时厚重；分钟随时间变粗。",
+  "The hour, and the minutes on a gauge with a real needle.": "小时，以及带真实指针的分钟刻度。",
+  "A split-flap board: the time and one line of your day.": "翻牌显示屏：时间和今天的一行信息。",
+  "Nothing ahead": "暂无安排"
 }
