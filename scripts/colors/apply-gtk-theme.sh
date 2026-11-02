@@ -276,7 +276,7 @@ generate_kdeglobals() {
     fi
     if [[ -z "$icon_theme" ]]; then
         if [[ -d "$HOME/.local/share/icons/WhiteSur-dark" || -d "/usr/share/icons/WhiteSur-dark" ]]; then
-            icon_theme=$("$SCRIPT_DIR/../lib/accel-run" icon-theme WhiteSur-dark "$THEME_MODE")
+            icon_theme=$("$SCRIPT_DIR/../lib/accel-run" icon-theme WhiteSur-dark "$THEME_MODE" 2>/dev/null || echo WhiteSur-dark)
         else
             icon_theme="Adwaita"
         fi
@@ -1041,7 +1041,7 @@ CURRENT_ICON_THEME="$APPLIED_ICON_THEME"
 [[ -z "$CURRENT_ICON_THEME" ]] && CURRENT_ICON_THEME=$(grep '^icon_theme=' "$QT6CT_CONF" 2>/dev/null | cut -d= -f2 || true)
 if [[ -z "$CURRENT_ICON_THEME" ]]; then
     if [[ -d "$HOME/.local/share/icons/WhiteSur-dark" || -d "/usr/share/icons/WhiteSur-dark" ]]; then
-        CURRENT_ICON_THEME=$("$SCRIPT_DIR/../lib/accel-run" icon-theme WhiteSur-dark "$THEME_MODE")
+        CURRENT_ICON_THEME=$("$SCRIPT_DIR/../lib/accel-run" icon-theme WhiteSur-dark "$THEME_MODE" 2>/dev/null || echo WhiteSur-dark)
     else
         CURRENT_ICON_THEME="Adwaita"
     fi
