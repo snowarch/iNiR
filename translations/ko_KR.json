@@ -10136,5 +10136,7 @@
   "Side panels off": "사이드 패널 꺼짐",
   "One section": "섹션 1개",
   "%1 sections": "섹션 %1개",
-  "Dial size": "시계판 크기"
+  "Dial size": "시계판 크기",
+  "Hour": "시각",
+  "Trend": "추세"
 }

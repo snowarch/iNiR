@@ -63,7 +63,7 @@
   "options": [
     {"key":"style","label":"Clock style","type":"choice","default":"digital","when":"material","choices":[["digital","Digital"],["androidStacked","Android stacked"],["cookie","Cookie"],["pixel","Pixel"],["instrument","Instrument"]]},
     {"key":"pixel.orientation","label":"Orientation","type":"choice","default":"horizontal","when":["material",{"style":"pixel"}],"choices":[["horizontal","Horizontal"],["vertical","Vertical"]]},
-    {"key":"timeFormat","label":"Time format","type":"choice","default":"system","when":{"any":[["material",{"style":["digital","androidStacked"]}],["face",{"iris.face":"digital"}]]},"choices":[["system","System"],["24h","24h"],["12h","12h"]]},
+    {"key":"timeFormat","label":"Time format","type":"choice","default":"system","when":{"any":[["material",{"style":["digital","androidStacked"]}],["face",{"iris.face":["digital","hour"]}]]},"choices":[["system","System"],["24h","24h"],["12h","12h"]]},
     {"key":"dateStyle","label":"Date style","type":"choice","default":"long","when":["material",{"style":"digital"}],"tune":true,"choices":[["long","Long"],["minimal","Minimal"],["weekday","Weekday"],["numeric","Numeric"]]},
     {"key":"digital.preset","label":"Digital preset","type":"choice","default":"default","when":["material",{"style":"digital"}],"tune":true,"choices":[["default","Default"],["light","Light"],["bold","Bold"],["mono","Mono"]],"sets":{"default":{"digital.fontWeight":600,"digital.spacing":6},"light":{"digital.fontWeight":300,"digital.spacing":8},"bold":{"digital.fontWeight":800,"digital.spacing":4},"mono":{"digital.fontWeight":500,"digital.spacing":2}}},
     {"key":"showSeconds","label":"Seconds","type":"switch","default":false,"when":["plain",{"style":["digital","androidStacked","instrument"]}]},
