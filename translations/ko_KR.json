@@ -9004,6 +9004,8 @@
   "What it can do": "할 수 있는 일",
   "Nothing beyond the shell": "셸 밖에서는 아무것도 하지 않음",
   "It only draws inside the shell: it runs no commands, reaches no websites and reads no files of yours.": "셸 안에서 그리기만 합니다: 명령을 실행하지 않고, 사이트에 접속하지 않으며, 파일을 읽지 않습니다.",
+  "Not in the catalogue": "카탈로그에 없음",
+  "It isn't in the catalogue, so nobody checked what it can do.": "카탈로그에 없어 무엇을 할 수 있는지 아무도 확인하지 않았습니다.",
   "Update all": "모두 업데이트",
   "‹ Hub": "‹ 허브",
   "About it": "정보",

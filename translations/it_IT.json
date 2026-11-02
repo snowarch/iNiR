@@ -9004,6 +9004,8 @@
   "What it can do": "Cosa può fare",
   "Nothing beyond the shell": "Niente oltre la shell",
   "It only draws inside the shell: it runs no commands, reaches no websites and reads no files of yours.": "Disegna solo dentro la shell: non esegue comandi, non contatta siti e non legge i tuoi file.",
+  "Not in the catalogue": "Fuori catalogo",
+  "It isn't in the catalogue, so nobody checked what it can do.": "Non è nel catalogo, quindi nessuno ha controllato cosa può fare.",
   "Update all": "Aggiorna tutto",
   "‹ Hub": "‹ Hub",
   "About it": "Informazioni",

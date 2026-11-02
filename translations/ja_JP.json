@@ -9004,6 +9004,8 @@
   "What it can do": "できること",
   "Nothing beyond the shell": "シェルの外では何もしません",
   "It only draws inside the shell: it runs no commands, reaches no websites and reads no files of yours.": "シェルの中で描画するだけです: コマンドを実行せず、サイトにアクセスせず、あなたのファイルを読みません。",
+  "Not in the catalogue": "カタログ外",
+  "It isn't in the catalogue, so nobody checked what it can do.": "カタログに載っていないため、何ができるかは確認されていません。",
   "Update all": "すべて更新",
   "‹ Hub": "‹ ハブ",
   "About it": "詳細",

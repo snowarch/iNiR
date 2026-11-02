@@ -9004,6 +9004,8 @@
   "What it can do": "Neler yapabilir",
   "Nothing beyond the shell": "Kabuğun dışında hiçbir şey",
   "It only draws inside the shell: it runs no commands, reaches no websites and reads no files of yours.": "Yalnızca kabuğun içinde çizer: komut çalıştırmaz, sitelere bağlanmaz ve dosyalarını okumaz.",
+  "Not in the catalogue": "Katalog dışında",
+  "It isn't in the catalogue, so nobody checked what it can do.": "Katalogda yok, bu yüzden neler yapabildiğini kimse denetlemedi.",
   "Update all": "Tümünü güncelle",
   "‹ Hub": "‹ Hub",
   "About it": "Hakkında",

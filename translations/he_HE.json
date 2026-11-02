@@ -9004,6 +9004,8 @@
   "What it can do": "מה הוא יכול לעשות",
   "Nothing beyond the shell": "שום דבר מחוץ למעטפת",
   "It only draws inside the shell: it runs no commands, reaches no websites and reads no files of yours.": "הוא רק מצייר בתוך המעטפת: לא מריץ פקודות, לא פונה לאתרים ולא קורא את הקבצים שלך.",
+  "Not in the catalogue": "מחוץ לקטלוג",
+  "It isn't in the catalogue, so nobody checked what it can do.": "הוא לא בקטלוג, ולכן איש לא בדק מה הוא יכול לעשות.",
   "Update all": "לעדכן הכול",
   "‹ Hub": "‹ מרכז",
   "About it": "עליו",

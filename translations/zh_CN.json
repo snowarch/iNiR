@@ -9004,6 +9004,8 @@
   "What it can do": "它能做什么",
   "Nothing beyond the shell": "不超出 Shell",
   "It only draws inside the shell: it runs no commands, reaches no websites and reads no files of yours.": "它只在 Shell 内绘制：不运行命令、不访问网站，也不读取你的文件。",
+  "Not in the catalogue": "不在目录中",
+  "It isn't in the catalogue, so nobody checked what it can do.": "它不在目录中，因此没有人检查过它能做什么。",
   "Update all": "全部更新",
   "‹ Hub": "‹ 中心",
   "About it": "关于",

@@ -9004,6 +9004,8 @@
   "What it can do": "Yang bisa dilakukannya",
   "Nothing beyond the shell": "Tidak lebih dari shell",
   "It only draws inside the shell: it runs no commands, reaches no websites and reads no files of yours.": "Hanya menggambar di dalam shell: tidak menjalankan perintah, tidak mengakses situs, dan tidak membaca berkasmu.",
+  "Not in the catalogue": "Di luar katalog",
+  "It isn't in the catalogue, so nobody checked what it can do.": "Tidak ada di katalog, jadi tak ada yang memeriksa apa yang bisa dilakukannya.",
   "Update all": "Perbarui semua",
   "‹ Hub": "‹ Hub",
   "About it": "Tentang",

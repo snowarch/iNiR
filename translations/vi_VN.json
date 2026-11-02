@@ -9004,6 +9004,8 @@
   "What it can do": "Nó có thể làm gì",
   "Nothing beyond the shell": "Không làm gì ngoài shell",
   "It only draws inside the shell: it runs no commands, reaches no websites and reads no files of yours.": "Nó chỉ vẽ bên trong shell: không chạy lệnh, không truy cập trang web và không đọc tệp của bạn.",
+  "Not in the catalogue": "Ngoài danh mục",
+  "It isn't in the catalogue, so nobody checked what it can do.": "Nó không có trong danh mục, nên chưa ai kiểm tra nó có thể làm gì.",
   "Update all": "Cập nhật tất cả",
   "‹ Hub": "‹ Hub",
   "About it": "Giới thiệu",

@@ -9004,6 +9004,8 @@
   "What it can do": "यह क्या कर सकता है",
   "Nothing beyond the shell": "शेल के बाहर कुछ नहीं",
   "It only draws inside the shell: it runs no commands, reaches no websites and reads no files of yours.": "यह सिर्फ़ शेल के अंदर दिखता है: कोई कमांड नहीं चलाता, किसी साइट से नहीं जुड़ता और आपकी फ़ाइलें नहीं पढ़ता।",
+  "Not in the catalogue": "कैटलॉग से बाहर",
+  "It isn't in the catalogue, so nobody checked what it can do.": "यह कैटलॉग में नहीं है, इसलिए किसी ने नहीं जाँचा कि यह क्या कर सकता है।",
   "Update all": "सब अपडेट करें",
   "‹ Hub": "‹ हब",
   "About it": "इसके बारे में",

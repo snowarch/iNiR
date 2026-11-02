@@ -9004,6 +9004,8 @@
   "What it can do": "ما يمكنه فعله",
   "Nothing beyond the shell": "لا شيء خارج الواجهة",
   "It only draws inside the shell: it runs no commands, reaches no websites and reads no files of yours.": "يرسم داخل الواجهة فقط: لا يشغّل أوامر ولا يتصل بمواقع ولا يقرأ ملفاتك.",
+  "Not in the catalogue": "خارج الكتالوج",
+  "It isn't in the catalogue, so nobody checked what it can do.": "ليس في الكتالوج، لذا لم يتحقق أحد مما يمكنه فعله.",
   "Update all": "تحديث الكل",
   "‹ Hub": "‹ المركز",
   "About it": "عنه",

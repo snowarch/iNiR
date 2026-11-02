@@ -87,6 +87,15 @@ Singleton {
         const picked = usable.filter(item => item.featured === true).sort(newest)
         return (picked.length > 0 ? picked : usable.slice().sort(newest))[0]
     }
+    // What a page says an item can do. An orphan left the catalogue and its audit with it: nothing is claimed.
+    function reachTitle(item: var): string {
+        if (item?.orphan) return Translation.tr("Not in the catalogue")
+        return Array.from(item?.permissions ?? []).length > 0 ? Translation.tr("What it can do") : Translation.tr("Nothing beyond the shell")
+    }
+    function reachText(item: var): string {
+        return item?.orphan ? Translation.tr("It isn't in the catalogue, so nobody checked what it can do.")
+            : Translation.tr("It only draws inside the shell: it runs no commands, reaches no websites and reads no files of yours.")
+    }
     function find(id: string): var {
         return root.items.find(item => item.id === id) ?? null
     }

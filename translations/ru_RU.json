@@ -9004,6 +9004,8 @@
   "What it can do": "Что умеет",
   "Nothing beyond the shell": "Ничего вне оболочки",
   "It only draws inside the shell: it runs no commands, reaches no websites and reads no files of yours.": "Только рисует внутри оболочки: не запускает команды, не обращается к сайтам и не читает ваши файлы.",
+  "Not in the catalogue": "Нет в каталоге",
+  "It isn't in the catalogue, so nobody checked what it can do.": "Его нет в каталоге, поэтому никто не проверял, что он может делать.",
   "Update all": "Обновить всё",
   "‹ Hub": "‹ Хаб",
   "About it": "Подробнее",

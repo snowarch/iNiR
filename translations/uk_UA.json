@@ -9004,6 +9004,8 @@
   "What it can do": "Що вміє",
   "Nothing beyond the shell": "Нічого поза оболонкою",
   "It only draws inside the shell: it runs no commands, reaches no websites and reads no files of yours.": "Лише малює всередині оболонки: не запускає команд, не звертається до сайтів і не читає ваших файлів.",
+  "Not in the catalogue": "Немає в каталозі",
+  "It isn't in the catalogue, so nobody checked what it can do.": "Його немає в каталозі, тому ніхто не перевіряв, що він може робити.",
   "Update all": "Оновити все",
   "‹ Hub": "‹ Хаб",
   "About it": "Докладніше",
