@@ -10185,5 +10185,6 @@
   "A preset sets the whole look in one tap; every tile under it fine-tunes one part.": "Пресет змінює весь стиль одним дотиком; кожна плитка нижче налаштовує одну частину.",
   "The glyph alone in its colour, as the widgets.": "Лише значок у своєму кольорі, як у віджетах.",
   "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "«Авто» дає кожному розділу свій колір; лінійний стиль (Nothing) малює їх чорнилом.",
-  "Auto fills them, as the widgets do; a line look outlines them.": "«Авто» заливає їх, як у віджетах; лінійний стиль малює контуром."
+  "Auto fills them, as the widgets do; a line look outlines them.": "«Авто» заливає їх, як у віджетах; лінійний стиль малює контуром.",
+  "Whole look": "Стиль цілком"
 }

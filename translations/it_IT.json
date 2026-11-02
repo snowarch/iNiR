@@ -10185,5 +10185,6 @@
   "A preset sets the whole look in one tap; every tile under it fine-tunes one part.": "Un preset cambia tutto lo stile con un tocco; ogni riquadro sotto ne rifinisce una parte.",
   "The glyph alone in its colour, as the widgets.": "Solo il glifo nel suo colore, come i widget.",
   "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "Auto dà a ogni area il suo colore; uno stile a linea (Nothing) li disegna in inchiostro.",
-  "Auto fills them, as the widgets do; a line look outlines them.": "Auto li riempie, come i widget; uno stile a linea li disegna in contorno."
+  "Auto fills them, as the widgets do; a line look outlines them.": "Auto li riempie, come i widget; uno stile a linea li disegna in contorno.",
+  "Whole look": "Stile completo"
 }

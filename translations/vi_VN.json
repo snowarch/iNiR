@@ -10185,5 +10185,6 @@
   "A preset sets the whole look in one tap; every tile under it fine-tunes one part.": "Một mẫu đổi toàn bộ phong cách chỉ với một chạm; mỗi ô bên dưới tinh chỉnh một phần.",
   "The glyph alone in its colour, as the widgets.": "Chỉ biểu tượng với màu riêng, như các widget.",
   "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "Tự động cho mỗi khu vực màu riêng; phong cách nét (Nothing) vẽ chúng bằng màu mực.",
-  "Auto fills them, as the widgets do; a line look outlines them.": "Tự động tô đầy như các widget; phong cách nét chỉ vẽ đường viền."
+  "Auto fills them, as the widgets do; a line look outlines them.": "Tự động tô đầy như các widget; phong cách nét chỉ vẽ đường viền.",
+  "Whole look": "Toàn bộ phong cách"
 }

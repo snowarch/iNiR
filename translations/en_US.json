@@ -10186,5 +10186,6 @@
   "A preset sets the whole look in one tap; every tile under it fine-tunes one part.": "A preset sets the whole look in one tap; every tile under it fine-tunes one part.",
   "The glyph alone in its colour, as the widgets.": "The glyph alone in its colour, as the widgets.",
   "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "Auto gives each area its colour; a line look (Nothing) draws them in ink.",
-  "Auto fills them, as the widgets do; a line look outlines them.": "Auto fills them, as the widgets do; a line look outlines them."
+  "Auto fills them, as the widgets do; a line look outlines them.": "Auto fills them, as the widgets do; a line look outlines them.",
+  "Whole look": "Whole look"
 }

@@ -10185,5 +10185,6 @@
   "A preset sets the whole look in one tap; every tile under it fine-tunes one part.": "Hazır ayar tek dokunuşla tüm görünümü değiştirir; aşağıdaki her kutu bir parçasını ayarlar.",
   "The glyph alone in its colour, as the widgets.": "Yalnızca kendi rengindeki simge, widget'lardaki gibi.",
   "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "Otomatik her alana kendi rengini verir; çizgi görünümü (Nothing) onları mürekkeple çizer.",
-  "Auto fills them, as the widgets do; a line look outlines them.": "Otomatik onları widget'lardaki gibi doldurur; çizgi görünümü dış hatla çizer."
+  "Auto fills them, as the widgets do; a line look outlines them.": "Otomatik onları widget'lardaki gibi doldurur; çizgi görünümü dış hatla çizer.",
+  "Whole look": "Tüm görünüm"
 }

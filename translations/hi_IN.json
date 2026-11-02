@@ -10185,5 +10185,6 @@
   "A preset sets the whole look in one tap; every tile under it fine-tunes one part.": "प्रीसेट एक टैप में पूरी शैली बदलता है; नीचे की हर टाइल एक हिस्सा सेट करती है।",
   "The glyph alone in its colour, as the widgets.": "केवल अपने रंग में ग्लिफ़, विजेट की तरह।",
   "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "ऑटो हर क्षेत्र को उसका रंग देता है; लाइन शैली (Nothing) इन्हें स्याही में बनाती है।",
-  "Auto fills them, as the widgets do; a line look outlines them.": "ऑटो इन्हें विजेट की तरह भरता है; लाइन शैली इन्हें रूपरेखा में बनाती है।"
+  "Auto fills them, as the widgets do; a line look outlines them.": "ऑटो इन्हें विजेट की तरह भरता है; लाइन शैली इन्हें रूपरेखा में बनाती है।",
+  "Whole look": "पूरी शैली"
 }

@@ -10185,5 +10185,6 @@
   "A preset sets the whole look in one tap; every tile under it fine-tunes one part.": "ערכה מוכנה משנה את כל המראה בנגיעה; כל אריח למטה מכוונן חלק אחד.",
   "The glyph alone in its colour, as the widgets.": "רק הסמל בצבע שלו, כמו בווידג'טים.",
   "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "אוטומטי נותן לכל אזור את צבעו; מראה קווי (Nothing) מצייר אותם בדיו.",
-  "Auto fills them, as the widgets do; a line look outlines them.": "אוטומטי ממלא אותם כמו בווידג'טים; מראה קווי מצייר קו מתאר."
+  "Auto fills them, as the widgets do; a line look outlines them.": "אוטומטי ממלא אותם כמו בווידג'טים; מראה קווי מצייר קו מתאר.",
+  "Whole look": "המראה כולו"
 }

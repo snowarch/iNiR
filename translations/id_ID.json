@@ -10185,5 +10185,6 @@
   "A preset sets the whole look in one tap; every tile under it fine-tunes one part.": "Preset mengubah seluruh gaya dengan satu ketukan; tiap ubin di bawah mengatur satu bagian.",
   "The glyph alone in its colour, as the widgets.": "Hanya glif dengan warnanya sendiri, seperti widget.",
   "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "Otomatis memberi tiap area warnanya; gaya garis (Nothing) menggambarnya dengan tinta.",
-  "Auto fills them, as the widgets do; a line look outlines them.": "Otomatis mengisinya seperti widget; gaya garis menggambarnya sebagai garis tepi."
+  "Auto fills them, as the widgets do; a line look outlines them.": "Otomatis mengisinya seperti widget; gaya garis menggambarnya sebagai garis tepi.",
+  "Whole look": "Gaya menyeluruh"
 }

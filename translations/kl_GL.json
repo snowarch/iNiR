@@ -10185,5 +10185,6 @@
   "A preset sets the whole look in one tap; every tile under it fine-tunes one part.": "Piareersimasoq ataasiarlugu tooruinnarlugu isikkivik tamaat allanngortarpaa; ataani tamarmik ilaa aaqqissortarpaat.",
   "The glyph alone in its colour, as the widgets.": "Ilisarnaat kisimi qalipaammini, widgetit assigalugit.",
   "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "Nammineq immikkoortut tamarmik qalipaatiminnik tunniuttarpai; titartagaq (Nothing) qernertumik titartartarpai.",
-  "Auto fills them, as the widgets do; a line look outlines them.": "Nammineq widgetit assigalugit immersortarpai; titartagaq killeqarfiinik titartartarpai."
+  "Auto fills them, as the widgets do; a line look outlines them.": "Nammineq widgetit assigalugit immersortarpai; titartagaq killeqarfiinik titartartarpai.",
+  "Whole look": "Isikkivik tamarmi"
 }

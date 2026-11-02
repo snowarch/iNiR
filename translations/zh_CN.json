@@ -10185,5 +10185,6 @@
   "A preset sets the whole look in one tap; every tile under it fine-tunes one part.": "预设一键更换整体风格；下方每个磁贴微调其中一部分。",
   "The glyph alone in its colour, as the widgets.": "仅显示带有自身颜色的图标，与小组件一致。",
   "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "自动为每个区域使用其颜色；线条风格（Nothing）以墨色绘制。",
-  "Auto fills them, as the widgets do; a line look outlines them.": "自动像小组件一样填充；线条风格以轮廓绘制。"
+  "Auto fills them, as the widgets do; a line look outlines them.": "自动像小组件一样填充；线条风格以轮廓绘制。",
+  "Whole look": "整体风格"
 }

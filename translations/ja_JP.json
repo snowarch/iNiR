@@ -10185,5 +10185,6 @@
   "A preset sets the whole look in one tap; every tile under it fine-tunes one part.": "プリセットはタップひとつでスタイル全体を変えます。下の各タイルで一部ずつ調整できます。",
   "The glyph alone in its colour, as the widgets.": "ウィジェットと同じく、アイコンだけをその色で表示。",
   "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "自動では各エリアに固有の色を使い、線のスタイル（Nothing）ではインクで描きます。",
-  "Auto fills them, as the widgets do; a line look outlines them.": "自動ではウィジェットと同じく塗りつぶし、線のスタイルでは輪郭で描きます。"
+  "Auto fills them, as the widgets do; a line look outlines them.": "自動ではウィジェットと同じく塗りつぶし、線のスタイルでは輪郭で描きます。",
+  "Whole look": "全体のスタイル"
 }
