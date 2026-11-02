@@ -223,6 +223,15 @@ function _widgetSizes(obj, fromV2) {
                 widgets[key].sizeClass = size;
                 changed = true;
             }
+    // The engine reads a size per screen and the typed base entries hold none: each screen takes what the file said.
+    if (fromV2)
+        for (const record of Array.isArray(widgets.outputOverrides) ? widgets.outputOverrides : [])
+            for (const [key, entry] of _isObject(record?.widgets) ? Object.entries(record.widgets) : [])
+                for (const size of ["sizeClass", "freeWidth", "freeHeight"])
+                    if (_isObject(entry) && entry[size] === undefined && _isObject(widgets[key]) && widgets[key][size] !== undefined) {
+                        entry[size] = widgets[key][size];
+                        changed = true;
+                    }
     return changed;
 }
 
