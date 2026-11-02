@@ -9347,7 +9347,7 @@
   "Next: %1, %2": "下一个：%1，%2",
   "Paused · click to bring it back": "已暂停 · 点击恢复",
   "Paste a calendar's iCal link": "粘贴日历的 iCal 链接",
-  "until %1": "直到 %1",
+  "until %1": "到 %1",
   "At night, from %1": "夜晚，从 %1 起",
   "By day, from %1": "白天，从 %1 起",
   "Drag the sun and the moon to change the hours.": "拖动太阳和月亮来更改时间。",
@@ -10047,7 +10047,6 @@
   "A watch with real hands, the day beside it.": "一块有真指针的表,旁边是日期。",
   "One fact of your day, a new one each minute.": "今天的一条信息,每分钟换一条。",
   "A window on the sky: the sun, the weather, tonight's moon.": "一扇望向天空的窗：太阳、天气、今晚的月亮。",
-  "until %1": "到 %1",
   "The path a Direct shape follows as it opens or adjusts.": "直接形状在展开或调整时所走的路径。",
   "Leaves fast and lands softly.": "快速出发，轻柔落地。",
   "Even all the way.": "自始至终匀速。",
@@ -10179,5 +10178,12 @@
   "Trails": "拖影",
   "What a moving body leaves behind it: its lit edge, as a long exposure catches it.": "运动物体身后留下的痕迹：长曝光拍下的那条受光边缘。",
   "Aurora colours": "极光色",
-  "Aurora runs your accent into its two neighbours; Your colours takes accent, wallpaper and highlight as they are.": "极光把你的强调色延伸到两侧相邻的颜色；你的颜色则原样采用强调色、壁纸和高亮。"
+  "Aurora runs your accent into its two neighbours; Your colours takes accent, wallpaper and highlight as they are.": "极光把你的强调色延伸到两侧相邻的颜色；你的颜色则原样采用强调色、壁纸和高亮。",
+  "Pick a look": "选择风格",
+  "One tap sets the whole look; Undo takes it back. The tiles below fine-tune it.": "轻点一下即可更换整体风格，撤销可还原。下方的磁贴用于微调。",
+  "Presets, colour, material, shape and type": "预设、颜色、材质、形状和字体",
+  "A preset sets the whole look in one tap; every tile under it fine-tunes one part.": "预设一键更换整体风格；下方每个磁贴微调其中一部分。",
+  "The glyph alone in its colour, as the widgets.": "仅显示带有自身颜色的图标，与小组件一致。",
+  "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "自动为每个区域使用其颜色；线条风格（Nothing）以墨色绘制。",
+  "Auto fills them, as the widgets do; a line look outlines them.": "自动像小组件一样填充；线条风格以轮廓绘制。"
 }

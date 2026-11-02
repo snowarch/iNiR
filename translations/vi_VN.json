@@ -10047,7 +10047,6 @@
   "A watch with real hands, the day beside it.": "Một chiếc đồng hồ có kim thật, bên cạnh là ngày.",
   "One fact of your day, a new one each minute.": "Một thông tin trong ngày, mỗi phút một điều mới.",
   "A window on the sky: the sun, the weather, tonight's moon.": "Cửa sổ nhìn ra bầu trời: mặt trời, thời tiết, trăng đêm nay.",
-  "until %1": "đến %1",
   "The path a Direct shape follows as it opens or adjusts.": "Đường mà một hình Trực tiếp đi theo khi mở ra hoặc điều chỉnh.",
   "Leaves fast and lands softly.": "Xuất phát nhanh, đáp xuống êm.",
   "Even all the way.": "Đều từ đầu đến cuối.",
@@ -10179,5 +10178,12 @@
   "Trails": "Vệt mờ",
   "What a moving body leaves behind it: its lit edge, as a long exposure catches it.": "Thứ một vật đang chuyển động để lại phía sau: cạnh được chiếu sáng của nó, như ảnh phơi sáng lâu ghi lại.",
   "Aurora colours": "Màu cực quang",
-  "Aurora runs your accent into its two neighbours; Your colours takes accent, wallpaper and highlight as they are.": "Cực quang đưa màu nhấn sang hai bên cạnh; Màu của bạn giữ nguyên màu nhấn, hình nền và điểm sáng như hiện có."
+  "Aurora runs your accent into its two neighbours; Your colours takes accent, wallpaper and highlight as they are.": "Cực quang đưa màu nhấn sang hai bên cạnh; Màu của bạn giữ nguyên màu nhấn, hình nền và điểm sáng như hiện có.",
+  "Pick a look": "Chọn phong cách",
+  "One tap sets the whole look; Undo takes it back. The tiles below fine-tune it.": "Một chạm đổi toàn bộ phong cách; Hoàn tác để quay lại. Các ô bên dưới tinh chỉnh thêm.",
+  "Presets, colour, material, shape and type": "Mẫu có sẵn, màu, chất liệu, hình dạng và kiểu chữ",
+  "A preset sets the whole look in one tap; every tile under it fine-tunes one part.": "Một mẫu đổi toàn bộ phong cách chỉ với một chạm; mỗi ô bên dưới tinh chỉnh một phần.",
+  "The glyph alone in its colour, as the widgets.": "Chỉ biểu tượng với màu riêng, như các widget.",
+  "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "Tự động cho mỗi khu vực màu riêng; phong cách nét (Nothing) vẽ chúng bằng màu mực.",
+  "Auto fills them, as the widgets do; a line look outlines them.": "Tự động tô đầy như các widget; phong cách nét chỉ vẽ đường viền."
 }

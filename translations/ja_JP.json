@@ -10047,7 +10047,6 @@
   "A watch with real hands, the day beside it.": "本物の針を持つ時計と、横に日付。",
   "One fact of your day, a new one each minute.": "今日のひとことを、毎分新しく。",
   "A window on the sky: the sun, the weather, tonight's moon.": "空を映す窓：太陽、天気、今夜の月。",
-  "until %1": "%1 まで",
   "The path a Direct shape follows as it opens or adjusts.": "ダイレクトな形が開くとき・調整するときにたどる軌道。",
   "Leaves fast and lands softly.": "速く出て、やわらかく着地。",
   "Even all the way.": "最初から最後まで均一。",
@@ -10179,5 +10178,12 @@
   "Trails": "残像",
   "What a moving body leaves behind it: its lit edge, as a long exposure catches it.": "動く物体が背後に残すもの。長時間露光が捉えるような、その光る縁。",
   "Aurora colours": "オーロラカラー",
-  "Aurora runs your accent into its two neighbours; Your colours takes accent, wallpaper and highlight as they are.": "オーロラはアクセントを両隣へ広げ、あなたの色はアクセント・壁紙・ハイライトをそのまま使う。"
+  "Aurora runs your accent into its two neighbours; Your colours takes accent, wallpaper and highlight as they are.": "オーロラはアクセントを両隣へ広げ、あなたの色はアクセント・壁紙・ハイライトをそのまま使う。",
+  "Pick a look": "スタイルを選ぶ",
+  "One tap sets the whole look; Undo takes it back. The tiles below fine-tune it.": "タップひとつでスタイル全体が変わり、元に戻すで取り消せます。下のタイルで細かく調整できます。",
+  "Presets, colour, material, shape and type": "プリセット、カラー、素材、形、書体",
+  "A preset sets the whole look in one tap; every tile under it fine-tunes one part.": "プリセットはタップひとつでスタイル全体を変えます。下の各タイルで一部ずつ調整できます。",
+  "The glyph alone in its colour, as the widgets.": "ウィジェットと同じく、アイコンだけをその色で表示。",
+  "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "自動では各エリアに固有の色を使い、線のスタイル（Nothing）ではインクで描きます。",
+  "Auto fills them, as the widgets do; a line look outlines them.": "自動ではウィジェットと同じく塗りつぶし、線のスタイルでは輪郭で描きます。"
 }

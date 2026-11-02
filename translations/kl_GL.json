@@ -9689,7 +9689,7 @@
   "Next: %1, %2": "Tulliuttoq: %1, %2",
   "Paused · click to bring it back": "Unitsitaq · utertinniarlugu tooruk",
   "Paste a calendar's iCal link": "Kalenderip iCal-ip link-ia ikkuguk",
-  "until %1": "%1 tikillugu",
+  "until %1": "until %1",
   "At night, from %1": "Unnukkut, %1-mit",
   "By day, from %1": "Ullukkut, %1-mit",
   "Drag the sun and the moon to change the hours.": "Nalunaaquttap akunneri allanngortinniarlugit seqineq qaammallu nusukkit.",
@@ -10047,7 +10047,6 @@
   "A watch with real hands, the day beside it.": "A watch with real hands, the day beside it.",
   "One fact of your day, a new one each minute.": "One fact of your day, a new one each minute.",
   "A window on the sky: the sun, the weather, tonight's moon.": "A window on the sky: the sun, the weather, tonight's moon./*keep*/",
-  "until %1": "until %1",
   "The path a Direct shape follows as it opens or adjusts.": "The path a Direct shape follows as it opens or adjusts.",
   "Leaves fast and lands softly.": "Leaves fast and lands softly.",
   "Even all the way.": "Even all the way.",
@@ -10179,5 +10178,12 @@
   "Trails": "Trails",
   "What a moving body leaves behind it: its lit edge, as a long exposure catches it.": "What a moving body leaves behind it: its lit edge, as a long exposure catches it.",
   "Aurora colours": "Aurora colours",
-  "Aurora runs your accent into its two neighbours; Your colours takes accent, wallpaper and highlight as they are.": "Aurora runs your accent into its two neighbours; Your colours takes accent, wallpaper and highlight as they are."
+  "Aurora runs your accent into its two neighbours; Your colours takes accent, wallpaper and highlight as they are.": "Aurora runs your accent into its two neighbours; Your colours takes accent, wallpaper and highlight as they are.",
+  "Pick a look": "Isikkivik toqqaruk",
+  "One tap sets the whole look; Undo takes it back. The tiles below fine-tune it.": "Ataasiarlugu tooruinnarlugu isikkivik tamarmi allanngortarpoq; Peeruk utertitsivoq. Ataani assigiinngitsut naammassisarpaat.",
+  "Presets, colour, material, shape and type": "Piareersimasut, qalipaat, atortoq, ilusia allagaasiallu",
+  "A preset sets the whole look in one tap; every tile under it fine-tunes one part.": "Piareersimasoq ataasiarlugu tooruinnarlugu isikkivik tamaat allanngortarpaa; ataani tamarmik ilaa aaqqissortarpaat.",
+  "The glyph alone in its colour, as the widgets.": "Ilisarnaat kisimi qalipaammini, widgetit assigalugit.",
+  "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "Nammineq immikkoortut tamarmik qalipaatiminnik tunniuttarpai; titartagaq (Nothing) qernertumik titartartarpai.",
+  "Auto fills them, as the widgets do; a line look outlines them.": "Nammineq widgetit assigalugit immersortarpai; titartagaq killeqarfiinik titartartarpai."
 }

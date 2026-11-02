@@ -10047,7 +10047,6 @@
   "A watch with real hands, the day beside it.": "שעון עם מחוגים אמיתיים, והיום לצידו.",
   "One fact of your day, a new one each minute.": "עובדה אחת על היום שלך, חדשה בכל דקה.",
   "A window on the sky: the sun, the weather, tonight's moon.": "חלון לשמיים: השמש, מזג האוויר, הירח של הלילה.",
-  "until %1": "עד %1",
   "The path a Direct shape follows as it opens or adjusts.": "המסלול שצורה ישירה עוברת כשהיא נפתחת או מתכווננת.",
   "Leaves fast and lands softly.": "יוצאת מהר ונוחתת ברכות.",
   "Even all the way.": "אחידה מתחילה ועד סוף.",
@@ -10179,5 +10178,12 @@
   "Trails": "שבילים",
   "What a moving body leaves behind it: its lit edge, as a long exposure catches it.": "מה שגוף נע משאיר אחריו: קצהו המואר, כפי שתיעד חשיפה ארוכה.",
   "Aurora colours": "צבעי זוהר הצפון",
-  "Aurora runs your accent into its two neighbours; Your colours takes accent, wallpaper and highlight as they are.": "זוהר הצפון מעביר את הצבע המודגש לשני שכניו; הצבעים שלך לוקחים את הצבע המודגש, הרקע וההדגשה כמו שהם."
+  "Aurora runs your accent into its two neighbours; Your colours takes accent, wallpaper and highlight as they are.": "זוהר הצפון מעביר את הצבע המודגש לשני שכניו; הצבעים שלך לוקחים את הצבע המודגש, הרקע וההדגשה כמו שהם.",
+  "Pick a look": "בחירת מראה",
+  "One tap sets the whole look; Undo takes it back. The tiles below fine-tune it.": "נגיעה אחת משנה את כל המראה; ביטול מחזיר אותו. האריחים למטה מכווננים אותו.",
+  "Presets, colour, material, shape and type": "ערכות מוכנות, צבע, חומר, צורה וגופן",
+  "A preset sets the whole look in one tap; every tile under it fine-tunes one part.": "ערכה מוכנה משנה את כל המראה בנגיעה; כל אריח למטה מכוונן חלק אחד.",
+  "The glyph alone in its colour, as the widgets.": "רק הסמל בצבע שלו, כמו בווידג'טים.",
+  "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "אוטומטי נותן לכל אזור את צבעו; מראה קווי (Nothing) מצייר אותם בדיו.",
+  "Auto fills them, as the widgets do; a line look outlines them.": "אוטומטי ממלא אותם כמו בווידג'טים; מראה קווי מצייר קו מתאר."
 }

@@ -10047,7 +10047,6 @@
   "A watch with real hands, the day beside it.": "Часы с настоящими стрелками, рядом день.",
   "One fact of your day, a new one each minute.": "Один факт о вашем дне, каждую минуту новый.",
   "A window on the sky: the sun, the weather, tonight's moon.": "Окно в небо: солнце, погода, сегодняшняя луна.",
-  "until %1": "до %1",
   "The path a Direct shape follows as it opens or adjusts.": "Путь, по которому прямая форма открывается или подстраивается.",
   "Leaves fast and lands softly.": "Быстро стартует и мягко приземляется.",
   "Even all the way.": "Ровно от начала до конца.",
@@ -10179,5 +10178,12 @@
   "Trails": "Следы",
   "What a moving body leaves behind it: its lit edge, as a long exposure catches it.": "То, что оставляет за собой движущееся тело: его освещённый край, как его ловит длинная выдержка.",
   "Aurora colours": "Цвета полярного сияния",
-  "Aurora runs your accent into its two neighbours; Your colours takes accent, wallpaper and highlight as they are.": "Полярное сияние переносит ваш акцент на двух соседей; «Ваши цвета» берут акцент, обои и подсветку как есть."
+  "Aurora runs your accent into its two neighbours; Your colours takes accent, wallpaper and highlight as they are.": "Полярное сияние переносит ваш акцент на двух соседей; «Ваши цвета» берут акцент, обои и подсветку как есть.",
+  "Pick a look": "Выберите стиль",
+  "One tap sets the whole look; Undo takes it back. The tiles below fine-tune it.": "Одно касание меняет весь стиль; «Отменить» возвращает прежний. Плитки ниже уточняют детали.",
+  "Presets, colour, material, shape and type": "Пресеты, цвет, материал, форма и шрифт",
+  "A preset sets the whole look in one tap; every tile under it fine-tunes one part.": "Пресет меняет весь стиль одним касанием; каждая плитка ниже настраивает одну часть.",
+  "The glyph alone in its colour, as the widgets.": "Только значок в своём цвете, как в виджетах.",
+  "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "«Авто» даёт каждому разделу свой цвет; линейный стиль (Nothing) рисует их чернилами.",
+  "Auto fills them, as the widgets do; a line look outlines them.": "«Авто» заливает их, как в виджетах; линейный стиль рисует контуром."
 }

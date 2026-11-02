@@ -10047,7 +10047,6 @@
   "A watch with real hands, the day beside it.": "ساعة بعقارب حقيقية، واليوم بجانبها.",
   "One fact of your day, a new one each minute.": "معلومة واحدة عن يومك، وجديدة كل دقيقة.",
   "A window on the sky: the sun, the weather, tonight's moon.": "نافذة على السماء: الشمس والطقس وقمر الليلة.",
-  "until %1": "حتى %1",
   "The path a Direct shape follows as it opens or adjusts.": "المسار الذي يتبعه الشكل المباشر عند فتحه أو ضبطه.",
   "Leaves fast and lands softly.": "ينطلق بسرعة ويهبط بنعومة.",
   "Even all the way.": "متساوٍ من البداية إلى النهاية.",
@@ -10179,5 +10178,12 @@
   "Trails": "الآثار",
   "What a moving body leaves behind it: its lit edge, as a long exposure catches it.": "ما يتركه الجسم المتحرك خلفه: حافته المضيئة، كما يلتقطها التعريض الطويل.",
   "Aurora colours": "ألوان الشفق",
-  "Aurora runs your accent into its two neighbours; Your colours takes accent, wallpaper and highlight as they are.": "يمرّر الشفق لونك المميز إلى جاريَيْه؛ و«ألوانك» تأخذ اللون المميز والخلفية والإبراز كما هي."
+  "Aurora runs your accent into its two neighbours; Your colours takes accent, wallpaper and highlight as they are.": "يمرّر الشفق لونك المميز إلى جاريَيْه؛ و«ألوانك» تأخذ اللون المميز والخلفية والإبراز كما هي.",
+  "Pick a look": "اختر مظهرًا",
+  "One tap sets the whole look; Undo takes it back. The tiles below fine-tune it.": "لمسة واحدة تغيّر المظهر كله، والتراجع يعيده. المربعات أدناه تضبط التفاصيل.",
+  "Presets, colour, material, shape and type": "إعدادات جاهزة ولون ومادة وشكل وخط",
+  "A preset sets the whole look in one tap; every tile under it fine-tunes one part.": "الإعداد الجاهز يغيّر المظهر كله بلمسة؛ وكل مربع أدناه يضبط جزءًا منه.",
+  "The glyph alone in its colour, as the widgets.": "الرمز وحده بلونه، كما في الأدوات.",
+  "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "التلقائي يعطي كل قسم لونه؛ والمظهر الخطي (Nothing) يرسمها بالحبر.",
+  "Auto fills them, as the widgets do; a line look outlines them.": "التلقائي يملؤها كما في الأدوات؛ والمظهر الخطي يرسمها بحدود فقط."
 }

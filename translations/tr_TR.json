@@ -9347,7 +9347,7 @@
   "Next: %1, %2": "Sıradaki: %1, %2",
   "Paused · click to bring it back": "Duraklatıldı · geri getirmek için tıkla",
   "Paste a calendar's iCal link": "Bir takvimin iCal bağlantısını yapıştır",
-  "until %1": "%1'e kadar",
+  "until %1": "%1 kadar",
   "At night, from %1": "Gece, %1'den itibaren",
   "By day, from %1": "Gündüz, %1'den itibaren",
   "Drag the sun and the moon to change the hours.": "Saatleri değiştirmek için güneşi ve ayı sürükle.",
@@ -10047,7 +10047,6 @@
   "A watch with real hands, the day beside it.": "Gerçek ibreli bir saat, yanında gün.",
   "One fact of your day, a new one each minute.": "Gününe dair tek bir bilgi, her dakika yenisi.",
   "A window on the sky: the sun, the weather, tonight's moon.": "Gökyüzüne bir pencere: güneş, hava, bu gecenin ayı.",
-  "until %1": "%1 kadar",
   "The path a Direct shape follows as it opens or adjusts.": "Doğrudan bir şeklin açılırken ya da ayarlanırken izlediği yol.",
   "Leaves fast and lands softly.": "Hızlı çıkar, yumuşak iner.",
   "Even all the way.": "Baştan sona eşit.",
@@ -10179,5 +10178,12 @@
   "Trails": "İzler",
   "What a moving body leaves behind it: its lit edge, as a long exposure catches it.": "Hareket eden bir cismin arkasında bıraktığı: uzun pozlama fotoğrafının yakaladığı gibi, aydınlanan kenarı.",
   "Aurora colours": "Aurora renkleri",
-  "Aurora runs your accent into its two neighbours; Your colours takes accent, wallpaper and highlight as they are.": "Aurora vurgu rengini iki komşusuna taşır; Renkleriniz vurgu rengini, duvar kağıdını ve vurguyu olduğu gibi alır."
+  "Aurora runs your accent into its two neighbours; Your colours takes accent, wallpaper and highlight as they are.": "Aurora vurgu rengini iki komşusuna taşır; Renkleriniz vurgu rengini, duvar kağıdını ve vurguyu olduğu gibi alır.",
+  "Pick a look": "Bir görünüm seçin",
+  "One tap sets the whole look; Undo takes it back. The tiles below fine-tune it.": "Tek dokunuş tüm görünümü değiştirir; Geri al eski hâline döndürür. Aşağıdaki kutular ince ayar yapar.",
+  "Presets, colour, material, shape and type": "Hazır ayarlar, renk, malzeme, şekil ve yazı",
+  "A preset sets the whole look in one tap; every tile under it fine-tunes one part.": "Hazır ayar tek dokunuşla tüm görünümü değiştirir; aşağıdaki her kutu bir parçasını ayarlar.",
+  "The glyph alone in its colour, as the widgets.": "Yalnızca kendi rengindeki simge, widget'lardaki gibi.",
+  "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "Otomatik her alana kendi rengini verir; çizgi görünümü (Nothing) onları mürekkeple çizer.",
+  "Auto fills them, as the widgets do; a line look outlines them.": "Otomatik onları widget'lardaki gibi doldurur; çizgi görünümü dış hatla çizer."
 }

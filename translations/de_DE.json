@@ -10047,7 +10047,6 @@
   "A watch with real hands, the day beside it.": "Eine Uhr mit echten Zeigern, daneben der Tag.",
   "One fact of your day, a new one each minute.": "Eine Tatsache deines Tages, jede Minute eine neue.",
   "A window on the sky: the sun, the weather, tonight's moon.": "Ein Fenster zum Himmel: die Sonne, das Wetter, der Mond von heute Nacht.",
-  "until %1": "bis %1",
   "The path a Direct shape follows as it opens or adjusts.": "Der Weg, dem eine direkte Form beim Öffnen oder Anpassen folgt.",
   "Leaves fast and lands softly.": "Startet schnell und landet weich.",
   "Even all the way.": "Gleichmäßig von Anfang bis Ende.",
@@ -10179,5 +10178,12 @@
   "Trails": "Spuren",
   "What a moving body leaves behind it: its lit edge, as a long exposure catches it.": "Was ein bewegter Körper hinter sich lässt: seine beleuchtete Kante, wie eine Langzeitbelichtung sie einfängt.",
   "Aurora colours": "Polarlichtfarben",
-  "Aurora runs your accent into its two neighbours; Your colours takes accent, wallpaper and highlight as they are.": "Polarlicht führt deine Akzentfarbe in seine beiden Nachbarn; Deine Farben übernehmen Akzent, Hintergrundbild und Highlight unverändert."
+  "Aurora runs your accent into its two neighbours; Your colours takes accent, wallpaper and highlight as they are.": "Polarlicht führt deine Akzentfarbe in seine beiden Nachbarn; Deine Farben übernehmen Akzent, Hintergrundbild und Highlight unverändert.",
+  "Pick a look": "Stil wählen",
+  "One tap sets the whole look; Undo takes it back. The tiles below fine-tune it.": "Ein Tipp ändert den ganzen Stil; Rückgängig nimmt ihn zurück. Die Kacheln darunter verfeinern ihn.",
+  "Presets, colour, material, shape and type": "Vorlagen, Farbe, Material, Form und Schrift",
+  "A preset sets the whole look in one tap; every tile under it fine-tunes one part.": "Eine Vorlage ändert den ganzen Stil mit einem Tipp; jede Kachel darunter verfeinert einen Teil.",
+  "The glyph alone in its colour, as the widgets.": "Nur das Symbol in seiner Farbe, wie bei den Widgets.",
+  "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "Auto gibt jedem Bereich seine Farbe; ein Linienstil (Nothing) zeichnet sie in Tinte.",
+  "Auto fills them, as the widgets do; a line look outlines them.": "Auto füllt sie wie bei den Widgets; ein Linienstil zeichnet nur Umrisse."
 }

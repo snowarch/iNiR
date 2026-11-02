@@ -10047,7 +10047,6 @@
   "A watch with real hands, the day beside it.": "असली सुइयों वाली घड़ी, पास में दिन।",
   "One fact of your day, a new one each minute.": "आपके दिन की एक बात, हर मिनट नई।",
   "A window on the sky: the sun, the weather, tonight's moon.": "आकाश की खिड़की: सूरज, मौसम, आज रात का चाँद।",
-  "until %1": "%1 तक",
   "The path a Direct shape follows as it opens or adjusts.": "खुलते या बदलते समय सीधा आकार जिस रास्ते पर चलता है।",
   "Leaves fast and lands softly.": "तेज़ी से निकलता है और धीरे उतरता है।",
   "Even all the way.": "शुरू से अंत तक एक जैसा।",
@@ -10179,5 +10178,12 @@
   "Trails": "निशान",
   "What a moving body leaves behind it: its lit edge, as a long exposure catches it.": "चलती वस्तु अपने पीछे जो छोड़ती है: उसका प्रकाशित किनारा, जैसा लंबे एक्सपोज़र में दिखता है।",
   "Aurora colours": "अरोरा रंग",
-  "Aurora runs your accent into its two neighbours; Your colours takes accent, wallpaper and highlight as they are.": "अरोरा आपके एक्सेंट को उसके दोनों पड़ोसियों तक ले जाता है; आपके रंग एक्सेंट, वॉलपेपर और हाइलाइट को जैसे हैं वैसे लेते हैं।"
+  "Aurora runs your accent into its two neighbours; Your colours takes accent, wallpaper and highlight as they are.": "अरोरा आपके एक्सेंट को उसके दोनों पड़ोसियों तक ले जाता है; आपके रंग एक्सेंट, वॉलपेपर और हाइलाइट को जैसे हैं वैसे लेते हैं।",
+  "Pick a look": "एक शैली चुनें",
+  "One tap sets the whole look; Undo takes it back. The tiles below fine-tune it.": "एक टैप पूरी शैली बदल देता है; पूर्ववत करें से वापस आती है। नीचे की टाइलें इसे बारीकी से सेट करती हैं।",
+  "Presets, colour, material, shape and type": "प्रीसेट, रंग, सामग्री, आकार और फ़ॉन्ट",
+  "A preset sets the whole look in one tap; every tile under it fine-tunes one part.": "प्रीसेट एक टैप में पूरी शैली बदलता है; नीचे की हर टाइल एक हिस्सा सेट करती है।",
+  "The glyph alone in its colour, as the widgets.": "केवल अपने रंग में ग्लिफ़, विजेट की तरह।",
+  "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "ऑटो हर क्षेत्र को उसका रंग देता है; लाइन शैली (Nothing) इन्हें स्याही में बनाती है।",
+  "Auto fills them, as the widgets do; a line look outlines them.": "ऑटो इन्हें विजेट की तरह भरता है; लाइन शैली इन्हें रूपरेखा में बनाती है।"
 }

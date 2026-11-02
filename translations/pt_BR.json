@@ -10047,7 +10047,6 @@
   "A watch with real hands, the day beside it.": "Um relógio com ponteiros de verdade, o dia ao lado.",
   "One fact of your day, a new one each minute.": "Um dado do seu dia, um novo a cada minuto.",
   "A window on the sky: the sun, the weather, tonight's moon.": "Uma janela para o céu: o sol, o clima, a lua de hoje.",
-  "until %1": "até %1",
   "The path a Direct shape follows as it opens or adjusts.": "O caminho que uma forma Direta segue ao abrir ou se ajustar.",
   "Leaves fast and lands softly.": "Sai rápido e pousa suave.",
   "Even all the way.": "Uniforme do início ao fim.",
@@ -10179,5 +10178,12 @@
   "Trails": "Rastros",
   "What a moving body leaves behind it: its lit edge, as a long exposure catches it.": "O que um corpo em movimento deixa para trás: sua borda iluminada, como captura uma longa exposição.",
   "Aurora colours": "Cores da aurora",
-  "Aurora runs your accent into its two neighbours; Your colours takes accent, wallpaper and highlight as they are.": "Aurora leva seu destaque para as duas vizinhas; Suas cores usam destaque, papel de parede e realce como estão."
+  "Aurora runs your accent into its two neighbours; Your colours takes accent, wallpaper and highlight as they are.": "Aurora leva seu destaque para as duas vizinhas; Suas cores usam destaque, papel de parede e realce como estão.",
+  "Pick a look": "Escolha um visual",
+  "One tap sets the whole look; Undo takes it back. The tiles below fine-tune it.": "Um toque muda o visual inteiro; Desfazer volta atrás. Os blocos abaixo ajustam os detalhes.",
+  "Presets, colour, material, shape and type": "Predefinições, cor, material, forma e tipografia",
+  "A preset sets the whole look in one tap; every tile under it fine-tunes one part.": "Uma predefinição muda o visual inteiro com um toque; cada bloco abaixo ajusta uma parte.",
+  "The glyph alone in its colour, as the widgets.": "Só o glifo na sua cor, como os widgets.",
+  "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "Automático dá a cada área sua cor; um visual de linha (Nothing) os desenha em tinta.",
+  "Auto fills them, as the widgets do; a line look outlines them.": "Automático os preenche, como os widgets; um visual de linha usa contorno."
 }
