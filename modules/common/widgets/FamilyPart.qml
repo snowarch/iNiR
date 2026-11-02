@@ -13,11 +13,21 @@ Loader {
     readonly property string url: root.part.length > 0 && Plugins.ready ? Plugins.part(root.family, root.part) : ""
 
     active: root.when && root.url.length > 0
-    onUrlChanged: root._load()
+    // One switch moves `part` and `props` a binding at a time: load once both landed, or the old props reach the new part.
+    onUrlChanged: if (root._built) settle.restart()
     onPropsChanged: root._apply()
     // A part made again after `when` turned back on is built from the props it was first given: bring it up to date.
     onLoaded: root._apply()
-    Component.onCompleted: root._load()
+    property bool _built: false
+    Component.onCompleted: {
+        root._built = true
+        root._load()
+    }
+    Timer {
+        id: settle
+        interval: 0
+        onTriggered: root._load()
+    }
 
     function _apply(): void {
         if (!root.item) return
