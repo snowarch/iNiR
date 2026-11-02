@@ -238,22 +238,25 @@ function _widgetSizes(obj, fromV2) {
 // Moves the keys of a parsed config.json to their owners in place; true when anything moved.
 // iRiS's factory look moved (one form, a lit card, glass on). A file carries the old factory values as written defaults,
 // so those alone change, once (glass turned off later must stay off), and a value someone chose stays.
-const factoryLook = 2;
-// [since, path, old factory value, new one]: each step runs once, so a value picked after it stays.
+const factoryLook = 3;
+// [since, path, old factory value, new one, only from]: each step runs once, so a value picked after it stays; a step
+// with "only from" moves only files that already took that step, whose value came from our own factory.
 const factoryValues = [
     [1, "iris.appearance.expandedRadius", 28, 22],
-    [1, "iris.appearance.glass.mode", "off", "compositor"],
+    [1, "iris.appearance.glass.mode", "off", "wallpaper"],
     [1, "iris.appearance.glass.edgeLight", 34, 14],
     [1, "iris.appearance.glass.edgeLine", 10, 0],
     // Marks speak as the widgets head themselves: the glyph alone in its colour.
     [2, "iris.appearance.icons.style", "iris", "glyph"],
+    // Glass on the wallpaper from the factory: Niri's blur of what is below cost the Island half its frames (testers 11-02).
+    [3, "iris.appearance.glass.mode", "compositor", "wallpaper", 1],
 ];
 function _factoryLook(obj) {
     if (!_isObject(_get(obj, "iris.appearance"))) return false;
     const at = Number(_get(obj, "iris.appearance.factoryLook") ?? 0);
     if (at >= factoryLook) return false;
-    for (const [since, path, before, after] of factoryValues)
-        if (since > at && _get(obj, path) === before) _set(obj, path, after);
+    for (const [since, path, before, after, from] of factoryValues)
+        if (since > at && at >= (from ?? 0) && _get(obj, path) === before) _set(obj, path, after);
     if (at < 1) {
         // The glass edge's own width became every body's rim; 1.5 was its factory value.
         const width = _get(obj, "iris.appearance.glass.edgeWidth");

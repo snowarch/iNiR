@@ -1769,7 +1769,7 @@
             "themeId": "iris",
             "design": "iris",
             "glass": {
-                "mode": "compositor",
+                "mode": "wallpaper",
                 "tint": 58,
                 "blur": 100,
                 "edgeLight": 14,
