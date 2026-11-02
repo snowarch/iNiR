@@ -3,7 +3,7 @@
 # ${XDG_DATA_HOME:-~/.local/share}/inir. sdata/prebuilt.json pins each part (version, file, sha256); where the file
 # lives comes from inir.space/releases/manifest.json, so hosting can move without touching installs, and the sha256
 # only ever from the pin. Fetched before anything is synced (a miss stops with nothing changed), switched on after.
-# A pin without a sha256 is not released yet and is skipped. INIR_PREBUILT_FROM=<dir or URL> serves the files
+# A pin without a sha256 is not released yet: update and install refuse it (prebuilt_unpinned). INIR_PREBUILT_FROM=<dir or URL> serves the files
 # instead (VMs, a mirror); INIR_PREBUILT=0 skips it all. A part is built for its "arch" (x86_64 when it names none):
 # aarch64 takes only inir-accel, so the shell keeps Quickshell there.
 # An add-on ("with": the part it unpacks over, e.g. Qt WebEngine over qs-rs) has that part's version, so it lands in
@@ -35,6 +35,14 @@ prebuilt_parts() {
         | [.key, .value.dest, (if (.value.with // "") == "" then .value.version else $all[.value.with].version end),
             .value.file, .value.sha256, .value.repo, .value.with // ""] | @tsv' \
         "$(_prebuilt_pins)"
+}
+
+# prebuilt_unpinned: what this machine needs that has no sha256 yet. The base has no helpers of its own any more, so a
+# base published like that stops the update before it touches anything; it never goes on without them.
+prebuilt_unpinned() {
+    [[ "${INIR_PREBUILT:-1}" == 1 && -f "$(_prebuilt_pins)" ]] || return 0
+    jq -r --arg arch "$(uname -m)" '.parts | to_entries[] | .key as $k | .value
+        | select(.sha256 == "" and (.with // "") == "" and (.arch // "x86_64") == $arch) | $k' "$(_prebuilt_pins)"
 }
 
 # prebuilt_pending_addons: the titles of the add-ons this machine takes whose part is there and they are not

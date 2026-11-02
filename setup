@@ -2667,6 +2667,11 @@ run_update() {
         mapfile -t hub_plugins <<<"$needed"
         [[ -n "${hub_plugins[0]:-}" ]] || hub_plugins=()
         # qs-rs and inir-accel the same way (sdata/lib/prebuilt.sh): unpacked beside the old ones, nothing switched yet
+        if [[ -n "$(prebuilt_unpinned)" ]]; then
+            _report_update_failure 25 "This version names no build of qs-rs or inir-accel, so nothing changed"
+            tui_error "This version names no build of qs-rs or inir-accel, so nothing changed"
+            return 25
+        fi
         if [[ -n "$(prebuilt_parts)" ]]; then
             tui_info "Fetching qs-rs and inir-accel..."
             if ! prebuilt_fetch; then

@@ -259,7 +259,7 @@ case "${SKIP_QUICKSHELL}" in
     log_success "Quickshell inir config installed"
 
     # qs-rs and inir-accel prebuilt (sdata/lib/prebuilt.sh); without them the shell runs on Quickshell
-    if prebuilt_fetch; then
+    if [[ -z "$(prebuilt_unpinned)" ]] && prebuilt_fetch; then
       prebuilt_activate
     else
       log_warning "Could not get qs-rs and inir-accel; the shell runs on Quickshell until inir update gets them"
