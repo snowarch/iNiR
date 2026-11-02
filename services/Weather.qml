@@ -179,7 +179,7 @@ Singleton {
 
     function describeWeather(code, night): string {
         const weatherCode = String(code ?? "113")
-        if (weatherCode === "113" && night === true) return Translation.tr("Clear")
+        if (weatherCode === "113" && night === true) return Translation.tr("Clear skies")
         const descriptions = {
             "113": Translation.tr("Sunny"),
             "116": Translation.tr("Partly cloudy"),
@@ -338,7 +338,7 @@ Singleton {
     function _dayName(dateStr): string {
         const d = new Date(dateStr)
         if (isNaN(d.getTime())) return ""
-        return Qt.formatDate(d, "ddd")
+        return Translation.locale.toString(d, "ddd")
     }
 
     function refineOpenMeteoData(apiData): void {
@@ -576,7 +576,7 @@ Singleton {
         if (!root.hasData) return "--:--"
         const then = new Date(root.lastUpdated)
         const time = Qt.formatTime(then, "hh:mm")
-        return then.toDateString() === new Date().toDateString() ? time : Qt.formatDate(then, "ddd") + " " + time
+        return then.toDateString() === new Date().toDateString() ? time : Translation.locale.toString(then, "ddd") + " " + time
     }
 
     function _stamp(): void {

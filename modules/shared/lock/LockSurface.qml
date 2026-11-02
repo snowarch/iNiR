@@ -593,7 +593,7 @@ MouseArea {
                 Text {
                     id: dateText
                     Layout.alignment: clockView.clockPosition === "center" ? Qt.AlignHCenter : Qt.AlignLeft
-                    text: Qt.formatDate(new Date(), "dddd, d MMMM")
+                    text: Translation.locale.toString(new Date(), "dddd, d MMMM")
                     font.pixelSize: Math.round((clockView.clockStyle === "minimal" ? 15 : 20) * Appearance.fontSizeScale)
                     font.weight: root.editorial ? Font.DemiBold : Font.Normal
                     font.family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.title
@@ -614,7 +614,7 @@ MouseArea {
                         interval: 60000
                         running: true
                         repeat: true
-                        onTriggered: dateText.text = Qt.formatDate(new Date(), "dddd, d MMMM")
+                        onTriggered: dateText.text = Translation.locale.toString(new Date(), "dddd, d MMMM")
                     }
                 }
             }
@@ -644,7 +644,7 @@ MouseArea {
                             top: cookieClock.bottom
                             topMargin: 16
                         }
-                        text: Qt.formatDate(new Date(), "dddd, d MMMM")
+                        text: Translation.locale.toString(new Date(), "dddd, d MMMM")
                         font.pixelSize: Math.round(16 * Appearance.fontSizeScale)
                         font.weight: root.editorial ? Font.DemiBold : Font.Normal
                         font.family: root.editorial ? Appearance.editorial.displayFamily : Appearance.font.family.title
@@ -660,7 +660,7 @@ MouseArea {
 
                         Timer {
                             interval: 60000; running: true; repeat: true
-                            onTriggered: dateTextAnalog.text = Qt.formatDate(new Date(), "dddd, d MMMM")
+                            onTriggered: dateTextAnalog.text = Translation.locale.toString(new Date(), "dddd, d MMMM")
                         }
                     }
                 }

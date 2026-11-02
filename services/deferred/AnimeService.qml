@@ -19,7 +19,7 @@ Singleton {
     property var schedule: []
     property var seasonalAnime: []
     property var topAiring: []
-    property string currentDay: Qt.formatDate(new Date(), "dddd").toLowerCase()
+    property string currentDay: Qt.locale("C").toString(new Date(), "dddd").toLowerCase()
     
     // Season selection for Seasonal tab
     property string selectedSeason: getCurrentSeason()
@@ -368,7 +368,7 @@ Singleton {
         let broadcast = ""
         if (nextEp?.airingAt) {
             const d = new Date(nextEp.airingAt * 1000)
-            broadcast = Qt.formatDateTime(d, "ddd hh:mm") + " (Ep " + nextEp.episode + ")"
+            broadcast = Translation.locale.toString(d, "ddd hh:mm") + " (Ep " + nextEp.episode + ")"
         }
         
         return {

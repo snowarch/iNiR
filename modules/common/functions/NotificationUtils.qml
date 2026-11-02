@@ -1,5 +1,6 @@
 pragma Singleton
 import Quickshell
+import qs.services
 
 Singleton {
     id: root
@@ -79,10 +80,10 @@ Singleton {
 
         // Yesterday
         if (messageTime.toDateString() === new Date(now.getTime() - 86400000).toDateString())
-            return 'Yesterday';
+            return Translation.tr("Yesterday");
 
         // Older dates
-        return Qt.formatDateTime(messageTime, "MMMM dd");
+        return Translation.locale.toString(messageTime, "MMMM dd");
     }
 
     function processNotificationBody(body, appName) {

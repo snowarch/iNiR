@@ -396,7 +396,7 @@ Item {
                             Layout.fillWidth: true
                             Layout.minimumWidth: 0
                             horizontalAlignment: Text.AlignRight
-                            text: Qt.formatDate(DateTime.clock.date, "dddd, MMMM")
+                            text: Translation.locale.toString(DateTime.clock.date, "dddd, MMMM")
                             elide: Text.ElideRight
                             font.pixelSize: Appearance.font.pixelSize.small
                             color: Appearance.editorialEverywhere ? Appearance.editorial.paperOnInk : root.colSubtext

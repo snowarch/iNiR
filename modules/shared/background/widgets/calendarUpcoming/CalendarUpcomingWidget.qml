@@ -318,7 +318,7 @@ AbstractBackgroundWidget {
         if (root.showDate && !event._underHeading) {
             if (eventDay.getTime() === today.getTime()) dateStr = Translation.tr("Today")
             else if (eventDay.getTime() === tomorrow.getTime()) dateStr = Translation.tr("Tomorrow")
-            else dateStr = Qt.formatDate(dt, "ddd d MMM")
+            else dateStr = Translation.locale.toString(dt, "ddd d MMM")
         }
 
         let timeStr = ""
@@ -360,6 +360,6 @@ AbstractBackgroundWidget {
         const days = Math.round((eventDay.getTime() - today.getTime()) / 86400000)
         if (days === 0) return Translation.tr("Today")
         if (days === 1) return Translation.tr("Tomorrow")
-        return Qt.formatDate(dt, "dddd, d MMM")
+        return Translation.locale.toString(dt, "dddd, d MMM")
     }
 }
