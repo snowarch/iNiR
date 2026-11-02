@@ -8,6 +8,7 @@
 // [from, to]: one owner.
 const moves = [
     ["bar.weather", "weather"],
+    ["waffles.widgetsPanel.weatherHideLocation", "weather.hideLocation"],
     ["sidebar.translator", "translator"],
     ["sidebar.booru", "booru"],
     ["sidebar.wallhaven", "wallhaven"],
@@ -168,28 +169,61 @@ function _contentSize(key, entry) {
 }
 
 // A widget's plate has one switch. iRiS's per-widget "Transparent" was a second one; the shared material keeps its
-// own Transparent, which only says what widgets that never chose do.
-function _onePlate(entry) {
+// own Transparent, which only says what widgets that never chose do. From a v2.33 file the switch takes what its
+// desktop showed: iRiS there read only its material (`shown`), the other families only `showBackground`.
+function _onePlate(entry, fromV2, shown) {
     if (!_isObject(entry)) return false;
-    const nested = _isObject(entry.iris) ? entry.iris.material : undefined;
-    if ((entry["iris.material"] ?? nested) !== "clear") return false;
-    entry.showBackground = false;
-    delete entry["iris.material"];
-    if (_isObject(entry.iris)) delete entry.iris.material;
-    return true;
+    const own = _ownPlate(entry);
+    let changed = false;
+    if (own === "clear") {
+        delete entry["iris.material"];
+        if (_isObject(entry.iris)) delete entry.iris.material;
+        changed = true;
+    }
+    if (shown !== undefined) {
+        if (entry.showBackground === undefined && own === undefined) return changed;
+        const on = shown !== "clear";
+        if (entry.showBackground !== on) changed = true;
+        entry.showBackground = on;
+    } else if (own === "clear" && !fromV2) entry.showBackground = false;
+    return changed;
 }
 
-function _widgetSizes(obj) {
+// What v2.33's iRiS drew when a widget had no size stored, where the manifest's first class differs now.
+const _v2IrisSizes = { clock: "small", monthCalendar: "medium", todo: "medium" };
+const _irisPlates = ["glass", "clear", "solid", "tinted"];
+function _ownPlate(entry) {
+    return entry["iris.material"] ?? (_isObject(entry.iris) ? entry.iris.material : undefined);
+}
+
+function _widgetSizes(obj, fromV2) {
     const widgets = _get(obj, "background.widgets");
     if (!_isObject(widgets)) return false;
     const irisActive = obj.panelFamily === "iris";
-    const pairs = Object.entries(widgets);
-    if (_isObject(widgets.custom)) pairs.push(...Object.entries(widgets.custom));
-    if (_isObject(widgets.mascotInstances)) pairs.push(...Object.values(widgets.mascotInstances).map(entry => ["mascot", entry]));
+    const pairs = Object.entries(widgets).map(([key, entry]) => [key, entry, entry]);
+    if (_isObject(widgets.custom)) pairs.push(...Object.entries(widgets.custom).map(([key, entry]) => [key, entry, entry]));
+    if (_isObject(widgets.mascotInstances)) pairs.push(...Object.values(widgets.mascotInstances).map(entry => ["mascot", entry, entry]));
     for (const record of Array.isArray(widgets.outputOverrides) ? widgets.outputOverrides : [])
-        if (_isObject(record?.widgets)) pairs.push(...Object.entries(record.widgets));
-    return pairs.map(([key, entry]) => [_oneSize(entry, irisActive), _contentSize(key, entry), _onePlate(entry)]
-        .some(moved => moved)).some(moved => moved);
+        if (_isObject(record?.widgets)) pairs.push(...Object.entries(record.widgets).map(([key, entry]) => [key, entry, widgets[key]]));
+    const shared = _get(obj, "iris.widgets.material");
+    const shownPlate = (entry, base) => {
+        const own = [entry, base].filter(_isObject).map(_ownPlate).find(value => _irisPlates.includes(value));
+        return own ?? (_irisPlates.includes(shared) ? shared : "glass");
+    };
+    // Read before any entry moves: a per-screen entry falls back on a base entry the same pass rewrites.
+    const shown = pairs.map(([, entry, base]) => fromV2 && irisActive && _isObject(entry) ? shownPlate(entry, base) : undefined);
+    let changed = false;
+    pairs.forEach(([key, entry], index) => {
+        for (const moved of [_oneSize(entry, irisActive), _contentSize(key, entry), _onePlate(entry, fromV2, shown[index])])
+            changed = moved || changed;
+    });
+    if (fromV2 && irisActive)
+        for (const [key, size] of Object.entries(_v2IrisSizes))
+            if (_isObject(widgets[key]) && widgets[key].sizeClass === undefined) {
+                widgets[key].sizeClass = size;
+                changed = true;
+            }
+    return changed;
 }
 
 // Moves the keys of a parsed config.json to their owners in place; true when anything moved.
@@ -223,8 +257,9 @@ function _factoryLook(obj) {
 
 function migrate(obj) {
     if (!_isObject(obj)) return false;
+    const fromV2 = Number(_get(obj, "iris.appearance.factoryLook") ?? 0) < 1;
     let changed = _factoryLook(obj);
-    changed = _widgetSizes(obj) || changed;
+    changed = _widgetSizes(obj, fromV2) || changed;
     for (const [from, to] of moves) {
         const value = _get(obj, from);
         if (value === undefined) continue;
