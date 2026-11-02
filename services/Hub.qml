@@ -370,6 +370,36 @@ Singleton {
         statusProcess.running = true
     }
 
+    // A plugin's own choices (plugin.json `choices`: { title, run }): its script prints them as [{ id, label, on }]
+    // (`run list`) and flips one (`run toggle <id>`); every family's Hub page draws them as chips under it.
+    property var choices: ({})
+    function choicesTitle(item: var): string {
+        return item?.installed ? String(Plugins.manifests[item.id]?.choices?.title ?? "") : ""
+    }
+    function readChoices(id: string): void { root._runChoices(id, ["list"]) }
+    function toggleChoice(id: string, choice: string): void { root._runChoices(id, ["toggle", choice]) }
+    function _runChoices(id: string, args: var): void {
+        const script = Plugins.path(id, String(Plugins.manifests[id]?.choices?.run ?? ""))
+        if (script.length === 0 || choicesProcess.running) return
+        choicesProcess.plugin = id
+        choicesProcess.command = ["/usr/bin/bash", script].concat(args)
+        choicesProcess.running = true
+    }
+    Process {
+        id: choicesProcess
+        property string plugin: ""
+        stdout: StdioCollector {
+            id: choicesOut
+            onStreamFinished: {
+                let list = []
+                try { list = JSON.parse(choicesOut.text) } catch (e) { list = [] }
+                const next = Object.assign({}, root.choices)
+                next[choicesProcess.plugin] = Array.isArray(list) ? list : []
+                root.choices = next
+            }
+        }
+    }
+
     property Timer _refreshSoon: Timer {
         interval: 400
         onTriggered: root.refresh(false)
