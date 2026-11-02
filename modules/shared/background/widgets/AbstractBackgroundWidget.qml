@@ -498,7 +498,7 @@ AbstractWidget {
 
     FamilyPart {
         z: 202
-        when: GlobalStates.widgetEditMode && root.sizeChoices.length > 1 && !root.locked
+        when: GlobalStates.widgetEditMode && (root.sizeChoices.length > 1 || root.freeAllowed) && root.sized && !root.locked
         part: "widget.sizeGrip"
         props: ({ widget: root, visible: root.editSelected || root._gripHover || root._sizing })
     }
@@ -869,8 +869,10 @@ AbstractWidget {
     readonly property bool familyFaced: root.familyDesign && root.hasFamilyFace
     // One size per instance (`sizeClass`), from the classes the widget's manifest lists: every family and design draws
     // the same footprint, so changing family leaves the desktop as it was arranged. A stack keeps the classes all its
-    // pages have. Where the family's faces take any box (`widgetFreeSize` in its plugin.json) a free width and height lie
-    // over the class, which follows to the nearest one; S, M or L clears them.
+    // pages have. A drawing that takes any box carries a free width and height over the class, which follows to the
+    // nearest one; S, M or L clears them. The shared (Material) drawings always do, under any family; a family's own
+    // faces do where its plugin.json says `widgetFreeSize`. The drawing decides, never the family around it: a Material
+    // widget under iRiS was held to S/M/L it was never drawn for (his 11-02).
     readonly property var sizes: DesktopWidgetRegistry.sizesOf(root.configEntryName)
     // Always small to large; the manifest's first is only the default.
     readonly property var sizeChoices: DesktopWidgetRegistry.sizeOrder.filter(size => (root.stacked ? root.stack.sizes : root.sizes).includes(size))
@@ -890,9 +892,9 @@ AbstractWidget {
         const k = FamilyStyle.density * root._baseScale
         return Qt.size(Math.round(box.width * k), Math.round(box.height * k))
     }
-    readonly property bool _freeAllowed: Plugins.flag(Plugins.active, "widgetFreeSize")
-    readonly property real _freeWidth: root._freeAllowed ? Number(root._readConfigKey("freeWidth") ?? 0) || 0 : 0
-    readonly property real _freeHeight: root._freeAllowed ? Number(root._readConfigKey("freeHeight") ?? 0) || 0 : 0
+    readonly property bool freeAllowed: !root.familyFaced || Plugins.flag(Plugins.active, "widgetFreeSize")
+    readonly property real _freeWidth: root.freeAllowed ? Number(root._readConfigKey("freeWidth") ?? 0) || 0 : 0
+    readonly property real _freeHeight: root.freeAllowed ? Number(root._readConfigKey("freeHeight") ?? 0) || 0 : 0
     readonly property bool freeSized: root._freeWidth > 0 || root._freeHeight > 0
     readonly property real footprintWidth: root._freeWidth > 0 ? Math.round(root._freeWidth * root._baseScale)
         : root.sized ? root.footprintOf(root.sizeClass).width : 0
