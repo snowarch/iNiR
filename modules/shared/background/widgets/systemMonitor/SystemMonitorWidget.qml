@@ -720,7 +720,8 @@ AbstractBackgroundWidget {
         anchors.fill: parent
         active: !root.familyFaced
         sourceComponent: Item {
-            Row {
+            Grid {
+                columns: root.sized ? root.meterColumns : Math.max(1, root._resourceModel.length)
                 id: ringsBody
                 anchors.centerIn: parent
                 spacing: Appearance.sizes.spacingNormal ?? 8
@@ -739,10 +740,14 @@ AbstractBackgroundWidget {
                         id: ringCol
                         required property var modelData
                         spacing: Appearance.sizes.spacingSmall ?? 4
-                        readonly property int _ringSize: Math.min(
-                            Math.round((root.height - root._innerMargin * 2 - (root.showLabels ? 20 : 0)) * 0.85),
-                            Math.round((root.width - root._innerMargin * 2) / Math.max(1, root._resourceModel.length) - (Appearance.sizes.spacingNormal ?? 8))
-                        )
+                        readonly property int _ringSize: {
+                            const across = root.sized ? root.meterColumns : Math.max(1, root._resourceModel.length)
+                            const down = root.sized ? root.meterRows : 1
+                            const gap = ringsBody.spacing
+                            return Math.max(12, Math.min(
+                                (root.height - root._innerMargin * 2 - gap * (down - 1)) / down - (root.showLabels ? 20 : 0),
+                                (root.width - root._innerMargin * 2 - gap * (across - 1)) / across))
+                        }
                         readonly property real _liveValue: root._getValue(modelData.key)
                         readonly property color _liveColor: root._getColor(modelData.key)
                         width: _ringSize

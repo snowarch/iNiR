@@ -112,7 +112,17 @@ AbstractWidget {
     property bool _sizing: false
     property bool _previewing: false
     property var _resizePreviewValues: ({})
-    readonly property real scaleFactor: root._baseScale * (root.fits ? root._fit : 1)
+    readonly property real scaleFactor: root._baseScale * (root.fits ? root._fit : root._freeFit)
+    // A shared drawing is laid out in pixels times scaleFactor, so a box resized by hand carries its drawing with it:
+    // what sits fixed in a corner of a bigger box, or spills out of a smaller one, is what "resizes badly" looked like.
+    readonly property real _freeFit: {
+        if (!root.freeSized || root.familyFaced || !root.sized)
+            return 1
+        const box = root.footprintOf(root.sizeClass)
+        const w = root._freeWidth > 0 ? root.footprintWidth / box.width : 1
+        const h = root._freeHeight > 0 ? root.footprintHeight / box.height : 1
+        return Math.max(0.6, Math.min(1.8, Math.min(w, h)))
+    }
     property bool _geometryReady: false
     readonly property bool animateGeometry: root._geometryReady && root.animationsActive
         && !root._isResizing && !root.containsPress
@@ -962,14 +972,23 @@ AbstractWidget {
         const pad = root.fitPadding * root._baseScale * 2
         const fit = Math.max(0.4, Math.min(root.fitMax,
             (root.footprintWidth - pad) / unitWidth, (root.footprintHeight - pad) / unitHeight))
-        if (Math.abs(fit - root._fit) > 0.004)
-            root._fit = fit
+        // A drawing rounds its size, so the fit it answers with can hop between two values for ever, at a timer of 0,
+        // and the shell stops answering: a few passes per box, and a step too small to see is no step.
+        if (Math.abs(fit - root._fit) < 0.02 * root._fit || root._fitPasses >= 4)
+            return
+        root._fitPasses++
+        root._fit = fit
+    }
+    property int _fitPasses: 0
+    function _refitBox(): void {
+        root._fitPasses = 0
+        _refitLater.restart()
     }
     onDrawnWidthChanged: _refitLater.restart()
     onDrawnHeightChanged: _refitLater.restart()
-    onFootprintWidthChanged: _refitLater.restart()
-    onFootprintHeightChanged: _refitLater.restart()
-    onFitsChanged: _refitLater.restart()
+    onFootprintWidthChanged: root._refitBox()
+    onFootprintHeightChanged: root._refitBox()
+    onFitsChanged: root._refitBox()
     Timer {
         id: _refitLater
         interval: 0
@@ -980,6 +999,7 @@ AbstractWidget {
     onSizeClassChanged: {
         const was = root._shownSize
         root._shownSize = root.sizeClass
+        root._refitBox()
         if (was.length > 0 && !root._sizing)
             _sizeSettle.restart()
     }
