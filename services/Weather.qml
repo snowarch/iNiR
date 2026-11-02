@@ -336,7 +336,9 @@ Singleton {
 
     // Short localized weekday from an ISO-ish date string ("2026-06-07").
     function _dayName(dateStr): string {
-        const d = new Date(dateStr)
+        // A bare date is midnight UTC to JS, the evening before west of Greenwich: read it as that day, local.
+        const parts = String(dateStr ?? "").slice(0, 10).split("-").map(Number)
+        const d = parts.length === 3 && parts.every(Number.isFinite) ? new Date(parts[0], parts[1] - 1, parts[2]) : new Date(dateStr)
         if (isNaN(d.getTime())) return ""
         return Translation.locale.toString(d, "ddd")
     }
