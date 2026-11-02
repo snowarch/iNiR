@@ -108,6 +108,8 @@ function auto_backup_configs(){
   esac
   if $backup; then
     backup_clashing_targets dots/.config $XDG_CONFIG_HOME "${BACKUP_DIR}/.config"
+    backup_clashing_targets defaults $XDG_CONFIG_HOME "${BACKUP_DIR}/.config"
+    backup_clashing_targets defaults/kde $XDG_CONFIG_HOME "${BACKUP_DIR}/.config"
     [[ -d "${BACKUP_DIR}" ]] && log_success "Backup saved to ${BACKUP_DIR}"
   fi
 }
@@ -306,18 +308,12 @@ case "${SKIP_NIRI}" in
       if [[ -d "defaults/niri" ]]; then
         install_dir__sync "defaults/niri" "${XDG_CONFIG_HOME}/niri"
         log_success "Niri config installed (defaults)"
-      elif [[ -d "dots/.config/niri" ]]; then
-        install_dir__sync "dots/.config/niri" "${XDG_CONFIG_HOME}/niri"
-        log_success "Niri config installed (dots)"
       fi
     elif [[ -f "$NIRI_CONFIG" ]]; then
       log_success "Preserving existing Niri config"
     elif [[ -d "defaults/niri" ]]; then
       install_dir__sync "defaults/niri" "${XDG_CONFIG_HOME}/niri"
       log_success "Niri config installed (defaults)"
-    elif [[ -d "dots/.config/niri" ]]; then
-      install_dir__sync "dots/.config/niri" "${XDG_CONFIG_HOME}/niri"
-      log_success "Niri config installed (dots)"
     fi
 
     # Patch the Niri config: startup extras and the Qt platform theme
@@ -397,13 +393,10 @@ if ! _selected_supervisor="$(reconcile_inir_supervisor)"; then
 fi
 log_success "Startup: selected ${_selected_supervisor} supervisor"
 
-# Theming templates — defaults/ is the primary source (kept in sync with dots/)
+# Theming templates
 if [[ -d "defaults/matugen" ]]; then
   install_dir__sync "defaults/matugen" "${XDG_CONFIG_HOME}/matugen"
   log_success "Theming templates installed (defaults)"
-elif [[ -d "dots/.config/matugen" ]]; then
-  install_dir__sync "dots/.config/matugen" "${XDG_CONFIG_HOME}/matugen"
-  log_success "Theming templates installed (dots)"
 fi
 
 # ii-pixel-sddm theme (login screen matching ii lockscreen aesthetic)
@@ -542,17 +535,15 @@ fi
 # pipeline (apply-gtk-theme.sh) owns them, so a reinstall must not put the
 # defaults back over generated colors and the user's theme, font and icons.
 for gtkver in gtk-3.0 gtk-4.0; do
-  if [[ -d "dots/.config/${gtkver}" ]] \
+  if [[ -d "defaults/${gtkver}" ]] \
       && [[ "${INSTALL_FIRSTRUN}" == true || ! -f "${XDG_CONFIG_HOME}/${gtkver}/settings.ini" ]]; then
-    install_dir "dots/.config/${gtkver}" "${XDG_CONFIG_HOME}/${gtkver}"
+    install_dir "defaults/${gtkver}" "${XDG_CONFIG_HOME}/${gtkver}"
   fi
 done
 
 if [[ "${INSTALL_FIRSTRUN}" == true || ! -f "${XDG_CONFIG_HOME}/kdeglobals" ]]; then
   if [[ -f "defaults/kde/kdeglobals" ]]; then
     install_file "defaults/kde/kdeglobals" "${XDG_CONFIG_HOME}/kdeglobals"
-  elif [[ -f "dots/.config/kdeglobals" ]]; then
-    install_file "dots/.config/kdeglobals" "${XDG_CONFIG_HOME}/kdeglobals"
   fi
 fi
 
@@ -560,15 +551,11 @@ fi
 if command -v dolphin &>/dev/null; then
   if [[ -f "defaults/kde/dolphinrc" ]]; then
     install_file "defaults/kde/dolphinrc" "${XDG_CONFIG_HOME}/dolphinrc"
-  elif [[ -f "dots/.config/dolphinrc" ]]; then
-    install_file "dots/.config/dolphinrc" "${XDG_CONFIG_HOME}/dolphinrc"
   fi
 
   # KDE service menu (enables "Open terminal here" in Dolphin right-click)
   if [[ -f "defaults/kde/kservicemenurc" ]]; then
     install_file "defaults/kde/kservicemenurc" "${XDG_CONFIG_HOME}/kservicemenurc"
-  elif [[ -f "dots/.config/kservicemenurc" ]]; then
-    install_file "dots/.config/kservicemenurc" "${XDG_CONFIG_HOME}/kservicemenurc"
   fi
 
   # Dolphin panel layout state

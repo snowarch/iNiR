@@ -125,6 +125,9 @@ fi
 # This allows IPC-triggered updates (inir shell update) to refresh the theme
 # without needing a terminal for sudo prompts.
 
+# The login draws with the shell's own shape library; the sddm user can only read what sits in the theme.
+SHAPES_SRC="${THEME_SRC%/dots/sddm/pixel}/modules/common/widgets/shapes"
+
 # Checksum comparison: skip copy if source and target are identical.
 # Only compare QML/JS/conf files (not assets like background.png which are user-generated).
 theme_needs_update=true
@@ -140,13 +143,15 @@ if $theme_needs_update; then
     log_info "Installing ${THEME_NAME} to ${THEME_DIR}..."
     if [[ -d "${THEME_DIR}" ]] && [[ -O "${THEME_DIR}" ]]; then
         # User already owns the directory — no sudo needed
-        mkdir -p "${THEME_DIR}/assets"
+        mkdir -p "${THEME_DIR}/assets" "${THEME_DIR}/shapes"
         cp -rf "${THEME_SRC}/." "${THEME_DIR}/"
+        cp -rf "${SHAPES_SRC}/." "${THEME_DIR}/shapes/"
         log_ok "Theme files updated (no sudo needed — user owns dir)"
     else
         # First install or owned by root — requires elevation (sudo or pkexec)
-        elevate mkdir -p "${THEME_DIR}/assets"
+        elevate mkdir -p "${THEME_DIR}/assets" "${THEME_DIR}/shapes"
         elevate cp -rf "${THEME_SRC}/." "${THEME_DIR}/"
+        elevate cp -rf "${SHAPES_SRC}/." "${THEME_DIR}/shapes/"
         log_ok "Theme files installed"
 
         # Transfer ownership to the current user so the sync script can update colors
