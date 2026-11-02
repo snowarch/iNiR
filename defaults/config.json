@@ -1744,7 +1744,8 @@
                     "lume": true
                 }
             },
-            "expandedRadius": 28,
+            "expandedRadius": 22,
+      "factoryLook": 1,
             "preset": "iris",
             "morph": "direct",
             "tint": 0,
@@ -1768,11 +1769,11 @@
             "themeId": "iris",
             "design": "iris",
             "glass": {
-                "mode": "off",
+                "mode": "compositor",
                 "tint": 58,
                 "blur": 100,
-                "edgeLight": 34,
-                "edgeLine": 10,
+                "edgeLight": 14,
+                "edgeLine": 0,
                 "edgeColour": "scene"
             },
             "theme": {
@@ -1787,7 +1788,7 @@
                 "text": 100,
                 "weight": "regular",
                 "rim": true,
-                "edges": "line",
+                "edges": "light",
                 "rimTint": "neutral",
                 "rimWidth": 1,
                 "glow": 0,

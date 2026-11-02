@@ -193,9 +193,28 @@ function _widgetSizes(obj) {
 }
 
 // Moves the keys of a parsed config.json to their owners in place; true when anything moved.
+// iRiS's factory look moved (one form, a lit card, glass on). A file carries the old factory values as written defaults,
+// so those alone change, once (glass turned off later must stay off), and a value someone chose stays.
+const factoryLook = 1;
+const factoryValues = [
+    ["iris.appearance.expandedRadius", 28, 22],
+    ["iris.appearance.glass.mode", "off", "compositor"],
+    ["iris.appearance.glass.edgeLight", 34, 14],
+    ["iris.appearance.glass.edgeLine", 10, 0],
+];
+function _factoryLook(obj) {
+    if (!_isObject(_get(obj, "iris.appearance"))) return false;
+    if (Number(_get(obj, "iris.appearance.factoryLook") ?? 0) >= factoryLook) return false;
+    for (const [path, before, after] of factoryValues)
+        if (_get(obj, path) === before) _set(obj, path, after);
+    _set(obj, "iris.appearance.factoryLook", factoryLook);
+    return true;
+}
+
 function migrate(obj) {
     if (!_isObject(obj)) return false;
-    let changed = _widgetSizes(obj);
+    let changed = _factoryLook(obj);
+    changed = _widgetSizes(obj) || changed;
     for (const [from, to] of moves) {
         const value = _get(obj, from);
         if (value === undefined) continue;

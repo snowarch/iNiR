@@ -81,8 +81,6 @@ Singleton {
     readonly property int radiusPanel: root.p ? root.p.radiusPanel : Appearance.rounding.windowRounding
     readonly property int spaceSmall: root.p ? root.p.spaceSmall : 6
     readonly property real shapeScale: root.p ? root.p.shapeScale : 1
-    readonly property bool fieldChamfer: root.p ? root.p.fieldChamfer : false
-    readonly property int chamferCut: root.p ? root.p.chamferCut : 10
 
     readonly property int revealDuration: root.p ? root.p.revealDuration : root.duration(140)
     readonly property int feedbackDuration: root.p ? root.p.feedbackDuration : root.duration(100)
@@ -106,7 +104,6 @@ Singleton {
     function weight(base: int): int { return root.p ? root.p.weight(base) : base }
     function concentric(outer: real, inset: real, floor: real): int { return root.p ? root.p.concentric(outer, inset, floor) : Math.max(Math.round(floor), Math.round(outer - inset)) }
     function concentricPad(outer: real, floor: real): int { return root.p ? root.p.concentricPad(outer, floor) : Math.max(Math.round(floor), Math.round(outer * 0.3 + 7)) }
-    function nestedCut(outer: real, inset: real): int { return root.p ? root.p.nestedCut(outer, inset) : Math.max(2, Math.round(outer - inset * (2 - Math.SQRT2))) }
     function iconRadius(size: real): int { return root.p ? root.p.iconRadius(size) : Math.round(size * 0.26) }
     function tintFill(tint: color): color { return root.p ? root.p.tintFill(tint) : ColorUtils.applyAlpha(tint, 0.13) }
     function tintFillHover(tint: color): color { return root.p ? root.p.tintFillHover(tint) : ColorUtils.applyAlpha(tint, 0.2) }

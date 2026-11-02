@@ -1435,7 +1435,6 @@ Scope {
             layer.effect: ShaderEffect {
                 readonly property vector2d size: Qt.vector2d(bgRoot.width, bgRoot.height)
                 readonly property real corner: Number(editOverLoader.item?.cardCorner ?? 0)
-                readonly property real chamfer: editOverLoader.item?.cardCut ? 1 : 0
                 readonly property real edge: 1 / Math.max(0.05, bgRoot.editCard.s * bgRoot.devicePixelRatio)
                 readonly property vector2d reach: Qt.vector2d(
                     0.2 / Math.max(0.2, bgRoot.editCard.s) / Math.max(1, bgRoot.width * bgRoot.devicePixelRatio),
