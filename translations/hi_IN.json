@@ -10186,5 +10186,8 @@
   "The glyph alone in its colour, as the widgets.": "केवल अपने रंग में ग्लिफ़, विजेट की तरह।",
   "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "ऑटो हर क्षेत्र को उसका रंग देता है; लाइन शैली (Nothing) इन्हें स्याही में बनाती है।",
   "Auto fills them, as the widgets do; a line look outlines them.": "ऑटो इन्हें विजेट की तरह भरता है; लाइन शैली इन्हें रूपरेखा में बनाती है।",
-  "Whole look": "पूरी शैली"
+  "Whole look": "पूरी शैली",
+  "Sunlight": "धूप",
+  "By day, the Island's foot glows where the sun stands.": "दिन में आइलैंड का निचला किनारा वहाँ चमकता है जहाँ सूरज है।",
+  "The time; by day the Island's foot glows where the sun stands.": "समय; दिन में आइलैंड का निचला किनारा वहाँ चमकता है जहाँ सूरज है।"
 }

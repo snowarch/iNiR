@@ -10186,5 +10186,8 @@
   "The glyph alone in its colour, as the widgets.": "Только значок в своём цвете, как в виджетах.",
   "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "«Авто» даёт каждому разделу свой цвет; линейный стиль (Nothing) рисует их чернилами.",
   "Auto fills them, as the widgets do; a line look outlines them.": "«Авто» заливает их, как в виджетах; линейный стиль рисует контуром.",
-  "Whole look": "Стиль целиком"
+  "Whole look": "Стиль целиком",
+  "Sunlight": "Солнечный свет",
+  "By day, the Island's foot glows where the sun stands.": "Днём низ Острова светится там, где стоит солнце.",
+  "The time; by day the Island's foot glows where the sun stands.": "Время; днём низ Острова светится там, где стоит солнце."
 }

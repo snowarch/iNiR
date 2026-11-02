@@ -10186,5 +10186,8 @@
   "The glyph alone in its colour, as the widgets.": "Ilisarnaat kisimi qalipaammini, widgetit assigalugit.",
   "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "Nammineq immikkoortut tamarmik qalipaatiminnik tunniuttarpai; titartagaq (Nothing) qernertumik titartartarpai.",
   "Auto fills them, as the widgets do; a line look outlines them.": "Nammineq widgetit assigalugit immersortarpai; titartagaq killeqarfiinik titartartarpai.",
-  "Whole look": "Isikkivik tamarmi"
+  "Whole look": "Isikkivik tamarmi",
+  "Sunlight": "Seqernup qaamanera",
+  "By day, the Island's foot glows where the sun stands.": "Ullukkut Qeqertap ataa seqernup sumiinneranut qaammarissarpoq.",
+  "The time; by day the Island's foot glows where the sun stands.": "Piffissaq; ullukkut Qeqertap ataa seqernup sumiinneranut qaammarissarpoq."
 }

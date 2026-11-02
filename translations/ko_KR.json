@@ -10186,5 +10186,8 @@
   "The glyph alone in its colour, as the widgets.": "위젯처럼 아이콘만 고유 색으로 표시합니다.",
   "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "자동은 각 영역에 고유 색을 주고, 선 스타일(Nothing)은 잉크색으로 그립니다.",
   "Auto fills them, as the widgets do; a line look outlines them.": "자동은 위젯처럼 채우고, 선 스타일은 윤곽선으로 그립니다.",
-  "Whole look": "전체 스타일"
+  "Whole look": "전체 스타일",
+  "Sunlight": "햇빛",
+  "By day, the Island's foot glows where the sun stands.": "낮에는 아일랜드 아래쪽이 해가 있는 곳에서 빛납니다.",
+  "The time; by day the Island's foot glows where the sun stands.": "시간. 낮에는 아일랜드 아래쪽이 해가 있는 곳에서 빛납니다."
 }

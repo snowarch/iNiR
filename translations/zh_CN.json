@@ -10186,5 +10186,8 @@
   "The glyph alone in its colour, as the widgets.": "仅显示带有自身颜色的图标，与小组件一致。",
   "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "自动为每个区域使用其颜色；线条风格（Nothing）以墨色绘制。",
   "Auto fills them, as the widgets do; a line look outlines them.": "自动像小组件一样填充；线条风格以轮廓绘制。",
-  "Whole look": "整体风格"
+  "Whole look": "整体风格",
+  "Sunlight": "阳光",
+  "By day, the Island's foot glows where the sun stands.": "白天，岛的底边会在太阳所在的位置发光。",
+  "The time; by day the Island's foot glows where the sun stands.": "时间；白天，岛的底边会在太阳所在的位置发光。"
 }

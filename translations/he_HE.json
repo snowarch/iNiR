@@ -10186,5 +10186,8 @@
   "The glyph alone in its colour, as the widgets.": "רק הסמל בצבע שלו, כמו בווידג'טים.",
   "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "אוטומטי נותן לכל אזור את צבעו; מראה קווי (Nothing) מצייר אותם בדיו.",
   "Auto fills them, as the widgets do; a line look outlines them.": "אוטומטי ממלא אותם כמו בווידג'טים; מראה קווי מצייר קו מתאר.",
-  "Whole look": "המראה כולו"
+  "Whole look": "המראה כולו",
+  "Sunlight": "אור השמש",
+  "By day, the Island's foot glows where the sun stands.": "ביום, תחתית האי זוהרת היכן שהשמש עומדת.",
+  "The time; by day the Island's foot glows where the sun stands.": "השעה; ביום תחתית האי זוהרת היכן שהשמש עומדת."
 }

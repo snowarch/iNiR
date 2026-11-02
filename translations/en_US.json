@@ -10187,5 +10187,8 @@
   "The glyph alone in its colour, as the widgets.": "The glyph alone in its colour, as the widgets.",
   "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "Auto gives each area its colour; a line look (Nothing) draws them in ink.",
   "Auto fills them, as the widgets do; a line look outlines them.": "Auto fills them, as the widgets do; a line look outlines them.",
-  "Whole look": "Whole look"
+  "Whole look": "Whole look",
+  "Sunlight": "Sunlight",
+  "By day, the Island's foot glows where the sun stands.": "By day, the Island's foot glows where the sun stands.",
+  "The time; by day the Island's foot glows where the sun stands.": "The time; by day the Island's foot glows where the sun stands."
 }

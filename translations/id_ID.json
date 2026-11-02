@@ -10186,5 +10186,8 @@
   "The glyph alone in its colour, as the widgets.": "Hanya glif dengan warnanya sendiri, seperti widget.",
   "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "Otomatis memberi tiap area warnanya; gaya garis (Nothing) menggambarnya dengan tinta.",
   "Auto fills them, as the widgets do; a line look outlines them.": "Otomatis mengisinya seperti widget; gaya garis menggambarnya sebagai garis tepi.",
-  "Whole look": "Gaya menyeluruh"
+  "Whole look": "Gaya menyeluruh",
+  "Sunlight": "Sinar matahari",
+  "By day, the Island's foot glows where the sun stands.": "Pada siang hari, kaki Pulau bersinar di tempat matahari berada.",
+  "The time; by day the Island's foot glows where the sun stands.": "Waktu; pada siang hari kaki Pulau bersinar di tempat matahari berada."
 }

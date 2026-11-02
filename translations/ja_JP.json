@@ -10186,5 +10186,8 @@
   "The glyph alone in its colour, as the widgets.": "ウィジェットと同じく、アイコンだけをその色で表示。",
   "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "自動では各エリアに固有の色を使い、線のスタイル（Nothing）ではインクで描きます。",
   "Auto fills them, as the widgets do; a line look outlines them.": "自動ではウィジェットと同じく塗りつぶし、線のスタイルでは輪郭で描きます。",
-  "Whole look": "全体のスタイル"
+  "Whole look": "全体のスタイル",
+  "Sunlight": "日の光",
+  "By day, the Island's foot glows where the sun stands.": "日中、アイランドの下端が太陽の位置で光ります。",
+  "The time; by day the Island's foot glows where the sun stands.": "時刻。日中はアイランドの下端が太陽の位置で光ります。"
 }

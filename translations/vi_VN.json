@@ -10186,5 +10186,8 @@
   "The glyph alone in its colour, as the widgets.": "Chỉ biểu tượng với màu riêng, như các widget.",
   "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "Tự động cho mỗi khu vực màu riêng; phong cách nét (Nothing) vẽ chúng bằng màu mực.",
   "Auto fills them, as the widgets do; a line look outlines them.": "Tự động tô đầy như các widget; phong cách nét chỉ vẽ đường viền.",
-  "Whole look": "Toàn bộ phong cách"
+  "Whole look": "Toàn bộ phong cách",
+  "Sunlight": "Ánh nắng",
+  "By day, the Island's foot glows where the sun stands.": "Ban ngày, chân Đảo sáng lên ở nơi mặt trời đang đứng.",
+  "The time; by day the Island's foot glows where the sun stands.": "Giờ; ban ngày chân Đảo sáng lên ở nơi mặt trời đang đứng."
 }

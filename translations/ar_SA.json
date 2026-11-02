@@ -10186,5 +10186,8 @@
   "The glyph alone in its colour, as the widgets.": "الرمز وحده بلونه، كما في الأدوات.",
   "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "التلقائي يعطي كل قسم لونه؛ والمظهر الخطي (Nothing) يرسمها بالحبر.",
   "Auto fills them, as the widgets do; a line look outlines them.": "التلقائي يملؤها كما في الأدوات؛ والمظهر الخطي يرسمها بحدود فقط.",
-  "Whole look": "المظهر الكامل"
+  "Whole look": "المظهر الكامل",
+  "Sunlight": "ضوء الشمس",
+  "By day, the Island's foot glows where the sun stands.": "في النهار، يتوهج أسفل الجزيرة حيث تقف الشمس.",
+  "The time; by day the Island's foot glows where the sun stands.": "الوقت؛ في النهار يتوهج أسفل الجزيرة حيث تقف الشمس."
 }

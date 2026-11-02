@@ -10186,5 +10186,8 @@
   "The glyph alone in its colour, as the widgets.": "Le glyphe seul dans sa couleur, comme les widgets.",
   "Auto gives each area its colour; a line look (Nothing) draws them in ink.": "Auto donne à chaque zone sa couleur ; un style au trait (Nothing) les dessine à l'encre.",
   "Auto fills them, as the widgets do; a line look outlines them.": "Auto les remplit, comme les widgets ; un style au trait les dessine en contour.",
-  "Whole look": "Style complet"
+  "Whole look": "Style complet",
+  "Sunlight": "Lumière du soleil",
+  "By day, the Island's foot glows where the sun stands.": "Le jour, le pied de l'Île s'illumine là où se trouve le soleil.",
+  "The time; by day the Island's foot glows where the sun stands.": "L'heure ; le jour, le pied de l'Île s'illumine là où se trouve le soleil."
 }

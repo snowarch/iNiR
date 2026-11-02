@@ -1974,6 +1974,7 @@
                 "settings"
             ],
             "design": "halo",
+            "sunLight": true,
             "blockStyle": "plain",
             "scrollAction": "volume",
             "desktopBanner": "wallpaper",
