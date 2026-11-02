@@ -10046,7 +10046,7 @@
   "The hour lit on its own tile, the minutes beside it.": "Jam menyala di petaknya sendiri, menit di sampingnya.",
   "A watch with real hands, the day beside it.": "Arloji dengan jarum sungguhan, hari di sampingnya.",
   "One fact of your day, a new one each minute.": "Satu fakta harimu, yang baru setiap menit.",
-  "A round window on the sky: the sun, the weather, tonight's moon.": "Jendela bundar ke langit: matahari, cuaca, dan bulan malam ini.",
+  "A window on the sky: the sun, the weather, tonight's moon.": "Jendela ke langit: matahari, cuaca, bulan malam ini.",
   "until %1": "sampai %1",
   "The path a Direct shape follows as it opens or adjusts.": "Jalur yang diikuti bentuk Langsung saat terbuka atau menyesuaikan.",
   "Leaves fast and lands softly.": "Berangkat cepat dan mendarat lembut.",
@@ -10149,14 +10149,5 @@
   "Grow from the corner": "Tumbuh dari sudut",
   "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Gelembung di sudut keluar dari lengkung bingkai sebagai satu kontur, sejauh apa pun mereka mencapai sepanjang tepi.",
   "in %1": "dalam %1",
-  "%1 h": "%1 j",
-  "Approach": "Mendekat",
-  "Regulator": "Regulator",
-  "Board": "Papan",
-  "The Island is the sky outside: sun, moon and weather.": "Pulau adalah langit di luar: matahari, bulan, dan cuaca.",
-  "The next three hours, your events coming toward the needle.": "Tiga jam ke depan, acara Anda mendekati jarum.",
-  "A heavy hour; the minutes gain weight as it goes by.": "Jam yang tebal; menit makin tebal seiring waktu.",
-  "The hour, and the minutes on a gauge with a real needle.": "Jam, dan menit pada alat ukur dengan jarum sungguhan.",
-  "A split-flap board: the time and one line of your day.": "Papan split-flap: waktu dan satu baris hari Anda.",
-  "Nothing ahead": "Tidak ada apa-apa"
+  "%1 h": "%1 j"
 }

@@ -10046,7 +10046,7 @@
   "The hour lit on its own tile, the minutes beside it.": "L'heure allumée sur sa propre tuile, les minutes à côté.",
   "A watch with real hands, the day beside it.": "Une montre avec de vraies aiguilles, le jour à côté.",
   "One fact of your day, a new one each minute.": "Un fait de ta journée, un nouveau chaque minute.",
-  "A round window on the sky: the sun, the weather, tonight's moon.": "Une fenêtre ronde sur le ciel : le soleil, la météo, la lune de ce soir.",
+  "A window on the sky: the sun, the weather, tonight's moon.": "Une fenêtre sur le ciel : le soleil, la météo, la lune de ce soir.",
   "until %1": "jusqu'à %1",
   "The path a Direct shape follows as it opens or adjusts.": "Le chemin que suit une forme Directe en s'ouvrant ou en s'ajustant.",
   "Leaves fast and lands softly.": "Part vite et se pose en douceur.",
@@ -10149,14 +10149,5 @@
   "Grow from the corner": "Naître du coin",
   "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Les bulles d'un coin sortent de la courbe du cadre en un seul contour, aussi loin qu'elles aillent le long du bord.",
   "in %1": "dans %1",
-  "%1 h": "%1 h",
-  "Approach": "Approche",
-  "Regulator": "Régulateur",
-  "Board": "Panneau",
-  "The Island is the sky outside: sun, moon and weather.": "L'Île est le ciel dehors : soleil, lune et météo.",
-  "The next three hours, your events coming toward the needle.": "Les trois prochaines heures, vos événements vers l'aiguille.",
-  "A heavy hour; the minutes gain weight as it goes by.": "Une heure lourde ; les minutes prennent du poids au fil du temps.",
-  "The hour, and the minutes on a gauge with a real needle.": "L'heure, et les minutes sur un cadran à vraie aiguille.",
-  "A split-flap board: the time and one line of your day.": "Un panneau à palettes : l'heure et une ligne de votre journée.",
-  "Nothing ahead": "Rien à venir"
+  "%1 h": "%1 h"
 }

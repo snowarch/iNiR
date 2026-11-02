@@ -10046,7 +10046,7 @@
   "The hour lit on its own tile, the minutes beside it.": "A hora acesa em sua própria peça, os minutos ao lado.",
   "A watch with real hands, the day beside it.": "Um relógio com ponteiros de verdade, o dia ao lado.",
   "One fact of your day, a new one each minute.": "Um dado do seu dia, um novo a cada minuto.",
-  "A round window on the sky: the sun, the weather, tonight's moon.": "Uma janela redonda para o céu: o sol, o clima e a lua desta noite.",
+  "A window on the sky: the sun, the weather, tonight's moon.": "Uma janela para o céu: o sol, o clima, a lua de hoje.",
   "until %1": "até %1",
   "The path a Direct shape follows as it opens or adjusts.": "O caminho que uma forma Direta segue ao abrir ou se ajustar.",
   "Leaves fast and lands softly.": "Sai rápido e pousa suave.",
@@ -10149,14 +10149,5 @@
   "Grow from the corner": "Nascer do canto",
   "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "As bolhas de um canto saem da curva da moldura como um só contorno, por mais longe que cheguem na borda.",
   "in %1": "em %1",
-  "%1 h": "%1 h",
-  "Approach": "Aproximação",
-  "Regulator": "Regulador",
-  "Board": "Painel",
-  "The Island is the sky outside: sun, moon and weather.": "A Ilha é o céu lá fora: sol, lua e clima.",
-  "The next three hours, your events coming toward the needle.": "As próximas três horas, seus eventos chegando à agulha.",
-  "A heavy hour; the minutes gain weight as it goes by.": "Uma hora pesada; os minutos ganham peso conforme ela passa.",
-  "The hour, and the minutes on a gauge with a real needle.": "A hora, e os minutos em um mostrador com agulha de verdade.",
-  "A split-flap board: the time and one line of your day.": "Um painel de palhetas: a hora e uma linha do seu dia.",
-  "Nothing ahead": "Nada à frente"
+  "%1 h": "%1 h"
 }

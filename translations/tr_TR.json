@@ -10046,7 +10046,7 @@
   "The hour lit on its own tile, the minutes beside it.": "Saat kendi kutusunda parlar, dakikalar yanında.",
   "A watch with real hands, the day beside it.": "Gerçek ibreli bir saat, yanında gün.",
   "One fact of your day, a new one each minute.": "Gününe dair tek bir bilgi, her dakika yenisi.",
-  "A round window on the sky: the sun, the weather, tonight's moon.": "Gökyüzüne yuvarlak bir pencere: güneş, hava durumu ve bu gecenin ayı.",
+  "A window on the sky: the sun, the weather, tonight's moon.": "Gökyüzüne bir pencere: güneş, hava, bu gecenin ayı.",
   "until %1": "%1 kadar",
   "The path a Direct shape follows as it opens or adjusts.": "Doğrudan bir şeklin açılırken ya da ayarlanırken izlediği yol.",
   "Leaves fast and lands softly.": "Hızlı çıkar, yumuşak iner.",
@@ -10149,14 +10149,5 @@
   "Grow from the corner": "Köşeden büyü",
   "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Bir köşedeki baloncuklar, kenar boyunca ne kadar uzağa giderse gitsin, çerçevenin kıvrımından tek bir kontur olarak çıkar.",
   "in %1": "%1 sonra",
-  "%1 h": "%1 sa",
-  "Approach": "Yaklaşma",
-  "Regulator": "Regülatör",
-  "Board": "Pano",
-  "The Island is the sky outside: sun, moon and weather.": "Ada dışarıdaki gökyüzüdür: güneş, ay ve hava.",
-  "The next three hours, your events coming toward the needle.": "Önümüzdeki üç saat, etkinlikleriniz ibreye yaklaşıyor.",
-  "A heavy hour; the minutes gain weight as it goes by.": "Ağır bir saat; dakikalar geçtikçe ağırlaşır.",
-  "The hour, and the minutes on a gauge with a real needle.": "Saat ve gerçek ibreli bir göstergede dakikalar.",
-  "A split-flap board: the time and one line of your day.": "Kanatlı pano: saat ve gününüzden bir satır.",
-  "Nothing ahead": "Önünüzde bir şey yok"
+  "%1 h": "%1 sa"
 }

@@ -10046,7 +10046,7 @@
   "The hour lit on its own tile, the minutes beside it.": "시는 자기 타일에 밝게, 분은 그 옆에.",
   "A watch with real hands, the day beside it.": "진짜 바늘이 있는 시계와 옆의 날짜.",
   "One fact of your day, a new one each minute.": "오늘의 정보 하나, 매분 새롭게.",
-  "A round window on the sky: the sun, the weather, tonight's moon.": "하늘을 보는 둥근 창: 해, 날씨, 오늘 밤의 달.",
+  "A window on the sky: the sun, the weather, tonight's moon.": "하늘을 보는 창: 해, 날씨, 오늘 밤의 달.",
   "until %1": "%1까지",
   "The path a Direct shape follows as it opens or adjusts.": "직접 모양이 열리거나 조정될 때 따라가는 경로.",
   "Leaves fast and lands softly.": "빠르게 출발해 부드럽게 착지.",
@@ -10149,14 +10149,5 @@
   "Grow from the corner": "모서리에서 자라기",
   "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "모서리의 버블은 가장자리를 따라 얼마나 멀리 이어지든 프레임의 곡선에서 하나의 윤곽으로 이어집니다.",
   "in %1": "%1 후",
-  "%1 h": "%1시간",
-  "Approach": "접근",
-  "Regulator": "레귤레이터",
-  "Board": "플립 보드",
-  "The Island is the sky outside: sun, moon and weather.": "아일랜드는 바깥 하늘입니다: 해, 달, 날씨.",
-  "The next three hours, your events coming toward the needle.": "앞으로 세 시간, 일정이 바늘로 다가옵니다.",
-  "A heavy hour; the minutes gain weight as it goes by.": "굵은 시; 분은 시간이 갈수록 굵어집니다.",
-  "The hour, and the minutes on a gauge with a real needle.": "시와, 진짜 바늘이 있는 분 눈금.",
-  "A split-flap board: the time and one line of your day.": "플립 보드: 시간과 오늘의 한 줄.",
-  "Nothing ahead": "예정 없음"
+  "%1 h": "%1시간"
 }

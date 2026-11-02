@@ -10046,7 +10046,7 @@
   "The hour lit on its own tile, the minutes beside it.": "L'ora accesa sulla sua tessera, i minuti accanto.",
   "A watch with real hands, the day beside it.": "Un orologio con vere lancette, il giorno accanto.",
   "One fact of your day, a new one each minute.": "Un dato della tua giornata, uno nuovo ogni minuto.",
-  "A round window on the sky: the sun, the weather, tonight's moon.": "Una finestra rotonda sul cielo: il sole, il meteo, la luna di stanotte.",
+  "A window on the sky: the sun, the weather, tonight's moon.": "Una finestra sul cielo: il sole, il meteo, la luna di stanotte.",
   "until %1": "fino alle %1",
   "The path a Direct shape follows as it opens or adjusts.": "Il percorso che una forma Diretta segue quando si apre o si regola.",
   "Leaves fast and lands softly.": "Parte veloce e atterra morbida.",
@@ -10149,14 +10149,5 @@
   "Grow from the corner": "Nascere dall'angolo",
   "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Le bolle in un angolo escono dalla curva della cornice come un unico contorno, per quanto lontano arrivino lungo il bordo.",
   "in %1": "tra %1",
-  "%1 h": "%1 h",
-  "Approach": "Avvicinamento",
-  "Regulator": "Regolatore",
-  "Board": "Tabellone",
-  "The Island is the sky outside: sun, moon and weather.": "L'Isola è il cielo fuori: sole, luna e meteo.",
-  "The next three hours, your events coming toward the needle.": "Le prossime tre ore, i tuoi eventi verso la lancetta.",
-  "A heavy hour; the minutes gain weight as it goes by.": "Un'ora pesante; i minuti prendono peso man mano che passa.",
-  "The hour, and the minutes on a gauge with a real needle.": "L'ora, e i minuti su un quadrante con una vera lancetta.",
-  "A split-flap board: the time and one line of your day.": "Un tabellone a palette: l'ora e una riga della tua giornata.",
-  "Nothing ahead": "Niente in vista"
+  "%1 h": "%1 h"
 }

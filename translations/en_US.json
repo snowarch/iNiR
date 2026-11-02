@@ -10046,7 +10046,7 @@
   "The hour lit on its own tile, the minutes beside it.": "The hour lit on its own tile, the minutes beside it.",
   "A watch with real hands, the day beside it.": "A watch with real hands, the day beside it.",
   "One fact of your day, a new one each minute.": "One fact of your day, a new one each minute.",
-  "A round window on the sky: the sun, the weather, tonight's moon.": "A round window on the sky: the sun, the weather, tonight's moon.",
+  "A window on the sky: the sun, the weather, tonight's moon.": "A window on the sky: the sun, the weather, tonight's moon.",
   "until %1": "until %1",
   "The path a Direct shape follows as it opens or adjusts.": "The path a Direct shape follows as it opens or adjusts.",
   "Leaves fast and lands softly.": "Leaves fast and lands softly.",
@@ -10149,14 +10149,5 @@
   "Grow from the corner": "Grow from the corner",
   "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.",
   "in %1": "in %1",
-  "%1 h": "%1 h",
-  "Approach": "Approach",
-  "Regulator": "Regulator",
-  "Board": "Board",
-  "The Island is the sky outside: sun, moon and weather.": "The Island is the sky outside: sun, moon and weather.",
-  "The next three hours, your events coming toward the needle.": "The next three hours, your events coming toward the needle.",
-  "A heavy hour; the minutes gain weight as it goes by.": "A heavy hour; the minutes gain weight as it goes by.",
-  "The hour, and the minutes on a gauge with a real needle.": "The hour, and the minutes on a gauge with a real needle.",
-  "A split-flap board: the time and one line of your day.": "A split-flap board: the time and one line of your day.",
-  "Nothing ahead": "Nothing ahead"
+  "%1 h": "%1 h"
 }

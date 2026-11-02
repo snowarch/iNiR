@@ -10046,7 +10046,7 @@
   "The hour lit on its own tile, the minutes beside it.": "Час светится на своей плитке, минуты рядом.",
   "A watch with real hands, the day beside it.": "Часы с настоящими стрелками, рядом день.",
   "One fact of your day, a new one each minute.": "Один факт о вашем дне, каждую минуту новый.",
-  "A round window on the sky: the sun, the weather, tonight's moon.": "Круглое окно в небо: солнце, погода и сегодняшняя луна.",
+  "A window on the sky: the sun, the weather, tonight's moon.": "Окно в небо: солнце, погода, сегодняшняя луна.",
   "until %1": "до %1",
   "The path a Direct shape follows as it opens or adjusts.": "Путь, по которому прямая форма открывается или подстраивается.",
   "Leaves fast and lands softly.": "Быстро стартует и мягко приземляется.",
@@ -10149,14 +10149,5 @@
   "Grow from the corner": "Расти из угла",
   "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Пузыри в углу выходят из изгиба рамки одним контуром, как бы далеко вдоль края они ни тянулись.",
   "in %1": "через %1",
-  "%1 h": "%1 ч",
-  "Approach": "Сближение",
-  "Regulator": "Регулятор",
-  "Board": "Табло",
-  "The Island is the sky outside: sun, moon and weather.": "Остров — это небо снаружи: солнце, луна и погода.",
-  "The next three hours, your events coming toward the needle.": "Следующие три часа, события движутся к стрелке.",
-  "A heavy hour; the minutes gain weight as it goes by.": "Тяжёлый час; минуты набирают вес по мере его хода.",
-  "The hour, and the minutes on a gauge with a real needle.": "Час и минуты на шкале с настоящей стрелкой.",
-  "A split-flap board: the time and one line of your day.": "Перекидное табло: время и одна строка вашего дня.",
-  "Nothing ahead": "Впереди ничего"
+  "%1 h": "%1 ч"
 }

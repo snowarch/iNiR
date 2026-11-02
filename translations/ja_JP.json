@@ -10046,7 +10046,7 @@
   "The hour lit on its own tile, the minutes beside it.": "時が専用のタイルに灯り、横に分。",
   "A watch with real hands, the day beside it.": "本物の針を持つ時計と、横に日付。",
   "One fact of your day, a new one each minute.": "今日のひとことを、毎分新しく。",
-  "A round window on the sky: the sun, the weather, tonight's moon.": "空を覗く丸い窓:太陽、天気、今夜の月。",
+  "A window on the sky: the sun, the weather, tonight's moon.": "空を映す窓：太陽、天気、今夜の月。",
   "until %1": "%1 まで",
   "The path a Direct shape follows as it opens or adjusts.": "ダイレクトな形が開くとき・調整するときにたどる軌道。",
   "Leaves fast and lands softly.": "速く出て、やわらかく着地。",
@@ -10149,14 +10149,5 @@
   "Grow from the corner": "角から伸ばす",
   "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "角のバブルは、縁に沿ってどこまで並んでも、フレームの曲線からひと続きの輪郭として伸びます。",
   "in %1": "%1後",
-  "%1 h": "%1時間",
-  "Approach": "接近",
-  "Regulator": "レギュレーター",
-  "Board": "フラップ",
-  "The Island is the sky outside: sun, moon and weather.": "アイランドは外の空：太陽、月、天気。",
-  "The next three hours, your events coming toward the needle.": "これからの3時間、予定が針に近づきます。",
-  "A heavy hour; the minutes gain weight as it goes by.": "太い時；分は時が進むほど太くなります。",
-  "The hour, and the minutes on a gauge with a real needle.": "時と、本物の針が動く分の目盛り。",
-  "A split-flap board: the time and one line of your day.": "反転フラップ式の表示：時刻と今日の1行。",
-  "Nothing ahead": "予定なし"
+  "%1 h": "%1時間"
 }
