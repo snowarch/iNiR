@@ -21,10 +21,11 @@ AbstractBackgroundWidget {
     readonly property int meterColumns: {
         const count = Math.max(1, root._resourceModel.length)
         const gap = 10 * root.scaleFactor, inner = 28 * root.scaleFactor
+        const label = root.displayMode === "rings" && root.showLabels ? 20 * root.scaleFactor : 0
         let best = 1, bestSide = 0
         for (let columns = 1; columns <= count; ++columns) {
             const rows = Math.ceil(count / columns)
-            const side = Math.min((root.footprintHeight - inner - gap * (rows - 1)) / rows, (root.footprintWidth - inner - gap * (columns - 1)) / columns)
+            const side = Math.min((root.footprintHeight - inner - gap * (rows - 1)) / rows - label, (root.footprintWidth - inner - gap * (columns - 1)) / columns)
             if (side > bestSide + 0.5) { best = columns; bestSide = side }
         }
         return best
