@@ -95,9 +95,31 @@ Singleton {
     }
 
     // ── Pictures of widgets, for the shelf ──
-    // Each widget on the desktop takes its own picture once a second while arranging (key -> { url, width, height } in
-    // logical px), and leaves it on disk on Done so the shelf shows a widget that is not out with its last look.
+    // Each widget on the desktop takes its own picture when arranging starts and after it changes size (key -> { url,
+    // width, height } in logical px), and leaves it on disk so the shelf shows a widget that is not out with its last look.
     // `look` names the look a family is wearing (scheme, Design): a picture from another look is not shown.
+    // One at a time, a beat apart: every widget grabbing and writing its PNG on the same turn hitched the mode just after
+    // it opened (11-02).
+    property var _pictureQueue: []
+    function askPicture(taker: var): void {
+        if (!taker || root._pictureQueue.includes(taker)) return
+        root._pictureQueue = root._pictureQueue.concat([taker])
+        if (!pictureBeat.running) pictureBeat.start()
+    }
+    function forgetPicture(taker: var): void {
+        root._pictureQueue = root._pictureQueue.filter(entry => entry !== taker)
+    }
+    Timer {
+        id: pictureBeat
+        interval: 90
+        repeat: true
+        onTriggered: {
+            const next = root._pictureQueue[0]
+            root._pictureQueue = root._pictureQueue.slice(1)
+            if (next) next.takePicture()
+            if (root._pictureQueue.length === 0) pictureBeat.stop()
+        }
+    }
     property string look: "default"
     property var pictures: ({})
     readonly property string pictureDir: (Quickshell.env("XDG_CACHE_HOME") || (Quickshell.env("HOME") + "/.cache")) + "/inir/widget-pictures"

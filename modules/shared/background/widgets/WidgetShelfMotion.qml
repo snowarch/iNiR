@@ -33,12 +33,13 @@ Item {
         id: pictureTimer
         interval: 600
         running: root.picturing
-        onTriggered: root.takePicture()
+        onTriggered: DesktopEditStage.askPicture(root)
     }
     function retake(): void {
         if (root.picturing) pictureTimer.restart()
     }
     Component.onDestruction: {
+        DesktopEditStage.forgetPicture(root)
         if (!root.picture) return
         root.picture.saveToFile(DesktopEditStage.savedPicture(root.widget.configEntryName))
         DesktopEditStage.setPicture(root.widget.configEntryName, "", 0, 0)
