@@ -27,7 +27,8 @@ Item {
     readonly property real hourPeak: Math.max(900, ...root.hourly)
     readonly property int hourNow: { void root.revision; return new Date().getHours() }
     readonly property var apps: { void root.revision; return root.on ? ScreenTime.getAppList(1) : [] }
-    readonly property var topApps: root.apps.slice(0, 3)
+    // Small and Medium are one unit tall: a third row spilled out of the box (his 11-02).
+    readonly property var topApps: root.apps.slice(0, ["small", "medium"].includes(root.widget.sizeClass) ? 2 : 3)
 
     function hm(seconds: int): string {
         const hours = Math.floor(seconds / 3600)
