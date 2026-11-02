@@ -133,8 +133,7 @@ function _oneSize(entry, irisActive) {
     return changed;
 }
 
-// v2.33's resize handles wrote `contentWidth/Height` over these factory sizes; a size that moved stays a free size,
-// and a v2.33 desktop on Material or Waffle, which drew at these, keeps them too.
+// v2.33's resize handles wrote `contentWidth/Height` over these factory sizes; a size that moved stays a free size.
 const _factorySizes = {
     calendarUpcoming: [280, 240],
     dateBadge: [220, 140],
@@ -149,12 +148,12 @@ const _factorySizes = {
     uptime: [250, 96],
     visualizer: [304, 104]
 };
-function _contentSize(key, entry, keepFactory) {
+function _contentSize(key, entry) {
     if (!_isObject(entry)) return false;
     let changed = false;
     [["contentWidth", "freeWidth"], ["contentHeight", "freeHeight"]].forEach(([from, to], axis) => {
         if (entry[from] === undefined) return;
-        if (entry[to] === undefined && entry[from] > 0 && (keepFactory || entry[from] !== _factorySizes[key]?.[axis])) entry[to] = entry[from];
+        if (entry[to] === undefined && entry[from] > 0 && entry[from] !== _factorySizes[key]?.[axis]) entry[to] = entry[from];
         delete entry[from];
         changed = true;
     });
@@ -215,7 +214,7 @@ function _widgetSizes(obj, fromV2) {
     const shown = pairs.map(([, entry, base]) => fromV2 && irisActive && _isObject(entry) ? shownPlate(entry, base) : undefined);
     let changed = false;
     pairs.forEach(([key, entry], index) => {
-        for (const moved of [_oneSize(entry, irisActive), _contentSize(key, entry, fromV2 && !irisActive), _onePlate(entry, fromV2, shown[index])])
+        for (const moved of [_oneSize(entry, irisActive), _contentSize(key, entry), _onePlate(entry, fromV2, shown[index])])
             changed = moved || changed;
     });
     if (fromV2 && irisActive)
