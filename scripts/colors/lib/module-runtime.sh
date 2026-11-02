@@ -14,6 +14,10 @@ CONFIG_FILE="$(inir_config_file)"
 MODULE_LOG="$STATE_DIR/user/generated/theming_modules.log"
 TARGETS_DIR="$SCRIPT_DIR/targets"
 MODULES_DIR="$SCRIPT_DIR/modules"
+# Installed plugins (modules/<id>, linked by `inir hub`) bring their own targets in colors/targets and colors/modules.
+PLUGINS_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)/modules"
+# What a plugin's module sources to get these helpers: it cannot find this file from where it is installed.
+export INIR_COLOR_RUNTIME="$SCRIPT_DIR/lib/module-runtime.sh"
 
 ensure_generated_dirs() {
   mkdir -p "$STATE_DIR/user/generated"
@@ -172,15 +176,26 @@ installed_chromium_browsers() {
   return 0
 }
 
+# Every target, one manifest path per line: the base's (targets/<id>.json) and each installed plugin's
+# (modules/<plugin>/colors/targets/<id>.json). A target's module sits in the modules/ folder beside its targets/.
 list_theming_target_manifests() {
-  if [[ -d "$TARGETS_DIR" ]]; then
-    find "$TARGETS_DIR" -maxdepth 1 -type f -name '*.json' | sort
-  fi
+  local manifest
+  for manifest in "$TARGETS_DIR"/*.json "$PLUGINS_DIR"/*/colors/targets/*.json; do
+    [[ -f "$manifest" ]] && printf '%s\n' "$manifest"
+  done
+  return 0
+}
+
+theming_target_manifest() {
+  local manifest
+  while IFS= read -r manifest; do
+    [[ "$(basename "$manifest" .json)" == "$1" ]] && { printf '%s\n' "$manifest"; return 0; }
+  done < <(list_theming_target_manifests)
+  return 1
 }
 
 resolve_target_module_path() {
-  local target_id="$1"
-  local manifest_path="$TARGETS_DIR/${target_id}.json"
+  local manifest_path="$1"
   [[ -f "$manifest_path" ]] || return 1
 
   local module_name=""
@@ -190,8 +205,9 @@ resolve_target_module_path() {
     module_name=$(sed -n 's/.*"module"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$manifest_path" | head -1)
   fi
 
-  [[ -n "$module_name" ]] || return 1
-  local module_path="$MODULES_DIR/$module_name"
+  [[ -n "$module_name" && "$module_name" != */* ]] || return 1
+  local module_path
+  module_path="$(dirname "$(dirname "$manifest_path")")/modules/$module_name"
   [[ -f "$module_path" ]] || return 1
   printf '%s\n' "$module_path"
 }
@@ -215,8 +231,6 @@ list_declared_theming_modules() {
   while IFS= read -r manifest; do
     [[ -n "$manifest" ]] || continue
     target_manifest_enabled "$manifest" || continue
-    local target_id
-    target_id="$(basename "$manifest" .json)"
-    resolve_target_module_path "$target_id" || true
+    resolve_target_module_path "$manifest" || true
   done < <(list_theming_target_manifests)
 }

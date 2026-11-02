@@ -1,6 +1,6 @@
 # Theming Targets
 
-A target is one app integration. It has a manifest in `scripts/colors/targets/<id>.json` and a module in `scripts/colors/modules/`. The `inir theme` command lists, checks, applies and scaffolds them.
+A target is one app integration. It has a manifest in `scripts/colors/targets/<id>.json` and a module in `scripts/colors/modules/`. An installed plugin can bring its own (see [Targets from a plugin](#targets-from-a-plugin)). The `inir theme` command lists, checks, applies and scaffolds them.
 
 ## Declared targets
 
@@ -43,3 +43,17 @@ inir theme scaffold <id>         # writes a manifest and a stub module, never ov
 3. Run `inir theme doctor myapp`, then `inir theme apply myapp`.
 
 Declare only `palette.json` unless the app needs ANSI colours. Then add `terminal.json` or `material_colors.scss`.
+
+## Targets from a plugin
+
+A hub plugin (a component, linked at `modules/<id>`) brings a target the same way, inside its own folder:
+`colors/targets/<id>.json` and the script it names in `colors/modules/`. `applycolor.sh`, `apply-targets.sh` and
+`inir theme` list it next to the shell's own, so it runs on every theme change; `inir hub install` and `update` run
+it once as it lands. The script cannot find the shell from where it is installed, so it sources the runtime through
+`INIR_COLOR_RUNTIME`:
+
+```bash
+source "${INIR_COLOR_RUNTIME:?run by iNiR: scripts/colors/apply-targets.sh myapp}"
+```
+
+`fastfetch` in inir-hub (`components/fastfetch`) is one.

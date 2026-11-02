@@ -36,7 +36,7 @@ main() {
   local failed=0
   local target_id module_path
   for target_id in "${targets[@]}"; do
-    module_path="$(resolve_target_module_path "$target_id" || true)"
+    module_path="$(resolve_target_module_path "$(theming_target_manifest "$target_id" || true)" || true)"
     if [[ -z "$module_path" ]]; then
       echo "Unknown theming target: $target_id" >&2
       failed=1

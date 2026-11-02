@@ -4,7 +4,7 @@ A module is one shell script in `scripts/colors/modules/` that themes one app. `
 
 ## How they run
 
-- A module runs only when a manifest in `scripts/colors/targets/` names it. Once any manifest exists, a module that no manifest names never runs.
+- A module runs only when a manifest names it: one in `scripts/colors/targets/`, or one an installed plugin brings in `modules/<plugin>/colors/targets/` (its module beside it in `colors/modules/`). Once any manifest exists, a module that no manifest names never runs.
 - `applycolor.sh` skips the whole run when the generated files, config, scripts and app installs are unchanged. `--force` or `INIR_THEME_FORCE=1` runs it anyway.
 - Enabled modules run in parallel under `nice` and `ionice`, two to four at a time: half your CPUs by default, and `INIR_THEME_MAX_JOBS` overrides it.
 - Runs take a lock (`applycolor.lock`, waiting up to 120 s). Each module logs to `~/.local/state/quickshell/user/generated/theming_modules.log`, tagged with its target id.
@@ -19,7 +19,7 @@ A module is one shell script in `scripts/colors/modules/` that themes one app. `
 
 ## Shared runtime
 
-`module-runtime.sh` sets `SCRIPT_DIR`, `STATE_DIR` (`$XDG_STATE_HOME/quickshell`), `CONFIG_FILE`, `TARGETS_DIR` and `MODULES_DIR`. Its helpers include:
+`module-runtime.sh` sets `SCRIPT_DIR`, `STATE_DIR` (`$XDG_STATE_HOME/quickshell`), `CONFIG_FILE`, `TARGETS_DIR`, `MODULES_DIR` and `PLUGINS_DIR`, and exports its own path as `INIR_COLOR_RUNTIME` for a plugin's module to source. Its helpers include:
 
 - `config_bool '<jq path>' <fallback>`, for example `.appearance.wallpaperTheming.enableChrome`.
 - `log_module`, `write_if_changed` and `theme_mode`, which returns `dark` or `light` from `theme-meta.json`.

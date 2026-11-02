@@ -82,7 +82,7 @@ inir.space, `inir help` and tab completion are built from those comments.
 
 Wallpaper -> `switchwall.sh` -> `inir-accel material-colors` -> `colors.json` -> `MaterialThemeLoader` -> each family's
 tokens (`Appearance`, `Looks`, `IrisStyle`). `scripts/colors/applycolor.sh` themes the apps listed in
-`scripts/colors/targets/`.
+`scripts/colors/targets/` and in each installed plugin's `colors/targets/`.
 
 ## Install and update
 

@@ -18,6 +18,10 @@ inputs_fingerprint() {
     done
     if [[ -f "$CONFIG_FILE" ]]; then sha1sum "$CONFIG_FILE"; fi
     find "$SCRIPT_DIR" -type f -printf '%P %s %T@\n' 2>/dev/null | sort
+    # a plugin's own targets: installing or updating one applies it on the next run
+    for path in "$PLUGINS_DIR"/*/colors; do
+      if [[ -d "$path" ]]; then find -L "$path" -type f -printf '%p %s %T@\n' | sort; fi
+    done
     for path in /opt/spotify/Apps/xpui/index.html /usr/share/spotify/Apps/xpui/index.html \
       "$HOME/.local/share/spotify-launcher/install/usr/share/spotify/Apps/xpui/index.html" \
       "$HOME/.local/share/flatpak/app/com.spotify.Client/current/active/files/extra/share/spotify/Apps/xpui/index.html" \
@@ -72,12 +76,11 @@ main() {
 
   local modules=()
   local enabled_targets=0
-  local manifest_path target_id module_path
+  local manifest_path module_path
   for manifest_path in "${manifests[@]}"; do
     target_manifest_enabled "$manifest_path" || continue
     enabled_targets=$((enabled_targets + 1))
-    target_id="$(basename "$manifest_path" .json)"
-    module_path="$(resolve_target_module_path "$target_id" || true)"
+    module_path="$(resolve_target_module_path "$manifest_path" || true)"
     [[ -n "$module_path" ]] || continue
     modules+=("$module_path")
   done
