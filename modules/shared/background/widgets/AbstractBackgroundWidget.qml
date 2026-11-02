@@ -113,16 +113,24 @@ AbstractWidget {
     property bool _previewing: false
     property var _resizePreviewValues: ({})
     readonly property real scaleFactor: root._baseScale * (root.fits ? root._fit : root._freeFit)
-    // A shared drawing is laid out in pixels times scaleFactor, so a box resized by hand carries its drawing with it:
-    // what sits fixed in a corner of a bigger box, or spills out of a smaller one, is what "resizes badly" looked like.
-    readonly property real _freeFit: {
-        if (!root.freeSized || root.familyFaced || !root.sized)
+    // A shared drawing is laid out in pixels times scaleFactor, so a box resized by hand carries its drawing with it.
+    readonly property real _freeFit: !root.freeSized || root.familyFaced || !root.sized ? 1 : root.freeScale
+    // A free size is its class drawn at another scale, the box keeping the class's proportions: a box of any other shape
+    // left air beside a drawing made for S, M or L, or cut it (his 11-02: "se redimensionan mal"). A stored size of
+    // another shape (older files) reads as the largest class box inside it.
+    readonly property real freeScale: {
+        if (!root.freeSized || !root.sized)
             return 1
-        const box = root.footprintOf(root.sizeClass)
-        const w = root._freeWidth > 0 ? root.footprintWidth / box.width : 1
-        const h = root._freeHeight > 0 ? root.footprintHeight / box.height : 1
-        return Math.max(0.6, Math.min(1.8, Math.min(w, h)))
+        const box = DesktopWidgetRegistry.footprint(root.sizeClass)
+        const k = FamilyStyle.density
+        const ratios = []
+        if (root._freeWidth > 0) ratios.push(root._freeWidth / (box.width * k))
+        if (root._freeHeight > 0) ratios.push(root._freeHeight / (box.height * k))
+        return Math.max(root.freeScaleMin, Math.min(root.freeScaleMax, Math.min(...ratios)))
     }
+    readonly property real freeScaleMin: 0.6
+    readonly property real freeScaleMax: 1.8
+    property real _freeStartScale: 1
     property bool _geometryReady: false
     readonly property bool animateGeometry: root._geometryReady && root.animationsActive
         && !root._isResizing && !root.containsPress
@@ -906,44 +914,49 @@ AbstractWidget {
     readonly property real _freeWidth: root.freeAllowed ? Number(root._readConfigKey("freeWidth") ?? 0) || 0 : 0
     readonly property real _freeHeight: root.freeAllowed ? Number(root._readConfigKey("freeHeight") ?? 0) || 0 : 0
     readonly property bool freeSized: root._freeWidth > 0 || root._freeHeight > 0
-    readonly property real footprintWidth: root._freeWidth > 0 ? Math.round(root._freeWidth * root._baseScale)
-        : root.sized ? root.footprintOf(root.sizeClass).width : 0
-    readonly property real footprintHeight: root._freeHeight > 0 ? Math.round(root._freeHeight * root._baseScale)
-        : root.sized ? root.footprintOf(root.sizeClass).height : 0
+    readonly property real footprintWidth: root.sized ? Math.round(root.footprintOf(root.sizeClass).width * root.freeScale)
+        : root._freeWidth > 0 ? Math.round(root._freeWidth * root._baseScale) : 0
+    readonly property real footprintHeight: root.sized ? Math.round(root.footprintOf(root.sizeClass).height * root.freeScale)
+        : root._freeHeight > 0 ? Math.round(root._freeHeight * root._baseScale) : 0
     implicitWidth: root.footprintWidth
     implicitHeight: root.footprintHeight
     // The family's edit window drives a free size in screen pixels at true size.
     function beginFreeSize(): void {
+        root._freeStartScale = root.freeScale
         root._resizePreviewValues = ({})
         root._isResizing = true
     }
+    // The pointer's box becomes one scale of the class: the side that moved farther from where the drag began leads, so
+    // an edge grip follows its edge and a corner grip its stronger axis. The class stays: S, M or L are their own keys.
     function previewFreeSize(width: real, height: real): void {
-        const w = Math.max(root.resizeMinWidth, Math.min(root.resizeMaxWidth, width))
-        const h = Math.max(root.resizeMinHeight, Math.min(root.resizeMaxHeight, height))
-        root._resizePreviewValues = { freeWidth: Math.round(w / root._baseScale), freeHeight: Math.round(h / root._baseScale) }
+        if (!root.sized) {
+            root._resizePreviewValues = { freeWidth: Math.round(Math.max(root.resizeMinWidth, Math.min(root.resizeMaxWidth, width)) / root._baseScale),
+                freeHeight: Math.round(Math.max(root.resizeMinHeight, Math.min(root.resizeMaxHeight, height)) / root._baseScale) }
+            return
+        }
+        const box = root.footprintOf(root.sizeClass)
+        const across = width / box.width
+        const down = height / box.height
+        const lead = Math.abs(across - root._freeStartScale) >= Math.abs(down - root._freeStartScale) ? across : down
+        const scale = Math.max(root.freeScaleMin, Math.min(root.freeScaleMax, lead))
+        const unit = DesktopWidgetRegistry.footprint(root.sizeClass)
+        const k = FamilyStyle.density
+        root._resizePreviewValues = { freeWidth: Math.round(unit.width * k * scale), freeHeight: Math.round(unit.height * k * scale) }
     }
     function commitFreeSize(): void {
         const preview = root._resizePreviewValues
         root._isResizing = false
         root._resizePreviewValues = ({})
         if (preview.freeWidth === undefined) return
-        root._setOutputValues({ freeWidth: preview.freeWidth, freeHeight: preview.freeHeight,
-            sizeClass: root.nearestSize(preview.freeWidth, preview.freeHeight) })
+        const unit = DesktopWidgetRegistry.footprint(root.sizeClass)
+        // Back at the class's own size, it is the class again, not a free size of 100 %.
+        const plain = root.sized && Math.abs(preview.freeWidth / (unit.width * FamilyStyle.density) - 1) < 0.03
+        root._setOutputValues(plain ? { freeWidth: 0, freeHeight: 0 } : { freeWidth: preview.freeWidth, freeHeight: preview.freeHeight })
         _makeRoomLater.restart()
     }
     function cancelFreeSize(): void {
         root._resizePreviewValues = ({})
         root._isResizing = false
-    }
-    function nearestSize(width: real, height: real): string {
-        let best = root.sizeClass
-        let gap = Number.POSITIVE_INFINITY
-        for (const size of root.sizes) {
-            const foot = DesktopWidgetRegistry.footprint(size)
-            const d = Math.abs(foot.width - width) + Math.abs(foot.height - height)
-            if (d < gap) { gap = d; best = size }
-        }
-        return best
     }
     function commitSize(size: string): void {
         root._resizePreviewValues = ({})
