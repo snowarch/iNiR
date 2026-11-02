@@ -36,11 +36,30 @@ Item {
         return high && low ? Translation.tr("H:%1  L:%2").arg(high).arg(low) : ""
     }
     readonly property var facts: [
+        { icon: "thermostat", value: Translation.tr("Feels %1").arg(root.degrees(Weather.data?.tempFeelsLike)) },
         { icon: "humidity_percentage", value: String(Weather.data?.humidity ?? "").trim() },
         { icon: "air", value: String(Weather.data?.wind ?? "").trim() },
-        { icon: "light_mode", value: Translation.tr("UV") + " " + String(Weather.data?.uv ?? "").trim() },
-        { icon: "thermostat", value: Translation.tr("Feels %1").arg(root.degrees(Weather.data?.tempFeelsLike)) }
+        { icon: "light_mode", value: Translation.tr("UV") + " " + String(Weather.data?.uv ?? "").trim() }
     ].filter(fact => fact.value.length > 0 && !/--|\s$/.test(fact.value))
+    // One line of facts, as many as the width holds: a second line fell on the plate's edge.
+    readonly property var shownFacts: {
+        const room = root.width - 2 * root.px(16)
+        let used = 0
+        const out = []
+        for (const fact of root.facts) {
+            const chip = root.px(15) + root.px(5) + Math.ceil(factMetrics.advanceWidth(fact.value)) + root.px(18)
+            if (used + chip > room) break
+            used += chip + root.px(6)
+            out.push(fact)
+        }
+        return out
+    }
+    FontMetrics {
+        id: factMetrics
+        font.family: Appearance.font.family.main
+        font.pixelSize: root.px(Appearance.font.pixelSize.smaller)
+        font.weight: Font.Medium
+    }
     readonly property string city: root.widget.showLocation && Weather.showVisibleCity ? String(Weather.visibleCity).split(",")[0].trim() : ""
 
     ColumnLayout {
@@ -219,12 +238,12 @@ Item {
         Item { Layout.fillHeight: true }
 
         // Large: what the sky feels like, in the tonal chips the detail style uses.
-        Flow {
+        Row {
             Layout.fillWidth: true
-            visible: root.large && root.facts.length > 0
+            visible: root.large && root.shownFacts.length > 0
             spacing: root.px(6)
             Repeater {
-                model: root.large ? root.facts : []
+                model: root.large ? root.shownFacts : []
                 Rectangle {
                     id: fact
                     required property var modelData

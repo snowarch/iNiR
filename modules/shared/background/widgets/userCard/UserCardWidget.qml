@@ -41,32 +41,20 @@ AbstractBackgroundWidget {
             value: String(SystemInfo.desktopEnvironment || "Wayland").split(":")[0].replace(/^./, first => first.toUpperCase()) },
         { glyph: "computer", label: Translation.tr("Machine"), value: root.hostname || SystemInfo.distroName }
     ].concat(root.showWeather && root.weatherLine.text !== "" ? [{ glyph: root.weatherLine.icon, label: Translation.tr("Weather"), value: root.weatherLine.text }] : [])
+    // Read from the weather code: the description is in the person's language, so matching English words in it never hit.
     readonly property var weatherLine: {
-        const desc = (Weather.data?.description ?? "").toLowerCase();
-        if (desc.includes("rain"))
-            return {
-                text: Translation.tr("Rain today"),
-                icon: "rainy"
-            };
-        if (desc.includes("snow"))
-            return {
-                text: Translation.tr("Snow today"),
-                icon: "ac_unit"
-            };
-        if (desc.includes("clear"))
-            return {
-                text: Translation.tr("Clear skies"),
-                icon: "clear_day"
-            };
-        if (desc.includes("cloud"))
-            return {
-                text: Translation.tr("A bit cloudy"),
-                icon: "cloud"
-            };
-        return {
-            text: Weather.data?.description ?? "",
-            icon: "thermostat"
-        };
+        const code = Number(Weather.data?.wCode ?? NaN)
+        const rain = [176, 200, 263, 266, 281, 284, 293, 296, 299, 302, 305, 308, 311, 314, 353, 356, 359, 386, 389]
+        const snow = [179, 182, 185, 227, 230, 317, 320, 323, 326, 329, 332, 335, 338, 350, 362, 365, 368, 371, 374, 377, 392, 395]
+        if (rain.includes(code))
+            return { text: Translation.tr("Rain today"), icon: "rainy" }
+        if (snow.includes(code))
+            return { text: Translation.tr("Snow today"), icon: "ac_unit" }
+        if (code === 113)
+            return { text: Translation.tr("Clear skies"), icon: Icons.getWeatherIcon(113, Weather.isNightNow()) ?? "clear_day" }
+        if ([116, 119, 122].includes(code))
+            return { text: Translation.tr("A bit cloudy"), icon: "cloud" }
+        return { text: Weather.data?.description ?? "", icon: "thermostat" }
     }
 
     function lockScreen(): void {
@@ -204,8 +192,9 @@ AbstractBackgroundWidget {
             Layout.maximumWidth: parent.width
             visible: root.showWeather && root.weatherLine.text !== "" && !root.isSmall && !root.isLarge
                 && root.height >= Math.round(170 * root.scaleFactor)
-            implicitWidth: Math.min(parent.width,
-                weatherChip.implicitWidth + Math.round(18 * root.scaleFactor))
+            // From the text's own width: read back from the row that fills this chip, it lagged a word behind.
+            implicitWidth: Math.min(parent.width, Math.round(18 * root.scaleFactor) + weatherChipIcon.implicitWidth
+                + Math.round(6 * root.scaleFactor) + Math.ceil(weatherChipText.implicitWidth))
             implicitHeight: weatherChip.implicitHeight + Math.round(9 * root.scaleFactor)
             radius: root.widgetEditorial ? root.widgetControlRadius : height / 2
             color: root.widgetSemanticContainer(root.widgetTertiaryRole)
@@ -218,6 +207,7 @@ AbstractBackgroundWidget {
                 spacing: Math.round(6 * root.scaleFactor)
 
                 MaterialSymbol {
+                    id: weatherChipIcon
                     text: root.weatherLine.icon
                     fill: 1
                     iconSize: Math.round(Appearance.font.pixelSize.normal * root.scaleFactor)
@@ -225,6 +215,7 @@ AbstractBackgroundWidget {
                 }
 
                 StyledText {
+                    id: weatherChipText
                     Layout.fillWidth: true
                     text: root.weatherLine.text
                     elide: Text.ElideRight
