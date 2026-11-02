@@ -1687,7 +1687,7 @@
             },
             "figureWeight": "bold",
             "icons": {
-                "style": "iris",
+                "style": "glyph",
                 "plate": "black",
                 "shape": "auto",
                 "colour": "auto",
@@ -1745,7 +1745,7 @@
                 }
             },
             "expandedRadius": 22,
-      "factoryLook": 1,
+            "factoryLook": 2,
             "preset": "iris",
             "morph": "direct",
             "tint": 0,
@@ -1890,6 +1890,40 @@
                     "speed": 100,
                     "morph": "",
                     "material": ""
+                }
+            },
+            "streak": {
+                "aurora": 55,
+                "light": 75,
+                "trails": 60,
+                "colours": "aurora"
+            },
+            "places": {
+                "island": "",
+                "dock": "",
+                "control": "",
+                "settings": "",
+                "spotlight": "",
+                "orbit": "",
+                "lock": "",
+                "widgets": "",
+                "notifications": "",
+                "osd": ""
+            },
+            "looks": {
+                "nothing": {
+                    "chosen": "ink"
+                },
+                "synth": {
+                    "keys": "accent",
+                    "levels": "highlight",
+                    "depth": 3,
+                    "mono": true
+                },
+                "gel": {
+                    "body": "accent",
+                    "gloss": 60,
+                    "round": true
                 }
             }
         },

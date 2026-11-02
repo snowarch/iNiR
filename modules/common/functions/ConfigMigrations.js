@@ -195,22 +195,28 @@ function _widgetSizes(obj) {
 // Moves the keys of a parsed config.json to their owners in place; true when anything moved.
 // iRiS's factory look moved (one form, a lit card, glass on). A file carries the old factory values as written defaults,
 // so those alone change, once (glass turned off later must stay off), and a value someone chose stays.
-const factoryLook = 1;
+const factoryLook = 2;
+// [since, path, old factory value, new one]: each step runs once, so a value picked after it stays.
 const factoryValues = [
-    ["iris.appearance.expandedRadius", 28, 22],
-    ["iris.appearance.glass.mode", "off", "compositor"],
-    ["iris.appearance.glass.edgeLight", 34, 14],
-    ["iris.appearance.glass.edgeLine", 10, 0],
+    [1, "iris.appearance.expandedRadius", 28, 22],
+    [1, "iris.appearance.glass.mode", "off", "compositor"],
+    [1, "iris.appearance.glass.edgeLight", 34, 14],
+    [1, "iris.appearance.glass.edgeLine", 10, 0],
+    // Marks speak as the widgets head themselves: the glyph alone in its colour.
+    [2, "iris.appearance.icons.style", "iris", "glyph"],
 ];
 function _factoryLook(obj) {
     if (!_isObject(_get(obj, "iris.appearance"))) return false;
-    if (Number(_get(obj, "iris.appearance.factoryLook") ?? 0) >= factoryLook) return false;
-    for (const [path, before, after] of factoryValues)
-        if (_get(obj, path) === before) _set(obj, path, after);
-    // The glass edge's own width became every body's rim; 1.5 was its factory value.
-    const width = _get(obj, "iris.appearance.glass.edgeWidth");
-    if (typeof width === "number" && width !== 1.5) _set(obj, "iris.appearance.theme.rimWidth", Math.max(1, Math.round(width)));
-    _remove(obj, "iris.appearance.glass.edgeWidth");
+    const at = Number(_get(obj, "iris.appearance.factoryLook") ?? 0);
+    if (at >= factoryLook) return false;
+    for (const [since, path, before, after] of factoryValues)
+        if (since > at && _get(obj, path) === before) _set(obj, path, after);
+    if (at < 1) {
+        // The glass edge's own width became every body's rim; 1.5 was its factory value.
+        const width = _get(obj, "iris.appearance.glass.edgeWidth");
+        if (typeof width === "number" && width !== 1.5) _set(obj, "iris.appearance.theme.rimWidth", Math.max(1, Math.round(width)));
+        _remove(obj, "iris.appearance.glass.edgeWidth");
+    }
     _set(obj, "iris.appearance.factoryLook", factoryLook);
     return true;
 }
