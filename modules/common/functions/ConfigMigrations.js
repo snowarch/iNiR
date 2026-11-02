@@ -207,6 +207,10 @@ function _factoryLook(obj) {
     if (Number(_get(obj, "iris.appearance.factoryLook") ?? 0) >= factoryLook) return false;
     for (const [path, before, after] of factoryValues)
         if (_get(obj, path) === before) _set(obj, path, after);
+    // The glass edge's own width became every body's rim; 1.5 was its factory value.
+    const width = _get(obj, "iris.appearance.glass.edgeWidth");
+    if (typeof width === "number" && width !== 1.5) _set(obj, "iris.appearance.theme.rimWidth", Math.max(1, Math.round(width)));
+    _remove(obj, "iris.appearance.glass.edgeWidth");
     _set(obj, "iris.appearance.factoryLook", factoryLook);
     return true;
 }
