@@ -76,7 +76,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for a detailed breakdown. Key directories
 | `scripts/` | CLI launcher, theming pipeline, helpers |
 | `sdata/` | Install/update lifecycle |
 | `defaults/` | Shipped default config and app configs |
-| `translations/` | i18n strings (15+ languages) |
+| `translations/` | Strings the base shows (18 languages); a family keeps its own in its plugin |
 
 ## Mandatory Patterns
 
@@ -207,8 +207,8 @@ There are no migrations. When a key or file changes, read the old one as a fallb
 
 ## Translations
 
-- Strings go in `translations/`
-- Use `Translation.tr("key", "default text")` in QML
+- Use `Translation.tr("English text")` in QML: the English text is the key
+- A string the base or two families show goes in `translations/`; one only a family shows goes in that family's `translations/` in inir-hub
 - See existing translations for the format
 
 ## AI-Assisted Contributions

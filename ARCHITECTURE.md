@@ -59,7 +59,7 @@ what every family shares. A shared surface that needs the active family's versio
 | `scripts/` | What runs on your machine: the `inir` launcher, colour generation and app theming, media and capture helpers |
 | `sdata/`, `setup` | Install, update, uninstall, doctor |
 | `defaults/`, `dots/` | The fresh-install config and the app configs setup offers |
-| `translations/` | Every visible string, one catalogue per language |
+| `translations/` | The strings the base or two families show, one catalogue per language; a family keeps its own beside it |
 | `docs/` | User docs, published at [inir.space/docs](https://inir.space/docs) |
 
 A new look, Design, theme or widget is a plugin in inir-hub, never a folder here.
