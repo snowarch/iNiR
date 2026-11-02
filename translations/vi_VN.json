@@ -10138,5 +10138,11 @@
   "%1 sections": "%1 mục",
   "Dial size": "Kích thước mặt số",
   "Hour": "Giờ",
-  "Trend": "Xu hướng"
+  "Trend": "Xu hướng",
+  "Down from top left": "Xuống từ góc trên bên trái",
+  "Up from bottom left": "Lên từ góc dưới bên trái",
+  "Down from top right": "Xuống từ góc trên bên phải",
+  "Up from bottom right": "Lên từ góc dưới bên phải",
+  "Grow from the corner": "Mọc từ góc",
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Các bong bóng ở góc mọc ra từ đường cong của khung thành một đường viền liền, dù chúng trải xa đến đâu dọc theo cạnh."
 }

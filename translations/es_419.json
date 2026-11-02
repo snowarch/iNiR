@@ -10138,5 +10138,11 @@
   "%1 sections": "%1 secciones",
   "Dial size": "Tamaño de la esfera",
   "Hour": "Hora",
-  "Trend": "Tendencia"
+  "Trend": "Tendencia",
+  "Down from top left": "Hacia abajo desde arriba a la izquierda",
+  "Up from bottom left": "Hacia arriba desde abajo a la izquierda",
+  "Down from top right": "Hacia abajo desde arriba a la derecha",
+  "Up from bottom right": "Hacia arriba desde abajo a la derecha",
+  "Grow from the corner": "Nacer de la esquina",
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Las burbujas de una esquina salen de la curva del marco como un solo contorno, por lejos que lleguen sobre el borde."
 }

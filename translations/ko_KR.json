@@ -10138,5 +10138,11 @@
   "%1 sections": "섹션 %1개",
   "Dial size": "시계판 크기",
   "Hour": "시각",
-  "Trend": "추세"
+  "Trend": "추세",
+  "Down from top left": "왼쪽 위에서 아래로",
+  "Up from bottom left": "왼쪽 아래에서 위로",
+  "Down from top right": "오른쪽 위에서 아래로",
+  "Up from bottom right": "오른쪽 아래에서 위로",
+  "Grow from the corner": "모서리에서 자라기",
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "모서리의 버블은 가장자리를 따라 얼마나 멀리 이어지든 프레임의 곡선에서 하나의 윤곽으로 이어집니다."
 }

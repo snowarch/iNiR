@@ -10138,5 +10138,11 @@
   "%1 sections": "%1 sections",
   "Dial size": "Taille du cadran",
   "Hour": "Heure",
-  "Trend": "Tendance"
+  "Trend": "Tendance",
+  "Down from top left": "Vers le bas depuis le coin supérieur gauche",
+  "Up from bottom left": "Vers le haut depuis le coin inférieur gauche",
+  "Down from top right": "Vers le bas depuis le coin supérieur droit",
+  "Up from bottom right": "Vers le haut depuis le coin inférieur droit",
+  "Grow from the corner": "Naître du coin",
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Les bulles d'un coin sortent de la courbe du cadre en un seul contour, aussi loin qu'elles aillent le long du bord."
 }

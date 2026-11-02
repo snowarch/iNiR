@@ -10138,5 +10138,11 @@
   "%1 sections": "%1 セクション",
   "Dial size": "文字盤のサイズ",
   "Hour": "時刻",
-  "Trend": "推移"
+  "Trend": "推移",
+  "Down from top left": "左上から下へ",
+  "Up from bottom left": "左下から上へ",
+  "Down from top right": "右上から下へ",
+  "Up from bottom right": "右下から上へ",
+  "Grow from the corner": "角から伸ばす",
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "角のバブルは、縁に沿ってどこまで並んでも、フレームの曲線からひと続きの輪郭として伸びます。"
 }

@@ -10138,5 +10138,11 @@
   "%1 sections": "%1 מקטעים",
   "Dial size": "גודל החוגה",
   "Hour": "שעה",
-  "Trend": "מגמה"
+  "Trend": "מגמה",
+  "Down from top left": "למטה מלמעלה משמאל",
+  "Up from bottom left": "למעלה מלמטה משמאל",
+  "Down from top right": "למטה מלמעלה מימין",
+  "Up from bottom right": "למעלה מלמטה מימין",
+  "Grow from the corner": "לצמוח מהפינה",
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "בועות בפינה יוצאות מהעיקול של המסגרת כקו מתאר אחד, עד כמה שיגיעו לאורך הקצה."
 }

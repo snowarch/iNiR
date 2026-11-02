@@ -10138,5 +10138,11 @@
   "%1 sections": "%1 sezioni",
   "Dial size": "Dimensione del quadrante",
   "Hour": "Ora",
-  "Trend": "Andamento"
+  "Trend": "Andamento",
+  "Down from top left": "Verso il basso dall'angolo in alto a sinistra",
+  "Up from bottom left": "Verso l'alto dall'angolo in basso a sinistra",
+  "Down from top right": "Verso il basso dall'angolo in alto a destra",
+  "Up from bottom right": "Verso l'alto dall'angolo in basso a destra",
+  "Grow from the corner": "Nascere dall'angolo",
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Le bolle in un angolo escono dalla curva della cornice come un unico contorno, per quanto lontano arrivino lungo il bordo."
 }

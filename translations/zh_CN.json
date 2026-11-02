@@ -10138,5 +10138,11 @@
   "%1 sections": "%1 个分区",
   "Dial size": "表盘大小",
   "Hour": "时刻",
-  "Trend": "趋势"
+  "Trend": "趋势",
+  "Down from top left": "从左上角向下",
+  "Up from bottom left": "从左下角向上",
+  "Down from top right": "从右上角向下",
+  "Up from bottom right": "从右下角向上",
+  "Grow from the corner": "从角落长出",
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "角落里的气泡无论沿边缘延伸多远，都会从边框的弧线中以一条连续的轮廓长出。"
 }

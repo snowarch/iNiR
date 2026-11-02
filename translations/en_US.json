@@ -10138,5 +10138,11 @@
   "%1 sections": "%1 sections",
   "Dial size": "Dial size",
   "Hour": "Hour",
-  "Trend": "Trend"
+  "Trend": "Trend",
+  "Down from top left": "Down from top left",
+  "Up from bottom left": "Up from bottom left",
+  "Down from top right": "Down from top right",
+  "Up from bottom right": "Up from bottom right",
+  "Grow from the corner": "Grow from the corner",
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach."
 }

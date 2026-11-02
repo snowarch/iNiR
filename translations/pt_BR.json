@@ -10138,5 +10138,11 @@
   "%1 sections": "%1 seções",
   "Dial size": "Tamanho do mostrador",
   "Hour": "Hora",
-  "Trend": "Tendência"
+  "Trend": "Tendência",
+  "Down from top left": "Para baixo a partir do canto superior esquerdo",
+  "Up from bottom left": "Para cima a partir do canto inferior esquerdo",
+  "Down from top right": "Para baixo a partir do canto superior direito",
+  "Up from bottom right": "Para cima a partir do canto inferior direito",
+  "Grow from the corner": "Nascer do canto",
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "As bolhas de um canto saem da curva da moldura como um só contorno, por mais longe que cheguem na borda."
 }

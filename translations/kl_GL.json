@@ -10138,5 +10138,11 @@
   "%1 sections": "Immikkoortut %1",
   "Dial size": "Nalunaaqutap angissusia",
   "Hour": "Akunneq",
-  "Trend": "Ineriartorneq"
+  "Trend": "Ineriartorneq",
+  "Down from top left": "Qulaani saamerlermit ammut",
+  "Up from bottom left": "Ataani saamerlermit qummut",
+  "Down from top right": "Qulaani talerperlermit ammut",
+  "Up from bottom right": "Ataani talerperlermit qummut",
+  "Grow from the corner": "Teqeqqumit naggorlugu",
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Teqeqqumi pupput killeqarfiup ingerlaarneranit ataatsimik killeqarfittut anisarput, sinaa malillugu qanoq ungasitsigisumut apuuppataluunniit."
 }

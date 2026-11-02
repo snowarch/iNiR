@@ -300,7 +300,7 @@ complete -c inir -n '__inir_at_function iris' -a settings -d 'Open iRiS Settings
 complete -c inir -n '__inir_at_value 1 settings iris' -a 'general appearance motion bar bubbles dock desktop windows sidebars controlCenter spotlight orbit notifications sound capture display keyboard battery gaming lock player anime sources system lock/security next prev back forward search: open'
 complete -c inir -n '__inir_at_function iris' -a settingsClose -d 'Close iRiS Settings in either host, over the desktop or as…'
 complete -c inir -n '__inir_at_function iris' -a bubble -d 'Place an Island bubble (left, right, utility) or an extra b…'
-complete -c inir -n '__inir_at_value 2 bubble iris' -a 'left right utility weather notifications controls sound mic tools media visualizer tray top-left top-right bottom-left bottom-right edge: island off'
+complete -c inir -n '__inir_at_value 2 bubble iris' -a 'left right utility weather notifications controls sound mic tools media visualizer tray top-left top-right bottom-left bottom-right left-top left-bottom right-top right-bottom edge: island off'
 complete -c inir -n '__inir_at_function iris' -a dock -d 'reveal, hide or toggle the iRiS Dock (revealed stays until…'
 complete -c inir -n '__inir_at_value 1 dock iris' -a 'reveal hide toggle'
 complete -c inir -n '__inir_at_function iris' -a dockApp -d 'Open a Dock app\'s windows or menu by app id (e.g'

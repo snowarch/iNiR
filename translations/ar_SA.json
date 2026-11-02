@@ -10138,5 +10138,11 @@
   "%1 sections": "%1 أقسام",
   "Dial size": "حجم القرص",
   "Hour": "الساعة",
-  "Trend": "الاتجاه"
+  "Trend": "الاتجاه",
+  "Down from top left": "نزولًا من أعلى اليسار",
+  "Up from bottom left": "صعودًا من أسفل اليسار",
+  "Down from top right": "نزولًا من أعلى اليمين",
+  "Up from bottom right": "صعودًا من أسفل اليمين",
+  "Grow from the corner": "النمو من الزاوية",
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "تخرج الفقاعات في الزاوية من منحنى الإطار كمحيط واحد، مهما امتدت على طول الحافة."
 }

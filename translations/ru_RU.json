@@ -10138,5 +10138,11 @@
   "%1 sections": "Разделов: %1",
   "Dial size": "Размер циферблата",
   "Hour": "Час",
-  "Trend": "Тренд"
+  "Trend": "Тренд",
+  "Down from top left": "Вниз от верхнего левого угла",
+  "Up from bottom left": "Вверх от нижнего левого угла",
+  "Down from top right": "Вниз от верхнего правого угла",
+  "Up from bottom right": "Вверх от нижнего правого угла",
+  "Grow from the corner": "Расти из угла",
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Пузыри в углу выходят из изгиба рамки одним контуром, как бы далеко вдоль края они ни тянулись."
 }

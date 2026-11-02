@@ -10138,5 +10138,11 @@
   "%1 sections": "%1 bagian",
   "Dial size": "Ukuran dial",
   "Hour": "Jam",
-  "Trend": "Tren"
+  "Trend": "Tren",
+  "Down from top left": "Ke bawah dari kiri atas",
+  "Up from bottom left": "Ke atas dari kiri bawah",
+  "Down from top right": "Ke bawah dari kanan atas",
+  "Up from bottom right": "Ke atas dari kanan bawah",
+  "Grow from the corner": "Tumbuh dari sudut",
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Gelembung di sudut keluar dari lengkung bingkai sebagai satu kontur, sejauh apa pun mereka mencapai sepanjang tepi."
 }

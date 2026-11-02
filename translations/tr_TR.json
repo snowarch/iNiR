@@ -10138,5 +10138,11 @@
   "%1 sections": "%1 bölüm",
   "Dial size": "Kadran boyutu",
   "Hour": "Saat",
-  "Trend": "Eğilim"
+  "Trend": "Eğilim",
+  "Down from top left": "Sol üstten aşağı",
+  "Up from bottom left": "Sol alttan yukarı",
+  "Down from top right": "Sağ üstten aşağı",
+  "Up from bottom right": "Sağ alttan yukarı",
+  "Grow from the corner": "Köşeden büyü",
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Bir köşedeki baloncuklar, kenar boyunca ne kadar uzağa giderse gitsin, çerçevenin kıvrımından tek bir kontur olarak çıkar."
 }

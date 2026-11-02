@@ -10138,5 +10138,11 @@
   "%1 sections": "%1 Abschnitte",
   "Dial size": "Zifferblattgröße",
   "Hour": "Stunde",
-  "Trend": "Verlauf"
+  "Trend": "Verlauf",
+  "Down from top left": "Abwärts von oben links",
+  "Up from bottom left": "Aufwärts von unten links",
+  "Down from top right": "Abwärts von oben rechts",
+  "Up from bottom right": "Aufwärts von unten rechts",
+  "Grow from the corner": "Aus der Ecke wachsen",
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Blasen in einer Ecke wachsen als eine Kontur aus der Rahmenkurve, egal wie weit sie am Rand reichen."
 }

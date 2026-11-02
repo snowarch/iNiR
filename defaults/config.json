@@ -2243,6 +2243,7 @@
             "attach": true,
             "join": "notch",
             "notchCurve": 100,
+            "fromCorner": true,
             "reserve": true,
             "apps": []
         },

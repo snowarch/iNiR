@@ -10138,5 +10138,11 @@
   "%1 sections": "Розділів: %1",
   "Dial size": "Розмір циферблата",
   "Hour": "Година",
-  "Trend": "Тренд"
+  "Trend": "Тренд",
+  "Down from top left": "Донизу від верхнього лівого кута",
+  "Up from bottom left": "Догори від нижнього лівого кута",
+  "Down from top right": "Донизу від верхнього правого кута",
+  "Up from bottom right": "Догори від нижнього правого кута",
+  "Grow from the corner": "Рости з кута",
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Бульбашки в куті виходять із вигину рамки одним контуром, хоч би як далеко вздовж краю вони сягали."
 }

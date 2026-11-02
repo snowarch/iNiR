@@ -10138,5 +10138,11 @@
   "%1 sections": "%1 अनुभाग",
   "Dial size": "डायल का आकार",
   "Hour": "घंटा",
-  "Trend": "रुझान"
+  "Trend": "रुझान",
+  "Down from top left": "ऊपर बाईं ओर से नीचे",
+  "Up from bottom left": "नीचे बाईं ओर से ऊपर",
+  "Down from top right": "ऊपर दाईं ओर से नीचे",
+  "Up from bottom right": "नीचे दाईं ओर से ऊपर",
+  "Grow from the corner": "कोने से उगाएँ",
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "कोने के बबल फ़्रेम के घुमाव से एक ही रूपरेखा में निकलते हैं, किनारे के साथ वे कितनी भी दूर तक जाएँ।"
 }
