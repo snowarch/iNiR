@@ -10042,11 +10042,11 @@
   "Everything drawn as an island wears these: bar islands, panels and widgets. Each keeps its own shape.": "आइलैंड के रूप में बनी हर चीज़ इन्हें पहनती है: बार आइलैंड, पैनल और विजेट। हर एक अपना आकार रखता है।",
   "How the resting Island shows the time.": "आराम में द्वीप समय कैसे दिखाता है।",
   "The time, with the sun's path under it by day.": "समय, और दिन में उसके नीचे सूरज का रास्ता।",
-  "The time, then dots counting down to your next event.": "समय, फिर बिंदु जो आपके अगले इवेंट तक गिनती करते हैं।",
-  "A tile per figure that turns as it changes.": "हर अंक की एक टाइल, जो बदलने पर पलटती है।",
-  "The hour beside a radio scale of minutes.": "मिनटों के रेडियो स्केल के पास घंटा।",
-  "A sign lined with bulbs billing the song or the day.": "बल्बों से सजा साइनबोर्ड जो गाना या दिन दिखाता है।",
-  "The time beside tonight's moon, or the song's cover.": "आज रात के चाँद या गाने के कवर के पास समय।",
+  "The time, then what is next on your calendar.": "समय, फिर आपके कैलेंडर में आगे क्या है।",
+  "The hour lit on its own tile, the minutes beside it.": "अपनी टाइल पर जगमगाता घंटा, पास में मिनट।",
+  "A watch with real hands, the day beside it.": "असली सुइयों वाली घड़ी, पास में दिन।",
+  "One fact of your day, a new one each minute.": "आपके दिन की एक बात, हर मिनट नई।",
+  "A round window on the sky: the sun, the weather, tonight's moon.": "आकाश की गोल खिड़की: सूरज, मौसम और आज रात का चाँद।",
   "until %1": "%1 तक",
   "The path a Direct shape follows as it opens or adjusts.": "खुलते या बदलते समय सीधा आकार जिस रास्ते पर चलता है।",
   "Leaves fast and lands softly.": "तेज़ी से निकलता है और धीरे उतरता है।",
@@ -10147,5 +10147,7 @@
   "Down from top right": "ऊपर दाईं ओर से नीचे",
   "Up from bottom right": "नीचे दाईं ओर से ऊपर",
   "Grow from the corner": "कोने से उगाएँ",
-  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "कोने के बबल फ़्रेम के घुमाव से एक ही रूपरेखा में निकलते हैं, किनारे के साथ वे कितनी भी दूर तक जाएँ।"
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "कोने के बबल फ़्रेम के घुमाव से एक ही रूपरेखा में निकलते हैं, किनारे के साथ वे कितनी भी दूर तक जाएँ।",
+  "in %1": "%1 में",
+  "%1 h": "%1 घं"
 }

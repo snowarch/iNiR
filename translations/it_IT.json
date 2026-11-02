@@ -10042,11 +10042,11 @@
   "Everything drawn as an island wears these: bar islands, panels and widgets. Each keeps its own shape.": "Tutto ciò che è disegnato come isola li indossa: isole della barra, pannelli e widget. Ognuno mantiene la sua forma.",
   "How the resting Island shows the time.": "Come l'Isola a riposo mostra l'ora.",
   "The time, with the sun's path under it by day.": "L'ora, con il percorso del sole sotto, di giorno.",
-  "The time, then dots counting down to your next event.": "L'ora, poi punti che contano fino al tuo prossimo evento.",
-  "A tile per figure that turns as it changes.": "Una tessera per cifra che gira quando cambia.",
-  "The hour beside a radio scale of minutes.": "L'ora accanto a una scala radio dei minuti.",
-  "A sign lined with bulbs billing the song or the day.": "Un'insegna di lampadine che annuncia la canzone o il giorno.",
-  "The time beside tonight's moon, or the song's cover.": "L'ora accanto alla luna di stasera o alla copertina della canzone.",
+  "The time, then what is next on your calendar.": "L'ora, poi ciò che viene dopo nel tuo calendario.",
+  "The hour lit on its own tile, the minutes beside it.": "L'ora accesa sulla sua tessera, i minuti accanto.",
+  "A watch with real hands, the day beside it.": "Un orologio con vere lancette, il giorno accanto.",
+  "One fact of your day, a new one each minute.": "Un dato della tua giornata, uno nuovo ogni minuto.",
+  "A round window on the sky: the sun, the weather, tonight's moon.": "Una finestra rotonda sul cielo: il sole, il meteo, la luna di stanotte.",
   "until %1": "fino alle %1",
   "The path a Direct shape follows as it opens or adjusts.": "Il percorso che una forma Diretta segue quando si apre o si regola.",
   "Leaves fast and lands softly.": "Parte veloce e atterra morbida.",
@@ -10147,5 +10147,7 @@
   "Down from top right": "Verso il basso dall'angolo in alto a destra",
   "Up from bottom right": "Verso l'alto dall'angolo in basso a destra",
   "Grow from the corner": "Nascere dall'angolo",
-  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Le bolle in un angolo escono dalla curva della cornice come un unico contorno, per quanto lontano arrivino lungo il bordo."
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Le bolle in un angolo escono dalla curva della cornice come un unico contorno, per quanto lontano arrivino lungo il bordo.",
+  "in %1": "tra %1",
+  "%1 h": "%1 h"
 }

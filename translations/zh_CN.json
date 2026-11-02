@@ -10042,11 +10042,11 @@
   "Everything drawn as an island wears these: bar islands, panels and widgets. Each keeps its own shape.": "所有以岛屿形式绘制的元素都使用这些设置：栏上的岛屿、面板和小组件。各自保留自己的形状。",
   "How the resting Island shows the time.": "静止时岛屿如何显示时间。",
   "The time, with the sun's path under it by day.": "时间，白天下方是太阳的轨迹。",
-  "The time, then dots counting down to your next event.": "时间，以及一串倒数到下个日程的圆点。",
-  "A tile per figure that turns as it changes.": "每个数字一块方片，变化时翻转。",
-  "The hour beside a radio scale of minutes.": "小时旁是分钟的收音机刻度。",
-  "A sign lined with bulbs billing the song or the day.": "灯泡环绕的招牌，亮出歌曲或日期。",
-  "The time beside tonight's moon, or the song's cover.": "时间旁是今晚的月亮或歌曲封面。",
+  "The time, then what is next on your calendar.": "时间,然后是日历上的下一项。",
+  "The hour lit on its own tile, the minutes beside it.": "小时点亮在自己的方块上,分钟在旁边。",
+  "A watch with real hands, the day beside it.": "一块有真指针的表,旁边是日期。",
+  "One fact of your day, a new one each minute.": "今天的一条信息,每分钟换一条。",
+  "A round window on the sky: the sun, the weather, tonight's moon.": "望向天空的圆窗:太阳、天气和今晚的月亮。",
   "until %1": "到 %1",
   "The path a Direct shape follows as it opens or adjusts.": "直接形状在展开或调整时所走的路径。",
   "Leaves fast and lands softly.": "快速出发，轻柔落地。",
@@ -10147,5 +10147,7 @@
   "Down from top right": "从右上角向下",
   "Up from bottom right": "从右下角向上",
   "Grow from the corner": "从角落长出",
-  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "角落里的气泡无论沿边缘延伸多远，都会从边框的弧线中以一条连续的轮廓长出。"
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "角落里的气泡无论沿边缘延伸多远，都会从边框的弧线中以一条连续的轮廓长出。",
+  "in %1": "%1后",
+  "%1 h": "%1 小时"
 }

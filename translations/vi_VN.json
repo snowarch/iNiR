@@ -10042,11 +10042,11 @@
   "Everything drawn as an island wears these: bar islands, panels and widgets. Each keeps its own shape.": "Mọi thứ vẽ dạng đảo đều mang các thiết lập này: đảo trên thanh, bảng và widget. Mỗi thứ giữ hình dạng riêng.",
   "How the resting Island shows the time.": "Cách Đảo khi nghỉ hiển thị thời gian.",
   "The time, with the sun's path under it by day.": "Thời gian, ban ngày có đường đi của mặt trời bên dưới.",
-  "The time, then dots counting down to your next event.": "Thời gian, rồi các chấm đếm ngược đến sự kiện tiếp theo của bạn.",
-  "A tile per figure that turns as it changes.": "Mỗi chữ số một ô, lật khi thay đổi.",
-  "The hour beside a radio scale of minutes.": "Giờ bên cạnh thang radio của phút.",
-  "A sign lined with bulbs billing the song or the day.": "Biển đèn bóng giới thiệu bài hát hoặc ngày.",
-  "The time beside tonight's moon, or the song's cover.": "Thời gian bên cạnh mặt trăng đêm nay hoặc bìa bài hát.",
+  "The time, then what is next on your calendar.": "Giờ và việc tiếp theo trong lịch của bạn.",
+  "The hour lit on its own tile, the minutes beside it.": "Giờ sáng trên ô riêng, phút ở bên cạnh.",
+  "A watch with real hands, the day beside it.": "Một chiếc đồng hồ có kim thật, bên cạnh là ngày.",
+  "One fact of your day, a new one each minute.": "Một thông tin trong ngày, mỗi phút một điều mới.",
+  "A round window on the sky: the sun, the weather, tonight's moon.": "Một ô cửa tròn nhìn lên trời: mặt trời, thời tiết và trăng đêm nay.",
   "until %1": "đến %1",
   "The path a Direct shape follows as it opens or adjusts.": "Đường mà một hình Trực tiếp đi theo khi mở ra hoặc điều chỉnh.",
   "Leaves fast and lands softly.": "Xuất phát nhanh, đáp xuống êm.",
@@ -10147,5 +10147,7 @@
   "Down from top right": "Xuống từ góc trên bên phải",
   "Up from bottom right": "Lên từ góc dưới bên phải",
   "Grow from the corner": "Mọc từ góc",
-  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Các bong bóng ở góc mọc ra từ đường cong của khung thành một đường viền liền, dù chúng trải xa đến đâu dọc theo cạnh."
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Các bong bóng ở góc mọc ra từ đường cong của khung thành một đường viền liền, dù chúng trải xa đến đâu dọc theo cạnh.",
+  "in %1": "sau %1",
+  "%1 h": "%1 giờ"
 }

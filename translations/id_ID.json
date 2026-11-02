@@ -10042,11 +10042,11 @@
   "Everything drawn as an island wears these: bar islands, panels and widgets. Each keeps its own shape.": "Semua yang digambar sebagai pulau memakai ini: pulau bilah, panel, dan widget. Masing-masing tetap dengan bentuknya.",
   "How the resting Island shows the time.": "Cara Pulau saat diam menampilkan waktu.",
   "The time, with the sun's path under it by day.": "Waktu, dengan lintasan matahari di bawahnya saat siang.",
-  "The time, then dots counting down to your next event.": "Waktu, lalu titik-titik yang menghitung mundur ke acara berikutnya.",
-  "A tile per figure that turns as it changes.": "Satu tegel per angka yang berputar saat berubah.",
-  "The hour beside a radio scale of minutes.": "Jam di samping skala radio menit.",
-  "A sign lined with bulbs billing the song or the day.": "Papan berhias bohlam yang menampilkan lagu atau hari.",
-  "The time beside tonight's moon, or the song's cover.": "Waktu di samping bulan malam ini atau sampul lagu.",
+  "The time, then what is next on your calendar.": "Waktu, lalu yang berikutnya di kalendermu.",
+  "The hour lit on its own tile, the minutes beside it.": "Jam menyala di petaknya sendiri, menit di sampingnya.",
+  "A watch with real hands, the day beside it.": "Arloji dengan jarum sungguhan, hari di sampingnya.",
+  "One fact of your day, a new one each minute.": "Satu fakta harimu, yang baru setiap menit.",
+  "A round window on the sky: the sun, the weather, tonight's moon.": "Jendela bundar ke langit: matahari, cuaca, dan bulan malam ini.",
   "until %1": "sampai %1",
   "The path a Direct shape follows as it opens or adjusts.": "Jalur yang diikuti bentuk Langsung saat terbuka atau menyesuaikan.",
   "Leaves fast and lands softly.": "Berangkat cepat dan mendarat lembut.",
@@ -10147,5 +10147,7 @@
   "Down from top right": "Ke bawah dari kanan atas",
   "Up from bottom right": "Ke atas dari kanan bawah",
   "Grow from the corner": "Tumbuh dari sudut",
-  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Gelembung di sudut keluar dari lengkung bingkai sebagai satu kontur, sejauh apa pun mereka mencapai sepanjang tepi."
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Gelembung di sudut keluar dari lengkung bingkai sebagai satu kontur, sejauh apa pun mereka mencapai sepanjang tepi.",
+  "in %1": "dalam %1",
+  "%1 h": "%1 j"
 }

@@ -10042,11 +10042,11 @@
   "Everything drawn as an island wears these: bar islands, panels and widgets. Each keeps its own shape.": "Усе, що малюється островом, має ці налаштування: острови панелі, панелі й віджети. Форма в кожного своя.",
   "How the resting Island shows the time.": "Як Острів у спокої показує час.",
   "The time, with the sun's path under it by day.": "Час, а вдень під ним шлях сонця.",
-  "The time, then dots counting down to your next event.": "Час і крапки, що відлічують до наступної події.",
-  "A tile per figure that turns as it changes.": "Плитка на кожну цифру, перевертається при зміні.",
-  "The hour beside a radio scale of minutes.": "Година поруч із радіошкалою хвилин.",
-  "A sign lined with bulbs billing the song or the day.": "Вивіска з лампочками: пісня або день.",
-  "The time beside tonight's moon, or the song's cover.": "Час поруч із сьогоднішнім місяцем або обкладинкою пісні.",
+  "The time, then what is next on your calendar.": "Час і наступна подія в календарі.",
+  "The hour lit on its own tile, the minutes beside it.": "Година світиться на власній плитці, хвилини поруч.",
+  "A watch with real hands, the day beside it.": "Годинник зі справжніми стрілками, поруч день.",
+  "One fact of your day, a new one each minute.": "Один факт про ваш день, щохвилини новий.",
+  "A round window on the sky: the sun, the weather, tonight's moon.": "Кругле вікно в небо: сонце, погода й місяць цієї ночі.",
   "until %1": "до %1",
   "The path a Direct shape follows as it opens or adjusts.": "Шлях, яким пряма форма відкривається або підлаштовується.",
   "Leaves fast and lands softly.": "Швидко стартує і м'яко приземляється.",
@@ -10147,5 +10147,7 @@
   "Down from top right": "Донизу від верхнього правого кута",
   "Up from bottom right": "Догори від нижнього правого кута",
   "Grow from the corner": "Рости з кута",
-  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Бульбашки в куті виходять із вигину рамки одним контуром, хоч би як далеко вздовж краю вони сягали."
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Бульбашки в куті виходять із вигину рамки одним контуром, хоч би як далеко вздовж краю вони сягали.",
+  "in %1": "за %1",
+  "%1 h": "%1 год"
 }

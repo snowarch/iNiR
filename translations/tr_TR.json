@@ -10042,11 +10042,11 @@
   "Everything drawn as an island wears these: bar islands, panels and widgets. Each keeps its own shape.": "Ada olarak çizilen her şey bunları giyer: çubuk adaları, paneller ve widget'lar. Her biri kendi şeklini korur.",
   "How the resting Island shows the time.": "Dinlenen Ada'nın saati nasıl gösterdiği.",
   "The time, with the sun's path under it by day.": "Saat, gündüz altında güneşin yoluyla.",
-  "The time, then dots counting down to your next event.": "Saat ve sonraki etkinliğine kadar sayan noktalar.",
-  "A tile per figure that turns as it changes.": "Her rakama bir karo, değişince döner.",
-  "The hour beside a radio scale of minutes.": "Dakikaların radyo skalası yanında saat.",
-  "A sign lined with bulbs billing the song or the day.": "Şarkıyı ya da günü duyuran ampullü bir tabela.",
-  "The time beside tonight's moon, or the song's cover.": "Saat, yanında bu gecenin ayı ya da şarkının kapağı.",
+  "The time, then what is next on your calendar.": "Saat ve takviminde sıradaki şey.",
+  "The hour lit on its own tile, the minutes beside it.": "Saat kendi kutusunda parlar, dakikalar yanında.",
+  "A watch with real hands, the day beside it.": "Gerçek ibreli bir saat, yanında gün.",
+  "One fact of your day, a new one each minute.": "Gününe dair tek bir bilgi, her dakika yenisi.",
+  "A round window on the sky: the sun, the weather, tonight's moon.": "Gökyüzüne yuvarlak bir pencere: güneş, hava durumu ve bu gecenin ayı.",
   "until %1": "%1 kadar",
   "The path a Direct shape follows as it opens or adjusts.": "Doğrudan bir şeklin açılırken ya da ayarlanırken izlediği yol.",
   "Leaves fast and lands softly.": "Hızlı çıkar, yumuşak iner.",
@@ -10147,5 +10147,7 @@
   "Down from top right": "Sağ üstten aşağı",
   "Up from bottom right": "Sağ alttan yukarı",
   "Grow from the corner": "Köşeden büyü",
-  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Bir köşedeki baloncuklar, kenar boyunca ne kadar uzağa giderse gitsin, çerçevenin kıvrımından tek bir kontur olarak çıkar."
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Bir köşedeki baloncuklar, kenar boyunca ne kadar uzağa giderse gitsin, çerçevenin kıvrımından tek bir kontur olarak çıkar.",
+  "in %1": "%1 sonra",
+  "%1 h": "%1 sa"
 }

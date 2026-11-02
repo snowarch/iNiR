@@ -10042,11 +10042,11 @@
   "Everything drawn as an island wears these: bar islands, panels and widgets. Each keeps its own shape.": "Всё, что рисуется островом, носит эти настройки: острова панели, панели и виджеты. Форма у каждого своя.",
   "How the resting Island shows the time.": "Как Остров в покое показывает время.",
   "The time, with the sun's path under it by day.": "Время, а днём под ним путь солнца.",
-  "The time, then dots counting down to your next event.": "Время и точки, отсчитывающие до следующего события.",
-  "A tile per figure that turns as it changes.": "Плитка на каждую цифру, переворачивается при смене.",
-  "The hour beside a radio scale of minutes.": "Час рядом с радиошкалой минут.",
-  "A sign lined with bulbs billing the song or the day.": "Вывеска с лампочками: песня или день.",
-  "The time beside tonight's moon, or the song's cover.": "Время рядом с сегодняшней луной или обложкой песни.",
+  "The time, then what is next on your calendar.": "Время и следующее событие в календаре.",
+  "The hour lit on its own tile, the minutes beside it.": "Час светится на своей плитке, минуты рядом.",
+  "A watch with real hands, the day beside it.": "Часы с настоящими стрелками, рядом день.",
+  "One fact of your day, a new one each minute.": "Один факт о вашем дне, каждую минуту новый.",
+  "A round window on the sky: the sun, the weather, tonight's moon.": "Круглое окно в небо: солнце, погода и сегодняшняя луна.",
   "until %1": "до %1",
   "The path a Direct shape follows as it opens or adjusts.": "Путь, по которому прямая форма открывается или подстраивается.",
   "Leaves fast and lands softly.": "Быстро стартует и мягко приземляется.",
@@ -10147,5 +10147,7 @@
   "Down from top right": "Вниз от верхнего правого угла",
   "Up from bottom right": "Вверх от нижнего правого угла",
   "Grow from the corner": "Расти из угла",
-  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Пузыри в углу выходят из изгиба рамки одним контуром, как бы далеко вдоль края они ни тянулись."
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Пузыри в углу выходят из изгиба рамки одним контуром, как бы далеко вдоль края они ни тянулись.",
+  "in %1": "через %1",
+  "%1 h": "%1 ч"
 }

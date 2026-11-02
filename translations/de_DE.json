@@ -10042,11 +10042,11 @@
   "Everything drawn as an island wears these: bar islands, panels and widgets. Each keeps its own shape.": "Alles, was als Insel gezeichnet wird, trägt diese Einstellungen: Leisteninseln, Panels und Widgets. Jedes behält seine eigene Form.",
   "How the resting Island shows the time.": "Wie die ruhende Insel die Uhrzeit zeigt.",
   "The time, with the sun's path under it by day.": "Die Uhrzeit, tagsüber mit dem Weg der Sonne darunter.",
-  "The time, then dots counting down to your next event.": "Die Uhrzeit, dann Punkte, die bis zu deinem nächsten Termin herunterzählen.",
-  "A tile per figure that turns as it changes.": "Eine Kachel pro Ziffer, die sich dreht, wenn sie wechselt.",
-  "The hour beside a radio scale of minutes.": "Die Stunde neben einer Radioskala der Minuten.",
-  "A sign lined with bulbs billing the song or the day.": "Ein Schild voller Glühbirnen, das den Song oder den Tag ankündigt.",
-  "The time beside tonight's moon, or the song's cover.": "Die Uhrzeit neben dem Mond von heute Nacht oder dem Song-Cover.",
+  "The time, then what is next on your calendar.": "Die Uhrzeit, dann das Nächste in deinem Kalender.",
+  "The hour lit on its own tile, the minutes beside it.": "Die Stunde leuchtet auf ihrer eigenen Kachel, die Minuten daneben.",
+  "A watch with real hands, the day beside it.": "Eine Uhr mit echten Zeigern, daneben der Tag.",
+  "One fact of your day, a new one each minute.": "Eine Tatsache deines Tages, jede Minute eine neue.",
+  "A round window on the sky: the sun, the weather, tonight's moon.": "Ein rundes Fenster zum Himmel: Sonne, Wetter und der Mond von heute Nacht.",
   "until %1": "bis %1",
   "The path a Direct shape follows as it opens or adjusts.": "Der Weg, dem eine direkte Form beim Öffnen oder Anpassen folgt.",
   "Leaves fast and lands softly.": "Startet schnell und landet weich.",
@@ -10147,5 +10147,7 @@
   "Down from top right": "Abwärts von oben rechts",
   "Up from bottom right": "Aufwärts von unten rechts",
   "Grow from the corner": "Aus der Ecke wachsen",
-  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Blasen in einer Ecke wachsen als eine Kontur aus der Rahmenkurve, egal wie weit sie am Rand reichen."
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Blasen in einer Ecke wachsen als eine Kontur aus der Rahmenkurve, egal wie weit sie am Rand reichen.",
+  "in %1": "in %1",
+  "%1 h": "%1 h"
 }

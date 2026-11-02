@@ -10042,11 +10042,11 @@
   "Everything drawn as an island wears these: bar islands, panels and widgets. Each keeps its own shape.": "كل ما يُرسم كجزيرة يرتدي هذه الإعدادات: جزر الشريط واللوحات والأدوات. ويحتفظ كلٌّ منها بشكله.",
   "How the resting Island shows the time.": "كيف تعرض الجزيرة الوقت وهي ساكنة.",
   "The time, with the sun's path under it by day.": "الوقت، ومسار الشمس تحته نهارًا.",
-  "The time, then dots counting down to your next event.": "الوقت، ثم نقاط تعدّ تنازليًا حتى حدثك التالي.",
-  "A tile per figure that turns as it changes.": "بلاطة لكل رقم تنقلب عندما يتغيّر.",
-  "The hour beside a radio scale of minutes.": "الساعة بجانب مقياس راديو للدقائق.",
-  "A sign lined with bulbs billing the song or the day.": "لافتة محاطة بمصابيح تعلن الأغنية أو اليوم.",
-  "The time beside tonight's moon, or the song's cover.": "الوقت بجانب قمر الليلة أو غلاف الأغنية.",
+  "The time, then what is next on your calendar.": "الوقت، ثم ما هو التالي في تقويمك.",
+  "The hour lit on its own tile, the minutes beside it.": "الساعة مضيئة على بلاطتها، والدقائق بجانبها.",
+  "A watch with real hands, the day beside it.": "ساعة بعقارب حقيقية، واليوم بجانبها.",
+  "One fact of your day, a new one each minute.": "معلومة واحدة عن يومك، وجديدة كل دقيقة.",
+  "A round window on the sky: the sun, the weather, tonight's moon.": "نافذة مستديرة على السماء: الشمس والطقس وقمر الليلة.",
   "until %1": "حتى %1",
   "The path a Direct shape follows as it opens or adjusts.": "المسار الذي يتبعه الشكل المباشر عند فتحه أو ضبطه.",
   "Leaves fast and lands softly.": "ينطلق بسرعة ويهبط بنعومة.",
@@ -10147,5 +10147,7 @@
   "Down from top right": "نزولًا من أعلى اليمين",
   "Up from bottom right": "صعودًا من أسفل اليمين",
   "Grow from the corner": "النمو من الزاوية",
-  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "تخرج الفقاعات في الزاوية من منحنى الإطار كمحيط واحد، مهما امتدت على طول الحافة."
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "تخرج الفقاعات في الزاوية من منحنى الإطار كمحيط واحد، مهما امتدت على طول الحافة.",
+  "in %1": "بعد %1",
+  "%1 h": "%1 س"
 }

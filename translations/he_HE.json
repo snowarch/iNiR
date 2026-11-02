@@ -10042,11 +10042,11 @@
   "Everything drawn as an island wears these: bar islands, panels and widgets. Each keeps its own shape.": "כל מה שמצויר כאי לובש את אלה: איי הסרגל, לוחות ווידג'טים. כל אחד שומר על צורתו.",
   "How the resting Island shows the time.": "איך האיילנד במנוחה מציג את השעה.",
   "The time, with the sun's path under it by day.": "השעה, ומתחתיה מסלול השמש ביום.",
-  "The time, then dots counting down to your next event.": "השעה, ואז נקודות שסופרות לאחור עד האירוע הבא שלך.",
-  "A tile per figure that turns as it changes.": "משבצת לכל ספרה שמתהפכת כשהיא משתנה.",
-  "The hour beside a radio scale of minutes.": "השעה ליד סקאלת רדיו של הדקות.",
-  "A sign lined with bulbs billing the song or the day.": "שלט מוקף נורות שמכריז על השיר או על היום.",
-  "The time beside tonight's moon, or the song's cover.": "השעה ליד הירח של הלילה או עטיפת השיר.",
+  "The time, then what is next on your calendar.": "השעה, ואז מה הבא ביומן שלך.",
+  "The hour lit on its own tile, the minutes beside it.": "השעה מוארת על משבצת משלה, והדקות לצידה.",
+  "A watch with real hands, the day beside it.": "שעון עם מחוגים אמיתיים, והיום לצידו.",
+  "One fact of your day, a new one each minute.": "עובדה אחת על היום שלך, חדשה בכל דקה.",
+  "A round window on the sky: the sun, the weather, tonight's moon.": "חלון עגול לשמיים: השמש, מזג האוויר והירח של הלילה.",
   "until %1": "עד %1",
   "The path a Direct shape follows as it opens or adjusts.": "המסלול שצורה ישירה עוברת כשהיא נפתחת או מתכווננת.",
   "Leaves fast and lands softly.": "יוצאת מהר ונוחתת ברכות.",
@@ -10147,5 +10147,7 @@
   "Down from top right": "למטה מלמעלה מימין",
   "Up from bottom right": "למעלה מלמטה מימין",
   "Grow from the corner": "לצמוח מהפינה",
-  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "בועות בפינה יוצאות מהעיקול של המסגרת כקו מתאר אחד, עד כמה שיגיעו לאורך הקצה."
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "בועות בפינה יוצאות מהעיקול של המסגרת כקו מתאר אחד, עד כמה שיגיעו לאורך הקצה.",
+  "in %1": "בעוד %1",
+  "%1 h": "%1 ש׳"
 }

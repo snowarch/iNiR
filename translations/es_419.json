@@ -10042,11 +10042,11 @@
   "Everything drawn as an island wears these: bar islands, panels and widgets. Each keeps its own shape.": "Todo lo que se dibuja como isla usa esto: las islas de la barra, los paneles y los widgets. Cada uno conserva su forma.",
   "How the resting Island shows the time.": "Cómo muestra la hora la Isla en reposo.",
   "The time, with the sun's path under it by day.": "La hora, con el recorrido del sol debajo durante el día.",
-  "The time, then dots counting down to your next event.": "La hora y unos puntos que cuentan hasta tu próximo evento.",
-  "A tile per figure that turns as it changes.": "Una ficha por cifra que gira cuando cambia.",
-  "The hour beside a radio scale of minutes.": "La hora junto a una escala de radio con los minutos.",
-  "A sign lined with bulbs billing the song or the day.": "Un cartel de bombillas que anuncia la canción o el día.",
-  "The time beside tonight's moon, or the song's cover.": "La hora junto a la luna de esta noche o la portada de la canción.",
+  "The time, then what is next on your calendar.": "La hora y lo que sigue en tu calendario.",
+  "The hour lit on its own tile, the minutes beside it.": "La hora encendida en su propia ficha, con los minutos al lado.",
+  "A watch with real hands, the day beside it.": "Un reloj con agujas de verdad y el día al lado.",
+  "One fact of your day, a new one each minute.": "Un dato de tu día, uno nuevo cada minuto.",
+  "A round window on the sky: the sun, the weather, tonight's moon.": "Una ventana redonda al cielo: el sol, el clima y la luna de esta noche.",
   "until %1": "hasta las %1",
   "The path a Direct shape follows as it opens or adjusts.": "El recorrido que sigue una forma Directa al abrirse o ajustarse.",
   "Leaves fast and lands softly.": "Sale rápido y aterriza suave.",
@@ -10147,5 +10147,7 @@
   "Down from top right": "Hacia abajo desde arriba a la derecha",
   "Up from bottom right": "Hacia arriba desde abajo a la derecha",
   "Grow from the corner": "Nacer de la esquina",
-  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Las burbujas de una esquina salen de la curva del marco como un solo contorno, por lejos que lleguen sobre el borde."
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Las burbujas de una esquina salen de la curva del marco como un solo contorno, por lejos que lleguen sobre el borde.",
+  "in %1": "en %1",
+  "%1 h": "%1 h"
 }

@@ -10042,11 +10042,11 @@
   "Everything drawn as an island wears these: bar islands, panels and widgets. Each keeps its own shape.": "아일랜드로 그려지는 모든 것이 이것을 입습니다: 바 아일랜드, 패널, 위젯. 각자 자기 모양은 유지합니다.",
   "How the resting Island shows the time.": "쉬고 있는 아일랜드가 시간을 보여주는 방식.",
   "The time, with the sun's path under it by day.": "시간과, 낮에는 그 아래 태양의 길.",
-  "The time, then dots counting down to your next event.": "시간과 다음 일정까지 줄어드는 점선.",
-  "A tile per figure that turns as it changes.": "숫자마다 타일 하나, 바뀌면 돌아갑니다.",
-  "The hour beside a radio scale of minutes.": "분을 나타내는 라디오 눈금 옆의 시.",
-  "A sign lined with bulbs billing the song or the day.": "노래나 날짜를 알리는 전구 간판.",
-  "The time beside tonight's moon, or the song's cover.": "시간 옆에 오늘 밤의 달 또는 노래 표지.",
+  "The time, then what is next on your calendar.": "시간과 캘린더의 다음 일정.",
+  "The hour lit on its own tile, the minutes beside it.": "시는 자기 타일에 밝게, 분은 그 옆에.",
+  "A watch with real hands, the day beside it.": "진짜 바늘이 있는 시계와 옆의 날짜.",
+  "One fact of your day, a new one each minute.": "오늘의 정보 하나, 매분 새롭게.",
+  "A round window on the sky: the sun, the weather, tonight's moon.": "하늘을 보는 둥근 창: 해, 날씨, 오늘 밤의 달.",
   "until %1": "%1까지",
   "The path a Direct shape follows as it opens or adjusts.": "직접 모양이 열리거나 조정될 때 따라가는 경로.",
   "Leaves fast and lands softly.": "빠르게 출발해 부드럽게 착지.",
@@ -10147,5 +10147,7 @@
   "Down from top right": "오른쪽 위에서 아래로",
   "Up from bottom right": "오른쪽 아래에서 위로",
   "Grow from the corner": "모서리에서 자라기",
-  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "모서리의 버블은 가장자리를 따라 얼마나 멀리 이어지든 프레임의 곡선에서 하나의 윤곽으로 이어집니다."
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "모서리의 버블은 가장자리를 따라 얼마나 멀리 이어지든 프레임의 곡선에서 하나의 윤곽으로 이어집니다.",
+  "in %1": "%1 후",
+  "%1 h": "%1시간"
 }

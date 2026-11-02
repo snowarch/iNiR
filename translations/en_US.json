@@ -10042,11 +10042,11 @@
   "Everything drawn as an island wears these: bar islands, panels and widgets. Each keeps its own shape.": "Everything drawn as an island wears these: bar islands, panels and widgets. Each keeps its own shape.",
   "How the resting Island shows the time.": "How the resting Island shows the time.",
   "The time, with the sun's path under it by day.": "The time, with the sun's path under it by day.",
-  "The time, then dots counting down to your next event.": "The time, then dots counting down to your next event.",
-  "A tile per figure that turns as it changes.": "A tile per figure that turns as it changes.",
-  "The hour beside a radio scale of minutes.": "The hour beside a radio scale of minutes.",
-  "A sign lined with bulbs billing the song or the day.": "A sign lined with bulbs billing the song or the day.",
-  "The time beside tonight's moon, or the song's cover.": "The time beside tonight's moon, or the song's cover.",
+  "The time, then what is next on your calendar.": "The time, then what is next on your calendar.",
+  "The hour lit on its own tile, the minutes beside it.": "The hour lit on its own tile, the minutes beside it.",
+  "A watch with real hands, the day beside it.": "A watch with real hands, the day beside it.",
+  "One fact of your day, a new one each minute.": "One fact of your day, a new one each minute.",
+  "A round window on the sky: the sun, the weather, tonight's moon.": "A round window on the sky: the sun, the weather, tonight's moon.",
   "until %1": "until %1",
   "The path a Direct shape follows as it opens or adjusts.": "The path a Direct shape follows as it opens or adjusts.",
   "Leaves fast and lands softly.": "Leaves fast and lands softly.",
@@ -10147,5 +10147,7 @@
   "Down from top right": "Down from top right",
   "Up from bottom right": "Up from bottom right",
   "Grow from the corner": "Grow from the corner",
-  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach."
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.",
+  "in %1": "in %1",
+  "%1 h": "%1 h"
 }

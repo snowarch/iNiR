@@ -10042,11 +10042,11 @@
   "Everything drawn as an island wears these: bar islands, panels and widgets. Each keeps its own shape.": "Tout ce qui est dessiné en îlot les porte : îlots de la barre, panneaux et widgets. Chacun garde sa propre forme.",
   "How the resting Island shows the time.": "Comment l'Îlot au repos affiche l'heure.",
   "The time, with the sun's path under it by day.": "L'heure, avec la course du soleil dessous le jour.",
-  "The time, then dots counting down to your next event.": "L'heure, puis des points qui décomptent jusqu'à ton prochain événement.",
-  "A tile per figure that turns as it changes.": "Une tuile par chiffre, qui tourne quand il change.",
-  "The hour beside a radio scale of minutes.": "L'heure à côté d'une échelle radio des minutes.",
-  "A sign lined with bulbs billing the song or the day.": "Une enseigne bordée d'ampoules qui affiche la chanson ou le jour.",
-  "The time beside tonight's moon, or the song's cover.": "L'heure à côté de la lune de ce soir ou de la pochette de la chanson.",
+  "The time, then what is next on your calendar.": "L'heure, puis la suite de ton calendrier.",
+  "The hour lit on its own tile, the minutes beside it.": "L'heure allumée sur sa propre tuile, les minutes à côté.",
+  "A watch with real hands, the day beside it.": "Une montre avec de vraies aiguilles, le jour à côté.",
+  "One fact of your day, a new one each minute.": "Un fait de ta journée, un nouveau chaque minute.",
+  "A round window on the sky: the sun, the weather, tonight's moon.": "Une fenêtre ronde sur le ciel : le soleil, la météo, la lune de ce soir.",
   "until %1": "jusqu'à %1",
   "The path a Direct shape follows as it opens or adjusts.": "Le chemin que suit une forme Directe en s'ouvrant ou en s'ajustant.",
   "Leaves fast and lands softly.": "Part vite et se pose en douceur.",
@@ -10147,5 +10147,7 @@
   "Down from top right": "Vers le bas depuis le coin supérieur droit",
   "Up from bottom right": "Vers le haut depuis le coin inférieur droit",
   "Grow from the corner": "Naître du coin",
-  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Les bulles d'un coin sortent de la courbe du cadre en un seul contour, aussi loin qu'elles aillent le long du bord."
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "Les bulles d'un coin sortent de la courbe du cadre en un seul contour, aussi loin qu'elles aillent le long du bord.",
+  "in %1": "dans %1",
+  "%1 h": "%1 h"
 }

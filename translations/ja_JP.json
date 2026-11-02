@@ -10042,11 +10042,11 @@
   "Everything drawn as an island wears these: bar islands, panels and widgets. Each keeps its own shape.": "アイランドとして描かれるものはすべてこれをまといます：バーのアイランド、パネル、ウィジェット。形はそれぞれのままです。",
   "How the resting Island shows the time.": "待機中のアイランドが時刻をどう見せるか。",
   "The time, with the sun's path under it by day.": "時刻と、昼間はその下に太陽の軌道。",
-  "The time, then dots counting down to your next event.": "時刻と、次の予定までを数える点線。",
-  "A tile per figure that turns as it changes.": "数字ごとのタイルが、変わると回転する。",
-  "The hour beside a radio scale of minutes.": "時の横に分のラジオ目盛り。",
-  "A sign lined with bulbs billing the song or the day.": "電球で縁取った看板が曲や日付を掲げる。",
-  "The time beside tonight's moon, or the song's cover.": "時刻の横に今夜の月、または曲のカバー。",
+  "The time, then what is next on your calendar.": "時刻と、カレンダーの次の予定。",
+  "The hour lit on its own tile, the minutes beside it.": "時が専用のタイルに灯り、横に分。",
+  "A watch with real hands, the day beside it.": "本物の針を持つ時計と、横に日付。",
+  "One fact of your day, a new one each minute.": "今日のひとことを、毎分新しく。",
+  "A round window on the sky: the sun, the weather, tonight's moon.": "空を覗く丸い窓:太陽、天気、今夜の月。",
   "until %1": "%1 まで",
   "The path a Direct shape follows as it opens or adjusts.": "ダイレクトな形が開くとき・調整するときにたどる軌道。",
   "Leaves fast and lands softly.": "速く出て、やわらかく着地。",
@@ -10147,5 +10147,7 @@
   "Down from top right": "右上から下へ",
   "Up from bottom right": "右下から上へ",
   "Grow from the corner": "角から伸ばす",
-  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "角のバブルは、縁に沿ってどこまで並んでも、フレームの曲線からひと続きの輪郭として伸びます。"
+  "Bubbles in a corner run out of the frame's curve as one contour, however far along the edge they reach.": "角のバブルは、縁に沿ってどこまで並んでも、フレームの曲線からひと続きの輪郭として伸びます。",
+  "in %1": "%1後",
+  "%1 h": "%1時間"
 }
