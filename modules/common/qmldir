@@ -6,14 +6,11 @@ singleton Config 1.0 Config.qml
 ConfigOptions 1.0 ConfigOptions.qml
 singleton Directories 1.0 Directories.qml
 singleton FamilyStyle 1.0 FamilyStyle.qml
-EdgeReveal 1.0 EdgeReveal.qml
 FamilyPartLoader 1.0 FamilyPartLoader.qml
 singleton Icons 1.0 Icons.qml
 singleton Images 1.0 Images.qml
 singleton MediaArtworkCache 1.0 MediaArtworkCache.qml
 singleton MascotCatalog 1.0 MascotCatalog.qml
 singleton Persistent 1.0 Persistent.qml
-singleton SidebarGeometry 1.0 SidebarGeometry.qml
-singleton StylePresets 1.0 StylePresets.qml
 singleton ThemePresets 1.0 ThemePresets.qml
 ToastManager 1.0 ToastManager.qml

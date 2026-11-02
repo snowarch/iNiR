@@ -17,7 +17,6 @@ Item {
     // === API ===
     property string icon: ""
     property string fallback: "application-x-executable"
-    property bool filled: false           // Use filled variant for fluent icons
     property int iconSize: 24
     property alias implicitSize: root.iconSize
     
@@ -25,8 +24,6 @@ Item {
     property bool monochrome: false       // If true, applies 'color' as mask. If false, renders original colors.
     property color color: Appearance.colors.colOnLayer1 // Used only if monochrome=true
     
-    // Fluent icon mode - only try fluent asset paths when true (set by FluentIcon)
-    property bool useFluent: false
 
     // === Layout ===
     implicitWidth: iconSize
@@ -80,13 +77,7 @@ Item {
     Component {
         id: iconKind
         Kirigami.Icon {
-            source: {
-                // Only try fluent path if explicitly requested
-                if (root.useFluent && root.icon && !root.icon.includes("/") && !root.icon.includes(".")) {
-                    return `${Directories.assetsPath}/icons/fluent/${root.icon}${root.filled ? "-filled" : ""}.svg`
-                }
-                return root.resolvedSource
-            }
+            source: root.resolvedSource
             
             fallback: root.resolvedSource // Falls back to system theme if file not found
             

@@ -581,7 +581,7 @@ Item {
 ```
 
 Waffle faces use `Looks.*` tokens, the `W*` components (`WText`, `WButton`, `WSlider`…) and Fluent
-icons from `assets/icons/fluent`, never `Appearance.*`. Sizes go through `Looks.dp()`. Settings are
+icons from `modules/waffle/assets/icons/fluent`, never `Appearance.*`. Sizes go through `Looks.dp()`. Settings are
 the same `configKeys` the desktop face reads, through `CustomWidgets.getConfigValue(id, key, fallback)`.
 The card only exists while the panel is open, so it costs nothing the rest of the time.
 
