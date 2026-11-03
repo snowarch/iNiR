@@ -1060,7 +1060,7 @@ AbstractWidget {
     Loader {
         id: faceLoader
         anchors.fill: parent
-        active: root.familyFaced
+        active: root.familyFaced && DesktopWidgetLook.ready
         // A face answers to its own rows (Material, Opacity in iRiS Settings); Material's Opacity and Dimming are hidden
         // while a face is drawn, and a value left there from before faded it to a ghost with no row to undo it.
         opacity: 1

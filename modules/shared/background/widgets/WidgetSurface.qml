@@ -46,6 +46,7 @@ Item {
     Loader {
         id: plate
         anchors.fill: parent
-        active: root.visible
+        // A family's plate reads its family's look (DesktopWidgetLook.ready); the plain one reads nothing it lacks.
+        active: root.visible && (!(root.widget?.wearsFamily ?? true) || DesktopWidgetLook.ready)
     }
 }
