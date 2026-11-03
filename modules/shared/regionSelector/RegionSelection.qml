@@ -29,7 +29,16 @@ PanelWindow {
     enum SelectionMode { RectCorners, Circle }
     property var action: RegionSelection.SnipAction.Copy
     // A pin is framed on the window itself (LivePinFramer): niri does not say where a tiled window sits on screen.
-    onActionChanged: if (root.action === RegionSelection.SnipAction.Pin) { root.dismiss(); LivePins.frame() }
+    // Next turn, not here: dismissing destroys the toolbar in the middle of the click that chose it.
+    onActionChanged: if (root.action === RegionSelection.SnipAction.Pin) framePin.restart()
+    Timer {
+        id: framePin
+        interval: 0
+        onTriggered: {
+            root.dismiss()
+            LivePins.frame()
+        }
+    }
     property var selectionMode: RegionSelection.SelectionMode.RectCorners
     signal dismiss()
     
