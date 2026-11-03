@@ -11,6 +11,7 @@ iNiR is now a base with plugins: Material, Waffle and iRiS come from the iNiR Hu
 
 ### Added
 - **iNiR Hub**: Material, Waffle and iRiS install as plugins from inir.space/hub, next to community widgets, colour themes and web apps; `inir hub` lists, installs and removes them.
+- **Components with a panel**: a Hub component can bring a surface of its own, worn with the families it names, opened by its own IPC and keeping its options in its own file, so adding one never touches a family or your settings.
 - **Prebuilt runtime**: the shell runs on qs-rs, Quickshell rebuilt in Rust with its own Qt, and inir-accel takes over the shell's helpers; both arrive prebuilt and checked, and Quickshell stays as the fallback.
 - **The `inir` command**: `inir doctor`, `inir update`, `inir deps` and `inir hub` in one compiled command with shell completions; the old launcher stays as the fallback.
 - **Designs for iRiS**: a Design is another look over the same engine, picked in Settings › Appearance; AIRISU, the first one, is coloured lacquer with its own Island, lock, Spotlight, notifications, OSD, menus and widgets.
@@ -42,6 +43,8 @@ iNiR is now a base with plugins: Material, Waffle and iRiS come from the iNiR Hu
 - OpenCV and numpy left the Python dependencies: inir-accel finds the boxes the region selector snaps to in a screenshot.
 
 ### Fixed
+- A laptop with a charge limit is no longer taken for unplugged: no unplug sound, paused music, paused wallpaper or battery idle profile with the charger in, and a low battery notice waits until the reading holds instead of firing on a 0 % blip.
+- The night light comes back after a charger change resets the screen on some Intel laptops.
 - Void: a login no longer hangs when D-Bus starts elogind before its own service does.
 - Debian: a niri built from source gets niri-session and its service, so the shell starts at login.
 - The iNiR block in `.bashrc` and `.zshrc` prints colours and starship only in interactive shells, so scripts stop getting escape codes.
