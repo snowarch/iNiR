@@ -74,4 +74,4 @@ The catalogue refreshes about every six hours. Offline, the Hub shows the last l
 
 ## Make something
 
-The [contributing guide](https://github.com/snowarch/inir-hub/blob/main/CONTRIBUTING.md) has templates for every kind, and `inir hub submit` sends what you made as a pull request. For widgets, the [Widget SDK](https://github.com/snowarch/inir/blob/main/defaults/widgets/WIDGET-SDK.md) and the [iRiS SDK](https://github.com/snowarch/inir/blob/main/defaults/widgets/IRIS-SDK.md) are the reference.
+The [contributing guide](https://github.com/snowarch/inir-hub/blob/main/CONTRIBUTING.md) has templates for every kind, and `inir hub submit` sends what you made as a pull request. For widgets, the [widget guide](https://github.com/snowarch/inir-hub/blob/main/guides/widgets.md) and the [iRiS widget guide](https://github.com/snowarch/inir-hub/blob/main/guides/iris-widgets.md) are the reference.
