@@ -8,10 +8,10 @@ import qs.modules.common.widgets
 import qs.services
 // Elegant family transition overlay
 //
-// Choreography:
-//   Entry  → overlay fades in + background zooms/settles + blur builds progressively
-//   Hold   → exitComplete fires (panels swap underneath), brief hold for loading
-//   Exit   → content recedes first, then family element, then background fades out
+// Choreography, the same swap a switch without animation does plus a curtain around it:
+//   Entry  → the curtain fades in over a blur drawn once, so no frame of it pays for the blur
+//   Hold   → exitComplete fires (panels swap underneath) and it holds exactly until the family stands
+//   Exit   → the family's mark recedes, then the curtain fades out
 //
 // Each family has its own visual identity:
 //   Waffle  → Fluent acrylic card with decelerate curve and accent shimmer
@@ -25,11 +25,11 @@ Scope {
 
     // ── Timing ──────────────────────────────────────────────────────────
     readonly property bool _animated: Appearance.animationsEnabled
-    readonly property int _entryFade: _animated ? 300 : 5
-    readonly property int _enterDuration: _animated ? 380 : 5
-    readonly property int _holdDuration: 200
-    readonly property int _contentExitDelay: _animated ? 180 : 5
-    readonly property int _exitDuration: _animated ? 380 : 5
+    readonly property int _entryFade: _animated ? 130 : 5
+    readonly property int _enterDuration: _animated ? 150 : 5
+    readonly property int _holdDuration: 50
+    readonly property int _contentExitDelay: _animated ? 70 : 5
+    readonly property int _exitDuration: _animated ? 210 : 5
 
     // ── State ───────────────────────────────────────────────────────────
     // The target family's own transition (its part `familyTransition`), Material's ink ripple otherwise. It may say
@@ -44,8 +44,7 @@ Scope {
 
     // ── Animated background properties ──────────────────────────────────
     property real _overlayOpacity: 0
-    property real _bgScale: 1.05
-    property real _blurAmount: 0
+    property real _bgScale: 1.02
 
     // ── Color snapshot (frozen at transition start) ─────────────────────
     // Prevents palette shifts from affecting the overlay mid-animation.
@@ -94,7 +93,7 @@ Scope {
 
     function _forceFinish(): void {
         enterTimer.stop(); holdTimer.stop(); contentExitTimer.stop()
-        fadeIn.stop(); bgScaleIn.stop(); blurIn.stop()
+        fadeIn.stop(); bgScaleIn.stop()
         fadeOut.stop(); bgScaleOut.stop()
         watchdog.stop()
         // exitComplete may not have run yet; the family still has to be applied.
@@ -132,13 +131,10 @@ Scope {
 
             // Reset to pre-entry state
             root._overlayOpacity = 0
-            root._bgScale = 1.05
-            root._blurAmount = 0
+            root._bgScale = 1.02
 
-            // Launch entry animations (smooth, never instant)
             fadeIn.restart()
             bgScaleIn.restart()
-            blurIn.restart()
             enterTimer.start()
     }
 
@@ -156,17 +152,9 @@ Scope {
     NumberAnimation {
         id: bgScaleIn
         target: root; property: "_bgScale"
-        from: 1.05; to: 1.0
-        duration: _animated ? 520 : 5
-        easing.type: Easing.OutQuart
-    }
-
-    NumberAnimation {
-        id: blurIn
-        target: root; property: "_blurAmount"
-        from: 0; to: 1
-        duration: _animated ? 360 : 5
-        easing.type: Easing.OutQuad
+        from: 1.02; to: 1.0
+        duration: root._entryFade + root._enterDuration
+        easing.type: Easing.OutCubic
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -174,7 +162,7 @@ Scope {
     // ════════════════════════════════════════════════════════════════════
     Timer {
         id: enterTimer
-        interval: root._enterDuration + 60
+        interval: root._enterDuration
         onTriggered: {
             root.exitComplete()       // panels swap underneath
             holdTimer.start()
@@ -188,11 +176,9 @@ Scope {
             // a first visit compiles the family under the curtain (~1.5 s for iRiS); lifting on a fixed 200 ms showed
             // its panels building in the reveal. Capped at 2.5 s more, under the watchdog.
             if (root.swapPending && root._holdWaits++ < 50) {
-                holdTimer.interval = 50
                 holdTimer.restart()
                 return
             }
-            holdTimer.interval = root._holdDuration
             root._holdWaits = 0
             root._phase = true        // triggers content exit in family components
             contentExitTimer.start()
@@ -226,7 +212,7 @@ Scope {
     NumberAnimation {
         id: bgScaleOut
         target: root; property: "_bgScale"
-        to: 0.98
+        to: 0.99
         duration: root._exitDuration
         easing.type: Easing.InCubic
     }
@@ -274,6 +260,9 @@ Scope {
                     anchors.fill: parent
                     scale: root._bgScale
                     transformOrigin: Item.Center
+                    // Drawn once and moved as a texture: a full screen blur every frame is what made the curtain crawl
+                    // on an integrated GPU, with the new family building on the same thread.
+                    layer.enabled: true
 
                     Image {
                         id: wallpaperImg
@@ -308,8 +297,8 @@ Scope {
                         source: wallpaperImg
                         visible: wallpaperImg.status === Image.Ready
                         blurEnabled: Appearance.effectsEnabled
-                        // The family's own depth, read live: its part may arrive after the blur started.
-                        blur: root._blurAmount * (root._familyPart?.blur ?? 0.8)
+                        // The family's own depth; its part may arrive after the first frame.
+                        blur: root._familyPart?.blur ?? 0.8
                         blurMax: 64
                         saturation: 0.25
                     }

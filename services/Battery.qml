@@ -31,7 +31,16 @@ Singleton {
     property bool isPluggedIn: isCharging || chargeState == UPowerDeviceState.PendingCharge
     // Discharging-based, not !isPluggedIn: FullyCharged on AC must not count as "on battery"
     readonly property bool onBattery: available && (chargeState == UPowerDeviceState.Discharging || chargeState == UPowerDeviceState.PendingDischarge)
-    property real percentage: simulating ? simulatedPercentage : (UPower.displayDevice?.percentage ?? 1)
+    // A driver can say 0 % in an unknown state for a moment, at boot or when the charger moves (Lenovo ACPI): that
+    // is no reading, and it must not raise a critical notice or suspend the machine. The last real one stands.
+    property real _lastReading: 1
+    readonly property real _reading: {
+        const device = UPower.displayDevice
+        const unread = !device || (device.percentage <= 0 && device.state === UPowerDeviceState.Unknown)
+        return unread ? root._lastReading : device.percentage
+    }
+    on_ReadingChanged: root._lastReading = root._reading
+    property real percentage: simulating ? simulatedPercentage : root._reading
     readonly property bool allowAutomaticSuspend: Config.options?.battery?.automaticSuspend ?? false
     readonly property bool soundEnabled: Config.options?.sounds?.battery ?? true
 

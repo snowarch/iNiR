@@ -1191,9 +1191,8 @@ ShellRoot {
 
         const targetFamily = _pendingFamily
         _pendingFamily = ""
-        // No warm-up under the curtain: its compile held the GUI thread (1.2 s for iRiS before the curtain, 10-29), and
-        // under it both switches to Material after a reload stood still until the watchdog, 6.9 s (his 10-30). The
-        // panels compile once as they load, the way every boot does (1.2 s for Material), and the curtain holds for it.
+        // The curtain is up and still: the same swap a switch without animation does, so the two differ by the curtain.
+        root._warmFamily(targetFamily)
         root.beginSerializedFamilySwap(targetFamily)
     }
 
