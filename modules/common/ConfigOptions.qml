@@ -477,6 +477,9 @@ JsonAdapter {
                 property string placementStrategy: "free" // "free", "leastBusy", "mostBusy"
                 property real x: 100
                 property real y: 100
+                property string sizeClass: "" // a size picked on no screen of its own (v2.28 wrote it here); each screen's record wins
+                property real freeWidth: 0
+                property real freeHeight: 0
                 property string style: "digital" // "digital" | "androidStacked" | "cookie" | "pixel" | "instrument"
                 property int dim: 0 // Extra dim for clock text (0-100)
                 property string fontFamily: "Space Grotesk"
@@ -544,6 +547,9 @@ JsonAdapter {
                 property string placementStrategy: "free" // "free", "leastBusy", "mostBusy"
                 property real x: 100
                 property real y: 200
+                property string sizeClass: ""
+                property real freeWidth: 0
+                property real freeHeight: 0
                 property int size: 200
                 property int tempSize: 80
                 property int iconSize: 80
@@ -605,6 +611,9 @@ JsonAdapter {
                 }
                 property real x: 120
                 property real y: 320
+                property string sizeClass: ""
+                property real freeWidth: 0
+                property real freeHeight: 0
             }
 
             property JsonObject imageConverter: JsonObject {
@@ -632,6 +641,9 @@ JsonAdapter {
                 property real cornerRadius: -1
                 property real x: 120
                 property real y: 360
+                property string sizeClass: ""
+                property real freeWidth: 0
+                property real freeHeight: 0
             }
 
             property JsonObject mediaControls: JsonObject {
@@ -660,6 +672,9 @@ JsonAdapter {
                 property bool lyricsExpanded: false
                 property real x: 240
                 property real y: 240
+                property string sizeClass: ""
+                property real freeWidth: 0
+                property real freeHeight: 0
                 property int widgetScale: 100
                 property int widgetOpacity: 100
                 property string colorMode: "auto"
@@ -731,6 +746,9 @@ JsonAdapter {
                 }
                 property real x: 100
                 property real y: 100
+                property string sizeClass: ""
+                property real freeWidth: 0
+                property real freeHeight: 0
             }
 
             property JsonObject systemMonitor: JsonObject {
@@ -771,6 +789,9 @@ JsonAdapter {
                 }
                 property real x: 50
                 property real y: 400
+                property string sizeClass: ""
+                property real freeWidth: 0
+                property real freeHeight: 0
             }
 
             property JsonObject battery: JsonObject {
@@ -807,6 +828,9 @@ JsonAdapter {
                 }
                 property real x: 50
                 property real y: 50
+                property string sizeClass: ""
+                property real freeWidth: 0
+                property real freeHeight: 0
             }
 
             property JsonObject notes: JsonObject {
@@ -839,6 +863,9 @@ JsonAdapter {
                 }
                 property real x: 80
                 property real y: 80
+                property string sizeClass: ""
+                property real freeWidth: 0
+                property real freeHeight: 0
             }
 
             property JsonObject japaneseTypography: JsonObject {
@@ -910,6 +937,9 @@ JsonAdapter {
                 }
                 property real x: 56
                 property real y: 120
+                property string sizeClass: ""
+                property real freeWidth: 0
+                property real freeHeight: 0
             }
 
             property JsonObject calendarUpcoming: JsonObject {
@@ -942,6 +972,9 @@ JsonAdapter {
                 }
                 property real x: 80
                 property real y: 80
+                property string sizeClass: ""
+                property real freeWidth: 0
+                property real freeHeight: 0
             }
 
             property JsonObject monthCalendar: JsonObject {
@@ -972,6 +1005,9 @@ JsonAdapter {
                 property int dim: 0
                 property real x: 420
                 property real y: 120
+                property string sizeClass: ""
+                property real freeWidth: 0
+                property real freeHeight: 0
             }
 
             property JsonObject todo: JsonObject {
@@ -1001,6 +1037,9 @@ JsonAdapter {
                 property int dim: 0
                 property real x: 120
                 property real y: 180
+                property string sizeClass: ""
+                property real freeWidth: 0
+                property real freeHeight: 0
             }
 
             property JsonObject timers: JsonObject {
@@ -1033,6 +1072,9 @@ JsonAdapter {
                 property int dim: 0
                 property real x: 360
                 property real y: 420
+                property string sizeClass: ""
+                property real freeWidth: 0
+                property real freeHeight: 0
             }
 
             property JsonObject dayProgress: JsonObject {
@@ -1065,6 +1107,9 @@ JsonAdapter {
                 property int dim: 0
                 property real x: 80
                 property real y: 260
+                property string sizeClass: ""
+                property real freeWidth: 0
+                property real freeHeight: 0
             }
 
             property JsonObject uptime: JsonObject {
@@ -1094,6 +1139,9 @@ JsonAdapter {
                 property int dim: 0
                 property real x: 80
                 property real y: 80
+                property string sizeClass: ""
+                property real freeWidth: 0
+                property real freeHeight: 0
             }
 
             property JsonObject controls: JsonObject {
@@ -1104,6 +1152,9 @@ JsonAdapter {
                 property real cornerRadius: -1
                 property real x: 120
                 property real y: 420
+                property string sizeClass: ""
+                property real freeWidth: 0
+                property real freeHeight: 0
             }
 
             property JsonObject screenTime: JsonObject {
@@ -1114,6 +1165,9 @@ JsonAdapter {
                 property real cornerRadius: -1
                 property real x: 120
                 property real y: 240
+                property string sizeClass: ""
+                property real freeWidth: 0
+                property real freeHeight: 0
             }
 
             property JsonObject palette: JsonObject {
@@ -1124,6 +1178,9 @@ JsonAdapter {
                 property real cornerRadius: -1
                 property real x: 120
                 property real y: 600
+                property string sizeClass: ""
+                property real freeWidth: 0
+                property real freeHeight: 0
             }
 
             property JsonObject lyrics: JsonObject {
@@ -1134,6 +1191,9 @@ JsonAdapter {
                 property real cornerRadius: -1
                 property real x: 520
                 property real y: 600
+                property string sizeClass: ""
+                property real freeWidth: 0
+                property real freeHeight: 0
             }
 
             property JsonObject shape: JsonObject {
@@ -1165,6 +1225,9 @@ JsonAdapter {
                 property int dim: 0
                 property real x: 80
                 property real y: 240
+                property string sizeClass: ""
+                property real freeWidth: 0
+                property real freeHeight: 0
             }
 
             property JsonObject editorial: JsonObject {
@@ -1196,6 +1259,9 @@ JsonAdapter {
                 property int dim: 0
                 property real x: 100
                 property real y: 300
+                property string sizeClass: ""
+                property real freeWidth: 0
+                property real freeHeight: 0
             }
 
             property JsonObject dateBadge: JsonObject {
@@ -1227,6 +1293,9 @@ JsonAdapter {
                 property int dim: 0
                 property real x: 260
                 property real y: 80
+                property string sizeClass: ""
+                property real freeWidth: 0
+                property real freeHeight: 0
             }
 
             property JsonObject worldClock: JsonObject {
@@ -1253,6 +1322,9 @@ JsonAdapter {
                 property int dim: 0
                 property real x: 80
                 property real y: 200
+                property string sizeClass: ""
+                property real freeWidth: 0
+                property real freeHeight: 0
                 property list<string> timezones: ["Asia/Tokyo", "Europe/London", "America/New_York"]
                 property string style: "cards" // "cards" (list) | "instrument" (chronometer board)
                 property string instrumentLayout: "grid" // "grid" | "rows"
@@ -1291,6 +1363,9 @@ JsonAdapter {
                 property int dim: 0
                 property real x: 80
                 property real y: 420
+                property string sizeClass: ""
+                property real freeWidth: 0
+                property real freeHeight: 0
             }
 
             property JsonObject mascot: JsonObject {
@@ -1322,6 +1397,9 @@ JsonAdapter {
                 property string anchorWidget: "" // configEntryName of another widget she perches on top of; "" = free
                 property real x: 120
                 property real y: 320
+                property string sizeClass: ""
+                property real freeWidth: 0
+                property real freeHeight: 0
             }
 
             property JsonObject newsTicker: JsonObject {
@@ -1351,6 +1429,9 @@ JsonAdapter {
                 property int dim: 0
                 property real x: 100
                 property real y: 260
+                property string sizeClass: ""
+                property real freeWidth: 0
+                property real freeHeight: 0
             }
 
             property JsonObject editGrid: JsonObject {

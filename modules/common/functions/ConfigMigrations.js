@@ -133,7 +133,8 @@ function _oneSize(entry, irisActive) {
     return changed;
 }
 
-// v2.33's resize handles wrote `contentWidth/Height` over these factory sizes; a size that moved stays a free size.
+// Resize handles wrote `contentWidth/Height` over these factory sizes (on the entry before v2.29, per screen since); a size
+// that moved stays a free size.
 const _factorySizes = {
     calendarUpcoming: [280, 240],
     dateBadge: [220, 140],
@@ -223,15 +224,6 @@ function _widgetSizes(obj, fromV2) {
                 widgets[key].sizeClass = size;
                 changed = true;
             }
-    // The engine reads a size per screen and the typed base entries hold none: each screen takes what the file said.
-    if (fromV2)
-        for (const record of Array.isArray(widgets.outputOverrides) ? widgets.outputOverrides : [])
-            for (const [key, entry] of _isObject(record?.widgets) ? Object.entries(record.widgets) : [])
-                for (const size of ["sizeClass", "freeWidth", "freeHeight"])
-                    if (_isObject(entry) && entry[size] === undefined && _isObject(widgets[key]) && widgets[key][size] !== undefined) {
-                        entry[size] = widgets[key][size];
-                        changed = true;
-                    }
     return changed;
 }
 
