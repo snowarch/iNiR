@@ -15,7 +15,7 @@ Describe what you ran and what you observed, not just "it works".
 
 ## Code
 
-- [ ] Comments only where a constraint needs one (no narration, no history), commits follow [CONTRIBUTING.md](../CONTRIBUTING.md#commit-conventions)
+- [ ] Comments only where a constraint needs one (no narration, no history), commits follow [CONTRIBUTING.md](CONTRIBUTING.md#commit-conventions)
 
 ## AI usage
 

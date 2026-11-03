@@ -1,8 +1,19 @@
 <p align="center">
-  <img src="../images/iris-2.32-principal.webp" alt="iNiR iRiS desktop" width="900">
+  <img src="../images/iris-2.32-principal.webp" alt="iRiS परिवार वाला iNiR डेस्कटॉप" width="900">
 </p>
 
 <h1 align="center">iNiR</h1>
+
+<p align="center">
+  <a href="https://github.com/YaLTeR/niri">Niri</a> के लिए एक पूरा डेस्कटॉप शेल। कोई परिवार चुनें, उसे अपने हिसाब से ढालें, और एक ही कमांड से उसे नया रखें।
+</p>
+
+<p align="center">
+  <a href="https://inir.space">inir.space</a> ·
+  <a href="https://inir.space/docs">दस्तावेज़</a> ·
+  <a href="https://inir.space/hub">Hub</a> ·
+  <a href="https://discord.gg/pAPTfAhZUJ">Discord</a>
+</p>
 
 <p align="center">
   <sub>
@@ -10,16 +21,7 @@
   </sub>
 </p>
 
-iNiR, [Niri](https://github.com/YaLTeR/niri) के लिए एक पूरा डेस्कटॉप शेल है, जो [Quickshell](https://quickshell.outfoxxed.me/) पर बना है।
-
-## स्क्रीनशॉट
-
-<p align="center">
-  <img src="../images/iris-2.31-desktop.webp" alt="iRiS desktop layout" width="49%">
-  <img src="../images/iris-2.31-card.webp" alt="iRiS card surface" width="49%">
-</p>
-
-## इंस्टॉल
+## स्थापना
 
 ```bash
 git clone https://github.com/snowarch/inir.git
@@ -27,18 +29,55 @@ cd inir
 ./setup install
 ```
 
+Arch, Fedora, Debian, Ubuntu, Void और NixOS। हर एक के लिए ज़रूरी बातें [स्थापना गाइड](https://inir.space/docs/install/) में दी गई हैं।
+
 ## अपडेट
 
 ```bash
 inir update
 ```
 
-## फ़ैमिली
+आपकी कॉन्फ़िगरेशन और आपके बदलाव बने रहते हैं। अगर नया संस्करण शुरू नहीं होता, तो अपडेट आपका पिछला संस्करण वापस लगा देता है।
 
-hub के प्लगइन हैं, [inir.space/hub](https://inir.space/hub) से इंस्टॉल होते हैं।
+## परिवार
 
-- **Material**: फ़्लोटिंग बार, साइडबार और Material Design लुक
-- **Waffle**: Windows 11 जैसा टास्कबार और एक्शन सेंटर
-- **iRiS**: स्क्रीन के किसी भी किनारे पर एक आइलैंड, जो आप खोलें वही बन जाता है
+| Material | Waffle | iRiS |
+|:---:|:---:|:---:|
+| <img src="../shots/families-material.webp" alt="Material" width="290"> | <img src="../shots/families-waffle.webp" alt="Waffle" width="290"> | <img src="../shots/families-iris.webp" alt="iRiS" width="290"> |
+| किसी भी किनारे पर बार, साइडबार, ओवरव्यू, और नौ ग्लोबल स्टाइल | Windows 11 का टास्कबार और एक्शन सेंटर | किसी भी किनारे पर एक Island, जो आप खोलते हैं वही बन जाता है, साथ में एक डॉक |
 
-[Docs](https://inir.space/docs) · [Hub](https://inir.space/hub) · [Discord](https://discord.gg/pAPTfAhZUJ) · [लाइसेंस](../../LICENSE)
+`Super+Shift+W` से इनके बीच बदलें। और अधिक लुक, विजेट, थीम और वेब ऐप्स [hub](https://inir.space/hub) में हैं।
+
+## यह कैसे बना है
+
+iNiR एक आधार है और उसके आसपास के हिस्से हैं, हर हिस्सा अपनी अलग रिपॉज़िटरी में है। आपकी मशीन पर कुछ भी कंपाइल नहीं होता: setup और
+`inir update` हर हिस्से को पहले से बना हुआ लाता है और sha256 से जाँचता है।
+
+| रिपॉज़िटरी | यह क्या है | नवीनतम |
+|---|---|---|
+| **iNiR** (यही रिपॉज़िटरी) | आधार: सर्विसेज़, कॉन्फ़िगरेशन, Settings, स्वागत विज़ार्ड, setup और अपडेट, प्लगइन होस्ट | ![](https://img.shields.io/github/v/release/snowarch/iNiR?label=&style=flat-square) |
+| [inir-hub](https://github.com/snowarch/inir-hub) | हर प्लगइन: तीनों परिवार, कंपोनेंट, थीम, विजेट, वेब ऐप्स | [inir.space/hub](https://inir.space/hub) |
+| [qs-rs](https://github.com/snowarch/qs-rs) | रनटाइम: Rust में दोबारा लिखा गया Quickshell, अपने Qt के साथ | ![](https://img.shields.io/github/v/release/snowarch/qs-rs?label=&style=flat-square) |
+| [inir-accel](https://github.com/snowarch/inir-accel) | शेल जो बैकग्राउंड में चलाता है, Rust में: रंग, थंबनेल, सेंसर, खोज | ![](https://img.shields.io/github/v/release/snowarch/inir-accel?label=&style=flat-square) |
+| [inir-cli](https://github.com/snowarch/inir-cli) | `inir` कमांड: IPC, जाँच, अपडेट, `inir hub` | ![](https://img.shields.io/github/v/release/snowarch/inir-cli?label=&style=flat-square) |
+| [inir-site](https://github.com/snowarch/inir-site) | [inir.space](https://inir.space): साइट, दस्तावेज़, hub का कैटलॉग | |
+| [iNiR-Walls](https://github.com/snowarch/iNiR-Walls), [inir-mascot](https://github.com/snowarch/inir-mascot) | वॉलपेपर पैक और Kira की आर्ट, दोनों setup में वैकल्पिक हैं | |
+
+[Architecture](../ARCHITECTURE_OVERVIEW.md) में पूरा नक्शा है। कुछ जोड़ने के लिए, उसे प्लगइन बनाएँ:
+[inir-hub की गाइड](https://github.com/snowarch/inir-hub/blob/main/CONTRIBUTING.md)। आधार बदलने के लिए:
+[CONTRIBUTING](../../.github/CONTRIBUTING.md)।
+
+## श्रेय
+
+- [end-4](https://github.com/end-4/dots-hyprland): illogical-impulse, वे Hyprland dots जहाँ से iNiR शुरू हुआ
+- [Quickshell](https://quickshell.outfoxxed.me/), outfoxxed द्वारा: फ़्रेमवर्क, और वह API जिसके साथ qs-rs संगत रहता है
+- [Niri](https://github.com/YaLTeR/niri), YaLTeR द्वारा: कंपोज़िटर
+- [Gakuseei](https://github.com/Gakuseei): [Ricelin](https://github.com/Gakuseei/Ricelin), जहाँ से पिल बार और washi व flame लुक आते हैं
+- [pctrade/end4-pC](https://github.com/pctrade/end4-pC): एक फ़ॉर्क, जिसमें अपनाने लायक विचार हैं
+- हर वह व्यक्ति जो [योगदान](https://github.com/snowarch/iNiR/graphs/contributors) देता है और Discord पर परखता है
+
+[GPL-3.0](../../LICENSE) के तहत, शर्तें [NOTICE](../../NOTICE) में हैं। कॉपीराइट (C) 2025-2026 snowarch।
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/snowarch/inir-mascot/main/inir-mascot-hero-banner.png" alt="Kira, iNiR का मैस्कॉट, iNiR लोगो पर झुका हुआ" width="640">
+</p>
