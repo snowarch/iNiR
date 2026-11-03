@@ -1726,22 +1726,19 @@
                     "tone": 0,
                     "warmth": 20,
                     "colour": 100,
-                    "widgets": 100,
-                    "lume": false
+                    "widgets": 100
                 },
                 "ink": {
                     "tone": 0,
                     "warmth": 50,
                     "colour": 100,
-                    "widgets": 100,
-                    "lume": true
+                    "widgets": 100
                 },
                 "light": {
                     "tone": -8,
                     "warmth": 38,
                     "colour": 85,
-                    "widgets": 110,
-                    "lume": true
+                    "widgets": 110
                 }
             },
             "expandedRadius": 22,
