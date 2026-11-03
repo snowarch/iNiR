@@ -18,6 +18,15 @@ Singleton {
     property bool _seeded: false
     readonly property bool ready: root._seeded || (folders.status === FolderListModel.Ready && root._read >= folders.count)
     readonly property var families: Object.keys(root.manifests).filter(id => root.manifests[id].kind === "family").sort()
+    // Components that bring a surface of their own (`parts.panel`). A component adds to the desktop without editing a
+    // family: its panel holds its windows and its IpcHandler, and loads while the active family is one it names in
+    // `families` (every family when it names none).
+    readonly property var components: Object.keys(root.manifests)
+        .filter(id => root.manifests[id].kind === "component" && String(root.manifests[id].parts?.panel ?? "").length > 0).sort()
+    function wornWith(id: string, family: string): bool {
+        const families = root.manifests[id]?.families
+        return !Array.isArray(families) || families.length === 0 || families.includes(family)
+    }
     readonly property string active: String(Config.options?.panelFamily ?? "ii")
 
     // The family whose Settings opens: the active one, or the one it wears instead while a key of its own says so

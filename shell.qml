@@ -1015,6 +1015,28 @@ ShellRoot {
         }
     }
 
+    // Each installed component's surface, once the family's panels are up and while the active family is one it is
+    // worn with. One that fails to load leaves the shell as it was: only its own panel is missing.
+    Variants {
+        model: Plugins.components
+        Scope {
+            id: component
+            required property string modelData
+            readonly property bool wanted: Config.ready && Plugins.ready && GlobalStates.deferredPanelsReady
+                && !root._familyPanelsSuspended && Plugins.wornWith(component.modelData, Config.options?.panelFamily ?? "ii")
+            // Compiled the first time it is wanted, kept while the shell runs, as the family parts are.
+            property bool used: false
+            onWantedChanged: if (component.wanted) component.used = true
+            Component.onCompleted: component.used = component.wanted
+            LazyLoader {
+                id: componentPanel
+                source: component.used ? Plugins.part(component.modelData, "panel") : ""
+                loading: component.wanted && componentPanel.source !== ""
+                activeAsync: component.wanted && componentPanel.source !== ""
+            }
+        }
+    }
+
     // Close confirmation dialog (always loaded, handles IPC)
     LazyLoader { active: Config.ready; source: "modules/shared/closeConfirm/CloseConfirm.qml" }
 
