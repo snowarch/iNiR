@@ -4791,6 +4791,11 @@ case "$command_name" in
         printf 'Completions come from the inir binary, which is missing here. Run: inir update\n' >&2
         exit 1
         ;;
+    help|-h|--help|"")
+        usage_short
+        printf '\n'
+        usage
+        ;;
     *)
         # Pre-validate: if registry is available and target is completely unknown,
         # show suggestions before forwarding to Quickshell's bare "Target not found."
