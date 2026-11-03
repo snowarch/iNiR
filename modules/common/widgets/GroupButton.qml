@@ -60,6 +60,10 @@ Button {
     property color colBackgroundToggledHover: Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateHover : Appearance.colors.colPrimaryHover
     property color colBackgroundToggledActive: Appearance.regaliaEverywhere ? Appearance.regalia.primaryPlateActive : Appearance.colors.colPrimaryActive
 
+    // Disabled, the chosen one is held on a raised neutral plate: a primary fill under the group's dimming read as a
+    // smear (Bar › Corner style while the bar isn't Classic, 11-03), the value still has to read.
+    property color colBackgroundToggledDisabled: ColorUtils.mix(Appearance.colors.colSurfaceContainerHighest, Appearance.colors.colOnSurface, 0.78)
+
     property real radius: root.down ? root.buttonRadiusPressed : root.buttonRadius
     property real leftRadius: root.down ? root.buttonRadiusPressed : root.buttonRadius
     property real rightRadius: root.down ? root.buttonRadiusPressed : root.buttonRadius
@@ -69,9 +73,7 @@ Button {
             colBackgroundToggled) :
         (root.down ? colBackgroundActive : 
             root.hovered ? colBackgroundHover : 
-            colBackground)) : (root.toggled ? colBackgroundToggled : colBackground)
-    // Disabled, the chosen one keeps its fill and its ink and the group's dimming says it is off: dropped to the rest
-    // fill, its on-primary label went grey on grey (Bar › Corner style while the bar isn't Classic).
+            colBackground)) : (root.toggled ? colBackgroundToggledDisabled : colBackground)
 
     onDownChanged: {
         if (root.down) {

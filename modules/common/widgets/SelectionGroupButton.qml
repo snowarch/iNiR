@@ -20,6 +20,8 @@ GroupButton {
     property bool leftmost: false
     property bool rightmost: false
     readonly property bool showZzzPreview: Appearance.zzzEverywhere && buttonPreviewKind.length > 0
+    // chosen while the group is off: on GroupButton's neutral plate, in full ink
+    readonly property bool held: root.toggled && !root.enabled
     leftRadius: Appearance.regaliaEverywhere ? Appearance.regalia.controlRadius
         : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
         : Appearance.editorialEverywhere
@@ -77,8 +79,8 @@ GroupButton {
         readonly property bool hug: kind === "hug"
         readonly property bool rect: kind === "rect"
         readonly property bool card: kind === "card"
-        readonly property color barFill: root.toggled
-            ? ColorUtils.mix(Appearance.zzz.onSticker, Appearance.zzz.sticker, 0.75)
+        readonly property color barFill: root.held ? ColorUtils.applyAlpha(Appearance.colors.colOnSurface, 0.6)
+            : root.toggled ? ColorUtils.mix(Appearance.zzz.onSticker, Appearance.zzz.sticker, 0.75)
             : ColorUtils.applyAlpha(Appearance.zzz.ink, 0.5)
 
         Rectangle {
@@ -147,7 +149,8 @@ GroupButton {
                 visible: !root.showZzzPreview
                 text: root.buttonIcon
                 iconSize: Appearance.font.pixelSize.normal
-                color: Appearance.regaliaEverywhere
+                color: root.held ? Appearance.colors.colOnSurface
+                    : Appearance.regaliaEverywhere
                     ? (root.toggled ? Appearance.regalia.primaryPlateInk : Appearance.regalia.onColor)
                     : Appearance.zzzEverywhere
                         ? (root.toggled ? Appearance.zzz.onSticker : Appearance.zzz.ink)
@@ -188,7 +191,8 @@ GroupButton {
                 verticalAlignment: Text.AlignVCenter
                 elide: Text.ElideRight
                 maximumLineCount: 1
-                color: Appearance.regaliaEverywhere
+                color: root.held ? Appearance.colors.colOnSurface
+                    : Appearance.regaliaEverywhere
                     ? (root.toggled ? Appearance.regalia.primaryPlateInk : Appearance.regalia.onColor)
                     : Appearance.zzzEverywhere
                         ? (root.toggled ? Appearance.zzz.onSticker : Appearance.zzz.ink)

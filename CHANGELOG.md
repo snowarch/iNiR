@@ -22,6 +22,7 @@ iNiR is now a base with plugins: Material, Waffle and iRiS come from the iNiR Hu
 - **Live pins**: pin part of a window to the screen and it keeps updating.
 - **Wallpaper picker**: iRiS gets a new picker in three layouts with favourites, local folders and web sources, and Material's picker gets a skewed deck with a full screen preview.
 - **Light leak**: a third iRiS texture, faded film light.
+- **Classic Settings**: Material's Settings window from v2.33 is back as a design with every new page in it; the history button in its header switches between Classic and Expressive.
 - **Web Apps tab**: Qt WebEngine is now a one-time download of about 110 MB, started from the tab itself.
 - **Picture-in-picture**: a PiP window from any browser floats on its own.
 - **NixOS**: a lean NixOS module with its Python environment and a niri config to start from.
