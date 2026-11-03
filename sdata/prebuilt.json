@@ -1,14 +1,14 @@
 {
   "manifest": "https://inir.space/releases/manifest.json",
   "fallback": "https://github.com/snowarch/{repo}/releases/download/v{version}/{file}",
-  "cli": { "version": "0.2.0" },
+  "cli": { "version": "0.2.1" },
   "parts": {
     "qs-rs": {
       "repo": "qs-rs",
       "dest": "runtime",
-      "version": "0.1.0",
-      "file": "qs-rs-0.1.0-x86_64.tar.gz",
-      "sha256": "88c02f4253dd3fdbe5fa3b36c573c1acbbe74fcc1921de50470a5c5d9088369d"
+      "version": "0.1.1",
+      "file": "qs-rs-0.1.1-x86_64.tar.gz",
+      "sha256": "781c19626c4e8cb0279139e3e994748bfec71598cd1aea4c7a2f7308badbfd08"
     },
     "inir-accel": {
       "repo": "inir-accel",
@@ -31,8 +31,8 @@
       "with": "qs-rs",
       "when": "material.sidebar.plugins.enable",
       "title": "Qt WebEngine for the Web Apps tab",
-      "file": "qs-rs-webengine-0.1.0-x86_64.tar.gz",
-      "sha256": "8b0e39631e0cf463aa2365c396414a37a4a332d2045e4c4712806e06f7a53c80"
+      "file": "qs-rs-webengine-0.1.1-x86_64.tar.gz",
+      "sha256": "cfb8f789363b125fd19a51f495b9adfb901307c0253302170be401bec0d7410e"
     }
   }
 }
