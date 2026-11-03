@@ -3737,7 +3737,7 @@ run_hub_command() {
             fi
             run_ipc_target_command settingsNav open hub
             ;;
-        ""|-h|--help|help|status|sources|sync|list|search|info|install|update|remove|validate|bumps|new|build|preview|--json)
+        ""|-h|--help|help|status|sources|sync|list|search|info|install|update|remove|fetch|link|rate|check|validate|audit|bumps|new|build|preview|stats|submit|--json)
             local msg="inir hub needs the inir binary; inir update fetches it"
             [[ " $* " == *" --json "* ]] && printf '{"ok":false,"error":"%s","code":1}\n' "$msg"
             printf 'inir hub: %s\n' "$msg" >&2
