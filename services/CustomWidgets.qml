@@ -275,7 +275,7 @@ Singleton {
             for template in "$@"; do cp "$template" "$dir/"; done
             cat > "$dir/${_createProcess._pascalName}.qml" << 'QML'
 // ${_createProcess._pascalName} — custom iNiR desktop widget
-// Full SDK reference: defaults/widgets/WIDGET-SDK.md
+// Full SDK reference: inir-hub guides/widgets.md
 // Example widget: defaults/widgets/example-widget/
 
 import QtQuick

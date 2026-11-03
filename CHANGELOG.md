@@ -25,9 +25,10 @@ iNiR is now a base with plugins: Material, Waffle and iRiS come from the iNiR Hu
 - **Web Apps tab**: Qt WebEngine is now a one-time download of about 110 MB, started from the tab itself.
 - **Picture-in-picture**: a PiP window from any browser floats on its own.
 - **NixOS**: a lean NixOS module with its Python environment and a niri config to start from.
-- **Fonts**: Geist and Geist Mono ship with iNiR, and Material sets its type in Google Sans Flex.
+- **Fonts**: Geist, Geist Mono and Archivo ship with iRiS, and Material sets its type in Google Sans Flex.
 
 ### Changed
+- The base keeps only what it uses: one wallpaper (the others come with the iNiR-Walls pack setup offers), and iRiS's fonts and Material's Discord and YouTube Music web apps travel with their family. The widget guides moved to inir-hub, where widgets are made.
 - `inir update` brings the whole new iNiR: the base, the families from the Hub, the prebuilt runtime, inir-accel and the `inir` command. Your config and edits stay, and a version that won't load is rolled back to the one you had.
 - Migrations are gone: the update itself sets right whatever an older iNiR left behind, so `inir migrate` and `./setup migrate` retired with them. Nobody will miss numbered shell scripts.
 - The update also installs what `inir doctor` now checks for: plasma-integration, a colour emoji font and the shell's fonts.

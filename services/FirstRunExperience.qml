@@ -50,7 +50,7 @@ Singleton {
         onExited: (exitCode) => {
             if (_candidates.length > 0) {
                 const sorted = [..._candidates].sort()
-                root.defaultWallpaperPath = sorted.find(path => path.endsWith("/qs-niri.jpg"))
+                root.defaultWallpaperPath = sorted.find(path => path.endsWith("/G5uBmitWkAAyk8s.jpg"))
                     ?? sorted[0]
             }
             if (root._pendingFirstRun) {

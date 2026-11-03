@@ -1285,7 +1285,7 @@ ShellRoot {
         active: Config.ready
             && root._transitionUsesOverlay
             && (GlobalStates.familyTransitionActive || root._transitionInProgress)
-        source: "FamilyTransitionOverlay.qml"
+        source: "modules/common/FamilyTransitionOverlay.qml"
         onLoaded: {
             // the curtain lifts once the new family stands, not on a fixed hold while its panels still build
             item.swapPending = Qt.binding(() => root._pendingFamily !== "" || root._familyPanelsSuspended || !root._familyUp)

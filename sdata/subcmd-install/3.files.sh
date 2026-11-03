@@ -925,22 +925,13 @@ fi
 #####################################################################################
 # Set default wallpaper and generate initial theme (first run only)
 #####################################################################################
-# Pick the first available wallpaper (don't hardcode a filename that may not exist)
+# The factory wallpaper (the one the welcome wizard also picks), unless the iNiR-Walls step chose one
 DEFAULT_WALLPAPER=""
 if [[ -n "$INIR_WALLS_DEFAULT_OVERRIDE" && -f "$INIR_WALLS_DEFAULT_OVERRIDE" && -s "$INIR_WALLS_DEFAULT_OVERRIDE" ]]; then
   DEFAULT_WALLPAPER="$INIR_WALLS_DEFAULT_OVERRIDE"
+elif [[ -s "${USER_WALLPAPERS_DIR}/G5uBmitWkAAyk8s.jpg" ]]; then
+  DEFAULT_WALLPAPER="${USER_WALLPAPERS_DIR}/G5uBmitWkAAyk8s.jpg"
 fi
-for candidate in \
-  "${USER_WALLPAPERS_DIR}/G5uBmitWkAAyk8s.jpg" \
-  "${USER_WALLPAPERS_DIR}/Angel1.png" \
-  "${USER_WALLPAPERS_DIR}/qs-niri.jpg"
-do
-  [[ -n "$DEFAULT_WALLPAPER" ]] && break
-  if [[ -f "$candidate" && -s "$candidate" ]]; then
-    DEFAULT_WALLPAPER="$candidate"
-    break
-  fi
-done
 # Fallback: pick any wallpaper in the directory
 if [[ -z "$DEFAULT_WALLPAPER" ]]; then
   for f in "${USER_WALLPAPERS_DIR}"/*.{jpg,jpeg,png,webp}; do
