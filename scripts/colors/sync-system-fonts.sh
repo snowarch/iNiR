@@ -25,23 +25,36 @@ if ! flock -w 15 9; then
 fi
 
 status=0
-bundled_fonts="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/assets/fonts"
-user_fonts="${XDG_DATA_HOME:-$HOME/.local/share}/fonts/inir"
-# An update that adds a face keeps the same link, so the bundled set itself decides when fontconfig rescans.
+# The base's faces and every installed plugin's own (a family that ships its type in assets/fonts) are linked where
+# fontconfig looks, so apps, GTK and doctor have what the shell draws with; a removed plugin's link goes with it.
+shell_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+fonts_root="${XDG_DATA_HOME:-$HOME/.local/share}/fonts"
+declare -A font_dirs=()
+[[ -d "$shell_root/assets/fonts" ]] && font_dirs[inir]="$shell_root/assets/fonts"
+for dir in "$shell_root"/modules/*/assets/fonts; do
+    [[ -d "$dir" ]] || continue
+    id="${dir%/assets/fonts}"
+    font_dirs["inir-${id##*/}"]="$dir"
+done
+# An update that adds a face keeps the same links, so the set itself decides when fontconfig rescans.
 fonts_stamp="$state_home/quickshell/user/generated/bundled-fonts.stamp"
-fonts_list="$(cd "$bundled_fonts" 2>/dev/null && find . -name '*.ttf' -o -name '*.otf' | sort | tr '\n' ' ' || true)"
-if [[ -d "$bundled_fonts" ]]; then
-    relink=0
-    if [[ "$(readlink "$user_fonts" 2>/dev/null)" != "$bundled_fonts" ]]; then
-        mkdir -p "$(dirname "$user_fonts")"
-        if [[ ! -e "$user_fonts" || -L "$user_fonts" ]]; then
-            ln -sfn "$bundled_fonts" "$user_fonts" && relink=1
-        fi
+fonts_list="$(for name in "${!font_dirs[@]}"; do (cd "${font_dirs[$name]}" && find . -name '*.ttf' -o -name '*.otf' | sed "s|^\.|$name|"); done | sort | tr '\n' ' ')"
+relink=0
+for name in "${!font_dirs[@]}"; do
+    link="$fonts_root/$name"
+    [[ "$(readlink "$link" 2>/dev/null)" == "${font_dirs[$name]}" ]] && continue
+    mkdir -p "$fonts_root"
+    if [[ ! -e "$link" || -L "$link" ]]; then
+        ln -sfn "${font_dirs[$name]}" "$link" && relink=1
     fi
-    if [[ -L "$user_fonts" ]] && { [[ $relink == 1 ]] || [[ "$(cat "$fonts_stamp" 2>/dev/null)" != "$fonts_list" ]]; }; then
-        command -v fc-cache >/dev/null 2>&1 && fc-cache -f "$(dirname "$user_fonts")" >/dev/null 2>&1 || true
-        printf '%s' "$fonts_list" > "$fonts_stamp" || true
-    fi
+done
+for link in "$fonts_root"/inir-*; do
+    [[ -L "$link" && -z "${font_dirs[${link##*/}]+_}" ]] || continue
+    rm -f "$link" && relink=1
+done
+if [[ $relink == 1 || "$(cat "$fonts_stamp" 2>/dev/null)" != "$fonts_list" ]]; then
+    command -v fc-cache >/dev/null 2>&1 && fc-cache -f "$fonts_root" >/dev/null 2>&1 || true
+    printf '%s' "$fonts_list" > "$fonts_stamp" || true
 fi
 
 if command -v gsettings >/dev/null 2>&1; then
