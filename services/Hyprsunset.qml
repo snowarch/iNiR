@@ -40,10 +40,38 @@ Singleton {
         id: restartDebounce
         interval: 300
         onTriggered: {
+            // Stop first: the unit is still there, and systemd-run refuses a name in use.
             if (root._pendingRestart && root.active) {
-                root._doEnable()
+                root.enable()
             }
             root._pendingRestart = false
+        }
+    }
+
+    // wlsunset keeps a gamma control the compositor dropped (a charger moving resets the panel on some Intel laptops) and
+    // asks again only when its temperature changes, which with fixed times is never: the screen stayed blue until the
+    // next toggle (11-03). After a power or output change, the shell restarts it when it said it lost one.
+    readonly property bool _pluggedIn: Battery.isPluggedIn
+    readonly property var _outputs: NiriService.outputs
+    on_PluggedInChanged: if (root.active && CompositorService.isNiri) gammaCheck.restart()
+    on_OutputsChanged: if (root.active && CompositorService.isNiri) gammaCheck.restart()
+    Timer {
+        id: gammaCheck
+        interval: 2500
+        onTriggered: if (!gammaLostProc.running) gammaLostProc.running = true
+    }
+    Process {
+        id: gammaLostProc
+        // Without a user journal (runit, OpenRC) it can't know, and a restart costs a blink.
+        command: ["/usr/bin/bash", "-c",
+            `if command -v journalctl >/dev/null 2>&1 && systemctl --user is-active --quiet inir-wlsunset.service 2>/dev/null; then
+                journalctl --user -u inir-wlsunset.service --since "-30s" -o cat --no-pager 2>/dev/null | grep -q "gamma control of output .* failed";
+            fi`]
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode === 0 && root.active) {
+                root._pendingRestart = true
+                restartDebounce.restart()
+            }
         }
     }
 

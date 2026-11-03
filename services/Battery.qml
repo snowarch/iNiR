@@ -23,20 +23,25 @@ Singleton {
     readonly property bool simulating: simulatedPercentage >= 0
 
     property bool available: simulating || UPower.displayDevice.isLaptopBattery
+    // UPower fills the display device after the shell starts; until then it reads 0 % in an unknown state.
+    readonly property bool ready: simulating || (UPower.displayDevice?.ready ?? false)
     property var chargeState: !simulating ? UPower.displayDevice.state
         : simulatedState === "charging" ? UPowerDeviceState.Charging
         : simulatedState === "full" ? UPowerDeviceState.FullyCharged
         : UPowerDeviceState.Discharging
     property bool isCharging: chargeState == UPowerDeviceState.Charging
-    property bool isPluggedIn: isCharging || chargeState == UPowerDeviceState.PendingCharge
-    // Discharging-based, not !isPluggedIn: FullyCharged on AC must not count as "on battery"
-    readonly property bool onBattery: available && (chargeState == UPowerDeviceState.Discharging || chargeState == UPowerDeviceState.PendingDischarge)
+    // On battery is UPower's own answer: a battery draining with no line power online. The pack's state alone misread a
+    // charge limit: on AC a pack above its limit drains to it ("Discharging"), at it reads Full or Pending, and the shell
+    // played the unplug sound, paused the wallpaper and flipped the idle profile with the charger in (11-03).
+    readonly property bool onBattery: simulating ? chargeState == UPowerDeviceState.Discharging
+        : available && ready && UPower.onBattery
+    readonly property bool isPluggedIn: available && ready && !onBattery
     // A driver can say 0 % in an unknown state for a moment, at boot or when the charger moves (Lenovo ACPI): that
     // is no reading, and it must not raise a critical notice or suspend the machine. The last real one stands.
     property real _lastReading: 1
     readonly property real _reading: {
         const device = UPower.displayDevice
-        const unread = !device || (device.percentage <= 0 && device.state === UPowerDeviceState.Unknown)
+        const unread = !device || !root.ready || (device.percentage <= 0 && device.state === UPowerDeviceState.Unknown)
         return unread ? root._lastReading : device.percentage
     }
     on_ReadingChanged: root._lastReading = root._reading
@@ -49,9 +54,10 @@ Singleton {
     property bool isSuspending: available && (percentage <= ((Config.options?.battery?.suspend ?? 5) / 100))
     property bool isFull: available && (percentage >= ((Config.options?.battery?.full ?? 95) / 100))
 
-    property bool isLowAndNotCharging: isLow && !isCharging
-    property bool isCriticalAndNotCharging: isCritical && !isCharging
-    property bool isSuspendingAndNotCharging: !simulating && allowAutomaticSuspend && isSuspending && !isCharging
+    // "Not charging" meant on battery: Unknown, Full and Pending with the charger in are not a draining pack.
+    property bool isLowAndNotCharging: isLow && onBattery
+    property bool isCriticalAndNotCharging: isCritical && onBattery
+    property bool isSuspendingAndNotCharging: !simulating && allowAutomaticSuspend && isSuspending && onBattery
     property bool isFullAndCharging: isFull && isCharging
 
     // A simulated pack: 12 W over five hours, refilled at 30 W in two.
@@ -392,42 +398,63 @@ Singleton {
     }
 
     // ─── Battery warnings ───
-    onIsLowAndNotChargingChanged: {
-        if (!root.available || !isLowAndNotCharging) return;
-        Quickshell.execDetached([
-            "/usr/bin/notify-send", 
-            Translation.tr("Low battery"), 
-            Translation.tr("Consider plugging in your device"), 
-            "-u", "critical",
-            "-a", "Shell",
-            "--hint=int:transient:1",
-        ])
-
-        if (root.soundEnabled) Audio.playEvent("batteryLow");
-    }
-
-    onIsCriticalAndNotChargingChanged: {
-        if (!root.available || !isCriticalAndNotCharging) return;
-        Quickshell.execDetached([
-            "/usr/bin/notify-send", 
-            Translation.tr("Critically low battery"), 
-            Translation.tr("Please charge!\nAutomatic suspend triggers at %1%").arg(Config.options?.battery?.suspend ?? 5), 
-            "-u", "critical",
-            "-a", "Shell",
-            "--hint=int:transient:1",
-        ]);
-
-        if (root.soundEnabled) Audio.playEvent("batteryCritical");
-    }
-
-    onIsSuspendingAndNotChargingChanged: {
-        if (root.available && isSuspendingAndNotCharging) {
-            Session.suspend()
+    // UPower sends level and state apart, and a charger moving can read low for a moment: a notice waits until the
+    // reading has held, suspend longer, and the plug sounds only start once the first real state is in
+    // (cam's #321, 11-03).
+    Timer {
+        id: lowSettle
+        interval: 2000
+        onTriggered: {
+            if (!root.isLowAndNotCharging || root.isCriticalAndNotCharging) return
+            Quickshell.execDetached([
+                "/usr/bin/notify-send",
+                Translation.tr("Low battery"),
+                Translation.tr("Consider plugging in your device"),
+                "-u", "critical",
+                "-a", "Shell",
+                "--hint=int:transient:1",
+            ])
+            if (root.soundEnabled) Audio.playEvent("batteryLow")
         }
+    }
+    onIsLowAndNotChargingChanged: isLowAndNotCharging ? lowSettle.restart() : lowSettle.stop()
+
+    Timer {
+        id: criticalSettle
+        interval: 2000
+        onTriggered: {
+            if (!root.isCriticalAndNotCharging) return
+            Quickshell.execDetached([
+                "/usr/bin/notify-send",
+                Translation.tr("Critically low battery"),
+                Translation.tr("Please charge!\nAutomatic suspend triggers at %1%").arg(Config.options?.battery?.suspend ?? 5),
+                "-u", "critical",
+                "-a", "Shell",
+                "--hint=int:transient:1",
+            ])
+            if (root.soundEnabled) Audio.playEvent("batteryCritical")
+        }
+    }
+    onIsCriticalAndNotChargingChanged: isCriticalAndNotCharging ? criticalSettle.restart() : criticalSettle.stop()
+
+    Timer {
+        id: suspendSettle
+        interval: 5000
+        onTriggered: if (root.isSuspendingAndNotCharging) Session.suspend()
+    }
+    onIsSuspendingAndNotChargingChanged: isSuspendingAndNotCharging ? suspendSettle.restart() : suspendSettle.stop()
+
+    // The first state UPower delivers is no plug or unplug.
+    property bool _powerSoundsArmed: false
+    Timer {
+        id: powerSoundsArm
+        interval: 1500
+        running: root.ready
+        onTriggered: root._powerSoundsArmed = true
     }
 
     onIsFullAndChargingChanged: {
-        if (!root.available || !isFullAndCharging) return;
+        if (!root.available || !root._powerSoundsArmed || !isFullAndCharging) return;
         Quickshell.execDetached([
             "/usr/bin/notify-send",
             Translation.tr("Battery full"),
@@ -440,7 +467,7 @@ Singleton {
     }
 
     onIsPluggedInChanged: {
-        if (!root.available || !root.soundEnabled) return;
+        if (!root.available || !root._powerSoundsArmed || !root.soundEnabled) return;
         if (isPluggedIn) {
             Audio.playEvent("powerPlug")
         } else {
