@@ -2762,6 +2762,8 @@ run_update() {
             fi
         fi
 
+        repair_v2_shipped_wallpapers || tui_warn "Could not move your wallpaper out of the shell's files"
+
         echo ""
         tui_info "Syncing files..."
 

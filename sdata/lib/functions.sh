@@ -595,8 +595,41 @@ repair_v2_leftovers() {
       jq '.background.widgets.clock.dim = 0' "$conf" >"$tmp" && mv "$tmp" "$conf" || { rm -f "$tmp"; return 1; }
       ((INIR_V2_LEFTOVERS_REPAIRED++)) || true
     fi
+    repair_v2_shipped_wallpapers || return 1
   fi
   rm -f "$state"
+  return 0
+}
+
+# v2's welcome wizard set the wallpaper to a picture inside the shell's own files (assets/wallpapers/qs-niri.jpg), and
+# those pictures left the base: each one the config still names goes to the person's wallpaper folder (from their own
+# copy there, else from the checkout's history) and the config and the wallpaper state follow it. The update runs it
+# before the payload sync too, so the old shell moves to the copy before its picture goes.
+repair_v2_shipped_wallpapers() {
+  command -v jq >/dev/null 2>&1 || return 0
+  declare -F inir_config_file >/dev/null || source "${REPO_ROOT}/scripts/lib/config-path.sh"
+  local conf pictures dir path name dest rel commit tmp
+  local state="${XDG_STATE_HOME:-$HOME/.local/state}/quickshell/user/generated/wallpaper/path.txt"
+  conf="$(inir_config_file)"
+  [[ -f "$conf" ]] || return 0
+  tmp="${conf}.inir-repair.$$"
+  pictures="$(xdg-user-dir PICTURES 2>/dev/null || true)"
+  [[ -n "$pictures" && "$pictures" == /* && "$pictures" != "$HOME" ]] || pictures="$HOME/Pictures"
+  dir="$pictures/Wallpapers"
+  while IFS= read -r path; do
+    [[ -s "$path" ]] && continue
+    name="${path##*/}" dest="$dir/$name" rel="assets/wallpapers/${path##*/}"
+    if [[ ! -s "$dest" ]]; then
+      commit="$(git -C "$REPO_ROOT" rev-list -1 HEAD -- "$rel" 2>/dev/null || true)"
+      [[ -n "$commit" ]] && git -C "$REPO_ROOT" cat-file -e "${commit}^:$rel" 2>/dev/null || continue
+      mkdir -p "$dir" || return 1
+      git -C "$REPO_ROOT" show "${commit}^:$rel" >"$dest.tmp" && mv "$dest.tmp" "$dest" || { rm -f "$dest.tmp"; return 1; }
+    fi
+    jq --arg from "$path" --arg to "$dest" 'walk(if type == "string" then (split($from) | join($to)) else . end)' \
+      "$conf" >"$tmp" && mv "$tmp" "$conf" || { rm -f "$tmp"; return 1; }
+    [[ -f "$state" && "$(<"$state")" == *"$path"* ]] && printf '%s' "$dest" >"$state"
+    ((INIR_V2_LEFTOVERS_REPAIRED++)) || true
+  done < <(grep -oE '(file://)?/[^"]*/quickshell/(inir|ii)/assets/wallpapers/[^"/]+' "$conf" | sed 's|^file://||' | sort -u)
   return 0
 }
 
