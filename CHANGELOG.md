@@ -48,6 +48,7 @@ iNiR is now a base with plugins: Material, Waffle and iRiS come from the iNiR Hu
 - The night light comes back after a charger change resets the screen on some Intel laptops.
 - Desktop widgets keep a size you set before v2.29 through the update, instead of going back to their factory size.
 - Waffle: a desktop renamed in Task View keeps its name.
+- Settings buttons and labels grow with their text, so Spanish, German and other languages no longer spill out of them (Compositor, the theme editor, the timers, Waffle's AI page).
 - Void: a login no longer hangs when D-Bus starts elogind before its own service does.
 - Debian: a niri built from source gets niri-session and its service, so the shell starts at login.
 - The iNiR block in `.bashrc` and `.zshrc` prints colours and starship only in interactive shells, so scripts stop getting escape codes.
