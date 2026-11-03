@@ -41,6 +41,11 @@ Singleton {
     property string wallpapersPath: Config.options?.wallpapers?.directory || `${Directories.picturesPath}/Wallpapers`
     property string screenshotsPath: Config.options?.regionSelector?.savePath || `${Directories.picturesPath}/Screenshots`
     property string persistentStatesPath: `${Directories.statePath}/states.json`
+    // A plugin that is not a family keeps its own options here, never in config.json: removing it leaves the person's
+    // settings as they were, and installing it again finds its options where it left them.
+    function pluginFile(id: string): string {
+        return `${Directories.configPath}/inir/plugins/${id}.json`
+    }
     property string eventsPath: `${Directories.stateUserPath}/events.json`
     property string screenTimePath: `${Directories.stateUserPath}/screentime`
     property string generatedMaterialScssPath: `${Directories.stateUserPath}/generated/material_colors.scss`
