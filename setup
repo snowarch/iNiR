@@ -2660,8 +2660,8 @@ run_update() {
         install_inir_cli_binary && cli_fetched=true
         # shellcheck disable=SC2086
         if ! needed="$(hub_plugins_needed "$hub_runtime" "$REPO_ROOT")" || ! hub_fetch_plugins "$(get_repo_version)" $needed; then
-            _report_update_failure 25 "Could not get your families from the hub, so nothing changed. inir update tries again"
-            tui_error "Could not get your families from the hub, so nothing changed. inir update tries again once online"
+            _report_update_failure 25 "Could not get your families from the hub, so nothing changed. The reason is in the update's output; inir update tries again"
+            tui_error "Could not get your families from the hub (the reason is just above), so nothing changed. Run inir update again once it is solved"
             return 25
         fi
         mapfile -t hub_plugins <<<"$needed"
