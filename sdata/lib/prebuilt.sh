@@ -182,6 +182,63 @@ prebuilt_accel_hooks_ok() {
 # first); the next update tries again
 prebuilt_runtime_off() { rm -f "$(_prebuilt_home)/runtime/current"; }
 
+# shell_qs_running: the binary of the inir shell running now (qs-rs or Quickshell), read from Quickshell's run dir as
+# the launcher does (scripts/inir running_shell_qs); its pid lands in SHELL_QS_PID when called outside $(...).
+shell_qs_running() {
+    local run="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/quickshell" link pid exe comm
+    SHELL_QS_PID=""
+    for link in "$run"/by-pid/*; do
+        [[ -L "$link" ]] || continue
+        pid="${link##*/}"
+        [[ -e "$run/by-shell/inir/$(basename "$(readlink "$link")")" ]] || continue
+        comm="$(cat "/proc/$pid/comm" 2>/dev/null)"
+        [[ "$comm" == qs || "$comm" == inir-shell ]] || continue
+        exe="$(readlink "/proc/$pid/exe" 2>/dev/null)" || continue
+        exe="${exe% (deleted)}"
+        [[ -x "$exe" ]] || continue
+        SHELL_QS_PID="$pid"
+        printf '%s\n' "$exe"
+        return 0
+    done
+    return 1
+}
+
+# shell_qs: the runtime the shell runs on, else the one the launcher would start (scripts/inir find_qs): qs-rs from
+# runtime/current before any Quickshell in PATH
+shell_qs() {
+    local own
+    own="$(_prebuilt_home)/runtime/current/bin/qs"
+    shell_qs_running && return 0
+    if [[ -n "${INIR_QS_BIN:-}" && -x "$INIR_QS_BIN" ]]; then
+        printf '%s\n' "$INIR_QS_BIN"
+    elif [[ -x "$own" ]]; then
+        printf '%s\n' "$own"
+    else
+        command -v qs 2>/dev/null || command -v quickshell 2>/dev/null
+    fi
+}
+
+# shell_qs_name BIN: what it is, "qs-rs 0.1.1" or "Quickshell 0.2.1"
+shell_qs_name() {
+    local line
+    line="$(timeout 10 env QT_QPA_PLATFORM=offscreen "$1" --version 2>/dev/null | head -1 | sed 's/\x1b\[[0-9;]*m//g')"
+    if [[ "$line" =~ distributed\ by\ qs-rs\ ([0-9][^\ ,\)]*) ]]; then
+        printf 'qs-rs %s\n' "${BASH_REMATCH[1]}"
+    elif [[ -n "$line" ]]; then
+        printf '%s\n' "${line%% (*}"
+    else
+        return 1
+    fi
+}
+
+# shell_qs_own_qt BIN: the Qt a runtime carries (qt.conf beside it, as qs-rs ships), or nothing for one on the system's
+shell_qs_own_qt() {
+    local dir
+    dir="$(dirname "$(readlink -f "$1" 2>/dev/null)")"
+    [[ -f "$dir/qt.conf" ]] || return 1
+    strings "$dir/../lib/libQt6Core.so.6" 2>/dev/null | grep -m1 -E '^6\.[0-9]+\.[0-9]+$' || echo "?"
+}
+
 # prebuilt_links / prebuilt_restore_links FILE: the current links, saved with a snapshot and put back with it
 prebuilt_links() {
     local dest

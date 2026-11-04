@@ -618,12 +618,10 @@ show_version_info() {
     fi
 
 
-    # Shell running status (resolve symlinks so qs -p matches the running instance)
+    # Shell running status
     if [[ -n "$runtime_dir" && -f "$runtime_dir/shell.qml" ]]; then
-        local running_output resolved_runtime_dir
-        resolved_runtime_dir="$(readlink -f "$runtime_dir" 2>/dev/null || printf '%s' "$runtime_dir")"
-        running_output="$(qs -p "$resolved_runtime_dir" list 2>/dev/null || true)"
-        if [[ -n "$running_output" && "$running_output" != No\ running\ instances* ]]; then
+        # whichever runtime runs it, qs-rs or Quickshell (sdata/lib/prebuilt.sh)
+        if shell_qs_running >/dev/null; then
             tui_status_line "Shell:" "running" "ok"
         else
             tui_status_line "Shell:" "stopped" "warn"
@@ -732,9 +730,8 @@ show_status_boot_timing() {
         fi
     fi
     # qs process start time (best-effort: read /proc/<pid>/stat starttime if running)
-    local qs_pid
-    qs_pid=$(pgrep -u "$USER" -fn '/usr/bin/qs.*shell\.qml|/usr/bin/qs -n -p' 2>/dev/null | head -1)
-    [[ -z "$qs_pid" ]] && qs_pid=$(pgrep -u "$USER" -fn 'qs -n' 2>/dev/null | head -1)
+    local qs_pid=""
+    shell_qs_running >/dev/null && qs_pid="$SHELL_QS_PID"
     if [[ -n "$qs_pid" && -r "/proc/$qs_pid/stat" ]]; then
         # field 22 = starttime in clock ticks since boot
         local starttime_ticks btime hz
@@ -823,7 +820,7 @@ show_status_boot_timing() {
 show_status_environment() {
     # Versions and system info — the things we always end up asking users for
     # in support threads. Print once so they can paste their `inir status` output.
-    tui_title "System & Quickshell"
+    tui_title "System & runtime"
     tui_table_header "Property" "Value" 22 42
 
     # Distro
@@ -865,16 +862,16 @@ show_status_environment() {
     fi
     tui_table_row "Panel Family" "$panel_family" 22 42
 
-    # Quickshell binary + version + revision + distributor
-    local qs_path qs_version_line
-    qs_path="$(command -v qs 2>/dev/null || command -v quickshell 2>/dev/null || true)"
+    # The runtime the shell runs on, as the launcher picks it: qs-rs as setup installs it, or Quickshell
+    local qs_path qs_name own_qt
+    qs_path="$(shell_qs 2>/dev/null || true)"
     if [[ -n "$qs_path" ]]; then
-        qs_version_line="$($qs_path --version 2>&1 | head -1 | tr -d '\r')"
-        # Strip ANSI just in case
-        qs_version_line="$(printf '%s' "$qs_version_line" | sed 's/\x1b\[[0-9;]*m//g')"
-        tui_table_row "Quickshell" "${qs_version_line:-unknown}" 22 42
+        qs_name="$(shell_qs_name "$qs_path" || echo "unknown")"
+        shell_qs_running >/dev/null || qs_name="$qs_name (starts next)"
+        tui_table_row "Runtime" "$qs_name" 22 42
+        tui_table_row "Runtime Binary" "$qs_path" 22 42
     else
-        tui_table_row "Quickshell" "not installed" 22 42
+        tui_table_row "Runtime" "not installed" 22 42
     fi
 
     # Quickshell package origin. We want to tell users if their binary came from
@@ -917,8 +914,10 @@ show_status_environment() {
         fi
     fi
 
-    # Qt build-time vs runtime (the ABI mismatch witness)
-    if [[ -n "$qs_path" ]] && command -v strings >/dev/null 2>&1; then
+    # Qt build-time vs runtime (the ABI mismatch witness); a runtime with its own Qt never meets the system's
+    if [[ -n "$qs_path" ]] && own_qt="$(shell_qs_own_qt "$qs_path")"; then
+        tui_table_row "Qt" "its own, $own_qt" 22 42
+    elif [[ -n "$qs_path" ]] && command -v strings >/dev/null 2>&1; then
         local buildtime_qt runtime_qt
         buildtime_qt="$(strings "$qs_path" 2>/dev/null | grep -P '^6\.\d+\.\d+$' | head -1)"
         if [[ -L /usr/lib/libQt6Core.so.6 ]]; then
@@ -960,7 +959,6 @@ show_status() {
     local repo_commit
     local runtime_dir=$(get_runtime_shell_dir)
     local runtime_version_file=""
-    local running_output
     local runtime_dir_display="${runtime_dir:-"(missing)"}"
     local repo_path_display="$installed_repo_path"
     local branch_display="$(setup_current_branch)"
@@ -1028,12 +1026,10 @@ show_status() {
 
     tui_title "Health Checks"
 
-    # Check shell status (resolve symlinks so qs -p matches the running instance)
+    # Check shell status
     if [[ -n "$runtime_dir" && -f "$runtime_dir/shell.qml" ]]; then
-        local resolved_runtime_dir
-        resolved_runtime_dir="$(readlink -f "$runtime_dir" 2>/dev/null || printf '%s' "$runtime_dir")"
-        running_output="$(qs -p "$resolved_runtime_dir" list 2>/dev/null || true)"
-        if [[ -n "$running_output" && "$running_output" != No\ running\ instances* ]]; then
+        # whichever runtime runs it, qs-rs or Quickshell (sdata/lib/prebuilt.sh)
+        if shell_qs_running >/dev/null; then
             tui_check_ok "Shell is running"
         else
             tui_check_warn "Shell is not running"
@@ -1218,13 +1214,11 @@ show_info() {
 
     echo ""
 
-    # Quick health (resolve symlinks so qs -p matches the running instance)
+    # Quick health
     tui_subtitle "Quick Health"
     if [[ -n "$runtime_dir" && -f "$runtime_dir/shell.qml" ]]; then
-        local running_output resolved_runtime_dir
-        resolved_runtime_dir="$(readlink -f "$runtime_dir" 2>/dev/null || printf '%s' "$runtime_dir")"
-        running_output="$(qs -p "$resolved_runtime_dir" list 2>/dev/null || true)"
-        if [[ -n "$running_output" && "$running_output" != No\ running\ instances* ]]; then
+        # whichever runtime runs it, qs-rs or Quickshell (sdata/lib/prebuilt.sh)
+        if shell_qs_running >/dev/null; then
             tui_check_ok "Shell is running"
         else
             tui_check_warn "Shell is not running"

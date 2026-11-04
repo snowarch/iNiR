@@ -127,6 +127,8 @@ check_dependencies() {
     for item in "${cmds[@]}"; do
         local cmd="${item%%:*}"
         local name="${item##*:}"
+        # the shell's runtime is qs-rs as setup installs it, or Quickshell
+        [[ "$cmd" == qs ]] && shell_qs >/dev/null && continue
         if ! command -v "$cmd" &>/dev/null; then
             missing+=("$name")
             missing_cmds+=("$cmd")
@@ -1323,15 +1325,8 @@ _doctor_own_runtime() {
     [[ -L "$own" ]] && printf '%s\n' "$own"
 }
 
-# the qs the launcher starts when no shell runs (scripts/inir find_qs)
-_doctor_qs() {
-    local own
-    if own="$(_doctor_own_runtime)" && [[ -x "$own/bin/qs" ]]; then
-        printf '%s\n' "$own/bin/qs"
-    else
-        command -v qs
-    fi
-}
+# the qs the shell runs on, or the one the launcher starts when none runs (sdata/lib/prebuilt.sh shell_qs)
+_doctor_qs() { shell_qs; }
 
 check_quickshell_abi() {
     local own ver

@@ -1002,7 +1002,9 @@ _inir_perf_layer_names() {
 # Prints process stats, graphics/media ownership, top heap/file mappings,
 # child processes, enabled features, and heuristic recommendations.
 _inir_doctor_perf() {
-    local pid=""
+    local pid="" running
+    # the runtime the shell runs on (qs-rs or Quickshell), not whatever qs is on PATH
+    running="$(running_shell_qs)" && qs_bin="$running"
     if command -v "$qs_bin" >/dev/null 2>&1; then
         pid="$("$qs_bin" list --all 2>/dev/null | awk '
             /^Instance / { candidate="" }
