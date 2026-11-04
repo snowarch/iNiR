@@ -20,11 +20,25 @@ _hub_why() {
     printf '  %s\n' "$why" >&2
 }
 
+# _hub_worn RUNTIME: the plugin ids the person's config wears. A family names in its plugin.json `wears` the config
+# keys whose value is a plugin of the hub (iRiS: the Design it wears); the base reads them and never names one.
+_hub_worn() {
+    local runtime="$1" config="" candidate key
+    for candidate in "${XDG_CONFIG_HOME:-$HOME/.config}/illogical-impulse/config.json" "${XDG_CONFIG_HOME:-$HOME/.config}/inir/config.json"; do
+        [[ -f "$candidate" ]] && { config="$candidate"; break; }
+    done
+    [[ -n "$config" ]] || return 0
+    jq -r '.wears[]? | strings' "$runtime"/modules/*/plugin.json 2>/dev/null | sort -u | while read -r key; do
+        jq -r --arg key "$key" 'getpath($key | split(".")) // empty | strings' "$config" 2>/dev/null
+    done
+}
+
 # hub_plugins_needed RUNTIME TREE [all-families]: one id per line, fails when the catalogue can't be read.
 # Needed: what the hub installed, what the old runtime still holds as a real folder at a plugin's path (a v2.33
-# install carried its families in its own tree), and with all-families every family listed (a fresh install).
+# install carried its families in its own tree), what the config wears (a Design picked before it came from the hub),
+# and with all-families every family listed (a fresh install).
 hub_plugins_needed() {
-    local catalogue runtime="$1" tree="$2" all="${3:-}" id provides installed kind errors rc=0
+    local catalogue runtime="$1" tree="$2" all="${3:-}" id provides installed kind errors worn rc=0
     if [[ ! -x "${XDG_DATA_HOME:-$HOME/.local/share}/inir/cli/inir" ]]; then
         printf '  %s\n' "the inir command is not installed, and the hub lives in it" >&2
         return 1
@@ -37,11 +51,12 @@ hub_plugins_needed() {
         return 1
     fi
     rm -f "$errors"
+    worn=" $(_hub_worn "$runtime" | tr '\n' ' ') "
     # a unit separator, not a tab: bash folds empty tab-separated fields away
     while IFS=$'\x1f' read -r id provides installed kind; do
         [[ -n "$provides" && ! -e "$tree/$provides" ]] || continue
         if [[ "$installed" == yes || ( -d "$runtime/$provides" && ! -L "$runtime/$provides" ) \
-            || ( "$all" == all-families && "$kind" == family ) ]]; then
+            || "$worn" == *" $id "* || ( "$all" == all-families && "$kind" == family ) ]]; then
             printf '%s\n' "$id"
         fi
     done < <(jq -r '.items[] | [.id, (.provides // ""), (if .installed then "yes" else "" end), (.kind // "")] | map(tostring) | join("\u001f")' <<<"$catalogue")
