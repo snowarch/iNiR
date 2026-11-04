@@ -30,6 +30,8 @@ Singleton {
         id: eventsFileView
         path: Qt.resolvedUrl(root.filePath)
         watchChanges: true
+        // no events yet is the usual first state, handled in onLoadFailed: not a warning
+        printErrors: false
         onLoaded: {
             const fileContents = eventsFileView.text()
             if (!fileContents || fileContents.trim() === "") {

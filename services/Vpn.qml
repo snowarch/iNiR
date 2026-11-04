@@ -336,7 +336,8 @@ Singleton {
     Process {
         id: tailscaleProc
         running: false
-        command: ["tailscale", "status", "--json"]
+        // Asked through sh so a machine without Tailscale answers 127 quietly instead of a failed start in the log
+        command: ["sh", "-c", "command -v tailscale >/dev/null || exit 127; exec tailscale status --json"]
         stdout: StdioCollector {
             onStreamFinished: {
                 if (text.trim().length === 0) return
