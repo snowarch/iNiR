@@ -36,6 +36,13 @@ Singleton {
     signal changed(string kind, string id)
     // An item someone asked to see (`inir hub open <id>`); the Hub page that is showing takes it and clears it.
     property string requestedId: ""
+    // A shelf someone asked to open on (a family's "More in the Hub" for its Designs), taken the same way.
+    property string requestedKind: ""
+    function takeKind(): string {
+        const kind = root.requestedKind
+        root.requestedKind = ""
+        return kind
+    }
     function takeRequest(): string {
         const id = root.requestedId
         root.requestedId = ""
@@ -47,6 +54,8 @@ Singleton {
         { id: "theme", label: "Colour themes", one: "Colour theme", icon: "palette" },
         { id: "iris-theme", label: "iRiS themes", one: "iRiS theme", icon: "style" },
         { id: "webapp", label: "Web apps", one: "Web app", icon: "language" },
+        { id: "component", label: "Components", one: "Component", icon: "extension" },
+        { id: "design", label: "Designs", one: "Design", icon: "brush" },
         { id: "family", label: "Families", one: "Family", icon: "dashboard" }
     ]
     readonly property var permissionText: ({
@@ -172,7 +181,7 @@ Singleton {
         const surfaces = Array.from(item.surfaces ?? [])
         if (item.kind === "theme")
             return family === "iris" ? Translation.tr("Works in Material and Waffle") : Translation.tr("Colours the shell and your apps")
-        if (item.kind === "iris-theme")
+        if (item.kind === "iris-theme" || item.kind === "design")
             return family === "iris" ? Translation.tr("Redesigns iRiS") : Translation.tr("Works in iRiS")
         if (item.kind === "webapp")
             return family === "material" ? Translation.tr("Opens in the left sidebar") : Translation.tr("Works in Material")

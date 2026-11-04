@@ -3224,5 +3224,8 @@
   "Take style from Material": "Tomar el estilo de Material",
   "Hide background": "Ocultar fondo",
   "Dial size": "Tamaño de la esfera",
-  "Off, widgets are arranged on the full desktop, in place.": "Si está apagado, los widgets se ordenan en el escritorio completo, en su lugar."
+  "Off, widgets are arranged on the full desktop, in place.": "Si está apagado, los widgets se ordenan en el escritorio completo, en su lugar.",
+  "Components": "Componentes",
+  "Component": "Componente",
+  "Designs": "Diseños"
 }

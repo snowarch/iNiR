@@ -44,6 +44,8 @@ If a folder you made already has the item's name, the card says **Name taken**, 
 
 | Kind | Shows up |
 | --- | --- |
+| Designs | iRiS's Settings › Style › Design: another iRiS, its own colour, type, shapes, edges and motion |
+| Components | Beside the family they are worn with: a panel, a corner or a tool with its own keybind |
 | Widgets | Material's desktop, the iRiS Island, Waffle's Widgets panel |
 | Colour themes | Settings › Themes, beside your own |
 | iRiS themes | The iRiS theme list, beside the built-in ones |
