@@ -46,6 +46,9 @@ Singleton {
         property string body: notification?.body ?? ""
         property string image: notification?.image ?? ""
         property string summary: notification?.summary ?? ""
+        // The sender takes a typed answer in place (a chat app's Reply): `replyTo` sends it.
+        readonly property bool canReply: notification?.hasInlineReply ?? false
+        readonly property string replyHint: notification?.inlineReplyPlaceholder ?? ""
         property double time
         property string urgency: notification?.urgency.toString() ?? "normal"
         property Timer timer
@@ -448,6 +451,7 @@ Singleton {
         bodyMarkupSupported: true
         bodySupported: true
         imageSupported: true
+        inlineReplySupported: true
         keepOnReload: false
         persistenceSupported: true
 
@@ -704,6 +708,16 @@ Singleton {
             const cmd = "/usr/bin/gtk-launch \"" + appIcon + "\" || \"" + appIcon + "\"";
             ShellExec.execCmd(cmd);
         }
+    }
+
+    // A typed answer to a notification that takes one; the sender closes it or sends a new one.
+    function replyTo(id, text) {
+        const reply = String(text ?? "").trim()
+        if (reply.length === 0) return false
+        const notif = notifServer.trackedNotifications.values.find((n) => n.id + root.idOffset === id)
+        if (!notif?.hasInlineReply) return false
+        notif.sendInlineReply(reply)
+        return true
     }
 
     function attemptInvokeAction(id, notifIdentifier) {
