@@ -170,7 +170,14 @@ runtime_payload() (
       if [[ -z "$sub" ]]; then rules+=("/$dir/*$suffix")
       elif [[ "$dir" == "$sub"/* ]]; then rules+=("/${dir#"$sub"/}/*$suffix"); fi
     done
-    printf -- '--exclude=%s\n' "${rules[@]}"
+    # Caches the shell writes itself (a v2.33 helper's __pycache__) are perishable: they go with a folder the payload
+    # drops, where a plain exclude kept it alive ("cannot delete non-empty directory", 11-04).
+    for rule in "${rules[@]}"; do
+      case "$rule" in
+        __pycache__|.ruff_cache|'*.pyc'|'*.qmlc'|'*.jsc') printf -- '--filter=-p %s\n' "$rule" ;;
+        *) printf -- '--exclude=%s\n' "$rule" ;;
+      esac
+    done
   }
 
   # separate: the target is its own folder, not this checkout, inside it or holding it.
