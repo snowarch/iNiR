@@ -2301,9 +2301,11 @@ _update_hub_plugins() {
 
 _update_dependencies() {
     _step_phase_header 5 "Checking dependencies"
-    check_dependencies
+    # doctor's check, without its own lines: they said "✗ Missing ... Run: ./setup install" for what the next lines
+    # install by themselves (a new version's new packages, every update)
+    check_dependencies >/dev/null 2>&1
     if [[ ${#doctor_missing_deps[@]} -gt 0 ]]; then
-        tui_warn "Missing packages detected: ${doctor_missing_deps[*]}"
+        tui_info "Packages this version needs: ${doctor_missing_deps[*]}"
         if [[ "${SKIP_ALLDEPS:-false}" == true || "$(read_installed_version_field '.dependencies' setup)" == user ]]; then
             tui_info "--skip-deps: packages are yours to manage, so none are installed"
         elif $ask; then
