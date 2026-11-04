@@ -700,6 +700,14 @@ check_fonts() {
         return 1
     fi
 
+    # the faces the runtime and its plugins ship, linked first: an update checks here before the new shell has done
+    # it, and every update said "Configured fonts unavailable: Geist" for a family it had just installed (11-04)
+    local runtime_fonts
+    runtime_fonts="$(doctor_runtime_dir)"
+    if [[ -n "$runtime_fonts" && -f "$runtime_fonts/scripts/colors/link-bundled-fonts.sh" ]]; then
+        bash "$runtime_fonts/scripts/colors/link-bundled-fonts.sh" >/dev/null 2>&1 || true
+    fi
+
     local fc_cache
     fc_cache="$(fc-list : family 2>/dev/null)"
     local user_font_dir="${XDG_DATA_HOME}/fonts"
