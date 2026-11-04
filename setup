@@ -2630,14 +2630,15 @@ run_update() {
             else
                 tui_success "Already up to date ($installed_ver)"
             fi
-            _write_update_status "success"
-
             repair_update_owned_state true
             # a past update whose packages failed is finished here, not only by doctor
             _update_dependencies
             # The binary has its own releases: an up-to-date shell still gets a newer one.
             install_inir_cli_binary || tui_warn "Could not fetch the inir binary; the Hub needs it (inir update tries again)"
             _update_hub_plugins || true
+            # last: each step above reports progress, and a progress marker left behind reads as an update in flight
+            # to the shell, which kept showing the update card (11-04)
+            _write_update_status "success"
             return 0
         else
             # Local repo ahead of installed - create snapshot
