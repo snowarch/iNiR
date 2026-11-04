@@ -124,9 +124,11 @@ function _oneSize(entry, irisActive) {
         delete entry.materialSize;
         changed = true;
     }
+    // A zero Material size was no size: carried over, it held `freeWidth` at 0 and the person's own resize
+    // (`contentWidth`, read next by _contentSize) was dropped (a visualizer 248x267 went back to auto, 11-04).
     for (const [from, to] of [["materialWidth", "freeWidth"], ["materialHeight", "freeHeight"]]) {
         if (entry[from] === undefined) continue;
-        if (entry[to] === undefined) entry[to] = entry[from];
+        if (entry[to] === undefined && Number(entry[from]) > 0) entry[to] = entry[from];
         delete entry[from];
         changed = true;
     }
