@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Effects
 import Quickshell
 import Quickshell.Wayland
+import qs
 import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
