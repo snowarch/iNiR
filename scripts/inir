@@ -3286,6 +3286,37 @@ run_service_command() {
     esac
 }
 
+# What this desktop runs of every part beside what this iNiR pins (sdata/prebuilt.json), so a person sees that an
+# update reached everything; a part behind its pin names the fix.
+_part_version_line() {
+    if [[ -n "$3" && "$2" != "$3" ]]; then
+        printf '%s: %s (this iNiR pins %s; run inir update)\n' "$1" "${2:-not installed}" "$3"
+    else
+        printf '%s: %s\n' "$1" "${2:-not installed}"
+    fi
+}
+
+_show_part_versions() {
+    command -v jq >/dev/null 2>&1 || return 0
+    local pins="$1/sdata/prebuilt.json" data="${XDG_DATA_HOME:-$HOME/.local/share}/inir" have want
+    have="$("$data/cli/inir" cli version 2>/dev/null | awk 'NR == 1 {print $2}')"
+    _part_version_line inir-cli "$have" "$(jq -r '.cli.version // empty' "$pins" 2>/dev/null)"
+    have="$(readlink "$data/runtime/current" 2>/dev/null)"; have="${have##*/}"
+    want="$(jq -r '.parts["qs-rs"].version // empty' "$pins" 2>/dev/null)"
+    # qs-rs is built for x86_64 only; elsewhere Quickshell runs the shell
+    [[ "$(uname -m)" == x86_64 ]] || { want=""; have="${have:-Quickshell (no qs-rs build for this CPU)}"; }
+    _part_version_line qs-rs "$have" "$want"
+    have="$(readlink "$data/accel/current" 2>/dev/null)"; have="${have##*/}"
+    _part_version_line inir-accel "$have" "$(jq -r '.parts["inir-accel"].version // empty' "$pins" 2>/dev/null)"
+    have="$(jq -r '(.items // {}) | to_entries | map("\(.key) \(.value.version)") | join(", ")' \
+        "${XDG_STATE_HOME:-$HOME/.local/state}/inir/hub/installed.json" 2>/dev/null)"
+    [[ -z "$have" ]] || printf 'hub: %s\n' "$have"
+    # newer on the hub (its catalogue, read again when the cached copy is over 10 minutes old)
+    have="$(timeout 5 "$data/cli/inir" hub status --max-age 600 --json 2>/dev/null |
+        jq -r '[(.items // [])[] | select(.update and .compatible) | "\(.id) \(.version)"] | join(", ")' 2>/dev/null)"
+    [[ -z "$have" ]] || printf 'hub has newer: %s (run inir update)\n' "$have"
+}
+
 show_version() {
     local json=false
     local runtime_path=""
@@ -3379,6 +3410,7 @@ show_version() {
                 printf 'note: non-release branch\n'
             fi
         fi
+        _show_part_versions "$live_repo"
         return
     fi
 
@@ -3409,6 +3441,7 @@ show_version() {
                     fi
                 fi
             fi
+            _show_part_versions "${repo_dir:-$runtime_path}"
             return
         fi
     fi
@@ -3422,6 +3455,7 @@ show_version() {
 
     printf 'iNiR %s\n' "$(tr -d '[:space:]' < "$setup_dir/VERSION")"
     printf 'runtime: %s\n' "${runtime_path:-$setup_dir}"
+    _show_part_versions "$setup_dir"
 }
 
 # ── inir bind: Niri keybinds for any inir call ────────────────────────────────
