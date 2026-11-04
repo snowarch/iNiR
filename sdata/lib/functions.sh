@@ -1425,7 +1425,16 @@ KDL
         for (i = 1; i <= NR; i++) {
           if (drop[i]) continue
           if (line[i] ~ /^[ \t]*spawn-sh-at-startup.*runsvdir/) drop[i] = 1
-          else if (line[i] ~ /^[ \t]*spawn-at-startup "bash" "-c" "systemctl --user import-environment XDG_MENU_PREFIX && kbuildsycoca6"$/) drop[i] = 1
+          else if (line[i] ~ /^[ \t]*spawn-at-startup "bash" "-c" "systemctl --user import-environment XDG_MENU_PREFIX && kbuildsycoca6"$/) {
+            drop[i] = 1
+            # the two-line note v2.33 put above it goes too: the block brings the same note, and left behind it
+            # explained nothing
+            if (line[i - 1] ~ /^[ \t]*\/\/ sycoca database so KDE\/Qt apps see the correct \.desktop entries\.$/ \
+                && line[i - 2] ~ /^[ \t]*\/\/ Export XDG_MENU_PREFIX into the systemd user session and rebuild the$/) {
+              drop[i - 1] = 1; drop[i - 2] = 1
+              if (line[i - 3] ~ /^[ \t]*$/ && line[i + 1] ~ /^[ \t]*$/) drop[i + 1] = 1
+            }
+          }
           else if (line[i] ~ /^[ \t]*\/\/ iNiR is managed by the (user systemd service \(inir\.service\)|runit user service \(service\/inir\)|turnstile user service \(service\/inir\))\.$/ \
                    && line[i + 1] ~ /^[ \t]*\/\/ Do not add a compositor startup entry here or you.ll get two shells\./) { drop[i] = 1; drop[i + 1] = 1; i++ }
         }
