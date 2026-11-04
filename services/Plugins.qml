@@ -5,6 +5,7 @@ import QtQuick
 import Qt.labs.folderlistmodel
 import Quickshell
 import Quickshell.Io
+import qs
 import qs.modules.common
 
 // What is installed: every folder under modules/ that carries a plugin.json (the families today, components and
@@ -82,6 +83,8 @@ Singleton {
             const next = Object.assign({}, root.manifests)
             next[folder] = Object.assign({ provides: `modules/${folder}`, parts: {}, flags: {} }, manifest)
             root.manifests = next
+            if (root._loadable !== null && !root._loadable.includes(folder))
+                arrived.restart()
         }
         root._read++
     }
@@ -119,6 +122,29 @@ Singleton {
         showFiles: false
         showDirs: true
         showDotAndDotDot: false
+        onStatusChanged: {
+            if (folders.status !== FolderListModel.Ready || root._loadable !== null) return
+            const names = []
+            for (let i = 0; i < folders.count; i++) names.push(String(folders.get(i, "fileName")))
+            root._loadable = names
+        }
+    }
+
+    // The shell loads its files from the copy of its folder that each (re)load makes: a plugin installed while it runs
+    // is listed at once, but its parts (a Design's face, a component's panel) load only after the next reload. One
+    // soft reload once it lands; never while the screen is locked.
+    property var _loadable: null
+    Timer {
+        id: arrived
+        interval: 1500
+        onTriggered: {
+            if (GlobalStates.screenLocked) {
+                arrived.interval = 5000
+                arrived.restart()
+                return
+            }
+            Quickshell.reload(false)
+        }
     }
 
     Instantiator {
