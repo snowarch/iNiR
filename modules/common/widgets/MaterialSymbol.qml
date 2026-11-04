@@ -65,6 +65,9 @@ Item {
         verticalAlignment: Text.AlignVCenter
 
         renderType: root.textRenderType
+        // Icons are often centred by hand ((box - icon) / 2) and land on half a pixel; a glyph there flips a pixel
+        // as a surface scales in and settles. Drawn on whole pixels it stays put.
+        transform: Translate { x: Math.round(root.x) - root.x; y: Math.round(root.y) - root.y }
         font {
             hintingPreference: (root.useNerd && root.hasNerdGlyph) ? Font.PreferFullHinting : Font.PreferNoHinting
             family: root.useJp ? "Zen Kaku Gothic New"
