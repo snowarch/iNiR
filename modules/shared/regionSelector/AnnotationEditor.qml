@@ -521,7 +521,9 @@ PanelWindow {
             _fmt='${StringUtils.shellSingleQuoteEscape(Config.options?.regionSelector?.screenshotNameFormat ?? "ss-%Y%m%d-%H%M%S")}';
             mkdir -p "$_dir" || { echo "mkdir failed: $_dir" >&2; exit 1; };
             _ss="$_dir/$(date +"$_fmt").png";
-            if ! cp '${root._outPath}' "$_ss"; then
+            _part="$_dir/.$(basename "$_ss").part";
+            if ! { cp '${root._outPath}' "$_part" && mv -f "$_part" "$_ss"; }; then
+                rm -f "$_part";
                 echo "cp failed: ${root._outPath} -> $_ss" >&2;
                 /usr/bin/notify-send "Edit failed" "Could not copy to screenshots folder" -a "Screenshot" -i camera-photo -t 4000;
                 exit 2;

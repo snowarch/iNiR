@@ -402,8 +402,10 @@ PanelWindow {
         const copiedTitle = StringUtils.shellSingleQuoteEscape(Translation.tr("Screenshot copied"))
         const copiedBody = StringUtils.shellSingleQuoteEscape(Translation.tr("%1 × %2, saved in %3").arg(rw).arg(rh).arg(savedIn))
         switch (root.action) {
+            // The shot lands whole: written beside it as a hidden part, then renamed, so the Shelf and the Island
+            // never read a half-written PNG ("Unsupported image format").
             case RegionSelection.SnipAction.Copy:
-                snipProc.command = ["/usr/bin/bash", "-c", `_dir='${screenshotSaveDir}' && mkdir -p "$_dir" && _ss="$_dir/$(date +'${StringUtils.shellSingleQuoteEscape(root.screenshotNameFormat)}').png" && ${cropToStdout} | tee "$_ss" | '${clipboardCopy}' && printf '%s' "$_ss" | '${clipboardCopy}' --primary && ${cleanup} && /usr/bin/notify-send '${copiedTitle}' '${copiedBody}' -a Screenshot -i camera-photo -t 3000`]
+                snipProc.command = ["/usr/bin/bash", "-c", `_dir='${screenshotSaveDir}' && mkdir -p "$_dir" && _ss="$_dir/$(date +'${StringUtils.shellSingleQuoteEscape(root.screenshotNameFormat)}').png" && _part="$_dir/.$(basename "$_ss").part" && ${cropToStdout} | tee "$_part" | '${clipboardCopy}' && mv -f "$_part" "$_ss" && printf '%s' "$_ss" | '${clipboardCopy}' --primary && ${cleanup} && /usr/bin/notify-send '${copiedTitle}' '${copiedBody}' -a Screenshot -i camera-photo -t 3000`]
                 break;
             case RegionSelection.SnipAction.Edit:
                 if (Config.options?.regionSelector?.annotation?.useNativeEditor ?? true) {
