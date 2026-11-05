@@ -319,9 +319,12 @@ Singleton {
                 readProc.buffer.push(line)
             }
         }
+        stderr: StdioCollector { id: readErr }
 
         onExited: (exitCode, exitStatus) => {
-            if (exitCode === 0) {
+            // A history nothing was copied into yet: cliphist exits 1 with "please store something first" (every new install logged an ERROR).
+            const empty = exitCode === 1 && String(readErr.text ?? "").includes("store something first")
+            if (exitCode === 0 || empty) {
                 // Cap the number of entries we keep to avoid heavy models
                 root.entries = readProc.buffer.slice(0, root.maxEntries)
                 root.listed = true
