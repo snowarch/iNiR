@@ -261,11 +261,31 @@ function _factoryLook(obj) {
     return true;
 }
 
+// The person's place has one switch, weather.hideLocation. The weather widget kept a second one that hid the city in
+// that widget alone while the Island, the lock screen and the sidebars kept printing it (11-04): a city hidden there
+// is hidden everywhere.
+function _onePlace(obj) {
+    const widgets = _get(obj, "background.widgets");
+    if (!_isObject(widgets)) return false;
+    const entries = [widgets.weather];
+    for (const record of Array.isArray(widgets.outputOverrides) ? widgets.outputOverrides : [])
+        entries.push(record?.widgets?.weather);
+    let changed = false;
+    for (const entry of entries.filter(_isObject)) {
+        if (entry.showLocation === undefined) continue;
+        if (entry.showLocation === false) _set(obj, "weather.hideLocation", true);
+        delete entry.showLocation;
+        changed = true;
+    }
+    return changed;
+}
+
 function migrate(obj) {
     if (!_isObject(obj)) return false;
     const fromV2 = Number(_get(obj, "iris.appearance.factoryLook") ?? 0) < 1;
     let changed = _factoryLook(obj);
     changed = _widgetSizes(obj, fromV2) || changed;
+    changed = _onePlace(obj) || changed;
     for (const [from, to] of moves) {
         const value = _get(obj, from);
         if (value === undefined) continue;

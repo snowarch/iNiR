@@ -42,6 +42,9 @@ Singleton {
         return (Weather.location?.valid ?? false) ? name.split(",")[0].trim() : ""
     }
 
+    // What a surface may print: the place stays off screen under weather.hideLocation.
+    readonly property string localCityShown: Weather.hideLocation ? "" : root.localCity
+
     function feedUrl(mode, topic) {
         if (mode === "local" && root.localCity.length > 0)
             return `https://news.google.com/rss/headlines/section/geo/${encodeURIComponent(root.localCity)}?${root._localeQuery}`

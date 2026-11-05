@@ -34,7 +34,6 @@ AbstractBackgroundWidget {
     readonly property bool showMetrics: Boolean(root._readConfigKey("showMetrics") ?? true)
     readonly property bool showSunPath: Boolean(root._readConfigKey("showSunPath") ?? true)
     readonly property bool showSunTimes: Boolean(root._readConfigKey("showSunTimes") ?? true)
-    readonly property bool showLocation: Boolean(root._readConfigKey("showLocation") ?? true)
 
     readonly property var _metricModel: {
         const d = Weather.data;
@@ -76,9 +75,6 @@ AbstractBackgroundWidget {
     drawnWidth: root.forecastFace ? 0 : root.weatherStyle === "detail" ? Math.round(shapeSize * 2.2)
         : root.weatherStyle === "dial" ? Math.round(shapeSize * 1.4) : shapeSize
     drawnHeight: root.forecastFace ? 0 : root.weatherStyle === "detail" ? Math.round(shapeSize * 0.95) : shapeSize
-    familyOptions: [
-        { key: "showLocation", raw: true, label: Translation.tr("Location"), icon: "location_on", fallback: true }
-    ]
     resizeMinWidth: root.weatherStyle === "detail" ? 280
         : root.weatherStyle === "dial" ? 224 : 80
     resizeMinHeight: root.weatherStyle === "detail" ? 150
@@ -445,7 +441,7 @@ AbstractBackgroundWidget {
                         InstrumentLabel {
                             Layout.fillWidth: true
                             // the town alone: its province cut the label short
-                            text: root.showLocation && Weather.showVisibleCity && String(Weather.visibleCity || "").length > 0
+                            text: Weather.showVisibleCity && String(Weather.visibleCity || "").length > 0
                                 ? (root.isSmall ? String(Weather.visibleCity).split(",")[0].trim()
                                     : Translation.tr("Atmosphere / %1").arg(String(Weather.visibleCity).split(",")[0].trim()))
                                 : Translation.tr("Atmosphere / Local")

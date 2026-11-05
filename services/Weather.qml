@@ -38,7 +38,7 @@ Singleton {
         windDir: "N",
         wCode: "113",
         description: "",
-        city: "City",
+        city: "",
         wind: "0 km/h",
         precip: "0 mm",
         visib: "10 km",
@@ -64,6 +64,7 @@ Singleton {
         pm10: "",
         ozone: ""
     })
+    // The only place a surface may take the person's city from: off under weather.hideLocation, whatever the surface.
     readonly property string visibleCity: {
         if (root.hideLocation)
             return ""

@@ -558,7 +558,6 @@ JsonAdapter {
                 property bool showCondition: false
                 property bool showSunPath: true
                 property bool showSunTimes: true
-                property bool showLocation: true
                 property int padding: 20
                 property int tempFontWeight: 500 // Font.Medium
                 property real conditionOpacity: 0.7

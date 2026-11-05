@@ -74,6 +74,8 @@ QtObject {
         // A run of switches is the wall the page must not be: a widget's switches refine it, so they wait behind its
         // Fine-tune unless a row says `tune: false` (the plate, which people come to turn off).
         if (spec.tune === undefined && kind === "switch") spec.tune = true
+        // `shell`: the row shows a shell key every surface reads (the weather's place), not one of the widget's own.
+        if (spec.shell) spec.path = spec.shell
         const when = spec.when
         spec.showIf = () => root.on(widget) && root.overlay(widget)[key] === undefined && (when === undefined || when())
         delete spec.when
@@ -287,12 +289,14 @@ QtObject {
     // What a row shows and what it writes (IrisOptions.currentValue / commit route `spec.widget` rows here).
     function read(spec: var): var {
         if (spec.widgetEnable) return root.on(spec.widget)
+        if (spec.shell) return Config.getNestedValue(spec.shell, spec.fallback)
         if (spec.key === "sizeClass")
             return root.value(spec.widget, "sizeClass", undefined) ?? DesktopWidgetStacks.reported[spec.widget]?.size ?? spec.fallback
         return root.value(spec.widget, spec.key, spec.key === "showBackground" ? root.plateDefault(spec.widget) : spec.fallback)
     }
     function write(spec: var, next: var): void {
         if (spec.widgetEnable) { DesktopWidgetLayout.setGloballyEnabled(spec.widget, Boolean(next)); return }
+        if (spec.shell) { Config.setNestedValue(spec.shell, next); return }
         let value = next
         if (spec.key === "timezones") value = Array.from(next ?? []).slice(0, WorldClock.maxTimezones)
         const values = spec.apply ? spec.apply(value) : ({})

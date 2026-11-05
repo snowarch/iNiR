@@ -60,7 +60,7 @@ Item {
         font.pixelSize: root.px(Appearance.font.pixelSize.smaller)
         font.weight: Font.Medium
     }
-    readonly property string city: root.widget.showLocation && Weather.showVisibleCity ? String(Weather.visibleCity).split(",")[0].trim() : ""
+    readonly property string city: Weather.showVisibleCity ? String(Weather.visibleCity).split(",")[0].trim() : ""
 
     ColumnLayout {
         anchors.fill: parent

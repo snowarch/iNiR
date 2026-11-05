@@ -24,7 +24,6 @@
     "showMetrics": true,
     "showSunPath": true,
     "showSunTimes": true,
-    "showLocation": true,
     "padding": 20,
     "tempFontWeight": 500,
     "conditionOpacity": 0.7,
@@ -42,7 +41,7 @@
   },
   "conditions": {"forecast":[{"sizeClass":["medium","large"]},{"not":{"style":"dial"}}]},
   "options": [
-    {"key":"showLocation","label":"Location","type":"switch","default":true},
+    {"key":"hideLocation","label":"Location","description":"Your city, here and on every other surface: the Island, the lock screen, sidebars and widgets.","type":"switch","default":false,"shell":"weather.hideLocation","invert":true,"tune":false,"keywords":["city","place","privacy","stream","ciudad","ubicación"]},
     {"key":"style","label":"Style","type":"choice","default":"pill","when":"material","choices":[["pill","Shape"],["card","Card"],["detail","Detail"],["dial","Instrument"]]},
     {"key":"shape","label":"Shape","type":"choice","default":"pill","when":[{"not":"forecast"},"material",{"style":"pill"}],"choices":[["pill","Pill"],["circle","Circle"],["oval","Oval"],["diamond","Diamond"],["heart","Heart"],["flower","Flower"],["cookie4","Cookie"],["sunny","Sunny"],["clover","Clover"],["softBurst","Burst"],["gem","Gem"],["puffy","Puffy"]]},
     {"key":"preset","label":"Preset","type":"choice","default":"default","when":["material",{"not":"forecast"}],"choices":[["default","Default"],["compact","Compact"],["iconOnly","Icon only"],["textOnly","Text only"]],"sets":{"default":{"size":200,"tempSize":80,"iconSize":80,"showTemp":true,"showIcon":true,"showCondition":false},"compact":{"size":140,"tempSize":50,"iconSize":50,"showTemp":true,"showIcon":true,"showCondition":false},"iconOnly":{"size":120,"showTemp":false,"showIcon":true,"showCondition":false},"textOnly":{"size":160,"showTemp":true,"showIcon":false,"showCondition":true}}},

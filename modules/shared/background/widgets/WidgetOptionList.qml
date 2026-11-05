@@ -42,8 +42,8 @@ ColumnLayout {
             property var spec: ({})
             iconName: String(spec.glyph ?? "")
             label: root.label(spec.label)
-            checked: Boolean(root.valueOf(spec))
-            onToggled: DesktopWidgetOptions.write(spec, !checked)
+            checked: spec.invert ? !Boolean(root.valueOf(spec)) : Boolean(root.valueOf(spec))
+            onToggled: DesktopWidgetOptions.write(spec, spec.invert ? checked : !checked)
         }
     }
 

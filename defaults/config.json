@@ -397,7 +397,6 @@
                 "showMetrics": true,
                 "showSunPath": true,
                 "showSunTimes": true,
-                "showLocation": true,
                 "padding": 20,
                 "tempFontWeight": 500,
                 "conditionOpacity": 0.7
