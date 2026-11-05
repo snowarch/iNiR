@@ -19,8 +19,8 @@ you have current.
 - Pick the family itself, and which families the shortcut visits, here:
   - Material: Settings › Modules › Panel Style
   - Waffle: Waffle Settings › Modules › Panel Style
-  - iRiS: iRiS Settings › Home › Shell family
-- The switch animates by default. To turn that off, use Settings › Modules › Panel Style › Animated switch (Material), Waffle Settings › Waffle Style › Family Transition (Waffle), or iRiS Settings › Home › Shell family › Animated switch.
+  - iRiS: iRiS Settings › General › Shell
+- The switch animates by default. To turn that off, use Settings › Modules › Panel Style › Animated switch (Material), Waffle Settings › Waffle Style › Family Transition (Waffle), or iRiS Settings › General › Shell › Animated switch.
 
 Material is the default for a reason, but nobody is keeping score.
 
