@@ -79,7 +79,7 @@ Singleton {
         const exists = pinned.some(p => String(p).toLowerCase() === lower)
         const next = exists ? pinned.filter(p => String(p).toLowerCase() !== lower)
             : pinned.concat([AppSearch.lookupDesktopEntry(id)?.id || id])
-        Config.setNestedValue(["dock", "pinnedApps"], next)
+        Config.setNestedValue(["apps", "pinned"], next)
     }
 
     function _buildApps(): var {
