@@ -2026,6 +2026,17 @@
                 "media": true,
                 "micGlow": true
             },
+            "faces": {
+                "ledger": { "ahead": 720 },
+                "tiles": { "lit": "hour", "day": true },
+                "dial": { "marks": "hours", "beside": "day" },
+                "marquee": { "events": true, "weather": true, "sun": true },
+                "duo": { "temperature": true },
+                "headline": { "beside": "sky", "temperature": true },
+                "rings": { "outer": "day", "middle": "battery", "inner": "month" },
+                "aura": { "colours": "spectrum", "turns": true },
+                "status": { "carry": "auto", "connection": true, "sound": true }
+            },
             "scrollBubbles": true,
             "trailing": "controls",
             "height": 42,
