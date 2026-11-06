@@ -2017,6 +2017,15 @@
                 "niri": true,
                 "soundGuard": true
             },
+            "activities": {
+                "record": true,
+                "timer": true,
+                "task": true,
+                "camera": true,
+                "call": true,
+                "media": true,
+                "micGlow": true
+            },
             "scrollBubbles": true,
             "trailing": "controls",
             "height": 42,
