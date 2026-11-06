@@ -9,7 +9,38 @@ import qs.modules.common
 Singleton {
     id: root
 
-    readonly property bool enabled: Config.options?.background?.widgets?.worldClock?.enable ?? false
+    readonly property bool widgetOn: Config.options?.background?.widgets?.worldClock?.enable ?? false
+    // Zones another surface shows (an Island face, say), each with how many ask for it: kept fresh while asked, without
+    // the widget's second clock. `want` on show, `release` on hide; `offsetOf` answers once the zone is read.
+    property var _asked: ({})
+    readonly property var askedZones: Object.keys(root._asked).filter(tz => root._asked[tz] > 0)
+    readonly property bool enabled: root.widgetOn || root.askedZones.length > 0
+    // What one refresh reads: the widget's cities while it shows, and every asked zone.
+    readonly property var zones: (root.widgetOn ? root.timezones : []).concat(root.askedZones.filter(tz => !root.widgetOn || !root.timezones.includes(tz)))
+    property var zoneOffsets: ({})
+
+    function want(tz: string): void {
+        const zone = String(tz ?? "")
+        if (zone.length === 0)
+            return
+        const asked = Object.assign({}, root._asked)
+        asked[zone] = (asked[zone] ?? 0) + 1
+        root._asked = asked
+    }
+    function release(tz: string): void {
+        const zone = String(tz ?? "")
+        if (!(root._asked[zone] > 0))
+            return
+        const asked = Object.assign({}, root._asked)
+        asked[zone] -= 1
+        if (asked[zone] <= 0)
+            delete asked[zone]
+        root._asked = asked
+    }
+    // Minutes east of UTC, or undefined until the zone has been read.
+    function offsetOf(tz: string): var {
+        return root.zoneOffsets[String(tz ?? "")]
+    }
 
     readonly property var fallbackTimezones: ["Pacific/Auckland", "Pacific/Honolulu", "Australia/Sydney", "Australia/Perth", "Asia/Tokyo", "Asia/Seoul", "Asia/Shanghai", "Asia/Hong_Kong", "Asia/Singapore", "Asia/Bangkok", "Asia/Kolkata", "Asia/Dubai", "Asia/Qatar", "Asia/Tehran", "Asia/Jerusalem", "Europe/Moscow", "Europe/Istanbul", "Europe/Athens", "Europe/Warsaw", "Europe/Berlin", "Europe/Paris", "Europe/Madrid", "Europe/Rome", "Europe/London", "Europe/Lisbon", "Africa/Cairo", "Africa/Johannesburg", "Africa/Nairobi", "Africa/Lagos", "America/Sao_Paulo", "America/Argentina/Buenos_Aires", "America/Santiago", "America/Montevideo", "America/La_Paz", "America/Lima", "America/Bogota", "America/Caracas", "America/Mexico_City", "America/New_York", "America/Chicago", "America/Denver", "America/Phoenix", "America/Los_Angeles", "America/Anchorage", "America/Vancouver", "America/Toronto", "UTC"]
 
@@ -95,6 +126,7 @@ Singleton {
     property var _nextOffsets: []
     property bool _refreshQueued: false
     property string _offsetText: ""
+    property var _reading: []
 
     function refreshOffsets(): void {
         if (!root.enabled)
@@ -106,6 +138,7 @@ Singleton {
         root._refreshQueued = false;
         root._offsetIndex = 0;
         root._nextOffsets = [];
+        root._reading = root.zones.slice();
         root._runNextOffset();
     }
 
@@ -115,8 +148,11 @@ Singleton {
             root._nextOffsets = [];
             return;
         }
-        if (root._offsetIndex >= root.timezones.length) {
-            root.offsetsMinutes = root._nextOffsets;
+        if (root._offsetIndex >= root._reading.length) {
+            const read = Object.assign({}, root.zoneOffsets);
+            root._reading.forEach((tz, i) => read[tz] = root._nextOffsets[i]);
+            root.zoneOffsets = read;
+            root.offsetsMinutes = root.timezones.map((tz, i) => read[tz] ?? root.offsetsMinutes[i] ?? 0);
             root._offsetIndex = -1;
             if (root._refreshQueued)
                 root.refreshOffsets();
@@ -126,22 +162,17 @@ Singleton {
         root._offsetText = "";
         offsetProc.exec({
             command: ["date", "+%z"],
-            environment: ({ TZ: String(root.timezones[root._offsetIndex] ?? "UTC") })
+            environment: ({ TZ: String(root._reading[root._offsetIndex] ?? "UTC") })
         });
     }
 
-    onTimezonesChanged: root.refreshOffsets()
-    onEnabledChanged: {
-        if (root.enabled) {
-            root.now = new Date();
-            root.refreshOffsets();
-        }
-    }
+    onZonesChanged: root.refreshOffsets()
+    onWidgetOnChanged: if (root.widgetOn) root.now = new Date()
     Component.onCompleted: root.refreshOffsets()
 
     Timer {
         interval: 1000
-        running: root.enabled
+        running: root.widgetOn
         repeat: true
         onTriggered: root.now = new Date()
     }

@@ -2035,7 +2035,9 @@
                 "headline": { "beside": "sky", "temperature": true },
                 "rings": { "outer": "day", "middle": "battery", "inner": "month" },
                 "aura": { "colours": "spectrum", "turns": true },
-                "status": { "carry": "auto", "connection": true, "sound": true }
+                "status": { "carry": "auto", "connection": true, "sound": true },
+                "forecast": { "hours": 3, "labels": true, "colour": true },
+                "world": { "zone": "Asia/Tokyo", "second": "none", "apart": true, "watch": true }
             },
             "scrollBubbles": true,
             "trailing": "controls",
