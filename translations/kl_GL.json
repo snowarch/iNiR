@@ -379,7 +379,6 @@
   "Enter a valid number": "Number valid allaguk",
   "Enter tags (use #tag for autocomplete / multi-word), or \"%1\" for commands": "Tag-it allakkit (#tag autocomplete / multi-word-imut), imaluunniit command-imut \"%1\"",
   "Error": "Kukkuneq",
-  "Exceeded max allowed": "Max allowed qaangerneqarpoq",
   "Expand controls": "Controls expand-gikkit",
   "Expressive": "Ersarissumik",
   "External": "Avataaneersoq",
@@ -506,7 +505,6 @@
   "Identify Music": "Music identify-guk",
   "Identify the currently playing song": "Maanna song playing-iusoq identify-guk",
   "Idle & Sleep": "Idle & sleep",
-  "Illegal increment": "Increment akuerineqanngilaq",
   "Images": "Assit",
   "Immersive": "Immerse",
   "In use": "Atorneqarpoq",
@@ -3227,5 +3225,7 @@
   "Off, widgets are arranged on the full desktop, in place.": "Off, widgets are arranged on the full desktop, in place.",
   "Components": "Ilaminertat",
   "Component": "Ilaminertaq",
-  "Designs": "Ilusiliinerit"
+  "Designs": "Ilusiliinerit",
+  "It rose more than %1% at once": "It rose more than %1% at once",
+  "%1% is the most allowed": "%1% is the most allowed"
 }

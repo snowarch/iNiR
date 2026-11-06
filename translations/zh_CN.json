@@ -379,7 +379,6 @@
   "Enter a valid number": "输入有效号码",
   "Enter tags (use #tag for autocomplete / multi-word), or \"%1\" for commands": "输入标签（使用 #tag 进行自动完成/多字），或使用“%1”进行命令",
   "Error": "错误",
-  "Exceeded max allowed": "超过允许的最大值",
   "Expand controls": "展开控制",
   "Expressive": "表现力",
   "External": "外部",
@@ -506,7 +505,6 @@
   "Identify Music": "识别音乐",
   "Identify the currently playing song": "识别当前播放的歌曲",
   "Idle & Sleep": "空闲和睡眠",
-  "Illegal increment": "非法增量",
   "Images": "图片",
   "Immersive": "身临其境",
   "In use": "使用中",
@@ -3227,5 +3225,7 @@
   "Off, widgets are arranged on the full desktop, in place.": "Off, widgets are arranged on the full desktop, in place.",
   "Components": "组件",
   "Component": "组件",
-  "Designs": "设计"
+  "Designs": "设计",
+  "It rose more than %1% at once": "一次升高超过 %1%",
+  "%1% is the most allowed": "最高允许 %1%"
 }

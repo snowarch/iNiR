@@ -379,7 +379,6 @@
   "Enter a valid number": "Nhập số hợp lệ",
   "Enter tags (use #tag for autocomplete / multi-word), or \"%1\" for commands": "Nhập thẻ (sử dụng #tag để tự động hoàn thành / nhiều từ) hoặc \"%1\" cho lệnh",
   "Error": "Lỗi",
-  "Exceeded max allowed": "Vượt mức tối đa cho phép",
   "Expand controls": "Mở rộng điều khiển",
   "Expressive": "Biểu cảm",
   "External": "Bên ngoài",
@@ -506,7 +505,6 @@
   "Identify Music": "Xác định âm nhạc",
   "Identify the currently playing song": "Xác định bài hát đang phát",
   "Idle & Sleep": "Nhàn rỗi & Ngủ",
-  "Illegal increment": "Tăng bất hợp pháp",
   "Images": "Hình ảnh",
   "Immersive": "Đắm chìm",
   "In use": "Đang sử dụng",
@@ -3227,5 +3225,7 @@
   "Off, widgets are arranged on the full desktop, in place.": "Off, widgets are arranged on the full desktop, in place.",
   "Components": "Thành phần",
   "Component": "Thành phần",
-  "Designs": "Thiết kế"
+  "Designs": "Thiết kế",
+  "It rose more than %1% at once": "Tăng hơn %1% cùng lúc",
+  "%1% is the most allowed": "Tối đa cho phép là %1%"
 }

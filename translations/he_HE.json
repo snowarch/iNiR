@@ -24,7 +24,7 @@
   "24-hour": "24 שעות",
   "24h": "24 שעות",
   "25 MB": "25 מגה-בייט",
-  "5 min": "5 דקות",
+  "5 min": "5 דק׳",
   "50 MB": "50 מגה-בייט",
   "8 MB": "8 מגה-בייט",
   "A full snapshot of your current config will be saved before updating.": "תמונת מצב מלאה של התצורה הנוכחית שלך תישמר לפני העדכון.",
@@ -379,7 +379,6 @@
   "Enter a valid number": "הזן מספר חוקי",
   "Enter tags (use #tag for autocomplete / multi-word), or \"%1\" for commands": "הזן תגים (השתמש ב-#tag עבור השלמה אוטומטית / ריבוי מילים), או \"%1\" עבור פקודות",
   "Error": "שגיאה",
-  "Exceeded max allowed": "חריגה מהמקסימום המותר",
   "Expand controls": "הרחב את הפקדים",
   "Expressive": "מביע",
   "External": "חיצוני",
@@ -506,7 +505,6 @@
   "Identify Music": "זיהוי מוזיקה",
   "Identify the currently playing song": "זהה את השיר המתנגן כעת",
   "Idle & Sleep": "סרק ושינה",
-  "Illegal increment": "הוספה לא חוקית",
   "Images": "תמונות",
   "Immersive": "סוחף",
   "In use": "בשימוש",
@@ -3227,5 +3225,7 @@
   "Off, widgets are arranged on the full desktop, in place.": "Off, widgets are arranged on the full desktop, in place.",
   "Components": "רכיבים",
   "Component": "רכיב",
-  "Designs": "עיצובים"
+  "Designs": "עיצובים",
+  "It rose more than %1% at once": "עלה ביותר מ-%1% בבת אחת",
+  "%1% is the most allowed": "המרבי המותר הוא %1%"
 }

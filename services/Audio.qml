@@ -283,7 +283,7 @@ Singleton {
         }
     }
 
-    // Set sink volume safely. When protection is enabled, large jumps are rejected as "Illegal increment".
+    // Set sink volume safely. When protection is enabled, large jumps are rejected.
     // To keep UX consistent with brightness (click anywhere on slider), we ramp in small steps.
     // The queued wpctl path also works while Quickshell is rebuilding its node bindings.
     function setSinkVolume(target: real): void {
@@ -302,7 +302,7 @@ Singleton {
         if (!root._rampTimer.running) root._rampTimer.start();
     }
 
-    // Ramp helper (prevents "Illegal increment" when user clicks far away on slider)
+    // Ramp helper (keeps the guard from rejecting a jump when user clicks far away on slider)
     property real _rampTarget: 0
     property alias _rampTimer: _rampTimerInternal
     Timer {
@@ -419,10 +419,10 @@ Singleton {
 
             if (newVolume - lastVolume > maxAllowedIncrease) {
                 root._queueSinkVolume(lastVolume)
-                root.sinkProtectionTriggered(Translation.tr("Illegal increment"));
+                root.sinkProtectionTriggered(Translation.tr("It rose more than %1% at once").arg(Math.round(maxAllowedIncrease * 100)));
                 return
             } else if (newVolume > maxAllowed || newVolume > root.hardMaxValue) {
-                root.sinkProtectionTriggered(Translation.tr("Exceeded max allowed"));
+                root.sinkProtectionTriggered(Translation.tr("%1% is the most allowed").arg(Math.round(maxAllowed * 100)));
                 lastVolume = Math.min(lastVolume, maxAllowed)
                 root._queueSinkVolume(lastVolume)
                 return

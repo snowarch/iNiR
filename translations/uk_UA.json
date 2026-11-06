@@ -379,7 +379,6 @@
   "Enter a valid number": "Введіть дійсний номер",
   "Enter tags (use #tag for autocomplete / multi-word), or \"%1\" for commands": "Введіть теги (використовуйте #tag для автозаповнення / багатослівного) або \"%1\" для команд",
   "Error": "Помилка",
-  "Exceeded max allowed": "Перевищено максимально дозволений",
   "Expand controls": "Розгорнути елементи керування",
   "Expressive": "Виразний",
   "External": "Зовнішній",
@@ -506,7 +505,6 @@
   "Identify Music": "Визнач Музику",
   "Identify the currently playing song": "Визначте пісню, яка зараз відтворюється",
   "Idle & Sleep": "Бездіяльність і сон",
-  "Illegal increment": "Незаконне збільшення",
   "Images": "Зображення",
   "Immersive": "Імерсивний",
   "In use": "У користуванні",
@@ -3227,5 +3225,7 @@
   "Off, widgets are arranged on the full desktop, in place.": "Off, widgets are arranged on the full desktop, in place.",
   "Components": "Компоненти",
   "Component": "Компонент",
-  "Designs": "Дизайни"
+  "Designs": "Дизайни",
+  "It rose more than %1% at once": "Зросла більше ніж на %1% одразу",
+  "%1% is the most allowed": "Дозволено не більше %1%"
 }

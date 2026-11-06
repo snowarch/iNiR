@@ -24,7 +24,7 @@
   "24-hour": "24-घंटे",
   "24h": "24h",
   "25 MB": "25 एमबी",
-  "5 min": "5 मिनट",
+  "5 min": "5 मि",
   "50 MB": "50 एमबी",
   "8 MB": "8 एमबी",
   "A full snapshot of your current config will be saved before updating.": "अपडेट करने से पहले आपके वर्तमान कॉन्फ़िगरेशन का एक पूरा स्नैपशॉट सहेजा जाएगा।",
@@ -379,7 +379,6 @@
   "Enter a valid number": "एक वैध संख्या दर्ज करें",
   "Enter tags (use #tag for autocomplete / multi-word), or \"%1\" for commands": "टैग दर्ज करें (स्वतः पूर्ण/बहु-शब्द के लिए #tag का उपयोग करें), या कमांड के लिए \"%1\" दर्ज करें",
   "Error": "त्रुटि",
-  "Exceeded max allowed": "अधिकतम अनुमत सीमा से अधिक",
   "Expand controls": "नियंत्रणों का विस्तार करें",
   "Expressive": "अभिव्यंजक",
   "External": "बाहरी",
@@ -506,7 +505,6 @@
   "Identify Music": "संगीत को पहचानें",
   "Identify the currently playing song": "वर्तमान में चल रहे गाने को पहचानें",
   "Idle & Sleep": "निष्क्रिय और निद्रा",
-  "Illegal increment": "अवैध वेतन वृद्धि",
   "Images": "छवियाँ",
   "Immersive": "निमग्न",
   "In use": "प्रयोग में है",
@@ -3227,5 +3225,7 @@
   "Off, widgets are arranged on the full desktop, in place.": "Off, widgets are arranged on the full desktop, in place.",
   "Components": "घटक",
   "Component": "घटक",
-  "Designs": "डिज़ाइन"
+  "Designs": "डिज़ाइन",
+  "It rose more than %1% at once": "एक बार में %1% से ज़्यादा बढ़ा",
+  "%1% is the most allowed": "अधिकतम %1% की अनुमति है"
 }

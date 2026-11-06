@@ -24,7 +24,7 @@
   "24-hour": "24 Stunden",
   "24h": "24h",
   "25 MB": "25 MB",
-  "5 min": "5 Min",
+  "5 min": "5 Min.",
   "50 MB": "50 MB",
   "8 MB": "8 MB",
   "A full snapshot of your current config will be saved before updating.": "Vor der Aktualisierung wird ein vollständiger Snapshot deiner aktuellen Konfiguration gespeichert.",
@@ -379,7 +379,6 @@
   "Enter a valid number": "Gib eine gültige Nummer ein",
   "Enter tags (use #tag for autocomplete / multi-word), or \"%1\" for commands": "Gib Tags ein (verwende #tag für automatische Vervollständigung/mehrere Wörter) oder „%1“ für Befehle",
   "Error": "Fehler",
-  "Exceeded max allowed": "Maximal zulässiger Wert überschritten",
   "Expand controls": "Steuerelemente erweitern",
   "Expressive": "Ausdrucksstark",
   "External": "Extern",
@@ -506,7 +505,6 @@
   "Identify Music": "Identifiziere Musik",
   "Identify the currently playing song": "Identifiziere das aktuell wiedergegebene Lied",
   "Idle & Sleep": "Leerlauf & Schlaf",
-  "Illegal increment": "Unzulässige Erhöhung",
   "Images": "Bilder",
   "Immersive": "Immersiv",
   "In use": "Im Einsatz",
@@ -3227,5 +3225,7 @@
   "Off, widgets are arranged on the full desktop, in place.": "Off, widgets are arranged on the full desktop, in place.",
   "Components": "Komponenten",
   "Component": "Komponente",
-  "Designs": "Designs"
+  "Designs": "Designs",
+  "It rose more than %1% at once": "Um mehr als %1% auf einmal gestiegen",
+  "%1% is the most allowed": "Höchstens %1% erlaubt"
 }

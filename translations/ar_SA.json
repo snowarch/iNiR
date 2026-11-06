@@ -24,7 +24,7 @@
   "24-hour": "24 ساعة",
   "24h": "24 س",
   "25 MB": "25 ميجا بايت",
-  "5 min": "5 دقائق",
+  "5 min": "5 د",
   "50 MB": "50 ميجابايت",
   "8 MB": "8 ميجا بايت",
   "A full snapshot of your current config will be saved before updating.": "سيتم حفظ لقطة كاملة للتكوين الحالي الخاص بك قبل التحديث.",
@@ -379,7 +379,6 @@
   "Enter a valid number": "أدخل رقمًا صالحًا",
   "Enter tags (use #tag for autocomplete / multi-word), or \"%1\" for commands": "أدخل العلامات (استخدم #tag للإكمال التلقائي / الكلمات المتعددة)، أو \"%1\" للأوامر",
   "Error": "خطأ",
-  "Exceeded max allowed": "تم تجاوز الحد الأقصى المسموح به",
   "Expand controls": "قم بتوسيع عناصر التحكم",
   "Expressive": "معبرة",
   "External": "خارجي",
@@ -506,7 +505,6 @@
   "Identify Music": "تحديد الموسيقى",
   "Identify the currently playing song": "تحديد الأغنية التي يتم تشغيلها حاليًا",
   "Idle & Sleep": "الخمول والنوم",
-  "Illegal increment": "زيادة غير مشروعة",
   "Images": "الصور",
   "Immersive": "غامرة",
   "In use": "قيد الاستخدام",
@@ -3227,5 +3225,7 @@
   "Off, widgets are arranged on the full desktop, in place.": "Off, widgets are arranged on the full desktop, in place.",
   "Components": "المكونات",
   "Component": "مكوّن",
-  "Designs": "التصاميم"
+  "Designs": "التصاميم",
+  "It rose more than %1% at once": "ارتفع أكثر من %1% دفعة واحدة",
+  "%1% is the most allowed": "الحد الأقصى المسموح %1%"
 }

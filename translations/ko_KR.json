@@ -379,7 +379,6 @@
   "Enter a valid number": "유효한 숫자를 입력하세요.",
   "Enter tags (use #tag for autocomplete / multi-word), or \"%1\" for commands": "태그를 입력하세요(자동 완성/여러 단어의 경우 #tag 사용). 명령의 경우 \"%1\"",
   "Error": "오류",
-  "Exceeded max allowed": "허용되는 최대값을 초과했습니다.",
   "Expand controls": "컨트롤 확장",
   "Expressive": "표현적",
   "External": "외부",
@@ -506,7 +505,6 @@
   "Identify Music": "음악 식별",
   "Identify the currently playing song": "현재 재생 중인 노래 식별",
   "Idle & Sleep": "유휴 및 절전",
-  "Illegal increment": "불법적인 증분",
   "Images": "이미지",
   "Immersive": "몰입형",
   "In use": "사용 중",
@@ -3227,5 +3225,7 @@
   "Off, widgets are arranged on the full desktop, in place.": "Off, widgets are arranged on the full desktop, in place.",
   "Components": "구성 요소",
   "Component": "구성 요소",
-  "Designs": "디자인"
+  "Designs": "디자인",
+  "It rose more than %1% at once": "한 번에 %1% 넘게 올라갔습니다",
+  "%1% is the most allowed": "최대 %1%까지 허용됩니다"
 }

@@ -379,7 +379,6 @@
   "Enter a valid number": "有効な番号を入力してください",
   "Enter tags (use #tag for autocomplete / multi-word), or \"%1\" for commands": "タグを入力します (オートコンプリート/複数単語の場合は #tag を使用します)、またはコマンドの場合は「%1」を入力します",
   "Error": "エラー",
-  "Exceeded max allowed": "許容最大値を超えました",
   "Expand controls": "コントロールを展開する",
   "Expressive": "表現豊か",
   "External": "外部",
@@ -506,7 +505,6 @@
   "Identify Music": "音楽を特定する",
   "Identify the currently playing song": "現在再生中の曲を識別する",
   "Idle & Sleep": "アイドル&スリープ",
-  "Illegal increment": "不正な増分",
   "Images": "画像",
   "Immersive": "没入型",
   "In use": "使用中",
@@ -3227,5 +3225,7 @@
   "Off, widgets are arranged on the full desktop, in place.": "Off, widgets are arranged on the full desktop, in place.",
   "Components": "コンポーネント",
   "Component": "コンポーネント",
-  "Designs": "デザイン"
+  "Designs": "デザイン",
+  "It rose more than %1% at once": "一度に %1% 以上上がりました",
+  "%1% is the most allowed": "上限は %1% です"
 }

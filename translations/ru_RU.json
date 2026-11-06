@@ -24,7 +24,7 @@
   "24-hour": "24 часа",
   "24h": "24 ч.",
   "25 MB": "25 МБ",
-  "5 min": "5 минут",
+  "5 min": "5 мин",
   "50 MB": "50 МБ",
   "8 MB": "8 МБ",
   "A full snapshot of your current config will be saved before updating.": "Перед обновлением будет сохранен полный снимок вашей текущей конфигурации.",
@@ -379,7 +379,6 @@
   "Enter a valid number": "Введите действительный номер",
   "Enter tags (use #tag for autocomplete / multi-word), or \"%1\" for commands": "Введите теги (используйте #tag для автозаполнения/из нескольких слов) или «%1» для команд.",
   "Error": "Ошибка",
-  "Exceeded max allowed": "Превышено максимально допустимое",
   "Expand controls": "Развернуть элементы управления",
   "Expressive": "Выразительность",
   "External": "Внешний",
@@ -506,7 +505,6 @@
   "Identify Music": "Определить музыку",
   "Identify the currently playing song": "Определите воспроизводимую в данный момент песню",
   "Idle & Sleep": "Режим ожидания и сон",
-  "Illegal increment": "Недопустимое приращение",
   "Images": "Изображения",
   "Immersive": "Захватывающий",
   "In use": "В использовании",
@@ -3227,5 +3225,7 @@
   "Off, widgets are arranged on the full desktop, in place.": "Off, widgets are arranged on the full desktop, in place.",
   "Components": "Компоненты",
   "Component": "Компонент",
-  "Designs": "Дизайны"
+  "Designs": "Дизайны",
+  "It rose more than %1% at once": "Выросла больше чем на %1% сразу",
+  "%1% is the most allowed": "Разрешено не больше %1%"
 }

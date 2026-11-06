@@ -379,7 +379,6 @@
   "Enter a valid number": "Inserisci un numero valido",
   "Enter tags (use #tag for autocomplete / multi-word), or \"%1\" for commands": "Inserisci tag (usa #tag per autocompletamento / più parole), o \"%1\" per i comandi",
   "Error": "Errore",
-  "Exceeded max allowed": "Superato il massimo consentito",
   "Expand controls": "Espandi controlli",
   "Expressive": "Espressivo",
   "External": "Esterno",
@@ -506,7 +505,6 @@
   "Identify Music": "Identifica musica",
   "Identify the currently playing song": "Identifica il brano attualmente in riproduzione",
   "Idle & Sleep": "Inattività e sospensione",
-  "Illegal increment": "Incremento illegale",
   "Images": "Immagini",
   "Immersive": "Immersivo",
   "In use": "In uso",
@@ -3227,5 +3225,7 @@
   "Off, widgets are arranged on the full desktop, in place.": "Off, widgets are arranged on the full desktop, in place.",
   "Components": "Componenti",
   "Component": "Componente",
-  "Designs": "Design"
+  "Designs": "Design",
+  "It rose more than %1% at once": "Salito di oltre il %1% in un colpo",
+  "%1% is the most allowed": "Il massimo consentito è %1%"
 }

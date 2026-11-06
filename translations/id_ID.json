@@ -24,7 +24,7 @@
   "24-hour": "24-jam",
   "24h": "24j",
   "25 MB": "25 MB",
-  "5 min": "5 menit",
+  "5 min": "5 mnt",
   "50 MB": "50 MB",
   "8 MB": "8 MB",
   "A full snapshot of your current config will be saved before updating.": "Snapshot lengkap dari konfigurasi Anda saat ini akan disimpan sebelum memperbarui.",
@@ -379,7 +379,6 @@
   "Enter a valid number": "Masukkan angka yang valid",
   "Enter tags (use #tag for autocomplete / multi-word), or \"%1\" for commands": "Masukkan tag (gunakan #tag untuk pelengkapan otomatis / multi-kata), atau \"%1\" untuk perintah",
   "Error": "Kesalahan",
-  "Exceeded max allowed": "Melebihi batas maksimum yang diizinkan",
   "Expand controls": "Perluas kontrol",
   "Expressive": "Ekspresif",
   "External": "Eksternal",
@@ -506,7 +505,6 @@
   "Identify Music": "Identifikasi Musik",
   "Identify the currently playing song": "Identifikasi lagu yang sedang diputar",
   "Idle & Sleep": "Idle & Tidur",
-  "Illegal increment": "Inkremen ilegal",
   "Images": "Gambar",
   "Immersive": "Imersif",
   "In use": "Sedang digunakan",
@@ -3227,5 +3225,7 @@
   "Off, widgets are arranged on the full desktop, in place.": "Off, widgets are arranged on the full desktop, in place.",
   "Components": "Komponen",
   "Component": "Komponen",
-  "Designs": "Desain"
+  "Designs": "Desain",
+  "It rose more than %1% at once": "Naik lebih dari %1% sekaligus",
+  "%1% is the most allowed": "Paling tinggi %1%"
 }
