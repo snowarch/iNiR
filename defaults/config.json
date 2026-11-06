@@ -1909,7 +1909,8 @@
             },
             "looks": {
                 "nothing": {
-                    "chosen": "ink"
+                    "chosen": "ink",
+                    "figures": "dots"
                 },
                 "synth": {
                     "keys": "accent",
@@ -1983,6 +1984,7 @@
             "desktopBlocks": [
                 "profile",
                 "context",
+                "workspaces",
                 "forecast",
                 "agenda",
                 "modules"
@@ -2043,6 +2045,8 @@
                 "headline": { "beside": "sky", "temperature": true },
                 "rings": { "outer": "day", "middle": "battery", "inner": "month" },
                 "aura": { "colours": "spectrum", "turns": true },
+                "comet": { "counts": "hour", "trail": "tail", "colours": "spectrum", "laps": true },
+                "lumen": { "light": "battery", "pool": true },
                 "status": { "carry": "auto", "connection": true, "sound": true },
                 "forecast": { "hours": 3, "labels": true, "colour": true },
                 "world": { "zone": "Asia/Tokyo", "second": "none", "apart": true, "watch": true }
