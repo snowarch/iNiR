@@ -2024,7 +2024,15 @@
                 "camera": true,
                 "call": true,
                 "media": true,
-                "micGlow": true
+                "micGlow": true,
+                "order": [
+                    "record",
+                    "timer",
+                    "task",
+                    "camera",
+                    "call",
+                    "media"
+                ]
             },
             "faces": {
                 "ledger": { "ahead": 720 },
