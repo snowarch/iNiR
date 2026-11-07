@@ -2359,7 +2359,10 @@
             "musicLight": 35,
             "musicLightWidth": 5,
             "thickness": 10,
-            "radius": 22
+            "radius": 22,
+            "style": "plain",
+            "holoLight": 70,
+            "holoMarks": true
         },
         "controlCenter": {
             "opens": "island",
