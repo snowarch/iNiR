@@ -45,6 +45,26 @@ prebuilt_unpinned() {
         | select(.sha256 == "" and (.with // "") == "" and (.arch // "x86_64") == $arch) | $k' "$(_prebuilt_pins)"
 }
 
+# prebuilt_behind: one "part have want" line per part this machine takes that is not running its pin: its current
+# link on another version (an older release, a dev build) or its folder not the pinned sha256. `inir version` reads
+# the same links, so what it calls behind is what `inir update` brings, even with the base already up to date.
+prebuilt_behind() {
+    local home part dest ver file sha repo with have
+    home="$(_prebuilt_home)"
+    while IFS=$'\t' read -r part dest ver file sha repo with; do
+        if [[ -n "$with" ]]; then
+            [[ -f "$home/$dest/$ver/.sha256" && "$(cat "$home/$dest/$ver/.$part.sha256" 2>/dev/null)" != "$sha" ]] &&
+                printf '%s\t%s\t%s\n' "$part" "missing" "$ver"
+            continue
+        fi
+        have="$(readlink "$home/$dest/current" 2>/dev/null)"
+        have="${have##*/}"
+        [[ "$have" == "$ver" && "$(cat "$home/$dest/$ver/.sha256" 2>/dev/null)" == "$sha" ]] ||
+            printf '%s\t%s\t%s\n' "$part" "${have:-none}" "$ver"
+    done < <(prebuilt_parts)
+    return 0
+}
+
 # prebuilt_pending_addons: the titles of the add-ons this machine takes whose part is there and they are not
 prebuilt_pending_addons() {
     local home part dest ver file sha repo with

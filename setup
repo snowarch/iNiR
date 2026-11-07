@@ -2253,6 +2253,46 @@ refresh_sddm_theme_on_update() {
     fi
 }
 
+# _update_engines: with the base already up to date, qs-rs and inir-accel still go to this base's pins (a fetch that
+# failed once, a dev build left on the machine): `inir version` calls them behind and points here. A new qs-rs runs
+# once the shell restarts, which is checked; one that does not load goes back to the runtime the shell had.
+_update_engines() {
+    local behind before now rc part have want
+    behind="$(prebuilt_behind)"
+    [[ -n "$behind" && -z "$(prebuilt_unpinned)" ]] || return 0
+    tui_info "Bringing $(cut -f1 <<<"$behind" | paste -sd ' ') to this version's builds..."
+    if ! prebuilt_fetch; then
+        tui_warn "Could not get them; inir update tries again once online"
+        return 1
+    fi
+    before="$(readlink "$(_prebuilt_home)/runtime/current" 2>/dev/null)"
+    prebuilt_activate
+    while IFS=$'\t' read -r part have want; do
+        tui_success "$part: $have -> $want"
+    done <<<"$behind"
+    now="$(readlink "$(_prebuilt_home)/runtime/current" 2>/dev/null)"
+    [[ "$now" != "$before" ]] || return 0
+    if [[ -z "${NIRI_SOCKET:-}${WAYLAND_DISPLAY:-}" ]] || inir_user_service_is_masked \
+        || ! has_usable_systemd_user_manager || ! systemctl --user cat inir.service >/dev/null 2>&1; then
+        tui_info "qs-rs $now runs from the shell's next start"
+        return 0
+    fi
+    restart_shell_and_verify 30
+    rc=$?
+    if ((rc == 1)); then
+        if [[ -n "$before" && -d "$(_prebuilt_home)/runtime/$before" ]]; then
+            ln -sfn "$before" "$(_prebuilt_home)/runtime/current"
+        else
+            prebuilt_runtime_off
+        fi
+        restart_shell_and_verify 30 || true
+        tui_warn "qs-rs $now did not start here, so the shell went back to ${before:-Quickshell}; inir update tries again"
+        return 1
+    fi
+    ((rc == 0)) && tui_success "Shell restarted on qs-rs $now"
+    return 0
+}
+
 # Packages the new version needs, installed the way this run allows: asked, pkexec, or a hint.
 # The base may not move while a family, theme or widget does: each has its own version in the hub. Shell code the
 # new copy won't load goes back to the one it replaced (verified where systemd runs the shell). `data` leaves shell
@@ -2650,6 +2690,8 @@ run_update() {
             # last: each step above reports progress, and a progress marker left behind reads as an update in flight
             # to the shell, which kept showing the update card (11-04)
             _write_update_status "success"
+            # after success, as the full update does before its restart: the restarted shell reads no update in flight
+            _update_engines || true
             return 0
         else
             # Local repo ahead of installed - create snapshot
@@ -2674,19 +2716,20 @@ run_update() {
         fi
         mapfile -t hub_plugins <<<"$needed"
         [[ -n "${hub_plugins[0]:-}" ]] || hub_plugins=()
-        # qs-rs and inir-accel the same way (sdata/lib/prebuilt.sh): unpacked beside the old ones, nothing switched yet
-        if [[ -n "$(prebuilt_unpinned)" ]]; then
-            _report_update_failure 25 "This version names no build of qs-rs or inir-accel, so nothing changed"
-            tui_error "This version names no build of qs-rs or inir-accel, so nothing changed"
+    fi
+    # qs-rs and inir-accel the same way (sdata/lib/prebuilt.sh), a repo-link checkout too: unpacked beside the old
+    # ones, nothing switched yet
+    if [[ -n "$(prebuilt_unpinned)" ]]; then
+        _report_update_failure 25 "This version names no build of qs-rs or inir-accel, so nothing changed"
+        tui_error "This version names no build of qs-rs or inir-accel, so nothing changed"
+        return 25
+    fi
+    if [[ -n "$(prebuilt_behind)" ]]; then
+        tui_info "Fetching qs-rs and inir-accel..."
+        if ! prebuilt_fetch; then
+            _report_update_failure 25 "Could not get qs-rs and inir-accel, so nothing changed. inir update tries again"
+            tui_error "Could not get qs-rs and inir-accel, so nothing changed. inir update tries again once online"
             return 25
-        fi
-        if [[ -n "$(prebuilt_parts)" ]]; then
-            tui_info "Fetching qs-rs and inir-accel..."
-            if ! prebuilt_fetch; then
-                _report_update_failure 25 "Could not get qs-rs and inir-accel, so nothing changed. inir update tries again"
-                tui_error "Could not get qs-rs and inir-accel, so nothing changed. inir update tries again once online"
-                return 25
-            fi
         fi
     fi
 
