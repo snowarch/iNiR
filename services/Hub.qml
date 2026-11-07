@@ -224,6 +224,15 @@ Singleton {
         }[sort] ?? ((a, b) => root._popularity(b) - root._popularity(a))
         return Array.from(items ?? []).slice().sort((a, b) => by(a, b) || String(a.name ?? "").localeCompare(String(b.name ?? "")))
     }
+    // What changed, newest first: what an update brings while one waits, else the last three versions.
+    function changesOf(item: var): var {
+        const all = Array.from(item?.update === true && (item?.news ?? []).length > 0 ? item.news : (item?.changes ?? []))
+        return item?.update === true ? all : all.slice(0, 3)
+    }
+    function changesTitle(item: var): string {
+        return item?.update === true && (item?.news ?? []).length > 0
+            ? Translation.tr("In the update") : Translation.tr("What's new")
+    }
     // 950, 1.2k, 18k, 2.4M
     function countText(n: real): string {
         n = Number(n ?? 0)

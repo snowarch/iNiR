@@ -290,7 +290,11 @@ Singleton {
         if (key === root.lastNotifiedHub
                 && (root.remindDays <= 0 || now - root.lastNotifiedHubAt < root.remindDays * 86400000)) return
         const names = root.hubPending.map(item => item.name || item.id).join(", ")
-        root.postUpdateNotice(Translation.tr("Hub updates ready"), Translation.tr("%1. Update them in Settings › Hub, or run `inir update`.").arg(names))
+        // One item says what it brings; several are named.
+        const only = root.hubPending.length === 1 ? root.hubPending[0] : null
+        const news = Array.from(only?.news?.[0]?.notes ?? [])
+        const what = news.length > 0 ? `${names} ${only.version}: ${news.slice(0, 2).join("; ")}` : names
+        root.postUpdateNotice(Translation.tr("Hub updates ready"), Translation.tr("%1. Update them in Settings › Hub, or run `inir update`.").arg(what))
         Config.setNestedValues({
             "shellUpdates.lastNotifiedHub": key,
             "shellUpdates.lastNotifiedHubAt": now
