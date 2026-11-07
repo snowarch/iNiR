@@ -36,7 +36,7 @@ Singleton {
     function cardFor(output: string, w: real, h: real): var {
         const stage = root.stages[output]
         if (!stage || w <= 0 || h <= 0 || !root.card)
-            return { x: 0, y: 0, s: 1, p: 0 }
+            return { x: 0, y: 0, s: 1, p: 0, rest: 1 }
         const top = stage.top + root.gap
         const bottom = h - stage.bottom - root.gap
         const fit = Math.max(0.2, Math.min((w - 4 * root.gap) / w, (bottom - top) / h))
@@ -45,7 +45,8 @@ Singleton {
         const p = stage.progress
         const x = Math.round((w - w * s) / 2)
         const y = Math.round(top + Math.max(0, (bottom - top - h * s) / 2))
-        return { x: x * p, y: y * p, s: 1 + (s - 1) * p, p: p }
+        // `rest`: the scale it settles at, for what renders once at the size it will be shown.
+        return { x: x * p, y: y * p, s: 1 + (s - 1) * p, p: p, rest: s }
     }
 
     // ── Who arranges each output ──
