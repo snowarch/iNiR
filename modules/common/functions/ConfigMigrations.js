@@ -230,20 +230,25 @@ function _widgetSizes(obj, fromV2) {
 }
 
 // Moves the keys of a parsed config.json to their owners in place; true when anything moved.
-// iRiS's factory look moved (one form, a lit card, glass on). A file carries the old factory values as written defaults,
+// iRiS's factory look moved (one form, a lit card, glass on, then flat again). A file carries the old factory values as written defaults,
 // so those alone change, once (glass turned off later must stay off), and a value someone chose stays.
-const factoryLook = 3;
+const factoryLook = 4;
 // [since, path, old factory value, new one, only from]: each step runs once, so a value picked after it stays; a step
 // with "only from" moves only files that already took that step, whose value came from our own factory.
 const factoryValues = [
     [1, "iris.appearance.expandedRadius", 28, 22],
-    [1, "iris.appearance.glass.mode", "off", "wallpaper"],
+    // [1] once moved glass "off" to "wallpaper"; with flat the factory again (step 4) a v2.33 file keeps what it has.
     [1, "iris.appearance.glass.edgeLight", 34, 14],
     [1, "iris.appearance.glass.edgeLine", 10, 0],
     // Marks speak as the widgets head themselves: the glyph alone in its colour.
     [2, "iris.appearance.icons.style", "iris", "glyph"],
     // Glass on the wallpaper from the factory: Niri's blur of what is below cost the Island half its frames (testers 11-02).
     [3, "iris.appearance.glass.mode", "compositor", "wallpaper", 1],
+    // Flat and black from the factory (his 11-07): the wallpaper's glass read grey over dark wallpapers, Niri's blur cost
+    // its CPU 7-8x while a panel moved (nest, 11-07). Blur picked by hand stays.
+    [4, "iris.appearance.glass.mode", "wallpaper", "off", 1],
+    // The microphone's screen glow is the person's to turn on: on every call it lit the whole screen (his 11-07).
+    [4, "iris.bar.activities.micGlow", true, false],
 ];
 function _factoryLook(obj) {
     if (!_isObject(_get(obj, "iris.appearance"))) return false;

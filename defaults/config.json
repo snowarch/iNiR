@@ -1741,7 +1741,7 @@
                 }
             },
             "expandedRadius": 22,
-            "factoryLook": 2,
+            "factoryLook": 4,
             "preset": "iris",
             "morph": "direct",
             "tint": 0,
@@ -1767,7 +1767,7 @@
             "themeId": "iris",
             "design": "iris",
             "glass": {
-                "mode": "wallpaper",
+                "mode": "off",
                 "tint": 58,
                 "blur": 100,
                 "edgeLight": 14,
@@ -2027,7 +2027,7 @@
                 "camera": true,
                 "call": true,
                 "media": true,
-                "micGlow": true,
+                "micGlow": false,
                 "order": [
                     "record",
                     "timer",
