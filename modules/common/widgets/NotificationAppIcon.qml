@@ -25,7 +25,15 @@ MaterialShape { // App icon
     readonly property string hintedIcon: imageIsIconHint ? imageValue.substring(13) : ""
     readonly property string appIconValue: String(appIcon ?? "").trim()
     readonly property bool appIconIsFileUrl: appIconValue.startsWith("file://")
-    readonly property string effectiveAppIcon: appIconValue.length > 0 ? appIconValue : hintedIcon
+    // A theme name the person's icon theme lacks would draw Quickshell's missing-icon checker:
+    // such a hint is dropped and the Material symbol stands in. Paths and file URLs pass as they are.
+    function resolvedIcon(name) {
+        if (name.length === 0 || name.startsWith("/") || name.startsWith("file://"))
+            return name
+        return Quickshell.iconPath(name, true) !== "" ? name : ""
+    }
+    readonly property string effectiveAppIcon: resolvedIcon(appIconValue.length > 0 ? appIconValue : hintedIcon)
+    readonly property string badgeAppIcon: resolvedIcon(appIconValue)
     readonly property string defaultMaterialSymbol: NotificationUtils.findSuitableMaterialSymbol("")
     readonly property string guessedMaterialSymbol: NotificationUtils.findSuitableMaterialSymbol(String(summary ?? ""))
     readonly property bool preferMaterialSymbol: guessedMaterialSymbol !== defaultMaterialSymbol
@@ -124,13 +132,13 @@ MaterialShape { // App icon
             }
             Loader {
                 id: notifImageAppIconLoader
-                active: root.appIconValue.length > 0
+                active: root.badgeAppIcon.length > 0
                 anchors.bottom: parent.bottom
                 anchors.right: parent.right
                 sourceComponent: IconImage {
                     implicitSize: root.smallAppIconSize
                     asynchronous: true
-                    source: Quickshell.iconPath(root.appIconValue, "image-missing")
+                    source: Quickshell.iconPath(root.badgeAppIcon, "image-missing")
                 }
             }
         }
