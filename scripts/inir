@@ -3450,6 +3450,13 @@ _show_part_versions() (
     # qs-rs is built for x86_64 only; elsewhere Quickshell runs the shell
     [[ "$(uname -m)" == x86_64 ]] || { want=""; have="${have:-Quickshell (no qs-rs build for this CPU)}"; }
     _part_version_line qs-rs "$have" "$want"
+    # the running shell keeps the binary it started with: a switched runtime/current is only true after a restart
+    local running_exe
+    if [[ -n "$have" ]] && running_exe="$(running_shell_qs 2>/dev/null)" \
+        && [[ "$running_exe" == "$data/runtime/"* && "$running_exe" != "$data/runtime/$have/"* ]]; then
+        running_exe="${running_exe#"$data/runtime/"}"
+        printf '  the running shell is still on %s until it restarts (inir restart)\n' "${running_exe%%/*}"
+    fi
     have="$(readlink "$data/accel/current" 2>/dev/null)"; have="${have##*/}"
     _part_version_line inir-accel "$have" "$(jq -r '.parts["inir-accel"].version // empty' "$pins" 2>/dev/null)"
     have="$(jq -r '(.items // {}) | to_entries | map("\(.key) \(.value.version)") | join(", ")' \
