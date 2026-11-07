@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../images/iris-2.32-principal.webp" alt="iNiR-Desktop mit der Familie iRiS" width="900">
+  <img src="../images/releases/3.0.0/00-hero.webp" alt="iNiR 3.0: der iRiS-Desktop über einem verschneiten Wald bei Nacht" width="100%">
 </p>
 
 <h1 align="center">iNiR</h1>
@@ -9,9 +9,18 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/snowarch/iNiR/releases/latest"><img src="https://img.shields.io/github/v/release/snowarch/iNiR?style=flat-square&label=release&color=111111" alt="Latest release"></a>
+  <a href="https://github.com/snowarch/iNiR/stargazers"><img src="https://img.shields.io/github/stars/snowarch/iNiR?style=flat-square&color=111111" alt="Stars"></a>
+  <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/discord-join-111111?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
+  <a href="../../LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-111111?style=flat-square" alt="GPL-3.0"></a>
+</p>
+
+<p align="center">
   <a href="https://inir.space">inir.space</a> ·
+  <a href="https://inir.space/docs/install/">Installation</a> ·
   <a href="https://inir.space/docs">Dokumentation</a> ·
   <a href="https://inir.space/hub">Hub</a> ·
+  <a href="https://inir.space/changelog">Changelog</a> ·
   <a href="https://discord.gg/pAPTfAhZUJ">Discord</a>
 </p>
 
@@ -20,6 +29,34 @@
     <a href="../../README.md">English</a> · <a href="README.es.md">Español</a> · <a href="README.ru.md">Русский</a> · <a href="README.zh.md">中文</a> · <a href="README.ja.md">日本語</a> · <a href="README.pt.md">Português</a> · <a href="README.fr.md">Français</a> · <a href="README.de.md">Deutsch</a> · <a href="README.ko.md">한국어</a> · <a href="README.hi.md">हिन्दी</a> · <a href="README.ar.md">العربية</a> · <a href="README.it.md">Italiano</a>
   </sub>
 </p>
+
+## Neu in 3.0
+
+Eine kleine Basis, in der jede Familie ein Plugin ist, eine eigene Laufzeit, ein Zuhause auf [inir.space](https://inir.space) und neue Settings für iRiS. Ein `inir update` bringt alles und behält deine Konfiguration. [Den ganzen Changelog lesen](../../CHANGELOG.md).
+
+<table>
+<tr>
+<td width="50%" valign="top"><img src="../images/releases/3.0.0/01-prism.webp" alt="Prism" width="100%"><br><sub><b>Prism</b><br>Die Settings von iRiS neu gebaut: jede Option an einem Ort, mit einer Live-Vorschau dessen, was sie ändert.</sub></td>
+<td width="50%" valign="top"><img src="../images/releases/3.0.0/02-island.webp" alt="Die Island" width="100%"><br><sub><b>Die Island</b><br>Musik, Timer und Live-Aktivitäten in einem Objekt oben, in sechzehn Designs.</sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="../images/releases/3.0.0/04-airisu.webp" alt="AIRISU" width="100%"><br><sub><b>AIRISU</b><br>Das erste Design: eigene Panels, eigenes Layout und eigene Stimme auf der Engine von iRiS.</sub></td>
+<td width="50%" valign="top"><img src="../images/releases/3.0.0/03-edit-mode.webp" alt="Bearbeitungsmodus" width="100%"><br><sub><b>Bearbeitungsmodus</b><br>Desktop-Widgets ziehen, skalieren und speichern, dann ganze Desktops mit einem Klick wechseln.</sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="../images/releases/3.0.0/06-material.webp" alt="Material" width="100%"><br><sub><b>Material</b><br>Dieselben Widgets in Materials eigenen Gesichtern, mit neuen Settings und neuer Schrift.</sub></td>
+<td width="50%" valign="top"><img src="../images/releases/3.0.0/05-hub.webp" alt="iNiR Hub" width="100%"><br><sub><b>iNiR Hub</b><br>Familien, Designs, Themes und Widgets als Plugins, auf inir.space/hub und in der Shell.</sub></td>
+</tr>
+</table>
+
+## Familien
+
+| Material | Waffle | iRiS |
+|:---:|:---:|:---:|
+| <img src="../shots/families-material.webp" alt="Material" width="290"> | <img src="../shots/families-waffle.webp" alt="Waffle" width="290"> | <img src="../shots/families-iris.webp" alt="iRiS" width="290"> |
+| Eine Leiste an jedem Rand, Seitenleisten, Übersicht, neun globale Stile | Eine Windows-11-Taskleiste und ein Aktionszentrum | Eine Island an jedem Rand, die zu dem wird, was du öffnest, plus ein Dock |
+
+`Super+Shift+W` wechselt zwischen ihnen. Weitere Looks, Widgets, Themes und Web-Apps gibt es im [Hub](https://inir.space/hub).
 
 ## Installation
 
@@ -39,15 +76,6 @@ inir update
 
 Deine Konfiguration und deine Änderungen bleiben erhalten. Startet die neue Version nicht, stellt das Update die vorherige wieder her.
 
-## Familien
-
-| Material | Waffle | iRiS |
-|:---:|:---:|:---:|
-| <img src="../shots/families-material.webp" alt="Material" width="290"> | <img src="../shots/families-waffle.webp" alt="Waffle" width="290"> | <img src="../shots/families-iris.webp" alt="iRiS" width="290"> |
-| Eine Leiste an jedem Rand, Seitenleisten, Übersicht, neun globale Stile | Eine Windows-11-Taskleiste und ein Aktionszentrum | Eine Island an jedem Rand, die zu dem wird, was du öffnest, plus ein Dock |
-
-`Super+Shift+W` wechselt zwischen ihnen. Weitere Looks, Widgets, Themes und Web-Apps gibt es im [Hub](https://inir.space/hub).
-
 ## Aufbau
 
 iNiR ist eine Basis und die Teile darum herum, jeder in einem eigenen Repository. Auf deinem Rechner wird nichts kompiliert: Setup und
@@ -55,11 +83,11 @@ iNiR ist eine Basis und die Teile darum herum, jeder in einem eigenen Repository
 
 | Repository | Funktion | Neueste Version |
 |---|---|---|
-| **iNiR** (dieses) | Die Basis: Dienste, Konfiguration, Settings, der Willkommensassistent, Setup und Aktualisierung, der Plugin-Host | ![](https://img.shields.io/github/v/release/snowarch/iNiR?label=&style=flat-square) |
+| **iNiR** (dieses) | Die Basis: Dienste, Konfiguration, Settings, der Willkommensassistent, Setup und Aktualisierung, der Plugin-Host | ![](https://img.shields.io/github/v/release/snowarch/iNiR?label=&style=flat-square&color=111111) |
 | [inir-hub](https://github.com/snowarch/inir-hub) | Alle Plugins: die drei Familien, Komponenten, Themes, Widgets, Web-Apps | [inir.space/hub](https://inir.space/hub) |
-| [qs-rs](https://github.com/snowarch/qs-rs) | Die Laufzeitumgebung: Quickshell, in Rust neu geschrieben, mit eigenem Qt | ![](https://img.shields.io/github/v/release/snowarch/qs-rs?label=&style=flat-square) |
-| [inir-accel](https://github.com/snowarch/inir-accel) | Was die Shell im Hintergrund ausführt, in Rust: Farben, Miniaturen, Sensoren, Suche | ![](https://img.shields.io/github/v/release/snowarch/inir-accel?label=&style=flat-square) |
-| [inir-cli](https://github.com/snowarch/inir-cli) | Der Befehl `inir`: IPC, doctor, Aktualisierung, `inir hub` | ![](https://img.shields.io/github/v/release/snowarch/inir-cli?label=&style=flat-square) |
+| [qs-rs](https://github.com/snowarch/qs-rs) | Die Laufzeitumgebung: Quickshell, in Rust neu geschrieben, mit eigenem Qt | ![](https://img.shields.io/github/v/release/snowarch/qs-rs?label=&style=flat-square&color=111111) |
+| [inir-accel](https://github.com/snowarch/inir-accel) | Was die Shell im Hintergrund ausführt, in Rust: Farben, Miniaturen, Sensoren, Suche | ![](https://img.shields.io/github/v/release/snowarch/inir-accel?label=&style=flat-square&color=111111) |
+| [inir-cli](https://github.com/snowarch/inir-cli) | Der Befehl `inir`: IPC, doctor, Aktualisierung, `inir hub` | ![](https://img.shields.io/github/v/release/snowarch/inir-cli?label=&style=flat-square&color=111111) |
 | [inir-site](https://github.com/snowarch/inir-site) | [inir.space](https://inir.space): die Website, die Dokumentation, der Hub-Katalog | |
 | [iNiR-Walls](https://github.com/snowarch/iNiR-Walls), [inir-mascot](https://github.com/snowarch/inir-mascot) | Das Hintergrundbild-Paket und Kiras Artwork, beides optional im Setup | |
 

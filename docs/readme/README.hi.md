@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../images/iris-2.32-principal.webp" alt="iRiS परिवार वाला iNiR डेस्कटॉप" width="900">
+  <img src="../images/releases/3.0.0/00-hero.webp" alt="iNiR 3.0: रात में बर्फ़ीले जंगल पर iRiS डेस्कटॉप" width="100%">
 </p>
 
 <h1 align="center">iNiR</h1>
@@ -9,9 +9,18 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/snowarch/iNiR/releases/latest"><img src="https://img.shields.io/github/v/release/snowarch/iNiR?style=flat-square&label=release&color=111111" alt="Latest release"></a>
+  <a href="https://github.com/snowarch/iNiR/stargazers"><img src="https://img.shields.io/github/stars/snowarch/iNiR?style=flat-square&color=111111" alt="Stars"></a>
+  <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/discord-join-111111?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
+  <a href="../../LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-111111?style=flat-square" alt="GPL-3.0"></a>
+</p>
+
+<p align="center">
   <a href="https://inir.space">inir.space</a> ·
+  <a href="https://inir.space/docs/install/">स्थापना</a> ·
   <a href="https://inir.space/docs">दस्तावेज़</a> ·
   <a href="https://inir.space/hub">Hub</a> ·
+  <a href="https://inir.space/changelog">बदलाव</a> ·
   <a href="https://discord.gg/pAPTfAhZUJ">Discord</a>
 </p>
 
@@ -20,6 +29,34 @@
     <a href="../../README.md">English</a> · <a href="README.es.md">Español</a> · <a href="README.ru.md">Русский</a> · <a href="README.zh.md">中文</a> · <a href="README.ja.md">日本語</a> · <a href="README.pt.md">Português</a> · <a href="README.fr.md">Français</a> · <a href="README.de.md">Deutsch</a> · <a href="README.ko.md">한국어</a> · <a href="README.hi.md">हिन्दी</a> · <a href="README.ar.md">العربية</a> · <a href="README.it.md">Italiano</a>
   </sub>
 </p>
+
+## 3.0 में नया
+
+एक छोटा बेस जिसमें हर परिवार एक प्लगइन है, अपना रनटाइम, [inir.space](https://inir.space) पर एक घर, और iRiS के लिए नई Settings। एक `inir update` सब कुछ लाता है और आपकी कॉन्फ़िग बनाए रखता है। [पूरा चेंजलॉग पढ़ें](../../CHANGELOG.md)।
+
+<table>
+<tr>
+<td width="50%" valign="top"><img src="../images/releases/3.0.0/01-prism.webp" alt="Prism" width="100%"><br><sub><b>Prism</b><br>नई बनी iRiS Settings: हर विकल्प एक जगह, और वह जो बदलता है उसका लाइव पूर्वावलोकन।</sub></td>
+<td width="50%" valign="top"><img src="../images/releases/3.0.0/02-island.webp" alt="Island" width="100%"><br><sub><b>Island</b><br>संगीत, टाइमर और लाइव गतिविधियाँ ऊपर एक ही वस्तु में, सोलह डिज़ाइनों में।</sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="../images/releases/3.0.0/04-airisu.webp" alt="AIRISU" width="100%"><br><sub><b>AIRISU</b><br>पहला Design: iRiS के इंजन पर अपने पैनल, लेआउट और अंदाज़।</sub></td>
+<td width="50%" valign="top"><img src="../images/releases/3.0.0/03-edit-mode.webp" alt="एडिट मोड" width="100%"><br><sub><b>एडिट मोड</b><br>डेस्कटॉप विजेट खींचें, आकार बदलें और सहेजें, फिर एक क्लिक में पूरा डेस्कटॉप बदलें।</sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="../images/releases/3.0.0/06-material.webp" alt="Material" width="100%"><br><sub><b>Material</b><br>वही विजेट Material के अपने रूप में, नई Settings और टाइपोग्राफी के साथ।</sub></td>
+<td width="50%" valign="top"><img src="../images/releases/3.0.0/05-hub.webp" alt="iNiR Hub" width="100%"><br><sub><b>iNiR Hub</b><br>परिवार, Design, थीम और विजेट प्लगइन के रूप में, inir.space/hub पर और शेल के अंदर।</sub></td>
+</tr>
+</table>
+
+## परिवार
+
+| Material | Waffle | iRiS |
+|:---:|:---:|:---:|
+| <img src="../shots/families-material.webp" alt="Material" width="290"> | <img src="../shots/families-waffle.webp" alt="Waffle" width="290"> | <img src="../shots/families-iris.webp" alt="iRiS" width="290"> |
+| किसी भी किनारे पर बार, साइडबार, ओवरव्यू, और नौ ग्लोबल स्टाइल | Windows 11 का टास्कबार और एक्शन सेंटर | किसी भी किनारे पर एक Island, जो आप खोलते हैं वही बन जाता है, साथ में एक डॉक |
+
+`Super+Shift+W` से इनके बीच बदलें। और अधिक लुक, विजेट, थीम और वेब ऐप्स [hub](https://inir.space/hub) में हैं।
 
 ## स्थापना
 
@@ -39,15 +76,6 @@ inir update
 
 आपकी कॉन्फ़िगरेशन और आपके बदलाव बने रहते हैं। अगर नया संस्करण शुरू नहीं होता, तो अपडेट आपका पिछला संस्करण वापस लगा देता है।
 
-## परिवार
-
-| Material | Waffle | iRiS |
-|:---:|:---:|:---:|
-| <img src="../shots/families-material.webp" alt="Material" width="290"> | <img src="../shots/families-waffle.webp" alt="Waffle" width="290"> | <img src="../shots/families-iris.webp" alt="iRiS" width="290"> |
-| किसी भी किनारे पर बार, साइडबार, ओवरव्यू, और नौ ग्लोबल स्टाइल | Windows 11 का टास्कबार और एक्शन सेंटर | किसी भी किनारे पर एक Island, जो आप खोलते हैं वही बन जाता है, साथ में एक डॉक |
-
-`Super+Shift+W` से इनके बीच बदलें। और अधिक लुक, विजेट, थीम और वेब ऐप्स [hub](https://inir.space/hub) में हैं।
-
 ## यह कैसे बना है
 
 iNiR एक आधार है और उसके आसपास के हिस्से हैं, हर हिस्सा अपनी अलग रिपॉज़िटरी में है। आपकी मशीन पर कुछ भी कंपाइल नहीं होता: setup और
@@ -55,11 +83,11 @@ iNiR एक आधार है और उसके आसपास के ह�
 
 | रिपॉज़िटरी | यह क्या है | नवीनतम |
 |---|---|---|
-| **iNiR** (यही रिपॉज़िटरी) | आधार: सर्विसेज़, कॉन्फ़िगरेशन, Settings, स्वागत विज़ार्ड, setup और अपडेट, प्लगइन होस्ट | ![](https://img.shields.io/github/v/release/snowarch/iNiR?label=&style=flat-square) |
+| **iNiR** (यही रिपॉज़िटरी) | आधार: सर्विसेज़, कॉन्फ़िगरेशन, Settings, स्वागत विज़ार्ड, setup और अपडेट, प्लगइन होस्ट | ![](https://img.shields.io/github/v/release/snowarch/iNiR?label=&style=flat-square&color=111111) |
 | [inir-hub](https://github.com/snowarch/inir-hub) | हर प्लगइन: तीनों परिवार, कंपोनेंट, थीम, विजेट, वेब ऐप्स | [inir.space/hub](https://inir.space/hub) |
-| [qs-rs](https://github.com/snowarch/qs-rs) | रनटाइम: Rust में दोबारा लिखा गया Quickshell, अपने Qt के साथ | ![](https://img.shields.io/github/v/release/snowarch/qs-rs?label=&style=flat-square) |
-| [inir-accel](https://github.com/snowarch/inir-accel) | शेल जो बैकग्राउंड में चलाता है, Rust में: रंग, थंबनेल, सेंसर, खोज | ![](https://img.shields.io/github/v/release/snowarch/inir-accel?label=&style=flat-square) |
-| [inir-cli](https://github.com/snowarch/inir-cli) | `inir` कमांड: IPC, जाँच, अपडेट, `inir hub` | ![](https://img.shields.io/github/v/release/snowarch/inir-cli?label=&style=flat-square) |
+| [qs-rs](https://github.com/snowarch/qs-rs) | रनटाइम: Rust में दोबारा लिखा गया Quickshell, अपने Qt के साथ | ![](https://img.shields.io/github/v/release/snowarch/qs-rs?label=&style=flat-square&color=111111) |
+| [inir-accel](https://github.com/snowarch/inir-accel) | शेल जो बैकग्राउंड में चलाता है, Rust में: रंग, थंबनेल, सेंसर, खोज | ![](https://img.shields.io/github/v/release/snowarch/inir-accel?label=&style=flat-square&color=111111) |
+| [inir-cli](https://github.com/snowarch/inir-cli) | `inir` कमांड: IPC, जाँच, अपडेट, `inir hub` | ![](https://img.shields.io/github/v/release/snowarch/inir-cli?label=&style=flat-square&color=111111) |
 | [inir-site](https://github.com/snowarch/inir-site) | [inir.space](https://inir.space): साइट, दस्तावेज़, hub का कैटलॉग | |
 | [iNiR-Walls](https://github.com/snowarch/iNiR-Walls), [inir-mascot](https://github.com/snowarch/inir-mascot) | वॉलपेपर पैक और Kira की आर्ट, दोनों setup में वैकल्पिक हैं | |
 
