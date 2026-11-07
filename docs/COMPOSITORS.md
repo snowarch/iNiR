@@ -66,6 +66,8 @@ A new install can ask for it from the start: `./setup install --compositor umbri
 | `config.d/80-layer-rules.toml` | Layer rules for the shell |
 | `config.d/90-user-extra.toml` | Your own settings. Updates never touch it, and it loads last |
 
+Your Niri keybinds (including the ones you added or removed), keyboard layout and key repeat come along: iNiR writes them to `config.d/60-from-niri.toml` when Umbriel is added and on every update, and `inir compositor sync` does it again after you change them in Niri.
+
 `inir update` refreshes iNiR's files and keeps any file you changed, and puts them in place by itself when Umbriel is installed and has no config yet. A config from the early iNiR-Umbriel port no longer loads in today's Umbriel: it is moved whole to `~/.config/umbriel.inir-old-<date>` and replaced. iNiR starts with either compositor as soon as one is installed, so one added later needs no other step. Colours for borders, the overview and tab bars follow your theme: iNiR writes them to `~/.local/state/quickshell/user/generated/umbriel-colors.toml`, which the config loads. Check a change with `umbriel config validate`.
 
 Keys Umbriel adds: **Mod+W** tabs a column, **Mod+P** pins a window, **Mod+Shift+Tab** cycles the workspace layout, **Mod+`** shows the scratchpad and **Mod+Shift+`** sends a window there.

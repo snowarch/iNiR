@@ -175,7 +175,7 @@ Other:
   completions <bash|zsh|fish|install>
   bind [--add|--remove|--list|--examples] <keys> <call…>   Niri keybinds for any inir call
   service <install|uninstall|enable|disable|start|stop|restart|status|logs>
-  compositor [status|add <niri|umbriel>]   Which compositors iNiR runs on here; add Umbriel next to Niri
+  compositor [status|add <niri|umbriel>|sync]   Which compositors iNiR runs on here; add Umbriel next to Niri
   repair, path, settings-window
 EOF
 }
@@ -3142,6 +3142,15 @@ run_compositor_command() {
                 none) command -v umbriel >/dev/null 2>&1 && echo "Umbriel config: none yet: run 'inir compositor add umbriel'" ;;
             esac
             ;;
+        sync)
+            # Niri's keys and keyboard to Umbriel again, after changing them in Niri.
+            if [[ "$(compositor_umbriel_config_state)" != inir ]]; then
+                echo "Umbriel does not run iNiR's config here: run 'inir compositor add umbriel' first." >&2
+                return 1
+            fi
+            compositor_sync_umbriel_from_niri || { echo "ERROR: could not read your Niri config (needs inir-accel and jq)" >&2; return 1; }
+            echo "Your Niri keys and keyboard layout are on Umbriel (config.d/60-from-niri.toml); Umbriel reloads it by itself."
+            ;;
         add)
             local which="${1:-}"
             case "$which" in
@@ -3160,6 +3169,8 @@ run_compositor_command() {
                         foreign) echo "Your own ~/.config/umbriel/config.toml is kept: include iNiR's from $config_dir/defaults/umbriel to get its keys" ;;
                     esac
                     [[ -n "$COMPOSITOR_CONFIG_KEPT" ]] && echo "Kept your changes in: $COMPOSITOR_CONFIG_KEPT"
+                    [[ "$COMPOSITOR_CONFIG_RESULT" != foreign ]] && compositor_sync_umbriel_from_niri \
+                        && echo "Your Niri keys and keyboard layout are on Umbriel too (config.d/60-from-niri.toml)"
                     ;;
                 niri)
                     if ! command -v niri >/dev/null 2>&1; then

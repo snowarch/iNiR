@@ -33,5 +33,7 @@ files = [
 files = [
   # Colours iNiR writes from your wallpaper and theme (borders, overview, tab bar), refreshed on every theme change.
   "~/.local/state/quickshell/user/generated/umbriel-colors.toml",
+  # Your Niri keys and keyboard, brought over by `inir compositor sync` (also on add and update).
+  "config.d/60-from-niri.toml",
   "config.d/90-user-extra.toml",
 ]

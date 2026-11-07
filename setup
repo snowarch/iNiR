@@ -2939,6 +2939,7 @@ run_update() {
                     updated) tui_success "Umbriel config refreshed" ;;
                 esac
                 [[ -n "$COMPOSITOR_CONFIG_KEPT" ]] && tui_info "Umbriel files you changed were kept: $COMPOSITOR_CONFIG_KEPT"
+                compositor_sync_umbriel_from_niri "${XDG_CONFIG_HOME}/umbriel" >/dev/null 2>&1 || true
             else
                 tui_warn "Could not refresh ~/.config/umbriel"
             fi

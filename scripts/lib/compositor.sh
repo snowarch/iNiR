@@ -130,3 +130,55 @@ compositor_install_umbriel_package() {
     echo "Then run: inir compositor add umbriel" >&2
     return 1
 }
+
+# ── Niri → Umbriel ────────────────────────────────────────────────────────────────────────────────────────────────
+# Brings the person's Niri habits to Umbriel: every keybind (a spawn as is, a Niri action through the pair iNiR's
+# own defaults give for the same key), the keys they removed from iNiR's defaults, keyboard layout and repeat.
+# Writes config.d/60-from-niri.toml (iNiR's config includes it, 90-user-extra still wins). Needs inir-accel and jq.
+compositor_sync_umbriel_from_niri() {
+    local dest="${1:-${XDG_CONFIG_HOME:-$HOME/.config}/umbriel}"
+    local lib; lib="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local repo="${lib%/scripts/lib}" niri_dir="${XDG_CONFIG_HOME:-$HOME/.config}/niri"
+    local binds out="$dest/config.d/60-from-niri.toml" input_file
+    [[ -d "$dest/config.d" ]] || return 1
+    command -v jq >/dev/null 2>&1 || return 1
+    binds="$("$lib/accel-run" niri-config get-binds 2>/dev/null)" || return 1
+    input_file="$niri_dir/config.d/10-input-and-cursor.kdl"; [[ -f "$input_file" ]] || input_file="$niri_dir/config.kdl"
+    jq -nr --argjson user "$binds" \
+        --rawfile niriDef "$repo/defaults/niri/config.d/70-binds.kdl" \
+        --rawfile umbDef "$repo/defaults/umbriel/config.d/70-binds.toml" \
+        --rawfile input "$(readlink -f "$input_file" 2>/dev/null || echo /dev/null)" '
+      def words: [scan("\"((?:[^\"\\\\]|\\\\.)*)\"") | .[0]];
+      def combo: gsub("WheelScroll"; "Wheel");
+      def norm: gsub("\\s+"; " ") | sub("^ "; "") | sub(" ?;?$"; "");
+      def shq: if test("^[A-Za-z0-9_./:@%+=,-]+$") then . else "\u0027" + gsub("\u0027"; "\u0027\\\\\u0027\u0027") + "\u0027" end;
+      def tq: "\"" + (gsub("\\\\"; "\\\\\\\\") | gsub("\""; "\\\"")) + "\"";
+      ($niriDef | split("\n") | map(select(test("^\\s*//") | not)
+        | capture("^\\s*(?<k>[A-Za-z0-9_+]+)[^{]*\\{\\s*(?<a>[^}]*?)\\s*\\}") // empty
+        | {key: (.k | combo), value: (.a | norm)}) | from_entries) as $nd
+      | ($umbDef | split("\n") | map(capture("^\"(?<k>[^\"]+)\"\\s*=\\s*(?<v>.+)$") // empty
+        | .v as $v | {key: .k, value: (($v | capture("^\"(?<a>(?:[^\"\\\\]|\\\\.)*)\"")) // ($v | capture("action\\s*=\\s*\"(?<a>(?:[^\"\\\\]|\\\\.)*)\"")) // {a: null}).a})
+        | from_entries) as $ud
+      | ([$nd | to_entries[] | select($ud[.key] != null) | {key: .value, value: $ud[.key]}] | from_entries) as $map
+      | ($user.binds | map(select(.commented | not) | .key_combo |= combo)) as $ub
+      | ($ub | map(.key_combo) ) as $have
+      | [ $ub[] | (.action | norm) as $a
+          | (if ($a | startswith("spawn-sh ")) then "spawn " + ($a | words | .[0])
+             elif ($a | startswith("spawn ")) then "spawn " + ($a | words | map(shq) | join(" "))
+             else $map[$a] end) as $u
+          | select($u != null and $u != $ud[.key_combo])
+          | [(.options | test("repeat=false")), (.options | test("allow-when-locked=true"))] as $o
+          | "\(.key_combo | tq) = " + (if ($o | any) then "{ action = \($u | tq)" + (if $o[0] then ", repeat = false" else "" end)
+              + (if $o[1] then ", allow_when_locked = true" else "" end) + " }" else ($u | tq) end)
+          | if test("Wheel") then sub("\"(?<a>[^\"]+)\"$"; "{ action = \"\(.a)\", cooldown_ms = 150 }") else . end ] as $lines
+      | [ $nd | keys[] | select(($have | index(.)) == null and $ud[.] != null) | "\(tq) = \"\"" ] as $gone
+      | ($input | [scan("(?m)^\\s*(layout|variant|options)\\s+\"([^\"]*)\"")] | map({key: .[0], value: .[1]}) | from_entries) as $xkb
+      | ($input | [scan("(?m)^\\s*(repeat-delay|repeat-rate)\\s+([0-9]+)")] | map({key: (.[0] | gsub("-"; "_")), value: .[1]}) | from_entries) as $rep
+      | ["# Written by iNiR from your Niri config (inir compositor sync): the same keys and keyboard on Umbriel.",
+         "# Edits here are lost on the next sync; your own changes go in 90-user-extra.toml.", "", "[keybinds]"]
+        + $lines + (if ($gone | length) > 0 then ["", "# Keys you removed from iNiR'"'"'s Niri defaults."] + $gone else [] end)
+        + ["", "[input.keyboard]"] + ($xkb | to_entries | map("\(.key) = \(.value | tq)"))
+        + ($rep | to_entries | map("\(.key) = \(.value)"))
+      | .[]' > "$out.tmp" || { rm -f "$out.tmp"; return 1; }
+    mv -f "$out.tmp" "$out"
+}
