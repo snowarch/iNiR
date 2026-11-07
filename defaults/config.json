@@ -2361,8 +2361,8 @@
             "thickness": 10,
             "radius": 22,
             "style": "plain",
-            "holoLight": 70,
-            "holoMarks": true
+            "holoLight": 45,
+            "holoHalo": 40
         },
         "controlCenter": {
             "opens": "island",
