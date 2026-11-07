@@ -114,7 +114,7 @@ AbstractWidget {
     property var _resizePreviewValues: ({})
     readonly property real scaleFactor: root._baseScale * (root.fits ? root._fit : root._freeFit)
     // A shared drawing is laid out in pixels times scaleFactor, so a box resized by hand carries its drawing with it.
-    readonly property real _freeFit: !root.freeSized || root.familyFaced || !root.sized ? 1 : root.freeScale
+    readonly property real _freeFit: !root.freeSized || root.familyFaced || !root.sized || root.freeShape ? 1 : root.freeScale
     // A free size is its class drawn at another scale, the box keeping the class's proportions: a box of any other shape
     // left air beside a drawing made for S, M or L, or cut it (his 11-02: "se redimensionan mal"). A stored size of
     // another shape (older files) reads as the largest class box inside it.
@@ -129,6 +129,12 @@ AbstractWidget {
         return Math.max(root.freeScaleMin, Math.min(root.freeScaleMax, Math.min(...ratios)))
     }
     readonly property real freeScaleMin: 0.6
+    // A widget whose Material face lays itself out in any box (a month, a list, notes, a picture: v2.33's `resizableAxes`
+    // width and height, his 11-07 "algunos sí necesitan redimensionarse de forma libre, como sus viejos comportamientos")
+    // says `"freeShape": true` in its widget.json: under Material its box takes any width and height and the drawing
+    // reflows. Every other widget scales its class; a family's own face keeps its sizes.
+    readonly property bool freeShape: !root.familyFaced && root.sized
+        && (DesktopWidgetRegistry.entry(root.configEntryName)?.freeShape ?? false)
     readonly property real freeScaleMax: 1.8
     property real _freeStartScale: 1
     property bool _geometryReady: false
@@ -924,9 +930,11 @@ AbstractWidget {
     readonly property real _freeWidth: root.freeAllowed ? Number(root._readConfigKey("freeWidth") ?? 0) || 0 : 0
     readonly property real _freeHeight: root.freeAllowed ? Number(root._readConfigKey("freeHeight") ?? 0) || 0 : 0
     readonly property bool freeSized: root._freeWidth > 0 || root._freeHeight > 0
-    readonly property real footprintWidth: root.sized ? Math.round(root.footprintOf(root.sizeClass).width * root.freeScale)
+    readonly property real footprintWidth: root.freeShape && root._freeWidth > 0 ? Math.round(root._freeWidth * root._baseScale)
+        : root.sized ? Math.round(root.footprintOf(root.sizeClass).width * (root.freeShape ? 1 : root.freeScale))
         : root._freeWidth > 0 ? Math.round(root._freeWidth * root._baseScale) : 0
-    readonly property real footprintHeight: root.sized ? Math.round(root.footprintOf(root.sizeClass).height * root.freeScale)
+    readonly property real footprintHeight: root.freeShape && root._freeHeight > 0 ? Math.round(root._freeHeight * root._baseScale)
+        : root.sized ? Math.round(root.footprintOf(root.sizeClass).height * (root.freeShape ? 1 : root.freeScale))
         : root._freeHeight > 0 ? Math.round(root._freeHeight * root._baseScale) : 0
     implicitWidth: root.footprintWidth
     implicitHeight: root.footprintHeight
@@ -939,9 +947,13 @@ AbstractWidget {
     // The pointer's box becomes one scale of the class: the side that moved farther from where the drag began leads, so
     // an edge grip follows its edge and a corner grip its stronger axis. The class stays: S, M or L are their own keys.
     function previewFreeSize(width: real, height: real): void {
-        if (!root.sized) {
-            root._resizePreviewValues = { freeWidth: Math.round(Math.max(root.resizeMinWidth, Math.min(root.resizeMaxWidth, width)) / root._baseScale),
-                freeHeight: Math.round(Math.max(root.resizeMinHeight, Math.min(root.resizeMaxHeight, height)) / root._baseScale) }
+        if (!root.sized || root.freeShape) {
+            // A free shape keeps at least six tenths of a small box on each side, so its face always has room to read.
+            const floor = root.freeShape ? root.footprintOf("small") : Qt.size(0, 0)
+            const minWidth = Math.max(root.resizeMinWidth, Math.round(floor.width * 0.6))
+            const minHeight = Math.max(root.resizeMinHeight, Math.round(floor.height * 0.6))
+            root._resizePreviewValues = { freeWidth: Math.round(Math.max(minWidth, Math.min(root.resizeMaxWidth, width)) / root._baseScale),
+                freeHeight: Math.round(Math.max(minHeight, Math.min(root.resizeMaxHeight, height)) / root._baseScale) }
             return
         }
         const box = root.footprintOf(root.sizeClass)
@@ -960,9 +972,28 @@ AbstractWidget {
         if (preview.freeWidth === undefined) return
         const unit = DesktopWidgetRegistry.footprint(root.sizeClass)
         // Back at the class's own size, it is the class again, not a free size of 100 %.
-        const plain = root.sized && Math.abs(preview.freeWidth / (unit.width * FamilyStyle.density) - 1) < 0.03
-        root._setOutputValues(plain ? { freeWidth: 0, freeHeight: 0 } : { freeWidth: preview.freeWidth, freeHeight: preview.freeHeight })
+        const near = (value, unitSide) => Math.abs(value / (unitSide * FamilyStyle.density) - 1) < 0.03
+        const plain = root.sized && near(preview.freeWidth, unit.width) && (!root.freeShape || near(preview.freeHeight, unit.height))
+        const values = plain ? { freeWidth: 0, freeHeight: 0 } : { freeWidth: preview.freeWidth, freeHeight: preview.freeHeight }
+        // A free shape lays out as the class nearest its box, so a wide short box reads as a small one stretched, not a
+        // large one cut.
+        if (root.freeShape && !plain)
+            values.sizeClass = root.nearestSize(preview.freeWidth, preview.freeHeight)
+        root._setOutputValues(values)
         _makeRoomLater.restart()
+    }
+    function nearestSize(width: real, height: real): string {
+        let best = root.sizeClass
+        let gap = Number.POSITIVE_INFINITY
+        for (const size of root.sizeChoices) {
+            const foot = DesktopWidgetRegistry.footprint(size)
+            const k = FamilyStyle.density
+            // Fits inside first: a class larger than the box on either side would cut its face.
+            const over = Math.max(0, foot.width * k - width) + Math.max(0, foot.height * k - height)
+            const d = over * 4 + Math.abs(foot.width * k - width) + Math.abs(foot.height * k - height)
+            if (d < gap) { gap = d; best = size }
+        }
+        return best
     }
     function cancelFreeSize(): void {
         root._resizePreviewValues = ({})

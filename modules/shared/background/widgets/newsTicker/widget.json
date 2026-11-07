@@ -7,6 +7,7 @@
   "category": "media",
   "keywords": "news feed rss headlines",
   "sizes": ["medium", "small", "large"],
+  "freeShape": true,
   "lock": true,
   "palette": true,
   "face": "news",

@@ -7,6 +7,7 @@
   "category": "system",
   "keywords": "boot session running",
   "sizes": ["small", "medium", "large"],
+  "freeShape": true,
   "lock": true,
   "palette": true,
   "face": "uptime",

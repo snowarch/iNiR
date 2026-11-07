@@ -7,6 +7,7 @@
   "category": "media",
   "keywords": "audio cava spectrum equalizer sound",
   "sizes": ["medium", "small", "large"],
+  "freeShape": true,
   "palette": true,
   "defaultConfig": {
     "placementStrategy": "free",

@@ -7,6 +7,7 @@
   "category": "decor",
   "keywords": "japanese kanji text",
   "sizes": ["large"],
+  "freeShape": true,
   "palette": true,
   "defaultConfig": {
     "enable": false,

@@ -7,6 +7,7 @@
   "category": "notes",
   "keywords": "sticky memo text write",
   "sizes": ["medium", "small", "large"],
+  "freeShape": true,
   "lock": true,
   "palette": true,
   "face": "notes",

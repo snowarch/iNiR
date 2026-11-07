@@ -7,6 +7,7 @@
   "category": "decor",
   "keywords": "decoration decorative",
   "sizes": ["small", "medium", "large"],
+  "freeShape": true,
   "palette": true,
   "defaultConfig": {
     "placementStrategy": "free",

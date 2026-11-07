@@ -7,6 +7,7 @@
   "category": "today",
   "keywords": "calendar month date days",
   "sizes": ["large", "small", "medium"],
+  "freeShape": true,
   "lock": true,
   "palette": true,
   "face": "calendar",

@@ -7,6 +7,7 @@
   "category": "decor",
   "keywords": "picture photo image",
   "sizes": ["medium", "small", "large"],
+  "freeShape": true,
   "palette": true,
   "face": "photo",
   "defaultConfig": {

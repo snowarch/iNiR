@@ -7,6 +7,7 @@
   "category": "decor",
   "keywords": "text typography quote",
   "sizes": ["large", "medium"],
+  "freeShape": true,
   "palette": true,
   "defaultConfig": {
     "placementStrategy": "free",
