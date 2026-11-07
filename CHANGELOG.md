@@ -874,7 +874,7 @@ Screenshots grew a native annotation editor, the AI chat got a real model picker
 
 ### Added
 - **Native annotation editor**: the screenshot Edit action opens an in-shell QML editor instead of shelling out to swappy/satty (which remain available as a fallback toggle).
-- **Smart flexible spacers**: `material.bar.layout.spacerMode` — smart (elastic on the edges, fixed gap inside centre pills), always elastic, or fixed width. Configurable from Settings next to the spacer width.
+- **Smart flexible spacers**: `bar.layout.spacerMode` — smart (elastic on the edges, fixed gap inside centre pills), always elastic, or fixed width. Configurable from Settings next to the spacer width.
 - **Unified snip menu** on `Ctrl+Shift+S`: copy, edit, search, OCR, and record from one surface. Migration 030 updates the keybind.
 - **All-apps grid in the overview**: optional replacement for workspace previews — a scrollable grid of every installed app, alphabetical or grouped by category.
 - **Searchable AI model picker**: the model pill in the AI chat morphs open into a searchable, provider-grouped list with key/local indicators, plus provider presets.
@@ -1113,7 +1113,7 @@ Thanks to [@EldoDvae](https://github.com/EldoDvae) for the SDDM Qt6 migration ([
 2.24 is a practical one: screen recording got real controls, keyboard indicators stopped being noisy, media players behave across ii and waffle, and the update flow is finally visible instead of doing spooky background theater.
 
 ### Added
-- **Settings UI Easy Mode**: optional curated mode that hides 7 advanced pages from the nav rail (Background, Tools, Services, Advanced, Modules, Waffle Style, Compositor) and trims expert-only sections inside the remaining pages. New `material.settingsUi.easyMode` config key, opt-in via the title-bar toggle (school/tune icon) in both overlay and window settings, also surfaced in Modules → Settings UI. Search results filter to essentials too. Fresh users pick Easy or Advanced on the welcome wizard. Default Advanced — nobody's existing layout shifts on update.
+- **Settings UI Easy Mode**: optional curated mode that hides 7 advanced pages from the nav rail (Background, Tools, Services, Advanced, Modules, Waffle Style, Compositor) and trims expert-only sections inside the remaining pages. New `settingsUi.easyMode` config key, opt-in via the title-bar toggle (school/tune icon) in both overlay and window settings, also surfaced in Modules → Settings UI. Search results filter to essentials too. Fresh users pick Easy or Advanced on the welcome wizard. Default Advanced — nobody's existing layout shifts on update.
 - **Welcome wizard refresh**: 5 steps got a polish pass. Step 1 gains a "What you'll dial in" preview card (Theme & wallpaper / Layout / Features / Tips) so users see value before they decide to skip. Skip button moved to a top-right ghost link with a tooltip pointing at `inir welcome` so it's recoverable. Step indicator gets per-circle labels and a "Step X of N" counter, past circles are clickable to jump back. Features step expanded with weather widget, bar auto-hide, time-format selector (system/24h/12h) and show-seconds toggle. Ready step replaces the CLI tip card with a "Try it now" action card (pick wallpaper, test notification, show shortcuts cheatsheet, open quick settings — all one-click via existing IPC), and the troubleshooting callout is now a clickable card linking to the wiki guide. Wizard surface uses `colLayer1Base` so Material/Cards styles stay solid even with content transparency on.
 - **`inir welcome` CLI**: re-runs the welcome wizard. For users who skipped on first run and now want to flip Easy/Advanced or replay the Try-it-now actions. Reuses the same launch lock pattern as `inir settings-window`.
 - **Terminal-visible shell updates**: clicking Update on the iNiR update overlay now launches `setup` in the user's configured terminal (resolved via `AppLauncher.commandFor("terminal")`, falls back to kitty) so the full TUI is visible — progress lines, success/warn/error banners, the snapshot ID, dependency checks, the lot. Output is also tee'd to `update.log` for the diagnostics flow. Auto-closes on success, pauses with "Press Enter to close" on failure so the error doesn't disappear in a flash. Toggle in Settings → Services → "Open terminal during update" or `shellUpdates.openTerminalOnUpdate` in config.json. Default on, off restores the previous silent-background behavior.
@@ -1303,7 +1303,7 @@ Thanks to [@kirisaki-vk](https://github.com/kirisaki-vk) for the time format fix
 Community contributions edition. Turns out people actually use this thing and want to make it better. Who knew.
 
 ### Added
-- **YTMusic "Up Next" notifications** ([@SecArt1](https://github.com/SecArt1)): When a track auto-advances, a transient notification shows what's coming next. Suppressed during gamemode and fullscreen. Configurable via `ytmusic.upNextNotifications` and `ytmusic.suppressUpNextInFullscreen`. *(PR #111)*
+- **YTMusic "Up Next" notifications** ([@SecArt1](https://github.com/SecArt1)): When a track auto-advances, a transient notification shows what's coming next. Suppressed during gamemode and fullscreen. Configurable via `sidebar.ytmusic.upNextNotifications` and `sidebar.ytmusic.suppressUpNextInFullscreen`. *(PR #111)*
 - **Zed editor Go-based theme pipeline** ([@yukazakiri](https://github.com/yukazakiri)): Zed theming split into its own module (`31-zed.sh`) with a compiled Go generator for significantly faster theme generation. Supports variant-based themes and input signature caching to skip redundant rebuilds. *(PR #98)*
 - **Neovim/LazyVim wallpaper theming** ([@yukazakiri](https://github.com/yukazakiri)): Generates an `aether.nvim` colorscheme plugin that maps Material 3 palette to Neovim highlight groups. Includes file watchers for live hot-reload when colors change. *(PR #103)*
 - **Equicord theme support** ([@yukazakiri](https://github.com/yukazakiri)): System24 theme generation now discovers Equicord config directories alongside standard Discord client paths. *(PR #100)*
@@ -1593,7 +1593,7 @@ Shoutout to [@yukazakiri](https://github.com/yukazakiri) for basically adopting 
 
 ### Added
 - **`inir` launcher CLI**: Unified daily-use command (`inir run`, `inir restart`, `inir settings`, `inir overview toggle`, etc.) replacing direct `qs` invocation. Supports direct IPC shorthand, maintenance delegation, systemd service management, and version inspection.
-- **Per-monitor workspaces (Niri)**: Each bar can show workspaces for its own monitor (`material.bar.workspaces.perMonitor`).
+- **Per-monitor workspaces (Niri)**: Each bar can show workspaces for its own monitor (`bar.workspaces.perMonitor`).
 - **Waffle quick action switches**: Individual toggles for Files/Terminal/Settings/Wallpaper/Screenshot/Screen Record/Session in the Widgets panel.
 - **Waffle background clock widget**: Configurable clock overlay on the desktop background with font, position, and style settings.
 - **Waffle Interface settings page**: New dedicated page for waffle-specific UI customization.
@@ -1612,7 +1612,7 @@ Shoutout to [@yukazakiri](https://github.com/yukazakiri) for basically adopting 
 
 ### Changed
 - **Dark mode toggles**: Routed through `MaterialThemeLoader` to ensure a reliable `colors.json` reload after switching.
-- **Style selection**: No longer forces `material.style.transparency.enable` when selecting styles.
+- **Style selection**: No longer forces `appearance.transparency.enable` when selecting styles.
 - **Color system modularized**: `applycolor.sh` rewritten from monolithic script to modular dispatcher with individual modules (terminals, GTK, Qt, Spicetify, SDDM) and shared runtime library.
 - **Shell RC namespace**: Setup-managed shell integration files moved from `~/.config/ii/` to `~/.config/inir/`; existing RC includes are migrated in place.
 - **Setup behavior for packaged installs**: `setup status`, `setup update`, `setup rollback`, and `setup uninstall` now detect externally-managed installs and provide appropriate guidance instead of assuming repo-based updates.
@@ -1778,7 +1778,7 @@ Shoutout to [@yukazakiri](https://github.com/yukazakiri) for basically adopting 
 - **Overview Dashboard panel**: New control center below workspace previews with quick toggles, media player, volume/brightness sliders, weather summary, and system stats. Configurable via `overview.dashboard.*` settings.
 - **Events & Reminders system**: Full event management with date-based notifications, calendar integration with event dots, and professional add/edit dialog.
 - **Calendar event indicators**: Days with events show colored dots; clicking navigates to Events tab.
-- **Reorderable Controls sections**: Drag to reorder sidebar sections (sliders, toggles, devices, media, quick actions) in compact layout. Persisted via `material.sidebar.right.controlsSectionOrder`.
+- **Reorderable Controls sections**: Drag to reorder sidebar sections (sliders, toggles, devices, media, quick actions) in compact layout. Persisted via `sidebar.right.controlsSectionOrder`.
 - **VSCode/Cursor theme generation**: Material You integration for VS Code and Cursor editors with wallpaper-synced colors.
 - **Zed editor theme generation**: Material You theme support for Zed (PR #62).
 - **Lock screen display name**: Show user's full name (GECOS) instead of username on lock screen.
