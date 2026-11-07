@@ -5,6 +5,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.modules.common
+import qs.services.deferred
 
 // The community hub (github.com/snowarch/inir-hub) as every family's Hub page sees it.
 // `inir hub` (inir-cli) owns the catalogue, downloads, checksums and installs; this service runs it,
@@ -192,19 +193,19 @@ Singleton {
         return Translation.tr("Shows on your desktop")
     }
     function votes(item: var): int {
-        return Number(item?.votesUp ?? 0) + Number(item?.votesDown ?? 0)
+        return root.voteCount(item, "up") + root.voteCount(item, "down")
     }
     // Share of people who liked it, or -1 before anyone voted.
     function liked(item: var): real {
         const n = root.votes(item)
-        return n > 0 ? Number(item.votesUp ?? 0) / n : -1
+        return n > 0 ? root.voteCount(item, "up") / n : -1
     }
     // Wilson's lower bound at 95 %: two votes of two don't outrank ninety of a hundred.
     function _confidence(item: var): real {
         const n = root.votes(item)
         if (n === 0)
             return 0
-        const p = Number(item.votesUp ?? 0) / n, z = 1.96
+        const p = root.voteCount(item, "up") / n, z = 1.96
         return (p + z * z / (2 * n) - z * Math.sqrt((p * (1 - p) + z * z / (4 * n)) / n)) / (1 + z * z / n)
     }
     function _days(date: string): real {
@@ -233,21 +234,69 @@ Singleton {
         return item?.update === true && (item?.news ?? []).length > 0
             ? Translation.tr("In the update") : Translation.tr("What's new")
     }
-    // What the person did with each item (hub.social in config.json) and what everyone did (the catalogue's counts,
-    // gathered daily). Their own act shows at once: a count never reads lower than their own vote or reaction.
-    readonly property var reactions: ["❤️", "🔥", "✨", "😂", "🤯", "👏"] // inir-cli hub.Reactions
+    // What the person did with each item (hub.social in config.json) and what everyone else did: read from the relays
+    // by `inir hub counts` when a page opens (the command keeps its last read five minutes), else the catalogue's
+    // daily counts. Their own act is added to the others', so it shows at once and is never counted twice.
+    readonly property var quickReactions: ["❤️", "🔥", "✨", "😂", "🤯", "👏"] // inir-cli hub.Reactions
+    readonly property int maxReactions: 12 // inir-cli maxReactions
+    // the picker's first row with no search: the quick set and two more, eight across
+    readonly property var _pickerFirst: root.quickReactions.concat(["🎉", "💯"])
     readonly property bool sharing: Config.options?.hub?.social?.share ?? true
+    // id -> {up, down, reactions}, everyone but this person; null until the first read answers.
+    property var liveCounts: null
     function mine(id: string): var {
         void Config.revision
         return Config.options?.hub?.social?.items?.[id] ?? ({})
     }
+    // Everyone else's count: the live read, else the catalogue's, which includes this person's own once published.
+    function _others(item: var, live: string, catalogue: var, own: bool): int {
+        if (root.liveCounts)
+            return Number(root.liveCounts[item?.id]?.[live] ?? 0)
+        return Math.max(0, Number(catalogue ?? 0) - (own ? 1 : 0))
+    }
     function voteCount(item: var, vote: string): int {
-        const counted = Number((vote === "up" ? item?.votesUp : item?.votesDown) ?? 0)
-        return Math.max(counted, root.mine(item?.id).vote === vote ? 1 : 0)
+        const own = root.mine(item?.id).vote === vote
+        return root._others(item, vote, vote === "up" ? item?.votesUp : item?.votesDown, own) + (own ? 1 : 0)
+    }
+    function _othersReactions(item: var): var {
+        return root.liveCounts ? (root.liveCounts[item?.id]?.reactions ?? {}) : (item?.reactions ?? {})
     }
     function reactionCount(item: var, emoji: string): int {
-        const counted = Number(item?.reactions?.[emoji] ?? 0)
-        return Math.max(counted, Array.from(root.mine(item?.id).reactions ?? []).includes(emoji) ? 1 : 0)
+        const own = Array.from(root.mine(item?.id).reactions ?? []).includes(emoji)
+        const others = Number(root._othersReactions(item)[emoji] ?? 0)
+        return (root.liveCounts ? others : Math.max(0, others - (own ? 1 : 0))) + (own ? 1 : 0)
+    }
+    // The reactions an item has, most given first ({emoji, count, mine}); the person's own stay even at one.
+    function reactionsOf(item: var): var {
+        const own = Array.from(root.mine(item?.id).reactions ?? [])
+        const emojis = Object.keys(root._othersReactions(item)).concat(own.filter(e => !(e in root._othersReactions(item))))
+        return emojis.map(emoji => ({ emoji: emoji, count: root.reactionCount(item, emoji), mine: own.includes(emoji) }))
+            .filter(r => r.count > 0)
+            .sort((a, b) => b.count - a.count || (b.mine ? 1 : 0) - (a.mine ? 1 : 0))
+    }
+    function canReact(id: string): bool {
+        return Array.from(root.mine(id).reactions ?? []).length < root.maxReactions
+    }
+    // Emoji for the picker: the quick set and the common ones with no query, else a search by name ("pregnant").
+    function emojiSearch(query: string): var {
+        const q = String(query ?? "").trim()
+        const all = Emojis.list
+        const glyph = entry => String(entry).split(" ")[0]
+        // a name that holds the words wins ("pregnant" is 🤰 🫃 🫄, not every flag fuzzy-close to it); fuzzy only
+        // when no name does
+        const words = q.toLowerCase().split(/\s+/).filter(w => w.length > 0)
+        const named = all.filter(entry => {
+            const name = String(entry).toLowerCase()
+            return words.every(w => name.indexOf(" " + w) >= 0)
+        })
+        const found = q.length === 0 ? all.slice(0, 160) : (named.length > 0 ? named : Emojis.fuzzyQuery(q)).slice(0, 160)
+        const list = (q.length === 0 ? root._pickerFirst : []).concat(found.map(glyph))
+        return list.filter((e, i) => e.length > 0 && list.indexOf(e) === i)
+    }
+    function readCounts(): void {
+        if (!root.online || countsProcess.running)
+            return
+        countsProcess.running = true
     }
     function vote(id: string, vote: string): void {
         const act = Object.assign({}, root.mine(id))
@@ -257,6 +306,8 @@ Singleton {
     function react(id: string, emoji: string): void {
         const act = Object.assign({}, root.mine(id))
         const had = Array.from(act.reactions ?? [])
+        if (!had.includes(emoji) && had.length >= root.maxReactions)
+            return
         act.reactions = had.includes(emoji) ? had.filter(r => r !== emoji) : had.concat([emoji])
         root._setAct(id, act)
     }
@@ -281,6 +332,24 @@ Singleton {
             if (!root.online || socialProcess.running)
                 return
             socialProcess.running = true
+        }
+    }
+    Process {
+        id: countsProcess
+        command: [root.launcher, "hub", "counts", "--json"]
+        stdout: StdioCollector {
+            id: countsOut
+            onStreamFinished: {
+                let reply = null
+                try {
+                    reply = JSON.parse(countsOut.text)
+                } catch (e) {
+                    reply = null
+                }
+                // an inir without the verb, or no relay and no last read: the catalogue's counts stay
+                if (reply && reply.items && typeof reply.items === "object")
+                    root.liveCounts = reply.items
+            }
         }
     }
     Process {
@@ -325,6 +394,7 @@ Singleton {
     function ensureLoaded(): void {
         if (!root.loaded && !statusProcess.running)
             root.refresh(false)
+        root.readCounts()
     }
 
     function install(id: string): void { root._enqueue("install", id) }

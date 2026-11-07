@@ -3239,5 +3239,11 @@
   "Count my votes and installs": "投票とインストールを集計に含める",
   "Without your name, from a key kept on this computer": "名前は使わず、このコンピューターに保存された鍵で",
   "Have it": "利用中",
-  "%1 have it": "%1 人が利用中"
+  "%1 have it": "%1 人が利用中",
+  "React": "リアクション",
+  "Add a reaction": "リアクションを追加",
+  "Search emoji": "絵文字を検索",
+  "No emoji called “%1”": "「%1」という絵文字はありません",
+  "What sits behind every widget.": "すべてのウィジェットの背後にあるもの。",
+  "One tap sets the whole look; Ctrl+Z takes it back. The tiles below fine-tune it.": "ワンタップで外観全体を設定し、Ctrl+Z で元に戻せます。下のタイルで微調整できます。"
 }

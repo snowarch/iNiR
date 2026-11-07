@@ -3239,5 +3239,11 @@
   "Count my votes and installs": "统计我的投票和安装",
   "Without your name, from a key kept on this computer": "不含你的名字，使用保存在这台电脑上的密钥",
   "Have it": "在用",
-  "%1 have it": "%1 人在用"
+  "%1 have it": "%1 人在用",
+  "React": "回应",
+  "Add a reaction": "添加回应",
+  "Search emoji": "搜索表情",
+  "No emoji called “%1”": "没有名为“%1”的表情",
+  "What sits behind every widget.": "每个小组件背后的内容。",
+  "One tap sets the whole look; Ctrl+Z takes it back. The tiles below fine-tune it.": "轻点一下即可设定整体外观；Ctrl+Z 撤销。下方的磁贴用于微调。"
 }

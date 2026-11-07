@@ -22,13 +22,15 @@ The search bar looks through names, summaries, tags and authors. Beside it:
   there are.
 
 Every row shows how many people liked the item, how many downloaded it, and when it last changed. On an item's
-page you say yours: 👍 or 👎, and any of ❤️ 🔥 ✨ 😂 🤯 👏; a second tap takes it back. Its page also says how many
-people have it and what changed in its last versions.
+page you say yours: 👍 or 👎, then the reactions it already has, and one small pill to add any emoji. Hover the
+pill (or press it) and type: "pregnant" finds 🫃, Enter picks the first. A second tap takes a vote or reaction back;
+up to 12 reactions per item. Its page also says how many people have it and what changed in its last versions.
 
 Your votes and reactions live in your own `config.json` (`hub.social`), like the rest of your shell. iNiR publishes
 them, with the items you installed, to public Nostr relays, signed by a key made on this computer
-(`~/.local/state/inir/hub/key`, never in `config.json`): no name, no account, no server of ours. The hub counts the
-newest state of each key once a day. **Count my votes and installs** in the Hub's Sources turns it off and takes you
+(`~/.local/state/inir/hub/key`, never in `config.json`): no name, no account, no server of ours. An item's page reads the
+relays when you open the Hub, so what others gave shows within minutes; the catalogue's own counts are made once a
+day. **Count my votes and installs** in the Hub's Sources turns it off and takes you
 out of every count; `inir hub social` publishes by hand.
 
 ## Install and remove

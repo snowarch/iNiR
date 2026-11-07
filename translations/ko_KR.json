@@ -3239,5 +3239,11 @@
   "Count my votes and installs": "내 투표와 설치 집계하기",
   "Without your name, from a key kept on this computer": "이름 없이, 이 컴퓨터에 보관된 키로",
   "Have it": "사용 중",
-  "%1 have it": "%1명 사용 중"
+  "%1 have it": "%1명 사용 중",
+  "React": "반응하기",
+  "Add a reaction": "반응 추가",
+  "Search emoji": "이모지 검색",
+  "No emoji called “%1”": "“%1”(이)라는 이모지가 없어요",
+  "What sits behind every widget.": "모든 위젯 뒤에 있는 것.",
+  "One tap sets the whole look; Ctrl+Z takes it back. The tiles below fine-tune it.": "한 번의 탭으로 전체 모양을 정하고, Ctrl+Z로 되돌립니다. 아래 타일로 세부 조정합니다."
 }

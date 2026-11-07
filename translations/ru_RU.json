@@ -3239,5 +3239,11 @@
   "Count my votes and installs": "Учитывать мои голоса и установки",
   "Without your name, from a key kept on this computer": "Без вашего имени, с ключом, хранящимся на этом компьютере",
   "Have it": "Установили",
-  "%1 have it": "Установили: %1"
+  "%1 have it": "Установили: %1",
+  "React": "Отреагировать",
+  "Add a reaction": "Добавить реакцию",
+  "Search emoji": "Поиск эмодзи",
+  "No emoji called “%1”": "Нет эмодзи «%1»",
+  "What sits behind every widget.": "То, что находится за каждым виджетом.",
+  "One tap sets the whole look; Ctrl+Z takes it back. The tiles below fine-tune it.": "Одно касание задаёт весь вид; Ctrl+Z отменяет. Плитки ниже уточняют его."
 }

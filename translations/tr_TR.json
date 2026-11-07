@@ -3239,5 +3239,11 @@
   "Count my votes and installs": "Oylarımı ve kurulumlarımı say",
   "Without your name, from a key kept on this computer": "Adın olmadan, bu bilgisayarda tutulan bir anahtarla",
   "Have it": "Kullanan",
-  "%1 have it": "%1 kişi kullanıyor"
+  "%1 have it": "%1 kişi kullanıyor",
+  "React": "Tepki ver",
+  "Add a reaction": "Tepki ekle",
+  "Search emoji": "Emoji ara",
+  "No emoji called “%1”": "“%1” adında emoji yok",
+  "What sits behind every widget.": "Her bileşenin arkasında duran.",
+  "One tap sets the whole look; Ctrl+Z takes it back. The tiles below fine-tune it.": "Tek dokunuş tüm görünümü ayarlar; Ctrl+Z geri alır. Aşağıdaki kutular ince ayar yapar."
 }

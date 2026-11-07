@@ -3239,5 +3239,11 @@
   "Count my votes and installs": "Count my votes and installs",
   "Without your name, from a key kept on this computer": "Without your name, from a key kept on this computer",
   "Have it": "Have it",
-  "%1 have it": "%1 have it"
+  "%1 have it": "%1 have it",
+  "React": "React",
+  "Add a reaction": "Add a reaction",
+  "Search emoji": "Search emoji",
+  "No emoji called “%1”": "No emoji called “%1”",
+  "What sits behind every widget.": "What sits behind every widget.",
+  "One tap sets the whole look; Ctrl+Z takes it back. The tiles below fine-tune it.": "One tap sets the whole look; Ctrl+Z takes it back. The tiles below fine-tune it."
 }

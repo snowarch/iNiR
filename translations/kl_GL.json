@@ -3239,5 +3239,11 @@
   "Count my votes and installs": "Taasinerma ikkussinerillu kisitsikkit",
   "Without your name, from a key kept on this computer": "Atit ilanngunnagu, qarasaasiami matumani kiilimik",
   "Have it": "Pigisaat",
-  "%1 have it": "%1 pigisaat"
+  "%1 have it": "%1 pigisaat",
+  "React": "Akissuteqarit",
+  "Add a reaction": "Akissummik ilassigit",
+  "Search emoji": "Emoji ujaruk",
+  "No emoji called “%1”": "Emoji “%1”-mik taaguutilik peqanngilaq",
+  "What sits behind every widget.": "Widgetit tamarmik tunuani sumiippa.",
+  "One tap sets the whole look; Ctrl+Z takes it back. The tiles below fine-tune it.": "Ataasiarlugu tooruinnarlugu isikkoq tamaat aaqqissorneqarpoq; Ctrl+Z-mik utertinneqarpoq. Ataani tiilit eqqortumik aaqqissuussipput."
 }

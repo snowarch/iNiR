@@ -3239,5 +3239,11 @@
   "Count my votes and installs": "मेरे वोट और इंस्टॉल गिनें",
   "Without your name, from a key kept on this computer": "आपके नाम के बिना, इस कंप्यूटर पर रखी कुंजी से",
   "Have it": "के पास है",
-  "%1 have it": "%1 के पास है"
+  "%1 have it": "%1 के पास है",
+  "React": "प्रतिक्रिया दें",
+  "Add a reaction": "प्रतिक्रिया जोड़ें",
+  "Search emoji": "इमोजी खोजें",
+  "No emoji called “%1”": "“%1” नाम का कोई इमोजी नहीं",
+  "What sits behind every widget.": "हर विजेट के पीछे क्या है।",
+  "One tap sets the whole look; Ctrl+Z takes it back. The tiles below fine-tune it.": "एक टैप पूरा रूप बदल देता है; Ctrl+Z उसे वापस लेता है। नीचे की टाइलें उसे बारीकी से सेट करती हैं।"
 }

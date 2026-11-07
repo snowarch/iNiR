@@ -3239,5 +3239,11 @@
   "Count my votes and installs": "Враховувати мої голоси й встановлення",
   "Without your name, from a key kept on this computer": "Без вашого імені, з ключем, що зберігається на цьому комп'ютері",
   "Have it": "Встановили",
-  "%1 have it": "Встановили: %1"
+  "%1 have it": "Встановили: %1",
+  "React": "Відреагувати",
+  "Add a reaction": "Додати реакцію",
+  "Search emoji": "Пошук емодзі",
+  "No emoji called “%1”": "Немає емодзі «%1»",
+  "What sits behind every widget.": "Те, що позаду кожного віджета.",
+  "One tap sets the whole look; Ctrl+Z takes it back. The tiles below fine-tune it.": "Один дотик задає весь вигляд; Ctrl+Z скасовує. Плитки нижче уточнюють його."
 }

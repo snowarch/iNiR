@@ -3239,5 +3239,11 @@
   "Count my votes and installs": "לספור את ההצבעות וההתקנות שלי",
   "Without your name, from a key kept on this computer": "בלי השם שלך, עם מפתח שנשמר במחשב הזה",
   "Have it": "מותקן אצל",
-  "%1 have it": "מותקן אצל %1"
+  "%1 have it": "מותקן אצל %1",
+  "React": "להגיב",
+  "Add a reaction": "הוספת תגובה",
+  "Search emoji": "חיפוש אמוג׳י",
+  "No emoji called “%1”": "אין אמוג׳י בשם “%1”",
+  "What sits behind every widget.": "מה שמאחורי כל וידג׳ט.",
+  "One tap sets the whole look; Ctrl+Z takes it back. The tiles below fine-tune it.": "נגיעה אחת קובעת את כל המראה; Ctrl+Z מבטל. האריחים למטה מכווננים אותו."
 }

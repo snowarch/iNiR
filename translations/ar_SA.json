@@ -3239,5 +3239,11 @@
   "Count my votes and installs": "احتساب تصويتاتي وتثبيتاتي",
   "Without your name, from a key kept on this computer": "دون اسمك، بمفتاح محفوظ على هذا الحاسوب",
   "Have it": "لديهم",
-  "%1 have it": "%1 لديهم"
+  "%1 have it": "%1 لديهم",
+  "React": "تفاعل",
+  "Add a reaction": "أضف تفاعلًا",
+  "Search emoji": "ابحث عن رمز تعبيري",
+  "No emoji called “%1”": "لا يوجد رمز تعبيري باسم “%1”",
+  "What sits behind every widget.": "ما يظهر خلف كل أداة.",
+  "One tap sets the whole look; Ctrl+Z takes it back. The tiles below fine-tune it.": "نقرة واحدة تضبط المظهر كله؛ و Ctrl+Z تتراجع عنها. المربعات أدناه تضبطه بدقة."
 }

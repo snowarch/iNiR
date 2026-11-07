@@ -3239,5 +3239,11 @@
   "Count my votes and installs": "Tính phiếu bầu và lượt cài đặt của tôi",
   "Without your name, from a key kept on this computer": "Không kèm tên bạn, bằng một khóa lưu trên máy này",
   "Have it": "Đang dùng",
-  "%1 have it": "%1 người đang dùng"
+  "%1 have it": "%1 người đang dùng",
+  "React": "Bày tỏ cảm xúc",
+  "Add a reaction": "Thêm cảm xúc",
+  "Search emoji": "Tìm biểu tượng cảm xúc",
+  "No emoji called “%1”": "Không có biểu tượng nào tên “%1”",
+  "What sits behind every widget.": "Thứ nằm phía sau mỗi tiện ích.",
+  "One tap sets the whole look; Ctrl+Z takes it back. The tiles below fine-tune it.": "Một chạm đặt toàn bộ giao diện; Ctrl+Z hoàn tác. Các ô bên dưới tinh chỉnh nó."
 }

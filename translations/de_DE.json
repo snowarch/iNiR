@@ -3239,5 +3239,11 @@
   "Count my votes and installs": "Meine Stimmen und Installationen zählen",
   "Without your name, from a key kept on this computer": "Ohne deinen Namen, mit einem Schlüssel auf diesem Computer",
   "Have it": "Haben es",
-  "%1 have it": "%1 haben es"
+  "%1 have it": "%1 haben es",
+  "React": "Reagieren",
+  "Add a reaction": "Reaktion hinzufügen",
+  "Search emoji": "Emoji suchen",
+  "No emoji called “%1”": "Kein Emoji namens „%1“",
+  "What sits behind every widget.": "Was hinter jedem Widget liegt.",
+  "One tap sets the whole look; Ctrl+Z takes it back. The tiles below fine-tune it.": "Ein Tippen setzt den ganzen Look; Strg+Z nimmt es zurück. Die Kacheln unten verfeinern ihn."
 }
