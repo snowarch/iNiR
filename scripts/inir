@@ -1651,10 +1651,10 @@ apply_shell_scale() {
 }
 
 wait_for_wayland_socket() {
-    # Niri is the authority for WAYLAND_DISPLAY.  Never guess another compositor
-    # socket from XDG_RUNTIME_DIR: nested compositors and gamescope can coexist.
+    # The compositor (Niri or Umbriel) is the authority for WAYLAND_DISPLAY.  Never
+    # guess another socket from XDG_RUNTIME_DIR: nested compositors and gamescope can coexist.
     if [[ -z "${WAYLAND_DISPLAY:-}" ]]; then
-        echo "Error: WAYLAND_DISPLAY is missing from the Niri session environment" >&2
+        echo "Error: WAYLAND_DISPLAY is missing from the compositor's session environment" >&2
         return 1
     fi
 
@@ -1672,7 +1672,7 @@ wait_for_wayland_socket() {
         (( i++ )) || true
     done
 
-    echo "Error: Niri WAYLAND_DISPLAY socket did not appear: $socket_path" >&2
+    echo "Error: the compositor's WAYLAND_DISPLAY socket did not appear: $socket_path" >&2
     return 1
 }
 
@@ -1745,6 +1745,9 @@ _niri_app_environment_value() {
 }
 
 apply_niri_app_environment() {
+    # Umbriel publishes its own [environment] to the user manager before inir.service starts; Niri's file is not
+    # this session's.
+    [[ -n "${UMBRIEL_SOCKET:-}" ]] && return 0
     local cfg
     cfg="$(_niri_app_environment_file)"
     [[ -n "$cfg" ]] || return 0
