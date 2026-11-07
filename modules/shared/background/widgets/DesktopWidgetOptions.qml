@@ -229,7 +229,7 @@ QtObject {
     }
     // A manifest's `when`: "face", "material", "plain", a name from its `conditions`, { key: value or values }, { key:
     // { above: n } }, { key: { is: value, otherwise: value while unset } }, a list (all of them), { any: [...] }, { not: ... },
-    // { wears: design or designs } (which of the family's face designs draws it).
+    // { wears: design or designs } (which of the family's face designs draws it), { widget: key or keys } (which widget).
     function holds(widget: string, when: var): bool {
         if (when === undefined)
             return true
@@ -247,6 +247,8 @@ QtObject {
             return !root.holds(widget, when.not)
         if (when.wears !== undefined)
             return root.face(widget) && [].concat(when.wears).includes(root.resolved(widget).wear)
+        if (when.widget !== undefined)
+            return [].concat(when.widget).includes(widget)
         return Object.keys(when).every(key => {
             const wanted = when[key]
             const seen = root.effective(widget, key, wanted?.otherwise !== undefined ? wanted.otherwise : root._default(widget, key))
