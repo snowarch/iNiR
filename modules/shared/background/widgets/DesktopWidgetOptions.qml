@@ -162,10 +162,12 @@ QtObject {
             && (shared || !root.resolved(spec.widget).face) && spec.showIf() && !root._bare(spec.widget, key))
     }
     // A widget drawn bare by default (the clock, the art) counts for its plate only while it shows one: showing every
-    // background put a card behind the mascot, and the factory desktop read as mixed.
+    // background put a card behind the mascot, and the factory desktop read as mixed. Drawn by the family's face it is a
+    // card like every other one (his 11-07: showing every background left the clock and the day bare under Prism).
     function _bare(widget: string, key: string): bool {
         const plate = key === "showBorder" ? "showBorder" : ["showBackground", "backgroundOpacity"].includes(key) ? "showBackground" : ""
-        return plate !== "" && Boolean(DesktopWidgetRegistry.byKey[widget]?.bare) && !Boolean(root.value(widget, plate, false))
+        return plate !== "" && Boolean(DesktopWidgetRegistry.byKey[widget]?.bare) && !root.face(widget)
+            && !Boolean(root.value(widget, plate, false))
     }
     function everyState(key: string): string {
         Config.revision
