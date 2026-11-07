@@ -1,8 +1,9 @@
 # 30 — Window rules
 
-# iNiR's settings window opens at two thirds of the screen.
+# iNiR's settings window opens at two thirds of the screen (the shell and Settings are app id "inir-settings";
+# org.quickshell is an older shell's).
 [[window_rule]]
-match.app_id = "^org\\.quickshell$"
+match.app_id = "^(inir|inir-settings|org\\.quickshell)$"
 match.title = ["^iNiR Settings$", "^Settings — iNiR$"]
 default_scrolling_extent = 0.66667
 

@@ -562,6 +562,19 @@ repair_v2_leftovers() {
     fi
   fi
 
+  # the shell and its Settings window carry app id "inir-settings" (the welcome "inir") since 2.34: the rule that
+  # opens Settings at two thirds matched only org.quickshell (Niri's KDL and Umbriel's TOML spell it differently)
+  local old_id new_id
+  for file in "$rules" "${XDG_CONFIG_HOME:-$HOME/.config}/umbriel/config.d/30-window-rules.toml"; do
+    case "$file" in
+      *.kdl) old_id='app-id=r#"^org\.quickshell$"# title="^' new_id='app-id=r#"^(inir|inir-settings|org\.quickshell)$"# title="^' ;;
+      *) old_id='match.app_id = "^org\\.quickshell$"' new_id='match.app_id = "^(inir|inir-settings|org\\.quickshell)$"' ;;
+    esac
+    [[ -f "$file" ]] && grep -qF "$old_id" "$file" || continue
+    OLD="$old_id" NEW="$new_id" perl -0pi -e 's/\Q$ENV{OLD}\E/$ENV{NEW}/g' "$file" || return 1
+    ((INIR_V2_LEFTOVERS_REPAIRED++)) || true
+  done
+
   # the opt-in Super-tap daemon ran a python file from ~/.local/bin; inir-accel runs it now
   # (until accel is in place the old python keeps working, and the next update gets here)
   accel="${XDG_DATA_HOME:-$HOME/.local/share}/inir/accel/current/inir-accel"
@@ -637,7 +650,7 @@ sync_user_desktop_integration_from_repo() {
   INIR_DESKTOP_INTEGRATION_CHANGED=0
 
   local launcher_target="${XDG_BIN_HOME}/inir"
-  local icon_source="${REPO_ROOT}/assets/icons/desktop-symbolic.svg"
+  local icon_source="${REPO_ROOT}/assets/icons/inir.svg"
   local icon_target="${XDG_DATA_HOME}/icons/hicolor/scalable/apps/inir.svg"
   local applications_dir="${XDG_DATA_HOME}/applications"
   local name source target tmp command

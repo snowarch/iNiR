@@ -1,5 +1,7 @@
 //@ pragma UseQApplication
 //@ pragma ShellId inir
+// The shell's own windows are its Settings (iRiS's window mode): they wear iNiR Settings' desktop entry and icon.
+//@ pragma AppId inir-settings
 //@ pragma Env QS_NO_RELOAD_POPUP=1
 //@ pragma DefaultEnv QT_LOGGING_RULES=quickshell.dbus.properties=false;quickshell.dbus.objectmanager.warning=false;qt.qpa.wayland.textinput.warning=false
 //@ pragma Env QT_QUICK_CONTROLS_STYLE=Basic

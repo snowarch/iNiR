@@ -6,3 +6,4 @@ Exec=inir settings
 Icon=inir
 Terminal=false
 Categories=Settings;
+StartupWMClass=inir-settings

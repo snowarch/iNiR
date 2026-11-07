@@ -20,10 +20,12 @@ window-rule {
 }
 
 // iNiR Settings as a window (iRiS "iNiR Settings", Material and Waffle "Settings — iNiR"): two thirds of the screen,
-// room for the sidebar beside a page that keeps its answers in a column, instead of half a column.
+// room for the sidebar beside a page that keeps its answers in a column, instead of half a column. The shell and the
+// Settings window carry app id "inir-settings" (its desktop entry and icon), the welcome "inir"; org.quickshell is what
+// a shell older than that carries.
 window-rule {
-    match app-id=r#"^org\.quickshell$"# title="^iNiR Settings$"
-    match app-id=r#"^org\.quickshell$"# title="^Settings — iNiR$"
+    match app-id=r#"^(inir|inir-settings|org\.quickshell)$"# title="^iNiR Settings$"
+    match app-id=r#"^(inir|inir-settings|org\.quickshell)$"# title="^Settings — iNiR$"
     default-column-width { proportion 0.66667; }
 }
 
