@@ -734,9 +734,11 @@ Singleton {
 
     // Resolves an icon name/path directly (for when you already have the icon from a DesktopEntry)
     // Now handles broken absolute paths from Electron apps
+    // A name the theme lacks goes the way of iconSource (the fallback, then the generic app icon, else ""): handed to
+    // Quickshell as name?fallback it logged "Could not load icon" on every draw (Unity Hub's editor entry, 11-07).
     function resolveIcon(iconNameOrPath, fallback): string {
-        fallback = fallback ?? "image-missing"
-        if (!iconNameOrPath) return Quickshell.iconPath(fallback, "");
+        fallback = fallback ?? "application-x-executable"
+        if (!iconNameOrPath) return root.iconSource([], fallback);
         
         // Preserve absolute icon paths; only repair the duplicated Electron
         // resources segment that some apps expose.
@@ -750,7 +752,6 @@ Singleton {
             return iconNameOrPath.startsWith("file://") ? iconNameOrPath : "file://" + path;
         }
         
-        // Icon name - resolve via theme
-        return Quickshell.iconPath(iconNameOrPath, fallback);
+        return root.iconExists(iconNameOrPath) ? Quickshell.iconPath(iconNameOrPath) : root.iconSource([], fallback);
     }
 }
