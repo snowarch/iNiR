@@ -2327,6 +2327,7 @@
             "opens": "card",
             "design": "glass",
             "snap": true,
+            "order": [],
             "cluster": true,
             "attach": true,
             "join": "notch",
