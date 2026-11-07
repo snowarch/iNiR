@@ -384,17 +384,21 @@ case "${SKIP_NIRI}" in
     ;;
 esac
 
-# Umbriel, when the person picked it (--compositor umbriel|both) or already runs iNiR's config there. The package
-# comes from the distribution or the AUR where iNiR knows how; its config keeps whatever the person changed.
-if [[ "${INSTALL_COMPOSITOR:-niri}" != niri ]] \
-    || grep -qs '^# iNiR — Umbriel configuration' "${XDG_CONFIG_HOME}/umbriel/config.toml"; then
-  source ./scripts/lib/compositor.sh
+# Umbriel, when the person picked it (--compositor umbriel|both), has it installed without a config of their own,
+# or already runs iNiR's config there. The package comes from the distribution or the AUR where iNiR knows how;
+# its config keeps whatever the person changed.
+source ./scripts/lib/compositor.sh
+local _umbriel_state
+_umbriel_state="$(compositor_umbriel_config_state "${XDG_CONFIG_HOME}/umbriel")"
+if [[ "${INSTALL_COMPOSITOR:-niri}" != niri || "$_umbriel_state" == inir || "$_umbriel_state" == old ]] \
+    || { [[ "$_umbriel_state" == none ]] && command -v umbriel >/dev/null 2>&1; }; then
   if [[ "${INSTALL_COMPOSITOR:-niri}" != niri ]] && ! compositor_install_umbriel_package; then
     log_warning "Umbriel is not installed; install it, then run: inir compositor add umbriel"
   fi
   if compositor_install_umbriel_config "defaults/umbriel" "${XDG_CONFIG_HOME}/umbriel"; then
     case "$COMPOSITOR_CONFIG_RESULT" in
       installed) log_success "Umbriel config installed (defaults)" ;;
+      replaced) log_success "Umbriel config replaced; the old one is in $COMPOSITOR_CONFIG_BACKUP" ;;
       updated) log_success "Umbriel config refreshed" ;;
       current) log_success "Umbriel config current" ;;
       foreign) log_warning "Your own ~/.config/umbriel is kept; iNiR's is in defaults/umbriel" ;;

@@ -37,15 +37,15 @@ doctor_detect_compositor_service() {
         return 1
     fi
 
-    # Every installed compositor iNiR runs on, one per line.
-    local unit found=1
+    # Both compositors iNiR runs on, one per line, as soon as either is installed
+    # (the one installed later starts the shell too).
+    local unit
     for unit in niri.service umbriel.service; do
-        if systemctl --user cat "$unit" &>/dev/null; then
-            printf '%s\n' "$unit"
-            found=0
-        fi
+        systemctl --user cat "$unit" &>/dev/null || continue
+        printf '%s\n' niri.service umbriel.service
+        return 0
     done
-    return "$found"
+    return 1
 }
 
 ###############################################################################

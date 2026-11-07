@@ -41,17 +41,32 @@ compositor_max_resolution() {
 # ── Umbriel's config ──────────────────────────────────────────────────────────────────────────────────────────────
 # Puts iNiR's Umbriel config (defaults/umbriel) in ~/.config/umbriel. A file of ours the person never changed is
 # refreshed; one they changed is kept (`.inir-sums` remembers what we wrote); config.d/90-user-extra.toml is theirs
-# and only created. A config.toml that is not iNiR's is their own setup: nothing is touched.
-# Sets COMPOSITOR_CONFIG_RESULT (installed | updated | current | foreign) and COMPOSITOR_CONFIG_KEPT (files kept).
+# and only created. A config.toml that is not iNiR's is their own setup: nothing is touched. The one the early
+# iNiR-Umbriel port wrote ("# iNiR defaults for Umbriel") no longer loads in today's Umbriel: it is moved aside
+# whole to umbriel.inir-old-<time> and replaced.
+# Sets COMPOSITOR_CONFIG_RESULT (installed | replaced | updated | current | foreign), COMPOSITOR_CONFIG_KEPT (files
+# kept) and COMPOSITOR_CONFIG_BACKUP (where a replaced config went).
+compositor_umbriel_config_state() {
+    local conf="${1:-${XDG_CONFIG_HOME:-$HOME/.config}/umbriel}/config.toml"
+    if [[ ! -f "$conf" ]]; then echo none
+    elif grep -q '^# iNiR — Umbriel configuration' "$conf"; then echo inir
+    elif grep -q '^# iNiR defaults for Umbriel' "$conf"; then echo old
+    else echo foreign
+    fi
+}
+
 compositor_install_umbriel_config() {
     local src="$1" dest="${2:-${XDG_CONFIG_HOME:-$HOME/.config}/umbriel}"
-    local sums="$dest/.inir-sums" rel want have recorded new_sums="" changed=false fresh=false
-    COMPOSITOR_CONFIG_RESULT="" COMPOSITOR_CONFIG_KEPT=""
+    local sums="$dest/.inir-sums" rel want have recorded new_sums="" changed=false fresh=false replaced=false
+    COMPOSITOR_CONFIG_RESULT="" COMPOSITOR_CONFIG_KEPT="" COMPOSITOR_CONFIG_BACKUP=""
     [[ -f "$src/config.toml" ]] || return 1
-    if [[ -f "$dest/config.toml" ]] && ! grep -q '^# iNiR — Umbriel configuration' "$dest/config.toml"; then
-        COMPOSITOR_CONFIG_RESULT=foreign
-        return 0
-    fi
+    case "$(compositor_umbriel_config_state "$dest")" in
+        foreign) COMPOSITOR_CONFIG_RESULT=foreign; return 0 ;;
+        old)
+            COMPOSITOR_CONFIG_BACKUP="$dest.inir-old-$(date +%Y%m%d-%H%M%S)"
+            mv "$dest" "$COMPOSITOR_CONFIG_BACKUP" || return 1
+            replaced=true ;;
+    esac
     [[ -f "$dest/config.toml" ]] || fresh=true
     mkdir -p "$dest/config.d" || return 1
     while IFS= read -r rel; do
@@ -77,7 +92,8 @@ compositor_install_umbriel_config() {
         cp "$src/config.d/90-user-extra.toml" "$dest/config.d/90-user-extra.toml" || return 1
     fi
     printf '%s' "$new_sums" > "$sums"
-    if $fresh; then COMPOSITOR_CONFIG_RESULT=installed
+    if $replaced; then COMPOSITOR_CONFIG_RESULT=replaced
+    elif $fresh; then COMPOSITOR_CONFIG_RESULT=installed
     elif $changed; then COMPOSITOR_CONFIG_RESULT=updated
     else COMPOSITOR_CONFIG_RESULT=current
     fi

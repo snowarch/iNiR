@@ -378,8 +378,8 @@ Singleton {
         {
             name: "System",
             children: [{ keybinds: [
-                { mods: ["Super"], key: "Tab", comment: "Niri Overview" },
-                { mods: ["Super", "Shift"], key: "E", comment: "Quit Niri" },
+                { mods: ["Super"], key: "Tab", comment: root.umbriel ? "Umbriel Overview" : "Niri Overview" },
+                { mods: ["Super", "Shift"], key: "E", comment: root.umbriel ? "Quit Umbriel" : "Quit Niri" },
                 { mods: ["Super"], key: "Escape", comment: "Toggle shortcuts inhibit" },
                 { mods: ["Super", "Shift"], key: "O", comment: "Power off monitors" }
             ]}]

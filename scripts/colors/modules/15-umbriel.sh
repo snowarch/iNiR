@@ -76,7 +76,18 @@ jq -r --arg glass "$glass" --arg family "$family" '
     "match.namespace = \"^quickshell\"",
     "blur = true",
     "blur_ignore_alpha = 0.02",
-    "blur_optimized = false"
+    "blur_optimized = false",
+    "",
+    "# The wallpaper and desktop layers have only the wallpaper behind them, which their own glass already draws.",
+    "[[layer_rule]]",
+    "match.namespace = \"^quickshell\"",
+    "match.layer = \"background\"",
+    "blur = false",
+    "",
+    "[[layer_rule]]",
+    "match.namespace = \"^quickshell\"",
+    "match.layer = \"bottom\"",
+    "blur = false"
   ] else [] end)
   | .[]' "$COLORS_FILE" > "$tmp"
 if cmp -s "$tmp" "$OUT"; then rm -f "$tmp"; else mv -f "$tmp" "$OUT"; fi

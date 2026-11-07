@@ -2216,17 +2216,17 @@ is_inir_service_enabled() {
 }
 
 detect_compositor_service() {
-    # Every installed compositor iNiR runs on, one unit per line: the shell is wired
-    # under each, so whichever the person picks at login starts it.  Never
-    # graphical-session.target or another desktop's unit.
-    local unit found=1
+    # Both compositors iNiR runs on, one unit per line, as soon as either is
+    # installed: the shell is wired under each, so the one picked at login starts
+    # it, even one installed after iNiR.  Never graphical-session.target or
+    # another desktop's unit.
+    local unit
     for unit in niri.service umbriel.service; do
-        if systemctl --user cat "$unit" &>/dev/null; then
-            printf '%s\n' "$unit"
-            found=0
-        fi
+        systemctl --user cat "$unit" &>/dev/null || continue
+        printf '%s\n' niri.service umbriel.service
+        return 0
     done
-    return "$found"
+    return 1
 }
 
 start_inir_service_if_enabled() {
@@ -3115,6 +3115,7 @@ run_compositor_command() {
 
     case "$action" in
         status|"")
+            resolve_config_dir
             local running unit name state wired
             running="$(compositor_name)"
             printf 'Running now: %s\n' "${running:-none iNiR drives (start Niri or Umbriel)}"
@@ -3131,6 +3132,12 @@ run_compositor_command() {
                 [[ -e "$systemd_user_dir/$unit.wants/inir.service" || -L "$systemd_user_dir/$unit.wants/inir.service" ]] && wired="yes"
                 printf '%-8s %s; starts iNiR: %s\n' "${name^}" "$state" "$wired"
             done
+            case "$(compositor_umbriel_config_state)" in
+                inir) echo "Umbriel config: iNiR's, in ~/.config/umbriel" ;;
+                old) echo "Umbriel config: the early iNiR-Umbriel port's, which today's Umbriel refuses: run 'inir compositor add umbriel'" ;;
+                foreign) echo "Umbriel config: your own (iNiR's is in $config_dir/defaults/umbriel)" ;;
+                none) command -v umbriel >/dev/null 2>&1 && echo "Umbriel config: none yet: run 'inir compositor add umbriel'" ;;
+            esac
             ;;
         add)
             local which="${1:-}"
@@ -3144,6 +3151,7 @@ run_compositor_command() {
                     fi
                     case "$COMPOSITOR_CONFIG_RESULT" in
                         installed) echo "Umbriel config installed in ~/.config/umbriel" ;;
+                        replaced) echo "Umbriel config replaced; the early port's one is in ${COMPOSITOR_CONFIG_BACKUP/#$HOME/\~}" ;;
                         updated) echo "Umbriel config refreshed in ~/.config/umbriel" ;;
                         current) echo "Umbriel config already current" ;;
                         foreign) echo "Your own ~/.config/umbriel/config.toml is kept: include iNiR's from $config_dir/defaults/umbriel to get its keys" ;;

@@ -291,10 +291,11 @@ ensure_user_inir_service_enabled() {
     fi
 
     [[ -f "$service_path" ]] || return 1
-    # Wired under every compositor iNiR runs on that is installed: the one picked at login starts it.
+    # Wired under both compositors iNiR runs on as soon as either is installed: the one picked at login starts it,
+    # even one installed after iNiR.
     local compositors=() unit
     for unit in niri.service umbriel.service; do
-        systemctl --user cat "$unit" &>/dev/null && compositors+=("$unit")
+        systemctl --user cat "$unit" &>/dev/null && { compositors=(niri.service umbriel.service); break; }
     done
     [[ ${#compositors[@]} -gt 0 ]] || return 1
 
@@ -2924,14 +2925,23 @@ run_update() {
         fi
     fi
 
-    # Umbriel: iNiR's config there is refreshed like any other default (files the person changed are kept).
-    if grep -qs '^# iNiR — Umbriel configuration' "${XDG_CONFIG_HOME}/umbriel/config.toml" \
-        && source "$REPO_ROOT/scripts/lib/compositor.sh" 2>/dev/null; then
-        if compositor_install_umbriel_config "$REPO_ROOT/defaults/umbriel" "${XDG_CONFIG_HOME}/umbriel"; then
-            [[ "$COMPOSITOR_CONFIG_RESULT" == updated ]] && tui_success "Umbriel config refreshed"
-            [[ -n "$COMPOSITOR_CONFIG_KEPT" ]] && tui_info "Umbriel files you changed were kept: $COMPOSITOR_CONFIG_KEPT"
-        else
-            tui_warn "Could not refresh ~/.config/umbriel"
+    # Umbriel: iNiR's config there is refreshed like any other default (files the person changed are kept); with
+    # Umbriel installed and no config yet, or the early port's one, iNiR's goes in so the session starts whole.
+    if source "$REPO_ROOT/scripts/lib/compositor.sh" 2>/dev/null; then
+        local _umbriel_state
+        _umbriel_state="$(compositor_umbriel_config_state "${XDG_CONFIG_HOME}/umbriel")"
+        if [[ "$_umbriel_state" == inir || "$_umbriel_state" == old ]] \
+            || { [[ "$_umbriel_state" == none ]] && command -v umbriel >/dev/null 2>&1; }; then
+            if compositor_install_umbriel_config "$REPO_ROOT/defaults/umbriel" "${XDG_CONFIG_HOME}/umbriel"; then
+                case "$COMPOSITOR_CONFIG_RESULT" in
+                    installed) tui_success "Umbriel config installed" ;;
+                    replaced) tui_success "Umbriel config replaced; the old one is in $COMPOSITOR_CONFIG_BACKUP" ;;
+                    updated) tui_success "Umbriel config refreshed" ;;
+                esac
+                [[ -n "$COMPOSITOR_CONFIG_KEPT" ]] && tui_info "Umbriel files you changed were kept: $COMPOSITOR_CONFIG_KEPT"
+            else
+                tui_warn "Could not refresh ~/.config/umbriel"
+            fi
         fi
     fi
 

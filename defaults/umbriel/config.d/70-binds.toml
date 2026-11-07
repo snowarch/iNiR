@@ -9,11 +9,13 @@
 
 [keybinds]
 
-# iNiR shell
+# System
 "Mod+Tab" = { action = "overview-toggle", repeat = false }
 "Mod+Shift+E" = "session-quit"
 "Mod+Escape" = { action = "shortcuts-inhibit-toggle", allow_when_inhibited = true, repeat = false }
 "Mod+Shift+O" = "dpms-off"
+
+# iNiR shell
 "Super+G" = "spawn inir overlay toggle"
 "Mod+Space" = { action = "spawn inir overview toggle", repeat = false }
 "Mod+V" = "spawn inir clipboard toggle"
