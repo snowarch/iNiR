@@ -1094,8 +1094,10 @@ ShellRoot {
     function cyclePanelFamily() {
         const currentFamily = Config.options?.panelFamily ?? "ii"
         const wanted = Array.from(Config.options?.familyCycle ?? families)
-        const order = wanted.filter((family, index) => families.includes(family) && wanted.indexOf(family) === index)
-        if (order.length === 0) return
+        const listed = wanted.filter((family, index) => families.includes(family) && wanted.indexOf(family) === index)
+        // A list of one family (or none) is no cycle: the key went there and then did nothing (11-07); go through all.
+        const order = listed.length >= 2 ? listed : families
+        if (order.length < 2) return
         const at = order.indexOf(currentFamily)
         const nextFamily = order[(at + 1) % order.length]
         if (nextFamily === currentFamily) return
