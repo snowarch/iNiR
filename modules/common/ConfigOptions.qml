@@ -351,6 +351,13 @@ JsonAdapter {
         // How every family's Hub page lists the catalogue: "list" rows or a "grid" of cards, in Hub.sorts order.
         property string view: "list"
         property string sort: "popular"
+        // What the person did in the Hub, theirs to keep: { id: { vote: "up"|"down", reactions: [emoji] } }.
+        // `inir hub social` publishes it with what they installed (signed by a key outside this file) so the hub
+        // can count; share off takes them out of every count.
+        property JsonObject social: JsonObject {
+            property bool share: true
+            property var items: ({})
+        }
     }
 
     property JsonObject idle: JsonObject {

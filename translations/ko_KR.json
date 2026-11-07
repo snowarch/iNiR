@@ -3233,5 +3233,11 @@
   "Your wallpaper": "내 배경화면",
   "Play some music": "음악을 재생해 보세요",
   "In the update": "이번 업데이트",
-  "What's new": "새로운 기능"
+  "What's new": "새로운 기능",
+  "I like it": "좋아요",
+  "Not for me": "나와 맞지 않아요",
+  "Count my votes and installs": "내 투표와 설치 집계하기",
+  "Without your name, from a key kept on this computer": "이름 없이, 이 컴퓨터에 보관된 키로",
+  "Have it": "사용 중",
+  "%1 have it": "%1명 사용 중"
 }

@@ -3233,5 +3233,11 @@
   "Your wallpaper": "Ваши обои",
   "Play some music": "Включите музыку",
   "In the update": "В обновлении",
-  "What's new": "Что нового"
+  "What's new": "Что нового",
+  "I like it": "Нравится",
+  "Not for me": "Не для меня",
+  "Count my votes and installs": "Учитывать мои голоса и установки",
+  "Without your name, from a key kept on this computer": "Без вашего имени, с ключом, хранящимся на этом компьютере",
+  "Have it": "Установили",
+  "%1 have it": "Установили: %1"
 }

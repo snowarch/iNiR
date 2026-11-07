@@ -21,14 +21,15 @@ The search bar looks through names, summaries, tags and authors. Beside it:
 - **The chips** under it narrow to one kind, to what you have installed, or to what has an update. Each says how many
   there are.
 
-Every row shows how many people liked the item, how many downloaded it, and when it last changed. Votes are the
-thumbs up and down on the item's discussion: **Reviews and votes** on its page takes you there, or from a terminal:
+Every row shows how many people liked the item, how many downloaded it, and when it last changed. On an item's
+page you say yours: 👍 or 👎, and any of ❤️ 🔥 ✨ 😂 🤯 👏; a second tap takes it back. Its page also says how many
+people have it and what changed in its last versions.
 
-```sh
-inir hub rate excalidraw up      # down, or clear to take your vote back
-```
-
-With `gh` logged in the vote goes straight in; without it, the discussion opens in your browser.
+Your votes and reactions live in your own `config.json` (`hub.social`), like the rest of your shell. iNiR publishes
+them, with the items you installed, to public Nostr relays, signed by a key made on this computer
+(`~/.local/state/inir/hub/key`, never in `config.json`): no name, no account, no server of ours. The hub counts the
+newest state of each key once a day. **Count my votes and installs** in the Hub's Sources turns it off and takes you
+out of every count; `inir hub social` publishes by hand.
 
 ## Install and remove
 

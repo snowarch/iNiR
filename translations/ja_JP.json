@@ -3233,5 +3233,11 @@
   "Your wallpaper": "あなたの壁紙",
   "Play some music": "音楽を再生しよう",
   "In the update": "このアップデート",
-  "What's new": "新機能"
+  "What's new": "新機能",
+  "I like it": "いいね",
+  "Not for me": "自分には合わない",
+  "Count my votes and installs": "投票とインストールを集計に含める",
+  "Without your name, from a key kept on this computer": "名前は使わず、このコンピューターに保存された鍵で",
+  "Have it": "利用中",
+  "%1 have it": "%1 人が利用中"
 }

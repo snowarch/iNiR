@@ -233,6 +233,65 @@ Singleton {
         return item?.update === true && (item?.news ?? []).length > 0
             ? Translation.tr("In the update") : Translation.tr("What's new")
     }
+    // What the person did with each item (hub.social in config.json) and what everyone did (the catalogue's counts,
+    // gathered daily). Their own act shows at once: a count never reads lower than their own vote or reaction.
+    readonly property var reactions: ["❤️", "🔥", "✨", "😂", "🤯", "👏"] // inir-cli hub.Reactions
+    readonly property bool sharing: Config.options?.hub?.social?.share ?? true
+    function mine(id: string): var {
+        void Config.revision
+        return Config.options?.hub?.social?.items?.[id] ?? ({})
+    }
+    function voteCount(item: var, vote: string): int {
+        const counted = Number((vote === "up" ? item?.votesUp : item?.votesDown) ?? 0)
+        return Math.max(counted, root.mine(item?.id).vote === vote ? 1 : 0)
+    }
+    function reactionCount(item: var, emoji: string): int {
+        const counted = Number(item?.reactions?.[emoji] ?? 0)
+        return Math.max(counted, Array.from(root.mine(item?.id).reactions ?? []).includes(emoji) ? 1 : 0)
+    }
+    function vote(id: string, vote: string): void {
+        const act = Object.assign({}, root.mine(id))
+        act.vote = act.vote === vote ? undefined : vote
+        root._setAct(id, act)
+    }
+    function react(id: string, emoji: string): void {
+        const act = Object.assign({}, root.mine(id))
+        const had = Array.from(act.reactions ?? [])
+        act.reactions = had.includes(emoji) ? had.filter(r => r !== emoji) : had.concat([emoji])
+        root._setAct(id, act)
+    }
+    function setSharing(on: bool): void {
+        Config.setNestedValue("hub.social.share", on)
+        root._publishSoon.restart()
+    }
+    function _setAct(id: string, act: var): void {
+        const items = Object.assign({}, Config.options?.hub?.social?.items ?? {})
+        if (!act.vote && (act.reactions ?? []).length === 0)
+            delete items[id]
+        else
+            items[id] = { vote: act.vote, reactions: act.reactions }
+        Config.setNestedValue("hub.social.items", items)
+        root._publishSoon.restart()
+    }
+    // Published a few seconds after the last change, after an install or removal, and once the catalogue is read;
+    // the command skips it when nothing changed in a week.
+    property Timer _publishSoon: Timer {
+        interval: 4000
+        onTriggered: {
+            if (!root.online || socialProcess.running)
+                return
+            socialProcess.running = true
+        }
+    }
+    Process {
+        id: socialProcess
+        command: [root.launcher, "hub", "social"]
+        onExited: code => {
+            if (code !== 0)
+                console.info("[Hub] votes not published yet, next time:", code)
+        }
+    }
+
     // 950, 1.2k, 18k, 2.4M
     function countText(n: real): string {
         n = Number(n ?? 0)
@@ -242,10 +301,6 @@ Singleton {
     // Where people talk about an item and where they report it: its hub repo on GitHub.
     function _repo(item: var): string {
         return String(item?.page ?? "").match(/^https:\/\/github\.com\/[^/]+\/[^/]+/)?.[0] ?? ""
-    }
-    function discussionUrl(item: var): string {
-        const repo = root._repo(item)
-        return String(item?.discussion ?? "") || (repo ? `${repo}/discussions?discussions_q=${encodeURIComponent(item.id)}` : "")
     }
     function reportUrl(item: var): string {
         const repo = root._repo(item)
@@ -462,6 +517,7 @@ Singleton {
                 root.checkedAt = Date.now()
                 root.loaded = true
                 root._forgetRemovedWidgets()
+                root._publishSoon.restart()
             }
         }
     }
