@@ -1,0 +1,44 @@
+# 30 — Window rules
+
+# iNiR's settings window opens at two thirds of the screen.
+[[window_rule]]
+match.app_id = "^org\\.quickshell$"
+match.title = ["^iNiR Settings$", "^Settings — iNiR$"]
+default_scrolling_extent = 0.66667
+
+# Games: square corners, no shadow, tearing allowed.
+[[window_rule]]
+match.app_id = "^(gamescope|steam_app_[0-9]+|dota2|lutris|net\\.lutris\\..*|heroic|com\\.heroicgameslauncher\\.hgl|org\\.prismlauncher\\.PrismLauncher|minecraft|wine|wine64)$"
+corner_radius = 0
+shadow = false
+
+[[window_rule]]
+match.content_type = "game"
+corner_radius = 0
+shadow = false
+
+# Windows out of focus are slightly see-through, as on Niri.
+[[window_rule]]
+match.is_focused = false
+opacity = 0.9
+
+[[window_rule]]
+match.title = "^[Pp]icture.[Ii]n.[Pp]icture$"
+default_floating = true
+default_pinned = true
+default_position = { x = 20, y = 20, anchor = "bottom_right" }
+
+[[window_rule]]
+match.app_id = "^steam$"
+match.title = "^notificationtoasts_\\d+_desktop$"
+default_floating = true
+default_focused = false
+default_position = { x = 10, y = 10, anchor = "bottom_right" }
+
+# The tray proxy for old XEmbed icons stays out of sight.
+[[window_rule]]
+match.app_id = "^xembedsniproxy$"
+default_floating = true
+default_focused = false
+opacity = 0.0
+shadow = false

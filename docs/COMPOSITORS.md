@@ -1,6 +1,6 @@
 # Compositors
 
-iNiR is built and tested for Niri. Hyprland code is still in the source from the project's early days, but it is not tested, and other compositors are not supported.
+iNiR runs on two compositors: **Niri** and **Umbriel**, the compositor from the Noctalia team. The shell finds out which one it runs under by itself; you pick at the login screen, and you can have both installed. Hyprland code is still in the source from the project's early days, but it is not tested, and other compositors are not supported.
 
 Compositor blur needs Niri 26.04 or newer. On older versions the **Allow compositor blur** switch is hidden.
 
@@ -35,3 +35,44 @@ iNiR keeps its Niri settings in `~/.config/niri/config.d/`:
 | `70-binds.kdl` | Keybinds |
 | `80-layer-rules.kdl` | Layer rules for the shell |
 | `90-user-extra.kdl` | Your own settings. Updates never touch it |
+
+## Umbriel
+
+[Umbriel](https://github.com/noctalia-dev/umbriel) scrolls columns like Niri, and also lays a workspace out as dwindle, master or stacking, tabs a column, pins windows and keeps a scratchpad. Every family works on it: the bar, the dock, Orbit, the overview, Alt+Tab, window previews, the cheatsheet, autostart, keyboard layouts and the lock screen.
+
+### Add it
+
+On a machine that already has iNiR:
+
+```
+inir compositor add umbriel
+```
+
+It installs Umbriel where iNiR knows how (CachyOS's repository, then the AUR on Arch; Terra on Fedora), puts iNiR's config in `~/.config/umbriel/` and starts the shell with Umbriel's session. Log out and pick **Umbriel** at the login screen. On other distributions, install Umbriel by [its guide](https://docs.noctalia.dev/umbriel/installation/) first and run the same command.
+
+A new install can ask for it from the start: `./setup install --compositor umbriel` (or `both`). `inir compositor` alone shows which compositors are installed and which start iNiR.
+
+### Where Umbriel settings live
+
+| File | Controls |
+|---|---|
+| `config.toml` | Loads the rest, in order |
+| `config.d/10-input.toml` | Keyboard, touchpad and cursor |
+| `config.d/20-layout.toml` | Layout, gaps, corners, shadows and the overview |
+| `config.d/30-window-rules.toml` | Window rules |
+| `config.d/40-environment.toml` | Environment variables for apps |
+| `config.d/50-startup.toml` | Processes started at login, including **Settings › Autostart** |
+| `config.d/70-binds.toml` | Keybinds |
+| `config.d/80-layer-rules.toml` | Layer rules for the shell |
+| `config.d/90-user-extra.toml` | Your own settings. Updates never touch it, and it loads last |
+
+`inir update` refreshes iNiR's files and keeps any file you changed. Colours for borders, the overview and tab bars follow your theme: iNiR writes them to `~/.local/state/quickshell/user/generated/umbriel-colors.toml`, which the config loads. Check a change with `umbriel config validate`.
+
+Keys Umbriel adds: **Mod+W** tabs a column, **Mod+P** pins a window, **Mod+Shift+Tab** cycles the workspace layout, **Mod+`** shows the scratchpad and **Mod+Shift+`** sends a window there.
+
+### What differs from Niri
+
+- **Settings › Compositor** (Material) and the window, keyboard and display rows of iRiS edit Niri's files, so they are hidden under Umbriel; its `config.d` files hold the same settings.
+- **Compositor blur**: iRiS's *Blur* glass asks Umbriel to blur behind the shell through a layer rule. Material and Waffle use their own glass.
+- Window previews are stills, refreshed when you open a surface that shows them; on Niri they can be live.
+- Alt+Tab is iNiR's switcher. Screenshots of a whole screen or a region use `inir region`, as on Niri.

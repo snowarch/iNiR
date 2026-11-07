@@ -11,12 +11,21 @@
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 launcher_path="$script_dir/inir"
 
+source "$script_dir/lib/compositor.sh"
+compositor=$(compositor_name)
+
 # Capture focused window JSON immediately — this is the window the user intended to close.
-focused_window_json=$(niri msg -j focused-window 2>/dev/null)
+# Under Umbriel the shell knows the focused window by its own number: it asks itself (closeConfirm trigger).
+focused_window_json=""
+[ "$compositor" = niri ] && focused_window_json=$(niri msg -j focused-window 2>/dev/null)
 focused_id=$(printf '%s' "$focused_window_json" | grep -o '"id":[0-9]*' | grep -o '[0-9]*')
 focused_app_id=$(printf '%s' "$focused_window_json" | grep -o '"app_id":"[^"]*"' | sed 's/"app_id":"\([^"]*\)"/\1/')
 
 close_focused() {
+    if [ "$compositor" = umbriel ]; then
+        umbriel msg window-close >/dev/null 2>&1
+        return 0
+    fi
     if [ "${focused_app_id,,}" = "spotify" ]; then
         # Keep Spotify running but hide its window from current workspace.
         if [ -n "$focused_id" ]; then

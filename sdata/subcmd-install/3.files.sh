@@ -244,9 +244,9 @@ case "${SKIP_QUICKSHELL}" in
 
     if $_use_systemd && [[ -f "$_service_target" ]]; then
       if ensure_user_inir_service_enabled; then
-        log_success "User inir.service enabled (wired to niri.service)"
+        log_success "User inir.service enabled (wired to your compositor: Niri, Umbriel or both)"
       else
-        log_warning "Could not wire inir.service to niri.service — run 'inir service enable'"
+        log_warning "Could not wire inir.service to niri.service or umbriel.service — run 'inir service enable'"
       fi
     fi
 
@@ -383,6 +383,27 @@ case "${SKIP_NIRI}" in
     fi
     ;;
 esac
+
+# Umbriel, when the person picked it (--compositor umbriel|both) or already runs iNiR's config there. The package
+# comes from the distribution or the AUR where iNiR knows how; its config keeps whatever the person changed.
+if [[ "${INSTALL_COMPOSITOR:-niri}" != niri ]] \
+    || grep -qs '^# iNiR — Umbriel configuration' "${XDG_CONFIG_HOME}/umbriel/config.toml"; then
+  source ./scripts/lib/compositor.sh
+  if [[ "${INSTALL_COMPOSITOR:-niri}" != niri ]] && ! compositor_install_umbriel_package; then
+    log_warning "Umbriel is not installed; install it, then run: inir compositor add umbriel"
+  fi
+  if compositor_install_umbriel_config "defaults/umbriel" "${XDG_CONFIG_HOME}/umbriel"; then
+    case "$COMPOSITOR_CONFIG_RESULT" in
+      installed) log_success "Umbriel config installed (defaults)" ;;
+      updated) log_success "Umbriel config refreshed" ;;
+      current) log_success "Umbriel config current" ;;
+      foreign) log_warning "Your own ~/.config/umbriel is kept; iNiR's is in defaults/umbriel" ;;
+    esac
+    [[ -n "$COMPOSITOR_CONFIG_KEPT" ]] && log_success "Kept your Umbriel edits: $COMPOSITOR_CONFIG_KEPT"
+  else
+    log_warning "Could not write ~/.config/umbriel"
+  fi
+fi
 
 # Render the startup supervisor and service after the Niri config has been installed.
 source "$REPO_ROOT/sdata/lib/functions.sh" 2>/dev/null || true

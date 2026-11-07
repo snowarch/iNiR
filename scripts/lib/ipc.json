@@ -70,7 +70,7 @@
      "args": [
       "which"
      ],
-     "description": "Which switcher Alt+Tab opens: `inir`, `niri` (Niri's own Recent Windows) or `status`",
+     "description": "Which switcher Alt+Tab opens: `inir`, `niri` (Niri's own Recent Windows) or `status`. Always `inir` on Umbriel, which has none of its own.",
      "values": [
       "inir",
       "niri",
@@ -200,7 +200,7 @@
     {
      "name": "status",
      "args": [],
-     "description": "Return `niri|<path>|<managedCount>|<externalCount>|<state>`",
+     "description": "Return `<compositor>|<path>|<managedCount>|<externalCount>|<state>` (compositor: niri, umbriel or other)",
      "values": []
     },
     {
@@ -2161,6 +2161,25 @@
      "values": [
       "app:"
      ]
+    },
+    {
+     "name": "dropSim",
+     "args": [
+      "count",
+      "keep"
+     ],
+     "description": "Hold files over the focused output's Island for 1.6 s (how many, default 3), then let go so the Shelf keeps nothing: `keep` shows the notice a real drop gives",
+     "values": [
+      "keep"
+     ]
+    },
+    {
+     "name": "notice",
+     "args": [
+      "kind"
+     ],
+     "description": "Show a sample Island notice of a kind (accessory, battery, charge, focus, silent, unlock, upcoming, rain, timers, recording, shelf, jobs), in the size and for the time Settings chose",
+     "values": []
     },
     {
      "name": "dockSlide",

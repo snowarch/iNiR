@@ -1,0 +1,159 @@
+# 70 — Key bindings
+#
+# The same keys as iNiR's Niri config, mapped to Umbriel's actions (`umbriel msg --help` lists them). Mod is Super
+# (Alt when Umbriel runs nested). iNiR's own actions go through `inir <target> <function>`; `inir --help` lists them.
+# Rebind or remove a key in config.d/90-user-extra.toml: a key set there replaces this one, `"Mod+X" = ""` unbinds it.
+#
+# Umbriel-only keys iNiR adds: Mod+W tabs a column, Mod+P pins a window, Mod+Shift+Tab cycles the workspace layout
+# (scrolling, dwindle, master, stacking), Mod+` shows the scratchpad and Mod+Shift+` sends a window there.
+
+[keybinds]
+
+# iNiR shell
+"Mod+Tab" = { action = "overview-toggle", repeat = false }
+"Mod+Shift+E" = "session-quit"
+"Mod+Escape" = { action = "shortcuts-inhibit-toggle", allow_when_inhibited = true, repeat = false }
+"Mod+Shift+O" = "dpms-off"
+"Super+G" = "spawn inir overlay toggle"
+"Mod+Space" = { action = "spawn inir overview toggle", repeat = false }
+"Mod+V" = "spawn inir clipboard toggle"
+"Mod+Alt+L" = { action = "spawn inir lock activate", allow_when_locked = true }
+"Mod+Ctrl+Shift+L" = { action = "spawn inir lock focus", allow_when_locked = true }
+"Mod+Shift+S" = "spawn inir region menu"
+"Ctrl+Shift+S" = "spawn inir region menu"
+"Mod+Shift+X" = "spawn inir region ocr"
+"Mod+Shift+A" = "spawn inir region search"
+"Mod+Shift+R" = "spawn inir region recordWithSound"
+"Ctrl+Alt+T" = "spawn inir wallpaperSelector toggle"
+"Mod+Comma" = "spawn inir settings"
+"Mod+Slash" = "spawn inir cheatsheet toggle"
+"Mod+Shift+W" = "spawn inir panelFamily cycle"
+"Mod+Shift+Q" = "spawn inir session toggle"
+"Ctrl+Alt+F" = "spawn inir equalizer toggle"
+"Alt+Tab" = "spawn inir altSwitcher next"
+"Alt+Shift+Tab" = "spawn inir altSwitcher previous"
+
+# Apps
+"Mod+T" = "spawn inir terminal"
+"Mod+Return" = "spawn inir terminal"
+"Super+E" = "spawn nautilus"
+"Super+W" = "spawn inir browser"
+
+# Windows
+"Mod+Q" = { action = "spawn inir close-window", repeat = false, allow_when_inhibited = false }
+"Mod+D" = "window-toggle-maximize"
+"Mod+F" = { action = "window-toggle-fullscreen", repeat = false }
+"Mod+A" = { action = "window-toggle-floating", repeat = false }
+"Mod+Shift+V" = { action = "window-focus-switch-floating", repeat = false }
+"Mod+R" = "window-cycle-primary-extent"
+"Mod+C" = "column-center"
+"Mod+Minus" = "window-modify-primary-extent -0.1"
+"Mod+Equal" = "window-modify-primary-extent +0.1"
+"Mod+Shift+Minus" = "window-modify-secondary-extent -0.1"
+"Mod+Shift+Equal" = "window-modify-secondary-extent +0.1"
+"Mod+BracketLeft" = "window-consume-or-expel-left"
+"Mod+BracketRight" = "window-consume-or-expel-right"
+"Mod+W" = { action = "column-toggle-tabbed", repeat = false }
+"Mod+P" = { action = "window-toggle-pinned", repeat = false }
+
+# Focus
+"Mod+Left" = "window-focus-left"
+"Mod+Right" = "window-focus-right"
+"Mod+H" = "window-focus-left"
+"Mod+L" = "window-focus-right"
+"Mod+Up" = "window-focus-up"
+"Mod+Down" = "window-focus-down"
+"Mod+K" = "window-focus-up"
+"Mod+J" = "window-focus-down"
+"Mod+Home" = "column-focus-first"
+"Mod+End" = "column-focus-last"
+
+# Move
+"Mod+Shift+Left" = "column-move-left"
+"Mod+Shift+Right" = "column-move-right"
+"Mod+Shift+H" = "column-move-left"
+"Mod+Shift+L" = "column-move-right"
+"Mod+Shift+Up" = "window-move-up"
+"Mod+Shift+Down" = "window-move-down"
+"Mod+Shift+K" = "window-move-up"
+"Mod+Shift+J" = "window-move-down"
+"Mod+Ctrl+Home" = "column-move-to-first"
+"Mod+Ctrl+End" = "column-move-to-last"
+
+# Monitors
+"Mod+Ctrl+Left" = "output-focus-left"
+"Mod+Ctrl+Right" = "output-focus-right"
+"Mod+Ctrl+Up" = "output-focus-up"
+"Mod+Ctrl+Down" = "output-focus-down"
+"Mod+Ctrl+Shift+Left" = "column-move-to-output-left"
+"Mod+Ctrl+Shift+Right" = "column-move-to-output-right"
+"Mod+Ctrl+Shift+Up" = "column-move-to-output-up"
+"Mod+Ctrl+Shift+Down" = "column-move-to-output-down"
+
+# Workspaces
+"Mod+1" = "workspace-switch 1"
+"Mod+2" = "workspace-switch 2"
+"Mod+3" = "workspace-switch 3"
+"Mod+4" = "workspace-switch 4"
+"Mod+5" = "workspace-switch 5"
+"Mod+6" = "workspace-switch 6"
+"Mod+7" = "workspace-switch 7"
+"Mod+8" = "workspace-switch 8"
+"Mod+9" = "workspace-switch 9"
+"Mod+Ctrl+1" = "column-move-to-workspace 1"
+"Mod+Ctrl+2" = "column-move-to-workspace 2"
+"Mod+Ctrl+3" = "column-move-to-workspace 3"
+"Mod+Ctrl+4" = "column-move-to-workspace 4"
+"Mod+Ctrl+5" = "column-move-to-workspace 5"
+"Mod+Ctrl+6" = "column-move-to-workspace 6"
+"Mod+Ctrl+7" = "column-move-to-workspace 7"
+"Mod+Ctrl+8" = "column-move-to-workspace 8"
+"Mod+Ctrl+9" = "column-move-to-workspace 9"
+"Mod+Shift+1" = "window-move-to-workspace 1"
+"Mod+Shift+2" = "window-move-to-workspace 2"
+"Mod+Shift+3" = "window-move-to-workspace 3"
+"Mod+Shift+4" = "window-move-to-workspace 4"
+"Mod+Shift+5" = "window-move-to-workspace 5"
+"Mod+Shift+6" = "window-move-to-workspace 6"
+"Mod+Shift+7" = "window-move-to-workspace 7"
+"Mod+Shift+8" = "window-move-to-workspace 8"
+"Mod+Shift+9" = "window-move-to-workspace 9"
+"Mod+Page_Down" = "workspace-next"
+"Mod+Page_Up" = "workspace-previous"
+"Mod+WheelDown" = { action = "workspace-next", cooldown_ms = 150 }
+"Mod+WheelUp" = { action = "workspace-previous", cooldown_ms = 150 }
+"Mod+Ctrl+Page_Down" = "column-move-to-workspace-next"
+"Mod+Ctrl+Page_Up" = "column-move-to-workspace-previous"
+"Mod+Ctrl+WheelDown" = { action = "column-move-to-workspace-next", cooldown_ms = 150 }
+"Mod+Ctrl+WheelUp" = { action = "column-move-to-workspace-previous", cooldown_ms = 150 }
+"Mod+WheelRight" = "window-focus-right"
+"Mod+WheelLeft" = "window-focus-left"
+"Mod+Shift+Tab" = { action = "workspace-set-layout toggle", repeat = false }
+
+# Scratchpad (Umbriel)
+"Mod+Grave" = { action = "scratchpad-toggle", repeat = false }
+"Mod+Shift+Grave" = { action = "window-toggle-scratchpad", repeat = false }
+
+# Screenshots
+"Print" = "spawn inir region screenshot"
+"Ctrl+Print" = "spawn inir screenshot"
+"Mod+Print" = "spawn inir screenshot"
+
+# Media and hardware keys (work on the lock screen)
+"XF86AudioRaiseVolume" = { action = "spawn inir audio volumeUp", allow_when_locked = true }
+"XF86AudioLowerVolume" = { action = "spawn inir audio volumeDown", allow_when_locked = true }
+"XF86AudioMute" = { action = "spawn inir audio mute", allow_when_locked = true }
+"XF86AudioMicMute" = { action = "spawn inir audio micMute", allow_when_locked = true }
+"XF86MonBrightnessUp" = { action = "spawn inir brightness increment", allow_when_locked = true }
+"XF86MonBrightnessDown" = { action = "spawn inir brightness decrement", allow_when_locked = true }
+"XF86AudioPlay" = "spawn inir mpris playPause"
+"XF86AudioPause" = "spawn inir mpris playPause"
+"XF86AudioNext" = "spawn inir mpris next"
+"XF86AudioPrev" = "spawn inir mpris previous"
+"Ctrl+Mod+Space" = "spawn inir mpris playPause"
+"Mod+Shift+P" = "spawn inir mpris playPause"
+"Mod+Alt+N" = "spawn inir mpris next"
+"Mod+Shift+N" = "spawn inir mpris next"
+"Mod+Alt+P" = "spawn inir mpris previous"
+"Mod+Shift+B" = "spawn inir mpris previous"
+"Mod+Shift+M" = "spawn inir audio mute"

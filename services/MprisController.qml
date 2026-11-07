@@ -830,14 +830,17 @@ Singleton {
 			window: restoreWindow && restoreWindow.id !== win.id ? restoreWindow.id : null,
 			workspace: NiriService.focusedWorkspaceId
 		};
+		// Niri focuses it in the same breath as the key; elsewhere the shell's own socket focuses it first.
+		const viaNiri = CompositorService.niriNative;
+		if (!viaNiri)
+			NiriService.focusWindow(win.id);
 		browserNavProcess.command = ["/usr/bin/bash", "-c", `
-			command -v niri >/dev/null 2>&1 || exit 0
 			command -v wtype >/dev/null 2>&1 || exit 0
-			niri msg action focus-window --id "$1" >/dev/null 2>&1 || exit 0
+			if [ "$3" = niri ]; then niri msg action focus-window --id "$1" >/dev/null 2>&1 || exit 0; fi
 			sleep 0.08
 			wtype -M shift -k "$2" >/dev/null 2>&1 || true
 			sleep 0.05
-		`, "_", String(win.id), direction === "previous" ? "p" : "n"];
+		`, "_", String(win.id), direction === "previous" ? "p" : "n", viaNiri ? "niri" : "socket"];
 		browserNavProcess.running = true;
 	}
 

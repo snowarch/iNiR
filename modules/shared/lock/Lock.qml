@@ -15,7 +15,8 @@ Scope {
     id: root
 
     readonly property bool _lockActivating: lockActivateDelay.running
-    readonly property string _niriSocket: Quickshell.env("NIRI_SOCKET")
+    // The compositor session the lock belongs to: a lock survives a shell restart only inside the same one.
+    readonly property string _sessionSocket: CompositorService.niriNative ? Quickshell.env("NIRI_SOCKET") : CompositorService.umbrielSocket
     readonly property string _lockRecoveryPath: {
         const runtimeDir = Quickshell.env("XDG_RUNTIME_DIR")
         return runtimeDir.length > 0 ? runtimeDir + "/inir-session-lock.state" : ""
@@ -23,9 +24,9 @@ Scope {
     property bool _recoveryStateLoaded: false
 
     function writeRecoveryState(locked: bool): void {
-        if (_niriSocket.length === 0 || !_recoveryStateLoaded || _lockRecoveryPath.length === 0)
+        if (_sessionSocket.length === 0 || !_recoveryStateLoaded || _lockRecoveryPath.length === 0)
             return
-        lockRecoveryFile.setText((locked ? "locked" : "unlocked") + "\n" + _niriSocket + "\n")
+        lockRecoveryFile.setText((locked ? "locked" : "unlocked") + "\n" + _sessionSocket + "\n")
     }
 
     function loadRecoveryState(): void {
@@ -37,11 +38,11 @@ Scope {
         const previousSocket = lines[1] ?? ""
         _recoveryStateLoaded = true
 
-        if (_niriSocket.length === 0)
+        if (_sessionSocket.length === 0)
             return
 
-        if (wasLocked && previousSocket === _niriSocket) {
-            console.warn("[Lock] Recovering interrupted Niri session lock")
+        if (wasLocked && previousSocket === _sessionSocket) {
+            console.warn("[Lock] Recovering interrupted compositor session lock")
             GlobalStates.screenLocked = true
             return
         }

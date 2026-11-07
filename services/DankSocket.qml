@@ -7,6 +7,8 @@ Item {
     property alias path: socket.path
     property alias parser: socket.parser
     property bool connected: false
+    // Whether the socket is open now (`connected` is only what was asked for).
+    property bool socketConnected: false
 
     property int reconnectBaseMs: 400
     property int reconnectMaxMs: 15000
@@ -23,6 +25,8 @@ Item {
         id: socket
 
         onConnectionStateChanged: {
+            // Set before the signal: a handler reading it sees the state that fired it.
+            root.socketConnected = connected
             root.connectionStateChanged()
             if (connected) {
                 root._reconnectAttempt = 0

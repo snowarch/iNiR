@@ -105,7 +105,7 @@ Singleton {
 
     Process {
         id: nativeBlurVersionProbe
-        running: CompositorService?.isNiri ?? false
+        running: CompositorService?.niriNative ?? false
         command: ["niri", "--version"]
         stdout: StdioCollector {
             onStreamFinished: {

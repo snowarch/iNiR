@@ -36,7 +36,7 @@ Singleton {
     signal applied(string id)
 
     function ensure(): void {
-        if (!CompositorService.isNiri) return
+        if (!CompositorService.niriNative) return
         wanted = true
         refresh()
     }
@@ -48,7 +48,7 @@ Singleton {
     }
 
     function apply(id: string): bool {
-        if (!CompositorService.isNiri || applying) return false
+        if (!CompositorService.niriNative || applying) return false
         if (loaded && !presets.some(p => p.id === id)) return false
         wanted = true
         error = ""

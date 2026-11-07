@@ -173,8 +173,12 @@ Scope {
     IpcHandler {
         target: "altSwitcher"
 
-        /// Which switcher Alt+Tab opens: `inir`, `niri` (Niri's own Recent Windows) or `status`
+        /// Which switcher Alt+Tab opens: `inir`, `niri` (Niri's own Recent Windows) or `status`. Always `inir` on
+        /// Umbriel, which has none of its own.
         function opens(which: string): string {
+            // Only Niri has a switcher of its own.
+            if (!CompositorService.niriNative)
+                return "inir"
             if (which === "inir" || which === "niri") {
                 NiriKeybinds.setAltTabSource(which)
                 return which

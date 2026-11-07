@@ -81,6 +81,22 @@ source_niri_session_env_helper() {
 
 source_niri_session_env_helper
 
+source_compositor_helper() {
+    local helper_path
+    for helper_path in \
+        "$script_dir/lib/compositor.sh" \
+        "$launcher_root/share/quickshell/inir/scripts/lib/compositor.sh" \
+        "$user_config_dir/scripts/lib/compositor.sh" \
+        "$system_config_dir/scripts/lib/compositor.sh" \
+        "$fallback_system_config_dir/scripts/lib/compositor.sh"; do
+        if [[ -f "$helper_path" ]]; then
+            source "$helper_path"
+            return 0
+        fi
+    done
+    return 1
+}
+
 _ipc_registry_loaded=false
 
 source_ipc_registry() {
@@ -159,6 +175,7 @@ Other:
   completions <bash|zsh|fish|install>
   bind [--add|--remove|--list|--examples] <keys> <call…>   Niri keybinds for any inir call
   service <install|uninstall|enable|disable|start|stop|restart|status|logs>
+  compositor [status|add <niri|umbriel>]   Which compositors iNiR runs on here; add Umbriel next to Niri
   repair, path, settings-window
 EOF
 }
@@ -1916,14 +1933,15 @@ apply_qt_runtime_env() {
         true
     fi
 
-    # Import missing session values from the user manager.  Niri is the sole
-    # authority for compositor-owned variables; this only copies published state
-    # into manual/recovery invocations and never probes sockets to manufacture it.
+    # Import missing session values from the user manager.  The compositor (Niri
+    # or Umbriel) is the sole authority for compositor-owned variables; this only
+    # copies published state into manual/recovery invocations and never probes
+    # sockets to manufacture it.
     local _qs_sys_env
     _qs_sys_env="$(_get_systemd_user_env)"
     if [[ -n "$_qs_sys_env" ]]; then
         local _qs_var _qs_val
-        for _qs_var in WAYLAND_DISPLAY NIRI_SOCKET DISPLAY \
+        for _qs_var in WAYLAND_DISPLAY NIRI_SOCKET UMBRIEL_SOCKET DISPLAY \
                        XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP DESKTOP_SESSION \
                        XCURSOR_THEME XCURSOR_SIZE \
                        LANG LC_ALL XDG_MENU_PREFIX \
@@ -2182,7 +2200,7 @@ is_inir_service_enabled() {
     fi
 
     # The unit has no [Install] section — enablement is managed by a wants link
-    # under the compositor service (e.g. niri.service.wants/inir.service).
+    # under each compositor service (niri.service.wants/, umbriel.service.wants/).
     # Only count links under compositor-specific dirs, not graphical-session.target
     # (which fires under any DE including KDE/GNOME).
     local wants_dir
@@ -2198,13 +2216,17 @@ is_inir_service_enabled() {
 }
 
 detect_compositor_service() {
-    # iNiR is a Niri shell.  niri.service is the only valid lifecycle owner;
-    # never fall back to graphical-session.target or another compositor unit.
-    if systemctl --user cat niri.service &>/dev/null; then
-        printf 'niri.service\n'
-        return 0
-    fi
-    return 1
+    # Every installed compositor iNiR runs on, one unit per line: the shell is wired
+    # under each, so whichever the person picks at login starts it.  Never
+    # graphical-session.target or another desktop's unit.
+    local unit found=1
+    for unit in niri.service umbriel.service; do
+        if systemctl --user cat "$unit" &>/dev/null; then
+            printf '%s\n' "$unit"
+            found=0
+        fi
+    done
+    return "$found"
 }
 
 start_inir_service_if_enabled() {
@@ -3081,24 +3103,94 @@ EOF
     printf '%s\n' "$systemd_user_dir/inir.service"
 }
 
+# `inir compositor`: which compositors iNiR runs on here, and adding one. Niri and Umbriel are both first class: the
+# shell finds which one it runs under by itself, inir.service is wired under each, the login screen picks.
+run_compositor_command() {
+    local action="${1:-status}"
+    shift || true
+    if ! source_compositor_helper; then
+        echo "ERROR: scripts/lib/compositor.sh is missing; run 'inir update'." >&2
+        return 1
+    fi
+
+    case "$action" in
+        status|"")
+            local running unit name state wired
+            running="$(compositor_name)"
+            printf 'Running now: %s\n' "${running:-none iNiR drives (start Niri or Umbriel)}"
+            for name in niri umbriel; do
+                unit="$name.service"
+                if ! command -v "$name" >/dev/null 2>&1; then
+                    state="not installed"
+                elif ! "$name" --version >/dev/null 2>&1; then
+                    state="installed but broken (reinstall the package)"
+                else
+                    state="installed, $("$name" --version 2>/dev/null | head -1)"
+                fi
+                wired="no"
+                [[ -e "$systemd_user_dir/$unit.wants/inir.service" || -L "$systemd_user_dir/$unit.wants/inir.service" ]] && wired="yes"
+                printf '%-8s %s; starts iNiR: %s\n' "${name^}" "$state" "$wired"
+            done
+            ;;
+        add)
+            local which="${1:-}"
+            case "$which" in
+                umbriel)
+                    compositor_install_umbriel_package || return 1
+                    resolve_config_dir
+                    if ! compositor_install_umbriel_config "$config_dir/defaults/umbriel"; then
+                        echo "ERROR: could not write ~/.config/umbriel" >&2
+                        return 1
+                    fi
+                    case "$COMPOSITOR_CONFIG_RESULT" in
+                        installed) echo "Umbriel config installed in ~/.config/umbriel" ;;
+                        updated) echo "Umbriel config refreshed in ~/.config/umbriel" ;;
+                        current) echo "Umbriel config already current" ;;
+                        foreign) echo "Your own ~/.config/umbriel/config.toml is kept: include iNiR's from $config_dir/defaults/umbriel to get its keys" ;;
+                    esac
+                    [[ -n "$COMPOSITOR_CONFIG_KEPT" ]] && echo "Kept your changes in: $COMPOSITOR_CONFIG_KEPT"
+                    ;;
+                niri)
+                    if ! command -v niri >/dev/null 2>&1; then
+                        echo "Niri is not installed: './setup install' installs it with iNiR." >&2
+                        return 1
+                    fi
+                    ;;
+                *)
+                    echo "Usage: inir compositor add <niri|umbriel>" >&2
+                    return 2
+                    ;;
+            esac
+            if command -v systemctl >/dev/null 2>&1 && ! is_using_runit_supervisor; then
+                enable_inir_service || return 1
+            fi
+            echo "Log out and pick ${which^} at the login screen."
+            ;;
+        -h|--help|help)
+            echo "Usage: inir compositor [status|add <niri|umbriel>]"
+            ;;
+        *)
+            echo "Usage: inir compositor [status|add <niri|umbriel>]" >&2
+            return 2
+            ;;
+    esac
+}
+
 cleanup_stale_wants_links() {
     # Remove inir.service wants links from targets it should NOT be wired to.
     # Previous versions used WantedBy=graphical-session.target which caused
     # inir to start under any DE.  Remove that, and only keep the link if it
     # lives under the detected compositor service.
-    local correct_target
-    correct_target="$(detect_compositor_service 2>/dev/null)" || correct_target=""
-    local correct_wants_dir=""
-    [[ -n "$correct_target" ]] && correct_wants_dir="$systemd_user_dir/${correct_target}.wants"
+    local correct_targets
+    correct_targets="$(detect_compositor_service 2>/dev/null)" || correct_targets=""
 
     local wants_dir
     for wants_dir in "$systemd_user_dir"/*.wants; do
         [[ -d "$wants_dir" ]] || continue
         local link="$wants_dir/inir.service"
         [[ -e "$link" || -L "$link" ]] || continue
-        # Keep the link if it's under the correct compositor
-        if [[ -n "$correct_wants_dir" ]] && \
-           [[ "$(realpath "$wants_dir" 2>/dev/null)" == "$(realpath "$correct_wants_dir" 2>/dev/null)" ]]; then
+        # Keep the link if it's under a compositor iNiR runs on
+        if grep -qxF "$(basename "$wants_dir" .wants)" <<< "$correct_targets"; then
             continue
         fi
         rm -f "$link"
@@ -3111,25 +3203,28 @@ enable_inir_service() {
     require_command systemctl
     ensure_service_unit_available
 
-    local target
-    target="$(detect_compositor_service 2>/dev/null)" || true
+    local targets
+    targets="$(detect_compositor_service 2>/dev/null)" || true
 
-    if [[ -z "$target" ]]; then
-        echo "ERROR: niri.service is not available." >&2
-        echo "       Start Niri as a managed session, then re-run 'inir service enable'." >&2
+    if [[ -z "$targets" ]]; then
+        echo "ERROR: neither niri.service nor umbriel.service is available." >&2
+        echo "       Install Niri or Umbriel as a managed session, then re-run 'inir service enable'." >&2
         return 1
     fi
 
-    local wants_dir="$systemd_user_dir/${target}.wants"
     local service_path
     service_path="$(systemctl --user show -p FragmentPath --value inir.service 2>/dev/null || true)"
     [[ -f "$service_path" ]] || service_path="$systemd_user_dir/inir.service"
 
-    mkdir -p "$wants_dir"
-    ln -sf "$service_path" "$wants_dir/inir.service"
+    local target
+    while read -r target; do
+        [[ -n "$target" ]] || continue
+        mkdir -p "$systemd_user_dir/${target}.wants"
+        ln -sf "$service_path" "$systemd_user_dir/${target}.wants/inir.service"
+    done <<< "$targets"
     systemctl --user daemon-reload
 
-    printf 'Enabled inir.service (wired to %s)\n' "$target"
+    printf 'Enabled inir.service (wired to %s)\n' "$(paste -sd, <<< "$targets" | sed 's/,/, /g')"
 }
 
 disable_inir_service() {
@@ -4749,6 +4844,9 @@ case "$command_name" in
         ;;
     service)
         run_service_command "$@"
+        ;;
+    compositor)
+        run_compositor_command "$@"
         ;;
     cleanup-orphans)
         cleanup_orphans

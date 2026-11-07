@@ -9,11 +9,32 @@ import Quickshell.Hyprland
 Singleton {
     id: root
 
+    // Which compositor the session runs: "niri", "umbriel", "hyprland" or "" (none iNiR drives).
+    property string compositor: ""
     property bool isHyprland: false
+    // The window, workspace and output model every surface reads (NiriService) is live: Niri itself, or Umbriel,
+    // whose IPC NiriService speaks too (services/UmbrielModel.js turns its snapshots into Niri's shapes).
     property bool isNiri: false
+    property bool isUmbriel: false
+    // Niri itself runs: its binary, `niri msg` and its KDL config are there. Gate those on this, never on isNiri.
+    readonly property bool niriNative: compositor === "niri"
+    // ext-background-effect-v1 blur regions: Niri 26.04 takes them; Umbriel blurs by its layer rules instead (iNiR
+    // writes the one compositor glass asks for), so a surface leaves its region unset there.
+    readonly property bool blurRegions: niriNative
 
     readonly property string hyprlandSignature: Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE")
     readonly property string niriSocket: Quickshell.env("NIRI_SOCKET")
+    // Umbriel exports it to everything it starts; its documented fallback covers a shell started some other way.
+    readonly property string umbrielSocket: {
+        const set = Quickshell.env("UMBRIEL_SOCKET")
+        if (set && set.length > 0) return set
+        const runtime = Quickshell.env("XDG_RUNTIME_DIR"), display = Quickshell.env("WAYLAND_DISPLAY")
+        return root._desktopIs("umbriel") && runtime && display ? `${runtime}/umbriel-${display}.sock` : ""
+    }
+
+    function _desktopIs(name: string): bool {
+        return String(Quickshell.env("XDG_CURRENT_DESKTOP") ?? "").toLowerCase().split(":").includes(name)
+    }
 
     property var sortedToplevels: []
 
@@ -392,7 +413,20 @@ Singleton {
     }
 
     function detectCompositor() {
+        // A compositor started inside another inherits the outer one's socket too: the desktop it names wins.
+        const umbriel = root.umbrielSocket.length > 0
+        const niri = !!niriSocket && niriSocket.length > 0
+        if (umbriel && (!niri || !root._desktopIs("niri"))) {
+            compositor = "umbriel"
+            isUmbriel = true
+            isNiri = true
+            isHyprland = false
+            console.info("CompositorService: Detected Umbriel with socket:", root.umbrielSocket)
+            return
+        }
+
         if (hyprlandSignature && hyprlandSignature.length > 0) {
+            compositor = "hyprland"
             isHyprland = true
             isNiri = false
             console.info("CompositorService: Detected Hyprland")
@@ -402,13 +436,15 @@ Singleton {
             return
         }
 
-        if (niriSocket && niriSocket.length > 0) {
+        if (niri) {
+            compositor = "niri"
             isNiri = true
             isHyprland = false
             console.info("CompositorService: Detected Niri with socket:", niriSocket)
             return
         }
 
+        compositor = ""
         isHyprland = false
         isNiri = false
     }

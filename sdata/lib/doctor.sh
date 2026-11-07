@@ -37,11 +37,15 @@ doctor_detect_compositor_service() {
         return 1
     fi
 
-    if systemctl --user cat niri.service &>/dev/null; then
-        printf 'niri.service'
-        return 0
-    fi
-    return 1
+    # Every installed compositor iNiR runs on, one per line.
+    local unit found=1
+    for unit in niri.service umbriel.service; do
+        if systemctl --user cat "$unit" &>/dev/null; then
+            printf '%s\n' "$unit"
+            found=0
+        fi
+    done
+    return "$found"
 }
 
 ###############################################################################
@@ -944,6 +948,14 @@ _try_install_font_package() {
 check_niri_running() {
     local current_socket="${NIRI_SOCKET:-}"
 
+    # Umbriel is the other compositor iNiR runs on.
+    if [[ -n "${UMBRIEL_SOCKET:-}" && -S "${UMBRIEL_SOCKET}" ]] \
+            || { declare -F has_usable_systemd_user_manager >/dev/null 2>&1 && has_usable_systemd_user_manager \
+                && systemctl --user is-active --quiet umbriel.service >/dev/null 2>&1; }; then
+        doctor_pass "Umbriel compositor running"
+        return 0
+    fi
+
     if declare -F has_usable_systemd_user_manager >/dev/null 2>&1 \
             && has_usable_systemd_user_manager \
             && systemctl --user is-active --quiet niri.service >/dev/null 2>&1 \
@@ -980,7 +992,7 @@ check_niri_running() {
     if [[ -n "$current_socket" && -S "$current_socket" ]]; then
         doctor_pass "Niri compositor running"
     else
-        doctor_fail "Niri not detected (run inside Niri session)"
+        doctor_fail "Neither Niri nor Umbriel detected (run inside a Niri or Umbriel session)"
     fi
 }
 
@@ -1178,26 +1190,26 @@ check_service_unit_health() {
         tui_warn "systemd is loading inir.service from ${fragment_path}"
     fi
 
-    local has_expected_link=false
+    local missing_links=()
     local stale_links=()
-    local wants_dir
+    local wants_dir target_name
     for wants_dir in "${XDG_CONFIG_HOME}/systemd/user"/*.wants; do
         [[ -d "$wants_dir" ]] || continue
         [[ -e "$wants_dir/inir.service" || -L "$wants_dir/inir.service" ]] || continue
-        local target_name
         target_name="$(basename "${wants_dir%.wants}")"
-        if [[ -n "$expected_target" && "$target_name" == "$expected_target" ]]; then
-            has_expected_link=true
-        else
-            stale_links+=("$target_name")
-        fi
+        grep -qxF "$target_name" <<< "$expected_target" || stale_links+=("$target_name")
     done
+    while read -r target_name; do
+        [[ -n "$target_name" ]] || continue
+        local link="${XDG_CONFIG_HOME}/systemd/user/${target_name}.wants/inir.service"
+        [[ -e "$link" || -L "$link" ]] || missing_links+=("$target_name")
+    done <<< "$expected_target"
 
-    if [[ -n "$expected_target" && "$has_expected_link" == false ]]; then
+    if [[ ${#missing_links[@]} -gt 0 ]]; then
         if declare -F ensure_user_inir_service_enabled >/dev/null 2>&1 && ensure_user_inir_service_enabled >/dev/null 2>&1; then
-            doctor_fix "Enabled inir.service for ${expected_target}"
+            doctor_fix "Enabled inir.service for ${missing_links[*]}"
         else
-            doctor_fail "inir.service not wired to ${expected_target}"
+            doctor_fail "inir.service not wired to ${missing_links[*]}"
             echo -e "    ${STY_FAINT}Run: inir service enable${STY_RST}"
         fi
     fi
@@ -1942,7 +1954,7 @@ run_doctor_with_fixes() {
     _doctor_run_step 9  $total_steps "Checking version tracking"     check_version_tracking
     _doctor_run_step 10 $total_steps "Checking file manifest"        check_manifest
     _doctor_run_step 11 $total_steps "Checking user service"         check_service_unit_health
-    _doctor_run_step 12 $total_steps "Checking Niri compositor"      check_niri_running
+    _doctor_run_step 12 $total_steps "Checking the compositor"       check_niri_running
     _doctor_run_step 13 $total_steps "Checking helpers"              check_helpers
     _doctor_run_step 14 $total_steps "Checking stale local quickshell" check_stale_local_quickshell
 

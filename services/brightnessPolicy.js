@@ -102,37 +102,38 @@ function pinnedForSleep(existingPinned, connectedNames, alreadyAsleep) {
     return outputsToPinOff(connectedNames)
 }
 
-function sleepCommandQueue(connectedNames) {
+function sleepCommandQueue(connectedNames, umbriel) {
     const pin = outputsToPinOff(connectedNames)
     const cmds = []
     for (let i = 0; i < pin.length; ++i)
-        cmds.push(niriOutputOffArgs(pin[i]))
-    cmds.push(niriPowerOffMonitorsArgs())
+        cmds.push(niriOutputOffArgs(pin[i], umbriel))
+    cmds.push(niriPowerOffMonitorsArgs(umbriel))
     return cmds
 }
 
-function wakeCommandQueue(pinnedNames) {
-    const cmds = [niriPowerOnMonitorsArgs()]
+function wakeCommandQueue(pinnedNames, umbriel) {
+    const cmds = [niriPowerOnMonitorsArgs(umbriel)]
     const pin = pinnedNames || []
     for (let i = 0; i < pin.length; ++i)
-        cmds.push(niriOutputOnArgs(pin[i]))
+        cmds.push(niriOutputOnArgs(pin[i], umbriel))
     return cmds
 }
 
-function niriPowerOffMonitorsArgs() {
-    return ["niri", "msg", "action", "power-off-monitors"]
+// The same four acts on Umbriel (`umbriel msg`), when `umbriel` is true.
+function niriPowerOffMonitorsArgs(umbriel) {
+    return umbriel ? ["umbriel", "msg", "dpms-off"] : ["niri", "msg", "action", "power-off-monitors"]
 }
 
-function niriPowerOnMonitorsArgs() {
-    return ["niri", "msg", "action", "power-on-monitors"]
+function niriPowerOnMonitorsArgs(umbriel) {
+    return umbriel ? ["umbriel", "msg", "dpms-on"] : ["niri", "msg", "action", "power-on-monitors"]
 }
 
-function niriOutputOffArgs(name) {
-    return ["niri", "msg", "output", String(name), "off"]
+function niriOutputOffArgs(name, umbriel) {
+    return umbriel ? ["umbriel", "msg", "output-disable", String(name)] : ["niri", "msg", "output", String(name), "off"]
 }
 
-function niriOutputOnArgs(name) {
-    return ["niri", "msg", "output", String(name), "on"]
+function niriOutputOnArgs(name, umbriel) {
+    return umbriel ? ["umbriel", "msg", "output-enable", String(name)] : ["niri", "msg", "output", String(name), "on"]
 }
 
 function wakeOutputRetryLimit() {

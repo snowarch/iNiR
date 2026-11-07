@@ -144,10 +144,10 @@ Singleton {
                 export PATH="$_merged_path"
             fi
 
-            # Niri owns the compositor environment. Prefer the values it
+            # The compositor (Niri or Umbriel) owns this environment. Prefer the values it
             # published to the user manager, but preserve an inherited value
             # for manual invocations where the manager has no session snapshot.
-            for _var in DISPLAY WAYLAND_DISPLAY NIRI_SOCKET; do
+            for _var in DISPLAY WAYLAND_DISPLAY NIRI_SOCKET UMBRIEL_SOCKET; do
                 _value="$(manager_value "$_var")"
                 [ -n "$_value" ] && export "$_var=$_value"
             done

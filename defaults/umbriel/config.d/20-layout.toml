@@ -1,0 +1,27 @@
+# 20 — Layout, look and the overview
+
+[layout]
+# scrolling (Niri's model), dwindle, master or stacking; a workspace can switch at runtime (workspace-set-layout).
+mode = "scrolling"
+gap = 25
+extent_presets = [0.33333, 0.5, 0.66667]
+
+[layout.scrolling]
+default_extent_fraction = 0.5
+center_focused = "never"
+
+[appearance]
+corner_radius = 16
+border_width = 0
+prefer_no_csd = true
+
+[appearance.shadow]
+enabled = true
+softness = 30
+offset_x = 0
+offset_y = 5
+
+[overview]
+zoom = 0.6
+# iNiR draws its own wallpaper and widgets; Umbriel's overview shows them behind each workspace.
+workspace_wallpaper = true

@@ -1,0 +1,24 @@
+# 10 — Input and cursor (iNiR defaults, the same as its Niri config)
+
+[general]
+mod_key = "Super"
+# iNiR has its own cheatsheet (Mod+/).
+show_cheatsheet = false
+
+[input.keyboard]
+layout = "us"
+repeat_delay = 250
+repeat_rate = 50
+
+[input.mouse]
+accel_profile = "flat"
+
+[[input.device]]
+name = ".*[Tt]ouchpad.*"
+tap = true
+tap_button_map = "left_right_middle"
+
+[input.cursor]
+theme = "capitaine-cursors-light"
+size = 24
+hide_when_typing = true

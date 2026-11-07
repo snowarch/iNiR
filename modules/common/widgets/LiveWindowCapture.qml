@@ -20,7 +20,8 @@ Item {
     readonly property bool streaming: capture.item?.streaming ?? false
 
     // The view sets a property only qs-rs has, so it lives in its own file and is compiled only where it exists.
-    readonly property bool supported: CompositorService.isNiri
+    // Niri exports Mutter's ScreenCast API for one window; Umbriel previews stay stills (grim on its toplevel ids).
+    readonly property bool supported: CompositorService.niriNative
         && SystemInfo.runtimeHas(["niri-window-capture"])
     // A game gets the GPU to itself: the still stays.
     readonly property bool wanted: root.supported && root.active && root.windowId >= 0 && !GameMode.active

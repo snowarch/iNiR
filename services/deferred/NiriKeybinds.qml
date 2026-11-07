@@ -5,11 +5,15 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.services
+import "../UmbrielModel.js" as UmbrielModel
 
 /**
  * Keybinds for Niri compositor with iNiR shell.
  * Dynamically parses user's ~/.config/niri/config.kdl
  * Falls back to defaults if parsing fails.
+ *
+ * Under Umbriel the cheatsheet reads ~/.config/umbriel/config.d/70-binds.toml and
+ * 90-user-extra.toml instead (read-only: Umbriel's keys are edited in its files).
  *
  * Read/write support: setBind() and removeBind() write back
  * to the keybinds KDL file via inir-accel niri-config.
@@ -44,13 +48,54 @@ Singleton {
 
     // ── Public API ────────────────────────────────────────────────────────
 
+    readonly property bool umbriel: CompositorService.isUmbriel
+    readonly property string umbrielConfigDir: Quickshell.env("HOME") + "/.config/umbriel/config.d"
+
     function reload(): void {
+        if (root.umbriel) {
+            root._readUmbrielBinds()
+            return
+        }
+        if (!CompositorService.niriNative)
+            return
         keybindParser.running = true
         enrichedBindsLoader.running = true
     }
 
+    function _readUmbrielBinds(): void {
+        const groups = UmbrielModel.bindsFrom([umbrielBinds.text(), umbrielUserBinds.text()], "Super")
+        root.allBinds = []
+        root.enrichedCategories = []
+        if (groups.length === 0)
+            return
+        root.keybinds = { children: groups, configPath: umbrielBinds.path }
+        root.configPath = umbrielBinds.path
+        root.loaded = true
+    }
+
+    FileView {
+        id: umbrielBinds
+        path: root.umbriel ? root.umbrielConfigDir + "/70-binds.toml" : ""
+        watchChanges: true
+        printErrors: false
+        onLoaded: root._readUmbrielBinds()
+        onFileChanged: reload()
+    }
+
+    FileView {
+        id: umbrielUserBinds
+        path: root.umbriel ? root.umbrielConfigDir + "/90-user-extra.toml" : ""
+        watchChanges: true
+        printErrors: false
+        onLoaded: root._readUmbrielBinds()
+        onLoadFailed: root._readUmbrielBinds()
+        onFileChanged: reload()
+    }
+
     // False when a save is already in flight; the result comes back as bindSaved or bindError.
     function setBind(keyCombo: string, action: string, options: string): bool {
+        if (!CompositorService.niriNative)
+            return false
         if (setBindProcess.running) {
             console.warn("[NiriKeybinds] setBind: process already running, ignoring")
             return false
@@ -77,11 +122,13 @@ Singleton {
     }
 
     function removeBind(keyCombo: string): void {
+        if (!CompositorService.niriNative) return
         root._removeBind(keyCombo, true)
     }
 
     // A rename drops the old combo after saving the new one: nothing was removed, so no Undo.
     function removeBindQuietly(keyCombo: string): void {
+        if (!CompositorService.niriNative) return
         root._removeBind(keyCombo, false)
     }
 
@@ -102,11 +149,11 @@ Singleton {
     // "custom" is an Alt+Tab the person bound themselves.
     property string altTabSource: ""
     function refreshAltTab(): void {
-        if (!altTabReader.running) altTabReader.running = true
+        if (CompositorService.niriNative && !altTabReader.running) altTabReader.running = true
     }
     function setAltTabSource(source: string): void {
         if (source !== "inir" && source !== "niri") return
-        if (altTabWriter.running) return
+        if (altTabWriter.running || !CompositorService.niriNative) return
         root.altTabSource = source
         altTabWriter.command = [root.accelRun, "niri-config", "set-alt-tab", source]
         altTabWriter.running = true
@@ -295,7 +342,7 @@ Singleton {
     // ── File watchers ─────────────────────────────────────────────────────
     FileView {
         id: configWatcher
-        path: Quickshell.env("HOME") + "/.config/niri/config.kdl"
+        path: CompositorService.niriNative ? Quickshell.env("HOME") + "/.config/niri/config.kdl" : ""
         watchChanges: true
 
         onFileChanged: {

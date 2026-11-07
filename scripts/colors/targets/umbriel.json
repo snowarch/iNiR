@@ -1,0 +1,8 @@
+{
+  "id": "umbriel",
+  "label": "Umbriel",
+  "module": "15-umbriel.sh",
+  "category": "compositor",
+  "inputs": ["colors.json"],
+  "description": "Window borders, the overview, tab and title bars and Umbriel's own panels in the theme's colours; the blur iRiS's compositor glass asks for."
+}

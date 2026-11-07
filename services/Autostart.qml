@@ -8,7 +8,10 @@ import Quickshell
 import Quickshell.Io
 
 /**
- * Autostart manager for niri.
+ * Autostart manager for niri (and Umbriel, whose `[general] autostart` array in
+ * ~/.config/umbriel/config.d/50-startup.toml holds the same managed section, one
+ * quoted command per line: Umbriel replaces an array a later include sets, so
+ * the section lives inside the one array, never in a file of its own).
  *
  * Source of truth is the niri startup file
  *   ~/.config/niri/config.d/50-startup.kdl
@@ -47,20 +50,20 @@ Singleton {
     // ── Paths / environment ──────────────────────────────────────────────
 
     readonly property bool isNiri: CompositorService.isNiri
+    // Umbriel's TOML: entries are array strings, comments start with #.
+    readonly property bool toml: CompositorService.isUmbriel
+    readonly property string _comment: toml ? "#" : "//"
 
-    readonly property string startupFilePath: {
-        try {
-            const home = Directories.homePath ?? ""
-            if (home.length === 0) return ""
-            return `${home}/.config/niri/config.d/50-startup.kdl`
-        } catch (e) {
-            return ""
-        }
+    readonly property string startupDir: {
+        const home = Directories.homePath ?? ""
+        return home.length === 0 ? "" : `${home}/.config/${root.toml ? "umbriel" : "niri"}/config.d`
     }
+    readonly property string startupFilePath: startupDir.length === 0 ? ""
+        : `${startupDir}/50-startup.${root.toml ? "toml" : "kdl"}`
 
-    readonly property string beginMarker: "// >>> inir-managed-autostart >>>"
-    readonly property string endMarker: "// <<< inir-managed-autostart <<<"
-    readonly property string sectionHeader: "// Managed by iNiR Settings — add or remove entries via Settings › Autostart."
+    readonly property string beginMarker: `${_comment} >>> inir-managed-autostart >>>`
+    readonly property string endMarker: `${_comment} <<< inir-managed-autostart <<<`
+    readonly property string sectionHeader: `${_comment} Managed by iNiR Settings — add or remove entries via Settings › Autostart.`
 
     // ── Model ────────────────────────────────────────────────────────────
 
@@ -120,8 +123,23 @@ Singleton {
         return (i >= 0 ? s.slice(i + 1) : s).toLowerCase()
     }
 
+    // An Umbriel autostart entry: one quoted command, split on blanks for matching.
+    function _tomlTokens(rawLine): var {
+        let line = String(rawLine ?? "").trim()
+        let enabled = true
+        if (line.startsWith("#")) {
+            enabled = false
+            line = line.replace(/^#/, "").trim()
+        }
+        const m = line.match(/^"((?:[^"\\]|\\.)*)"\s*,?\s*$/)
+        if (!m) return null
+        const tokens = _unescape(m[1]).split(/\s+/).filter(t => t.length > 0)
+        return tokens.length > 0 ? { tokens: tokens, enabled: enabled, raw: String(rawLine ?? "").trim() } : null
+    }
+
     // Extract the quoted tokens of a spawn line. Returns [] if not a spawn line.
     function _spawnTokens(rawLine): var {
+        if (root.toml) return _tomlTokens(rawLine)
         let line = String(rawLine ?? "").trim()
         if (line.length === 0) return null
         let enabled = true
@@ -175,6 +193,18 @@ Singleton {
             head = lines.slice(0, beginIdx).join("\n")
             managedText = lines.slice(beginIdx + 1, endIdx).join("\n")
             tail = lines.slice(endIdx + 1).join("\n")
+        } else if (root.toml) {
+            // No markers yet: the section goes in before the autostart array closes.
+            const open = lines.findIndex(l => /^\s*autostart\s*=\s*\[/.test(l))
+            const close = open < 0 ? -1 : lines.findIndex((l, i) => i > open && /^\s*\]/.test(l))
+            if (close < 0) {
+                head = (content ?? "") + ((content ?? "").includes("[general]") ? "" : "\n[general]") + "\nautostart = ["
+                tail = "]\n"
+            } else {
+                head = lines.slice(0, close).join("\n")
+                tail = lines.slice(close).join("\n")
+            }
+            managedText = ""
         } else {
             // First run: no markers. Head = whole file, markers appended on write.
             head = content ?? ""
@@ -188,15 +218,17 @@ Singleton {
 
         const entries = []
         const mlines = managedText.split("\n")
-        const appRe = /^spawn-at-startup\s+"gtk-launch"\s+"((?:[^"\\]|\\.)*)"\s*$/
-        const cmdRe = /^spawn-sh-at-startup\s+"((?:[^"\\]|\\.)*)"\s*$/
+        const appRe = root.toml ? /^"gtk-launch\s+((?:[^"\\\s]|\\.)+)"\s*,?\s*$/
+                                : /^spawn-at-startup\s+"gtk-launch"\s+"((?:[^"\\]|\\.)*)"\s*$/
+        const cmdRe = root.toml ? /^"((?:[^"\\]|\\.)*)"\s*,?\s*$/
+                                : /^spawn-sh-at-startup\s+"((?:[^"\\]|\\.)*)"\s*$/
         for (let i = 0; i < mlines.length; i++) {
             let line = mlines[i].trim()
-            if (line.length === 0) continue
+            if (line.length === 0 || line === root.sectionHeader) continue
             let enabled = true
-            if (line.startsWith("//")) {
+            if (line.startsWith(root._comment)) {
                 enabled = false
-                line = line.replace(/^\/\//, "").trim()
+                line = line.slice(root._comment.length).trim()
             }
             let m = line.match(appRe)
             if (m) {
@@ -232,12 +264,17 @@ Singleton {
 
     function _serialize(): string {
         const lines = []
-        lines.push(beginMarker)
-        lines.push(sectionHeader)
+        const indent = root.toml ? "  " : ""
+        lines.push(indent + beginMarker)
+        lines.push(indent + sectionHeader)
         for (let i = 0; i < root.entries.length; i++) {
             const e = root.entries[i]
-            const prefix = e.enabled ? "" : "// "
-            if (e.type === "app") {
+            const prefix = e.enabled ? "" : `${root._comment} `
+            if (root.toml) {
+                // Umbriel runs each with /bin/sh -c.
+                const command = e.type === "app" ? `gtk-launch ${e.desktopId ?? ""}` : (e.command ?? "")
+                lines.push(`  ${prefix}"${_escape(command)}",`)
+            } else if (e.type === "app") {
                 const id = _escape(e.desktopId ?? "")
                 lines.push(`${prefix}spawn-at-startup "gtk-launch" "${id}"`)
             } else {
@@ -245,7 +282,7 @@ Singleton {
                 lines.push(`${prefix}spawn-sh-at-startup "${cmd}"`)
             }
         }
-        lines.push(endMarker)
+        lines.push(indent + endMarker)
         const section = lines.join("\n")
 
         let out = root._head
@@ -253,7 +290,7 @@ Singleton {
         out += section + "\n"
         // Tail: ensure it starts on its own line and ends with a newline.
         if (root._tail.length > 0) {
-            if (!root._tail.startsWith("\n")) out += "\n"
+            if (!root._tail.startsWith("\n") && !root.toml) out += "\n"
             out += root._tail
             if (!out.endsWith("\n")) out += "\n"
         }
@@ -267,8 +304,7 @@ Singleton {
         }
         const text = _serialize()
         // Ensure the directory exists (defensive — the file ships with iNiR).
-        Quickshell.execDetached(["/usr/bin/mkdir", "-p",
-            (Directories.homePath ?? "") + "/.config/niri/config.d"])
+        Quickshell.execDetached(["/usr/bin/mkdir", "-p", root.startupDir])
         startupFileView.path = Qt.resolvedUrl(startupFilePath)
         startupFileView.setText(text)
         _log("[Autostart] Wrote", root.entries.length, "entries to", startupFilePath)
@@ -395,9 +431,9 @@ Singleton {
     /// and shown as "External" (read-only) in the list.
     IpcHandler {
         target: "autostart"
-        /// Return `niri|<path>|<managedCount>|<externalCount>|<state>`
+        /// Return `<compositor>|<path>|<managedCount>|<externalCount>|<state>` (compositor: niri, umbriel or other)
         function status(): string {
-            return `${root.isNiri ? "niri" : "other"}|${root.startupFilePath}|${root.entries.length}|${root.externalLines.length}|${root.status}`
+            return `${root.isNiri ? CompositorService.compositor : "other"}|${root.startupFilePath}|${root.entries.length}|${root.externalLines.length}|${root.status}`
         }
         /// Append a managed `spawn-sh-at-startup` shell line
         function addCommand(cmd: string): string {

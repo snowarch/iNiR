@@ -1,0 +1,9 @@
+# 40 — Session environment (published to systemd and D-Bus for every app of the session; needs a restart)
+# Umbriel sets XDG_CURRENT_DESKTOP=umbriel itself.
+
+[environment]
+XDG_MENU_PREFIX = "plasma-"
+QT_QPA_PLATFORM = "wayland"
+ELECTRON_OZONE_PLATFORM_HINT = "auto"
+QT_QPA_PLATFORMTHEME = "kde"
+QT_STYLE_OVERRIDE = "Darkly"

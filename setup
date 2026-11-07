@@ -291,34 +291,40 @@ ensure_user_inir_service_enabled() {
     fi
 
     [[ -f "$service_path" ]] || return 1
-    systemctl --user cat niri.service &>/dev/null || return 1
+    # Wired under every compositor iNiR runs on that is installed: the one picked at login starts it.
+    local compositors=() unit
+    for unit in niri.service umbriel.service; do
+        systemctl --user cat "$unit" &>/dev/null && compositors+=("$unit")
+    done
+    [[ ${#compositors[@]} -gt 0 ]] || return 1
 
     local systemd_user_dir="${XDG_CONFIG_HOME}/systemd/user"
-    local correct_wants_dir="${systemd_user_dir}/niri.service.wants"
     local wants_dir link
     for wants_dir in "$systemd_user_dir"/*.wants; do
         [[ -d "$wants_dir" ]] || continue
         link="$wants_dir/inir.service"
         [[ -e "$link" || -L "$link" ]] || continue
-        [[ "$(realpath "$wants_dir" 2>/dev/null)" == "$(realpath "$correct_wants_dir" 2>/dev/null)" ]] && continue
+        [[ " ${compositors[*]} " == *" $(basename "$wants_dir" .wants) "* ]] && continue
         rm -f "$link" || return 1
         INIR_SERVICE_WIRING_CHANGED=1
     done
 
-    mkdir -p "$correct_wants_dir" || return 1
-    link="$correct_wants_dir/inir.service"
     local service_real link_real
     service_real="$(readlink -f "$service_path" 2>/dev/null || printf '%s' "$service_path")"
-    link_real="$(readlink -f "$link" 2>/dev/null || true)"
-    if [[ ! -L "$link" || "$link_real" != "$service_real" ]]; then
-        ln -sf "$service_path" "$link" || return 1
-        INIR_SERVICE_WIRING_CHANGED=1
-    fi
+    for unit in "${compositors[@]}"; do
+        mkdir -p "$systemd_user_dir/$unit.wants" || return 1
+        link="$systemd_user_dir/$unit.wants/inir.service"
+        link_real="$(readlink -f "$link" 2>/dev/null || true)"
+        if [[ ! -L "$link" || "$link_real" != "$service_real" ]]; then
+            ln -sf "$service_path" "$link" || return 1
+            INIR_SERVICE_WIRING_CHANGED=1
+        fi
+    done
 
     if [[ "$INIR_SERVICE_WIRING_CHANGED" -gt 0 ]]; then
         systemctl --user daemon-reload >/dev/null 2>&1 || return 1
     fi
-    [[ -e "$link" || -L "$link" ]]
+    return 0
 }
 
 repair_update_owned_state() {
@@ -840,7 +846,10 @@ show_status_environment() {
 
     # Compositor + version
     local compositor="unknown" comp_ver=""
-    if [[ -n "${NIRI_SOCKET:-}" ]] && command -v niri >/dev/null 2>&1; then
+    if [[ -n "${UMBRIEL_SOCKET:-}" ]] && command -v umbriel >/dev/null 2>&1; then
+        compositor="umbriel"
+        comp_ver="$(umbriel --version 2>/dev/null | grep -oP '\d+\.\d+(\.\d+)?' | head -1)"
+    elif [[ -n "${NIRI_SOCKET:-}" ]] && command -v niri >/dev/null 2>&1; then
         compositor="niri"
         comp_ver="$(niri --version 2>/dev/null | grep -oP '\d+\.\d+(\.\d+)?' | head -1)"
     elif [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]] && command -v Hyprland >/dev/null 2>&1; then
@@ -2446,9 +2455,11 @@ run_update() {
             ensure_user_inir_service_enabled >/dev/null 2>&1 || true
             # Only start inir if we're running under a supported compositor.
             # WAYLAND_DISPLAY alone is not enough — KDE/GNOME set it too.
-            # The shipped unit is Niri-owned (PartOf/Requisite=niri.service).
+            # The shipped unit belongs to the compositor session (PartOf niri.service and umbriel.service).
             if has_usable_systemd_user_manager \
-                    && { [[ -n "${NIRI_SOCKET:-}" ]] || systemctl --user is-active --quiet niri.service >/dev/null 2>&1; }; then
+                    && { [[ -n "${NIRI_SOCKET:-}" || -n "${UMBRIEL_SOCKET:-}" ]] \
+                        || systemctl --user is-active --quiet niri.service >/dev/null 2>&1 \
+                        || systemctl --user is-active --quiet umbriel.service >/dev/null 2>&1; }; then
                 systemctl --user reset-failed inir.service >/dev/null 2>&1 || true
                 systemctl --user start inir.service >/dev/null 2>&1 || true
             fi
@@ -2910,6 +2921,17 @@ run_update() {
             fi
         else
             tui_warn "Niri is still running without ${XDG_BIN_HOME} in PATH; preserving existing launcher paths until the next session"
+        fi
+    fi
+
+    # Umbriel: iNiR's config there is refreshed like any other default (files the person changed are kept).
+    if grep -qs '^# iNiR — Umbriel configuration' "${XDG_CONFIG_HOME}/umbriel/config.toml" \
+        && source "$REPO_ROOT/scripts/lib/compositor.sh" 2>/dev/null; then
+        if compositor_install_umbriel_config "$REPO_ROOT/defaults/umbriel" "${XDG_CONFIG_HOME}/umbriel"; then
+            [[ "$COMPOSITOR_CONFIG_RESULT" == updated ]] && tui_success "Umbriel config refreshed"
+            [[ -n "$COMPOSITOR_CONFIG_KEPT" ]] && tui_info "Umbriel files you changed were kept: $COMPOSITOR_CONFIG_KEPT"
+        else
+            tui_warn "Could not refresh ~/.config/umbriel"
         fi
     fi
 

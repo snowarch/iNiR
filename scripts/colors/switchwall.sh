@@ -10,6 +10,7 @@ SHELL_ROOT="$(cd "$SCRIPT_DIR/../.." 2>/dev/null && pwd)"
 
 # shellcheck source=scripts/lib/config-path.sh
 source "$SCRIPT_DIR/../lib/config-path.sh"
+source "$SCRIPT_DIR/../lib/compositor.sh"
 SHELL_CONFIG_FILE="$(inir_config_file)"
 TEMPLATE_DIR="$XDG_CONFIG_HOME/matugen"
 terminalscheme="$SCRIPT_DIR/terminal/scheme-base.json"
@@ -77,15 +78,12 @@ write_generated_wallpaper_path() {
 get_max_monitor_resolution() {
     local width=1920
     local height=1080
-    # Try Niri first
-    if command -v niri >/dev/null 2>&1 && niri msg outputs >/dev/null 2>&1; then
-        # Parse niri msg outputs for resolution (e.g., "  Current mode: 1920x1080@60.000")
-        local res=$(niri msg outputs 2>/dev/null | grep -oP 'Current mode: \K\d+x\d+' | sort -t'x' -k1 -nr | head -1)
-        if [[ -n "$res" ]]; then
-            width=$(echo "$res" | cut -d'x' -f1)
-            height=$(echo "$res" | cut -d'x' -f2)
-        fi
-    # Fallback to Hyprland
+    local res
+    res=$(compositor_max_resolution)
+    if [[ -n "$res" ]]; then
+        width=${res%x*}
+        height=${res#*x}
+    # Hyprland reports its own shape
     elif command -v hyprctl >/dev/null 2>&1; then
         width="$(hyprctl monitors -j 2>/dev/null | jq '([.[].width] | max)' | xargs)"
         height="$(hyprctl monitors -j 2>/dev/null | jq '([.[].height] | max)' | xargs)"
@@ -237,16 +235,8 @@ set_backdrop_thumbnail_path() {
 }
 
 get_focused_monitor_name() {
-    if command -v niri >/dev/null 2>&1 && niri msg -j focused-output >/dev/null 2>&1; then
-        niri msg -j focused-output 2>/dev/null | jq -r '.name // ""'
-        return
-    fi
-    if command -v hyprctl >/dev/null 2>&1; then
-        hyprctl monitors -j 2>/dev/null | jq -r '.[] | select(.focused == true) | .name' | head -1
-        return
-    fi
-    echo ""
- }
+    compositor_focused_output
+}
 
  resolve_effective_theming_wallpaper() {
     jq -r --arg focused_monitor "$(get_focused_monitor_name)" '

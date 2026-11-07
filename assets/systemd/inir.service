@@ -1,11 +1,12 @@
 [Unit]
 Description=iNiR shell
-# Niri owns the graphical-session environment.  Since niri.service is
-# Type=notify, ordering after it guarantees DISPLAY, WAYLAND_DISPLAY and
-# NIRI_SOCKET have already been published to the user manager before iNiR starts.
-PartOf=niri.service
-Requisite=niri.service
-After=niri.service
+# The compositor owns the graphical-session environment: Niri or Umbriel, whichever
+# the person logged into.  Both units are Type=notify, so ordering after them
+# guarantees DISPLAY, WAYLAND_DISPLAY and NIRI_SOCKET or UMBRIEL_SOCKET are
+# already published to the user manager before iNiR starts.  Only a wants link
+# under one of them starts it ('inir service enable'); stopping it stops iNiR.
+PartOf=niri.service umbriel.service
+After=niri.service umbriel.service
 # Keep the StatusNotifier watcher ready before desktop autostart applications
 # register tray items.  Niri also orders itself before this target.
 Before=xdg-desktop-autostart.target
@@ -27,6 +28,8 @@ Environment=QT_SCALE_FACTOR=1
 Environment=QT_SCALE_FACTOR_ROUNDING_POLICY=RoundPreferFloor
 Environment=QT_LOGGING_RULES=quickshell.dbus.properties=false;quickshell.dbus.objectmanager.warning=false;qt.qml.settings.warning=false;qt.core.qsettings.warning=false;kf.xmlgui=false;kf.coreaddons=false;kf.config.core=false;kf.iconthemes=false;qt.qpa.wayland.textinput.warning=false
 
+# Started by hand outside a session (a TTY, another desktop): skip, never a failure.
+ExecCondition=/bin/sh -c 'systemctl --user is-active --quiet niri.service || systemctl --user is-active --quiet umbriel.service'
 ExecStart=/usr/bin/inir run --session
 SuccessExitStatus=143
 
@@ -63,5 +66,6 @@ ExecStopPost=-/usr/bin/inir cleanup-orphans
 IOSchedulingPriority=2
 
 # No [Install] section — wiring is managed by 'inir service enable' which
-# creates a compositor-specific wants link (e.g. niri.service.wants/) so
-# inir only starts under the correct compositor, not under KDE/GNOME/etc.
+# creates compositor-specific wants links (niri.service.wants/,
+# umbriel.service.wants/) so inir only starts under a compositor it runs on,
+# not under KDE/GNOME/etc.

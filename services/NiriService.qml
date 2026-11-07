@@ -9,11 +9,15 @@ import Quickshell.Io
 import Quickshell.Wayland
 import qs.modules.common
 import qs.services
+import "UmbrielModel.js" as UmbrielModel
 
 Singleton {
     id: root
 
-    readonly property string socketPath: Quickshell.env("NIRI_SOCKET")
+    // Niri's socket, or Umbriel's: under Umbriel this service speaks its IPC and serves the same model
+    // (UmbrielModel.js), so nothing that reads windows, workspaces or outputs needs to know which one runs.
+    readonly property bool umbriel: CompositorService.isUmbriel
+    readonly property string socketPath: root.umbriel ? CompositorService.umbrielSocket : Quickshell.env("NIRI_SOCKET")
 
     property var workspaces: ({})
     property var allWorkspaces: []
@@ -21,7 +25,7 @@ Singleton {
     property string focusedWorkspaceId: ""
     property var currentOutputWorkspaces: []
     property string currentOutput: ""
-    readonly property bool actionReady: requestSocket.connected
+    readonly property bool actionReady: root.umbriel ? eventStreamSocket.isConnected : requestSocket.connected
 
     // Config load status (updated from ConfigLoaded event)
     property bool configLoaded: false
@@ -75,22 +79,32 @@ Singleton {
         path: root.socketPath
         connected: CompositorService.isNiri
 
+        readonly property bool isConnected: socketConnected
         onConnectionStateChanged: {
-            if (connected) {
-                send('"EventStream"')
-                fetchOutputs()
+            if (!socketConnected)
+                return
+            if (root.umbriel) {
+                // Whole snapshots of each family, now and on every change.
+                send({ cmd: "subscribe", events: ["outputs", "workspaces", "windows", "overview", "keyboard_layout"] })
                 refreshOverviewHotCorners()
+                return
             }
+            send('"EventStream"')
+            fetchOutputs()
+            refreshOverviewHotCorners()
         }
 
         parser: SplitParser {
             onRead: line => {
+                let event
                 try {
-                    const event = JSON.parse(line)
-                    handleNiriEvent(event)
+                    event = JSON.parse(line)
                 } catch (e) {
                     console.warn("NiriService: Failed to parse event:", line, e)
+                    return
                 }
+                if (root.umbriel) root.handleUmbrielEvent(event)
+                else handleNiriEvent(event)
             }
         }
     }
@@ -98,7 +112,134 @@ Singleton {
     DankSocket {
         id: requestSocket
         path: root.socketPath
-        connected: CompositorService.isNiri
+        connected: CompositorService.niriNative
+    }
+
+    // ── Umbriel ──────────────────────────────────────────────────────────────────────────────────────────────────
+    // Umbriel answers one request per connection and closes it, so actions go out one at a time, in order (a focus
+    // before the move that needs it), each on its own connection.
+    property var _umbrielIds: UmbrielModel.newIds()
+    // Umbriel's own id for one of its window numbers (also its foreign-toplevel identifier, what captures take).
+    function umbrielWindowKey(id: int): var { return root.umbriel ? UmbrielModel.windowKey(root._umbrielIds, id) ?? null : null }
+    property var _umbrielQueue: []
+    property var _umbrielUnmapped: ({})
+    property var _umbrielWorkspaces: null
+
+    Socket {
+        id: umbrielRequest
+        path: root.socketPath
+        property var current: null
+        onConnectionStateChanged: {
+            if (connected) {
+                write(JSON.stringify(current) + "\n")
+                flush()
+                umbrielRequestTimeout.restart()
+            } else if (current) {
+                current = null
+                umbrielRequestTimeout.stop()
+                Qt.callLater(root._umbrielNext)
+            }
+        }
+        parser: SplitParser {
+            onRead: line => {
+                try {
+                    const reply = JSON.parse(line)
+                    if (reply?.err !== undefined)
+                        console.warn("NiriService: Umbriel refused", umbrielRequest.current?.action ?? umbrielRequest.current?.cmd, "-", reply.err)
+                } catch (e) {}
+                umbrielRequest.connected = false
+            }
+        }
+    }
+
+    Timer {
+        id: umbrielRequestTimeout
+        interval: 2000
+        onTriggered: {
+            console.warn("NiriService: Umbriel did not answer", umbrielRequest.current?.action ?? "")
+            umbrielRequest.connected = false
+        }
+    }
+
+    function _umbrielSend(requests): bool {
+        if (!root.umbriel || !eventStreamSocket.isConnected || requests.length === 0)
+            return false
+        root._umbrielQueue = root._umbrielQueue.concat(requests)
+        if (!umbrielRequest.current)
+            root._umbrielNext()
+        return true
+    }
+
+    function _umbrielNext(): void {
+        if (umbrielRequest.current || root._umbrielQueue.length === 0)
+            return
+        umbrielRequest.current = root._umbrielQueue[0]
+        root._umbrielQueue = root._umbrielQueue.slice(1)
+        umbrielRequest.connected = true
+    }
+
+    function _umbrielRequests(request): var {
+        const requests = UmbrielModel.actionRequests(root._umbrielIds, request, {
+            workspaceRef: id => {
+                const ws = root.workspaces[id]
+                return ws ? { workspace: ws.idx, output: ws.output } : null
+            },
+            focusedWindowKey: () => {
+                const focused = root.liveWindows.find(w => w.is_focused)
+                return focused ? UmbrielModel.windowKey(root._umbrielIds, focused.id) : null
+            }
+        })
+        if (requests.length === 0) {
+            const name = Object.keys(request?.Action ?? {})[0] ?? JSON.stringify(request)
+            if (!root._umbrielUnmapped[name]) {
+                root._umbrielUnmapped[name] = true
+                console.info("NiriService: Umbriel has no equal for", name)
+            }
+        }
+        return requests
+    }
+
+    function handleUmbrielEvent(event): void {
+        const data = event?.data
+        switch (event?.event) {
+        case "outputs":
+            root.handleOutputsChanged({ outputs: UmbrielModel.outputs(root._umbrielIds, data) })
+            if (root._umbrielWorkspaces)
+                root.handleWorkspacesChanged({ workspaces: UmbrielModel.workspaces(root._umbrielIds, root._umbrielWorkspaces) })
+            break
+        case "workspaces":
+            root._umbrielWorkspaces = data
+            root.handleWorkspacesChanged({ workspaces: UmbrielModel.workspaces(root._umbrielIds, data) })
+            root._umbrielSyncLayout()
+            break
+        case "windows": {
+            const before = new Map((root.liveWindows ?? []).map(w => [w.id, w.workspace_id]))
+            const next = UmbrielModel.windows(root._umbrielIds, data, Date.now())
+            const focusedBefore = root._latestFocusedWindowId
+            if (root.mruWindowIds.length > 0)
+                root.mruWindowIds = root.mruWindowIds.filter(id => next.some(w => w.id === id))
+            root.handleWindowsChanged({ windows: next })
+            // Niri tells focus apart (WindowFocusChanged); here it is read off the snapshot, for the recent order.
+            if (root._latestFocusedWindowId !== null && root._latestFocusedWindowId !== focusedBefore)
+                root.handleWindowFocusChanged({ id: root._latestFocusedWindowId })
+            // A window that came or went changes how many tile its workspace (the single-window policy).
+            const after = new Map(next.map(w => [w.id, w.workspace_id]))
+            const touched = new Set()
+            for (const [id, ws] of before) if (!after.has(id) && ws !== null) touched.add(ws)
+            for (const [id, ws] of after) if (!before.has(id) && ws !== null) touched.add(ws)
+            for (const ws of touched) root._scheduleSingleWindowCheck(ws)
+            break
+        }
+        case "overview":
+            root.handleOverviewChanged({ is_open: !!data?.open })
+            break
+        case "keyboard_layout":
+            root.applyKeyboardLayouts(UmbrielModel.keyboardLayouts(data))
+            break
+        default:
+            if (event?.err !== undefined)
+                console.warn("NiriService: Umbriel refused the subscription:", event.err)
+        }
     }
 
     Process {
@@ -164,7 +305,7 @@ Singleton {
         id: fetchOutputsDebounce
         interval: 200
         onTriggered: {
-            if (CompositorService.isNiri)
+            if (CompositorService.niriNative)
                 fetchOutputsProcess.running = true
         }
     }
@@ -178,13 +319,22 @@ Singleton {
     }
 
     function fetchOutputs() {
-        if (!CompositorService.isNiri)
+        // Umbriel sends its outputs as they change.
+        if (!CompositorService.niriNative)
             return
         fetchOutputsDebounce.restart()
     }
 
     function refreshOverviewHotCorners(): void {
-        if (!CompositorService.isNiri)
+        if (root.umbriel) {
+            // Umbriel's hot corners are its own ([hot_corners] in its config, off in iNiR's): none to stay clear of.
+            root.overviewHotCornersGlobal = []
+            root.overviewHotCornersByOutput = ({})
+            root.overviewHotCornerOverrides = ({})
+            root.overviewHotCornersReady = true
+            return
+        }
+        if (!CompositorService.niriNative)
             return
         if (overviewHotCornersProcess.running) {
             root._overviewHotCornersRefreshQueued = true
@@ -832,6 +982,8 @@ Singleton {
     }
 
     function send(request) {
+        if (root.umbriel)
+            return root._umbrielSend(root._umbrielRequests(request))
         if (!CompositorService.isNiri || !requestSocket.connected)
             return false
         requestSocket.send(request)
@@ -1244,8 +1396,33 @@ Singleton {
         applyLayout(layouts[nextIdx])
     }
 
+    // Umbriel lays a workspace out by itself: these names take its own modes, and the overlay shows what it runs.
+    readonly property var _umbrielModes: ({ "off": "scrolling", "master-left": "master", "master-right": "master",
+                                            "columns": "dwindle", "monocle": "scrolling" })
+
+    function _umbrielSyncLayout(): void {
+        const mode = root.allWorkspaces.find(ws => ws.is_focused)?.layout
+        const name = mode === "master" ? (root.currentLayout === "master-right" ? "master-right" : "master-left")
+            : mode === "dwindle" ? "columns"
+            : mode === "scrolling" && root.currentLayout === "monocle" ? "monocle"
+            : mode === "scrolling" ? "off" : root.currentLayout
+        if (name !== root.currentLayout) {
+            root.currentLayout = name
+            root.layoutChanged(name)
+        }
+    }
+
     function applyLayout(layoutName): void {
         if (!CompositorService.isNiri) return
+        if (root.umbriel) {
+            root._umbrielSend([{ cmd: "action", action: "workspace-set-layout", layout: root._umbrielModes[layoutName] ?? "scrolling" }])
+            if (layoutName !== "monocle") {
+                root.currentLayout = layoutName
+                root.layoutChanged(layoutName)
+                root.layoutApplied(layoutName, root._currentWorkspaceWindows.length)
+                return
+            }
+        }
         const wins = _currentWorkspaceWindows
         if (wins.length === 0) {
             currentLayout = layoutName

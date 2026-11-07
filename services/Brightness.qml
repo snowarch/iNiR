@@ -102,7 +102,7 @@ Singleton {
 
     function _queueWake(names): void {
         root._wakePendingOutputs = BrightnessPolicy.mergeOutputNames([], names)
-        root._enqueueNiri(BrightnessPolicy.niriPowerOnMonitorsArgs(), "wake")
+        root._enqueueNiri(BrightnessPolicy.niriPowerOnMonitorsArgs(CompositorService.isUmbriel), "wake")
         root._tryWakeOutputs()
         if (root._wakePendingOutputs.length > 0)
             wakeRetryTimer.restart()
@@ -134,7 +134,7 @@ Singleton {
             root._sleepDisabledOutputs, connected, root.asleep)
         root._wakePendingOutputs = []
         root.asleep = true
-        const cmds = BrightnessPolicy.sleepCommandQueue(connected)
+        const cmds = BrightnessPolicy.sleepCommandQueue(connected, CompositorService.isUmbriel)
         for (let i = 0; i < cmds.length; ++i)
             root._enqueueNiri(cmds[i], "sleep", "", true)
     }
@@ -142,7 +142,7 @@ Singleton {
     function _tryWakeOutputs(): void {
         const names = root._wakePendingOutputs
         for (let i = 0; i < names.length; ++i)
-            root._enqueueNiri(BrightnessPolicy.niriOutputOnArgs(names[i]), "wake", names[i])
+            root._enqueueNiri(BrightnessPolicy.niriOutputOnArgs(names[i], CompositorService.isUmbriel), "wake", names[i])
     }
 
     function restoreAfterWake(): void {

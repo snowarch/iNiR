@@ -19,6 +19,7 @@ Options:
   --skip-files        Skip config file installation
   --skip-quickshell   Skip Quickshell config sync
   --skip-niri         Skip Niri config installation
+  --compositor NAME   niri (default), umbriel or both: which compositors iNiR is set up for
   --skip-backup       Skip backup of existing configs
   --no-audio          Skip audio dependencies
   --no-toolkit        Skip toolkit dependencies (ydotool, backlight)
@@ -47,6 +48,7 @@ SKIP_ALLSETUPS=${SKIP_ALLSETUPS:-false}
 SKIP_ALLFILES=${SKIP_ALLFILES:-false}
 SKIP_QUICKSHELL=false
 SKIP_NIRI=false
+INSTALL_COMPOSITOR="${INSTALL_COMPOSITOR:-niri}"
 SKIP_BACKUP=false
 SKIP_SYSUPDATE=false
 
@@ -95,6 +97,20 @@ while [[ $# -gt 0 ]]; do
       ;;
     --skip-niri)
       SKIP_NIRI=true
+      shift
+      ;;
+    --compositor)
+      case "${2:-}" in
+        niri|umbriel|both) INSTALL_COMPOSITOR="$2" ;;
+        *) echo "--compositor takes niri, umbriel or both" >&2; exit 2 ;;
+      esac
+      shift 2
+      ;;
+    --compositor=*)
+      case "${1#*=}" in
+        niri|umbriel|both) INSTALL_COMPOSITOR="${1#*=}" ;;
+        *) echo "--compositor takes niri, umbriel or both" >&2; exit 2 ;;
+      esac
       shift
       ;;
     --skip-backup)

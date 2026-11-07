@@ -1,0 +1,10 @@
+# 80 — Layer rules for iNiR's surfaces
+#
+# iNiR draws its own glass (wallpaper glass) by default. When a family asks for compositor glass, iNiR writes the
+# blur rules for its own surfaces to ~/.local/state/quickshell/user/generated/umbriel-colors.toml; nothing here
+# blurs by default, so a solid panel never pays for it.
+
+# The shell's popups and menus follow their panel's choice.
+[[layer_rule]]
+match.namespace = "^quickshell"
+blur_popups = true

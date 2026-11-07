@@ -1,0 +1,13 @@
+# 90 — Yours. iNiR creates this file once and never touches it again; it loads last, so what you set here wins.
+#
+# Examples:
+#
+#   [keybinds]
+#   "Mod+T" = "spawn foot"        # rebind a key
+#   "Mod+W" = ""                  # unbind one of iNiR's
+#
+#   [output.DP-1]
+#   mode = "2560x1440@165"
+#   scale = 1.25
+#
+# Every key Umbriel knows: umbriel config schema --json. Check a change: umbriel config validate.

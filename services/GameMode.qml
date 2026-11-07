@@ -68,7 +68,7 @@ Singleton {
     
     // React to controlNiriAnimations changes while active
     onControlNiriAnimationsChanged: {
-        if (active && CompositorService.isNiri) {
+        if (active && CompositorService.niriNative) {
             // When setting enabled AND gamemode active -> disable niri animations
             // When setting disabled -> re-enable niri animations
             setNiriAnimations(!active || !controlNiriAnimations)
@@ -296,7 +296,7 @@ Singleton {
         interval: 200
         onTriggered: {
             root._loadState()
-            if (CompositorService.isNiri)
+            if (CompositorService.niriNative)
                 startupNiriSyncTimer.restart()
         }
     }
@@ -306,7 +306,7 @@ Singleton {
         interval: 900
         repeat: false
         onTriggered: {
-            if (!CompositorService.isNiri || !root.controlNiriAnimations)
+            if (!CompositorService.niriNative || !root.controlNiriAnimations)
                 return
             const shouldEnable = !root.active
             root._lastNiriAnimState = shouldEnable

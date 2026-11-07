@@ -27,6 +27,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # shellcheck source=scripts/lib/config-path.sh
 source "$SCRIPT_DIR/../../lib/config-path.sh"
+source "$SCRIPT_DIR/../../lib/compositor.sh"
 
 mkdir -p "$PICTURES_DIR/Wallpapers"
 page=$((1 + RANDOM % 1000));
@@ -46,22 +47,14 @@ multiMonitorEnabled=$(jq -r '.background.multiMonitor.enable' "$illogicalImpulse
 
 if [ "$multiMonitorEnabled" == "true" ]; then
     # Get focused monitor
-    focusedMonitor=""
-    if command -v niri &> /dev/null && niri msg outputs &> /dev/null; then
-        focusedMonitor=$(niri msg -j outputs 2>/dev/null | jq -r '.[] | select(.focused == true) | .name' 2>/dev/null)
-    elif command -v hyprctl &> /dev/null; then
-        focusedMonitor=$(hyprctl monitors -j 2>/dev/null | jq -r '.[] | select(.focused) | .name' 2>/dev/null)
-    fi
+    focusedMonitor=$(compositor_focused_output)
 
     if [ -n "$focusedMonitor" ]; then
-        # Detect workspace range for this monitor (Niri-specific)
+        # Workspace range of this monitor (Niri and Umbriel)
         wsArgs=""
-        if command -v niri &> /dev/null && niri msg workspaces &> /dev/null; then
-            wsFirst=$(niri msg -j workspaces 2>/dev/null | jq -r "[.[] | select(.output == \"$focusedMonitor\") | .idx] | sort | first // empty" 2>/dev/null)
-            wsLast=$(niri msg -j workspaces 2>/dev/null | jq -r "[.[] | select(.output == \"$focusedMonitor\") | .idx] | sort | last // empty" 2>/dev/null)
-            if [ -n "$wsFirst" ] && [ -n "$wsLast" ]; then
-                wsArgs="--start-workspace $wsFirst --end-workspace $wsLast"
-            fi
+        read -r wsFirst wsLast <<< "$(compositor_workspace_range "$focusedMonitor")"
+        if [ -n "$wsFirst" ] && [ -n "$wsLast" ]; then
+            wsArgs="--start-workspace $wsFirst --end-workspace $wsLast"
         fi
         "$SCRIPT_DIR/../switchwall.sh" --image "$downloadPath" --monitor "$focusedMonitor" $wsArgs
     else

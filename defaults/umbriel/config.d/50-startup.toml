@@ -1,0 +1,17 @@
+# 50 — Programs started with the session (a change needs a restart)
+#
+# iNiR itself is not here: inir.service starts it with umbriel.service (`inir service enable` wires it), so a crash
+# restarts the shell and logging out stops it. Adding it here too would give you two shells.
+
+[general]
+autostart = [
+  # KDE/Qt apps read the menu prefix from the rebuilt sycoca database.
+  "kbuildsycoca6",
+  # Clipboard history: text goes through inir-accel, which strips browser markup; images through iNiR's store.
+  # Mod+V opens it.
+  "wl-paste --no-newline --type text --watch ~/.config/quickshell/inir/scripts/lib/accel-run clipboard-store",
+  "wl-paste --type image --watch ~/.config/quickshell/inir/scripts/clipboard-image-store.sh",
+  # >>> inir-managed-autostart >>>
+  # Managed by iNiR Settings — add or remove entries via Settings › Autostart.
+  # <<< inir-managed-autostart <<<
+]

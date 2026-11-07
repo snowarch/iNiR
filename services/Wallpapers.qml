@@ -198,6 +198,9 @@ Singleton {
         interval: 80
         repeat: false
         onTriggered: {
+            // A Niri config edit: Umbriel's overview draws its own backdrop.
+            if (!CompositorService.niriNative)
+                return
             if (backdropShadowSyncProcess.running) {
                 root._backdropShadowSyncQueued = true
                 return

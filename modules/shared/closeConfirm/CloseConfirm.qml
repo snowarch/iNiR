@@ -83,10 +83,10 @@ Scope {
                 return;
 
             // Try cached activeWindow first, fallback to niri query
-            const win = NiriService.activeWindow;
+            const win = NiriService.activeWindow ?? (CompositorService.niriNative ? null : NiriService.windows.find(w => w.is_focused));
             if (win?.id) {
                 root.processWindow(win);
-            } else {
+            } else if (CompositorService.niriNative) {
                 focusedWindowProc.running = true;
             }
         }
@@ -118,7 +118,10 @@ Scope {
             return;
         }
         // Use niri msg directly - more reliable than socket IPC for some apps
-        Quickshell.execDetached(["niri", "msg", "action", "close-window", "--id", String(win.id)]);
+        if (CompositorService.niriNative)
+            Quickshell.execDetached(["niri", "msg", "action", "close-window", "--id", String(win.id)]);
+        else
+            NiriService.closeWindow(win.id);
     }
 
     function confirmClose(): void {

@@ -1,0 +1,37 @@
+# iNiR — Umbriel configuration
+#
+# Umbriel (https://github.com/noctalia-dev/umbriel) is the second compositor iNiR runs on, next to Niri. The shell
+# finds out which one it runs under by itself; this file is what `./setup install --compositor umbriel` (or
+# `inir compositor add umbriel`) puts in ~/.config/umbriel/ for it.
+#
+# Every file below is iNiR's and is refreshed by `inir update` unless you changed it (then yours is kept).
+# Put your own settings in config.d/90-user-extra.toml: it is never touched and loads last, so it wins.
+#
+#   10  Input and cursor
+#   20  Layout, gaps, look and the overview
+#   30  Window rules
+#   40  Session environment
+#   50  Programs started with the session
+#   70  Key bindings (iNiR shell + window management)
+#   80  Layer rules for iNiR's surfaces
+#   90  Your additions (optional)
+#
+# Changes apply live. Reference: https://docs.noctalia.dev/umbriel/  ·  check a file: umbriel config validate
+
+[include]
+files = [
+  "config.d/10-input.toml",
+  "config.d/20-layout.toml",
+  "config.d/30-window-rules.toml",
+  "config.d/40-environment.toml",
+  "config.d/50-startup.toml",
+  "config.d/70-binds.toml",
+  "config.d/80-layer-rules.toml",
+]
+
+[include.optional]
+files = [
+  # Colours iNiR writes from your wallpaper and theme (borders, overview, tab bar), refreshed on every theme change.
+  "~/.local/state/quickshell/user/generated/umbriel-colors.toml",
+  "config.d/90-user-extra.toml",
+]
