@@ -45,7 +45,7 @@ Singleton {
         writeFlightGuard.restart();
     }
 
-    function _applyNestedKey(nestedKey, value) {
+    function _applyNestedKey(nestedKey, value, quiet) {
         let keys = [];
         if (Array.isArray(nestedKey)) {
             keys = nestedKey;
@@ -136,7 +136,7 @@ Singleton {
         for (let i = 0; i < keys.length - 1; ++i) {
             if (!obj[keys[i]] || typeof obj[keys[i]] !== "object") {
                 if (root._isQtObject(obj) && !(keys[i] in obj))
-                    return root._undeclared(keys, i);
+                    return root._undeclared(keys, i, quiet);
                 obj[keys[i]] = {};
             }
             obj = obj[keys[i]];
@@ -144,7 +144,7 @@ Singleton {
 
         const lastKey = keys[keys.length - 1];
         if (root._isQtObject(obj) && !(lastKey in obj))
-            return root._undeclared(keys, keys.length - 1);
+            return root._undeclared(keys, keys.length - 1, quiet);
         const isPlainObject = convertedValue !== null && typeof convertedValue === "object" && !Array.isArray(convertedValue);
         if (isPlainObject && root._isQtObject(obj[lastKey])) {
             root._assignObjectInto(obj[lastKey], convertedValue);
@@ -154,11 +154,12 @@ Singleton {
         return true;
     }
     // A write to a key the schema does not declare: said once with the whole path (the caller writes it in the wrong
-    // place: a widget's own keys go through DesktopWidgetLayout), never thrown.
+    // place: a widget's own keys go through DesktopWidgetLayout), never thrown. A preview of one passes quietly: the
+    // drag's control shows the value and its write on release goes where that key lives.
     property var _undeclaredSaid: ({})
-    function _undeclared(keys, at): bool {
+    function _undeclared(keys, at, quiet): bool {
         const path = keys.join(".");
-        if (!root._undeclaredSaid[path]) {
+        if (!quiet && !root._undeclaredSaid[path]) {
             root._undeclaredSaid[path] = true;
             console.warn("[Config] " + path + ": the schema declares no " + keys.slice(0, at + 1).join(".") + ", the write is dropped");
         }
@@ -212,7 +213,7 @@ Singleton {
     // revision stays (every Settings row re-reads on a revision). The drag ends with setNestedValue.
     function previewNestedValue(nestedKey, value) {
         root._previewedKeys[Array.isArray(nestedKey) ? nestedKey.join(".") : String(nestedKey ?? "")] = true;
-        _applyNestedKey(nestedKey, value);
+        _applyNestedKey(nestedKey, value, true);
     }
 
     // Batch multiple key-value pairs, emitting configChanged only once.
