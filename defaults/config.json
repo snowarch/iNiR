@@ -1647,7 +1647,7 @@
         },
         "appearance": {
             "controlPlate": "none",
-            "texture": "solid",
+            "texture": "flat",
             "afterglow": {
                 "grade": "dusk",
                 "atmosphere": 60,
