@@ -19,7 +19,8 @@ Options:
   --skip-files        Skip config file installation
   --skip-quickshell   Skip Quickshell config sync
   --skip-niri         Skip Niri config installation
-  --compositor NAME   niri (default), umbriel or both: which compositors iNiR is set up for
+  --compositor NAME   niri, umbriel or both: which compositors iNiR is set up for (niri alone leaves Umbriel
+                      as it is; without it, Umbriel gets iNiR when installed or first logged into)
   --skip-backup       Skip backup of existing configs
   --no-audio          Skip audio dependencies
   --no-toolkit        Skip toolkit dependencies (ydotool, backlight)
@@ -48,7 +49,7 @@ SKIP_ALLSETUPS=${SKIP_ALLSETUPS:-false}
 SKIP_ALLFILES=${SKIP_ALLFILES:-false}
 SKIP_QUICKSHELL=false
 SKIP_NIRI=false
-INSTALL_COMPOSITOR="${INSTALL_COMPOSITOR:-niri}"
+INSTALL_COMPOSITOR="${INSTALL_COMPOSITOR:-}"
 SKIP_BACKUP=false
 SKIP_SYSUPDATE=false
 

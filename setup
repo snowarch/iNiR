@@ -292,11 +292,10 @@ ensure_user_inir_service_enabled() {
 
     [[ -f "$service_path" ]] || return 1
     # Wired under both compositors iNiR runs on as soon as either is installed: the one picked at login starts it,
-    # even one installed after iNiR.
+    # even one installed after iNiR. Only Niri's when the person picked Niri alone (scripts/lib/compositor.sh).
     local compositors=() unit
-    for unit in niri.service umbriel.service; do
-        systemctl --user cat "$unit" &>/dev/null && { compositors=(niri.service umbriel.service); break; }
-    done
+    source "$REPO_ROOT/scripts/lib/compositor.sh" 2>/dev/null || return 1
+    mapfile -t compositors < <(compositor_units)
     [[ ${#compositors[@]} -gt 0 ]] || return 1
 
     local systemd_user_dir="${XDG_CONFIG_HOME}/systemd/user"
@@ -2927,11 +2926,12 @@ run_update() {
 
     # Umbriel: iNiR's config there is refreshed like any other default (files the person changed are kept); with
     # Umbriel installed and no config yet, or the early port's one, iNiR's goes in so the session starts whole.
+    # Nothing when the person picked Niri alone.
     if source "$REPO_ROOT/scripts/lib/compositor.sh" 2>/dev/null; then
         local _umbriel_state
         _umbriel_state="$(compositor_umbriel_config_state "${XDG_CONFIG_HOME}/umbriel")"
-        if [[ "$_umbriel_state" == inir || "$_umbriel_state" == old ]] \
-            || { [[ "$_umbriel_state" == none ]] && command -v umbriel >/dev/null 2>&1; }; then
+        if compositor_umbriel_wanted && { [[ "$_umbriel_state" == inir || "$_umbriel_state" == old ]] \
+            || { [[ "$_umbriel_state" == none ]] && command -v umbriel >/dev/null 2>&1; }; }; then
             if compositor_install_umbriel_config "$REPO_ROOT/defaults/umbriel" "${XDG_CONFIG_HOME}/umbriel"; then
                 case "$COMPOSITOR_CONFIG_RESULT" in
                     installed) tui_success "Umbriel config installed" ;;

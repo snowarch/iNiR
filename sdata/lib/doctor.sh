@@ -38,14 +38,10 @@ doctor_detect_compositor_service() {
     fi
 
     # Both compositors iNiR runs on, one per line, as soon as either is installed
-    # (the one installed later starts the shell too).
-    local unit
-    for unit in niri.service umbriel.service; do
-        systemctl --user cat "$unit" &>/dev/null || continue
-        printf '%s\n' niri.service umbriel.service
-        return 0
-    done
-    return 1
+    # (the one installed later starts the shell too); only Niri's when the person
+    # picked Niri alone.
+    source "${REPO_ROOT:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)}/scripts/lib/compositor.sh" 2>/dev/null || return 1
+    compositor_units
 }
 
 ###############################################################################

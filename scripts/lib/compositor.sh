@@ -38,6 +38,68 @@ compositor_max_resolution() {
     esac
 }
 
+# ── Which compositors iNiR sets itself up on ──────────────────────────────────────────────────────────────────────
+# The person's pick, the file "compositor" in iNiR's config dir: "niri" (Umbriel is left as it is: no config,
+# the shell does not start there), "umbriel" or "both". No file means nobody asked (an update from v2.33, an
+# unattended install): Niri, and Umbriel too the moment it is installed or logged into.
+compositor_choice_file() {
+    local h="${XDG_CONFIG_HOME:-$HOME/.config}" d
+    # resolve_inir_config_dir's rule (sdata/lib/environment-variables.sh, inir-cli's Env.configDir)
+    if [[ -L "$h/illogical-impulse" && -d "$h/inir" ]]; then d="$h/inir"
+    elif [[ -d "$h/illogical-impulse" ]]; then d="$h/illogical-impulse"
+    else d="$h/inir"
+    fi
+    echo "${DOTS_CORE_CONFDIR:-$d}/compositor"
+}
+
+compositor_choice() {
+    local v; v="$(head -n1 "$(compositor_choice_file)" 2>/dev/null | tr -d '[:space:]')"
+    case "$v" in niri|umbriel|both) echo "$v" ;; esac
+}
+
+compositor_set_choice() {
+    case "$1" in niri|umbriel|both) ;; *) return 2 ;; esac
+    local f; f="$(compositor_choice_file)"
+    mkdir -p "$(dirname "$f")" && printf '%s\n' "$1" > "$f"
+}
+
+# Whether iNiR may set itself up on Umbriel (config, colours, the shell at login).
+compositor_umbriel_wanted() { [[ "$(compositor_choice)" != niri ]]; }
+
+# The units inir.service is wired under, one per line: both compositors as soon as either is installed (one added
+# later starts the shell too), only Niri's when the person picked Niri alone. Nothing when neither is installed.
+compositor_units() {
+    local unit
+    for unit in niri.service umbriel.service; do
+        systemctl --user cat "$unit" &>/dev/null || continue
+        echo niri.service
+        compositor_umbriel_wanted && echo umbriel.service
+        return 0
+    done
+    return 1
+}
+
+# A session start under Umbriel: the first login with no config of their own gets iNiR's (the early port's one is
+# moved aside), and every login brings their Niri keys and keyboard along, so nothing has to be typed. Their own
+# config is never touched. Quiet; the launcher runs it beside the shell.
+compositor_umbriel_session_start() {
+    local src="$1" dest="${XDG_CONFIG_HOME:-$HOME/.config}/umbriel"
+    [[ "$(compositor_name)" == umbriel ]] && compositor_umbriel_wanted || return 0
+    case "$(compositor_umbriel_config_state "$dest")" in
+        foreign) return 0 ;;
+        none|old)
+            compositor_install_umbriel_config "$src" "$dest" || return 1
+            compositor_sync_umbriel_from_niri "$dest" || true
+            # Umbriel started on its built-in config: it loads and watches iNiR's from now on.
+            umbriel config-replace "$dest/config.toml" >/dev/null 2>&1 || true
+            # The colours file comes with the next theme change; write it now from the current colours.
+            local colors="${src%/defaults/umbriel}/scripts/colors/modules/15-umbriel.sh"
+            [[ -f "$colors" ]] && bash "$colors" >/dev/null 2>&1 || true
+            ;;
+        inir) compositor_sync_umbriel_from_niri "$dest" || true ;;
+    esac
+}
+
 # ── Umbriel's config ──────────────────────────────────────────────────────────────────────────────────────────────
 # Puts iNiR's Umbriel config (defaults/umbriel) in ~/.config/umbriel. A file of ours the person never changed is
 # refreshed; one they changed is kept (`.inir-sums` remembers what we wrote); config.d/90-user-extra.toml is theirs

@@ -42,15 +42,11 @@ iNiR keeps its Niri settings in `~/.config/niri/config.d/`:
 
 ### Add it
 
-On a machine that already has iNiR:
+With iNiR installed, install Umbriel from your distribution (CachyOS has it; on Arch it is `umbriel-git` in the AUR; on Fedora, Terra's `umbriel-nightly`; elsewhere [its guide](https://docs.noctalia.dev/umbriel/installation/)), log out and pick **Umbriel** at the login screen. Nothing else: on that first login iNiR puts its config in `~/.config/umbriel/`, brings your Niri keybinds and keyboard layout along, and the shell starts as it does on Niri. A config of your own in `~/.config/umbriel/` is never touched.
 
-```
-inir compositor add umbriel
-```
+`inir compositor add umbriel` does the same from a terminal, and installs Umbriel too where iNiR knows how (CachyOS's repository, then the AUR on Arch; Terra on Fedora).
 
-It installs Umbriel where iNiR knows how (CachyOS's repository, then the AUR on Arch; Terra on Fedora), puts iNiR's config in `~/.config/umbriel/` and starts the shell with Umbriel's session. Log out and pick **Umbriel** at the login screen. On other distributions, install Umbriel by [its guide](https://docs.noctalia.dev/umbriel/installation/) first and run the same command.
-
-A new install can ask for it from the start: `./setup install --compositor umbriel` (or `both`). `inir compositor` alone shows which compositors are installed and which start iNiR.
+The installer asks where iNiR runs. **Niri and Umbriel** sets iNiR up on both (it installs Umbriel when it is missing); **Niri only**, offered when Umbriel is already installed, leaves Umbriel exactly as it is: no config, and the shell does not start there. Without a terminal to ask, `./setup install --compositor niri|umbriel|both` picks; with none of them, Umbriel gets iNiR the first time you log into it. `inir compositor remove umbriel` takes iNiR off Umbriel later, `inir compositor add umbriel` brings it back, and `inir compositor` alone shows what is installed, what starts iNiR and your pick.
 
 ### Where Umbriel settings live
 
@@ -66,9 +62,9 @@ A new install can ask for it from the start: `./setup install --compositor umbri
 | `config.d/80-layer-rules.toml` | Layer rules for the shell |
 | `config.d/90-user-extra.toml` | Your own settings. Updates never touch it, and it loads last |
 
-Your Niri keybinds (including the ones you added or removed), keyboard layout and key repeat come along: iNiR writes them to `config.d/60-from-niri.toml` when Umbriel is added and on every update, and `inir compositor sync` does it again after you change them in Niri.
+Your Niri keybinds (including the ones you added or removed), keyboard layout and key repeat come along: iNiR writes them to `config.d/60-from-niri.toml` when Umbriel is added, at every Umbriel login and on every update, and `inir compositor sync` does it again after you change them in Niri.
 
-`inir update` refreshes iNiR's files and keeps any file you changed, and puts them in place by itself when Umbriel is installed and has no config yet. A config from the early iNiR-Umbriel port no longer loads in today's Umbriel: it is moved whole to `~/.config/umbriel.inir-old-<date>` and replaced. iNiR starts with either compositor as soon as one is installed, so one added later needs no other step. Colours for borders, the overview and tab bars follow your theme: iNiR writes them to `~/.local/state/quickshell/user/generated/umbriel-colors.toml`, which the config loads. Check a change with `umbriel config validate`.
+`inir update` refreshes iNiR's files and keeps any file you changed, and puts them in place by itself when Umbriel is installed and has no config yet. A config from the early iNiR-Umbriel port no longer loads in today's Umbriel: it is moved whole to `~/.config/umbriel.inir-old-<date>` and replaced. iNiR starts with either compositor as soon as one is installed (Niri alone if that was your pick), so one added later needs no other step. Colours for borders, the overview and tab bars follow your theme: iNiR writes them to `~/.local/state/quickshell/user/generated/umbriel-colors.toml`, which the config loads. Check a change with `umbriel config validate`.
 
 Keys Umbriel adds: **Mod+W** tabs a column, **Mod+P** pins a window, **Mod+Shift+Tab** cycles the workspace layout, **Mod+`** shows the scratchpad and **Mod+Shift+`** sends a window there.
 

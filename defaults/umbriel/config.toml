@@ -1,8 +1,8 @@
 # iNiR — Umbriel configuration
 #
 # Umbriel (https://github.com/noctalia-dev/umbriel) is the second compositor iNiR runs on, next to Niri. The shell
-# finds out which one it runs under by itself; this file is what `./setup install --compositor umbriel` (or
-# `inir compositor add umbriel`) puts in ~/.config/umbriel/ for it.
+# finds out which one it runs under by itself; this file is what your first Umbriel login with iNiR installed (or
+# `inir compositor add umbriel`, or the installer) puts in ~/.config/umbriel/ for it.
 #
 # Every file below is iNiR's and is refreshed by `inir update` unless you changed it (then yours is kept).
 # Put your own settings in config.d/90-user-extra.toml: it is never touched and loads last, so it wins.

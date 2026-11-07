@@ -175,7 +175,7 @@ Other:
   completions <bash|zsh|fish|install>
   bind [--add|--remove|--list|--examples] <keys> <call…>   Niri keybinds for any inir call
   service <install|uninstall|enable|disable|start|stop|restart|status|logs>
-  compositor [status|add <niri|umbriel>|sync]   Which compositors iNiR runs on here; add Umbriel next to Niri
+  compositor [status|add <niri|umbriel>|remove umbriel|sync]   Which compositors iNiR runs on here
   repair, path, settings-window
 EOF
 }
@@ -2221,15 +2221,10 @@ is_inir_service_enabled() {
 detect_compositor_service() {
     # Both compositors iNiR runs on, one unit per line, as soon as either is
     # installed: the shell is wired under each, so the one picked at login starts
-    # it, even one installed after iNiR.  Never graphical-session.target or
-    # another desktop's unit.
-    local unit
-    for unit in niri.service umbriel.service; do
-        systemctl --user cat "$unit" &>/dev/null || continue
-        printf '%s\n' niri.service umbriel.service
-        return 0
-    done
-    return 1
+    # it, even one installed after iNiR; only Niri's when the person picked Niri
+    # alone.  Never graphical-session.target or another desktop's unit.
+    source_compositor_helper || return 1
+    compositor_units
 }
 
 start_inir_service_if_enabled() {
@@ -3122,6 +3117,11 @@ run_compositor_command() {
             local running unit name state wired
             running="$(compositor_name)"
             printf 'Running now: %s\n' "${running:-none iNiR drives (start Niri or Umbriel)}"
+            case "$(compositor_choice)" in
+                niri) echo "Your pick: Niri alone; Umbriel is left as it is ('inir compositor add umbriel' changes it)" ;;
+                umbriel|both) echo "Your pick: Niri and Umbriel" ;;
+                *) echo "Your pick: none yet; iNiR sets itself up on Umbriel the first time you log into it" ;;
+            esac
             for name in niri umbriel; do
                 unit="$name.service"
                 if ! command -v "$name" >/dev/null 2>&1; then
@@ -3137,9 +3137,10 @@ run_compositor_command() {
             done
             case "$(compositor_umbriel_config_state)" in
                 inir) echo "Umbriel config: iNiR's, in ~/.config/umbriel" ;;
-                old) echo "Umbriel config: the early iNiR-Umbriel port's, which today's Umbriel refuses: run 'inir compositor add umbriel'" ;;
+                old) echo "Umbriel config: the early iNiR-Umbriel port's, which today's Umbriel refuses: replaced at your next Umbriel login, or now with 'inir compositor add umbriel'" ;;
                 foreign) echo "Umbriel config: your own (iNiR's is in $config_dir/defaults/umbriel)" ;;
-                none) command -v umbriel >/dev/null 2>&1 && echo "Umbriel config: none yet: run 'inir compositor add umbriel'" ;;
+                none) command -v umbriel >/dev/null 2>&1 && compositor_umbriel_wanted \
+                    && echo "Umbriel config: none yet; iNiR's goes in at your first Umbriel login" ;;
             esac
             ;;
         sync)
@@ -3156,6 +3157,7 @@ run_compositor_command() {
             case "$which" in
                 umbriel)
                     compositor_install_umbriel_package || return 1
+                    compositor_set_choice both
                     resolve_config_dir
                     if ! compositor_install_umbriel_config "$config_dir/defaults/umbriel"; then
                         echo "ERROR: could not write ~/.config/umbriel" >&2
@@ -3177,6 +3179,7 @@ run_compositor_command() {
                         echo "Niri is not installed: './setup install' installs it with iNiR." >&2
                         return 1
                     fi
+                    [[ "$(compositor_choice)" == umbriel ]] && compositor_set_choice both
                     ;;
                 *)
                     echo "Usage: inir compositor add <niri|umbriel>" >&2
@@ -3188,11 +3191,24 @@ run_compositor_command() {
             fi
             echo "Log out and pick ${which^} at the login screen."
             ;;
+        remove)
+            if [[ "${1:-}" != umbriel ]]; then
+                echo "Usage: inir compositor remove umbriel (Niri is where iNiR always runs)" >&2
+                return 2
+            fi
+            # Umbriel left as it is: the shell no longer starts there, iNiR stops writing its config. Files stay.
+            compositor_set_choice niri || return 1
+            rm -f "$systemd_user_dir/umbriel.service.wants/inir.service"
+            command -v systemctl >/dev/null 2>&1 && systemctl --user daemon-reload >/dev/null 2>&1
+            echo "iNiR no longer starts on Umbriel or writes its config ('inir compositor add umbriel' brings it back)."
+            [[ "$(compositor_umbriel_config_state)" == inir ]] \
+                && echo "iNiR's Umbriel config is still in ~/.config/umbriel; delete it to get Umbriel's own back."
+            ;;
         -h|--help|help)
-            echo "Usage: inir compositor [status|add <niri|umbriel>]"
+            echo "Usage: inir compositor [status|add <niri|umbriel>|remove umbriel|sync]"
             ;;
         *)
-            echo "Usage: inir compositor [status|add <niri|umbriel>]" >&2
+            echo "Usage: inir compositor [status|add <niri|umbriel>|remove umbriel|sync]" >&2
             return 2
             ;;
     esac
@@ -4493,6 +4509,10 @@ case "$command_name" in
             check_qs_abi
             apply_qt_runtime_env          # import Niri-owned session env if needed
             wait_for_wayland_socket       # validate the exact Niri-owned socket
+            # Under Umbriel: iNiR's config on the first login, the person's Niri keys on every one, beside the shell.
+            if [[ -n "${UMBRIEL_SOCKET:-}" ]] && source_compositor_helper; then
+                compositor_umbriel_session_start "$config_dir/defaults/umbriel" </dev/null >/dev/null 2>&1 &
+            fi
             exec "$(shell_exec_bin)" -n -p "$config_dir"
         fi
 
