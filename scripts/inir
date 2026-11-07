@@ -3188,6 +3188,13 @@ run_compositor_command() {
 }
 
 cleanup_stale_wants_links() {
+    # The early iNiR-Umbriel port pinned the shell to Niri with a drop-in (Requisite=niri.service): under Umbriel
+    # systemd then refuses to start it ("Dependency failed"). The shipped unit names both compositors itself.
+    local pin="$systemd_user_dir/inir.service.d/compositor.conf"
+    if [[ -f "$pin" ]] && grep -q '^Requisite=niri.service' "$pin"; then
+        rm -f "$pin"
+    fi
+
     # Remove inir.service wants links from targets it should NOT be wired to.
     # Previous versions used WantedBy=graphical-session.target which caused
     # inir to start under any DE.  Remove that, and only keep the link if it
