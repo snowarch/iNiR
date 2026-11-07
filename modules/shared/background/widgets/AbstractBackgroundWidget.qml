@@ -857,14 +857,23 @@ AbstractWidget {
     property string facePart: DesktopWidgetRegistry.entry(root.configEntryName)?.face ?? ""
     property string printPart: ""
     property string printKey: ""
-    readonly property string faceUrl: root.facePart.length > 0 ? Plugins.part(Plugins.active, "widgetFace." + root.facePart)
+    readonly property string familyFaceUrl: root.facePart.length > 0 ? Plugins.part(Plugins.active, "widgetFace." + root.facePart)
         : root.printPart.length > 0 && FamilyStyle.facePrints[root.printKey] ? Plugins.part(Plugins.active, "designFace") : ""
-    readonly property bool hasFamilyFace: root.faceUrl.length > 0
+    readonly property bool hasFamilyFace: root.familyFaceUrl.length > 0
+    // Which of the family's face designs draws it (its own, or one of `faces`: Prism in iRiS), and that design's face.
+    readonly property string familyFaceDesign: root.familyDesign ? (root._designResolved.wear || DesktopWidgetDesign.faceDesign) : ""
+    readonly property string wornFaceUrl: root.familyFaceDesign.length > 0 && root.familyFaceDesign !== DesktopWidgetDesign.faceDesign
+        ? DesktopWidgetDesign.partOf(root.configEntryName, root.familyFaceDesign) : ""
+    readonly property string faceUrl: root.wornFaceUrl.length > 0 ? root.wornFaceUrl : root.familyFaceUrl
     readonly property bool faceOnly: DesktopWidgetRegistry.entry(root.configEntryName)?.faceOnly ?? false
     readonly property var designChoices: {
         const list = []
         const spec = DesktopWidgetDesign.spec
         if (root.hasFamilyFace && spec.face) list.push({ value: spec.face, icon: "auto_awesome", label: Translation.tr(spec.faceLabel) })
+        for (const entry of DesktopWidgetDesign.faceDesigns) {
+            if (root.hasFamilyFace && DesktopWidgetDesign.drawsIn(root.configEntryName, entry.value))
+                list.push({ value: entry.value, icon: entry.glyph ?? "auto_awesome", label: Translation.tr(entry.label) })
+        }
         if (!spec.face || !root.faceOnly) list.push({ value: "material", icon: "widgets", label: Translation.tr("Material") })
         if (DesktopWidgetDesign.supports(root.configEntryName)) {
             list.push({ value: "instrument", icon: "avg_pace", label: Translation.tr("iNstrument") })
@@ -872,9 +881,10 @@ AbstractWidget {
         }
         return list
     }
-    readonly property string widgetDesign: root.familyDesign ? DesktopWidgetDesign.faceDesign
+    readonly property string widgetDesign: root.familyDesign ? root.familyFaceDesign
         : root.widgetSharedDesign === "individual" ? "material" : root.widgetSharedDesign
-    readonly property bool widgetDesignShared: root.widgetDesign === DesktopWidgetDesign.current
+    // A widget the shared design has nothing for follows it all the same (it keeps the family's face meanwhile).
+    readonly property bool widgetDesignShared: root.widgetDesign === DesktopWidgetDesign.current || root._designResolved.fallback === true
     readonly property bool widgetDesignMatchable: !root.widgetDesignShared || DesktopWidgetDesign.exceptionCount > 0
     function useDesignEverywhere(): void { DesktopWidgetDesign.apply(root.widgetDesign) }
     function pickDesign(value: string): void {

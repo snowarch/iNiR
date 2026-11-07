@@ -93,7 +93,13 @@ QtObject {
     }
     function closing(widget: string, plate: bool): var {
         const designs = [["auto", "Same as every widget"]]
-        if (root.faced.includes(widget)) designs.push([DesktopWidgetDesign.faceDesign, DesktopWidgetDesign.spec.faceLabel])
+        if (root.faced.includes(widget)) {
+            designs.push([DesktopWidgetDesign.faceDesign, DesktopWidgetDesign.spec.faceLabel])
+            for (const entry of DesktopWidgetDesign.faceDesigns) {
+                if (DesktopWidgetDesign.drawsIn(widget, entry.value))
+                    designs.push([entry.value, entry.label, entry.glyph])
+            }
+        }
         designs.push(["material", "Material"])
         if (DesktopWidgetDesign.supports(widget)) designs.push(["instrument", "iNstrument"], ["readout", "Readout"])
         const out = [
@@ -222,7 +228,8 @@ QtObject {
         return root.row(widget, option.key, option.label, option.type, option.default, extra)
     }
     // A manifest's `when`: "face", "material", "plain", a name from its `conditions`, { key: value or values }, { key:
-    // { above: n } }, { key: { is: value, otherwise: value while unset } }, a list (all of them), { any: [...] }, { not: ... }.
+    // { above: n } }, { key: { is: value, otherwise: value while unset } }, a list (all of them), { any: [...] }, { not: ... },
+    // { wears: design or designs } (which of the family's face designs draws it).
     function holds(widget: string, when: var): bool {
         if (when === undefined)
             return true
@@ -238,6 +245,8 @@ QtObject {
             return when.any.some(part => root.holds(widget, part))
         if (when.not !== undefined)
             return !root.holds(widget, when.not)
+        if (when.wears !== undefined)
+            return root.face(widget) && [].concat(when.wears).includes(root.resolved(widget).wear)
         return Object.keys(when).every(key => {
             const wanted = when[key]
             const seen = root.effective(widget, key, wanted?.otherwise !== undefined ? wanted.otherwise : root._default(widget, key))

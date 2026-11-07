@@ -47,6 +47,17 @@ QtObject {
         todo: { style: "instrument", instrumentRules: false }
     })
 
+    // Other designs the family's own faces draw (`faces` in `widgetDesign`: value, label, glyph, part): each lists its
+    // faces as parts `<part>.<face>`; a widget it has no face for keeps the family's face.
+    readonly property var faceDesigns: Array.from(root.spec.faces ?? [])
+    function faceDesignOf(design: string): var { return root.faceDesigns.find(entry => entry.value === design) ?? null }
+    function partOf(widget: string, design: string): string {
+        const entry = root.faceDesignOf(design)
+        const face = DesktopWidgetRegistry.entry(widget)?.face ?? ""
+        return entry && face.length > 0 ? Plugins.part(Plugins.active, entry.part + "." + face) : ""
+    }
+    function drawsIn(widget: string, design: string): bool { return root.partOf(widget, design).length > 0 }
+
     function supports(widget: string): bool { return root.instruments[widget] !== undefined }
     function values(widget: string, design: string): var {
         if (design === "instrument") return root.instruments[widget] ?? ({})
@@ -54,12 +65,15 @@ QtObject {
         return ({})
     }
 
-    // What one widget draws: `face` is the family's face, `design` the overlay on the base drawing.
+    // What one widget draws: `face` is the family's face, `design` the overlay on the base drawing, `wear` which of the
+    // family's face designs draws it, `fallback` when the chosen design has nothing for this widget.
     function resolve(widget: string, own: string, hasFace: bool): var {
         const design = root.spec.choices.includes(own) ? own : root.shared
         const overlaid = ["instrument", "readout"].includes(design)
-        if (overlaid && !root.supports(widget) && hasFace) return { face: true, design: "individual" }
-        return { face: root.faceDesign.length > 0 && design === root.faceDesign, design: overlaid ? design : "individual" }
+        if (overlaid && !root.supports(widget) && hasFace) return { face: true, design: "individual", wear: root.faceDesign, fallback: true }
+        const faced = root.faceDesign.length > 0 && (design === root.faceDesign || root.faceDesignOf(design) !== null)
+        const wear = !faced ? "" : design === root.faceDesign || root.drawsIn(widget, design) ? design : root.faceDesign
+        return { face: faced, design: overlaid ? design : "individual", wear: wear, fallback: faced && wear !== design }
     }
 
     // Every place a widget keeps its own value for these keys: its entry, and each screen's.

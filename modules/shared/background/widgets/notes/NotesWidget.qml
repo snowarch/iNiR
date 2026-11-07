@@ -38,6 +38,8 @@ AbstractBackgroundWidget {
     readonly property bool instrument: root.noteStyle === "instrument"
     readonly property bool showRules: root._readConfigKey("showRules") ?? true
     readonly property real cardRadius: root.widgetCardRadius
+    // Where a family face that draws its own head wants the text to start (-1: the family's usual gutter).
+    property real faceTextTop: -1
     property bool _syncingText: false
 
     function _loadPersistedText(): void {
@@ -195,7 +197,7 @@ AbstractBackgroundWidget {
         id: editorFlick
         anchors.fill: parent
         anchors.margins: root.familyFaced ? root.sizeGutter : Math.round(14 * root.scaleFactor)
-        anchors.topMargin: root.familyFaced ? Math.round(root.sizeGutter * 2.75)
+        anchors.topMargin: root.familyFaced ? (root.faceTextTop >= 0 ? Math.round(root.faceTextTop) : Math.round(root.sizeGutter * 2.75))
             : noteHeading.visible ? noteHeading.y + noteHeading.height + 10 * root.scaleFactor : anchors.margins
         clip: true
         contentWidth: width
