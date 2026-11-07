@@ -2648,7 +2648,7 @@
             "monochromeIcons": false,
             "screenList": [],
             "activationWatermark": {
-                "enable": true
+                "enable": false
             },
             "desktopPeek": {
                 "hoverPeek": false,

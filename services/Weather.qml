@@ -29,6 +29,12 @@ Singleton {
     // ISO 3166-1 alpha-2, lowercase, "" when the location never resolved.
     // Lets consumers make region-aware choices without geocoding again.
     readonly property string countryCode: location?.countryCode ?? ""
+    // Place names in the language the shell speaks (es_AR -> "es-AR,es,en"), English last.
+    readonly property string placeLanguage: {
+        const code = String(Translation.languageCode || "en").replace("_", "-")
+        const base = code.split("-")[0]
+        return [...new Set([code, base, "en"])].join(",")
+    }
 
     property var data: ({
         uv: "0",
@@ -505,7 +511,7 @@ Singleton {
             if (!root.configCity) {
                 // Reverse geocode to get a nice city name
                 reverseGeocoder.command = ["/usr/bin/curl", "-s", "--max-time", "10",
-                    "https://nominatim.openstreetmap.org/reverse?format=json&lat=" + root.configLat + "&lon=" + root.configLon + "&zoom=10&accept-language=en"];
+                    "https://nominatim.openstreetmap.org/reverse?format=json&lat=" + root.configLat + "&lon=" + root.configLon + "&zoom=10&accept-language=" + root.placeLanguage];
                 reverseGeocoder.running = true;
             } else {
                 root.fetchWeather();
@@ -518,7 +524,7 @@ Singleton {
             console.info("[Weather] Using manual city:", root.redactedLogLocationName(root.configCity));
             const q = encodeURIComponent(root.configCity);
             forwardGeocoder.command = ["/usr/bin/curl", "-s", "--max-time", "10",
-                "https://nominatim.openstreetmap.org/search?format=jsonv2&q=" + q + "&limit=5&addressdetails=1&accept-language=es,en"];
+                "https://nominatim.openstreetmap.org/search?format=jsonv2&q=" + q + "&limit=5&addressdetails=1&accept-language=" + root.placeLanguage];
             forwardGeocoder.running = true;
             return;
         }
@@ -894,7 +900,7 @@ Singleton {
                         console.info("[Weather] GPS location:", root.redactedLogCoordinates(lat, lon));
                         // Reverse geocode for display name
                         reverseGeocoder.command = ["/usr/bin/curl", "-s", "--max-time", "10",
-                            "https://nominatim.openstreetmap.org/reverse?format=json&lat=" + lat + "&lon=" + lon + "&zoom=10&accept-language=en"];
+                            "https://nominatim.openstreetmap.org/reverse?format=json&lat=" + lat + "&lon=" + lon + "&zoom=10&accept-language=" + root.placeLanguage];
                         reverseGeocoder.running = true;
                         return;
                     }
