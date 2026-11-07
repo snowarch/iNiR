@@ -15,8 +15,9 @@ iNiR is now a base with plugins: Material, Waffle and iRiS come from the iNiR Hu
 - **Components with a panel**: a Hub component can bring a surface of its own, worn with the families it names, opened by its own IPC and keeping its options in its own file, so adding one never touches a family or your settings.
 - **Prebuilt runtime**: the shell runs on qs-rs, Quickshell rebuilt in Rust with its own Qt, and inir-accel takes over the shell's helpers; both arrive prebuilt and checked, and Quickshell stays as the fallback.
 - **The `inir` command**: `inir doctor`, `inir update`, `inir deps` and `inir hub` in one compiled command with shell completions; the old launcher stays as the fallback.
+- **Prism**: iRiS's new Settings, the one it opens with: a dark music app of pages where every setting is a numbered line, each page under a hero of white light broken into its spectrum. Every area of iRiS Settings is there, long pages read one group at a time, and the island at the bottom undoes what you changed (Ctrl+Z). Prism also dresses the desktop widgets, each its own form, with a shadow you can raise and none by default.
 - **Designs for iRiS**: a Design is another look over the same engine, picked in Settings › Appearance; AIRISU, the first one, is coloured lacquer with its own Island, lock, Spotlight, notifications, OSD, menus and widgets.
-- **Desktop edit mode**: arrange widgets on a card with magnets, guides and a shelf, save whole desktops and pick small, medium or large, in iRiS and in Material.
+- **Desktop edit mode**: arrange widgets on a card with magnets, guides and a shelf, save whole desktops and pick small, medium or large, in iRiS and in Material; Material's notes, calendar, monitors and the other content widgets still take any width and height, as they did in v2.33.
 - **New widgets**: lyrics, palette, photo, world clock and vitals, and every widget says something useful when it has nothing to show.
 - **Island**: three Island designs, Halo, Ledger and Tiles, new bubbles for weather, sound, mic, tools and media, and a shelf that keeps what you copy, capture and drop.
 - **Live window previews**: the overview, Orbit, the dock, Alt+Tab, taskbars and task view show the real windows moving instead of old stills.
@@ -34,11 +35,11 @@ iNiR is now a base with plugins: Material, Waffle and iRiS come from the iNiR Hu
 - `inir update` brings the whole new iNiR: the base, the families from the Hub, the prebuilt runtime, inir-accel and the `inir` command. Your config and edits stay, and a version that won't load is rolled back to the one you had.
 - Migrations are gone: the update itself sets right whatever an older iNiR left behind, so `inir migrate` and `./setup migrate` retired with them. Nobody will miss numbered shell scripts.
 - The update also installs what `inir doctor` now checks for: plasma-integration, a colour emoji font and the shell's fonts.
-- iRiS Settings is rebuilt: every option lives in it with a live scene beside each group, search reads what you mean, and it opens as Classic, Folio, Pocket or Drawer; the history key in its header brings back the v2.33 design over every new page.
+- iRiS Settings is rebuilt: every option lives in it, search reads what you mean, and it opens as Prism, Classic or Folio (Home › Settings window › Layout); the v2.33 design comes back over every new page from the same row. A Pocket or Drawer you had picked opens as Classic.
 - Under iRiS, Material's Settings pages keep only what iRiS Settings has no row for.
 - Notifications can arrive quietly, per app, from iRiS Settings, which also picks speakers, mic and each app's volume.
 - Only the family you use compiles at start, and the wallpaper shows up with the first frame.
-- The shell's process is `inir-shell`, out of reach of ananicy's `qs` rule.
+- The shell's process is `inir-shell`, out of reach of ananicy's `qs` rule, and its windows carry their own app id: Settings shows in docks and taskbars as iNiR Settings with iNiR's mark, and the update fixes a window rule you wrote for the old id.
 - A live wallpaper pauses under a maximized window, and a web wallpaper runs on every monitor.
 - Debian builds niri from its v26.04 tag, with its session files.
 - The docs live at inir.space/docs.
