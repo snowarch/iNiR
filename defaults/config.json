@@ -1750,6 +1750,7 @@
             "previews": true,
             "customize": "shell",
             "themeColoursOnly": false,
+            "settingsPanel": "prism",
             "settingsHost": "overlay",
             "settingsLayout": "classic",
             "settingsOriginal": false,
