@@ -280,12 +280,25 @@ function _onePlace(obj) {
     return changed;
 }
 
+// Choices withdrawn: a file still holding one takes its successor. [path, gone values, successor]
+// iRiS Settings' Pocket and Drawer layouts went (his 11-07, "no son óptimos").
+const withdrawn = [
+    ["iris.appearance.settingsLayout", ["pocket", "drawer"], "classic"],
+];
+function _withdrawn(obj) {
+    let changed = false;
+    for (const [path, gone, successor] of withdrawn)
+        if (gone.includes(_get(obj, path))) { _set(obj, path, successor); changed = true; }
+    return changed;
+}
+
 function migrate(obj) {
     if (!_isObject(obj)) return false;
     const fromV2 = Number(_get(obj, "iris.appearance.factoryLook") ?? 0) < 1;
     let changed = _factoryLook(obj);
     changed = _widgetSizes(obj, fromV2) || changed;
     changed = _onePlace(obj) || changed;
+    changed = _withdrawn(obj) || changed;
     for (const [from, to] of moves) {
         const value = _get(obj, from);
         if (value === undefined) continue;
