@@ -131,21 +131,38 @@ Singleton {
 
         let obj = root.options;
 
-        // Traverse to parent object
+        // Traverse to parent object. A schema object holds only what it declares: a key it lacks has no place, and
+        // assigning it threw, which also cut a batch (setNestedValues) short at that key. It is named and skipped.
         for (let i = 0; i < keys.length - 1; ++i) {
             if (!obj[keys[i]] || typeof obj[keys[i]] !== "object") {
+                if (root._isQtObject(obj) && !(keys[i] in obj))
+                    return root._undeclared(keys, i);
                 obj[keys[i]] = {};
             }
             obj = obj[keys[i]];
         }
 
         const lastKey = keys[keys.length - 1];
+        if (root._isQtObject(obj) && !(lastKey in obj))
+            return root._undeclared(keys, keys.length - 1);
         const isPlainObject = convertedValue !== null && typeof convertedValue === "object" && !Array.isArray(convertedValue);
         if (isPlainObject && root._isQtObject(obj[lastKey])) {
             root._assignObjectInto(obj[lastKey], convertedValue);
         } else {
             obj[lastKey] = convertedValue;
         }
+        return true;
+    }
+    // A write to a key the schema does not declare: said once with the whole path (the caller writes it in the wrong
+    // place: a widget's own keys go through DesktopWidgetLayout), never thrown.
+    property var _undeclaredSaid: ({})
+    function _undeclared(keys, at): bool {
+        const path = keys.join(".");
+        if (!root._undeclaredSaid[path]) {
+            root._undeclaredSaid[path] = true;
+            console.warn("[Config] " + path + ": the schema declares no " + keys.slice(0, at + 1).join(".") + ", the write is dropped");
+        }
+        return false;
     }
 
     function _isQtObject(v) {
@@ -183,7 +200,7 @@ Singleton {
     function setNestedValue(nestedKey, value) {
         if (root._alreadyHolds(nestedKey, value)) return;
         delete root._previewedKeys[Array.isArray(nestedKey) ? nestedKey.join(".") : String(nestedKey ?? "")];
-        _applyNestedKey(nestedKey, value);
+        if (_applyNestedKey(nestedKey, value) === false) return;
         _applyToMirror(nestedKey, value);
         _recordPendingMutation(nestedKey, value);
         fileWriteTimer.restart();
@@ -206,7 +223,7 @@ Singleton {
         const paths = Object.keys(updates).filter(path => !root._alreadyHolds(path, updates[path]));
         for (let i = 0; i < paths.length; ++i) {
             delete root._previewedKeys[paths[i]];
-            _applyNestedKey(paths[i], updates[paths[i]]);
+            if (_applyNestedKey(paths[i], updates[paths[i]]) === false) continue;
             _applyToMirror(paths[i], updates[paths[i]]);
             _recordPendingMutation(paths[i], updates[paths[i]]);
         }

@@ -1084,6 +1084,10 @@ AbstractWidget {
         root._setOutputValue(key, value)
         _previewSettle.restart()
     }
+    // A preview someone else committed (a sheet row written through DesktopWidgetOptions): let it go once the write lands.
+    function settlePreview(): void {
+        _previewSettle.restart()
+    }
     Timer {
         id: _previewSettle
         interval: 140
