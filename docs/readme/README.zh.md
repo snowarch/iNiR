@@ -5,7 +5,7 @@
 <h1 align="center">iNiR</h1>
 
 <p align="center">
-  为 <a href="https://github.com/YaLTeR/niri">Niri</a> 打造的完整桌面外壳。选一个系列，按你的喜好定制，用一条命令保持更新。
+  为 <a href="https://github.com/YaLTeR/niri">Niri</a> 和 <a href="https://github.com/noctalia-dev/umbriel">Umbriel</a> 打造的完整桌面外壳。选一个系列，按你的喜好定制，用一条命令保持更新。
 </p>
 
 <p align="center">
@@ -66,7 +66,7 @@ cd inir
 ./setup install
 ```
 
-Arch、Fedora、Debian、Ubuntu、Void 和 NixOS。[安装指南](https://inir.space/docs/install/) 列出了每个系统所需的内容。
+Arch、Fedora、Debian、Ubuntu、Void 和 NixOS。[安装指南](https://inir.space/docs/install/) 列出了每个系统所需的内容。它可以运行在 Niri 和 Umbriel 上：[合成器](https://inir.space/docs/compositors/) 说明了如何添加 Umbriel。
 
 ## 更新
 
@@ -100,6 +100,7 @@ iNiR 是一个基础，外加围绕它的各个部分，每个部分都在自己
 - [end-4](https://github.com/end-4/dots-hyprland)：illogical-impulse，iNiR 最初基于的 Hyprland 配置
 - [Quickshell](https://quickshell.outfoxxed.me/)，outfoxxed 制作：框架，以及 qs-rs 所保持兼容的 API
 - [Niri](https://github.com/YaLTeR/niri)，YaLTeR 制作：合成器
+- [Umbriel](https://github.com/noctalia-dev/umbriel)，Noctalia 团队制作：iNiR 运行的另一个合成器
 - [Gakuseei](https://github.com/Gakuseei)：[Ricelin](https://github.com/Gakuseei/Ricelin)，胶囊形的栏以及 washi 和 flame 外观的来源
 - [pctrade/end4-pC](https://github.com/pctrade/end4-pC)：一个值得借鉴的分支
 - 所有[贡献者](https://github.com/snowarch/iNiR/graphs/contributors)以及在 Discord 上参与测试的人

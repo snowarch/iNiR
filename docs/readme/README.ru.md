@@ -5,7 +5,7 @@
 <h1 align="center">iNiR</h1>
 
 <p align="center">
-  Полноценная оболочка рабочего стола для <a href="https://github.com/YaLTeR/niri">Niri</a>. Выберите семейство, настройте его под себя и обновляйте одной командой.
+  Полноценная оболочка рабочего стола для <a href="https://github.com/YaLTeR/niri">Niri</a> и <a href="https://github.com/noctalia-dev/umbriel">Umbriel</a>. Выберите семейство, настройте его под себя и обновляйте одной командой.
 </p>
 
 <p align="center">
@@ -66,7 +66,7 @@ cd inir
 ./setup install
 ```
 
-Arch, Fedora, Debian, Ubuntu, Void и NixOS. В [руководстве по установке](https://inir.space/docs/install/) написано, что нужно каждой из них.
+Arch, Fedora, Debian, Ubuntu, Void и NixOS. В [руководстве по установке](https://inir.space/docs/install/) написано, что нужно каждой из них. Работает в Niri и в Umbriel: как добавить Umbriel, описано на странице [Композиторы](https://inir.space/docs/compositors/).
 
 ## Обновление
 
@@ -100,6 +100,7 @@ iNiR — это основа и части вокруг неё, каждая в 
 - [end-4](https://github.com/end-4/dots-hyprland): illogical-impulse, дотфайлы Hyprland, с которых начался iNiR
 - [Quickshell](https://quickshell.outfoxxed.me/) от outfoxxed: фреймворк и API, которое сохраняет qs-rs
 - [Niri](https://github.com/YaLTeR/niri) от YaLTeR: композитор
+- [Umbriel](https://github.com/noctalia-dev/umbriel) от команды Noctalia: второй композитор, в котором работает iNiR
 - [Gakuseei](https://github.com/Gakuseei): [Ricelin](https://github.com/Gakuseei/Ricelin), откуда пришли панель pill и стили washi и flame
 - [pctrade/end4-pC](https://github.com/pctrade/end4-pC): форк с идеями, которые стоит перенять
 - Все, кто [вносит вклад](https://github.com/snowarch/iNiR/graphs/contributors) и тестирует в Discord

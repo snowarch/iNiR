@@ -5,7 +5,7 @@
 <h1 align="center">iNiR</h1>
 
 <p align="center">
-  صدفة سطح مكتب كاملة لـ <a href="https://github.com/YaLTeR/niri">Niri</a>. اختر عائلة، واجعلها على ذوقك، وحافظ على تحديثها بأمر واحد.
+  صدفة سطح مكتب كاملة لـ <a href="https://github.com/YaLTeR/niri">Niri</a> و <a href="https://github.com/noctalia-dev/umbriel">Umbriel</a>. اختر عائلة، واجعلها على ذوقك، وحافظ على تحديثها بأمر واحد.
 </p>
 
 <p align="center">
@@ -66,7 +66,7 @@ cd inir
 ./setup install
 ```
 
-Arch، Fedora، Debian، Ubuntu، Void و NixOS. يوضح [دليل التثبيت](https://inir.space/docs/install/) ما يحتاجه كل منها.
+Arch، Fedora، Debian، Ubuntu، Void و NixOS. يوضح [دليل التثبيت](https://inir.space/docs/install/) ما يحتاجه كل منها. يعمل على Niri وعلى Umbriel: تشرح صفحة [المُركِّبات](https://inir.space/docs/compositors/) كيفية إضافة Umbriel.
 
 ## التحديث
 
@@ -100,6 +100,7 @@ iNiR هو الأساس مع الأجزاء المحيطة به، وكل جزء �
 - [end-4](https://github.com/end-4/dots-hyprland): illogical-impulse، وهي إعدادات Hyprland التي بدأ منها iNiR
 - [Quickshell](https://quickshell.outfoxxed.me/) من تطوير outfoxxed: الإطار، والواجهة البرمجية التي يحافظ عليها qs-rs
 - [Niri](https://github.com/YaLTeR/niri) من تطوير YaLTeR: المُركِّب (compositor)
+- [Umbriel](https://github.com/noctalia-dev/umbriel) من فريق Noctalia: المُركِّب الآخر الذي يعمل عليه iNiR
 - [Gakuseei](https://github.com/Gakuseei): [Ricelin](https://github.com/Gakuseei/Ricelin)، ومنه يأتي الشريط الكبسولي ومظهرا washi و flame
 - [pctrade/end4-pC](https://github.com/pctrade/end4-pC): تفرّع (fork) فيه أفكار تستحق الأخذ بها
 - كل من [ساهم](https://github.com/snowarch/iNiR/graphs/contributors) وجرّب الإصدارات على Discord

@@ -5,7 +5,7 @@
 <h1 align="center">iNiR</h1>
 
 <p align="center">
-  A complete desktop shell for <a href="https://github.com/YaLTeR/niri">Niri</a>.<br>
+  A complete desktop shell for <a href="https://github.com/YaLTeR/niri">Niri</a> and <a href="https://github.com/noctalia-dev/umbriel">Umbriel</a>.<br>
   Pick a family, make it yours, keep it current with one command.
 </p>
 
@@ -68,7 +68,7 @@ cd inir
 ./setup install
 ```
 
-Arch, Fedora, Debian, Ubuntu, Void and NixOS. The [install guide](https://inir.space/docs/install/) has what each one needs.
+Arch, Fedora, Debian, Ubuntu, Void and NixOS. The [install guide](https://inir.space/docs/install/) has what each one needs. It runs on Niri and on Umbriel: [Compositors](https://inir.space/docs/compositors/) shows how to add Umbriel.
 
 ## Update
 
@@ -102,6 +102,7 @@ iNiR is a base and the parts around it, each in its own repository. Nothing comp
 - [end-4](https://github.com/end-4/dots-hyprland): illogical-impulse, the Hyprland dots iNiR started from
 - [Quickshell](https://quickshell.outfoxxed.me/) by outfoxxed: the framework, and the API qs-rs keeps
 - [Niri](https://github.com/YaLTeR/niri) by YaLTeR: the compositor
+- [Umbriel](https://github.com/noctalia-dev/umbriel) by the Noctalia team: the other compositor iNiR runs on
 - [Gakuseei](https://github.com/Gakuseei): [Ricelin](https://github.com/Gakuseei/Ricelin), where the pill bar and the washi and flame look come from
 - [pctrade/end4-pC](https://github.com/pctrade/end4-pC): a fork with ideas worth taking
 - Everyone who [contributes](https://github.com/snowarch/iNiR/graphs/contributors) and tests on Discord

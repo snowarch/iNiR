@@ -4,7 +4,7 @@ These are the things that do not work, work differently, or will catch you out. 
 
 ## Compositor
 
-iNiR is built for Niri. Hyprland is not supported, so anything that only worked on Hyprland does not work here.
+iNiR runs on Niri and on Umbriel. On Umbriel a few things work differently: window previews are stills, and Niri's own Settings rows are hidden ([Compositors](COMPOSITORS.md#what-differs-from-niri) lists them). Hyprland is not supported, so anything that only worked on Hyprland does not work here.
 
 ## Hardware
 

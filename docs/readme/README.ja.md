@@ -5,7 +5,7 @@
 <h1 align="center">iNiR</h1>
 
 <p align="center">
-  <a href="https://github.com/YaLTeR/niri">Niri</a> 向けの完全なデスクトップシェルです。ファミリーを選び、好みに合わせて、1つのコマンドで最新の状態に保てます。
+  <a href="https://github.com/YaLTeR/niri">Niri</a> と <a href="https://github.com/noctalia-dev/umbriel">Umbriel</a> 向けの完全なデスクトップシェルです。ファミリーを選び、好みに合わせて、1つのコマンドで最新の状態に保てます。
 </p>
 
 <p align="center">
@@ -66,7 +66,7 @@ cd inir
 ./setup install
 ```
 
-Arch、Fedora、Debian、Ubuntu、Void、NixOS に対応しています。それぞれに必要なことは [インストールガイド](https://inir.space/docs/install/) にあります。
+Arch、Fedora、Debian、Ubuntu、Void、NixOS に対応しています。それぞれに必要なことは [インストールガイド](https://inir.space/docs/install/) にあります。Niri と Umbriel の両方で動きます。Umbriel の追加方法は [コンポジター](https://inir.space/docs/compositors/) にあります。
 
 ## アップデート
 
@@ -100,6 +100,7 @@ iNiR はベースと、その周りの各部分からできています。それ
 - [end-4](https://github.com/end-4/dots-hyprland)：illogical-impulse。iNiR が出発点とした Hyprland の dots
 - [Quickshell](https://quickshell.outfoxxed.me/)、作者 outfoxxed：フレームワーク。qs-rs が維持している API
 - [Niri](https://github.com/YaLTeR/niri)、作者 YaLTeR：コンポジター
+- [Umbriel](https://github.com/noctalia-dev/umbriel)、Noctalia チーム：iNiR が動くもう一つのコンポジター
 - [Gakuseei](https://github.com/Gakuseei)：[Ricelin](https://github.com/Gakuseei/Ricelin)。ピル型のバーと washi・flame の外観はここから来ています
 - [pctrade/end4-pC](https://github.com/pctrade/end4-pC)：取り入れる価値のあるアイデアを持つフォーク
 - [コントリビューター](https://github.com/snowarch/iNiR/graphs/contributors)と、Discord でテストしてくれるすべての人

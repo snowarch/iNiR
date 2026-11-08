@@ -1,6 +1,6 @@
 # Install
 
-iNiR installs with one script. Arch is the main target. Void Linux (glibc and runit), Fedora 43 or newer, Debian testing and Ubuntu 25.10 or newer have automated dependency paths too. Debian 13 installs with a warning, because it ships Qt 6.8. Debian 12 and older, and Ubuntu 25.04 and older, stop early, because iNiR needs Qt 6.9 or newer. NixOS has [its own page](NIXOS.md).
+iNiR installs with one script. Arch is the main target. Void Linux (glibc and runit), Fedora 43 or newer, Debian testing and Ubuntu 25.10 or newer have automated dependency paths too. Debian 13 installs with a warning, because it ships Qt 6.8. Debian 12 and older, and Ubuntu 25.04 and older, stop early, because iNiR needs Qt 6.9 or newer. NixOS has [its own page](NIXOS.md). iNiR runs on Niri and on Umbriel, the Noctalia team's compositor: [Compositors](COMPOSITORS.md#umbriel) shows how to add Umbriel, during the install or later.
 
 ## Arch
 
@@ -14,7 +14,7 @@ cd inir
 
 Use `./setup install -y` to skip the questions.
 
-When it finishes, restart the computer. Logging out is not enough, because Niri's environment and your new groups only load at login. Then pick Niri at the login screen.
+When it finishes, restart the computer. Logging out is not enough, because Niri's environment and your new groups only load at login. Then pick Niri, or Umbriel if you set iNiR up there too, at the login screen.
 
 The first start opens a short welcome: pick a family, then a few choices about how it looks and where things sit, each one landing on the desktop behind it as you click. **Skip setup** keeps the recommended pick for every step you didn't reach, so skipping never leaves you halfway. Everything there can be changed later in Settings.
 

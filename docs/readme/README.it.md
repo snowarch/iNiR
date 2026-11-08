@@ -5,7 +5,7 @@
 <h1 align="center">iNiR</h1>
 
 <p align="center">
-  Una shell desktop completa per <a href="https://github.com/YaLTeR/niri">Niri</a>. Scegli una famiglia, rendila tua e tienila aggiornata con un solo comando.
+  Una shell desktop completa per <a href="https://github.com/YaLTeR/niri">Niri</a> e <a href="https://github.com/noctalia-dev/umbriel">Umbriel</a>. Scegli una famiglia, rendila tua e tienila aggiornata con un solo comando.
 </p>
 
 <p align="center">
@@ -66,7 +66,7 @@ cd inir
 ./setup install
 ```
 
-Arch, Fedora, Debian, Ubuntu, Void e NixOS. La [guida all'installazione](https://inir.space/docs/install/) indica cosa serve per ciascuna.
+Arch, Fedora, Debian, Ubuntu, Void e NixOS. La [guida all'installazione](https://inir.space/docs/install/) indica cosa serve per ciascuna. Funziona su Niri e su Umbriel: [Compositor](https://inir.space/docs/compositors/) spiega come aggiungere Umbriel.
 
 ## Aggiornamento
 
@@ -100,6 +100,7 @@ L'[architettura](../ARCHITECTURE_OVERVIEW.md) mostra la mappa completa. Per aggi
 - [end-4](https://github.com/end-4/dots-hyprland): illogical-impulse, i dotfiles di Hyprland da cui è partito iNiR
 - [Quickshell](https://quickshell.outfoxxed.me/) di outfoxxed: il framework e l'API che qs-rs mantiene
 - [Niri](https://github.com/YaLTeR/niri) di YaLTeR: il compositor
+- [Umbriel](https://github.com/noctalia-dev/umbriel) del team Noctalia: l'altro compositor su cui gira iNiR
 - [Gakuseei](https://github.com/Gakuseei): [Ricelin](https://github.com/Gakuseei/Ricelin), da cui vengono la barra pill e gli stili washi e flame
 - [pctrade/end4-pC](https://github.com/pctrade/end4-pC): un fork con idee da riprendere
 - Tutte le persone che [contribuiscono](https://github.com/snowarch/iNiR/graphs/contributors) e testano su Discord
