@@ -2113,6 +2113,8 @@ _reexec_update_after_repo_change() {
     $quiet && reexec_args+=("-q")
     reexec_args+=("update")
     export _II_POST_PULL=1
+    # the code it hands to takes the snapshot once the downloads are in (run_update)
+    export _II_SNAPSHOT_DUE="Before update to $(get_repo_commit)"
     exec "$REPO_ROOT/setup" "${reexec_args[@]}"
 }
 
@@ -2524,16 +2526,19 @@ run_update() {
     # code (doctor, etc.) is loaded fresh. _II_POST_PULL signals that
     # we already pulled and should skip straight to the sync phase.
     # Values: "1" = re-exec after pull, "local" = --local flag (skip pull entirely)
+    # A sync without a pull takes its snapshot once everything it needs is downloaded (below): a retry that fails to
+    # download changes nothing, and its snapshot of the same state pushed an older one out of the ten kept (11-08,
+    # while GitHub answered 504).
+    local snapshot_due=""
     if [[ "${_II_POST_PULL:-}" == "1" ]]; then
         unset _II_POST_PULL
+        snapshot_due="${_II_SNAPSHOT_DUE:-}"
+        unset _II_SNAPSHOT_DUE
         tui_success "Libraries reloaded after pull"
     elif [[ "${_II_POST_PULL:-}" == "local" ]]; then
         unset _II_POST_PULL
         tui_info "Syncing from local repo (git pull skipped)"
-        # Still create a snapshot before sync
-        local repo_commit=$(get_repo_commit)
-        local snapshot_id=$(create_snapshot "update" "Before local sync to ${repo_commit}" "$repo_commit")
-        tui_success "Snapshot: $snapshot_id"
+        snapshot_due="Before local sync to $(get_repo_commit)"
     else
         local update_rc=0
         check_remote_updates || update_rc=$?
@@ -2554,12 +2559,6 @@ run_update() {
                     return 0
                 fi
             fi
-
-            # Create snapshot BEFORE pulling
-            tui_info "Creating snapshot..."
-            local remote_commit=$(get_remote_commit)
-            local snapshot_id=$(create_snapshot "update" "Before update to ${remote_commit}" "$remote_commit")
-            tui_success "Snapshot: $snapshot_id"
 
             # Pull changes
             _step_phase_start 1 "Pulling changes"
@@ -2695,10 +2694,8 @@ run_update() {
             _update_engines || true
             return 0
         else
-            # Local repo ahead of installed - create snapshot
-            tui_info "Creating snapshot..."
-            local snapshot_id=$(create_snapshot "update" "Before sync to ${repo_commit}" "$repo_commit")
-            tui_success "Snapshot: $snapshot_id"
+            # Local repo ahead of installed: a snapshot before the sync
+            snapshot_due="Before sync to ${repo_commit}"
         fi
     fi
 
@@ -2732,6 +2729,12 @@ run_update() {
             tui_error "Could not get qs-rs and inir-accel, so nothing changed. inir update tries again once online"
             return 25
         fi
+    fi
+    if [[ -n "$snapshot_due" ]]; then
+        tui_info "Creating snapshot..."
+        local snapshot_id
+        snapshot_id=$(create_snapshot "update" "$snapshot_due" "$(get_repo_commit)")
+        tui_success "Snapshot: $snapshot_id"
     fi
 
     # Sync files
