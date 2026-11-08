@@ -1043,6 +1043,8 @@ Singleton {
         // on nested JsonObjects doesn't trigger QML property notifications)
         readonly property var _cfg: { Config.revision; return root.styleConfig?.aurora?.transparency ?? null }
         readonly property real overlayTransparentize: (_cfg?.overlay ?? 0.30) * _lightFactor
+        // Over Niri's own blur the tint is the one glass lays over its wallpaper copy, so both backends read alike.
+        readonly property real compositorOverlayTransparentize: overlayTransparentize
         readonly property real subSurfaceTransparentize: (_cfg?.subSurface ?? 0.42) * _lightFactor
         readonly property real popupTransparentize: (_cfg?.popup ?? 0.32) * _lightFactor
         readonly property real tooltipTransparentize: (_cfg?.tooltip ?? 0.28) * _lightFactor
@@ -1402,6 +1404,7 @@ Singleton {
         // Light mode: reduce glass transparency for better contrast on light wallpapers
         readonly property real _lightFactor: root._auroraLightMode ? 0.75 : 1.0
         readonly property real panelTransparentize: (root.styleConfig?.angel?.transparency?.panel ?? 0.28) * _lightFactor
+        readonly property real compositorPanelTransparentize: panelTransparentize
         readonly property real cardTransparentize: (root.styleConfig?.angel?.transparency?.card ?? 0.40) * _lightFactor
         readonly property real popupTransparentize: (root.styleConfig?.angel?.transparency?.popup ?? 0.28) * _lightFactor
         readonly property real tooltipTransparentize: (root.styleConfig?.angel?.transparency?.tooltip ?? 0.25) * _lightFactor
