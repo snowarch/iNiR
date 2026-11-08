@@ -105,7 +105,3 @@ iNiR एक आधार है और उसके आसपास के ह�
 - हर वह व्यक्ति जो [योगदान](https://github.com/snowarch/iNiR/graphs/contributors) देता है और Discord पर परखता है
 
 [GPL-3.0](../../LICENSE) के तहत, शर्तें [NOTICE](../../NOTICE) में हैं। कॉपीराइट (C) 2025-2026 snowarch।
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/snowarch/inir-mascot/main/inir-mascot-hero-banner.png" alt="Kira, iNiR का मैस्कॉट, iNiR लोगो पर झुका हुआ" width="640">
-</p>

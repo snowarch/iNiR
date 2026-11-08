@@ -107,7 +107,3 @@ iNiR is a base and the parts around it, each in its own repository. Nothing comp
 - Everyone who [contributes](https://github.com/snowarch/iNiR/graphs/contributors) and tests on Discord
 
 [GPL-3.0](LICENSE) with the terms in [NOTICE](NOTICE). Copyright (C) 2025-2026 snowarch.
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/snowarch/inir-mascot/main/inir-mascot-hero-banner.png" alt="Kira, iNiR's mascot, leaning on the iNiR logotype" width="640">
-</p>

@@ -105,7 +105,3 @@ iNiR はベースと、その周りの各部分からできています。それ
 - [コントリビューター](https://github.com/snowarch/iNiR/graphs/contributors)と、Discord でテストしてくれるすべての人
 
 [GPL-3.0](../../LICENSE) ライセンス。条件は [NOTICE](../../NOTICE) にあります。著作権 (C) 2025-2026 snowarch。
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/snowarch/inir-mascot/main/inir-mascot-hero-banner.png" alt="Kira（iNiR のマスコット）。iNiR のロゴにもたれかかっている" width="640">
-</p>

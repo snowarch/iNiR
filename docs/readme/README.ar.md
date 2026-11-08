@@ -105,7 +105,3 @@ iNiR هو الأساس مع الأجزاء المحيطة به، وكل جزء �
 - كل من [ساهم](https://github.com/snowarch/iNiR/graphs/contributors) وجرّب الإصدارات على Discord
 
 [GPL-3.0](../../LICENSE) مع الشروط الواردة في [NOTICE](../../NOTICE). حقوق النشر (C) 2025-2026 snowarch.
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/snowarch/inir-mascot/main/inir-mascot-hero-banner.png" alt="Kira، ماسكوت iNiR، متكئة على الشعار النصي لـ iNiR" width="640">
-</p>

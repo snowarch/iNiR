@@ -105,7 +105,3 @@ L'[architettura](../ARCHITECTURE_OVERVIEW.md) mostra la mappa completa. Per aggi
 - Tutte le persone che [contribuiscono](https://github.com/snowarch/iNiR/graphs/contributors) e testano su Discord
 
 [GPL-3.0](../../LICENSE) con i termini in [NOTICE](../../NOTICE). Copyright (C) 2025-2026 snowarch.
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/snowarch/inir-mascot/main/inir-mascot-hero-banner.png" alt="Kira, la mascotte di iNiR, appoggiata al logotipo di iNiR" width="640">
-</p>

@@ -105,7 +105,3 @@ Die [Architektur](../ARCHITECTURE_OVERVIEW.md) zeigt den ganzen Aufbau. Um etwas
 - Alle, die [beitragen](https://github.com/snowarch/iNiR/graphs/contributors) und auf Discord testen
 
 [GPL-3.0](../../LICENSE) mit den Bedingungen in [NOTICE](../../NOTICE). Copyright (C) 2025-2026 snowarch.
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/snowarch/inir-mascot/main/inir-mascot-hero-banner.png" alt="Kira, das Maskottchen von iNiR, lehnt sich an das iNiR-Logo" width="640">
-</p>

@@ -105,7 +105,3 @@ iNiR 是一个基础，外加围绕它的各个部分，每个部分都在自己
 - 所有[贡献者](https://github.com/snowarch/iNiR/graphs/contributors)以及在 Discord 上参与测试的人
 
 以 [GPL-3.0](../../LICENSE) 授权，条款见 [NOTICE](../../NOTICE)。版权所有 (C) 2025-2026 snowarch。
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/snowarch/inir-mascot/main/inir-mascot-hero-banner.png" alt="Kira，iNiR 的吉祥物，靠在 iNiR 标志上" width="640">
-</p>
