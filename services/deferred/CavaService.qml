@@ -319,6 +319,9 @@ Singleton {
         id: cavaProc
         running: false
         command: ["cava", "-p", root.configPath]
+        // A source that goes away (the one stream captured beside a filtered app, an unplugged sink) ends cava
+        // instead of PipeWire relinking it to the microphone; the exit re-resolves the source.
+        environment: ({ PIPEWIRE_PROPS: "{ node.dont-reconnect = true }" })
         onRunningChanged: {
             if (!running) {
                 if (root._pendingRestart && root.active) {
