@@ -13,17 +13,17 @@
     "inir-accel": {
       "repo": "inir-accel",
       "dest": "accel",
-      "version": "0.1.0",
-      "file": "inir-accel-0.1.0-x86_64.tar.gz",
-      "sha256": "f325d77d0c1c6bee208b16321578e4a27e776e5785c42b60e901fd9c303df603"
+      "version": "0.1.1",
+      "file": "inir-accel-0.1.1-x86_64.tar.gz",
+      "sha256": "8757c66626381d6819ec5d5f433c699d5994c472ad78cf496f47dcf2edac9daa"
     },
     "inir-accel-aarch64": {
       "repo": "inir-accel",
       "dest": "accel",
       "arch": "aarch64",
-      "version": "0.1.0",
-      "file": "inir-accel-0.1.0-aarch64.tar.gz",
-      "sha256": "47ab5e12f48960e8af39f4a1d7392d8a659be60afbb8d3bc65e23c92d320a5b0"
+      "version": "0.1.1",
+      "file": "inir-accel-0.1.1-aarch64.tar.gz",
+      "sha256": "fad63a4737147e69290698d6b42ecfeffb93aca1e4135d9c1b311a3f79439ee3"
     },
     "qs-rs-webengine": {
       "repo": "qs-rs",
