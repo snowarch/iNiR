@@ -352,7 +352,7 @@ Singleton {
 
     FileView {
         id: bindsWatcher
-        path: Quickshell.env("HOME") + "/.config/niri/config.d/70-binds.kdl"
+        path: CompositorService.niriNative ? Quickshell.env("HOME") + "/.config/niri/config.d/70-binds.kdl" : ""
         watchChanges: true
 
         onFileChanged: reloadDebounce.restart()

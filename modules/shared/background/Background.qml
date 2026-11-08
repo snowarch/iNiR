@@ -642,8 +642,8 @@ Scope {
             const work = bgRoot.desktopFreeWorkArea
             const size = Math.max(80, Number(Config.getNestedValue(
                 "background.widgets.customImage.size", 220)))
-            const maxX = Math.max(Number(work.left ?? 0), Number(work.right ?? bgRoot.screen.width) - size)
-            const maxY = Math.max(Number(work.top ?? 0), Number(work.bottom ?? bgRoot.screen.height) - size)
+            const maxX = Math.max(Number(work.left ?? 0), Number(work.right ?? (bgRoot.screen?.width ?? 0)) - size)
+            const maxY = Math.max(Number(work.top ?? 0), Number(work.bottom ?? (bgRoot.screen?.height ?? 0)) - size)
             Config.setNestedValues({
                 "background.widgets.customImage.sourceMode": "file",
                 "background.widgets.customImage.path": path
@@ -881,8 +881,8 @@ Scope {
         readonly property real baseWallpaperScale: ParallaxMath.effectiveScale(
             wallpaperWidth,
             wallpaperHeight,
-            screen.width,
-            screen.height,
+            screen?.width ?? 0,
+            screen?.height ?? 0,
             preferredWallpaperScale
         )
         readonly property real effectiveWallpaperScale: {
@@ -892,8 +892,8 @@ Scope {
         }
         readonly property real scaledWallpaperWidth: bgRoot.wallpaperWidth * bgRoot.effectiveWallpaperScale
         readonly property real scaledWallpaperHeight: bgRoot.wallpaperHeight * bgRoot.effectiveWallpaperScale
-        readonly property real parallaxTotalX: ParallaxMath.parallaxTotalPixels(bgRoot.scaledWallpaperWidth, bgRoot.screen.width)
-        readonly property real parallaxTotalY: ParallaxMath.parallaxTotalPixels(bgRoot.scaledWallpaperHeight, bgRoot.screen.height)
+        readonly property real parallaxTotalX: ParallaxMath.parallaxTotalPixels(bgRoot.scaledWallpaperWidth, (bgRoot.screen?.width ?? 0))
+        readonly property real parallaxTotalY: ParallaxMath.parallaxTotalPixels(bgRoot.scaledWallpaperHeight, (bgRoot.screen?.height ?? 0))
         readonly property string parallaxAxis: ParallaxMath.resolveAxis(
             bgRoot.parallaxOptions.axis,
             bgRoot.parallaxOptions.autoVertical ?? false,
@@ -1433,6 +1433,8 @@ Scope {
             layer.enabled: bgRoot.editCard.p > 0 && (editOverLoader.item?.cardMask ?? null) !== null
             layer.smooth: true
             layer.effect: ShaderEffect {
+                // The layer's texture: declared so the sampler binds at creation, not after a warning.
+                property variant source
                 readonly property vector2d size: Qt.vector2d(bgRoot.width, bgRoot.height)
                 readonly property real corner: Number(editOverLoader.item?.cardCorner ?? 0)
                 readonly property real edge: 1 / Math.max(0.05, bgRoot.editCard.s * bgRoot.devicePixelRatio)
@@ -1525,18 +1527,18 @@ Scope {
                     : useParallax
                     ? (bgRoot.parallaxTotalX > 0
                         ? (ParallaxMath.parallaxPosition(bgRoot.parallaxTotalX, activeValueX) + panOffsetX)
-                        : ParallaxMath.centerOffset(bgRoot.scaledWallpaperWidth, bgRoot.screen.width))
+                        : ParallaxMath.centerOffset(bgRoot.scaledWallpaperWidth, (bgRoot.screen?.width ?? 0)))
                     : panOffsetX
                 readonly property real targetY: bgRoot.spanning ? Wallpapers.spanArea.y - bgRoot.screen.y
                     : useParallax
                     ? (bgRoot.parallaxTotalY > 0
                         ? (ParallaxMath.parallaxPosition(bgRoot.parallaxTotalY, activeValueY) + panOffsetY)
-                        : ParallaxMath.centerOffset(bgRoot.scaledWallpaperHeight, bgRoot.screen.height))
+                        : ParallaxMath.centerOffset(bgRoot.scaledWallpaperHeight, (bgRoot.screen?.height ?? 0)))
                     : panOffsetY
                 readonly property real targetWidth: bgRoot.spanning ? Wallpapers.spanArea.width
-                    : (useParallax || bgRoot.effectiveHasPan) ? bgRoot.scaledWallpaperWidth : bgRoot.screen.width
+                    : (useParallax || bgRoot.effectiveHasPan) ? bgRoot.scaledWallpaperWidth : (bgRoot.screen?.width ?? 0)
                 readonly property real targetHeight: bgRoot.spanning ? Wallpapers.spanArea.height
-                    : (useParallax || bgRoot.effectiveHasPan) ? bgRoot.scaledWallpaperHeight : bgRoot.screen.height
+                    : (useParallax || bgRoot.effectiveHasPan) ? bgRoot.scaledWallpaperHeight : (bgRoot.screen?.height ?? 0)
                 x: targetX
                 y: targetY
                 Behavior on x {
