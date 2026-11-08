@@ -582,6 +582,14 @@ repair_v2_leftovers() {
     ((INIR_V2_LEFTOVERS_REPAIRED++)) || true
   done
 
+  # v2.33 floated picture-in-picture only for Firefox and Zen by app-id: Chromium browsers title it "Picture in
+  # picture" and Brave gave it no app-id (#302). The block exactly as v2.33 wrote it becomes the title rule.
+  if [[ -f "$rules" ]] && grep -qF 'match app-id=r#"firefox$"# title="^Picture-in-Picture$"' "$rules" \
+      && ! grep -qF 'picture.in.picture' "$rules"; then
+    perl -0pi -e 's{// Firefox / Zen: picture-in-picture window opens floating\.\nwindow-rule \{\n    match app-id=r#"firefox\$"# title="\^Picture-in-Picture\$"\n    open-floating true\n\}\nwindow-rule \{\n    match app-id=r#"zen\$"# title="\^Picture-in-Picture\$"\n    open-floating true\n\}}{// Picture-in-picture opens floating: Firefox and Zen title it "Picture-in-Picture", Chromium browsers\n// "Picture in picture" and, before Brave 1.96, with no app-id at all, so the title alone decides.\nwindow-rule {\n    match title=r#"(?i)^picture.in.picture\$"#\n    open-floating true\n}}' "$rules" || return 1
+    grep -qF 'picture.in.picture' "$rules" && { ((INIR_V2_LEFTOVERS_REPAIRED++)) || true; }
+  fi
+
   # the opt-in Super-tap daemon ran a python file from ~/.local/bin; inir-accel runs it now
   # (until accel is in place the old python keeps working, and the next update gets here)
   accel="${XDG_DATA_HOME:-$HOME/.local/share}/inir/accel/current/inir-accel"
