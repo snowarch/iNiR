@@ -14,7 +14,7 @@ import qs.modules.common
  * A stack is a list of widget keys in `background.widgets.stacks`. The widgets stay what they are; the
  * stack owns what must be one for all of them (place, size class, material, corners, lock), kept in
  * `outputOverrides` under the pseudo widget "stack:<id>" so every output has its own. DesktopWidgetLayout
- * asks `owner()` for whose record a value lives in. Nothing of this applies outside the iRiS design
+ * asks `owner()` for whose record a value lives in. Nothing of this applies outside the family's own faces
  * (`live`): elsewhere every widget stands where it was, and the lock screen never stacks.
  *
  * Which page is shown is runtime state (`pages`), never persisted. Rotation is one Timer per stack, held
@@ -32,14 +32,17 @@ Singleton {
     readonly property int defaultInterval: 20
     readonly property string prefix: "stack:"
 
-    // Stacks are a family's own faces, so they live while every widget wears them.
+    // Stacks are a family's own faces, so they live while every widget wears them: its face or another design its
+    // faces draw (`faces` in `widgetDesign`: Prism in iRiS), whose pages turn in the same face (11-08: under Prism a
+    // widget dropped on another was pushed aside).
     readonly property var _design: Plugins.manifests[Plugins.active]?.widgetDesign ?? ({})
     readonly property bool live: {
         void Config.revision
         const face = root._design.face ?? ""
         if (face.length === 0) return false
         const shared = String(Config.getNestedValue(root._design.shared, face))
-        return shared === face || !root._design.choices.includes(shared)
+        return shared === face || Array.from(root._design.faces ?? []).some(design => design?.value === shared)
+            || !root._design.choices.includes(shared)
     }
 
     readonly property var stacks: {
