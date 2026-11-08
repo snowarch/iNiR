@@ -201,7 +201,29 @@ AbstractBackgroundWidget {
             root.currentIndex = (current + direction + count) % count
         }
         root.currentPath = String(root.mediaPaths[root.currentIndex] ?? "")
-        rotationTimer.restart()
+        root.armRotation(true)
+    }
+
+    // The interval is the person's clock, not time on screen (#318): a pause while windows cover the desktop used to
+    // restart the count from zero, so a 180 s gallery on a busy desktop almost never turned. Each start runs only what
+    // is left, and a turn that came due while covered happens as the desktop shows again.
+    property real _turnedAt: Date.now()
+    readonly property bool rotating: root.sourceMode === "folder" && root.mediaPaths.length > 1
+        && !root.rotationPaused && root.motionActive && root.visible
+    onRotatingChanged: root.armRotation(false)
+    onIntervalSecondsChanged: root.armRotation(false)
+
+    function armRotation(turned: bool): void {
+        if (turned) root._turnedAt = Date.now()
+        rotationTimer.stop()
+        if (!root.rotating) return
+        const left = root.intervalSeconds * 1000 - (Date.now() - root._turnedAt)
+        if (left <= 0) {
+            Qt.callLater(() => { if (root.rotating) root.advance(1, root.rotationOrder === "random") })
+            return
+        }
+        rotationTimer.interval = Math.max(250, left)
+        rotationTimer.start()
     }
 
     function shapeForName(name: string): int {
@@ -271,7 +293,7 @@ AbstractBackgroundWidget {
         updates[root._configPath + ".sourceMode"] = "folder"
         updates[root._configPath + ".mediaFilter"] = "all"
         Config.setNestedValues(updates)
-        Qt.callLater(rotationTimer.restart)
+        Qt.callLater(() => root.armRotation(true))
     }
 
     onCurrentPathChanged: {
@@ -309,10 +331,6 @@ AbstractBackgroundWidget {
 
     Timer {
         id: rotationTimer
-        interval: root.intervalSeconds * 1000
-        repeat: true
-        running: root.sourceMode === "folder" && root.mediaPaths.length > 1
-            && !root.rotationPaused && root.motionActive && root.visible
         onTriggered: root.advance(1, root.rotationOrder === "random")
     }
 
