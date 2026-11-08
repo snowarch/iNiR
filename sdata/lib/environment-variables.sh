@@ -1,6 +1,19 @@
 # Environment variables for iNiR installer
 # This is NOT a script for execution, but for loading variables
 
+# Every setup, old or new, cds into the checkout and sources this file first. A setup that is not the checkout's own
+# (v2.33's copy in the runtime, which its `inir update` runs when an earlier update pulled this tree and then stopped
+# before the sync) would go on with code that calls files this tree no longer has; it hands over to the checkout's
+# setup instead, with the same arguments and environment.
+if [[ -z "${INIR_SETUP_HANDOFF:-}" && -n "${SCRIPT_DIR:-}" && -f "${SCRIPT_DIR}/setup" \
+      && -f "${PWD}/setup" && -f "${PWD}/shell.qml" \
+      && "$(basename -- "${BASH_SOURCE[${#BASH_SOURCE[@]}-1]}")" == setup ]] \
+    && ! cmp -s -- "${SCRIPT_DIR}/setup" "${PWD}/setup"; then
+  export INIR_SETUP_HANDOFF=1
+  exec bash "${PWD}/setup" "$@"
+fi
+unset INIR_SETUP_HANDOFF
+
 XDG_BIN_HOME=${XDG_BIN_HOME:-$HOME/.local/bin}
 XDG_CACHE_HOME=${XDG_CACHE_HOME:-$HOME/.cache}
 XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-$HOME/.config}

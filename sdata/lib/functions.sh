@@ -453,16 +453,23 @@ esac"
   local shell_file=""
 
   # Older installers created every profile; a ~/.bash_profile holding only our
-  # block hides ~/.profile from bash login shells, so those files go away.
-  for shell_file in "$HOME/.bash_profile" "$HOME/.zprofile" "$HOME/.zshrc"; do
-    inir_rc_block prune "$shell_file" || true
-  done
+  # block hides ~/.profile from bash login shells, so it goes away. zsh's files go
+  # only for someone whose shell isn't zsh: a zsh login reads ~/.zprofile and never
+  # ~/.profile, and the session's PATH (Niri's binds call `inir`) comes from it (#326).
+  local login_shell
+  login_shell="$(basename -- "${SHELL:-}")"
+  inir_rc_block prune "$HOME/.bash_profile" || true
+  if [[ "$login_shell" != zsh ]]; then
+    for shell_file in "$HOME/.zprofile" "$HOME/.zshrc"; do
+      inir_rc_block prune "$shell_file" || true
+    done
+  fi
 
-  # Only profiles that exist get the block, plus one login profile per shell.
+  # Only profiles that exist get the block, plus each shell's login profile.
   if [[ ! -f "$HOME/.profile" && ! -f "$HOME/.bash_profile" && ! -f "$HOME/.bash_login" ]]; then
     : >"$HOME/.profile"
   fi
-  if [[ "$(basename -- "${SHELL:-}")" == zsh && ! -f "$HOME/.zprofile" && ! -f "$HOME/.zshrc" ]]; then
+  if [[ "$login_shell" == zsh && ! -f "$HOME/.zprofile" ]]; then
     : >"$HOME/.zprofile"
   fi
   for shell_file in "$HOME/.profile" "$HOME/.bash_profile" "$HOME/.bash_login" "$HOME/.bashrc" \
