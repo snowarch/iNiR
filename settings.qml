@@ -16,9 +16,11 @@ ShellRoot {
     id: root
 
     readonly property bool settled: Plugins.ready && Config.ready
-    // The generated colours load only once something names their loader: a page that never did (Waffle's Taskbar)
-    // opened in the factory dark and blue under a light shell (10-29).
-    readonly property bool colorsFollowed: MaterialThemeLoader.isAutoTheme
+    // The theme is applied here, as the shell does: the family's window loads only once Config is ready, so a
+    // handler of its own on Config's ready never ran and a manual or preset theme opened in the factory dark (#325).
+    // Wallpaper colours too: they load only once something names their loader (Waffle's Taskbar, 10-29).
+    readonly property bool configReady: Config.ready
+    onConfigReadyChanged: if (root.configReady) ThemeService.applyCurrentTheme()
 
     // A family without a window keeps its Settings inside the shell.
     function _quitIfNone(): void {
@@ -27,7 +29,10 @@ ShellRoot {
         Qt.quit()
     }
     onSettledChanged: root._quitIfNone()
-    Component.onCompleted: root._quitIfNone()
+    Component.onCompleted: {
+        if (root.configReady) ThemeService.applyCurrentTheme()
+        root._quitIfNone()
+    }
 
     FamilyPartLoader { id: app; family: Plugins.settingsFamily; part: "settingsApp"; when: Config.ready }
 }
