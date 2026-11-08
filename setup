@@ -2357,7 +2357,8 @@ _update_dependencies() {
                 detect_distro
                 SKIP_SYSUPDATE=true
                 ONLY_MISSING_DEPS="${doctor_missing_deps[*]}"
-                if source ./sdata/subcmd-install/1.deps-router.sh; then
+                # a subshell: a package the distro refuses ends the installer's own run, not the update
+                if (source ./sdata/subcmd-install/1.deps-router.sh); then
                     tui_success "Dependencies installed"
                 else
                     tui_warn "Some packages could not be installed; the update continues and 'inir doctor' retries them"
@@ -2372,7 +2373,7 @@ _update_dependencies() {
             SKIP_SYSUPDATE=true
             ONLY_MISSING_DEPS="${doctor_missing_deps[*]}"
             USE_ELEVATE=true  # Signal deps-router to use elevate() instead of sudo
-            if source ./sdata/subcmd-install/1.deps-router.sh; then
+            if (source ./sdata/subcmd-install/1.deps-router.sh); then
                 tui_success "Dependencies installed"
             else
                 tui_warn "Some packages could not be installed; the update continues and 'inir doctor' retries them"

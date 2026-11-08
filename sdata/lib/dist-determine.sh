@@ -243,6 +243,19 @@ print_os_group_id_functions=(
   print_alpine_info
 )
 
+# The distro decided quietly and without asking, for a check that branches on it before anything called
+# detect_distro (the update's dependency check). Keeps a group already detected; on an unknown system it leaves
+# OS_GROUP_ID empty and returns 1, never prompting or exiting.
+detect_distro_quietly(){
+  [[ -n "${OS_GROUP_ID:-}" ]] && return 0
+  local fn quiet=true
+  for fn in "${print_os_group_id_functions[@]}"; do
+    $fn
+    [[ -n "$OS_GROUP_ID" ]] && return 0
+  done
+  return 1
+}
+
 ###############################################################################
 # Main detection function
 ###############################################################################

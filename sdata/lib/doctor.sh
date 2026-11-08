@@ -51,6 +51,9 @@ doctor_detect_compositor_service() {
 check_dependencies() {
     local missing=()
     local missing_cmds=()
+    # the list differs by distro (Void has no niri-session, Arch adds checkupdates): an update reaches here before
+    # anything detected it, and Void then asked xbps for a niri-session package that doesn't exist
+    detect_distro_quietly || true
     
     # Commands to check (command:friendly_name)
     # These are distro-agnostic - we check for the command, not the package
@@ -1920,7 +1923,8 @@ run_doctor_with_fixes() {
                 if ! $ask || tui_confirm "Install missing dependencies now?"; then
                     SKIP_SYSUPDATE=true
                     ONLY_MISSING_DEPS="${doctor_missing_deps[*]}"
-                    if ! source ./sdata/subcmd-install/1.deps-router.sh; then
+                    # a subshell: a package the distro refuses fails this step, the other checks still run
+                    if ! (source ./sdata/subcmd-install/1.deps-router.sh); then
                         doctor_fail "Dependency installation failed"
                     elif [[ "$OS_GROUP_ID" == void ]] && ! configure_void_ydotool_uinput; then
                         doctor_fail "Could not configure the ydotool provider"
