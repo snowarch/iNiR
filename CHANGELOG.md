@@ -5,6 +5,15 @@ All notable changes to iNiR will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.1] - 2026-11-08
+
+A small release right after 3.0: `inir update` finishes on Void again, the shell keeps its windows when it reloads, and a notice on the iRiS Island leaves the frame's corner bubbles where they are.
+
+### Fixed
+- **Updating on Void**: `inir update` checks the dependencies of the distro it runs on, so a package xbps refuses (such as `niri-session`) no longer stops the update halfway.
+- **Reloads keep your windows**: installing or updating a Hub item reloads the shell without tearing down and rebuilding every window (qs-rs 0.1.4); a part that really fails to load, even at the first start, still gets fresh windows.
+- **iRiS Island notices**: a notice, an event or a level on the Island no longer pulls the frame's corner bubbles down with it for its seconds (iRiS 2.33.62, from the Hub).
+
 ## [3.0.0] - 2026-11-07
 
 iNiR 3.0 rebuilds the shell from the ground up: a small base with every family as a plugin, its own prebuilt runtime, a home at inir.space, and a new Settings for iRiS. It is the work of 1,131 commits to the base and more than 1,300 across the Hub, the runtime and the `inir` command. One `inir update` brings all of it, compiles nothing on your machine, and keeps your config.
