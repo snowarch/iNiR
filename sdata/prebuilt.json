@@ -2,10 +2,10 @@
   "manifest": "https://inir.space/releases/manifest.json",
   "fallback": "https://github.com/snowarch/{repo}/releases/download/v{version}/{file}",
   "cli": {
-    "version": "0.2.9",
+    "version": "0.2.10",
     "sha256": {
-      "amd64": "713c2b9da3b79dc985b94daa24727bdd86668ed85fb2e7ba2aa92603900d315c",
-      "arm64": "9a9349224e351b9de72b875e9306e1a3413ceba754f4035dcf1a14ffbe7e3e3e"
+      "amd64": "d26e6c624741bee7156e3fd45140875eac9e409077a53b8e31e18b0037387b77",
+      "arm64": "3f87244baac120ebf02b32b35b1c54c616ac031c20a9922b90ede44b432cbadf"
     }
   },
   "parts": {
