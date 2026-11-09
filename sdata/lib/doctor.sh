@@ -1114,7 +1114,8 @@ check_service_unit_health() {
         fi
 
         local user_service="${XDG_CONFIG_HOME}/systemd/user/inir.service"
-        if [[ "$service_path" == "$user_service" ]]; then
+        # Home Manager's unit is the package's own, linked from the store
+        if [[ "$service_path" == "$user_service" ]] && ! nix_managed "$user_service"; then
             local packaged_asset="${REPO_ROOT}/assets/systemd/inir.service"
             local packaged_unit=""
             local candidate

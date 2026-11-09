@@ -166,10 +166,13 @@ xdg_data_path() {
   return 1
 }
 
-# qt_plugin_on_path PLUGIN: a Qt plugin on QT_PLUGIN_PATH, where Nix puts them (distros answer by package)
+# qt_plugin_on_path PLUGIN: a Qt plugin where Nix's Qt finds it: QT_PLUGIN_PATH, then each Nix profile (Home Manager
+# sets no QT_PLUGIN_PATH; nixpkgs' Qt looks beside the profiles on PATH). Distros answer by package.
 qt_plugin_on_path() {
   local dir IFS=:
-  for dir in ${QT_PLUGIN_PATH:-}; do
+  for dir in ${QT_PLUGIN_PATH:-} "$HOME/.nix-profile/lib/qt-6/plugins" "$HOME/.local/state/nix/profile/lib/qt-6/plugins" \
+      "/etc/profiles/per-user/${USER:-}/lib/qt-6/plugins" /run/current-system/sw/lib/qt-6/plugins \
+      /nix/var/nix/profiles/default/lib/qt-6/plugins; do
     [[ -n "$dir" && -e "$dir/$1" ]] && return 0
   done
   return 1
