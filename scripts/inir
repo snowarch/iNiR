@@ -2419,8 +2419,9 @@ cleanup_orphans() {
             [[ "$_cgroup" == *"inir.service"* ]] || continue
         fi
         kill "$_pid" 2>/dev/null || true
-    # qs-rs starts helpers by the name the shell gives (swayidle), Quickshell by their full path (/usr/bin/swayidle)
-    done < <(pgrep -f 'keyboard_lock_state_daemon\.py|inir-accel keyboard-lock-daemon|nmcli monitor|^(/[^ ]*/)?swayidle -w' 2>/dev/null || true)
+    # qs-rs starts helpers by the name the shell gives (swayidle), Quickshell by their full path (/usr/bin/swayidle);
+    # DeviceEvents' udev monitor too, which the next shell would only reap at its start
+    done < <(pgrep -f 'keyboard_lock_state_daemon\.py|inir-accel keyboard-lock-daemon|nmcli monitor|^(/[^ ]*/)?swayidle -w|^(/[^ ]*/)?udevadm monitor --udev --subsystem-match=usb/usb_device' 2>/dev/null || true)
 
     # Phase 6: Thumbnail generation uses a multiprocessing pool. Older runs
     # could outlive qs because KillMode=process intentionally preserves apps
