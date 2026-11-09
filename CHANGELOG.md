@@ -5,6 +5,13 @@ All notable changes to iNiR will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **NixOS**: the flake installs iNiR like every other distro: your copy lives in `~/.config/quickshell/inir`, the families come from the Hub on the first start and switch like on Arch, and Hub items update from **Settings › Hub** or `inir update`. A rebuild after the 3.0.1 package removes what it left in your home; the page is [NixOS](docs/NIXOS.md).
+- **Idle and lock timers**: restarting the shell no longer leaves an old `swayidle` behind on each restart.
+- **Family switch**: the logo on the transition between families shows again.
+
 ## [3.0.1] - 2026-11-08
 
 A small release right after 3.0: `inir update` finishes on Void again, the shell keeps its windows when it reloads, and a notice on the iRiS Island leaves the frame's corner bubbles where they are.
