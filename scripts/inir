@@ -2404,7 +2404,7 @@ cleanup_orphans() {
             _owned=false
             for _runtime_root in "$user_config_dir" "$system_config_dir" "$fallback_system_config_dir"; do
                 if [[ "$_cmdline" == *"$_runtime_root/scripts/daemon/keyboard_lock_state_daemon.py"* || "$_cmdline" == *"inir-accel keyboard-lock-daemon"* ]] \
-                        || { [[ "$_cmdline" == *"/swayidle -w"* ]] && [[ "$_cmdline" == *"$_runtime_root/scripts/inir"* ]]; }; then
+                        || { [[ "$_cmdline" == "swayidle -w "* || "$_cmdline" == *"/swayidle -w "* ]] && [[ "$_cmdline" == *"$_runtime_root/scripts/inir"* ]]; }; then
                     _owned=true
                     break
                 fi
@@ -2415,7 +2415,8 @@ cleanup_orphans() {
             [[ "$_cgroup" == *"inir.service"* ]] || continue
         fi
         kill "$_pid" 2>/dev/null || true
-    done < <(pgrep -f 'keyboard_lock_state_daemon\.py|inir-accel keyboard-lock-daemon|nmcli monitor|/usr/bin/swayidle -w' 2>/dev/null || true)
+    # qs-rs starts helpers by the name the shell gives (swayidle), Quickshell by their full path (/usr/bin/swayidle)
+    done < <(pgrep -f 'keyboard_lock_state_daemon\.py|inir-accel keyboard-lock-daemon|nmcli monitor|^(/[^ ]*/)?swayidle -w' 2>/dev/null || true)
 
     # Phase 6: Thumbnail generation uses a multiprocessing pool. Older runs
     # could outlive qs because KillMode=process intentionally preserves apps
