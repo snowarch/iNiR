@@ -9,14 +9,6 @@ let
   cfg = config.programs.inir;
   deps = cfg.package.passthru.deps;
 
-  # setup copies defaults/niri on other distros; here once, writable, so Niri and the shell can still change it
-  niriSeed = pkgs.writeShellScript "inir-niri-seed" ''
-    target="''${XDG_CONFIG_HOME:-$HOME/.config}/niri"
-    [ -e "$target/config.kdl" ] && exit 0
-    mkdir -p "$target"
-    cp -r --no-preserve=mode ${cfg.package}/share/quickshell/inir/defaults/niri/. "$target/"
-  '';
-
   sddmTheme = pkgs.callPackage ./sddm-theme.nix { inherit pkgs; background = cfg.desktop.loginBackground; };
 in
 {
@@ -28,11 +20,6 @@ in
       default = [ ];
       example = [ "alice" ];
       description = "People who use iNiR: they join the groups setup adds on other distros (video, input, i2c, ydotool).";
-    };
-    niriConfig.seed = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = "Copy iNiR's Niri config to ~/.config/niri at login when there is none yet.";
     };
     fonts.enable = lib.mkOption {
       type = lib.types.bool;
@@ -99,7 +86,7 @@ in
         before = [ "niri.service" ];
         serviceConfig = {
           Type = "oneshot";
-          ExecStart = niriSeed;
+          ExecStart = common.niriSeed cfg.package;
         };
       };
     })

@@ -64,7 +64,7 @@ iNiR's flake follows nixos-unstable, and that is where it is tested.
 | `programs.inir.desktop.displayManager` | `"sddm"` | `sddm` (with iNiR's ii-pixel theme), `greetd` or `none` |
 | `programs.inir.desktop.loginBackground` | `null` | A picture for the SDDM login screen |
 | `programs.inir.fonts.enable` | `true` | The fonts iNiR's styles use |
-| `programs.inir.niriConfig.seed` | `true` | Copies iNiR's Niri config to `~/.config/niri` at login if you have none |
+| `programs.inir.niriConfig.seed` | `true` | Copies iNiR's Niri config to `~/.config/niri` before Niri first starts, if you have none |
 | `programs.inir.webEngine` | `false` | Qt WebEngine for the Web Apps tab of Material's sidebar (about 200 MB) |
 | `programs.inir.extraPackages` | `[ ]` | More programs installed with iNiR, for the apps your config names |
 | `programs.inir.service.enable` | `true` | The `inir` systemd user service |
@@ -75,7 +75,7 @@ The Niri config is copied once and is yours from then on. iNiR never overwrites 
 ## Home Manager
 
 Import `inir.homeModules.default` and set `programs.inir.enable = true;`. It installs the package, its programs and
-fonts for you, and the user service Niri starts. Niri itself, the login screen, PipeWire, NetworkManager, UPower,
+fonts for you, iNiR's Niri config if you have none (`niriConfig.seed`), and the user service Niri starts. Niri itself, the login screen, PipeWire, NetworkManager, UPower,
 power profiles and the groups need root: they belong to your NixOS config. On other distros, install iNiR with its
 [install script](INSTALL.md) instead.
 

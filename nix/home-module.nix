@@ -28,6 +28,11 @@ in
     home.activation.inirLeftovers = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
       run ${common.leftovers}
     '';
+    # at every switch and at boot, so before the first login; after Home Manager links its own files (a Niri config it
+    # manages stays)
+    home.activation.inirNiriSeed = lib.mkIf cfg.niriConfig.seed (lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+      run ${common.niriSeed cfg.package}
+    '');
 
     systemd.user.services.inir = lib.mkIf cfg.service.enable {
       Unit = {

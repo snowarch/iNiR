@@ -34,8 +34,23 @@
         default = true;
         description = "Start iNiR with Niri through the inir user service.";
       };
+
+      niriConfig.seed = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Copy iNiR's Niri config to ~/.config/niri before Niri first starts, when there is none yet.";
+      };
     };
   };
+
+  # setup copies defaults/niri on other distros; here once, writable, so Niri and the shell can still change it. Before
+  # Niri's first start, or Niri writes its own config and opens its hotkey overlay over the welcome.
+  niriSeed = package: pkgs.writeShellScript "inir-niri-seed" ''
+    target="''${XDG_CONFIG_HOME:-$HOME/.config}/niri"
+    [ -e "$target/config.kdl" ] && exit 0
+    ${pkgs.coreutils}/bin/mkdir -p "$target"
+    ${pkgs.coreutils}/bin/cp -r --no-preserve=mode ${package}/share/quickshell/inir/defaults/niri/. "$target/"
+  '';
 
   # What an older package left in the person's home that would win over this one (leftovers.sh says what and why)
   leftovers = pkgs.writeShellScript "inir-leftovers" ''
