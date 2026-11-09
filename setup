@@ -2476,28 +2476,30 @@ run_update() {
     tui_title "Checking for updates..."
     echo ""
 
-    # Show current branch for awareness
-    local current_branch
-    local tracked_branch
-    current_branch="$(git -C "$REPO_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")"
-    tracked_branch="$(get_update_tracking_branch 2>/dev/null || echo "main")"
-    if [[ "$current_branch" == "HEAD" ]]; then
-        tui_warn "Detached HEAD checkout. Updates will track origin/${tracked_branch}."
-    elif [[ "$current_branch" != "main" && "$current_branch" != "master" && "$current_branch" != "unknown" ]]; then
-        tui_warn "On branch '$current_branch' (non-release). Updates will track this branch."
-    else
-        tui_info "Branch: $tracked_branch"
-    fi
-
-    tui_info "Repo: $REPO_ROOT"
-    local invoked_from="${INIR_INVOKED_FROM:-${INVOKED_FROM:-$PWD}}"
-    if [[ "$invoked_from" != "$REPO_ROOT" && -e "${invoked_from}/.git" && -f "${invoked_from}/shell.qml" ]]; then
-        tui_warn "Updating that repo, not the one you are standing in:"
-        tui_dim "    you are in: $invoked_from"
-        if [[ "$REPO_ROOT" == "$SCRIPT_DIR" ]]; then
-            tui_dim "    that is where this setup lives"
+    # Show current branch for awareness; a package has no checkout to name
+    if ! is_packaged_setup; then
+        local current_branch
+        local tracked_branch
+        current_branch="$(git -C "$REPO_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")"
+        tracked_branch="$(get_update_tracking_branch 2>/dev/null || echo "main")"
+        if [[ "$current_branch" == "HEAD" ]]; then
+            tui_warn "Detached HEAD checkout. Updates will track origin/${tracked_branch}."
+        elif [[ "$current_branch" != "main" && "$current_branch" != "master" && "$current_branch" != "unknown" ]]; then
+            tui_warn "On branch '$current_branch' (non-release). Updates will track this branch."
         else
-            tui_dim "    repo path comes from ~/.config/inir/version.json"
+            tui_info "Branch: $tracked_branch"
+        fi
+
+        tui_info "Repo: $REPO_ROOT"
+        local invoked_from="${INIR_INVOKED_FROM:-${INVOKED_FROM:-$PWD}}"
+        if [[ "$invoked_from" != "$REPO_ROOT" && -e "${invoked_from}/.git" && -f "${invoked_from}/shell.qml" ]]; then
+            tui_warn "Updating that repo, not the one you are standing in:"
+            tui_dim "    you are in: $invoked_from"
+            if [[ "$REPO_ROOT" == "$SCRIPT_DIR" ]]; then
+                tui_dim "    that is where this setup lives"
+            else
+                tui_dim "    repo path comes from ~/.config/inir/version.json"
+            fi
         fi
     fi
 
