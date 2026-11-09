@@ -68,6 +68,7 @@ check_dependencies() {
         "wpctl:WirePlumber"
         "pw-dump:PipeWire tools"
         "jq:jq"
+        "file:file"
         "rsync:rsync"
         "curl:curl"
         "unzip:unzip"

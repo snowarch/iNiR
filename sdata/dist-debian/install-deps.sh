@@ -39,7 +39,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
   # unknown command can never leak into apt as if it were a Debian package.
   declare -A cmd_to_pkg=(
     [qs]="quickshell" [niri]="niri" [nmcli]="network-manager" [wpctl]="wireplumber" [pw-dump]="pipewire-bin"
-    [jq]="jq" [rsync]="rsync" [curl]="curl" [unzip]="unzip" [git]="git" [python3]="python3"
+    [jq]="jq" [file]="file" [rsync]="rsync" [curl]="curl" [unzip]="unzip" [git]="git" [python3]="python3"
     [fish]="fish" [magick]="imagemagick" [grim]="grim" [cliphist]="cliphist"
     [wl-copy]="wl-clipboard" [wl-paste]="wl-clipboard"
     [hyprpicker]="hyprpicker" [playerctl]="playerctl" [notify-send]="libnotify-bin"
@@ -232,6 +232,7 @@ DEBIAN_CORE_PKGS=(
   curl
   ripgrep
   jq
+  file
   python3
   xdg-user-dirs
   rsync

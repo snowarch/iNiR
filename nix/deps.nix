@@ -42,7 +42,7 @@ let
     browser-media = { pkgs = [ kde.plasma-browser-integration ]; };
     base-tools = {
       pkgs = with pkgs; [
-        bash coreutils curl findutils gawk git gnugrep gnused jq procps python3 ripgrep rsync unzip util-linux
+        bash coreutils curl file findutils gawk git gnugrep gnused jq procps python3 ripgrep rsync unzip util-linux
         xdg-user-dirs xdg-utils wl-clipboard libnotify wlsunset
       ];
     };

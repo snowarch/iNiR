@@ -72,6 +72,7 @@ VOID_BASE_PACKAGES=(
   gum
   dunst
   jq
+  file
   python3
   curl
   wget
@@ -219,6 +220,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
     [qt-webengine]="qt6-webengine"
     [layer-shell-qt]="layer-shell-qt"
     [jq]="jq"
+    [file]="file"
     [rsync]="rsync"
     [curl]="curl"
     [unzip]="unzip"

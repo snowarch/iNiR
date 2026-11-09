@@ -17,6 +17,7 @@ depends=(
   curl
   ripgrep
   jq
+  file
   python
   unzip
   xdg-user-dirs

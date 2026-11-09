@@ -61,6 +61,7 @@ depends=(
   curl
   ripgrep
   jq
+  file
   python
   unzip
   rsync

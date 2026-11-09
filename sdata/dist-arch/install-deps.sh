@@ -32,6 +32,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
     [wpctl]="wireplumber"
     [pw-dump]="pipewire"
     [jq]="jq"
+    [file]="file"
     [rsync]="rsync"
     [curl]="curl"
     [unzip]="unzip"

@@ -40,7 +40,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
   # for Fedora and never pass an unknown command ID directly to dnf.
   declare -A cmd_to_pkg=(
     [qs]="quickshell" [niri]="niri" [niri-session]="niri" [nmcli]="NetworkManager" [wpctl]="wireplumber" [pw-dump]="pipewire-utils"
-    [jq]="jq" [rsync]="rsync" [curl]="curl" [unzip]="unzip" [git]="git" [python3]="python3"
+    [jq]="jq" [file]="file" [rsync]="rsync" [curl]="curl" [unzip]="unzip" [git]="git" [python3]="python3"
     [fish]="fish" [magick]="ImageMagick" [grim]="grim" [cliphist]="cliphist"
     [wl-copy]="wl-clipboard" [wl-paste]="wl-clipboard"
     [playerctl]="playerctl" [notify-send]="libnotify"
@@ -192,6 +192,7 @@ FEDORA_CORE_PKGS=(
   curl
   ripgrep
   jq
+  file
   python3
   xdg-user-dirs
   rsync
