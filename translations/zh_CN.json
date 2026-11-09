@@ -3191,6 +3191,7 @@
   "%1. Update them in Settings › Hub, or run `inir update`.": "%1。可在 设置 › 中心 中更新，或运行 `inir update`。",
   "Can't check for iNiR updates": "无法检查 iNiR 更新",
   "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "iNiR 服务器连续三次未响应。请检查网络连接，或运行 `inir doctor`。",
+  "%1 is having trouble right now (error %2). That's %1, not iNiR or your connection: iNiR checks again by itself.": "%1 目前出现问题（错误 %2）。这是 %1 的问题，不是 iNiR 或你的网络连接：iNiR 稍后会自动重新检查。",
   "Removed from clipboard history": "已从剪贴板历史中移除",
   "Removed %1 from autostart": "已从自动启动中移除 %1",
   "Removed a mascot": "已移除吉祥物",

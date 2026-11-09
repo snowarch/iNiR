@@ -3191,6 +3191,7 @@
   "%1. Update them in Settings › Hub, or run `inir update`.": "%1. Bunları Ayarlar › Hub içinden güncelle ya da `inir update` çalıştır.",
   "Can't check for iNiR updates": "iNiR güncellemeleri denetlenemiyor",
   "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "iNiR sunucusu üst üste üç kez yanıt vermedi. Bağlantını denetle ya da `inir doctor` çalıştır.",
+  "%1 is having trouble right now (error %2). That's %1, not iNiR or your connection: iNiR checks again by itself.": "%1 şu anda sorun yaşıyor (hata %2). Sorun %1 tarafında; iNiR'de veya bağlantınızda değil: iNiR kendiliğinden yeniden kontrol edecek.",
   "Removed from clipboard history": "Pano geçmişinden kaldırıldı",
   "Removed %1 from autostart": "%1 otomatik başlatmadan kaldırıldı",
   "Removed a mascot": "Maskot kaldırıldı",

@@ -3191,6 +3191,7 @@
   "%1. Update them in Settings › Hub, or run `inir update`.": "%1. Inissititernerit › Hub-imi nutarterikkit imaluunniit `inir update` aallartiguk.",
   "Can't check for iNiR updates": "iNiR-ip nutarterneqarsinnaanera misissorneqarsinnaanngilaq",
   "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "iNiR-ip serveria pingasoriarluni akissuteqanngilaq. Attaveqaatit misissoruk imaluunniit `inir doctor` aallartiguk.",
+  "%1 is having trouble right now (error %2). That's %1, not iNiR or your connection: iNiR checks again by itself.": "%1 maanna ajornartorsiuteqarpoq (kukkuneq %2). Ajornartoq %1-imiippoq, iNiR-imi attaveqaatinniluunniit pinngilaq: iNiR nammineq misissoqqissaaq.",
   "Removed from clipboard history": "Clipboard-ip oqaluttuassartaanit peerneqarpoq",
   "Removed %1 from autostart": "%1 nammineerluni aallartittartunit peerneqarpoq",
   "Removed a mascot": "Mascot peerneqarpoq",

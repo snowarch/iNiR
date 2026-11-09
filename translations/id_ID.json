@@ -3191,6 +3191,7 @@
   "%1. Update them in Settings › Hub, or run `inir update`.": "%1. Perbarui di Pengaturan › Hub atau jalankan `inir update`.",
   "Can't check for iNiR updates": "Tidak dapat memeriksa pembaruan iNiR",
   "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "Server iNiR tidak menjawab tiga kali berturut-turut. Periksa koneksi Anda atau jalankan `inir doctor`.",
+  "%1 is having trouble right now (error %2). That's %1, not iNiR or your connection: iNiR checks again by itself.": "%1 sedang bermasalah saat ini (galat %2). Itu masalah %1, bukan iNiR atau koneksimu: iNiR akan memeriksa lagi dengan sendirinya.",
   "Removed from clipboard history": "Dihapus dari riwayat papan klip",
   "Removed %1 from autostart": "%1 dihapus dari mulai otomatis",
   "Removed a mascot": "Maskot dihapus",

@@ -14,6 +14,10 @@ The update checks for new changes, takes a snapshot so you can roll back, pulls 
 from the hub, the prebuilt runtime and the `inir` command. Your config and edits stay, and a version that won't load is
 rolled back. If it stops because the checkout has local changes or commits of its own, it prints the command to run.
 
+When GitHub, or another server iNiR downloads from, is down (it answers with an error like 504), setup, `inir update`,
+`inir doctor`, the Hub and the update check say so and name it, with GitHub's status page: nothing changed and nothing
+on your system is broken. Try again in a while.
+
 The hub moves on its own: when iNiR itself has nothing new, `inir update` still brings new versions of the families,
 themes, widgets and web apps you installed. Where systemd runs the shell, a new family, component or Design that won't
 load goes back to the version you had; on Void the shell restarts on the new version without that check. The update

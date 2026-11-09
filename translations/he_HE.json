@@ -3191,6 +3191,7 @@
   "%1. Update them in Settings › Hub, or run `inir update`.": "%1. אפשר לעדכן אותם בהגדרות › מרכז או להריץ `inir update`.",
   "Can't check for iNiR updates": "לא ניתן לבדוק עדכונים ל-iNiR",
   "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "השרת של iNiR לא ענה שלוש פעמים ברצף. כדאי לבדוק את החיבור או להריץ `inir doctor`.",
+  "%1 is having trouble right now (error %2). That's %1, not iNiR or your connection: iNiR checks again by itself.": "ל־%1 יש כרגע תקלה (שגיאה %2). הבעיה ב־%1, לא ב־iNiR או בחיבור שלך: iNiR יבדוק שוב בעצמו.",
   "Removed from clipboard history": "הוסר מהיסטוריית הלוח",
   "Removed %1 from autostart": "%1 הוסר מההפעלה האוטומטית",
   "Removed a mascot": "הקמע הוסר",

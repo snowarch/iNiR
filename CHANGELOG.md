@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **When GitHub is down, iNiR says so**: setup, `inir update`, `inir doctor`, the Hub and the update check name the server that isn't answering (a 504 and the like), with GitHub's status page, instead of red lines that read as iNiR broken. Nothing changes on your system; try again in a while.
+
 ### Fixed
 - **NixOS**: the flake installs iNiR like every other distro: your copy lives in `~/.config/quickshell/inir`, the families come from the Hub on the first start and switch like on Arch, and Hub items update from **Settings › Hub** or `inir update`. A rebuild after the 3.0.1 package removes what it left in your home; the page is [NixOS](docs/NIXOS.md).
 - **Idle and lock timers**: restarting the shell no longer leaves an old `swayidle` behind on each restart.

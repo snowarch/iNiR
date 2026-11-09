@@ -932,17 +932,28 @@ Singleton {
         id: fetchProc
         running: false
         command: [...root._gitCmd, "fetch", "origin", "--quiet", "--no-tags"]
+        stderr: StdioCollector { id: fetchErr }
         onExited: (exitCode, exitStatus) => {
             if (exitCode !== 0) {
                 root.isChecking = false
                 root.consecutiveFetchErrors++
                 print("[ShellUpdates] Fetch failed (attempt " + root.consecutiveFetchErrors + ")")
+                // A server down (5xx, 429) is named, so a GitHub outage is not read as iNiR broken (11-09)
+                const err = fetchErr.text ?? ""
+                const code = (err.match(/returned error: (5\d\d|429)\b/) ?? [])[1] ?? ""
+                const host = (err.match(/'[a-z+]+:\/\/(?:[^@\/']*@)?([^\/:']+)/) ?? [])[1] ?? ""
+                const who = /(^|\.)(github\.com|githubusercontent\.com|github\.io)$/.test(host) ? "GitHub" : host
+                const down = code.length > 0 && who.length > 0
+                    ? Translation.tr("%1 is having trouble right now (error %2). That's %1, not iNiR or your connection: iNiR checks again by itself.").arg(who).arg(code)
+                    : ""
+                root.lastError = down
 
                 // Notify after 3 consecutive failures (persistent problem)
                 if (root.consecutiveFetchErrors >= 3 && !root.fetchErrorNotificationShown) {
                     root.fetchErrorNotificationShown = true
                     const title = Translation.tr("Can't check for iNiR updates")
-                    const body = Translation.tr("iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.")
+                    const body = down.length > 0 ? down
+                        : Translation.tr("iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.")
                     Notifications.send(title, body, "low", 8000)
                     print("[ShellUpdates] Notification sent: Persistent fetch errors")
                 }

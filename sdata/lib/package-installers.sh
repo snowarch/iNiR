@@ -220,11 +220,12 @@ install-yay(){
   fi
 
   # Clone yay-bin (faster than compiling yay)
-  git clone https://aur.archlinux.org/yay-bin.git /tmp/buildyay || return 1
+  git clone https://aur.archlinux.org/yay-bin.git /tmp/buildyay || { net_down aur.archlinux.org; return 1; }
 
   # Build and install
   x cd /tmp/buildyay
   if ! makepkg -si --noconfirm; then
+      net_down github.com aur.archlinux.org
       log_error "Failed to build yay; install an AUR helper (yay or paru) yourself, then: ./setup install"
       x cd "${REPO_ROOT}"
       return 1

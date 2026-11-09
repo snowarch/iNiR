@@ -30,8 +30,52 @@ esac
 
 # Setup downloads fonts, themes, binaries and installers from many hosts; one dropped connection used to
 # leave a piece missing until the next run (Deno, in a CI run). Every curl it or its scripts call retries.
-curl() { command curl --retry 3 --retry-all-errors --connect-timeout 15 "$@"; }
-export -f curl
+curl() {
+  command curl --retry 3 --retry-all-errors --connect-timeout 15 "$@" && return 0
+  local rc=$? arg
+  # 22 an HTTP error, the rest a server that hung up or never answered
+  case $rc in 7|22|28|35|52|56|92) for arg; do [[ $arg == http*://* ]] && { net_down "$arg"; break; }; done ;; esac
+  return "$rc"
+}
+
+# A server down (5xx, 429) makes setup print red lines people read as iNiR broken (GitHub's 504s, 11-09). net_down
+# URL|HOST... asks each (an answer is kept five minutes), names the one that is down and whose problem it is, once a
+# run, on setup's own stderr even where the caller hides curl's, sets NET_DOWN_CAUSE for a failure line and returns 0.
+[[ -n "${INIR_NOTICE_FD:-}" ]] || { exec {INIR_NOTICE_FD}>&2; export INIR_NOTICE_FD INIR_RUN_ID=$$; }
+net_down() {
+  local target url host out code server who msg dir="${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/inir-net-$UID"
+  mkdir -p "$dir" 2>/dev/null || return 1
+  for target; do
+    url=$target
+    [[ $url == *://* || $url != *@*:* ]] || { url=${url#*@}; url=${url%%:*}; }
+    [[ $url == *://* ]] || url="https://$url/"
+    host=${url#*://}; host=${host%%[/:?#]*}; [[ -n $host ]] || continue
+    if [[ -z "$(find "$dir/$host" -mmin -5 2>/dev/null)" ]]; then
+      out="$(command curl -s -o /dev/null -D - -r 0-0 -L --max-time 10 -w '\ncode %{http_code}\n' "$url" 2>/dev/null)"
+      code=$(sed -n 's/^code //p' <<<"$out" | tail -n1); server=$(grep -i '^server:' <<<"$out" | tail -n1)
+      who=$host
+      [[ $host =~ (^|\.)(github\.com|githubusercontent\.com|github\.io)$ || ${server,,} == *github* ]] && who=GitHub
+      printf '%s %s\n' "${code:-000}" "$who" > "$dir/$host"
+    fi
+    read -r code who < "$dir/$host" 2>/dev/null || continue
+    [[ $code == 5[0-9][0-9] || $code == 429 ]] || continue
+    local seen="HTTP $code"; [[ $who == GitHub ]] && seen+=" from $host"
+    NET_DOWN_CAUSE="$who is having trouble right now ($seen), not iNiR"
+    if [[ ! -e "$dir/$host.${INIR_RUN_ID:-0}" ]]; then
+      : > "$dir/$host.${INIR_RUN_ID:-0}"
+      if [[ $who == GitHub ]]; then
+        msg="GitHub is having trouble right now ($seen). That's GitHub, not iNiR or your system: try again in a while (https://www.githubstatus.com)"
+      else
+        msg="$who is having trouble right now ($seen). That's that server, not iNiR or your system: try again in a while"
+      fi
+      { printf '  \e[33m⚠\e[0m %s\n' "$msg" >&"${INIR_NOTICE_FD:-2}"; } 2>/dev/null || printf '  \e[33m⚠\e[0m %s\n' "$msg" >&2
+      [[ -n ${INIR_EVENTS_FD:-} ]] && printf 'warn\t%s\n' "$msg" >&"$INIR_EVENTS_FD" 2>/dev/null
+    fi
+    return 0
+  done
+  return 1
+}
+export -f curl net_down
 
 # Colors (ANSI escape codes)
 STY_RED='\e[31m'

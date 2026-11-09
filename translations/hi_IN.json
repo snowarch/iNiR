@@ -3191,6 +3191,7 @@
   "%1. Update them in Settings › Hub, or run `inir update`.": "%1. इन्हें सेटिंग्स › हब में अपडेट करें या `inir update` चलाएँ।",
   "Can't check for iNiR updates": "iNiR अपडेट जाँचे नहीं जा सके",
   "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "iNiR का सर्वर लगातार तीन बार जवाब नहीं दे पाया। अपना कनेक्शन जाँचें या `inir doctor` चलाएँ।",
+  "%1 is having trouble right now (error %2). That's %1, not iNiR or your connection: iNiR checks again by itself.": "%1 में अभी समस्या है (त्रुटि %2)। यह %1 की समस्या है, iNiR या आपके कनेक्शन की नहीं: iNiR अपने आप फिर से जाँच करेगा।",
   "Removed from clipboard history": "क्लिपबोर्ड इतिहास से हटाया गया",
   "Removed %1 from autostart": "%1 को ऑटोस्टार्ट से हटाया गया",
   "Removed a mascot": "मैस्कॉट हटाया गया",

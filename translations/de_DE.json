@@ -3191,6 +3191,7 @@
   "%1. Update them in Settings › Hub, or run `inir update`.": "%1. Aktualisiere sie unter Einstellungen › Hub oder führe `inir update` aus.",
   "Can't check for iNiR updates": "iNiR kann nicht nach Updates suchen",
   "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "Der Server von iNiR hat dreimal hintereinander nicht geantwortet. Prüfe deine Verbindung oder führe `inir doctor` aus.",
+  "%1 is having trouble right now (error %2). That's %1, not iNiR or your connection: iNiR checks again by itself.": "%1 hat gerade Probleme (Fehler %2). Das liegt an %1, nicht an iNiR oder deiner Verbindung: iNiR prüft später von selbst erneut.",
   "Removed from clipboard history": "Aus dem Zwischenablageverlauf entfernt",
   "Removed %1 from autostart": "%1 aus dem Autostart entfernt",
   "Removed a mascot": "Maskottchen entfernt",

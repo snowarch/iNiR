@@ -3191,6 +3191,7 @@
   "%1. Update them in Settings › Hub, or run `inir update`.": "%1. حدّثها من الإعدادات › المركز أو شغّل `inir update`.",
   "Can't check for iNiR updates": "تعذّر التحقق من تحديثات iNiR",
   "iNiR's server didn't answer three times in a row. Check your connection, or run `inir doctor`.": "لم يستجب خادم iNiR ثلاث مرات متتالية. تحقّق من اتصالك أو شغّل `inir doctor`.",
+  "%1 is having trouble right now (error %2). That's %1, not iNiR or your connection: iNiR checks again by itself.": "يواجه %1 مشكلة الآن (خطأ %2). المشكلة في %1، وليست في iNiR أو اتصالك: سيتحقق iNiR مرة أخرى تلقائيًا.",
   "Removed from clipboard history": "أُزيل من سجل الحافظة",
   "Removed %1 from autostart": "أُزيل %1 من التشغيل التلقائي",
   "Removed a mascot": "أُزيلت التميمة",

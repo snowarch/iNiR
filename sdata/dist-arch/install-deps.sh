@@ -516,6 +516,7 @@ if $INSTALL_FONTS; then
 
   for font in "${CRITICAL_FONTS[@]}"; do
     if ! pacman -Q "$font" &>/dev/null && ! $AUR_HELPER -S $installflags "$font" 2>/dev/null; then
+      net_down github.com aur.archlinux.org
       log_error "CRITICAL: Failed to install $font — some iNiR typography may fall back"
       log_warning "Try: $AUR_HELPER -S $font"
     fi
@@ -528,6 +529,7 @@ if $INSTALL_FONTS; then
     if ! $AUR_HELPER -S $installflags "$font" 2>/dev/null; then
       log_info "$font unavailable through AUR, trying direct download fallback..."
       if ! install_font_fallback "$font"; then
+        net_down github.com aur.archlinux.org
         log_warning "$font unavailable — system will use fallback fonts"
       fi
     fi

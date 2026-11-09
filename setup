@@ -2138,6 +2138,10 @@ _report_update_failure() {
     _write_update_status "failed:${code}:${msg}"
 }
 
+# ": GitHub is having trouble right now (HTTP 504), not iNiR" when a server this step used is down (net_down,
+# sdata/lib/environment-variables.sh), for the line the update notice shows
+_net_cause() { net_down "$@" && printf ': %s' "$NET_DOWN_CAUSE"; }
+
 _reexec_update_after_repo_change() {
     local reexec_args=()
     $ask || reexec_args+=("-y")
@@ -2595,7 +2599,7 @@ run_update() {
         tui_info "Syncing from local repo (git pull skipped)"
         snapshot_due="Before local sync to $(get_repo_commit)"
     else
-        local update_rc=0
+        local update_rc=0 cause=""
         check_remote_updates || update_rc=$?
 
         if [[ "$update_rc" -eq 0 ]]; then
@@ -2620,6 +2624,13 @@ run_update() {
             local pull_log
             pull_log="$(mktemp)"
             if ! LC_ALL=C git -C "$REPO_ROOT" pull --ff-only origin "$tracked_branch" 2>"$pull_log"; then
+                cause="$(_net_cause "$(git -C "$REPO_ROOT" remote get-url origin 2>/dev/null)")"
+                if [[ -n "$cause" ]]; then
+                    _step_phase_fail "Git pull failed"
+                    _report_update_failure 25 "Could not download the new version, so nothing changed${cause}. inir update tries again"
+                    rm -f "$pull_log"
+                    return 25
+                fi
                 _step_phase_fail "Git pull failed"
                 tui_error "Git pull from origin/${tracked_branch} failed in ${REPO_ROOT}"
                 if [[ -s "$pull_log" ]]; then
@@ -2716,6 +2727,11 @@ run_update() {
             tui_info "Without one:"
             tui_dim "  git clone https://github.com/snowarch/inir.git ~/inir && cd ~/inir && ./setup install"
             return 21
+        elif [[ "$update_rc" -eq 2 ]] \
+                && cause="$(_net_cause "$(git -C "$REPO_ROOT" remote get-url origin 2>/dev/null)")" && [[ -n "$cause" ]]; then
+            _report_update_failure 25 "Could not look for a newer version, so nothing changed${cause}. inir update tries again"
+            tui_error "Could not look for a newer version, so nothing changed${cause}"
+            return 25
         elif [[ "$update_rc" -eq 2 ]]; then
             tui_warn "Could not reach origin to look for a newer version (offline or no tracked branch)"
             tui_info "Checking local repo vs installed version..."
@@ -2763,7 +2779,13 @@ run_update() {
         install_inir_cli_binary && cli_fetched=true
         # shellcheck disable=SC2086
         if ! needed="$(hub_plugins_needed "$hub_runtime" "$REPO_ROOT")" || ! hub_fetch_plugins "$(get_repo_version)" $needed; then
-            _report_update_failure 25 "Could not get your families from the hub, so nothing changed. The reason is in the update's output; inir update tries again"
+            local cause
+            cause="$(_net_cause https://inir.space/hub/index.json github.com)"
+            if [[ -n "$cause" ]]; then
+                _report_update_failure 25 "Could not get your families from the hub, so nothing changed${cause}. inir update tries again"
+            else
+                _report_update_failure 25 "Could not get your families from the hub, so nothing changed. The reason is in the update's output; inir update tries again"
+            fi
             tui_error "Could not get your families from the hub (the reason is just above), so nothing changed. Run inir update again once it is solved"
             return 25
         fi
@@ -2780,7 +2802,7 @@ run_update() {
     if [[ -n "$(prebuilt_behind)" ]]; then
         tui_info "Fetching qs-rs and inir-accel..."
         if ! prebuilt_fetch; then
-            _report_update_failure 25 "Could not get qs-rs and inir-accel, so nothing changed. inir update tries again"
+            _report_update_failure 25 "Could not get qs-rs and inir-accel, so nothing changed$(_net_cause "$(jq -r .manifest "${REPO_ROOT}/sdata/prebuilt.json" 2>/dev/null)" github.com). inir update tries again"
             tui_error "Could not get qs-rs and inir-accel, so nothing changed. inir update tries again once online"
             return 25
         fi
