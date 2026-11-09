@@ -23,8 +23,9 @@ nix flake init -t github:snowarch/inir
 cp /etc/nixos/hardware-configuration.nix .
 ```
 
-Open `configuration.nix`, rename the `you` user to yours, and keep your own boot loader lines if your machine does
-not boot with systemd-boot. Then:
+Open `configuration.nix` and rename the `you` user to yours. From the `configuration.nix` your installer wrote, copy
+your time zone, language and machine name (the template marks where), and your boot loader lines if your machine
+does not boot with systemd-boot. Then:
 
 ```bash
 sudo nixos-rebuild switch --flake .#inir

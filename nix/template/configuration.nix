@@ -9,6 +9,11 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
+  # your machine's name, time zone and language: copy these lines from the configuration.nix your installer wrote
+  # networking.hostName = "nixos";
+  # time.timeZone = "Europe/Madrid";
+  # i18n.defaultLocale = "en_US.UTF-8";
+
   programs.inir = {
     enable = true;
     # Niri, a login screen, PipeWire, NetworkManager and the rest of a desktop session.
