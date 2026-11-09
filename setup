@@ -355,6 +355,8 @@ repair_update_owned_state() {
     elif [[ "${INIR_LEGACY_MALLOC_ENV_REPAIRED:-0}" -gt 0 ]]; then
         tui_success "Removed legacy global Quickshell allocator tuning"
     fi
+    repair_qt_platform_theme || tui_warn "Could not move Qt apps to KDE's theme"
+    [[ "${INIR_QT_THEME_REPAIRED:-0}" -gt 0 ]] && tui_success "Qt apps take KDE's theme (plasma-integration found)"
 
     if [[ "$include_repo_integration" == "true" ]]; then
         if repair_legacy_niri_shell_startup; then

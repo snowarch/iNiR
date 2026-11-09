@@ -178,6 +178,28 @@ qt_plugin_on_path() {
   return 1
 }
 
+# kde_platform_theme_present: KDE's Qt platform theme (plasma-integration) is installed
+kde_platform_theme_present() {
+  xbps-query -p pkgver plasma-integration >/dev/null 2>&1 \
+    || pacman -Q plasma-integration >/dev/null 2>&1 \
+    || dpkg -l plasma-integration 2>/dev/null | grep -q '^ii' \
+    || rpm -q plasma-integration >/dev/null 2>&1 \
+    || qt_plugin_on_path platformthemes/KDEPlasmaPlatformTheme6.so
+}
+
+# repair_qt_platform_theme: a Niri config setup left on the qt6ct fallback (no plasma-integration then) takes KDE's
+# theme once it is there, as a fresh install would; never the other way. Sets INIR_QT_THEME_REPAIRED.
+repair_qt_platform_theme() {
+  local niri="${XDG_CONFIG_HOME:-$HOME/.config}/niri" f
+  INIR_QT_THEME_REPAIRED=0
+  for f in "$niri/config.d/40-environment.kdl" "$niri/config.kdl"; do
+    [[ -f "$f" ]] && ! nix_managed "$f" && grep -q 'QT_QPA_PLATFORMTHEME "qt6ct"' "$f" || continue
+    kde_platform_theme_present || return 0
+    sed -i 's/QT_QPA_PLATFORMTHEME "qt6ct"/QT_QPA_PLATFORMTHEME "kde"/' "$f" || return 1
+    INIR_QT_THEME_REPAIRED=1
+  done
+}
+
 # File operations for 3.files.sh
 cp_file(){
   # $1 = source, $2 = target
