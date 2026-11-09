@@ -2250,7 +2250,11 @@ is_inir_service_enabled() {
             return 0
         fi
     done
-    return 1
+    # a package wires it where it installs the unit (the NixOS module: /etc/systemd/user/niri.service.wants), which
+    # systemd knows: without this, a call while the shell is down starts one the service doesn't own
+    local wanted_by
+    wanted_by=" $(systemctl --user show -p WantedBy --value inir.service 2>/dev/null) "
+    [[ "$wanted_by" == *" niri.service "* || "$wanted_by" == *" umbriel.service "* ]]
 }
 
 detect_compositor_service() {
