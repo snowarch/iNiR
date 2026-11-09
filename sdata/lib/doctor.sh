@@ -15,6 +15,8 @@ XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
 XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 XDG_BIN_HOME="${XDG_BIN_HOME:-$HOME/.local/bin}"
+# Where Nix installs what a person or the system has: NixOS has no /usr/lib for plugins, and sets no LV2_PATH
+DOCTOR_NIX_PROFILES=("$HOME/.nix-profile" "/etc/profiles/per-user/${USER:-$(id -un)}" /run/current-system/sw /nix/var/nix/profiles/default)
 
 doctor_pass() {
     tui_success "$1"
@@ -201,7 +203,11 @@ check_dependencies() {
     # when the actual LSP LV2 DSP backend is absent. Check the bundle itself so
     # Doctor repairs the capability the native iNiR equalizer depends on.
     local lsp_lv2_found=false lsp_dir
-    for lsp_dir in /usr/lib/lv2 /usr/lib64/lv2 /usr/local/lib/lv2 /usr/local/lib64/lv2; do
+    # LV2_PATH first, as LV2 hosts read it, then the Nix profiles (NixOS sets no LV2_PATH and has no /usr/lib/lv2)
+    local -a lv2_dirs=() nix_profile
+    IFS=: read -r -a lv2_dirs <<<"${LV2_PATH:-}"
+    for nix_profile in "${DOCTOR_NIX_PROFILES[@]}"; do lv2_dirs+=("$nix_profile/lib/lv2"); done
+    for lsp_dir in "${lv2_dirs[@]}" /usr/lib/lv2 /usr/lib64/lv2 /usr/local/lib/lv2 /usr/local/lib64/lv2; do
         if compgen -G "$lsp_dir/lsp-plugins*.lv2" >/dev/null \
                 || compgen -G "$lsp_dir/lsp*.lv2" >/dev/null; then
             lsp_lv2_found=true
@@ -224,8 +230,11 @@ check_dependencies() {
     # Not commands either: Qt apps take the theme's colors through plasma-integration's platform theme, and emoji
     # need a color font (the Qt theming and font steps say why). Here an update installs them.
     local qt_plugins qt_theme_found=false
+    local -a qt_path=()
+    IFS=: read -r -a qt_path <<<"${QT_PLUGIN_PATH:-}"
+    for nix_profile in "${DOCTOR_NIX_PROFILES[@]}"; do qt_path+=("$nix_profile/lib/qt-6/plugins"); done
     for qt_plugins in "$(qtpaths6 --plugin-dir 2>/dev/null || qtpaths --plugin-dir 2>/dev/null || true)" \
-            /usr/lib/qt6/plugins /usr/lib64/qt6/plugins /usr/lib/x86_64-linux-gnu/qt6/plugins; do
+            "${qt_path[@]}" /usr/lib/qt6/plugins /usr/lib64/qt6/plugins /usr/lib/x86_64-linux-gnu/qt6/plugins; do
         if [[ -n "$qt_plugins" && -f "$qt_plugins/platformthemes/KDEPlasmaPlatformTheme6.so" ]]; then
             qt_theme_found=true
             break
@@ -697,7 +706,7 @@ check_fonts() {
         "Rubik:Rubik:optional"
         "Space Grotesk:Space Grotesk:optional"
         "Readex Pro:Readex Pro:optional"
-        "Twemoji:Twemoji:optional"
+        "Twemoji\|Twitter Color Emoji:Twemoji:optional"
     )
 
     if ! command -v fc-list &>/dev/null; then
@@ -1201,7 +1210,10 @@ check_service_unit_health() {
     while read -r target_name; do
         [[ -n "$target_name" ]] || continue
         local link="${XDG_CONFIG_HOME}/systemd/user/${target_name}.wants/inir.service"
-        [[ -e "$link" || -L "$link" ]] || missing_links+=("$target_name")
+        [[ -e "$link" || -L "$link" ]] && continue
+        [[ "$installed_strategy" == "package-manager" ]] && declare -F compositor_wants_inir >/dev/null \
+            && compositor_wants_inir "$target_name" && continue
+        missing_links+=("$target_name")
     done <<< "$expected_target"
 
     if [[ ${#missing_links[@]} -gt 0 ]]; then
@@ -1739,7 +1751,11 @@ check_qt_theming() {
         qt_plugin_dir=$(qtpaths --plugin-dir 2>/dev/null || true)
         [[ -n "$qt_plugin_dir" ]] && search_dirs+=("${qt_plugin_dir}/platformthemes")
     fi
-    # Known fallback paths for common distros
+    # QT_PLUGIN_PATH as Qt reads it (NixOS names its profiles' plugin dirs there), then the usual distro paths
+    local -a qt_path=()
+    IFS=: read -r -a qt_path <<<"${QT_PLUGIN_PATH:-}"
+    for plugindir in "${DOCTOR_NIX_PROFILES[@]}"; do qt_path+=("$plugindir/lib/qt-6/plugins"); done
+    for plugindir in "${qt_path[@]}"; do search_dirs+=("$plugindir/platformthemes"); done
     search_dirs+=(
         /usr/lib/qt6/plugins/platformthemes
         /usr/lib64/qt6/plugins/platformthemes
@@ -1790,6 +1806,10 @@ check_qt_theming() {
         qt_plugin_dir=$(qtpaths --plugin-dir 2>/dev/null || true)
         [[ -n "$qt_plugin_dir" ]] && style_dirs+=("${qt_plugin_dir}/styles")
     fi
+    local -a qt_style_path=()
+    IFS=: read -r -a qt_style_path <<<"${QT_PLUGIN_PATH:-}"
+    for styledir in "${DOCTOR_NIX_PROFILES[@]}"; do qt_style_path+=("$styledir/lib/qt-6/plugins"); done
+    for styledir in "${qt_style_path[@]}"; do style_dirs+=("$styledir/styles"); done
     style_dirs+=(
         /usr/lib/qt6/plugins/styles
         /usr/lib64/qt6/plugins/styles

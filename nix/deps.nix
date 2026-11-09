@@ -23,7 +23,7 @@ let
     kde-qml = { pkgs = [ kde.kdialog ]; qml = [ kde.kirigami.unwrapped kde.syntax-highlighting ]; };
     qt-theming = { pkgs = [ kde.qt6ct kde.plasma-integration kde.frameworkintegration kde.kdecoration kde.breeze-icons ]; nixos = "qt.platformTheme kde"; };
     kvantum = { pkgs = [ kde.qtstyleplugin-kvantum ]; };
-    plasma-integration = { };
+    plasma-integration = { pkgs = [ kde.kde-cli-tools ]; };
     kconfig = { pkgs = [ kde.kconfig ]; };
     polkit = { nixos = "security.polkit"; };
     portals = { nixos = "xdg.portal: gnome and gtk"; };
@@ -87,7 +87,7 @@ let
     emoji-core = { fonts = [ pkgs.noto-fonts-color-emoji ]; };
     aur-fonts = {
       pkgs = [ pkgs.whitesur-icon-theme ];
-      fonts = with pkgs; [ roboto-flex rubik twemoji-color-font googleFonts ];
+      fonts = with pkgs; [ roboto-flex rubik twitter-color-emoji googleFonts ];
     };
     darkly = { pkgs = [ pkgs.darkly ]; };
     darkly-build = { };

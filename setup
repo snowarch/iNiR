@@ -206,14 +206,18 @@ sync_user_inir_service_from_repo_if_present() {
     [[ -f "$service_asset" ]] || return 1
     inir_user_service_is_masked && return 2
 
-    mkdir -p "$service_target_dir"
-    mkdir -p "${XDG_CACHE_HOME:-$HOME/.cache}"
-    local service_dropin_dir="${service_target_dir}/inir.service.d"
-    local service_override="${service_dropin_dir}/override.conf"
     install_mode="$(get_installed_install_mode 2>/dev/null || true)"
     if [[ -z "$install_mode" || "$install_mode" == "unknown" ]]; then
         install_mode="$(get_install_mode 2>/dev/null || true)"
     fi
+    # the package installs the unit for everyone (NixOS module, `make install`), as `inir service install` knows: a
+    # copy here would shadow it, and its ExecStart names a launcher a package never writes
+    [[ "$install_mode" == "package-managed" ]] && return 0
+
+    mkdir -p "$service_target_dir"
+    mkdir -p "${XDG_CACHE_HOME:-$HOME/.cache}"
+    local service_dropin_dir="${service_target_dir}/inir.service.d"
+    local service_override="${service_dropin_dir}/override.conf"
 
     if [[ "$install_mode" == "repo-link" ]]; then
         local service_asset_real service_target_real override_tmp
@@ -277,6 +281,16 @@ EOF
     return 0
 }
 
+# compositor_wants_inir UNIT: systemd's own view of UNIT, for a package that wires inir.service for everyone (NixOS:
+# /etc/systemd/user/niri.service.wants): it wants inir.service wherever the link lives, or it is not installed and
+# starts nothing yet
+compositor_wants_inir() {
+    local state
+    state="$(systemctl --user show -p LoadState -p Wants "$1" 2>/dev/null)"
+    state=" ${state//$'\n'/ } "
+    [[ "$state" == *" LoadState=not-found "* || "${state//=/ }" == *" inir.service "* ]]
+}
+
 ensure_user_inir_service_enabled() {
     INIR_SERVICE_WIRING_CHANGED=0
     has_usable_systemd_user_manager || return 1
@@ -313,8 +327,9 @@ ensure_user_inir_service_enabled() {
     local service_real link_real
     service_real="$(readlink -f "$service_path" 2>/dev/null || printf '%s' "$service_path")"
     for unit in "${compositors[@]}"; do
-        mkdir -p "$systemd_user_dir/$unit.wants" || return 1
         link="$systemd_user_dir/$unit.wants/inir.service"
+        [[ "$installed_strategy" == "package-manager" && ! -L "$link" ]] && compositor_wants_inir "$unit" && continue
+        mkdir -p "$systemd_user_dir/$unit.wants" || return 1
         link_real="$(readlink -f "$link" 2>/dev/null || true)"
         if [[ ! -L "$link" || "$link_real" != "$service_real" ]]; then
             ln -sf "$service_path" "$link" || return 1
@@ -1709,6 +1724,11 @@ show_install_completion() {
 
 show_update_completion() {
     local version="$1" commit="$2"
+    # a package's copy synced at login: one line for the journal, the package owns rollback
+    if [[ -n "${INIR_SESSION_SYNC:-}" ]]; then
+        tui_info "Your copy of iNiR ${version} is in step with the package"
+        return 0
+    fi
     tui_alert "success" "Update applied" \
         "iNiR ${version} (${commit}) is synced. The shell restart was requested when the session allowed it."
 
