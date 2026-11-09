@@ -25,7 +25,7 @@ QuickToggleModel {
     altAction: () => {
         ShellExec.execFishOrBashOneLiner(
             "flatpak run com.github.wwmm.easyeffects; or easyeffects",
-            "/usr/bin/flatpak run com.github.wwmm.easyeffects || /usr/bin/easyeffects"
+            "flatpak run com.github.wwmm.easyeffects || easyeffects"
         )
         GlobalStates.sidebarRightOpen = false
     }

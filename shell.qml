@@ -692,7 +692,7 @@ ShellRoot {
         }
         /// Switch to standalone Window mode and open page `index`
         function openWindowAt(index: int): void {
-            const args = ["/usr/bin/env"]
+            const args = ["env"]
             if (index >= 0)
                 args.push(`QS_SETTINGS_PAGE=${index}`)
             args.push(Quickshell.shellPath("scripts/inir"), "settings-window")

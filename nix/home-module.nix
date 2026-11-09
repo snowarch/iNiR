@@ -1,59 +1,47 @@
+# iNiR through Home Manager: the package, its programs and fonts for this person, and the inir.service unit Niri
+# starts. What needs root (Niri itself, PipeWire, NetworkManager, Bluetooth, UPower, power profiles, the login screen,
+# groups) belongs to the system: the NixOS module, or your distro's packages.
+{ commit ? "unknown" }:
 { config, lib, pkgs, ... }:
 
 let
   common = import ./module-common.nix { inherit lib pkgs; };
   cfg = config.programs.inir;
-  wantedUnit = common.compositorUnit cfg.service.compositor;
-  env = common.serviceEnvironment cfg // {
-    PATH = lib.makeBinPath ([ cfg.package ] ++ cfg.extraPackages);
-  };
+  unit = common.service cfg;
+  value = v: if builtins.isBool v then lib.boolToString v else toString v;
 in
 {
-  imports = [ common.optionsModule ];
+  imports = [ (common.options { inherit commit; updateHint = "nix flake update inir, then home-manager switch"; }) ];
 
-  options.programs.inir.configSymlink = {
-    enable = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-      description = "Expose the packaged shell at ~/.config/quickshell/inir for tools that expect the traditional path.";
-    };
+  options.programs.inir.fonts.enable = lib.mkOption {
+    type = lib.types.bool;
+    default = true;
+    description = "Install the fonts iNiR's styles use.";
   };
 
   config = lib.mkIf cfg.enable {
-    home.packages = [ cfg.package ];
+    home.packages = [ cfg.package ] ++ cfg.package.passthru.runtimeDependencies ++ cfg.extraPackages
+      ++ lib.optionals cfg.fonts.enable cfg.package.passthru.deps.fonts;
+    fonts.fontconfig.enable = lib.mkIf cfg.fonts.enable true;
 
-    xdg.configFile = lib.mkIf cfg.configSymlink.enable {
-      "quickshell/inir".source = "${cfg.package}/share/quickshell/inir";
-    };
+    # before Home Manager checks its links: an older package's launcher and unit would be in their way
+    home.activation.inirLeftovers = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
+      run ${common.leftovers}
+    '';
 
     systemd.user.services.inir = lib.mkIf cfg.service.enable {
       Unit = {
-        Description = "iNiR shell";
-        PartOf = [ "niri.service" ];
-        Requisite = [ "niri.service" ];
-        After = [ "niri.service" ];
-        Before = [ "xdg-desktop-autostart.target" ];
-        StartLimitIntervalSec = 30;
-        StartLimitBurst = 3;
+        Description = unit.description;
+        PartOf = unit.partOf;
+        After = unit.after;
+        Before = unit.before;
+        StartLimitIntervalSec = unit.startLimitIntervalSec;
+        StartLimitBurst = unit.startLimitBurst;
       };
-
-      Service = {
-        Type = "dbus";
-        BusName = "org.kde.StatusNotifierWatcher";
-        Environment = lib.mapAttrsToList (name: value: "${name}=${value}") env;
-        ExecStart = "${lib.getExe cfg.package} run --session";
-        ExecStopPost = "-${lib.getExe cfg.package} cleanup-orphans";
-        SuccessExitStatus = 143;
-        KillMode = "process";
-        KillSignal = "SIGTERM";
-        Restart = "on-failure";
-        RestartSec = 5;
-        TimeoutStopSec = 15;
-        LimitCORE = 0;
-        IOSchedulingPriority = 2;
+      Service = lib.mapAttrs (_: value) unit.serviceConfig // {
+        Environment = lib.mapAttrsToList (name: v: "${name}=${v}") unit.environment;
       };
-
-      Install.WantedBy = lib.optional (wantedUnit != null) wantedUnit;
+      Install.WantedBy = [ "niri.service" ];
     };
   };
 }

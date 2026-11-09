@@ -167,7 +167,7 @@ Singleton {
         // Emptied and made again in one process: as two detached ones the mkdir could run before the rm, which left the
         // folder gone and every clipboard image after it blank.
         for (const dir of [booruPreviews, latexOutput, cliphistDecode])
-            Quickshell.execDetached(["/usr/bin/bash", "-c", 'rm -rf -- "$1" && mkdir -p -- "$1"', "fresh", dir])
+            Quickshell.execDetached(["bash", "-c", 'rm -rf -- "$1" && mkdir -p -- "$1"', "fresh", dir])
         Quickshell.execDetached(["mkdir", "-p", `${aiChats}`])
         Quickshell.execDetached(["mkdir", "-p", `${screenTimePath}`])
         Quickshell.execDetached(["mkdir", "-p", `${userActions}`])

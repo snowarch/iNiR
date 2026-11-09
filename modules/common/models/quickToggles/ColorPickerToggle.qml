@@ -21,7 +21,7 @@ QuickToggleModel {
         interval: 300
         repeat: false
         onTriggered: {
-            ShellExec.execDetachedArgs(["/usr/bin/hyprpicker", "-a"], "Pick color");
+            ShellExec.execDetachedArgs(["hyprpicker", "-a"], "Pick color");
         }
     }
 

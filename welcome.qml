@@ -335,7 +335,7 @@ Scope {
         repeat: false
         onTriggered: {
             // first_run.txt is already written by FirstRunExperience before launching us
-            Quickshell.execDetached(["/usr/bin/notify-send", Translation.tr("Welcome to inir"), Translation.tr("Press Super+/ for all keyboard shortcuts."), "-a", "Shell"])
+            Quickshell.execDetached(["notify-send", Translation.tr("Welcome to inir"), Translation.tr("Press Super+/ for all keyboard shortcuts."), "-a", "Shell"])
             Qt.quit()
         }
     }

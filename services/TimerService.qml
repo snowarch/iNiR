@@ -120,7 +120,7 @@ Singleton {
                 notificationMessage = Translation.tr(`🔴 Focus: %1 minutes`).arg(Math.floor(focusTime / 60));
             }
 
-            Quickshell.execDetached(["/usr/bin/notify-send", "Pomodoro", notificationMessage, "-a", "Shell"]);
+            Quickshell.execDetached(["notify-send", "Pomodoro", notificationMessage, "-a", "Shell"]);
             if (Config.options?.sounds?.pomodoro ?? false) {
                 Audio.playEvent("pomodoroDone")
             }
@@ -238,7 +238,7 @@ Singleton {
         if (countdownSecondsLeft <= 0 && countdownRunning) {
             Persistent.states.timer.countdown.running = false;
             Persistent.states.timer.countdown.paused = false;
-            Quickshell.execDetached(["/usr/bin/notify-send", "Timer", Translation.tr("Time's up!"), "-a", "Shell", "-i", "alarm-symbolic"]);
+            Quickshell.execDetached(["notify-send", "Timer", Translation.tr("Time's up!"), "-a", "Shell", "-i", "alarm-symbolic"]);
             if (Config.options?.sounds?.timer ?? false) {
                 Audio.playEvent("timerDone");
             }

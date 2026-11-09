@@ -40,7 +40,7 @@ Singleton {
     }
 
     function _runTerminalScript(script: string, args): void {
-        const command = ["/usr/bin/bash", "-lc", script + "\nprintf \"\\nPress Enter to close...\"\nread", "bash", ...(args ?? [])]
+        const command = ["bash", "-lc", script + "\nprintf \"\\nPress Enter to close...\"\nread", "bash", ...(args ?? [])]
         const terminal = root._safeTerminal()
         if (terminal === "wezterm") {
             ShellExec.execDetachedArgs([terminal, "start", "--always-new-process", "--", ...command], "Run package action")
@@ -57,7 +57,7 @@ Singleton {
     function installPackage(name: string, preferAurHelper: bool): bool {
         const pkg = (name ?? "").trim()
         if (!root.isSafePackageName(pkg)) {
-            Quickshell.execDetached(["/usr/bin/notify-send", Translation.tr("Install Package"),
+            Quickshell.execDetached(["notify-send", Translation.tr("Install Package"),
                 Translation.tr("Invalid package name"), "-a", "Shell"])
             return false
         }
@@ -78,7 +78,7 @@ Singleton {
     function removePackage(name: string): bool {
         const pkg = (name ?? "").trim()
         if (!root.isSafePackageName(pkg)) {
-            Quickshell.execDetached(["/usr/bin/notify-send", Translation.tr("Remove Package"),
+            Quickshell.execDetached(["notify-send", Translation.tr("Remove Package"),
                 Translation.tr("Invalid package name"), "-a", "Shell"])
             return false
         }
@@ -163,7 +163,7 @@ Singleton {
             root.error = ""
             _stdout = ""
             const xbpsSearch = root._xbpsSearchPipeline("-Rs", 200)
-            _searchProc.command = ["/usr/bin/bash", "-lc",
+            _searchProc.command = ["bash", "-lc",
                 "if command -v pacman &>/dev/null; then " +
                     "if command -v yay &>/dev/null; then yay -Ss \"$1\" 2>/dev/null | head -200; " +
                     "elif command -v paru &>/dev/null; then paru -Ss \"$1\" 2>/dev/null | head -200; " +
@@ -281,7 +281,7 @@ Singleton {
         root.error = ""
         _stdout = ""
         const xbpsSearch = root._xbpsSearchPipeline("-s", 100)
-        _installedProc.command = ["/usr/bin/bash", "-lc",
+        _installedProc.command = ["bash", "-lc",
             "if command -v pacman &>/dev/null; then pacman -Qs \"$1\" 2>/dev/null | head -100; " +
             "elif command -v xbps-query &>/dev/null && command -v xbps-uhelper &>/dev/null; then " +
                 xbpsSearch + "; " +

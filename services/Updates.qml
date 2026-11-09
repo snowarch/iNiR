@@ -28,7 +28,7 @@ Singleton {
         root._checkOutput = null
         root._checkExit = -1
         // checkupdates syncs a copy of the package databases: background work, at nice 19 and idle IO.
-        checkUpdatesProc.command = ["/usr/bin/bash", "-c",
+        checkUpdatesProc.command = ["bash", "-c",
             'p=(nice -n 19); command -v ionice >/dev/null && p+=(ionice -c 3); exec "${p[@]}" "$@"', "_"]
             .concat(root._backend === "xbps" ? ["xbps-install", "-nu"] : ["checkupdates"])
         checkUpdatesProc.running = true;
@@ -67,7 +67,7 @@ Singleton {
     Process {
         id: checkAvailabilityProc
         running: false
-        command: ["/usr/bin/bash", "-c",
+        command: ["bash", "-c",
             "if command -v checkupdates &>/dev/null; then printf 'pacman\\n'; " +
             "elif command -v xbps-install &>/dev/null; then printf 'xbps\\n'; " +
             "else exit 1; fi"

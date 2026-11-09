@@ -77,7 +77,7 @@ Singleton {
                 console.log("[Persistent] File not found, creating new file.")
                 // Ensure parent directory exists
                 const parentDir = root.filePath.substring(0, root.filePath.lastIndexOf('/'))
-                Quickshell.execDetached(["/usr/bin/mkdir", "-p", parentDir])
+                Quickshell.execDetached(["mkdir", "-p", parentDir])
                 fileWriteTimer.restart();
             }
         }

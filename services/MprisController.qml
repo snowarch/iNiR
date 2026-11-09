@@ -380,7 +380,7 @@ Singleton {
 	Process {
 		id: plasmaIntegrationCheckProc
 		running: false
-		command: ["/usr/bin/bash", "-c", "command -v plasma-browser-integration-host >/dev/null; plasma=$?; command -v wtype >/dev/null; wtype=$?; exit $((plasma + wtype * 10))"]
+		command: ["bash", "-c", "command -v plasma-browser-integration-host >/dev/null; plasma=$?; command -v wtype >/dev/null; wtype=$?; exit $((plasma + wtype * 10))"]
 		onExited: (exitCode) => {
 			root.hasPlasmaIntegration = (exitCode % 10) === 0;
 			root.hasWtype = Math.floor(exitCode / 10) === 0;
@@ -834,7 +834,7 @@ Singleton {
 		const viaNiri = CompositorService.niriNative;
 		if (!viaNiri)
 			NiriService.focusWindow(win.id);
-		browserNavProcess.command = ["/usr/bin/bash", "-c", `
+		browserNavProcess.command = ["bash", "-c", `
 			command -v wtype >/dev/null 2>&1 || exit 0
 			if [ "$3" = niri ]; then niri msg action focus-window --id "$1" >/dev/null 2>&1 || exit 0; fi
 			sleep 0.08

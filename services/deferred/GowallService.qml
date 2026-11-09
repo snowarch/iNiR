@@ -244,7 +244,7 @@ Singleton {
         // Use source basename for predictable naming (overwrites previous result from same source)
         const basename = _pendingSourceBasename.length > 0 ? _pendingSourceBasename : "gowall"
         const dest = `${_outputDir}/${basename}.${_pendingFormat}`
-        copyProc.command = ["/usr/bin/cp", _currentPreviewPath, dest]
+        copyProc.command = ["cp", _currentPreviewPath, dest]
         copyProc._destPath = dest
         ensureDirProc._nextAction = "copy"
         ensureDirProc.running = true
@@ -352,7 +352,7 @@ Singleton {
 
     Process {
         id: availabilityProc
-        command: ["/usr/bin/which", "gowall"]
+        command: ["which", "gowall"]
         stdout: SplitParser {
             onRead: data => { root.available = data.trim().length > 0 }
         }
@@ -369,7 +369,7 @@ Singleton {
     // Create no-op shims so gowall can't spawn kitty/xdg-open after processing
     Process {
         id: shimSetupProc
-        command: ["/usr/bin/bash", "-c",
+        command: ["bash", "-c",
             `d=${root._shimDir} && mkdir -p "$d" && printf '#!/bin/sh\\nexit 0\\n' > "$d/kitty" && printf '#!/bin/sh\\nexit 0\\n' > "$d/xdg-open" && chmod +x "$d/kitty" "$d/xdg-open"`]
     }
 
@@ -392,7 +392,7 @@ Singleton {
     Process {
         id: ensureDirProc
         property string _nextAction: "operation"
-        command: ["/usr/bin/mkdir", "-p", root._runtimeDir, root._outputDir]
+        command: ["mkdir", "-p", root._runtimeDir, root._outputDir]
         onExited: (exitCode) => {
             if (exitCode !== 0) { root.error = "Failed to prepare directories"; return }
             if (_nextAction === "copy") {
@@ -405,7 +405,7 @@ Singleton {
             }
             if (root._pendingNeedsThemeFile) {
                 const cmd = `printf '%s' ${root._shellEscape(root._pendingThemeJson)} > ${root._shellEscape(root._customThemePath)}`
-                writeThemeProc.command = ["/usr/bin/bash", "-c", cmd]
+                writeThemeProc.command = ["bash", "-c", cmd]
                 writeThemeProc.running = true
                 return
             }

@@ -20,8 +20,8 @@ Singleton {
         xembed_bin="$(command -v xembedsniproxy 2>/dev/null || true)"
         [ -n "$xembed_bin" ] || exit 0
         if [ -S "${Quickshell.env("XDG_RUNTIME_DIR") || ""}/systemd/private" ] &&
-           /usr/bin/timeout 3s /usr/bin/systemctl --user show-environment >/dev/null 2>&1; then
-            exec /usr/bin/systemd-run --user --quiet --collect --unit=inir-xembedsniproxy \
+           timeout 3s systemctl --user show-environment >/dev/null 2>&1; then
+            exec systemd-run --user --quiet --collect --unit=inir-xembedsniproxy \
                 --service-type=exec --property=BindsTo=inir.service \
                 --property=After=inir.service --property=Restart=on-failure \
                 --property=RestartSec=1s --setenv=QT_NO_XDG_DESKTOP_PORTAL=1 \
@@ -258,7 +258,7 @@ Singleton {
 
     Process {
         id: xembedProxyCheckProc
-        command: ["/usr/bin/pgrep", "-x", "xembedsniproxy"]
+        command: ["pgrep", "-x", "xembedsniproxy"]
         onExited: (exitCode, exitStatus) => {
             root._xembedProxyCheckedOnce = true;
             if (exitCode !== 0) {
@@ -276,7 +276,7 @@ Singleton {
         stderr: SplitParser {
             onRead: (line) => root._log("[xembedsniproxy]", line)
         }
-        command: ["/usr/bin/bash", "-lc", root._xembedStartScript]
+        command: ["bash", "-lc", root._xembedStartScript]
         onExited: (exitCode, exitStatus) => {
             root._log("[xembedsniproxy] exited", exitCode, exitStatus)
         }

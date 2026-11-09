@@ -857,7 +857,7 @@ Singleton {
             } catch (e) {
                 if (root._retryLoad())
                     return;
-                Quickshell.execDetached(["/usr/bin/cp", "--", root.filePath, root.filePath + ".unreadable"]);
+                Quickshell.execDetached(["cp", "--", root.filePath, root.filePath + ".unreadable"]);
                 root._jsonMirror = {};
             }
             root._loadRetries = 0;
@@ -877,7 +877,7 @@ Singleton {
                 console.log("[Config] File not found, creating new file.");
                 // Ensure parent directory exists
                 const parentDir = root.filePath.substring(0, root.filePath.lastIndexOf('/'));
-                Quickshell.execDetached(["/usr/bin/mkdir", "-p", parentDir]);
+                Quickshell.execDetached(["mkdir", "-p", parentDir]);
                 root.customWidgetData = {};
                 root.customWidgetDataSynced = true;
                 root.mascotInstances = {};

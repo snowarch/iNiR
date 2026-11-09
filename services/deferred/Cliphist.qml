@@ -94,12 +94,12 @@ Singleton {
         root._log("[Cliphist] copy()", String(entry).slice(0, 120))
         root._selfCopy = true
         selfCopyResetTimer.restart()
-        Quickshell.execDetached(["/usr/bin/bash", "-c", `${root.decodeCommand(entry)} | /usr/bin/wl-copy`]);
+        Quickshell.execDetached(["bash", "-c", `${root.decodeCommand(entry)} | wl-copy`]);
     }
 
     function paste(entry) {
         root._selfCopy = true
-        Quickshell.execDetached(["/usr/bin/bash", "-c", `${root.decodeCommand(entry)} | /usr/bin/wl-copy\n${root.pressPasteCommand}`]);
+        Quickshell.execDetached(["bash", "-c", `${root.decodeCommand(entry)} | wl-copy\n${root.pressPasteCommand}`]);
     }
 
     function superpaste(count, isImage = false) {
@@ -108,9 +108,9 @@ Singleton {
             if (!isImage) return true;
             return entryIsImage(entry);
         }).slice(0, count)
-        const pasteCommands = [...targetEntries].reverse().map(entry => `${root.decodeCommand(entry)} | /usr/bin/wl-copy\n/usr/bin/sleep ${root.pasteDelay}\n${root.pressPasteCommand}`)
+        const pasteCommands = [...targetEntries].reverse().map(entry => `${root.decodeCommand(entry)} | wl-copy\nsleep ${root.pasteDelay}\n${root.pressPasteCommand}`)
         // Act
-        Quickshell.execDetached(["/usr/bin/bash", "-c", pasteCommands.join(`\n/usr/bin/sleep ${root.pasteDelay}\n`)]);
+        Quickshell.execDetached(["bash", "-c", pasteCommands.join(`\nsleep ${root.pasteDelay}\n`)]);
     }
 
     Process {
@@ -226,7 +226,7 @@ Singleton {
 
     function pinEntry(entry): void {
         if (!root.isPinnable(entry)) return
-        pinProc.command = ["/usr/bin/bash", "-c", root.decodeCommand(entry)]
+        pinProc.command = ["bash", "-c", root.decodeCommand(entry)]
         pinProc.running = true
     }
 

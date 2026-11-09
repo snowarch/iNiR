@@ -292,7 +292,7 @@ Singleton {
     Process {
         id: configGen
         running: false
-        command: ["/usr/bin/bash", root.scriptPath, root.configPath,
+        command: ["bash", root.scriptPath, root.configPath,
             String(root.cfgFramerate), String(root.cfgSensitivity),
             String(root._generationBars), String(root.cfgStereo),
             root.playerDesktopEntry, root.cfgBlockedAppsJson]

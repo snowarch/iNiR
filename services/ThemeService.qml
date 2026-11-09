@@ -237,7 +237,7 @@ Singleton {
         root._log("[ThemeService] Triggering Vesktop theme generation wrapper")
         Qt.callLater(() => {
             Quickshell.execDetached([
-                "/usr/bin/bash",
+                "bash",
                 Directories.scriptsPath + "/colors/system24_palette.sh"
             ]);
         });

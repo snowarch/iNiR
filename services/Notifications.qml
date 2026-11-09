@@ -385,7 +385,7 @@ Singleton {
     // `notify` announces a notification that arrived; it shows nothing. Post one with `send`.
     signal notify(notification: var);
     function send(summary: string, body: string, urgency: string, timeoutMs: int): void {
-        Quickshell.execDetached(["/usr/bin/notify-send", "-a", "iNiR", "-u", urgency.length > 0 ? urgency : "normal",
+        Quickshell.execDetached(["notify-send", "-a", "iNiR", "-u", urgency.length > 0 ? urgency : "normal",
             "-t", String(timeoutMs > 0 ? timeoutMs : 10000), "--", summary, body])
     }
     signal discard(id: int);
@@ -711,7 +711,7 @@ Singleton {
         }
 
         if (appIcon && appIcon.length > 0) {
-            const cmd = "/usr/bin/gtk-launch \"" + appIcon + "\" || \"" + appIcon + "\"";
+            const cmd = "gtk-launch \"" + appIcon + "\" || \"" + appIcon + "\"";
             ShellExec.execCmd(cmd);
         }
     }
@@ -788,7 +788,7 @@ Singleton {
         for (let i = 0; i < tests.length; ++i) {
             const t = tests[i];
             Quickshell.execDetached([
-                "/usr/bin/notify-send",
+                "notify-send",
                 "-h", "int:transient:1",
                 "-a", "Quickshell ii",
                 "-i", t.icon,
@@ -866,7 +866,7 @@ Singleton {
                 console.log("[Notifications] File not found, creating new file.")
                 // Ensure parent directory exists
                 const parentDir = root.filePath.substring(0, root.filePath.lastIndexOf('/'))
-                Quickshell.execDetached(["/usr/bin/mkdir", "-p", parentDir])
+                Quickshell.execDetached(["mkdir", "-p", parentDir])
                 root.list = []
                 // later: stock Quickshell forgets a write started inside its own load signal
                 Qt.callLater(() => notifFileView.setText(stringifyList(root.list)))

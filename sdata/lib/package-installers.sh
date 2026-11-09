@@ -599,6 +599,12 @@ ytdlp_build() {
 install-ytdlp(){
   local dir asset tag have base tmp
   dir="$(ytdlp_dir)"
+  # NixOS runs no foreign builds (no FHS loader): the system's yt-dlp (the iNiR package brings it) takes that place
+  if [[ -e /etc/NIXOS ]]; then
+    have="$(command -v yt-dlp 2>/dev/null)" || { log_warning "YT Music needs yt-dlp; the iNiR package brings it"; return 1; }
+    mkdir -p "$dir" && ln -sfn "$have" "$dir/yt-dlp" && rm -rf "$dir/_internal"
+    return
+  fi
   if ! asset="$(ytdlp_build)"; then
     log_warning "YT Music: yt-dlp has no build for $(uname -m); the distro's yt-dlp is used"
     return 0

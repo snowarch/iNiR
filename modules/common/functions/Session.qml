@@ -20,9 +20,9 @@ Singleton {
         repeat: false
         onTriggered: {
             if (CompositorService.isNiri) {
-                Quickshell.execDetached(["/usr/bin/niri", "msg", "action", "power-off-monitors"])
+                Quickshell.execDetached(["niri", "msg", "action", "power-off-monitors"])
             } else if (CompositorService.isHyprland) {
-                Quickshell.execDetached(["/usr/bin/hyprctl", "dispatch", "dpms", "off"])
+                Quickshell.execDetached(["hyprctl", "dispatch", "dpms", "off"])
             }
         }
     }
@@ -67,7 +67,7 @@ Singleton {
 
     function _notifyHibernateUnavailable(): void {
         Quickshell.execDetached([
-            "/usr/bin/notify-send",
+            "notify-send",
             Translation.tr("Hibernate unavailable"),
             Translation.tr("This system does not report hibernation support. Configure persistent swap and resume first."),
             "-u", "critical",
@@ -82,7 +82,7 @@ Singleton {
             return;
 
         HyprlandData.windowList.map(w => w.pid).forEach(pid => {
-            Quickshell.execDetached(["/usr/bin/kill", pid]);
+            Quickshell.execDetached(["kill", pid]);
         });
     }
 
@@ -106,7 +106,7 @@ Singleton {
         }
 
         closeAllWindows();
-        Quickshell.execDetached(["/usr/bin/pkill", "-i", "Hyprland"]);
+        Quickshell.execDetached(["pkill", "-i", "Hyprland"]);
     }
 
     function launchTaskManager() {
@@ -153,7 +153,7 @@ Singleton {
     Process {
         id: detectHibernateCapability
         command: [
-            "/usr/bin/busctl", "--system", "call",
+            "busctl", "--system", "call",
             "org.freedesktop.login1",
             "/org/freedesktop/login1",
             "org.freedesktop.login1.Manager",

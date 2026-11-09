@@ -458,6 +458,31 @@ find_qs() {
 # Lazy qs resolution: only validate qs binary for commands that actually need it.
 # Non-runtime commands (install, update, doctor, status, help, version, etc.)
 # must work without Quickshell installed.
+# A package (Nix, `make install`) ships the base read-only beside its launcher; the shell runs the person's copy of
+# it (~/.config/quickshell/inir), which setup brings in step whenever the package moved (the stamp:
+# scripts/lib/config-path.sh). It runs before the shell starts, so the shell starts on it.
+sync_package_runtime() {
+    local payload="" candidate runtime="$user_config_dir"
+    [[ -z "${INIR_RUNTIME_DIR:-}" ]] || return 0
+    for candidate in "$launcher_root" "$launcher_root/share/quickshell/inir"; do
+        # the person's copy carries the package's version.json too: it is never its own payload
+        [[ "$(readlink -f "$candidate")" != "$(readlink -f "$runtime")" ]] || continue
+        if [[ -f "$candidate/shell.qml" && -x "$candidate/setup" && ! -e "$candidate/.git" ]] \
+                && grep -Eq '"install(M|_m)ode"[[:space:]]*:[[:space:]]*"package-managed"' "$candidate/version.json" 2>/dev/null; then
+            payload="$candidate"
+            break
+        fi
+    done
+    [[ -n "$payload" ]] || return 0
+    declare -F inir_package_stamp >/dev/null || return 0
+    [[ -f "$runtime/shell.qml" && "$(cat "$(inir_package_stamp_file)" 2>/dev/null)" == "$(inir_package_stamp "$payload")" ]] && return 0
+    echo "iNiR: bringing your copy in step with the package at $payload" >&2
+    if ! INIR_SESSION_SYNC=1 "$payload/setup" update -y </dev/null >&2; then
+        [[ -f "$runtime/shell.qml" ]] || { echo "iNiR: could not set up your copy of the package (see above)" >&2; return 1; }
+        echo "iNiR: could not bring your copy in step (see above); starting the one you have" >&2
+    fi
+}
+
 require_qs() {
     if [[ -z "${_qs_resolved:-}" ]]; then
         find_qs
@@ -1863,6 +1888,12 @@ shell_exec_bin() {
 apply_qt_runtime_env() {
     # Must run before Qt reads env at QGuiApplication construction.
     apply_gpu_policy
+    # A runtime with its own Qt (qt.conf beside it: setup's qs-rs) loads only its own plugins and QML modules: the
+    # session's paths (Nix sets them for its Qt) hold builds for another Qt, which crash it. Apps get them back
+    # (ShellExec).
+    if [[ -f "$(dirname "$(readlink -f "$qs_bin" 2>/dev/null)")/qt.conf" ]]; then
+        unset QT_PLUGIN_PATH QML2_IMPORT_PATH QML_IMPORT_PATH
+    fi
     # inir.service is started by systemd, not as a direct Niri child. Mirror
     # Niri's app-facing policy so Quickshell and apps launched through it see
     # the same Qt platform/style values as direct compositor spawns.
@@ -1959,11 +1990,15 @@ apply_qt_runtime_env() {
         # includes user dirs (~/.local/bin, flatpak exports, nvm, pnpm, etc.)
         # absent from the minimal systemd unit PATH. ShellExec repeats this
         # synchronization at user-app launch time to avoid a stale snapshot.
-        local _qs_sys_path
+        # What this process already had stays after it: the system dirs, and a package's own (Nix's wrapper puts
+        # the shell's tools there).
+        local _qs_sys_path _qs_own_path
         _qs_sys_path="$(grep '^PATH=' <<< "$_qs_sys_env" | head -1 | cut -d= -f2- || true)"
         if [[ -n "$_qs_sys_path" && "$_qs_sys_path" != "$PATH" ]]; then
             local _qs_merged="$_qs_sys_path"
-            for _qs_p in /usr/local/bin /usr/bin; do
+            IFS=: read -r -a _qs_own_path <<< "$PATH:/usr/local/bin:/usr/bin"
+            for _qs_p in "${_qs_own_path[@]}"; do
+                [[ -n "$_qs_p" ]] || continue
                 case ":${_qs_merged}:" in
                     *":${_qs_p}:"*) ;;
                     *) _qs_merged="${_qs_merged}:${_qs_p}" ;;
@@ -4470,6 +4505,7 @@ case "$command_name" in
         kill_shell "$config_dir"
         ;;
     run)
+        sync_package_runtime || exit 1
         require_qs
         foreground=true
         _session_boot=false

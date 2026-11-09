@@ -68,16 +68,16 @@ Rectangle {
         // Multiple clipboard surfaces can render the same entry concurrently.
         // Decode through a per-process temporary file and publish it atomically;
         // the shared session cache is cleaned once by Directories on shell start.
-        command: ["/usr/bin/bash", "-c", `
+        command: ["bash", "-c", `
             if [ -s '${imageDecodeFilePath}' ]; then
                 exit 0
             fi
-            /usr/bin/mkdir -p '${imageDecodePath}'
+            mkdir -p '${imageDecodePath}'
             _tmp='${imageDecodeFilePath}'.$$
             if echo '${StringUtils.shellSingleQuoteEscape(root.entry)}' | ${Cliphist.cliphistBinary} decode > "$_tmp" && [ -s "$_tmp" ]; then
-                /usr/bin/mv -f "$_tmp" '${imageDecodeFilePath}'
+                mv -f "$_tmp" '${imageDecodeFilePath}'
             else
-                /usr/bin/rm -f "$_tmp"
+                rm -f "$_tmp"
                 exit 1
             fi
         `]

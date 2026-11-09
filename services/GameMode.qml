@@ -276,7 +276,7 @@ Singleton {
     Process {
         id: saveProcess
         command: [
-            "/usr/bin/bash",
+            "bash",
             "-c",
             "mkdir -p ~/.local/state/quickshell/user\n" +
             "echo " + (root._manualActive ? "1" : "0") + " > " + root._stateFile
@@ -287,7 +287,7 @@ Singleton {
     // Initial setup
     Component.onCompleted: {
         root._log("[GameMode] Service starting...")
-        Quickshell.execDetached(["/usr/bin/mkdir", "-p", Quickshell.env("HOME") + "/.local/state/quickshell/user"])
+        Quickshell.execDetached(["mkdir", "-p", Quickshell.env("HOME") + "/.local/state/quickshell/user"])
         initTimer.restart()
     }
 
@@ -333,11 +333,11 @@ Singleton {
             : "sed -i '/^animations {/,/^}/ s/^\\([ \\t]*\\)\\/\\/[ \\t]*off$/\\1off/'"
 
         niriAnimProcess.command = [
-            "/usr/bin/bash",
+            "bash",
             "-c",
             "if [ -f \"" + targetFile + "\" ]; then " + sedExpr + " \"" + targetFile + "\"; " +
             "else " + sedExpr + " \"" + fallbackFile + "\"; fi\n" +
-            "/usr/bin/niri msg action reload-config"
+            "niri msg action reload-config"
         ]
         niriAnimProcess.running = true
     }

@@ -1,178 +1,104 @@
-{ pkgs }:
+# iNiR for Nix, the same install every distro gets:
+# - the base as a read-only payload ($out/share/quickshell/inir), of which setup keeps the person's writable copy in
+#   ~/.config/quickshell/inir with the families from inir.space/hub, exactly as on Arch;
+# - the binaries every install runs at the versions the base pins (prebuilt.nix), linked by setup where it would
+#   unpack them;
+# - `inir`, which syncs the person's copy the first time it runs after the package moved, then starts the shell.
+# The base moves with the package (`nix flake update`); hub items update themselves (`inir update`, Settings › Hub).
+{ pkgs
+, withWebEngine ? false
+, commit ? "unknown"
+, updateHint ? "nix flake update inir, then rebuild"
+}:
 
 let
-  lib = pkgs.lib;
+  inherit (pkgs) lib;
+  prebuilt = import ./prebuilt.nix { inherit pkgs withWebEngine; };
+  deps = import ./deps.nix { inherit pkgs; };
+  version = lib.removeSuffix "\n" (builtins.readFile ../VERSION);
 
-  optionalTop = name:
-    lib.optional (builtins.hasAttr name pkgs) (builtins.getAttr name pkgs);
+  # where qs-rs has no build the shell runs on nixpkgs' Quickshell, which finds its QML modules here
+  quickshell = pkgs.symlinkJoin {
+    name = "inir-quickshell-${pkgs.quickshell.version}";
+    paths = [ pkgs.quickshell ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      for bin in qs quickshell; do
+        [ -e "$out/bin/$bin" ] || continue
+        wrapProgram "$out/bin/$bin" \
+          --prefix QML2_IMPORT_PATH : "${lib.makeSearchPath "lib/qt-6/qml" deps.qml}" \
+          --prefix QT_PLUGIN_PATH : "${lib.makeSearchPath "lib/qt-6/plugins" deps.qml}"
+      done
+    '';
+  };
+  path = [ quickshell ] ++ lib.remove pkgs.quickshell deps.packages;
 
-  optionalKde = name:
-    lib.optional
-      (builtins.hasAttr "kdePackages" pkgs && builtins.hasAttr name pkgs.kdePackages)
-      (builtins.getAttr name pkgs.kdePackages);
-
-  optionalQt6 = name:
-    lib.optional
-      (builtins.hasAttr "qt6" pkgs && builtins.hasAttr name pkgs.qt6)
-      (builtins.getAttr name pkgs.qt6);
-
-  runtimeDeps =
-    with pkgs; [
-      bash
-      coreutils
-      curl
-      deno
-      findutils
-      gawk
-      git
-      gnugrep
-      go
-      gnused
-      jq
-      procps
-      python3
-      ripgrep
-      rsync
-      systemd
-      xdg-user-dirs
-      xdg-utils
-      yt-dlp
-
-      quickshell
-      wl-clipboard
-      cliphist
-      grim
-      slurp
-      playerctl
-      libnotify
-      glib
-      pipewire
-      pulseaudio
-      wireplumber
-      yt-dlp
-    ]
-    ++ optionalTop "adw-gtk3"
-    ++ optionalTop "brightnessctl"
-    ++ optionalTop "cava"
-    ++ optionalTop "ddcutil"
-    ++ optionalTop "ffmpeg"
-    ++ optionalTop "fish"
-    ++ optionalTop "foot"
-    ++ optionalTop "geoclue2"
-    ++ optionalTop "hyprpicker"
-    ++ optionalTop "gum"
-    ++ optionalTop "imagemagick"
-    ++ optionalTop "kitty"
-    ++ optionalTop "libqalculate"
-    ++ optionalTop "mpv"
-    ++ optionalTop "nautilus"
-    ++ optionalTop "networkmanager"
-    ++ optionalTop "socat"
-    ++ optionalTop "songrec"
-    ++ optionalTop "swappy"
-    ++ optionalTop "tesseract"
-    ++ optionalTop "translate-shell"
-    ++ optionalTop "upower"
-    ++ optionalTop "wf-recorder"
-    ++ optionalTop "wlsunset"
-    ++ optionalTop "wtype"
-    ++ optionalTop "xwayland-satellite"
-    ++ optionalTop "ydotool"
-    ++ optionalTop "yt-dlp-ejs"
-    ++ optionalKde "breeze-icons"
-    ++ optionalKde "kdialog"
-    ++ optionalKde "kirigami"
-    ++ optionalKde "kconfig"
-    ++ optionalKde "plasma-integration"
-    ++ optionalKde "syntax-highlighting"
-    ++ optionalKde "xembedsniproxy"
-    ++ optionalQt6 "qt5compat"
-    ++ optionalQt6 "qtbase"
-    ++ optionalQt6 "qtdeclarative"
-    ++ optionalQt6 "qtimageformats"
-    ++ optionalQt6 "qtmultimedia"
-    ++ optionalQt6 "qtsvg"
-    ++ optionalQt6 "qttools"
-    ++ optionalQt6 "qttranslations"
-    ++ optionalQt6 "qtwayland";
-
-  materialSymbolsFont =
-    if builtins.hasAttr "material-symbols" pkgs
-    then pkgs.makeFontsConf { fontDirectories = [ pkgs.material-symbols ]; }
-    else null;
-  materialSymbolsWrapperArg =
-    lib.optionalString (materialSymbolsFont != null)
-      "--set FONTCONFIG_FILE \"${materialSymbolsFont}\" \\";
-
-  qmlDeps =
-    # kirigami-wrapped ships no QML files, use the unwrapped version.
-    (lib.optional
-      (builtins.hasAttr "kdePackages" pkgs && builtins.hasAttr "kirigami" pkgs.kdePackages)
-      pkgs.kdePackages.kirigami.passthru.unwrapped)
-    ++ optionalKde "syntax-highlighting"
-    ++ optionalQt6 "qt5compat"
-    ++ optionalQt6 "qtdeclarative"
-    ++ optionalQt6 "qtimageformats"
-    ++ optionalQt6 "qtmultimedia"
-    ++ optionalQt6 "qtsvg"
-    ++ optionalQt6 "qtwayland";
+  # the parts by <dest>/<version>, the layout setup links into ~/.local/share/inir (INIR_PREBUILT_STORE)
+  parts = lib.filter (part: part != null) [ prebuilt.qs-rs prebuilt.inir-accel ];
+  linkPart = part: ''
+    for dir in ${part}/*/*; do
+      mkdir -p "$store/$(basename "$(dirname "$dir")")"
+      ln -s "$dir" "$store/$(basename "$(dirname "$dir")")/"
+    done
+  '';
 in
 pkgs.stdenvNoCC.mkDerivation {
   pname = "inir";
-  version = lib.removeSuffix "\n" (builtins.readFile ../VERSION);
+  inherit version;
   src = lib.cleanSourceWith {
     src = ../.;
     filter = import ./runtime-source-filter.nix { inherit lib; root = ../.; };
   };
 
   nativeBuildInputs = [ pkgs.makeWrapper pkgs.jq pkgs.rsync ];
-
-  # Prevent patchShebangs from attempting to rewrite Python scripts;
-  # non-executable files are skipped during fixupPhase.
-  preFixup = ''
-    find "$out/share/quickshell/inir" -type f -name '*.py' -exec chmod -x {} +
-  '';
-
-  postFixup = ''
-    find "$out/share/quickshell/inir" -type f -name '*.py' -exec chmod +x {} +
-  '';
+  # setup and the scripts are run by the person's copy, never from the store: they keep their /usr/bin/env lines
+  dontPatchShebangs = true;
 
   installPhase = ''
     runHook preInstall
 
-    runtime="$out/share/quickshell/inir"
-    mkdir -p "$runtime" "$out/bin"
+    payload="$out/share/quickshell/inir"
+    store="$out/lib/inir/prebuilt"
+    mkdir -p "$payload" "$store" "$out/bin" "$out/share/applications" "$out/share/icons/hicolor/scalable/apps"
 
-    bash -c 'source sdata/lib/runtime-payload.sh && runtime_payload copy --root . --target "$1"' _ "$runtime"
+    bash -c 'source sdata/lib/runtime-payload.sh && runtime_payload copy --root . --target "$1"' _ "$payload"
+    chmod +x "$payload/setup" "$payload/scripts/inir"
 
-    chmod +x "$runtime/setup" "$runtime/scripts/inir"
-    find "$runtime/scripts" -type f \( -name '*.sh' -o -name '*.fish' -o -name '*.py' \) -exec chmod +x {} \;
+    jq -n --arg v ${lib.escapeShellArg version} --arg c ${lib.escapeShellArg commit} --arg h ${lib.escapeShellArg updateHint} '{
+      version: $v, commit: $c, source: "nix",
+      installMode: "package-managed", updateStrategy: "package-manager",
+      packageManager: "nix", packageName: "inir", packageUpdateHint: $h
+    }' > "$payload/version.json"
 
-    # The source tree intentionally targets Arch, where helpers live under
-    # /usr/bin. NixOS does not provide that layout. Patch only the packaged
-    # copy and keep shebang lines intact.
-    find "$runtime" \
-      -type f \( -name '*.qml' -o -name '*.js' -o -name '*.sh' -o -name '*.py' \) \
-      -exec sed -i '1!s#/usr/bin/##g' {} +
+    ${lib.concatMapStrings linkPart parts}
 
-    makeWrapper "$runtime/scripts/inir" "$out/bin/inir" \
-      --prefix PATH : "${lib.makeBinPath runtimeDeps}" \
-      --prefix QML2_IMPORT_PATH : "${lib.makeSearchPath "lib/qt-6/qml" qmlDeps}" \
-      --prefix QT_PLUGIN_PATH : "${lib.makeSearchPath "lib/qt-6/plugins" qmlDeps}" \
-      ${materialSymbolsWrapperArg}
-      --set-default INIR_SYSTEM_RUNTIME_DIR "$runtime" \
-      --set-default INIR_FALLBACK_SYSTEM_RUNTIME_DIR "$runtime"
+    # gsettings finds no schema on NixOS outside GNOME, and the shell's dark mode, icons and fonts reach GTK apps
+    # through it: gsettings-desktop-schemas goes last in XDG_DATA_DIRS, so a desktop's own schemas still win
+    makeWrapper "$payload/scripts/inir" "$out/bin/inir" \
+      --suffix PATH : ${lib.makeBinPath path} \
+      --suffix XDG_DATA_DIRS : ${pkgs.glib.getSchemaDataDirPath pkgs.gsettings-desktop-schemas} \
+      --set INIR_CLI ${lib.getExe prebuilt.inir-cli} \
+      --set INIR_FETCH_CLI 0 \
+      --set INIR_PREBUILT_STORE "$store" \
+      --set INIR_SETUP_DIR "$payload"
+
+    install -Dm644 "$payload/assets/icons/inir.svg" "$out/share/icons/hicolor/scalable/apps/inir.svg"
+    sed 's|^Exec=.*|Exec=inir service restart|' "$payload/assets/applications/inir.desktop" > "$out/share/applications/inir.desktop"
+    sed 's|^Exec=.*|Exec=inir settings|' "$payload/assets/applications/inir-settings.desktop" > "$out/share/applications/inir-settings.desktop"
 
     runHook postInstall
   '';
 
-  passthru.runtimeDependencies = runtimeDeps;
+  passthru = {
+    inherit prebuilt deps quickshell;
+    runtimeDependencies = path;
+  };
 
   meta = {
-    description = "Complete desktop shell for Niri, built on Quickshell";
-    homepage = "https://github.com/snowarch/inir";
+    description = "Complete desktop shell for Niri";
+    homepage = "https://inir.space";
     license = lib.licenses.gpl3Only;
-    platforms = lib.platforms.linux;
+    platforms = [ "x86_64-linux" "aarch64-linux" ];
     mainProgram = "inir";
   };
 }

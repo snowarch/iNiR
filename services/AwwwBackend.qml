@@ -94,7 +94,7 @@ Singleton {
         root._clearPreviewQueue()
         root.stoppedForNoOutputs = false
         previewProc.activeSignature = signature
-        previewProc.command = ["/usr/bin/bash", "-lc", script]
+        previewProc.command = ["bash", "-lc", script]
         previewProc.running = true
     }
 
@@ -518,7 +518,7 @@ Singleton {
 
         if (applyProc.running) {
             applyProc._queuedSignature = signature
-            applyProc._queuedCommand = ["/usr/bin/bash", "-lc", lines.join("\n")]
+            applyProc._queuedCommand = ["bash", "-lc", lines.join("\n")]
             return
         }
 
@@ -526,7 +526,7 @@ Singleton {
         stoppedForNoOutputs = false
         applyProc._queuedSignature = ""
         applyProc._queuedCommand = []
-        applyProc.command = ["/usr/bin/bash", "-lc", lines.join("\n")]
+        applyProc.command = ["bash", "-lc", lines.join("\n")]
         applyProc._pendingSignature = signature
         applyProc.running = true
     }
@@ -535,7 +535,7 @@ Singleton {
         id: probeProc
         // Check well-known paths first, then fall back to command -v for non-standard installs.
         // Using explicit paths avoids login-shell PATH issues that cause false negatives.
-        command: ["/usr/bin/bash", "-c", "for p in /usr/bin/awww /usr/local/bin/awww; do [ -x \"$p\" ] && { echo client; break; }; done; command -v awww >/dev/null 2>&1 && echo client; for p in /usr/bin/awww-daemon /usr/local/bin/awww-daemon; do [ -x \"$p\" ] && { echo daemon; break; }; done; command -v awww-daemon >/dev/null 2>&1 && echo daemon"]
+        command: ["bash", "-c", "for p in /usr/bin/awww /usr/local/bin/awww; do [ -x \"$p\" ] && { echo client; break; }; done; command -v awww >/dev/null 2>&1 && echo client; for p in /usr/bin/awww-daemon /usr/local/bin/awww-daemon; do [ -x \"$p\" ] && { echo daemon; break; }; done; command -v awww-daemon >/dev/null 2>&1 && echo daemon"]
         stdout: StdioCollector {
             id: probeStdout
         }
@@ -639,7 +639,7 @@ Singleton {
 
     Process {
         id: stopProc
-        command: ["/usr/bin/bash", "-lc", "command -v awww >/dev/null 2>&1 && awww kill >/dev/null 2>&1 || true"]
+        command: ["bash", "-lc", "command -v awww >/dev/null 2>&1 && awww kill >/dev/null 2>&1 || true"]
         onExited: {
             root.lastSyncSignature = ""
             root.lastError = ""

@@ -84,7 +84,7 @@ QtObject {
     property real _nextSearchAllowedMs: 0
 
     function _curlGetArgs(maxTime: int): var {
-        return ["/usr/bin/curl", "-s", "--max-time", String(maxTime),
+        return ["curl", "-s", "--max-time", String(maxTime),
             "--retry", "2", "--retry-delay", "1", "--retry-max-time", "8"]
     }
 

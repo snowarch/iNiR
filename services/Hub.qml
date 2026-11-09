@@ -534,7 +534,7 @@ Singleton {
         const script = Plugins.path(id, String(Plugins.manifests[id]?.choices?.run ?? ""))
         if (script.length === 0 || choicesProcess.running) return
         choicesProcess.plugin = id
-        choicesProcess.command = ["/usr/bin/bash", script].concat(args)
+        choicesProcess.command = ["bash", script].concat(args)
         choicesProcess.running = true
     }
     Process {

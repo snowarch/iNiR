@@ -153,12 +153,38 @@ function log_header() {
   fi
 }
 
+# A file Home Manager (or any Nix tool) manages is a link into the read-only store: setup leaves it to its owner
+nix_managed() { [[ -L "$1" && "$(readlink -f "$1")" == /nix/store/* ]]; }
+
+# xdg_data_path SUBPATH: the first data dir holding it (XDG_DATA_HOME, then XDG_DATA_DIRS: the Nix profiles there,
+# /usr/share everywhere); fails when none does
+xdg_data_path() {
+  local dir IFS=:
+  for dir in "${XDG_DATA_HOME:-$HOME/.local/share}" ${XDG_DATA_DIRS:-/usr/local/share:/usr/share} /usr/share; do
+    [[ -n "$dir" && -e "$dir/$1" ]] && { printf '%s/%s\n' "$dir" "$1"; return 0; }
+  done
+  return 1
+}
+
+# qt_plugin_on_path PLUGIN: a Qt plugin on QT_PLUGIN_PATH, where Nix puts them (distros answer by package)
+qt_plugin_on_path() {
+  local dir IFS=:
+  for dir in ${QT_PLUGIN_PATH:-}; do
+    [[ -n "$dir" && -e "$dir/$1" ]] && return 0
+  done
+  return 1
+}
+
 # File operations for 3.files.sh
 cp_file(){
   # $1 = source, $2 = target
   local src="$1"
   local dst="$2"
 
+  if nix_managed "$dst"; then
+    echo -e "${STY_BLUE}[$0]: '$dst' is managed by Nix (Home Manager), leaving it as it is.${STY_RST}"
+    return 0
+  fi
   x mkdir -p "$(dirname "$dst")"
 
   # Avoid failing when source and destination are the same file
@@ -176,6 +202,8 @@ cp_file(){
   else
     x cp -f "$src" "$dst"
   fi
+  # a package's payload is read-only (Nix store): the copy is the person's to change
+  [[ -w "$dst" ]] || chmod u+w "$dst" 2>/dev/null || true
 
   x mkdir -p "$(dirname "${INSTALLED_LISTFILE}")"
   realpath -se "$dst" >> "${INSTALLED_LISTFILE}"
@@ -194,11 +222,18 @@ _runtime_rsync() {
   mapfile -t exclusions <<< "$filters"
   local target="$2"
   shift 2
-  rsync -a "${exclusions[@]}" "$@" "$source_path/" "$target/"
+  # what Nix manages in the target stays its own; a copy out of a read-only payload is still the person's to change
+  if [[ -d "$target" ]]; then
+    local -a nix_links
+    mapfile -t nix_links < <(find "$target" -type l -lname '/nix/store/*' -printf '--exclude=/%P\n' 2>/dev/null)
+    exclusions+=("${nix_links[@]}")
+  fi
+  rsync -a --chmod=u+w "${exclusions[@]}" "$@" "$source_path/" "$target/"
 }
 
 rsync_dir() (
   set -o pipefail
+  nix_managed "$2" && { echo -e "${STY_BLUE}[$0]: '$2' is managed by Nix (Home Manager), leaving it as it is.${STY_RST}"; return 0; }
   x mkdir -p "$2"
   local dest
   dest="$(realpath -se -- "$2")" || return
@@ -208,6 +243,7 @@ rsync_dir() (
 
 rsync_dir__sync() (
   set -o pipefail
+  nix_managed "$2" && { echo -e "${STY_BLUE}[$0]: '$2' is managed by Nix (Home Manager), leaving it as it is.${STY_RST}"; return 0; }
   x mkdir -p "$2"
   local dest
   dest="$(realpath -se -- "$2")" || return
@@ -227,7 +263,9 @@ function install_file(){
 function install_file__auto_backup(){
   local s="$1"
   local t="$2"
-  if [ -f "$t" ];then
+  if nix_managed "$t"; then
+    cp_file "$s" "$t"
+  elif [ -f "$t" ];then
     if ! ${quiet:-false}; then
       echo -e "${STY_YELLOW}[$0]: \"$t\" exists.${STY_RST}"
     fi
@@ -541,7 +579,7 @@ repair_v2_leftovers() {
       *) shell=fish ;;
     esac
     rm -f "$dest"
-    "${XDG_DATA_HOME:-$HOME/.local/share}/inir/cli/inir" completions install "$shell" >/dev/null 2>&1 || true
+    "${INIR_CLI:-${XDG_DATA_HOME:-$HOME/.local/share}/inir/cli/inir}" completions install "$shell" >/dev/null 2>&1 || true
     ((INIR_V2_LEFTOVERS_REPAIRED++)) || true
   done
   declare -F inir_config_file >/dev/null || source "${REPO_ROOT}/scripts/lib/config-path.sh"

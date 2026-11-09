@@ -233,7 +233,7 @@ Singleton {
         case "ideapad":
         case "samsung":
             return [
-                "/usr/bin/pkexec", "/bin/sh", "-c",
+                "pkexec", "/bin/sh", "-c",
                 "printf '%s' \"$1\" > \"$2\"",
                 "battery-charge-limit",
                 String(_desiredChargeLimitValue(enable)),
@@ -241,7 +241,7 @@ Singleton {
             ]
         case "lg-legacy":
             return [
-                "/usr/bin/pkexec", "/bin/sh", "-c",
+                "pkexec", "/bin/sh", "-c",
                 "printf '%s' \"$1\" > \"$2\"",
                 "battery-charge-limit",
                 String(_desiredChargeLimitValue(enable)),
@@ -249,7 +249,7 @@ Singleton {
             ]
         case "huawei":
             return [
-                "/usr/bin/pkexec", "/bin/sh", "-c",
+                "pkexec", "/bin/sh", "-c",
                 "printf '%s %s' \"$1\" \"$2\" > \"$3\"",
                 "battery-charge-limit",
                 "0",
@@ -260,7 +260,7 @@ Singleton {
         case "smapi":
         case "sony":
             return [
-                "/usr/bin/pkexec", "/bin/sh", "-c",
+                "pkexec", "/bin/sh", "-c",
                 "printf '%s' \"$1\" > \"$2\"",
                 "battery-charge-limit",
                 String(_desiredChargeLimitValue(enable)),
@@ -407,7 +407,7 @@ Singleton {
         onTriggered: {
             if (!root.isLowAndNotCharging || root.isCriticalAndNotCharging) return
             Quickshell.execDetached([
-                "/usr/bin/notify-send",
+                "notify-send",
                 Translation.tr("Low battery"),
                 Translation.tr("Consider plugging in your device"),
                 "-u", "critical",
@@ -425,7 +425,7 @@ Singleton {
         onTriggered: {
             if (!root.isCriticalAndNotCharging) return
             Quickshell.execDetached([
-                "/usr/bin/notify-send",
+                "notify-send",
                 Translation.tr("Critically low battery"),
                 Translation.tr("Please charge!\nAutomatic suspend triggers at %1%").arg(Config.options?.battery?.suspend ?? 5),
                 "-u", "critical",
@@ -456,7 +456,7 @@ Singleton {
     onIsFullAndChargingChanged: {
         if (!root.available || !root._powerSoundsArmed || !isFullAndCharging) return;
         Quickshell.execDetached([
-            "/usr/bin/notify-send",
+            "notify-send",
             Translation.tr("Battery full"),
             Translation.tr("Please unplug the charger"),
             "-a", "Shell",

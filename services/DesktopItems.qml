@@ -450,7 +450,7 @@ Singleton {
         id: ensureStateDir
         running: false
         command: [
-            "/usr/bin/mkdir", "-p",
+            "mkdir", "-p",
             root.filePath.substring(0, root.filePath.lastIndexOf('/'))
         ]
         onExited: (exitCode, exitStatus) => {

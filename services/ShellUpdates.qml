@@ -228,7 +228,7 @@ Singleton {
     function postUpdateNotice(summary: string, body: string): void {
         updateNotice.running = false
         // -w waits until the notice closes; a server that keeps it in its history never says so.
-        updateNotice.command = ["/usr/bin/timeout", "60", "/usr/bin/notify-send", "-a", "iNiR", "-u", "normal", "-t", "15000", "-w",
+        updateNotice.command = ["timeout", "60", "notify-send", "-a", "iNiR", "-u", "normal", "-t", "15000", "-w",
             "-A", "open=" + Translation.tr("What changed"), "--", summary, body]
         updateNotice.running = true
     }
@@ -250,10 +250,15 @@ Singleton {
     }
 
     function check(): void {
-        if (!enabled || isChecking || isUpdating || managedExternally || simulated) return
+        if (!enabled || isChecking || isUpdating || simulated) return
         root._clock = Date.now()
         root.waitingForNetwork = !Network.online
         if (root.waitingForNetwork) return
+        // A package brings the base (Nix, a distro package): only the hub's items are this shell's to check
+        if (managedExternally) {
+            hubCheck.running = true
+            return
+        }
         root.isChecking = true
         root.lastError = ""
         fetchProc.running = true
@@ -284,7 +289,7 @@ Singleton {
 
     // A base update brings the hub's too, so its notice covers both.
     function maybeNotifyHub(): void {
-        if (root.hubPending.length === 0 || root.hasUpdate || root.managedExternally) return
+        if (root.hubPending.length === 0 || root.hasUpdate) return
         const key = root.hubPending.map(item => item.id + "@" + item.version).sort().join(" ")
         const now = Date.now()
         if (key === root.lastNotifiedHub
@@ -351,7 +356,7 @@ Singleton {
             simulatedUpdate.restart()
             if (Config.options?.shellUpdates?.openTerminalOnUpdate ?? true) {
                 const slot = (AppLauncher && typeof AppLauncher.commandFor === "function") ? AppLauncher.commandFor("terminal") : ""
-                ShellExec.execDetachedArgs([(slot.length > 0 ? slot : "kitty").trim().split(/\s+/)[0], "-e", "/usr/bin/bash", "-c",
+                ShellExec.execDetachedArgs([(slot.length > 0 ? slot : "kitty").trim().split(/\s+/)[0], "-e", "bash", "-c",
                     "echo 'Simulated iNiR update: nothing is downloaded or changed.'; echo; "
                     + "for s in Fetching Applying 'Restarting the shell'; do echo \"==> $s\"; sleep 1; done; "
                     + "echo; echo 'All good. You can close this window whenever you want.'; read -r _"], "Update iNiR", root.repoPath)
@@ -409,12 +414,12 @@ Singleton {
                 ? AppLauncher.commandFor("terminal") : ""
             const termBin = (termSlot.length > 0 ? termSlot : "kitty").trim().split(/\s+/)[0]
             ShellExec.execDetachedArgs(
-                [termBin, "-e", "/usr/bin/bash", "-c", bashCmd],
+                [termBin, "-e", "bash", "-c", bashCmd],
                 "Update iNiR", repoDir)
             print("[ShellUpdates] Update launched in terminal (" + termBin + ") from: " + repoDir)
         } else {
             // Detached background — same path as before the terminal toggle existed.
-            Quickshell.execDetached(["/usr/bin/bash", "-c", bashCmd])
+            Quickshell.execDetached(["bash", "-c", bashCmd])
             print("[ShellUpdates] Update launched (detached) from: " + repoDir)
         }
         print("[ShellUpdates] Log: " + logPath + " | Status: " + statusPath)
@@ -505,23 +510,23 @@ Singleton {
     Process {
         id: updateResumeReader
         running: false
-        command: ["/usr/bin/bash", "-c", `
+        command: ["bash", "-c", `
             status_file="$1"
             if [ ! -f "$status_file" ]; then exit 1; fi
 
-            now=$(/usr/bin/date +%s)
+            now=$(date +%s)
             if read -r uptime _ < /proc/uptime; then
-                uptime_s=$(/usr/bin/printf '%s\n' "$uptime" | /usr/bin/cut -d. -f1)
+                uptime_s=$(printf '%s\n' "$uptime" | cut -d. -f1)
             else
                 uptime_s=0
             fi
             boot_epoch=$((now - uptime_s))
-            mtime=$(/usr/bin/stat -c %Y "$status_file" 2>/dev/null || echo 0)
+            mtime=$(stat -c %Y "$status_file" 2>/dev/null || echo 0)
 
             if [ "$mtime" -lt "$boot_epoch" ]; then
                 echo "stale"
             else
-                /usr/bin/cat "$status_file"
+                cat "$status_file"
             fi
         `, "_", Directories.updateStatusPath]
         stdout: StdioCollector {
@@ -632,6 +637,7 @@ Singleton {
                         root.initialUpdateCheckDone = true
                         root.available = false
                         print("[ShellUpdates] Update strategy is managed externally: " + root.updateStrategy)
+                        root.check()
                         return
                     }
                     if (storedRepoPath.length > 0) {
@@ -660,7 +666,7 @@ Singleton {
         id: preferConfigRepoProc
         running: false
         command: [
-            "/usr/bin/bash", "-c",
+            "bash", "-c",
             "p='" + root.configDir + "'; [[ -e \"$p/.git\" && -f \"$p/setup\" && -f \"$p/shell.qml\" ]] && echo OK || echo ''"
         ]
         stdout: StdioCollector {
@@ -703,7 +709,7 @@ Singleton {
         id: validateRepoPathProc
         running: false
         command: [
-            "/usr/bin/bash", "-c",
+            "bash", "-c",
             "p='" + root.repoPath + "'; [[ -e \"$p/.git\" && -f \"$p/setup\" && -f \"$p/shell.qml\" ]] && echo OK || echo ''"
         ]
         stdout: StdioCollector {
@@ -730,7 +736,7 @@ Singleton {
         id: searchRepoProc
         running: false
         command: [
-            "/usr/bin/bash", "-c",
+            "bash", "-c",
             // First check if config dir itself is a git repo (dev setup)
             "if [[ -e \"" + root.configDir + "/.git\" ]]; then echo \"" + root.configDir + "\"; exit 0; fi; " +
             // Search for a git repo containing setup + shell.qml (our repo signature)
@@ -776,7 +782,7 @@ Singleton {
         id: persistRepoPathProc
         running: false
         command: [
-            "/usr/bin/bash", "-c",
+            "bash", "-c",
             // A missing or unreadable version.json is written fresh: the update reads repo_path from it.
             "vfile=\"$1/version.json\"; tmp=$(mktemp) || exit 0; " +
             "set -- --arg p \"$2\" --arg m \"$3\" --arg u \"$4\"; " +
@@ -800,7 +806,7 @@ Singleton {
         id: periodicCheck
         interval: root.checkIntervalMs
         repeat: true
-        running: root.enabled && root.available && Config.ready
+        running: root.enabled && (root.available || root.managedExternally) && Config.ready
         onTriggered: root.check()
     }
 
@@ -854,7 +860,7 @@ Singleton {
         id: manifestInfoProc
         running: false
         command: [
-            "/usr/bin/bash", "-c",
+            "bash", "-c",
             "manifest='" + root.manifestPath + "'; " +
             "[[ -f \"$manifest\" ]] || exit 1; " +
             "head -3 \"$manifest\" | grep -E '^# (generated|commit):' | sed 's/^# //'"
@@ -903,7 +909,7 @@ Singleton {
         id: localVersionStartupProc
         running: false
         command: [
-            "/usr/bin/bash", "-c",
+            "bash", "-c",
             "cat '" + root.repoPath + "/VERSION' 2>/dev/null || cat '" + root.configDir + "/VERSION' 2>/dev/null || echo ''"
         ]
         stdout: StdioCollector {
@@ -1160,7 +1166,7 @@ Singleton {
         id: localVersionProc
         running: false
         command: [
-            "/usr/bin/bash", "-c",
+            "bash", "-c",
             "cat '" + root.repoPath + "/VERSION' 2>/dev/null || cat '" + root.configDir + "/VERSION' 2>/dev/null || echo ''"
         ]
         stdout: StdioCollector {
@@ -1178,7 +1184,7 @@ Singleton {
         id: remoteChangelogProc
         running: false
         command: [
-            "/usr/bin/bash", "-c",
+            "bash", "-c",
             "git -C '" + root.repoPath + "' show 'origin/" + root._remoteBranch + ":CHANGELOG.md' 2>/dev/null | head -200"
         ]
         stdout: StdioCollector {
@@ -1196,7 +1202,7 @@ Singleton {
         id: localModsProc
         running: false
         command: [
-            "/usr/bin/bash", "-c",
+            "bash", "-c",
             "manifest='" + root.manifestPath + "'; " +
             "target='" + root.configDir + "'; " +
             "repo='" + root.repoPath + "'; " +

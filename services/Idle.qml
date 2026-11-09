@@ -65,7 +65,7 @@ Singleton {
     function _startSwayidle() {
         if (inhibit) return
 
-        const cmd = ["/usr/bin/swayidle", "-w"]
+        const cmd = ["swayidle", "-w"]
         const lockBeforeSleep = Config.options?.idle?.lockBeforeSleep !== false
 
         if (screenOffTimeout > 0 && CompositorService.isNiri) {

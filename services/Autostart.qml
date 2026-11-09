@@ -304,7 +304,7 @@ Singleton {
         }
         const text = _serialize()
         // Ensure the directory exists (defensive — the file ships with iNiR).
-        Quickshell.execDetached(["/usr/bin/mkdir", "-p", root.startupDir])
+        Quickshell.execDetached(["mkdir", "-p", root.startupDir])
         startupFileView.path = Qt.resolvedUrl(startupFilePath)
         startupFileView.setText(text)
         _log("[Autostart] Wrote", root.entries.length, "entries to", startupFilePath)

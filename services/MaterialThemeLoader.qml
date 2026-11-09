@@ -57,7 +57,7 @@ Singleton {
         if (schemeKey.length > 0 && scheme !== "auto")
             Config.setNestedValue(schemeKey, dark ? "dark" : scheme === "dark" ? "light" : scheme)
         darkModeProc.command = [
-            "/usr/bin/bash",
+            "bash",
             Directories.wallpaperSwitchScriptPath,
             "--mode", dark ? "dark" : "light",
             "--noswitch"
@@ -75,7 +75,7 @@ Singleton {
         root._forceApply = false
         Config.setNestedValue("appearance.palette.accentColor", seedColor)
         schemeVariantProc.command = [
-            "/usr/bin/bash",
+            "bash",
             Directories.wallpaperSwitchScriptPath,
             "--noswitch",
             "--skip-accent-write",
@@ -259,7 +259,7 @@ Singleton {
         id: colorInvertProc
         running: false
         command: [
-            "/usr/bin/bash",
+            "bash",
             Directories.wallpaperSwitchScriptPath,
             "--noswitch",
             "--skip-accent-write"
@@ -466,7 +466,7 @@ Singleton {
         interval: 1500
         onTriggered: {
             root._syncedLoginScreenKey = root._loginScreenKey
-            Quickshell.execDetached(["/usr/bin/bash", Directories.scriptsPath + "/colors/apply-targets.sh", "sddm"])
+            Quickshell.execDetached(["bash", Directories.scriptsPath + "/colors/apply-targets.sh", "sddm"])
         }
     }
     /// The login screen you see after starting the computer. It wears your wallpaper and colours.
@@ -552,7 +552,7 @@ Singleton {
         const applyColorPath = Directories.scriptsPath + "/colors/applycolor.sh"
         const overlay = root._styleAppPaletteOverlay()
         if (!overlay) {
-            Quickshell.execDetached(["/usr/bin/bash", applyColorPath])
+            Quickshell.execDetached(["bash", applyColorPath])
             return
         }
         // Merge and run share one shell invocation: the modules must never read
@@ -566,9 +566,9 @@ if command -v jq >/dev/null 2>&1 && [ -s "$p" ]; then
   fi
   rm -f "$p.style" "$p.merged"
 fi
-exec /usr/bin/bash ${_shq(applyColorPath)}
+exec bash ${_shq(applyColorPath)}
 `
-        Quickshell.execDetached(["/usr/bin/bash", "-c", script])
+        Quickshell.execDetached(["bash", "-c", script])
     }
 
     // Debounce file-change notifications: theme pipeline writes the JSON

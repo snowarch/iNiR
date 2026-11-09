@@ -10,17 +10,17 @@ import qs.modules.common
 Singleton {
     id: root
 
-    readonly property string fishPath: "/usr/bin/fish"
-    readonly property string bashPath: "/usr/bin/bash"
-    readonly property string systemdRunPath: "/usr/bin/systemd-run"
-    readonly property string gtkLaunchPath: "/usr/bin/gtk-launch"
+    readonly property string fishPath: "fish"
+    readonly property string bashPath: "bash"
+    readonly property string systemdRunPath: "systemd-run"
+    readonly property string gtkLaunchPath: "gtk-launch"
 
     // -1 unknown, 0 no, 1 yes
     property int _fishAvailable: -1
 
     Process {
         id: fishCheckProc
-        command: ["/usr/bin/test", "-x", root.fishPath]
+        command: ["sh", "-c", "command -v fish >/dev/null"]
         onExited: (exitCode, exitStatus) => {
             root._fishAvailable = (exitCode === 0) ? 1 : 0
         }
@@ -62,8 +62,8 @@ Singleton {
             manager_env=""
             systemd_user_manager_usable=false
             if [ -S "\${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/systemd/private" ] &&
-               [ -x /usr/bin/systemctl ] && [ -x /usr/bin/timeout ]; then
-                manager_env="$(/usr/bin/timeout 3s /usr/bin/systemctl --user show-environment 2>/dev/null)"
+               command -v systemctl >/dev/null && command -v timeout >/dev/null; then
+                manager_env="$(timeout 3s systemctl --user show-environment 2>/dev/null)"
                 case $? in 0|124) systemd_user_manager_usable=true ;; esac
             fi
 
@@ -152,6 +152,13 @@ Singleton {
                 [ -n "$_value" ] && export "$_var=$_value"
             done
 
+            # The shell on its own Qt (qs-rs) runs without the session's Qt plugin and QML paths, built for another
+            # Qt (Nix sets them): apps get the session's back.
+            for _var in QT_PLUGIN_PATH QML2_IMPORT_PATH QML_IMPORT_PATH; do
+                _value="$(manager_value "$_var")"
+                [ -n "$_value" ] && export "$_var=$_value"
+            done
+
             # Recommended by xwayland-satellite for Java/AWT clients. Keep an
             # explicit user value authoritative.
             import_if_missing _JAVA_AWT_WM_NONREPARENTING
@@ -167,7 +174,7 @@ Singleton {
                 cd -- "$workdir" || true
             fi
 
-            if [ -x "$systemd_run" ] && [ "$systemd_user_manager_usable" = true ]; then
+            if command -v "$systemd_run" >/dev/null && [ "$systemd_user_manager_usable" = true ]; then
                 if [ -n "$desc" ]; then
                     exec "$systemd_run" --user --quiet --collect --same-dir --scope \
                         --description="$desc" -- "$@"

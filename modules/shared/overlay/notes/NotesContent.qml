@@ -264,9 +264,9 @@ OverlayBackground {
         id: ensureNoteFile
         running: false
         command: [
-            "/usr/bin/bash",
+            "bash",
             "-c",
-            "/usr/bin/mkdir -p -- \"$1\" && { [ -e \"$2\" ] || /usr/bin/touch -- \"$2\"; }",
+            "mkdir -p -- \"$1\" && { [ -e \"$2\" ] || touch -- \"$2\"; }",
             "bash",
             Directories.notesPath.substring(0, Directories.notesPath.lastIndexOf('/')),
             Directories.notesPath

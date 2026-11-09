@@ -1030,7 +1030,7 @@ Singleton {
     Process {
         id: getDefaultPrompts
         running: false
-        command: ["/usr/bin/ls", "-1", Directories.defaultAiPrompts]
+        command: ["ls", "-1", Directories.defaultAiPrompts]
         stdout: StdioCollector {
             onStreamFinished: {
                 if (text.length === 0) return;
@@ -1044,7 +1044,7 @@ Singleton {
     Process {
         id: getUserPrompts
         running: false
-        command: ["/usr/bin/ls", "-1", Directories.userAiPrompts]
+        command: ["ls", "-1", Directories.userAiPrompts]
         stdout: StdioCollector {
             onStreamFinished: {
                 if (text.length === 0) return;
@@ -1058,7 +1058,7 @@ Singleton {
     Process {
         id: getSavedChats
         running: false
-        command: ["/usr/bin/ls", "-1", Directories.aiChats]
+        command: ["ls", "-1", Directories.aiChats]
         stdout: StdioCollector {
             onStreamFinished: {
                 if (text.length === 0) return;
@@ -1289,7 +1289,7 @@ Singleton {
 
     Process {
         id: requester
-        property list<string> baseCommand: ["/usr/bin/bash"]
+        property list<string> baseCommand: ["bash"]
         property AiMessageData message
         property ApiStrategy currentStrategy
         property int httpStatus: 0
@@ -1681,7 +1681,7 @@ Singleton {
         property string shellCommand: ""
         property AiMessageData message
         property string baseMessageContent: ""
-        command: ["/usr/bin/bash", "-c", shellCommand]
+        command: ["bash", "-c", shellCommand]
         stdout: SplitParser {
             onRead: (output) => {
                 commandExecutionProc.message.functionResponse += output + "\n\n";
@@ -1833,17 +1833,17 @@ Singleton {
         const path = chatPathForName(chatName);
         // Held in the runtime dir while its Undo notice is up.
         const held = `${Quickshell.env("XDG_RUNTIME_DIR") || "/tmp"}/inir-undo/chat-${Date.now()}.json`;
-        chatFileOps.exec(["/usr/bin/bash", "-c", 'mkdir -p -- "${2%/*}" && mv -- "$1" "$2"', "hold", path, held]);
+        chatFileOps.exec(["bash", "-c", 'mkdir -p -- "${2%/*}" && mv -- "$1" "$2"', "hold", path, held]);
         Undo.offer(Translation.tr("Removed %1").arg(chatName.trim()),
-            () => chatFileOps.exec(["/usr/bin/mv", "-n", "--", held, path]),
-            () => Quickshell.execDetached(["/usr/bin/rm", "-f", "--", held]));
+            () => chatFileOps.exec(["mv", "-n", "--", held, path]),
+            () => Quickshell.execDetached(["rm", "-f", "--", held]));
     }
 
     function renameChat(oldName, newName) {
         if (!oldName || !newName) return;
         const clean = newName.trim().replace(/[\/\0]/g, "-");
         if (clean.length === 0 || clean === oldName.trim()) return;
-        chatFileOps.exec(["/usr/bin/mv", "--", chatPathForName(oldName), chatPathForName(clean)]);
+        chatFileOps.exec(["mv", "--", chatPathForName(oldName), chatPathForName(clean)]);
     }
 
     // Stash the current conversation under a timestamped name, then clear

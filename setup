@@ -79,6 +79,7 @@ source ./sdata/lib/package-installers.sh
 source ./sdata/lib/dist-determine.sh
 source ./sdata/lib/conflicts.sh
 source ./sdata/lib/versioning.sh
+source ./scripts/lib/config-path.sh
 source ./sdata/lib/robust-update.sh
 source ./sdata/lib/extras.sh
 source ./sdata/lib/doctor.sh
@@ -1692,6 +1693,9 @@ show_install_completion() {
         "RAM:${ram}" \
         "Session:${compositor}"
 
+    # a package's copy made at login: nobody reads this but the journal, and the package owns rollback and reboots
+    [[ -n "${INIR_SESSION_SYNC:-}" ]] && return 0
+
     tui_section_start "After that"
     tui_list_item "Super+/ lists every shortcut, Super+, opens Settings"
     tui_list_item "Something off? inir doctor, then inir logs"
@@ -1720,6 +1724,10 @@ show_update_completion() {
 ###############################################################################
 run_install() {
     detect_distro
+    # a package's dependencies and system services are its own (Nix: the module), never this setup's
+    if is_packaged_setup; then
+        export SKIP_ALLDEPS=true
+    fi
     local dependency_repair_only=false
     [[ -n "${ONLY_MISSING_DEPS:-}" ]] && dependency_repair_only=true
     # Filled by the install steps with what only a fresh login or a reboot applies.
@@ -1827,6 +1835,7 @@ run_install() {
     inir_event stage finish
     tui_task_run 3 "recording version"
     set_installed_version "$(get_repo_version)" "$(get_repo_commit)" "setup"
+    is_packaged_setup && inir_write_package_stamp "$REPO_ROOT"
     tui_task_done 3 "$(get_repo_version)"
     tui_task_finalize
 
@@ -2301,7 +2310,7 @@ _update_engines() {
 # code alone: a full update brought the families with the base and restarts once itself.
 _update_hub_plugins() {
     local only="${1:-all}"
-    local cli="${XDG_DATA_HOME:-$HOME/.local/share}/inir/cli/inir" plugins="${XDG_DATA_HOME:-$HOME/.local/share}/inir/plugins"
+    local cli="${INIR_CLI:-${XDG_DATA_HOME:-$HOME/.local/share}/inir/cli/inir}" plugins="${XDG_DATA_HOME:-$HOME/.local/share}/inir/plugins"
     local state="${XDG_STATE_HOME:-$HOME/.local/state}/inir/hub" pending id kind name names=() code=() keep verified
     [[ -x "$cli" ]] || return 0
     pending="$("$cli" hub status --max-age 0 --json 2>/dev/null | jq -r '
@@ -2479,7 +2488,7 @@ run_update() {
     local package_name=$(get_installed_package_name)
     local update_hint=$(get_installed_package_update_hint)
 
-    if [[ "$installed_strategy" == "package-manager" ]]; then
+    if [[ "$installed_strategy" == "package-manager" ]] && ! is_packaged_setup; then
         tui_warn "This iNiR installation is package-managed"
         tui_status_line "Install Mode:" "$installed_mode" ""
         [[ -n "$package_name" ]] && tui_status_line "Package:" "$package_name" ""
@@ -2529,8 +2538,30 @@ run_update() {
     # A sync without a pull takes its snapshot once everything it needs is downloaded (below): a retry that fails to
     # download changes nothing, and its snapshot of the same state pushed an older one out of the ten kept (11-08,
     # while GitHub answered 504).
-    local snapshot_due=""
-    if [[ "${_II_POST_PULL:-}" == "1" ]]; then
+    local snapshot_due="" packaged=false
+    if is_packaged_setup; then
+        # A package (Nix, `make install`) brings the base read-only: the update keeps the person's copy of it in step
+        # with the package and brings what no package carries (the Hub's items). The launcher runs this at the
+        # session's start whenever the package moved.
+        packaged=true
+        local own_runtime="${XDG_CONFIG_HOME}/quickshell/inir"
+        # older Nix modules linked the store's read-only payload here, where no family can be installed
+        [[ -L "$own_runtime" && "$(readlink -f "$own_runtime")" == /nix/store/* ]] && rm -f "$own_runtime"
+        if [[ ! -f "$own_runtime/shell.qml" ]]; then
+            tui_info "First start of this iNiR package: setting up your copy of it"
+            "$REPO_ROOT/setup" install -y --skip-deps
+            return $?
+        fi
+        if [[ "$(cat "$(inir_package_stamp_file)" 2>/dev/null)" == "$(inir_package_stamp "$REPO_ROOT")" ]]; then
+            tui_info "The base comes with your package (${update_hint:-your package manager}); checking the hub"
+            _update_hub_plugins || true
+            _write_update_status "success"
+            tui_success "iNiR is up to date with your package"
+            return 0
+        fi
+        tui_info "Your iNiR package moved to $(get_repo_version) ($(get_repo_commit)): syncing your copy of it"
+        snapshot_due="Before sync to the package's $(get_repo_commit)"
+    elif [[ "${_II_POST_PULL:-}" == "1" ]]; then
         unset _II_POST_PULL
         snapshot_due="${_II_SNAPSHOT_DUE:-}"
         unset _II_SNAPSHOT_DUE
@@ -2853,8 +2884,9 @@ run_update() {
     find "$II_TARGET/scripts" \( -name "*.sh" -o -name "*.fish" -o \( -name "*.py" ! -name "test-*.py" \) \) -exec chmod +x {} \; 2>/dev/null || true
     [[ -f "${II_TARGET}/setup" ]] && chmod +x "${II_TARGET}/setup"
 
+    # a package puts its own launcher and desktop entries on PATH and XDG_DATA_DIRS
     local launcher_target="${XDG_BIN_HOME}/inir"
-    if [[ -f "${REPO_ROOT}/scripts/inir" ]]; then
+    if [[ -f "${REPO_ROOT}/scripts/inir" ]] && ! $packaged; then
         sync_launcher_from_repo >/dev/null || tui_warn "Could not refresh the inir launcher"
         if ! command -v inir &>/dev/null && [[ ":$PATH:" != *":${XDG_BIN_HOME}:"* ]]; then
             tui_warn "Launcher installed to ${launcher_target}, but ${XDG_BIN_HOME} is not in PATH for this shell"
@@ -2863,7 +2895,9 @@ run_update() {
 
     local _service_refresh_status=1
 
-    if sync_user_desktop_integration_from_repo; then
+    if $packaged; then
+        :
+    elif sync_user_desktop_integration_from_repo; then
         [[ "${INIR_DESKTOP_INTEGRATION_CHANGED:-0}" -gt 0 ]] && tui_success "Desktop integration updated"
     else
         tui_warn "Could not refresh desktop integration"
@@ -2993,7 +3027,8 @@ run_update() {
         fi
     fi
 
-    _update_dependencies
+    # a package's dependencies are its own (deps.toml mapped in nix/deps.nix)
+    $packaged || _update_dependencies
 
     # Run after dependency repair so newly installed providers get supervised
     # during the same update.
@@ -3021,9 +3056,11 @@ run_update() {
     # Signal success to the shell UI before restart
     _write_update_status "success"
 
-    # Restart shell (only if we have access to the session)
+    # Restart shell (only if we have access to the session); the launcher's own sync runs before the shell starts
     local not_loaded=""
-    if [[ -n "$NIRI_SOCKET" ]] || [[ -n "$WAYLAND_DISPLAY" ]]; then
+    if [[ -n "${INIR_SESSION_SYNC:-}" ]]; then
+        :
+    elif [[ -n "$NIRI_SOCKET" ]] || [[ -n "$WAYLAND_DISPLAY" ]]; then
         _step_phase_start 7 "Restarting shell"
         if inir_user_service_is_masked; then
             _step_phase_done "Shell restart skipped: inir.service is masked"
@@ -3078,6 +3115,7 @@ run_update() {
         tui_alert "error" "Update not applied" "The new version did not load. ${not_loaded}"
         return 24
     fi
+    $packaged && inir_write_package_stamp "$REPO_ROOT"
     show_update_completion "$repo_ver" "$repo_commit"
 }
 

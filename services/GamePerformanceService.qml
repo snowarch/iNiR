@@ -585,7 +585,7 @@ Singleton {
 
     Process {
         id: rigInfoProcess
-        command: ["/usr/bin/bash", "-c", `
+        command: ["bash", "-c", `
             cpu_model=$(awk -F: '/^model name/{gsub(/^[[:space:]]+/, "", $2); print $2; exit}' /proc/cpuinfo)
             cpu_cores=$(getconf _NPROCESSORS_ONLN 2>/dev/null || printf '0')
             ram_kb=$(awk '/^MemTotal:/{print $2; exit}' /proc/meminfo)
@@ -611,7 +611,7 @@ Singleton {
 
     Process {
         id: mangoHudProbe
-        command: ["/usr/bin/bash", "-c", "command -v mangohud >/dev/null 2>&1"]
+        command: ["bash", "-c", "command -v mangohud >/dev/null 2>&1"]
         running: false
         onExited: (exitCode, exitStatus) => root.mangoHudInstalled = exitCode === 0
     }

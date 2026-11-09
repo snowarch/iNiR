@@ -266,7 +266,7 @@ Singleton {
         required property string translationsDir
         signal languagesScanned(var languages)
 
-        command: ["/usr/bin/find", translationScanner.translationsDir, "-maxdepth", "1", "-type", "f", "-name", "*.json", "-exec", "/usr/bin/basename", "{}", ".json", ";"]
+        command: ["find", translationScanner.translationsDir, "-maxdepth", "1", "-type", "f", "-name", "*.json", "-exec", "basename", "{}", ".json", ";"]
         running: false
 
         stdout: StdioCollector {

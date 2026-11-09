@@ -197,7 +197,7 @@ Singleton {
             if (error == FileViewError.FileNotFound) {
                 console.log("[Todo] JSON not found, creating new file.")
                 const parentDir = root.filePath.substring(0, root.filePath.lastIndexOf('/'))
-                Quickshell.execDetached(["/usr/bin/mkdir", "-p", parentDir])
+                Quickshell.execDetached(["mkdir", "-p", parentDir])
                 root.list = []
                 // later: stock Quickshell forgets a write started inside its own load signal
                 Qt.callLater(() => todoFileView.setText(JSON.stringify(root.list)))

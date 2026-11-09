@@ -8,6 +8,8 @@
 # aarch64 takes only inir-accel, so the shell keeps Quickshell there.
 # An add-on ("with": the part it unpacks over, e.g. Qt WebEngine over qs-rs) has that part's version, so it lands in
 # the folder it was built for; it comes only while its "when" config key is true or INIR_PREBUILT_WANT names it.
+# A package that builds the parts for its system (Nix: patched for the store) names them in INIR_PREBUILT_STORE, laid
+# out as <dest>/<version>/ with the same .sha256 marks: each version folder here is then a link to it, never a download.
 
 # the base's pins; a local INIR_PREBUILT_FROM (VMs, before the releases) may carry its own beside the files
 _prebuilt_pins() {
@@ -59,6 +61,7 @@ prebuilt_behind() {
         fi
         have="$(readlink "$home/$dest/current" 2>/dev/null)"
         have="${have##*/}"
+        [[ -z "${INIR_PREBUILT_STORE:-}" || "$(readlink "$home/$dest/$ver")" == "$INIR_PREBUILT_STORE/$dest/$ver" ]] || have="${have:-none} (another build)"
         [[ "$have" == "$ver" && "$(cat "$home/$dest/$ver/.sha256" 2>/dev/null)" == "$sha" ]] ||
             printf '%s\t%s\t%s\n' "$part" "${have:-none}" "$ver"
     done < <(prebuilt_parts)
@@ -112,6 +115,24 @@ _prebuilt_url() {
 }
 
 # prebuilt_fetch: every pinned part unpacked at <dest>/<version>, its sha256 checked; fails on the first miss
+# _prebuilt_link_store PART DEST VERSION SHA256 WITH: the package's build of a part, linked where setup would unpack it
+_prebuilt_link_store() {
+    local part="$1" dest="$2" ver="$3" sha="$4" with="$5" src dir
+    src="$INIR_PREBUILT_STORE/$dest/$ver"
+    dir="$(_prebuilt_home)/$dest/$ver"
+    if [[ -n "$with" ]]; then
+        [[ "$(cat "$src/.$part.sha256" 2>/dev/null)" == "$sha" ]] ||
+            printf '%s is not in this package; the iNiR package option for it adds it\n' \
+                "$(jq -r --arg p "$part" '.parts[$p].title // $p' "$(_prebuilt_pins)")" >&2
+        return 0
+    fi
+    if [[ "$(cat "$src/.sha256" 2>/dev/null)" != "$sha" ]]; then
+        printf '%s %s: the package carries no build of it (%s)\n' "$part" "$ver" "$src" >&2
+        return 1
+    fi
+    [[ "$(readlink "$dir")" == "$src" ]] && return 0
+    mkdir -p "${dir%/*}" && rm -rf "$dir" && ln -s "$src" "$dir"
+}
 prebuilt_fetch() {
     local home part dest ver file sha repo with dir mark tmp url
     home="$(_prebuilt_home)"
@@ -122,6 +143,10 @@ prebuilt_fetch() {
             # over its part's folder, so that part comes first (the pins list it first)
             [[ -f "$dir/.sha256" ]] || continue
             mark="$dir/.$part.sha256"
+        fi
+        if [[ -n "${INIR_PREBUILT_STORE:-}" ]]; then
+            _prebuilt_link_store "$part" "$dest" "$ver" "$sha" "$with" || return 1
+            continue
         fi
         [[ "$(cat "$mark" 2>/dev/null)" == "$sha" ]] && continue
         url="$(_prebuilt_url "$part" "$ver" "$file" "$repo")"

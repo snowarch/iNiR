@@ -314,17 +314,17 @@ function setup_desktop_settings(){
 
   local preferred_icon_theme="WhiteSur-dark"
   local icon_theme="$preferred_icon_theme"
-  if [[ ! -d "$HOME/.local/share/icons/$preferred_icon_theme" ]] && [[ ! -d "/usr/share/icons/$preferred_icon_theme" ]]; then
+  if ! xdg_data_path "icons/$preferred_icon_theme" >/dev/null; then
     icon_theme="Adwaita"
   fi
   local preferred_gtk_theme="adw-gtk3-dark"
   local gtk_theme="$preferred_gtk_theme"
-  if [[ ! -d "$HOME/.local/share/themes/$preferred_gtk_theme" ]] && [[ ! -d "/usr/share/themes/$preferred_gtk_theme" ]]; then
+  if ! xdg_data_path "themes/$preferred_gtk_theme" >/dev/null; then
     gtk_theme="Adwaita"
   fi
   local preferred_cursor_theme="capitaine-cursors-light"
   local cursor_theme="$preferred_cursor_theme"
-  if [[ ! -d "$HOME/.local/share/icons/$preferred_cursor_theme" ]] && [[ ! -d "/usr/share/icons/$preferred_cursor_theme" ]]; then
+  if ! xdg_data_path "icons/$preferred_cursor_theme" >/dev/null; then
     cursor_theme="Adwaita"
   fi
   
@@ -401,11 +401,14 @@ PORTAL_EOF
 #####################################################################################
 # Run setups
 #####################################################################################
-showfun setup_user_groups
-v setup_user_groups
+# a package's groups and system services belong to it (Nix: the NixOS module)
+if ! is_packaged_setup; then
+  showfun setup_user_groups
+  v setup_user_groups
 
-showfun setup_systemd_services
-v setup_systemd_services
+  showfun setup_systemd_services
+  v setup_systemd_services
+fi
 
 showfun setup_desktop_settings
 v setup_desktop_settings

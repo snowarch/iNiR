@@ -92,7 +92,7 @@ StyledOverlayWidget {
 
     Process {
         id: diskQueryProcess
-        command: ["/usr/bin/df", "-BG", "--output=avail", root.effectiveSavePath]
+        command: ["df", "-BG", "--output=avail", root.effectiveSavePath]
         stdout: StdioCollector {
             onStreamFinished: {
                 const lines = text.trim().split("\n")
@@ -243,7 +243,7 @@ StyledOverlayWidget {
                     detailText: Translation.tr("Clipboard only")
                     onClicked: {
                         GlobalStates.overlayOpen = false;
-                        Quickshell.execDetached(["/usr/bin/bash", "-c", "/usr/bin/grim - | /usr/bin/wl-copy"]);
+                        Quickshell.execDetached(["bash", "-c", "grim - | wl-copy"]);
                     }
                 }
 

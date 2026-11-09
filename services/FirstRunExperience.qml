@@ -23,7 +23,7 @@ Singleton {
     }
 
     function enableNextTime() {
-        Quickshell.execDetached(["/usr/bin/rm", "-f", root.firstRunFilePath])
+        Quickshell.execDetached(["rm", "-f", root.firstRunFilePath])
     }
     function disableNextTime() {
         Quickshell.execDetached(["/bin/sh", "-c", `echo "${root.firstRunFileContent}" > "${root.firstRunFilePath}"`])
@@ -63,7 +63,7 @@ Singleton {
 
     Process {
         id: checkFirstRunProc
-        command: ["/usr/bin/test", "-f", root.firstRunFilePath]
+        command: ["test", "-f", root.firstRunFilePath]
         onExited: (exitCode) => {
             if (exitCode !== 0) {
                 root._pendingFirstRun = true

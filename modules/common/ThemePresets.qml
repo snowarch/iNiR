@@ -3935,7 +3935,7 @@ Singleton {
         if ((Config.options?.appearance?.wallpaperTheming?.enableVesktop ?? true) !== false) {
             _log("[ThemePresets] Triggering Vesktop theme generation wrapper")
             Quickshell.execDetached([
-                "/usr/bin/bash",
+                "bash",
                 Directories.scriptsPath + "/colors/system24_palette.sh"
             ])
         }
@@ -3977,7 +3977,7 @@ Singleton {
         if (chromiumRgb.length > 0) {
             script += `printf '%s\\n' '${chromiumRgb}' > '${Directories.generatedChromiumThemePath}'\n`;
         }
-        Quickshell.execDetached(["/usr/bin/bash", "-c", script]);
+        Quickshell.execDetached(["bash", "-c", script]);
     }
 
     function buildTerminalJson(c) {

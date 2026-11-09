@@ -88,7 +88,7 @@ Singleton {
 
     Process {
         id: getClients
-        command: ["/usr/bin/hyprctl", "clients", "-j"]
+        command: ["hyprctl", "clients", "-j"]
         onExited: {
             if (root._windowListRefreshQueued) {
                 root._windowListRefreshQueued = false;
@@ -117,7 +117,7 @@ Singleton {
 
     Process {
         id: getMonitors
-        command: ["/usr/bin/hyprctl", "monitors", "-j"]
+        command: ["hyprctl", "monitors", "-j"]
         stdout: StdioCollector {
             id: monitorsCollector
             onStreamFinished: {
@@ -133,7 +133,7 @@ Singleton {
 
     Process {
         id: getLayers
-        command: ["/usr/bin/hyprctl", "layers", "-j"]
+        command: ["hyprctl", "layers", "-j"]
         stdout: StdioCollector {
             id: layersCollector
             onStreamFinished: {
@@ -149,7 +149,7 @@ Singleton {
 
     Process {
         id: getWorkspaces
-        command: ["/usr/bin/hyprctl", "workspaces", "-j"]
+        command: ["hyprctl", "workspaces", "-j"]
         stdout: StdioCollector {
             id: workspacesCollector
             onStreamFinished: {
@@ -172,7 +172,7 @@ Singleton {
 
     Process {
         id: getActiveWorkspace
-        command: ["/usr/bin/hyprctl", "activeworkspace", "-j"]
+        command: ["hyprctl", "activeworkspace", "-j"]
         stdout: StdioCollector {
             id: activeWorkspaceCollector
             onStreamFinished: {

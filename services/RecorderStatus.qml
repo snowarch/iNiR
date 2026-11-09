@@ -193,7 +193,7 @@ Singleton {
 
     Process {
         id: storedConfigProcess
-        command: ["/usr/bin/cat", Config.filePath]
+        command: ["cat", Config.filePath]
         stdout: StdioCollector {
             id: storedConfigCollector
         }
@@ -208,7 +208,7 @@ Singleton {
 
     Process {
         id: metadataProcess
-        command: ["/usr/bin/cat", root.recorderStatusPath]
+        command: ["cat", root.recorderStatusPath]
         stdout: StdioCollector {
             id: metadataCollector
         }

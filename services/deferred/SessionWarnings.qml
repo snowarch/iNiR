@@ -25,7 +25,7 @@ Singleton {
 
     Process {
         id: detectPackageManagerProc
-        command: ["/usr/bin/pidof", "pacman", "yay", "paru", "dnf", "zypper", "apt", "apx", "xbps", "flatpak", "snap", "apk", "yum", "epsi", "pikman"]
+        command: ["pidof", "pacman", "yay", "paru", "dnf", "zypper", "apt", "apx", "xbps", "flatpak", "snap", "apk", "yum", "epsi", "pikman"]
         onExited: (exitCode, exitStatus) => {
             root.packageManagerRunning = (exitCode === 0);
         }
@@ -33,7 +33,7 @@ Singleton {
 
     Process {
         id: detectDownloadProc
-        command: ["/usr/bin/pidof", "curl", "wget", "aria2c", "yt-dlp"]
+        command: ["pidof", "curl", "wget", "aria2c", "yt-dlp"]
         onExited: (exitCode, exitStatus) => {
             root.downloadRunning = (exitCode === 0);
         }

@@ -23,7 +23,7 @@ Singleton {
         root._undo = undo
         root._commit = commit ?? null
         root.label = text
-        noticeComponent.createObject(root, { gen: root._gen, command: ["/usr/bin/timeout", "60", "/usr/bin/notify-send",
+        noticeComponent.createObject(root, { gen: root._gen, command: ["timeout", "60", "notify-send",
             "-a", "iNiR", "-u", "low", "-t", "6000", "-h", "int:transient:1",
             "-h", "string:x-canonical-private-synchronous:inir-undo", "-w", "-A", "undo=" + Translation.tr("Undo"), "--", text] })
     }

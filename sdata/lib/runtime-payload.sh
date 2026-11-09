@@ -237,7 +237,7 @@ runtime_payload() (
       payload_paths >/dev/null || exit 1
       separate "$target" || fail "destination must be a separate installed directory"
       retire_checkout "$target"
-      local -a args=(rsync -a) link
+      local -a args=(rsync -a --chmod=u+w) link  # a read-only payload (Nix store) still gives a copy the person owns
       # `inir hub` plugins are links under modules/ the payload never put there: --delete leaves them.
       while IFS= read -r link; do
         [[ -e "$root/modules/$link" ]] || args+=("--filter=P /modules/$(sed 's/[*?[\\]/\\&/g' <<< "$link")")

@@ -301,12 +301,12 @@ PanelWindow {
     Process {
         id: screenshotProc
         running: false
-        command: ["/usr/bin/bash", "-c", `/usr/bin/mkdir -p '${StringUtils.shellSingleQuoteEscape(root.screenshotDir)}' && /usr/bin/grim -o '${StringUtils.shellSingleQuoteEscape(root.screen.name)}' '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}'`]
+        command: ["bash", "-c", `mkdir -p '${StringUtils.shellSingleQuoteEscape(root.screenshotDir)}' && grim -o '${StringUtils.shellSingleQuoteEscape(root.screen.name)}' '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}'`]
         onExited: (exitCode, exitStatus) => {
             root.captured = true
             if (exitCode !== 0) {
                 root.screenshotReady = false
-                Quickshell.execDetached(["/usr/bin/notify-send", "Region search failed", "grim failed to capture the screen" , "-a", "Region Selector", "-t", "4000"])
+                Quickshell.execDetached(["notify-send", "Region search failed", "grim failed to capture the screen" , "-a", "Region Selector", "-t", "4000"])
             } else {
                 root.screenshotReady = true
             }
@@ -384,14 +384,14 @@ PanelWindow {
             + `-crop ${rw}x${rh}+${rx}+${ry}`
         const cropToStdout = `${cropBase} -`
         const cropInPlace = `${cropBase} '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}'`
-        const cleanup = `/usr/bin/rm '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}'`
+        const cleanup = `rm '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}'`
         const slurpRegion = `${rx},${ry} ${rw}x${rh}`
         const screenshotSaveDir = StringUtils.shellSingleQuoteEscape(Directories.screenshotsPath)
         const uploadAndGetUrl = (filePath) => {
             const escaped = StringUtils.shellSingleQuoteEscape(filePath)
-            const primary = `/usr/bin/curl -s --max-time 15 -F reqtype=fileupload -F time=1h -F fileToUpload=@'${escaped}' '${root.fileUploadApiEndpoint}'`
-            const fallback1 = `/usr/bin/curl -s --max-time 15 -F reqtype=fileupload -F fileToUpload=@'${escaped}' '${root.fileUploadApiFallback}'`
-            const fallback2 = `/usr/bin/curl -sf --max-time 10 -F file=@'${escaped}' '${root.fileUploadApiFallback2}'`
+            const primary = `curl -s --max-time 15 -F reqtype=fileupload -F time=1h -F fileToUpload=@'${escaped}' '${root.fileUploadApiEndpoint}'`
+            const fallback1 = `curl -s --max-time 15 -F reqtype=fileupload -F fileToUpload=@'${escaped}' '${root.fileUploadApiFallback}'`
+            const fallback2 = `curl -sf --max-time 10 -F file=@'${escaped}' '${root.fileUploadApiFallback2}'`
             // Try primary, then fallback1, then fallback2 if all fail or return empty/non-URL response
             return `url=$(${primary} 2>/dev/null); if [[ -z "$url" || "$url" != http* ]]; then url=$(${fallback1}); fi; if [[ -z "$url" || "$url" != http* ]]; then url=$(${fallback2}); fi; echo "$url"`
         }
@@ -405,20 +405,20 @@ PanelWindow {
             // The shot lands whole: written beside it as a hidden part, then renamed, so the Shelf and the Island
             // never read a half-written PNG ("Unsupported image format").
             case RegionSelection.SnipAction.Copy:
-                snipProc.command = ["/usr/bin/bash", "-c", `_dir='${screenshotSaveDir}' && mkdir -p "$_dir" && _ss="$_dir/$(date +'${StringUtils.shellSingleQuoteEscape(root.screenshotNameFormat)}').png" && _part="$_dir/.$(basename "$_ss").part" && ${cropToStdout} | tee "$_part" | '${clipboardCopy}' && mv -f "$_part" "$_ss" && printf '%s' "$_ss" | '${clipboardCopy}' --primary && ${cleanup} && /usr/bin/notify-send '${copiedTitle}' '${copiedBody}' -a Screenshot -i camera-photo -t 3000`]
+                snipProc.command = ["bash", "-c", `_dir='${screenshotSaveDir}' && mkdir -p "$_dir" && _ss="$_dir/$(date +'${StringUtils.shellSingleQuoteEscape(root.screenshotNameFormat)}').png" && _part="$_dir/.$(basename "$_ss").part" && ${cropToStdout} | tee "$_part" | '${clipboardCopy}' && mv -f "$_part" "$_ss" && printf '%s' "$_ss" | '${clipboardCopy}' --primary && ${cleanup} && notify-send '${copiedTitle}' '${copiedBody}' -a Screenshot -i camera-photo -t 3000`]
                 break;
             case RegionSelection.SnipAction.Edit:
                 if (Config.options?.regionSelector?.annotation?.useNativeEditor ?? true) {
                     editCropProc.editFile = `${root.screenshotDir}/edit-${root.screen.name}.png`;
                     editCropProc.editScreenName = root.screen.name;
-                    editCropProc.command = ["/usr/bin/bash", "-c", `${cropBase} '${StringUtils.shellSingleQuoteEscape(editCropProc.editFile)}' && ${cleanup}`];
+                    editCropProc.command = ["bash", "-c", `${cropBase} '${StringUtils.shellSingleQuoteEscape(editCropProc.editFile)}' && ${cleanup}`];
                     editCropProc.running = true;
                     return; // editCropProc.onExited opens the native editor and dismisses
                 }
-                snipProc.command = ["/usr/bin/bash", "-c", `${cropToStdout} | ${annotationCommand} && ${cleanup}`]
+                snipProc.command = ["bash", "-c", `${cropToStdout} | ${annotationCommand} && ${cleanup}`]
                 break;
             case RegionSelection.SnipAction.Search:
-                snipProc.command = ["/usr/bin/bash", "-c", `${cropInPlace} && uploaded_url="$(${uploadAndGetUrl(root.screenshotPath)})"; if [[ -n "$uploaded_url" && "$uploaded_url" == http* ]]; then /usr/bin/xdg-open "${root.effectiveImageSearchEngineBaseUrl}$uploaded_url"; else /usr/bin/notify-send "Image search failed" "Could not upload the image for reverse search" -a "Image Search" -i image; fi; ${cleanup}`]
+                snipProc.command = ["bash", "-c", `${cropInPlace} && uploaded_url="$(${uploadAndGetUrl(root.screenshotPath)})"; if [[ -n "$uploaded_url" && "$uploaded_url" == http* ]]; then xdg-open "${root.effectiveImageSearchEngineBaseUrl}$uploaded_url"; else notify-send "Image search failed" "Could not upload the image for reverse search" -a "Image Search" -i image; fi; ${cleanup}`]
                 break;
             case RegionSelection.SnipAction.CharRecognition: {
                 const ocrLanguage = String(Config.options?.regionSelector?.ocrLanguage ?? "auto");
@@ -429,19 +429,19 @@ PanelWindow {
                     japaneseOcrProc.lookupY = root.regionY;
                     japaneseOcrProc.lookupWidth = root.regionWidth;
                     japaneseOcrProc.lookupHeight = root.regionHeight;
-                    japaneseOcrProc.command = ["/usr/bin/bash", "-c", `${cropInPlace} && '${ocrRunner}' '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}' '${StringUtils.shellSingleQuoteEscape(ocrLanguage)}'; _ocr_status=$?; ${cleanup}; exit $_ocr_status`];
+                    japaneseOcrProc.command = ["bash", "-c", `${cropInPlace} && '${ocrRunner}' '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}' '${StringUtils.shellSingleQuoteEscape(ocrLanguage)}'; _ocr_status=$?; ${cleanup}; exit $_ocr_status`];
                     root.visible = false;
                     japaneseOcrProc.running = true;
                     return;
                 }
-                snipProc.command = ["/usr/bin/bash", "-c", `${cropInPlace} && { '${ocrRunner}' '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}' '${StringUtils.shellSingleQuoteEscape(ocrLanguage)}' | tee >('${clipboardCopy}' --primary) | '${clipboardCopy}'; _ocr_status=\${PIPESTATUS[0]}; ${cleanup}; if (( _ocr_status == 0 )); then /usr/bin/notify-send "Text recognized" "OCR text copied to clipboard" -a "OCR" -i edit-find -t 3000; else /usr/bin/notify-send "OCR failed" "The selected OCR language is unavailable or recognition failed" -a "OCR" -i dialog-error -t 4000; exit \$_ocr_status; fi; }`];
+                snipProc.command = ["bash", "-c", `${cropInPlace} && { '${ocrRunner}' '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}' '${StringUtils.shellSingleQuoteEscape(ocrLanguage)}' | tee >('${clipboardCopy}' --primary) | '${clipboardCopy}'; _ocr_status=\${PIPESTATUS[0]}; ${cleanup}; if (( _ocr_status == 0 )); then notify-send "Text recognized" "OCR text copied to clipboard" -a "OCR" -i edit-find -t 3000; else notify-send "OCR failed" "The selected OCR language is unavailable or recognition failed" -a "OCR" -i dialog-error -t 4000; exit \$_ocr_status; fi; }`];
                 break;
             }
             case RegionSelection.SnipAction.Record:
-                snipProc.command = ["/usr/bin/bash", "-c", `${Directories.recordScriptPath} --region '${slurpRegion}'`]
+                snipProc.command = ["bash", "-c", `${Directories.recordScriptPath} --region '${slurpRegion}'`]
                 break;
             case RegionSelection.SnipAction.RecordWithSound:
-                snipProc.command = ["/usr/bin/bash", "-c", `${Directories.recordScriptPath} --region '${slurpRegion}' --sound`]
+                snipProc.command = ["bash", "-c", `${Directories.recordScriptPath} --region '${slurpRegion}' --sound`]
                 break;
             default:
                 root.dismiss();
@@ -516,7 +516,7 @@ PanelWindow {
                 GlobalStates.annotationEditorScreenName = editCropProc.editScreenName;
                 GlobalStates.annotationEditorOpen = true;
             } else {
-                Quickshell.execDetached(["/usr/bin/notify-send", "Edit failed", "Could not prepare the region for editing", "-a", "Screenshot", "-t", "3000"]);
+                Quickshell.execDetached(["notify-send", "Edit failed", "Could not prepare the region for editing", "-a", "Screenshot", "-t", "3000"]);
             }
             root.dismiss();
         }
@@ -733,7 +733,7 @@ PanelWindow {
                             function onFullscreenRequested(): void { root.snipFullscreen() }
                             function onColorPickerRequested(): void {
                                 root.dismiss();
-                                ShellExec.execDetachedArgs(["/usr/bin/bash", "-c", "sleep 0.3; /usr/bin/hyprpicker -a"], "Pick color");
+                                ShellExec.execDetachedArgs(["bash", "-c", "sleep 0.3; hyprpicker -a"], "Pick color");
                             }
                         }
                     }
@@ -755,7 +755,7 @@ PanelWindow {
                             onColorPickerRequested: {
                                 // Dismiss first so hyprpicker grabs the live desktop, not this overlay.
                                 root.dismiss();
-                                ShellExec.execDetachedArgs(["/usr/bin/bash", "-c", "sleep 0.3; /usr/bin/hyprpicker -a"], "Pick color");
+                                ShellExec.execDetachedArgs(["bash", "-c", "sleep 0.3; hyprpicker -a"], "Pick color");
                             }
                         }
                         Item {

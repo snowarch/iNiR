@@ -443,7 +443,7 @@ Singleton {
             category: "tools",
             keywords: ["color", "picker", "eyedropper", "hex"],
             execute: () => {
-                ShellExec.execDetachedArgs(["/usr/bin/hyprpicker", "-a"], "Pick color")
+                ShellExec.execDetachedArgs(["hyprpicker", "-a"], "Pick color")
             }
         },
         {
@@ -454,7 +454,7 @@ Singleton {
             category: "tools",
             keywords: ["record", "screen", "video", "capture", "wf-recorder", "audio", "microphone", "mic"],
             execute: () => {
-                const args = ["/usr/bin/bash", Directories.recordScriptPath]
+                const args = ["bash", Directories.recordScriptPath]
                 if (RecorderStatus.isRecording)
                     args.push("--stop")
                 else
@@ -518,7 +518,7 @@ Singleton {
             keywords: ["paste", "clipboard", "multi", "superpaste"],
             execute: args => {
                 if (!args || !/^(\d+)/.test(args.trim())) {
-                    Quickshell.execDetached(["/usr/bin/notify-send", Translation.tr("Superpaste"),
+                    Quickshell.execDetached(["notify-send", Translation.tr("Superpaste"),
                         Translation.tr("Usage: superpaste NUM[i]\nExamples: superpaste 4i (last 4 images), superpaste 7 (last 7 entries)"),
                         "-a", "Shell"])
                     return
@@ -538,12 +538,12 @@ Singleton {
             keywords: ["todo", "task", "add", "note", "reminder"],
             execute: args => {
                 if (!args || args.trim() === "") {
-                    Quickshell.execDetached(["/usr/bin/notify-send", Translation.tr("Add Todo"),
+                    Quickshell.execDetached(["notify-send", Translation.tr("Add Todo"),
                         Translation.tr("Usage: todo <task description>"), "-a", "Shell"])
                     return
                 }
                 Todo.addTask(args.trim())
-                Quickshell.execDetached(["/usr/bin/notify-send", Translation.tr("Todo Added"),
+                Quickshell.execDetached(["notify-send", Translation.tr("Todo Added"),
                     args.trim(), "-a", "Shell", "-i", "checkbox-checked-symbolic"])
             }
         },
@@ -839,7 +839,7 @@ Singleton {
             keywords: ["install", "package", "yay", "paru", "pacman", "xbps", "aur", "setup"],
             execute: args => {
                 if (!args || args.trim() === "") {
-                    Quickshell.execDetached(["/usr/bin/notify-send", Translation.tr("Install Package"),
+                    Quickshell.execDetached(["notify-send", Translation.tr("Install Package"),
                         Translation.tr("Usage: install-package <package-name>"),
                         "-a", "Shell"])
                     return
@@ -857,7 +857,7 @@ Singleton {
             keywords: ["remove", "uninstall", "package", "pacman", "xbps"],
             execute: args => {
                 if (!args || args.trim() === "") {
-                    Quickshell.execDetached(["/usr/bin/notify-send", Translation.tr("Remove Package"),
+                    Quickshell.execDetached(["notify-send", Translation.tr("Remove Package"),
                         Translation.tr("Usage: remove-package <package-name>"),
                         "-a", "Shell"])
                     return
@@ -895,7 +895,7 @@ Singleton {
 
     Process {
         id: setupScanner
-        command: ["/usr/bin/bash", `${Directories.scriptsPath}/setup/_scan.sh`]
+        command: ["bash", `${Directories.scriptsPath}/setup/_scan.sh`]
         stdout: StdioCollector {
             onStreamFinished: {
                 try { root._setupTargets = JSON.parse(this.text || "[]") }
@@ -915,9 +915,9 @@ Singleton {
         const path = `${Directories.scriptsPath}/setup/${target.slug}.sh`
         const term = root._safeTerminal()
         ShellExec.execDetachedArgs(term === "wezterm"
-            ? [term, "start", "--always-new-process", "--", "/usr/bin/bash", path]
-            : [term, "-e", "/usr/bin/bash", path], `Setup ${target.name}`)
-        Quickshell.execDetached(["/usr/bin/notify-send",
+            ? [term, "start", "--always-new-process", "--", "bash", path]
+            : [term, "-e", "bash", path], `Setup ${target.name}`)
+        Quickshell.execDetached(["notify-send",
             "-a", "Setup", "-i", target.icon || "download",
             "-h", `string:x-canonical-private-synchronous:setup-${target.slug}`,
             "--", target.name, Translation.tr("Starting setup in terminal…")])

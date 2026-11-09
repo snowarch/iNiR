@@ -905,7 +905,7 @@ Singleton {
         const body = artist.length > 0 ? `${title} - ${artist}` : title
 
         Quickshell.execDetached([
-            "/usr/bin/notify-send",
+            "notify-send",
             Translation.tr("Up Next"),
             body,
             "-a", "YtMusic",
@@ -1633,7 +1633,7 @@ Singleton {
 
     Process {
         id: _detectDefaultBrowserProc
-        command: ["/usr/bin/xdg-settings", "get", "default-web-browser"]
+        command: ["xdg-settings", "get", "default-web-browser"]
         stdout: SplitParser {
             onRead: line => {
                 const desktop = line.trim().toLowerCase()
@@ -1714,7 +1714,7 @@ Singleton {
     Process {
         id: _resolveBrowserArgProc
         property bool _pendingCheck: false
-        command: ["/usr/bin/bash", "-c", `
+        command: ["bash", "-c", `
 case "$1" in
     zen) base=~/.zen ;;
     librewolf) base=~/.librewolf ;;
@@ -2117,7 +2117,7 @@ echo ""
             // and Quickshell still supervises the final mpv process directly after shell `exec`.
             return [
                 "/bin/sh", "-c",
-                "/usr/bin/install -Dm600 -- \"$1\" \"$2\" && shift 2 && exec \"$@\"",
+                "install -Dm600 -- \"$1\" \"$2\" && shift 2 && exec \"$@\"",
                 "_", root._mpvCookiesFile, root._playbackCookiesFile,
                 ...args
             ]

@@ -192,7 +192,7 @@ Singleton {
         onTriggered: {
             root._restartQueued = false
             _log("[IconThemeService] Restarting shell now...")
-            Quickshell.execDetached(["/usr/bin/bash", Quickshell.shellPath("scripts/restart-shell.sh")])
+            Quickshell.execDetached(["bash", Quickshell.shellPath("scripts/restart-shell.sh")])
         }
     }
 
@@ -236,7 +236,7 @@ Singleton {
         id: gsettingsSetProc
         property string themeName: ""
         property bool skipRestart: false
-        command: ["/usr/bin/gsettings", "set", "org.gnome.desktop.interface", "icon-theme", gsettingsSetProc.themeName]
+        command: ["gsettings", "set", "org.gnome.desktop.interface", "icon-theme", gsettingsSetProc.themeName]
         onExited: (exitCode, exitStatus) => {
             _log("[IconThemeService] gsettings set exited:", exitCode, "theme:", gsettingsSetProc.themeName)
             // Sync to KDE/Qt apps via kdeglobals
@@ -276,7 +276,7 @@ Singleton {
         property string themeName: ""
         property bool skipRestart: false
         command: [
-            "/usr/bin/kwriteconfig6",
+            "kwriteconfig6",
             "--file", "kdeglobals",
             "--group", "Icons",
             "--key", "Theme",
@@ -324,7 +324,7 @@ Singleton {
     Process {
         id: gtkSettingsProc
         property string themeName: ""
-        command: ["/usr/bin/bash", "-c",
+        command: ["bash", "-c",
             "for d in gtk-3.0 gtk-4.0; do \"$1\" ini-set \"$2/.config/$d/settings.ini\" Settings gtk-icon-theme-name \"$3\" --replace-invalid || s=1; done; exit ${s:-0}",
             "_", Quickshell.shellPath("scripts/lib/accel-run"), Directories.homePath, gtkSettingsProc.themeName]
         onExited: (exitCode, exitStatus) => {
@@ -334,7 +334,7 @@ Singleton {
 
     Process {
         id: currentThemeProc
-        command: ["/usr/bin/gsettings", "get", "org.gnome.desktop.interface", "icon-theme"]
+        command: ["gsettings", "get", "org.gnome.desktop.interface", "icon-theme"]
         stdout: SplitParser {
             onRead: line => {
                 root.currentTheme = line.trim().replace(/'/g, "")
@@ -345,7 +345,7 @@ Singleton {
     Process {
         id: listThemesProc
         command: [
-            "/usr/bin/find",
+            "find",
             "/usr/share/icons",
             `${FileUtils.trimFileProtocol(Directories.home)}/.local/share/icons`,
             "-maxdepth",

@@ -105,12 +105,26 @@ get_repo_version() {
     fi
 }
 
+# A package's payload (Nix, `make install`) carries its own version.json: who manages it, its commit, its update hint
+payload_version_field() {
+    local file="${REPO_ROOT:-}/version.json"
+    [[ ! -e "${REPO_ROOT:-}/.git" && -f "$file" ]] && command -v jq &>/dev/null || return 0
+    jq -r "(${1}) // empty" "$file" 2>/dev/null || true
+}
+
+# This setup is a package's read-only payload: the package brings the base, setup keeps the person's copy of it
+is_packaged_setup() {
+    [[ ! -e "${REPO_ROOT:-}/.git" ]] && is_package_managed_version_file "${REPO_ROOT:-}/version.json"
+}
+
 # Get current git commit hash
 get_repo_commit() {
     if command -v git &>/dev/null && [[ -e "${REPO_ROOT}/.git" ]]; then
         git -C "$REPO_ROOT" rev-parse --short HEAD 2>/dev/null || echo "unknown"
     else
-        echo "unknown"
+        local commit
+        commit="$(payload_version_field '.commit')"
+        echo "${commit:-unknown}"
     fi
 }
 
@@ -394,6 +408,10 @@ get_install_mode() {
         echo "$INIR_INSTALL_MODE"
         return
     fi
+    if is_packaged_setup; then
+        echo "package-managed"
+        return
+    fi
 
     local target="${XDG_CONFIG_HOME_RESOLVED}/quickshell/inir"
     local repo_real=""
@@ -452,9 +470,9 @@ write_version_info_json() {
     local repo_path
     local install_mode
     local update_strategy
-    local package_manager="${INIR_PACKAGE_MANAGER:-}"
-    local package_name="${INIR_PACKAGE_NAME:-}"
-    local package_update_hint="${INIR_PACKAGE_UPDATE_HINT:-}"
+    local package_manager="${INIR_PACKAGE_MANAGER:-$(payload_version_field '.packageManager // .package_manager')}"
+    local package_name="${INIR_PACKAGE_NAME:-$(payload_version_field '.packageName // .package_name')}"
+    local package_update_hint="${INIR_PACKAGE_UPDATE_HINT:-$(payload_version_field '.packageUpdateHint // .package_update_hint')}"
     local dependencies="${INIR_DEPENDENCIES:-}"
 
     [[ -n "$dependencies" ]] || dependencies="$(read_installed_version_field '.dependencies' setup)"

@@ -29,7 +29,7 @@ IconImage {
         // without this the error page is cached as an .ico that the image
         // loader then fails to decode on every startup, forever, because the
         // [ -f ] guard never re-fetches it.
-        command: ["/usr/bin/bash", "-c", `[ -f ${faviconFilePath} ] || /usr/bin/curl -sfL --remove-on-error '${root.faviconUrl}' -o '${faviconFilePath}' -H 'User-Agent: ${downloadUserAgent}'`]
+        command: ["bash", "-c", `[ -f ${faviconFilePath} ] || curl -sfL --remove-on-error '${root.faviconUrl}' -o '${faviconFilePath}' -H 'User-Agent: ${downloadUserAgent}'`]
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 0) root.urlToLoad = root.faviconFilePath
         }

@@ -464,7 +464,7 @@ Singleton {
         if (override.startsWith("/") || override.startsWith("file://")) {
             const volume = Config.options?.sounds?.volume ?? 0.5;
             const path = override.startsWith("file://") ? override.slice(7) : override;
-            Quickshell.execDetached(["/usr/bin/pw-play", "--volume", volume.toString(), path]);
+            Quickshell.execDetached(["pw-play", "--volume", volume.toString(), path]);
             return;
         }
         playSystemSound(override.length > 0 ? override : (root.soundEvents[eventId] ?? "bell"));

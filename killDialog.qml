@@ -61,7 +61,7 @@ ApplicationWindow {
 
         Process {
             running: true
-            command: ["/usr/bin/pidof", ...conflictGroup.programs]
+            command: ["pidof", ...conflictGroup.programs]
             onExited: (exitCode, exitStatus) => {
                 if (exitCode === 0) {
                     conflictGroup.visible = true
@@ -90,7 +90,7 @@ ApplicationWindow {
                     text: Translation.tr("Always")
                 }
                 onClicked: {
-                    Quickshell.execDetached(["/usr/bin/killall", ...conflictGroup.programs])
+                    Quickshell.execDetached(["killall", ...conflictGroup.programs])
                     conflictGroup.alwaysSelected()
                     conflictGroup.visible = false
                 }
@@ -101,7 +101,7 @@ ApplicationWindow {
                     text: Translation.tr("Stop")
                 }
                 onClicked: {
-                    Quickshell.execDetached(["/usr/bin/killall", ...conflictGroup.programs])
+                    Quickshell.execDetached(["killall", ...conflictGroup.programs])
                     conflictGroup.visible = false
                 }
             }

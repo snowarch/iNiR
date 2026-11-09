@@ -737,10 +737,10 @@ Singleton {
 
             Process {
                 id: screenshotProc
-                command: ["/usr/bin/bash", "-c", 
-                    `/usr/bin/mkdir -p '${StringUtils.shellSingleQuoteEscape(root.screenshotDir)}'`
-                    + ` && /usr/bin/grim -o '${StringUtils.shellSingleQuoteEscape(screenScope.screenName)}' -`
-                    + ` | /usr/bin/magick png:- -colorspace Gray -format "%[fx:mean*100]" info:`
+                command: ["bash", "-c", 
+                    `mkdir -p '${StringUtils.shellSingleQuoteEscape(root.screenshotDir)}'`
+                    + ` && grim -o '${StringUtils.shellSingleQuoteEscape(screenScope.screenName)}' -`
+                    + ` | magick png:- -colorspace Gray -format "%[fx:mean*100]" info:`
                 ]
                 stdout: StdioCollector {
                     id: lightnessCollector

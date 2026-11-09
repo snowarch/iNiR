@@ -85,7 +85,7 @@ Singleton {
             return
         root._loadingToday = true
         const path = root._todayFilePath()
-        startupReadProc.command = ["/usr/bin/bash", "-c", `test -f "${path}" && cat "${path}" || echo "__NOFILE__"`]
+        startupReadProc.command = ["bash", "-c", `test -f "${path}" && cat "${path}" || echo "__NOFILE__"`]
         startupReadProc.running = true
     }
 
@@ -312,7 +312,7 @@ Singleton {
         root._activeRangeDays = count
         rangeReadProc._requestedDays = count
         rangeReadProc._generation = root._rangeGeneration
-        rangeReadProc.command = ["/usr/bin/bash", "-c", script]
+        rangeReadProc.command = ["bash", "-c", script]
         rangeReadProc.running = true
     }
 
@@ -376,7 +376,7 @@ Singleton {
         const retention = Math.max(1,
             Config.options?.screenTime?.retentionDays ?? 30)
         Quickshell.execDetached([
-            "/usr/bin/find", Directories.screenTimePath,
+            "find", Directories.screenTimePath,
             "-maxdepth", "1", "-type", "f", "-name", "*.json",
             "-mtime", `+${retention}`, "-delete"
         ])
@@ -498,7 +498,7 @@ Singleton {
 
     Process {
         id: startupReadProc
-        command: ["/usr/bin/bash", "-c", ""]
+        command: ["bash", "-c", ""]
         stdout: StdioCollector {
             onStreamFinished: {
                 root._dirty = false
@@ -544,7 +544,7 @@ Singleton {
         property int _requestedDays: 1
         property int _generation: 0
         property bool _completed: false
-        command: ["/usr/bin/bash", "-c", ""]
+        command: ["bash", "-c", ""]
         stdout: StdioCollector {
             onStreamFinished: {
                 rangeReadProc._completed = true

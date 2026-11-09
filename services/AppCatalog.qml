@@ -97,7 +97,7 @@ Singleton {
 
     Process {
         id: _detectPmProc
-        command: ["/usr/bin/bash", "-c",
+        command: ["bash", "-c",
             "pm=unknown; " +
             "command -v pacman &>/dev/null && pm=pacman; " +
             "[ \"$pm\" = unknown ] && command -v xbps-query &>/dev/null && command -v xbps-install &>/dev/null && command -v xbps-remove &>/dev/null && pm=xbps; " +
@@ -153,7 +153,7 @@ Singleton {
         if (root._flatpakAvailable) {
             cmd += "; echo '---FLATPAK---'; flatpak list --app --columns=application 2>/dev/null"
         }
-        _installedProc.command = ["/usr/bin/bash", "-c", cmd]
+        _installedProc.command = ["bash", "-c", cmd]
         _installedProc.running = true
     }
 
@@ -212,7 +212,7 @@ Singleton {
     }
 
     function _runTerminalScript(script: string, args): void {
-        const command = ["/usr/bin/bash", "-lc", script + "\nprintf \"\\nPress Enter to close...\"\nread", "bash", ...(args ?? [])]
+        const command = ["bash", "-lc", script + "\nprintf \"\\nPress Enter to close...\"\nread", "bash", ...(args ?? [])]
         const terminal = root._safeTerminal()
         if (terminal === "wezterm") {
             ShellExec.execDetachedArgs([terminal, "start", "--always-new-process", "--", ...command], "Run catalog action")
@@ -247,7 +247,7 @@ Singleton {
 
         const target = root._getInstallTarget(app)
         if (!target) {
-            Quickshell.execDetached(["/usr/bin/notify-send",
+            Quickshell.execDetached(["notify-send",
                 Translation.tr("Software"),
                 Translation.tr("No package available for your system"),
                 "-a", "iNiR"])
@@ -278,7 +278,7 @@ Singleton {
                 script = 'flatpak install -y "$1"'
                 break
             case "aur-missing":
-                Quickshell.execDetached(["/usr/bin/notify-send",
+                Quickshell.execDetached(["notify-send",
                     Translation.tr("Software"),
                     Translation.tr("This package requires an AUR helper (yay or paru)"),
                     "-a", "iNiR"])

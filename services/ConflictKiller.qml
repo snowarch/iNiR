@@ -52,11 +52,11 @@ Singleton {
         var openDialog = false;
         if (conflictingTrays) {
             if (!(Config.options?.conflictKiller?.autoKillTrays ?? false)) openDialog = true;
-            else Quickshell.execDetached(["/usr/bin/killall", "kded6"])
+            else Quickshell.execDetached(["killall", "kded6"])
         }
         if (conflictingNotifications) {
             if (!(Config.options?.conflictKiller?.autoKillNotificationDaemons ?? false)) openDialog = true;
-            else Quickshell.execDetached(["/usr/bin/killall", "mako", "dunst"])
+            else Quickshell.execDetached(["killall", "mako", "dunst"])
         }
         if (openDialog) {
             Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "kill-dialog"])
@@ -68,7 +68,7 @@ Singleton {
 
     Process {
         id: pidofTraysProc
-        command: ["/usr/bin/pidof", "kded6"]
+        command: ["pidof", "kded6"]
         onExited: (exitCode, exitStatus) => {
             root._traysConflict = (exitCode === 0)
             root._maybeHandleConflicts()
@@ -77,7 +77,7 @@ Singleton {
 
     Process {
         id: pidofNotifsProc
-        command: ["/usr/bin/pidof", "mako", "dunst"]
+        command: ["pidof", "mako", "dunst"]
         onExited: (exitCode, exitStatus) => {
             root._notifsConflict = (exitCode === 0)
             root._maybeHandleConflicts()

@@ -184,7 +184,7 @@ Singleton {
         if (!path || path.length === 0) return
 
         Quickshell.execDetached([
-            "/usr/bin/bash",
+            "bash",
             Directories.scriptsPath + "/cava/apply_cover_theme.sh",
             path,
         ])

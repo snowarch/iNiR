@@ -128,7 +128,7 @@ Singleton {
         const source = root._pendingSources[root._fetchIndex]
         _log("Fetching source:", source.name, "from", source.url)
         _currentFetchSource = source
-        fetchProc.command = ["/usr/bin/curl", "-sL", "--max-time", "30",
+        fetchProc.command = ["curl", "-sL", "--max-time", "30",
             "--compressed", "-H", "Accept: text/calendar", source.url]
         fetchProc.running = true
     }

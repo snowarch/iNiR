@@ -88,7 +88,7 @@ Singleton {
     Process {
         id: detectGpuUsageSource
         // Select the backend only for the device chosen by inir-accel detect-sensors.
-        command: ["/usr/bin/bash", "-c", `
+        command: ["bash", "-c", `
             if [ "$1" = "0x10de" ] && command -v nvidia-smi >/dev/null 2>&1; then
                 echo "nvidia-smi:$(command -v nvidia-smi)"
             elif [ -f "$2/gpu_busy_percent" ]; then
@@ -551,7 +551,7 @@ Singleton {
                 LANG: "C",
                 LC_ALL: "C"
             })
-        command: ["/usr/bin/bash", "-c", "/usr/bin/lscpu | /usr/bin/grep 'CPU max MHz' | /usr/bin/awk '{print $4}'"]
+        command: ["bash", "-c", "lscpu | grep 'CPU max MHz' | awk '{print $4}'"]
         running: false
         stdout: StdioCollector {
             id: outputCollector
@@ -568,7 +568,7 @@ Singleton {
 
     Process {
         id: diskProc
-        command: ["/usr/bin/df", "-B1", "/"]
+        command: ["df", "-B1", "/"]
         running: false
         stdout: StdioCollector {
             id: diskCollector

@@ -451,7 +451,7 @@ PanelWindow {
         const ih = sourceImage.sourceSize.height;
         if (iw <= 0 || ih <= 0) {
             console.warn("[AnnotationEditor] source size 0, aborting export");
-            Quickshell.execDetached(["/usr/bin/notify-send", "Edit failed", "Image not ready", "-a", "Screenshot", "-t", "3000"]);
+            Quickshell.execDetached(["notify-send", "Edit failed", "Image not ready", "-a", "Screenshot", "-t", "3000"]);
             return;
         }
 
@@ -460,7 +460,7 @@ PanelWindow {
             const saved = result.saveToFile(root._outPath);
             if (!saved) {
                 console.warn("[AnnotationEditor] saveToFile failed for", root._outPath);
-                Quickshell.execDetached(["/usr/bin/notify-send", "Edit failed", "Could not write temp file", "-a", "Screenshot", "-t", "3000"]);
+                Quickshell.execDetached(["notify-send", "Edit failed", "Could not write temp file", "-a", "Screenshot", "-t", "3000"]);
                 return;
             }
             // Let cp/wl-copy read the temp file before cleanup.
@@ -473,13 +473,13 @@ PanelWindow {
     // Best-effort temp cleanup after cp/wl-copy have had time to read it.
     Process {
         id: cleanupProc
-        command: ["/usr/bin/bash", "-c", `sleep 3 && /usr/bin/rm -f '${root._outPath}'`]
+        command: ["bash", "-c", `sleep 3 && rm -f '${root._outPath}'`]
         onExited: (code) => { if (code !== 0) console.warn("[AnnotationEditor] cleanup exit", code); }
     }
 
     Process {
         id: prepareTempProc
-        command: ["/usr/bin/mkdir", "-p", root._tempDir]
+        command: ["mkdir", "-p", root._tempDir]
         running: true
         onExited: (code) => { if (code !== 0) console.warn("[AnnotationEditor] temp dir mkdir exit", code); }
     }
@@ -506,7 +506,7 @@ PanelWindow {
                 _exportPending = false;
                 exportWaitTimer.stop();
                 console.warn("[AnnotationEditor] image load timed out");
-                Quickshell.execDetached(["/usr/bin/notify-send", "Edit failed", "Image load timed out", "-a", "Screenshot", "-t", "3000"]);
+                Quickshell.execDetached(["notify-send", "Edit failed", "Image load timed out", "-a", "Screenshot", "-t", "3000"]);
             }
         }
     }
@@ -516,7 +516,7 @@ PanelWindow {
     // Clipboard is best-effort; saving to disk must still report success.
     Process {
         id: saveProc
-        command: ["/usr/bin/bash", "-c", `
+        command: ["bash", "-c", `
             _dir='${StringUtils.shellSingleQuoteEscape(Directories.screenshotsPath)}';
             _fmt='${StringUtils.shellSingleQuoteEscape(Config.options?.regionSelector?.screenshotNameFormat ?? "ss-%Y%m%d-%H%M%S")}';
             mkdir -p "$_dir" || { echo "mkdir failed: $_dir" >&2; exit 1; };
@@ -525,7 +525,7 @@ PanelWindow {
             if ! { cp '${root._outPath}' "$_part" && mv -f "$_part" "$_ss"; }; then
                 rm -f "$_part";
                 echo "cp failed: ${root._outPath} -> $_ss" >&2;
-                /usr/bin/notify-send "Edit failed" "Could not copy to screenshots folder" -a "Screenshot" -i camera-photo -t 4000;
+                notify-send "Edit failed" "Could not copy to screenshots folder" -a "Screenshot" -i camera-photo -t 4000;
                 exit 2;
             fi;
             # Clipboard ownership lives outside inir.service so editing/copying
@@ -536,7 +536,7 @@ PanelWindow {
             else
                 _body='${StringUtils.shellSingleQuoteEscape(Translation.tr("Saved in %1. Copying needs wl-clipboard").arg(root.savedIn))}';
             fi;
-            /usr/bin/notify-send '${StringUtils.shellSingleQuoteEscape(Translation.tr("Screenshot edited"))}' "$_body" -a Screenshot -i camera-photo -t 4000;
+            notify-send '${StringUtils.shellSingleQuoteEscape(Translation.tr("Screenshot edited"))}' "$_body" -a Screenshot -i camera-photo -t 4000;
         `]
         onExited: (code) => {
             if (code !== 0) console.warn("[AnnotationEditor] saveProc exit", code);

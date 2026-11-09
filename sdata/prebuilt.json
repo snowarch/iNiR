@@ -1,7 +1,13 @@
 {
   "manifest": "https://inir.space/releases/manifest.json",
   "fallback": "https://github.com/snowarch/{repo}/releases/download/v{version}/{file}",
-  "cli": { "version": "0.2.7" },
+  "cli": {
+    "version": "0.2.7",
+    "sha256": {
+      "amd64": "b9b20ebbf8bd7f9f3c3e26fc64e85a05141cac372f022ee23c1c54d79bdf886e",
+      "arm64": "71ff5b139e7834bc59c0924d1b970b5aacb88e0278550887ab1bc0b54172177c"
+    }
+  },
   "parts": {
     "qs-rs": {
       "repo": "qs-rs",

@@ -48,6 +48,26 @@ inir_version_file() {
     printf '%s/version.json\n' "$(inir_config_dir)"
 }
 
+# A package (Nix, `make install`) ships the base read-only and the shell runs the person's copy of it
+# (~/.config/quickshell/inir). The stamp names the payload that copy came from: the launcher syncs it again only
+# when the package moved.
+inir_package_stamp_file() {
+    printf '%s/inir/package\n' "${XDG_STATE_HOME:-$HOME/.local/state}"
+}
+
+inir_package_stamp() {
+    local dir sum
+    dir="$(readlink -f "$1" 2>/dev/null || printf '%s' "$1")"
+    sum="$(cksum < "$dir/version.json" 2>/dev/null)"
+    printf '%s %s\n' "$dir" "${sum%% *}"
+}
+
+inir_write_package_stamp() {
+    local file
+    file="$(inir_package_stamp_file)"
+    mkdir -p "${file%/*}" && inir_package_stamp "$1" > "$file"
+}
+
 inir_installed_marker_file() {
     printf '%s/installed_true\n' "$(inir_config_dir)"
 }

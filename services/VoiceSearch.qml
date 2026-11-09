@@ -127,7 +127,7 @@ Singleton {
         if (!root.hasBackend) {
             root.lastError = Translation.tr("No speech-to-text backend is ready")
             Quickshell.execDetached([
-                "/usr/bin/notify-send",
+                "notify-send",
                 Translation.tr("Voice input"),
                 Translation.tr("Connect Groq, Gemini or OpenAI in AI Settings, or install whisper.cpp locally."),
                 "-a", "Shell",
@@ -170,7 +170,7 @@ Singleton {
         if (!transcription || transcription.length === 0) {
             root.lastError = Translation.tr("No speech detected")
             Quickshell.execDetached([
-                "/usr/bin/notify-send", Translation.tr("Voice input"),
+                "notify-send", Translation.tr("Voice input"),
                 root.lastError, "-a", "Shell",
             ])
             return
@@ -227,7 +227,7 @@ Singleton {
         id: recordProc
         running: false
         command: [
-            "/usr/bin/bash",
+            "bash",
             `${Directories.scriptsPath}/voiceSearch/record-voice.sh`,
             String(root.recordDuration),
         ]
@@ -244,7 +244,7 @@ Singleton {
                 } else {
                     root.lastError = Translation.tr("Recording failed")
                     Quickshell.execDetached([
-                        "/usr/bin/notify-send", Translation.tr("Voice input"),
+                        "notify-send", Translation.tr("Voice input"),
                         root.lastError, "-a", "Shell",
                     ])
                 }
@@ -292,7 +292,7 @@ Singleton {
             root.lastError = root._transcriptionError.length > 0
                 ? root._transcriptionError : Translation.tr("Transcription failed")
             Quickshell.execDetached([
-                "/usr/bin/notify-send", Translation.tr("Voice input"),
+                "notify-send", Translation.tr("Voice input"),
                 root.lastError, "-a", "Shell",
             ])
         }

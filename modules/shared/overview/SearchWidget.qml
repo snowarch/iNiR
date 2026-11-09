@@ -250,9 +250,9 @@ Item { // Wrapper
                 const term = String(Config.options?.apps?.terminal ?? "ghostty").trim() || "ghostty";
                 const quotedCommand = `'${StringUtils.shellSingleQuoteEscape(cleanedCommand)}'`;
                 if (term.indexOf("ghostty") !== -1) {
-                    ShellExec.execCmd(`${term} -e /usr/bin/sh -lc ${quotedCommand}`);
+                    ShellExec.execCmd(`${term} -e sh -lc ${quotedCommand}`);
                 } else {
-                    ShellExec.execCmd(`${term} /usr/bin/bash -lc ${quotedCommand}`);
+                    ShellExec.execCmd(`${term} bash -lc ${quotedCommand}`);
                 }
             }
         };
@@ -364,7 +364,7 @@ Item { // Wrapper
 
     Process {
         id: mathProcess
-        property list<string> baseCommand: ["/usr/bin/qalc", "-t"]
+        property list<string> baseCommand: ["qalc", "-t"]
         function calculateExpression(expression) {
             root.mathResult = "";
             mathProcess.running = false;

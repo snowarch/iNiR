@@ -35,7 +35,7 @@ Singleton {
     function restart(): void {
         _log("user requested restart")
         Quickshell.execDetached([
-            "/usr/bin/notify-send",
+            "notify-send",
             "iNiR",
             Translation.tr("Restarting shell..."),
             "-a", "Shell",
@@ -90,7 +90,7 @@ Singleton {
         const mbEstimate = Math.round(root.currentDeletedMappings * 0.5)  // ~0.5 MB per mapping
 
         Quickshell.execDetached([
-            "/usr/bin/notify-send",
+            "notify-send",
             "iNiR",
             Translation.tr("Memory usage is high (~%1 MB accumulated). A restart would free it. Run: inir memory restart").arg(mbEstimate),
             "-u", "critical",

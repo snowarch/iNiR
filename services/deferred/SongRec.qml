@@ -52,7 +52,7 @@ Singleton {
     Process {
         id: dunstifyCheckProc
         running: false
-        command: ["/usr/bin/which", "dunstify"]
+        command: ["which", "dunstify"]
         onExited: (exitCode, exitStatus) => {
             root.dunstifyAvailable = (exitCode === 0)
         }
@@ -61,7 +61,7 @@ Singleton {
     function handleRecognition(jsonText) {
         try {
             if ((jsonText ?? "").trim() === "") {
-                Quickshell.execDetached(["/usr/bin/notify-send", Translation.tr("Couldn't recognize music"), Translation.tr("No match found before timeout"), "-a", "Shell"])
+                Quickshell.execDetached(["notify-send", Translation.tr("Couldn't recognize music"), Translation.tr("No match found before timeout"), "-a", "Shell"])
                 return
             }
             var obj = JSON.parse(jsonText)
@@ -74,18 +74,18 @@ Singleton {
             if (root.dunstifyAvailable) {
                 musicReconizedProc.running = true
             } else {
-                Quickshell.execDetached(["/usr/bin/notify-send", Translation.tr("Music Recognized"), root.recognizedTrack.title + " - " + root.recognizedTrack.subtitle, "-a", "Shell"])
+                Quickshell.execDetached(["notify-send", Translation.tr("Music Recognized"), root.recognizedTrack.title + " - " + root.recognizedTrack.subtitle, "-a", "Shell"])
                 Qt.openUrlExternally(root.recognizedTrack.url);
             }
         } catch(e) {
-            Quickshell.execDetached(["/usr/bin/notify-send", Translation.tr("Couldn't recognize music"), Translation.tr("Perhaps what you're listening to is too niche"), "-a", "Shell"])
+            Quickshell.execDetached(["notify-send", Translation.tr("Couldn't recognize music"), Translation.tr("Perhaps what you're listening to is too niche"), "-a", "Shell"])
         }
     }
 
     Process {
         id: recognizeMusicProc
         running: false
-        command: ["/usr/bin/bash", `${Directories.scriptsPath}/musicRecognition/recognize-music.sh`, "-i", String(root.timeoutInterval), "-t", String(root.timeoutDuration), "-s", root.monitorSourceString]
+        command: ["bash", `${Directories.scriptsPath}/musicRecognition/recognize-music.sh`, "-i", String(root.timeoutInterval), "-t", String(root.timeoutDuration), "-s", root.monitorSourceString]
         stdout: StdioCollector {
             onStreamFinished: {
                 if (root.manuallyStopped) {
@@ -97,7 +97,7 @@ Singleton {
         }
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 1) {
-                Quickshell.execDetached(["/usr/bin/notify-send", Translation.tr("Couldn't recognize music"), Translation.tr("Make sure you have songrec installed"), "-a", "Shell"])
+                Quickshell.execDetached(["notify-send", Translation.tr("Couldn't recognize music"), Translation.tr("Make sure you have songrec installed"), "-a", "Shell"])
             }
         }
     }
@@ -106,7 +106,7 @@ Singleton {
         id: musicReconizedProc
         running: false
         command: [
-            "/usr/bin/dunstify",
+            "dunstify",
             Translation.tr("Music Recognized"), 
             root.recognizedTrack.title + " - " + root.recognizedTrack.subtitle, 
             "-A", "Shazam",

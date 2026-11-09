@@ -63,7 +63,7 @@ Singleton {
     Process {
         id: gammaLostProc
         // Without a user journal (runit, OpenRC) it can't know, and a restart costs a blink.
-        command: ["/usr/bin/bash", "-c",
+        command: ["bash", "-c",
             `if command -v journalctl >/dev/null 2>&1 && systemctl --user is-active --quiet inir-wlsunset.service 2>/dev/null; then
                 journalctl --user -u inir-wlsunset.service --since "-30s" -o cat --no-pager 2>/dev/null | grep -q "gamma control of output .* failed";
             fi`]
@@ -130,14 +130,14 @@ Singleton {
     function _doEnable() {
         if (CompositorService.isNiri) {
             Quickshell.execDetached([
-                "/usr/bin/bash", "-c",
+                "bash", "-c",
                 `if [ -S "${Quickshell.env("XDG_RUNTIME_DIR") || ""}/systemd/private" ] &&
-                    [ -x /usr/bin/systemd-run ] && [ -x /usr/bin/systemctl ] && [ -x /usr/bin/timeout ] &&
-                    /usr/bin/timeout 3s /usr/bin/systemctl --user show-environment >/dev/null 2>&1; then
-                    exec /usr/bin/systemd-run --user --collect --unit=inir-wlsunset.service /usr/bin/wlsunset -T 6500 -t ${root.colorTemperature} -s 00:00 -S 23:59;
+                    command -v systemd-run >/dev/null && command -v systemctl >/dev/null && command -v timeout >/dev/null &&
+                    timeout 3s systemctl --user show-environment >/dev/null 2>&1; then
+                    exec systemd-run --user --collect --unit=inir-wlsunset.service wlsunset -T 6500 -t ${root.colorTemperature} -s 00:00 -S 23:59;
                 fi;
-                /usr/bin/pidof wlsunset >/dev/null 2>&1 ||
-                    nohup /usr/bin/wlsunset -T 6500 -t ${root.colorTemperature} -s 00:00 -S 23:59
+                pidof wlsunset >/dev/null 2>&1 ||
+                    nohup wlsunset -T 6500 -t ${root.colorTemperature} -s 00:00 -S 23:59
                         >/dev/null 2>&1 </dev/null &`
             ]);
         } else {
@@ -175,18 +175,18 @@ Singleton {
     // === Hyprland processes ===
     Process {
         id: hyprsunsetStartProc
-        command: ["/usr/bin/bash", "-c", `pidof hyprsunset || /usr/bin/hyprsunset --temperature ${root.colorTemperature}`]
+        command: ["bash", "-c", `pidof hyprsunset || hyprsunset --temperature ${root.colorTemperature}`]
     }
 
     Process {
         id: hyprsunsetKillProc
-        command: ["/usr/bin/pkill", "-x", "hyprsunset"]
+        command: ["pkill", "-x", "hyprsunset"]
     }
 
     Process {
         id: fetchProc
         running: !CompositorService.isNiri
-        command: ["/usr/bin/bash", "-c", "hyprctl hyprsunset temperature"]
+        command: ["bash", "-c", "hyprctl hyprsunset temperature"]
         stdout: StdioCollector {
             id: stateCollector
             onStreamFinished: {
@@ -202,13 +202,13 @@ Singleton {
     // === Niri processes (wlsunset) ===
     Process {
         id: wlsunsetKillProc
-        command: ["/usr/bin/bash", "-c",
+        command: ["bash", "-c",
             `if [ -S "${Quickshell.env("XDG_RUNTIME_DIR") || ""}/systemd/private" ] &&
-                [ -x /usr/bin/systemctl ] && [ -x /usr/bin/timeout ] &&
-                /usr/bin/timeout 3s /usr/bin/systemctl --user show-environment >/dev/null 2>&1; then
-                /usr/bin/systemctl --user stop inir-wlsunset.service >/dev/null 2>&1 || true;
+                command -v systemctl >/dev/null && command -v timeout >/dev/null &&
+                timeout 3s systemctl --user show-environment >/dev/null 2>&1; then
+                systemctl --user stop inir-wlsunset.service >/dev/null 2>&1 || true;
             fi;
-            /usr/bin/pkill -x wlsunset >/dev/null 2>&1 || true`]
+            pkill -x wlsunset >/dev/null 2>&1 || true`]
         onExited: {
             // If we're enabling, start wlsunset after kill completes
             if (root.active) {
@@ -220,14 +220,14 @@ Singleton {
     Process {
         id: niriFetchProc
         running: CompositorService.isNiri
-        command: ["/usr/bin/bash", "-c",
+        command: ["bash", "-c",
             `if [ -S "${Quickshell.env("XDG_RUNTIME_DIR") || ""}/systemd/private" ] &&
-                [ -x /usr/bin/systemctl ] && [ -x /usr/bin/timeout ] &&
-                /usr/bin/timeout 3s /usr/bin/systemctl --user show-environment >/dev/null 2>&1 &&
-                /usr/bin/systemctl --user is-active --quiet inir-wlsunset.service; then
+                command -v systemctl >/dev/null && command -v timeout >/dev/null &&
+                timeout 3s systemctl --user show-environment >/dev/null 2>&1 &&
+                systemctl --user is-active --quiet inir-wlsunset.service; then
                 exit 0;
             fi;
-            /usr/bin/pidof wlsunset >/dev/null`]
+            pidof wlsunset >/dev/null`]
         onExited: (exitCode, exitStatus) => {
             root.active = (exitCode === 0);
         }
@@ -263,7 +263,7 @@ Singleton {
                 root._pendingRestart = true;
                 restartDebounce.restart();
             } else {
-                Quickshell.execDetached(["/usr/bin/hyprctl", "hyprsunset", "temperature", `${temp}`]);
+                Quickshell.execDetached(["hyprctl", "hyprsunset", "temperature", `${temp}`]);
             }
         }
     }

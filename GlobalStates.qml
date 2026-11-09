@@ -162,7 +162,7 @@ Singleton {
             root.settingsOverlayOpen = true
         } else {
             // Each window knows its pages by name; the number is for callers that only have one.
-            const args = ["/usr/bin/env", `QS_SETTINGS_PAGE=${key.length > 0 ? key : index}`]
+            const args = ["env", `QS_SETTINGS_PAGE=${key.length > 0 ? key : index}`]
             if (requestedSection.length > 0)
                 args.push(`QS_SETTINGS_SECTION=${requestedSection}`)
             args.push(Quickshell.shellPath("scripts/inir"), "settings-window")

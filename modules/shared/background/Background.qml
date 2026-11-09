@@ -1367,7 +1367,7 @@ Scope {
         Process {
             id: getWallpaperSizeProc
             property string path: bgRoot.wallpaperPath
-            command: ["/usr/bin/magick", "identify", "-format", "%w %h", path]
+            command: ["magick", "identify", "-format", "%w %h", path]
             stdout: StdioCollector {
                 id: wallpaperSizeOutputCollector
                 onStreamFinished: {
@@ -2014,7 +2014,7 @@ Scope {
                         action: () => { ShellEditSession.toggle() } },
                     { type: "separator" },
                     { text: Translation.tr("Reload shell"), iconName: "refresh", monochromeIcon: true,
-                        action: () => { Quickshell.execDetached(["/usr/bin/bash", Quickshell.shellPath("scripts/restart-shell.sh")]) } }
+                        action: () => { Quickshell.execDetached(["bash", Quickshell.shellPath("scripts/restart-shell.sh")]) } }
                 ]
             }
 

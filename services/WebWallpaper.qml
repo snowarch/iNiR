@@ -38,7 +38,7 @@ Singleton {
         id: runnerProbeProc
         // Not a login shell: whatever a profile prints (a fetch banner) became the runner path.
         command: [
-            "/usr/bin/bash", "-c",
+            "bash", "-c",
             "command -v qml6 || command -v qml || { for q in /usr/lib/qt6/bin/qml /usr/lib64/qt6/bin/qml; do [ -x \"$q\" ] && printf '%s\\n' \"$q\" && exit 0; done; exit 1; }"
         ]
         stdout: StdioCollector { id: probeOut }
@@ -107,7 +107,7 @@ Singleton {
             Process {
                 id: stopProc
                 command: [
-                    "/usr/bin/bash", "-c",
+                    "bash", "-c",
                     `pidfile="$1"; host="$2";
                     if [ -r "$pidfile" ]; then
                         pid=$(cat "$pidfile" 2>/dev/null || true)
@@ -149,7 +149,7 @@ Singleton {
             Process {
                 id: hostProc
                 command: [
-                    "/usr/bin/bash", "-c",
+                    "bash", "-c",
                     `pidfile="$1"; shift;
                     child=""
                     cleanup() {

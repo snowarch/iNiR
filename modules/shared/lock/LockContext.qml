@@ -107,7 +107,7 @@ Scope {
     Process {
         id: fingerprintCheckProc
         running: true
-        command: ["/usr/bin/bash", "-c", "command -v fprintd-list >/dev/null && fprintd-list $(whoami) 2>/dev/null || exit 1"]
+        command: ["bash", "-c", "command -v fprintd-list >/dev/null && fprintd-list $(whoami) 2>/dev/null || exit 1"]
         stdout: StdioCollector {
             id: fingerprintOutputCollector
             onStreamFinished: {

@@ -331,7 +331,7 @@ Singleton {
     Process {
         id: ledDiscoveryProc
         running: false
-        command: ["/usr/bin/bash", "-lc", "printf 'capslock\\n'; for f in /sys/class/leds/*::capslock/brightness; do [ -e \"$f\" ] && printf '%s\\n' \"$f\"; done; printf 'numlock\\n'; for f in /sys/class/leds/*::numlock/brightness; do [ -e \"$f\" ] && printf '%s\\n' \"$f\"; done"]
+        command: ["bash", "-lc", "printf 'capslock\\n'; for f in /sys/class/leds/*::capslock/brightness; do [ -e \"$f\" ] && printf '%s\\n' \"$f\"; done; printf 'numlock\\n'; for f in /sys/class/leds/*::numlock/brightness; do [ -e \"$f\" ] && printf '%s\\n' \"$f\"; done"]
 
         stdout: StdioCollector {
             id: ledCollector

@@ -19,9 +19,9 @@ while getopts "i:t:s:" opt; do
   esac
 done
 if [ "$SOURCE_TYPE" = "monitor" ]; then
-    MONITOR_SOURCE=$(/usr/bin/pactl get-default-sink).monitor
+    MONITOR_SOURCE=$(pactl get-default-sink).monitor
 elif [ "$SOURCE_TYPE" = "input" ]; then
-    MONITOR_SOURCE=$(/usr/bin/pactl info | /usr/bin/grep "Default Source:" | /usr/bin/awk '{print $3}' || true)
+    MONITOR_SOURCE=$(pactl info | grep "Default Source:" | awk '{print $3}' || true)
 else
     echo "Invalid source type"
     exit 1
@@ -34,24 +34,24 @@ if [ -z "$SONGREC_BIN" ] || [ -z "$PAREC_BIN" ] || [ -z "$FFMPEG_BIN" ]; then
     exit 1
 fi
 
-if [ -z "$MONITOR_SOURCE" ] || ! /usr/bin/pactl list short sources | /usr/bin/grep -q "$MONITOR_SOURCE"; then
+if [ -z "$MONITOR_SOURCE" ] || ! pactl list short sources | grep -q "$MONITOR_SOURCE"; then
     exit 1
 fi
 
 cleanup() {
-    /usr/bin/rm -f "$TMP_RAW" "$TMP_MP3"
-    /usr/bin/pkill -P $$ parec >/dev/null 2>&1 || true
+    rm -f "$TMP_RAW" "$TMP_MP3"
+    pkill -P $$ parec >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
-/usr/bin/mkdir -p "$TMP_PATH"
+mkdir -p "$TMP_PATH"
 "$PAREC_BIN" --device="$MONITOR_SOURCE" --format=s16le --rate=44100 --channels=2 > "$TMP_RAW" &
 PAREC_PID=$!
-START_TIME=$(/usr/bin/date +%s)
+START_TIME=$(date +%s)
 
 while true; do
-    /usr/bin/sleep "$INTERVAL"
-    CURRENT_TIME=$(/usr/bin/date +%s)
+    sleep "$INTERVAL"
+    CURRENT_TIME=$(date +%s)
     ELAPSED=$((CURRENT_TIME - START_TIME))
 
     if (( ELAPSED >= TOTAL_DURATION )); then
@@ -65,7 +65,7 @@ while true; do
     "$FFMPEG_BIN" -f s16le -ar 44100 -ac 2 -i "$TMP_RAW" -acodec libmp3lame -y -hide_banner -loglevel error "$TMP_MP3" 2>/dev/null
     RESULT=$("$SONGREC_BIN" recognize -j "$TMP_MP3" 2>/dev/null || true)
 
-    if echo "$RESULT" | /usr/bin/grep -q '"matches"[[:space:]]*:[[:space:]]*\[' && [ ${#RESULT} -gt $MIN_VALID_RESULT_LENGTH ]; then
+    if echo "$RESULT" | grep -q '"matches"[[:space:]]*:[[:space:]]*\[' && [ ${#RESULT} -gt $MIN_VALID_RESULT_LENGTH ]; then
         echo "$RESULT"
         exit 0
     fi

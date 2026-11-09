@@ -9,7 +9,7 @@ mkdir -p "$TMP_PATH"
 rm -f "$TMP_WAV" 2>/dev/null
 
 # Record with pw-record (PipeWire)
-timeout "${DURATION}s" /usr/bin/pw-record --format=s16 --rate=16000 --channels=1 "$TMP_WAV" 2>/dev/null
+timeout "${DURATION}s" pw-record --format=s16 --rate=16000 --channels=1 "$TMP_WAV" 2>/dev/null
 
 if [ -f "$TMP_WAV" ] && [ -s "$TMP_WAV" ]; then
     echo "$TMP_WAV"

@@ -4,7 +4,7 @@
 # untouched) and installed right after the sync, before the shell restarts.
 
 _hub() {
-    local cli="${XDG_DATA_HOME:-$HOME/.local/share}/inir/cli/inir"
+    local cli="${INIR_CLI:-${XDG_DATA_HOME:-$HOME/.local/share}/inir/cli/inir}"
     [[ -x "$cli" ]] || return 127
     # the running shell is the old one until the restart: nothing to tell it yet
     INIR_HUB_FROM_SHELL=1 "$cli" hub "$@"
@@ -39,7 +39,7 @@ _hub_worn() {
 # and with all-families every family listed (a fresh install).
 hub_plugins_needed() {
     local catalogue runtime="$1" tree="$2" all="${3:-}" id provides installed kind errors worn rc=0
-    if [[ ! -x "${XDG_DATA_HOME:-$HOME/.local/share}/inir/cli/inir" ]]; then
+    if [[ ! -x "${INIR_CLI:-${XDG_DATA_HOME:-$HOME/.local/share}/inir/cli/inir}" ]]; then
         printf '  %s\n' "the inir command is not installed, and the hub lives in it" >&2
         return 1
     fi

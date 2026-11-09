@@ -99,7 +99,7 @@ Singleton {
 
         // Note: pidof returns 0 if ANY process exists. If pidof is missing or fails, exitCode != 0 and we proceed.
         command: [
-            "/usr/bin/pidof",
+            "pidof",
             "polkit-gnome-authentication-agent-1",
             "lxqt-policykit-agent",
             "polkit-kde-authentication-agent-1",
