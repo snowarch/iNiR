@@ -46,7 +46,7 @@ With iNiR installed, install Umbriel from your distribution (CachyOS has it; on 
 
 `inir compositor add umbriel` does the same from a terminal, and installs Umbriel too where iNiR knows how (CachyOS's repository, then the AUR on Arch; Terra on Fedora).
 
-The installer asks where iNiR runs. **Niri and Umbriel** sets iNiR up on both (it installs Umbriel when it is missing); **Niri only**, offered when Umbriel is already installed, leaves Umbriel exactly as it is: no config, and the shell does not start there. Without a terminal to ask, `./setup install --compositor niri|umbriel|both` picks; with none of them, Umbriel gets iNiR the first time you log into it. `inir compositor remove umbriel` takes iNiR off Umbriel later, `inir compositor add umbriel` brings it back, and `inir compositor` alone shows what is installed, what starts iNiR and your pick.
+The installer asks where iNiR runs. **Niri and Umbriel** sets iNiR up on both (it installs Umbriel when it is missing); **Niri only**, offered when Umbriel is already installed, leaves Umbriel exactly as it is: no config, and the shell does not start there. Without a terminal to ask, `./setup install --compositor niri|umbriel|both` picks; with none of them, Umbriel gets iNiR the first time you log into it. When another shell is installed, or Umbriel already has a config of your own, the question defaults to **Niri only**, and `-y` with another shell kept picks it too. `inir compositor remove umbriel` takes iNiR off Umbriel later, `inir compositor add umbriel` brings it back, and `inir compositor` alone shows what is installed, what starts iNiR and your pick.
 
 ### Where Umbriel settings live
 

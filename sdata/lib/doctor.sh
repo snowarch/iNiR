@@ -1616,8 +1616,7 @@ check_conflicting_services() {
 }
 
 check_conflicting_shells() {
-    # Quickshell-based shells that conflict with iNiR at the package level.
-    # These provide/replace quickshell or own overlapping config paths.
+    # Other Quickshell-based shells.
     local shell_pkgs=(
         "cachyos-niri-noctalia"
         "noctalia-shell"
@@ -1644,11 +1643,11 @@ check_conflicting_shells() {
         return 0
     fi
 
+    # They can stay: iNiR runs on its own runtime and config; only two shells in one session clash.
     if [[ ${#found[@]} -gt 0 ]]; then
-        doctor_fail "Conflicting Quickshell shells installed: ${found[*]}"
-        echo -e "    ${STY_FAINT}These must be removed for iNiR to work. Run: ./setup install${STY_RST}"
+        doctor_pass "Other shells installed: ${found[*]} (fine; don't start them in iNiR's session)"
     else
-        doctor_pass "No conflicting Quickshell shells"
+        doctor_pass "No other Quickshell shells"
     fi
 }
 
@@ -2004,7 +2003,7 @@ run_doctor_with_fixes() {
     _doctor_run_step 18 $total_steps "Checking theme colors"         check_matugen_colors
     _doctor_run_step 19 $total_steps "Checking Qt theming"           check_qt_theming
     _doctor_run_step 20 $total_steps "Checking conflicting services" check_conflicting_services
-    _doctor_run_step 21 $total_steps "Checking conflicting shells"   check_conflicting_shells
+    _doctor_run_step 21 $total_steps "Checking other shells"         check_conflicting_shells
     _doctor_run_step 22 $total_steps "Checking wallpaper health"     check_wallpaper_health
     _doctor_run_step 23 $total_steps "Checking environment variables" check_environment_vars
     _doctor_run_step 24 $total_steps "Checking Niri config"          check_niri_config

@@ -6,7 +6,7 @@ check_conflicts() {
     
     local conflicts=()
     local conflict_services=()
-    local critical_conflicts=()
+    local other_shells=()
     local package_manager=""
     local usable_systemd_user_manager=false
     if declare -F has_usable_systemd_user_manager >/dev/null 2>&1 \
@@ -45,8 +45,8 @@ check_conflicts() {
     conflict_map["mpvpaper"]="Wallpaper Daemon"
     conflict_map["wpaperd"]="Wallpaper Daemon"
     
-    # Quickshell-based shells — these are critical because they ship their own
-    # Quickshell fork or config that directly conflicts with iNiR at runtime.
+    # Other Quickshell shells: they can stay installed. iNiR runs on its own runtime (qs-rs, or Quickshell), from its
+    # own config folder, and starts only in the compositors it is set up on; two shells in one session is what clashes.
     # Noctalia (CachyOS default Niri shell)
     conflict_map["cachyos-niri-noctalia"]="Quickshell Shell (Noctalia/CachyOS)"
     conflict_map["noctalia-shell"]="Quickshell Shell (Noctalia)"
@@ -61,20 +61,12 @@ check_conflicts() {
     # BMS
     conflict_map["bms-shell-bin"]="Quickshell Shell (BMS)"
 
-    # Packages that are critical conflicts — they break iNiR at the package
-    # level (provide/replace quickshell, or own overlapping config paths).
-    # Unlike notification daemons or bars, these cannot coexist at all.
-    declare -A critical_map
-    critical_map["cachyos-niri-noctalia"]=1
-    critical_map["noctalia-shell"]=1
-    critical_map["noctalia-qs"]=1
-    critical_map["noctalia-qs-git"]=1
-    critical_map["dms-shell"]=1
-    critical_map["dms-shell-git"]=1
-    critical_map["caelestia-shell"]=1
-    critical_map["caelestia-shell-git"]=1
-    critical_map["bms-shell-bin"]=1
-    
+    declare -A shell_map
+    for pkg in cachyos-niri-noctalia noctalia-shell noctalia-qs noctalia-qs-git \
+               dms-shell dms-shell-git caelestia-shell caelestia-shell-git bms-shell-bin; do
+        shell_map[$pkg]=1
+    done
+
     # Check for installed conflicts
     for pkg in "${!conflict_map[@]}"; do
         local installed=false
@@ -110,8 +102,9 @@ check_conflicts() {
             else
                 conflicts+=("$pkg (${conflict_map[$pkg]})")
             fi
-            if [[ -n "${critical_map[$pkg]:-}" ]]; then
-                critical_conflicts+=("$pkg")
+            if [[ -n "${shell_map[$pkg]:-}" ]]; then
+                other_shells+=("$pkg")
+                continue
             fi
             # Check if it's a systemd service
             if $usable_systemd_user_manager \
@@ -128,37 +121,27 @@ check_conflicts() {
         done
         echo ""
 
-        if [ ${#critical_conflicts[@]} -gt 0 ]; then
-            echo -e "${STY_RED}${STY_BOLD}Critical:${STY_RST} ${critical_conflicts[*]} must be removed for iNiR to work."
-            echo -e "These packages ship their own Quickshell runtime or configs that directly conflict."
+        if [ ${#other_shells[@]} -gt 0 ]; then
+            echo -e "${STY_BOLD}Other shells can stay:${STY_RST} iNiR runs on its own runtime and config, and starts only"
+            echo -e "in the compositors you set it up on. Just don't start both shells in the same session."
             echo ""
-
-            if [[ "$package_manager" == "pacman" || "$package_manager" == "xbps" ]]; then
-                # On supported native package managers, offer to remove critical
-                # conflicts now rather than continuing with a known-broken shell.
-                # Removal order matters: meta-packages first, then shells, then runtimes.
+            # INIR_REMOVE_OTHER_SHELLS carries the pick from the inir install wizard; asked here otherwise, and -y keeps them.
+            local remove_shells="${INIR_REMOVE_OTHER_SHELLS:-}"
+            if [[ -z "$remove_shells" ]] && [[ "$package_manager" == "pacman" || "$package_manager" == "xbps" ]]; then
+                tui_confirm "Remove ${other_shells[*]}? (not needed for iNiR)" "no" && remove_shells=yes
+            fi
+            if [[ "$remove_shells" == yes ]]; then
+                # Meta-packages first, then shells, then runtimes.
                 local ordered_remove=()
                 for pkg in cachyos-niri-noctalia noctalia-shell noctalia-qs noctalia-qs-git \
                            dms-shell dms-shell-git caelestia-shell caelestia-shell-git bms-shell-bin; do
-                    for cpkg in "${critical_conflicts[@]}"; do
-                        if [[ "$pkg" == "$cpkg" ]]; then
-                            ordered_remove+=("$pkg")
-                        fi
-                    done
+                    [[ " ${other_shells[*]} " == *" $pkg "* ]] && ordered_remove+=("$pkg")
                 done
-
-                if [[ "$ask" == "true" ]]; then
-                    if tui_confirm "Remove conflicting packages? (${ordered_remove[*]})"; then
-                        _remove_critical_conflicts "${ordered_remove[@]}"
-                    else
-                        echo -e "${STY_YELLOW}Keeping conflicting packages — iNiR will NOT work correctly.${STY_RST}"
-                    fi
-                else
-                    echo -e "${STY_CYAN}Non-interactive mode: removing conflicting packages...${STY_RST}"
-                    _remove_critical_conflicts "${ordered_remove[@]}"
-                fi
+                _remove_other_shells "${ordered_remove[@]}"
             else
-                echo -e "${STY_YELLOW}Remove them manually before continuing.${STY_RST}"
+                # The distro's deps step keeps a Quickshell fork they bring instead of swapping it.
+                INIR_KEPT_SHELLS="${other_shells[*]}"
+                export INIR_KEPT_SHELLS
             fi
             echo ""
         fi
@@ -222,9 +205,9 @@ check_conflicts() {
     fi
 }
 
-# Remove critical conflicting packages on Arch.
-# Uses -Rdd to skip dependency checks since we're replacing the whole stack.
-_remove_critical_conflicts() {
+# Remove other shells the person chose to remove (pacman, xbps).
+# Uses -Rdd to skip dependency checks: a shell's meta-package, the shell and its runtime go together.
+_remove_other_shells() {
     local pkg
     for pkg in "$@"; do
         case "$package_manager" in

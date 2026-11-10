@@ -93,18 +93,30 @@ esac
 # Which compositors (asked first: the service wiring below follows the pick)
 #####################################################################################
 # With Umbriel already installed and no pick yet, ask once; Niri alone leaves Umbriel as it is (scripts/lib/compositor.sh).
+# Another shell kept (sdata/lib/conflicts.sh) or an Umbriel setup of their own most likely lives on Umbriel: then Niri
+# alone is the default, and what -y picks when a shell was kept, so the two never start in one session.
 source ./scripts/lib/compositor.sh
 _inir_umbriel_state="$(compositor_umbriel_config_state "${XDG_CONFIG_HOME}/umbriel")"
-if [[ -z "${INSTALL_COMPOSITOR:-}" && -z "$(compositor_choice)" && "$_inir_umbriel_state" != foreign \
-    && "${ask:-true}" != false && -t 0 ]] && command -v umbriel >/dev/null 2>&1; then
-  if tui_confirm "Umbriel is installed too. Set iNiR up on it as well (its keys, your Niri shortcuts, the shell at login)?" "yes"; then
-    INSTALL_COMPOSITOR=both
-  else
+if [[ -z "${INSTALL_COMPOSITOR:-}" && -z "$(compositor_choice)" ]] && command -v umbriel >/dev/null 2>&1; then
+  _inir_umbriel_default=yes
+  [[ -n "${INIR_KEPT_SHELLS:-}" || "$_inir_umbriel_state" == foreign ]] && _inir_umbriel_default=no
+  if [[ "${ask:-true}" != false && -t 0 ]]; then
+    if [[ "$_inir_umbriel_state" == foreign ]]; then
+      _inir_umbriel_q="Umbriel is installed with a setup of your own. Start iNiR there too (your Umbriel config stays as it is)?"
+    else
+      _inir_umbriel_q="Umbriel is installed too. Set iNiR up on it as well (its keys, your Niri shortcuts, the shell at login)?"
+    fi
+    if tui_confirm "$_inir_umbriel_q" "$_inir_umbriel_default"; then
+      INSTALL_COMPOSITOR=both
+    else
+      INSTALL_COMPOSITOR=niri
+    fi
+  elif [[ -n "${INIR_KEPT_SHELLS:-}" ]]; then
     INSTALL_COMPOSITOR=niri
   fi
 fi
 [[ -n "${INSTALL_COMPOSITOR:-}" ]] && compositor_set_choice "$INSTALL_COMPOSITOR"
-unset _inir_umbriel_state
+unset _inir_umbriel_state _inir_umbriel_default _inir_umbriel_q
 
 #####################################################################################
 # Backup existing configs

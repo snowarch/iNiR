@@ -18,6 +18,8 @@ When it finishes, restart the computer. Logging out is not enough, because Niri'
 
 The first start opens a short welcome: pick a family, then a few choices about how it looks and where things sit, each one landing on the desktop behind it as you click. **Skip setup** keeps the recommended pick for every step you didn't reach, so skipping never leaves you halfway. Everything there can be changed later in Settings.
 
+Another shell already installed, such as Noctalia, DankMaterialShell or Caelestia, can stay. iNiR runs on its own runtime and config, so the installer only offers to remove it, and `-y` keeps it. Keep the two in different sessions: if that shell lives on Umbriel, answer **Niri only** when the installer asks where iNiR runs (it is the default then), and Umbriel keeps its shell as it is.
+
 If the login screen is black on a laptop with NVIDIA and integrated graphics, the default X11 greeter may be starting on the GPU with no screens. Open `./setup`, choose Extras, and set up the Wayland login screen with Niri from there.
 
 ## Void Linux
