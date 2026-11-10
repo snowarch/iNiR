@@ -224,12 +224,14 @@ done
 # not swapped in over it; iNiR runs on qs-rs and falls back to that fork.
 #####################################################################################
 for _qs_pkg in ${INIR_KEPT_SHELLS:-}; do
-  if LC_ALL=C pacman -Qi "$_qs_pkg" 2>/dev/null | grep -E '^(Provides|Conflicts With)' | grep -qw quickshell; then
+  # Read whole, no pipe: under pipefail an early-exiting grep would fail the test.
+  _qs_info="$(LC_ALL=C pacman -Qi "$_qs_pkg" 2>/dev/null)"
+  if [[ "$_qs_info" =~ (^|$'\n')(Provides|Conflicts\ With)\ *:[^$'\n']*(^|[[:space:]])quickshell([[:space:]=<>]|$) ]]; then
     log_info "Keeping $_qs_pkg: it holds Quickshell's place, so stable quickshell is not installed"
     _keep_existing_quickshell=true
   fi
 done
-unset _qs_pkg
+unset _qs_pkg _qs_info
 
 tui_info "Installing official repo packages..."
 
