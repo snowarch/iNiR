@@ -71,23 +71,24 @@ jq -r --arg glass "$glass" --arg family "$family" '
   ]
   + (if $family == "iris" and $glass == "compositor" then [
     "",
-    "# iRiS asked for compositor glass: Umbriel blurs what is behind the shell wherever it draws (not its clear parts).",
+    "# iRiS asked for compositor glass. Umbriel has no blur region: it blurs every pixel of a matched surface above",
+    "# the alpha threshold. So only the surfaces that publish a region under Niri are matched (not Prism, whose",
+    "# scrim covers the screen), and the threshold sits over the iRiS shadows (kept under 0.1) and under its glass (0.12+).",
     "[[layer_rule]]",
-    "match.namespace = \"^quickshell\"",
+    "match.namespace = \"^quickshell:iris-(chassis|sidebar-|notifications|osd|osk|menu|edit|settings)\"",
     "blur = true",
-    "blur_ignore_alpha = 0.02",
+    "blur_ignore_alpha = 0.1",
     "blur_optimized = false",
     "",
-    "# The wallpaper and desktop layers have only the wallpaper behind them, which their own glass already draws.",
-    "[[layer_rule]]",
-    "match.namespace = \"^quickshell\"",
-    "match.layer = \"background\"",
-    "blur = false",
-    "",
-    "[[layer_rule]]",
-    "match.namespace = \"^quickshell\"",
-    "match.layer = \"bottom\"",
-    "blur = false"
+    "# The Umbriel blur dims and flattens what it blurs (0.9); the Niri one does neither. These are the Niri values",
+    "# (3 passes of 3, saturation 1.5), so the glass reads the same on both.",
+    "# Settings writes after this file: what a person picks there wins.",
+    "[appearance.blur]",
+    "passes = 3",
+    "radius = 3",
+    "brightness = 1.0",
+    "contrast = 1.0",
+    "saturation = 1.5"
   ] else [] end)
   | .[]' "$COLORS_FILE" > "$tmp"
 if cmp -s "$tmp" "$OUT"; then rm -f "$tmp"; else mv -f "$tmp" "$OUT"; fi
