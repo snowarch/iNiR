@@ -22,6 +22,8 @@ AbstractWidget {
     readonly property bool wearsFamily: DesktopWidgetDesign.faceDesign.length === 0 || root.familyDesign
     // How this family's widgets read: colours, type, shapes (its part `widgetLook`).
     readonly property var look: DesktopWidgetLook.look
+    // That look is the family's (or it has none): what the family draws over this widget may load.
+    readonly property bool lookIn: DesktopWidgetLook.holds(root.look)
     // The Background it sits on; a host with no desktop behind it (the lock) sets these itself.
     property var desktop: null
     property int screenWidth: root.desktop?.screen?.width ?? 0
@@ -1105,7 +1107,7 @@ AbstractWidget {
     Loader {
         id: faceLoader
         anchors.fill: parent
-        active: root.familyFaced && DesktopWidgetLook.ready
+        active: root.familyFaced && root.lookIn
         // A face answers to its own rows (Material, Opacity in iRiS Settings); Material's Opacity and Dimming are hidden
         // while a face is drawn, and a value left there from before faded it to a ghost with no row to undo it.
         opacity: 1
