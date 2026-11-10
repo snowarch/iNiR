@@ -1974,6 +1974,7 @@
                 "settings"
             ],
             "design": "halo",
+            "designFace": true,
             "sunLight": true,
             "blockStyle": "plain",
             "scrollAction": "volume",
