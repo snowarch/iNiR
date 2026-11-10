@@ -219,12 +219,15 @@ AbstractWidget {
         sourceComponent: WidgetChaos { widget: root }
     }
 
+    // How much of the widget its family shows right now (1 unless the family's body holds it back, 0 hides it).
+    property real presence: 1
     visible: opacity > 0
     // A family face dims itself, so its edit toolbar and sheet stay legible over a dimmed widget.
     opacity: ((GlobalStates.screenLocked && !visibleWhenLocked) ? 0 : 1)
         * (root.familyFaced ? 1 : root.widgetOpacity * root.dimOpacity)
         * (root.stackPresent ? 1 : 0)
         * (1 - root.absorb)
+        * root.presence
     enabled: !GlobalStates.screenLocked
     Behavior on opacity {
         animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
