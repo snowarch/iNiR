@@ -20,6 +20,10 @@ Singleton {
     readonly property bool umbriel: CompositorService.isUmbriel
     readonly property bool available: root.niri || root.umbriel
     readonly property string compositorName: root.niri ? "Niri" : root.umbriel ? "Umbriel" : ""
+    // A fullscreen window stays above the Top layer at rest on both; in the overview both draw Top above it (Niri
+    // since 25.05), so a surface there never needs Overlay to be seen. The keyboard differs: Niri gives a Top surface
+    // the keys in the overview, Umbriel refuses Top the keys while its output has a fullscreen window, overview or not.
+    readonly property bool overviewTopTakesKeys: root.niri
 
     property int revision: 0
     // A section the compositor's file took a write for: a family mirroring one reads it back.
