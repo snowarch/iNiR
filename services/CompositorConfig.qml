@@ -537,8 +537,10 @@ Singleton {
         root.umbrielRead = true
         root.forget("")
         root.revision++
+        root.syncRange()
     }
     function writeOwn(made: var): void {
+        made = root.withRange(made, root.rangeMarked())
         root.own = made
         root.effective = Toml.merge(root.below, made)
         ownFile.setText(Toml.stringify(made, "iNiR Settings writes this file: what you change in Settings lands here and loads last.\nYour own additions go in 90-user-extra.toml; a key set in both follows Settings."))
@@ -642,6 +644,7 @@ Singleton {
                         .map(out => root.fromUmbriel(out, colour.find(entry => entry.name === out.name), tearing.find(entry => entry.name === out.name)))
                     root.stale.outputs = false
                     root.revision++
+                    root.syncRange()
                 } catch (e) { root.error = String(e) }
             }
         }
@@ -685,6 +688,50 @@ Singleton {
         return Object.assign({}, all[out.name] ?? {}, all[out.config_name ?? out.configName ?? ""] ?? {})
     }
 
+    // ---- the HDMI range ----
+    // The driver sends limited range (16-235) at a TV (CTA-861) mode and full range at a screen's own modes, and
+    // neither compositor can set DRM's "Broadcast RGB". A screen that reads every HDMI signal as limited shows its own
+    // modes crushed and darker (11-10: an LG at 75 Hz, fine at 60). The person marks it in Settings; Settings' file
+    // then squeezes the picture with a screen effect, only while that screen runs a mode the driver sends full.
+    readonly property string rangeEffect: "inir-limited-range"
+    readonly property string rangeFile: Quickshell.shellPath("defaults/umbriel/effects/inir-limited-range/effect.toml")
+    function rangeMarked(): var {
+        return [].concat(Config.options?.display?.limitedRange ?? [])
+    }
+    // The TV modes a screen offers in practice, 1000/1001 rates (59.94) included; anything else goes out full.
+    function sendsLimited(mode: string): bool {
+        const found = /^(\d+)x(\d+)@([\d.]+)$/.exec(mode)
+        if (!found) return false
+        const tv = [24, 25, 30, 48, 50, 60, 100, 120]
+        const rates = ({ "720x480": [60, 120, 240], "720x576": [50, 100, 200], "1280x720": tv, "1920x1080": tv, "2560x1080": tv,
+            "3840x2160": tv, "4096x2160": tv })[`${found[1]}x${found[2]}`] ?? []
+        const hz = Number(found[3])
+        return rates.some(rate => Math.abs(hz - rate) < 0.005 || Math.abs(hz - rate * 1000 / 1001) < 0.005)
+    }
+    // Settings' file with the squeeze on each marked HDMI screen whose mode (the file's, else the running one) goes out
+    // full, off everywhere else, and the effect's file included only while a screen uses it.
+    function withRange(made: var, marked: var): var {
+        if (!root.umbriel || root.outputs.length === 0) return made
+        let used = false
+        for (const out of root.outputs) {
+            const path = ["output", out.configName, "screen_effect"]
+            const set = String(Toml.get(made, ["output", out.configName, "mode"]) ?? "")
+            const mode = set.includes("@") ? set : root.modeOf(out)
+            if (marked.includes(out.configName) && String(out.name).startsWith("HDMI") && !root.sendsLimited(mode)) {
+                made = Toml.set(made, path, root.rangeEffect)
+                used = true
+            } else if (Toml.get(made, path) === root.rangeEffect) made = Toml.set(made, path, undefined)
+        }
+        const files = [].concat(made.include?.files ?? []).filter(file => file !== root.rangeFile).concat(used ? [root.rangeFile] : [])
+        return Toml.set(made, ["include", "files"], files.length > 0 ? files : undefined)
+    }
+    // A mode changed outside Settings (or the shell started) puts the squeeze right once both the file and the screens are read.
+    function syncRange(): void {
+        if (!root.umbrielRead || root.pending) return
+        const made = root.withRange(root.own, root.rangeMarked())
+        if (JSON.stringify(made) !== JSON.stringify(root.own)) root.writeOwn(made)
+    }
+
     // ---- displays ----
     // `anyScreen` asks what the compositor can do at all, whether or not the chosen screen is on.
     function displayHas(key: string, anyScreen: bool): bool {
@@ -702,6 +749,7 @@ Singleton {
         if (key === "on") return root.outputs.length > 1 && (out.enabled === false || root.activeOutputs.length > 1)
         if (key === "hdr" || key === "sdr-white") return out.hdr_supported === true
         if (key === "bit-depth") return out.deep_colour === true
+        if (key === "limited-range") return String(out.name).startsWith("HDMI")
         return ["tearing", "main", "workspace-axis"].includes(key)
     }
     function modeOf(output: var): string {
@@ -753,6 +801,7 @@ Singleton {
         if (key === "tearing") return out.tearing === true
         if (key === "main") return out.main === true
         if (key === "workspace-axis") return String(out.workspace_axis ?? "vertical")
+        if (key === "limited-range") return root.rangeMarked().includes(out.configName)
         return ""
     }
     // Where a screen sits, read against the first other screen: the side it touches, in logical pixels.
@@ -824,6 +873,13 @@ Singleton {
             previous = root.modeOf(out)
         } else previous = String(root.displayValue(key))
         if (wanted === previous) return
+        if (key === "limited-range") {
+            if (!root.umbriel || !root.umbrielRead) return
+            const marked = root.rangeMarked().filter(name => name !== out.configName).concat(next === true || next === "true" ? [out.configName] : [])
+            Config.setNestedValue("display.limitedRange", marked)
+            root.writeOwn(root.withRange(root.own, marked))
+            return
+        }
         if (root.umbriel) {
             const names = ({ on: "enabled", vrr: "vrr", hdr: "hdr", "sdr-white": "sdr_white", "bit-depth": "bit_depth", main: "focus_at_startup", "workspace-axis": "workspace_axis" })
             const path = ["output", out.configName, names[setting] ?? setting]

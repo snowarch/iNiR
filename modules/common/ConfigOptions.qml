@@ -1655,6 +1655,9 @@ JsonAdapter {
 
     property JsonObject display: JsonObject {
         property string primaryMonitor: ""
+        // Screens (as the compositor names them) that read every HDMI signal as limited range: Umbriel squeezes their
+        // full-range modes for them (CompositorConfig, the HDMI range).
+        property list<string> limitedRange: []
     }
 
 

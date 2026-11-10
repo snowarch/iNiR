@@ -1,0 +1,5 @@
+# iNiR: the limited RGB range (16-235) some HDMI screens expect at every refresh rate. Settings > Display >
+# "Lift crushed blacks" includes this file and selects it per screen, only at the rates the driver sends in full range.
+[effects.preset.inir-limited-range]
+kind = "screen"
+shader = "shader.glsl"

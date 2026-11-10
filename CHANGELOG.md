@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **When GitHub is down, iNiR says so**: setup, `inir update`, `inir doctor`, the Hub and the update check name the server that isn't answering (a 504 and the like), with GitHub's status page, instead of red lines that read as iNiR broken. Nothing changes on your system; try again in a while.
 
 ### Fixed
+- **A darker picture on Umbriel at a high refresh rate**: some HDMI screens look darker at their own modes (75 Hz, 144 Hz) than at 60 Hz, because the GPU sends those in full range and the screen reads limited. **iRiS Settings › Display › Colour › Fix a darker picture** gives that screen the range it expects, only at the rates that need it (iRiS 2.33.73 from the Hub).
 - **NixOS**: the flake installs iNiR like every other distro: your copy lives in `~/.config/quickshell/inir`, the families come from the Hub on the first start and switch like on Arch, and Hub items update from **Settings › Hub** or `inir update`. A rebuild after the 3.0.1 package removes what it left in your home; the page is [NixOS](docs/NIXOS.md).
 - **Idle and lock timers**: restarting the shell no longer leaves an old `swayidle` behind on each restart.
 - **Family switch**: the logo on the transition between families shows again.
