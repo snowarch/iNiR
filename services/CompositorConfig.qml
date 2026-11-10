@@ -146,11 +146,14 @@ Singleton {
     })
     // What a hot corner can do, in the shell's words; the value is what the compositor runs.
     readonly property var cornerActions: [
-        { label: "Nothing", value: "" },
-        { label: "Overview", value: "overview-toggle" },
-        { label: "App launcher", value: "spawn inir overview toggle" },
-        { label: "Clipboard", value: "spawn inir clipboard toggle" },
-        { label: "Lock", value: "spawn inir lock activate" }
+        { label: "Nothing", value: "", glyph: "block" },
+        { label: "Overview", value: "overview-toggle", also: ["overview-open"], glyph: "overview_key" },
+        { label: "App launcher", value: "spawn inir overview toggle", glyph: "apps" },
+        { label: "Search", value: "spawn inir search toggle", glyph: "search" },
+        { label: "Clipboard", value: "spawn inir clipboard toggle", glyph: "content_paste" },
+        { label: "Screenshot", value: "spawn inir region screenshot", glyph: "screenshot_region" },
+        { label: "Power menu", value: "spawn inir session toggle", glyph: "power_settings_new" },
+        { label: "Lock", value: "spawn inir lock activate", glyph: "lock" }
     ]
 
     function entryOf(section: string, key: string): var {
@@ -225,7 +228,9 @@ Singleton {
             if (!entry) return spec.fallback
             if (entry.corner) {
                 const corner = Toml.get(root.effective, entry.path.split(".")) ?? {}
-                return corner.enabled === true ? String(corner.action ?? "") : ""
+                if (corner.enabled !== true) return ""
+                const action = String(corner.action ?? "")
+                return root.cornerActions.find(known => (known.also ?? []).includes(action))?.value ?? action
             }
             let found = Toml.get(root.effective, entry.path.split("."))
             if (found === undefined) found = root.schema[entry.path]
@@ -417,7 +422,9 @@ Singleton {
             onStreamFinished: {
                 try {
                     const defaults = {}, kinds = {}, limits = {}
-                    for (const option of JSON.parse(text)) {
+                    // { version, revision, options: [{ path, type, default?, min?, max?, values? }] }
+                    const told = JSON.parse(text)
+                    for (const option of (Array.isArray(told) ? told : told.options ?? [])) {
                         if (option.default !== undefined && option.default !== null) defaults[option.path] = option.default
                         kinds[option.path] = option.type
                         if (option.min !== undefined && option.max !== undefined) limits[option.path] = { min: option.min, max: option.max }

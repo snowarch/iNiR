@@ -1752,6 +1752,7 @@
             "themeColoursOnly": false,
             "settingsPanel": "prism",
             "settingsHost": "overlay",
+            "settingsRail": "auto",
             "settingsLayout": "classic",
             "settingsOriginal": false,
             "settingsHome": [

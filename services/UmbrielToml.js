@@ -59,6 +59,18 @@ function parse(text) {
             at++
         }
     }
+    // A table reached through an array of tables is that array's last one.
+    const step = (holder, name) => {
+        let next = holder[name]
+        if (next === undefined) next = holder[name] = {}
+        if (Array.isArray(next)) next = next[next.length - 1]
+        if (typeof next !== "object" || next === null) fail(`"${name}" is a value`)
+        return next
+    }
+    const put = (holder, path, what) => {
+        for (let i = 0; i < path.length - 1; i++) holder = step(holder, path[i])
+        holder[path[path.length - 1]] = what
+    }
     const value = () => {
         blank(false)
         const c = src[at]
@@ -101,18 +113,6 @@ function parse(text) {
         if (/^[+-]?(inf|nan)$/.test(plain)) return plain.endsWith("nan") ? NaN : plain[0] === "-" ? -Infinity : Infinity
         if (word.length === 0) fail("value")
         return word
-    }
-    // A table reached through an array of tables is that array's last one.
-    const step = (holder, name) => {
-        let next = holder[name]
-        if (next === undefined) next = holder[name] = {}
-        if (Array.isArray(next)) next = next[next.length - 1]
-        if (typeof next !== "object" || next === null) fail(`"${name}" is a value`)
-        return next
-    }
-    const put = (holder, path, what) => {
-        for (let i = 0; i < path.length - 1; i++) holder = step(holder, path[i])
-        holder[path[path.length - 1]] = what
     }
     for (;;) {
         blank(true)
@@ -196,7 +196,7 @@ function valueText(what) {
 
 function stringify(root, head) {
     const lines = []
-    if (head) lines.push(String(head).split("\n").map(line => ("# " + line).trimEnd()).join("\n"), "")
+    if (head) lines.push(String(head).split("\n").map(line => ("# " + line).replace(/\s+$/, "")).join("\n"), "")
     const walk = (holder, path) => {
         const names = Object.keys(holder)
         const plain = names.filter(name => !isTable(holder[name]) && !(Array.isArray(holder[name]) && holder[name].length > 0 && holder[name].every(isTable)))
