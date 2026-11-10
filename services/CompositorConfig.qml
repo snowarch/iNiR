@@ -176,13 +176,20 @@ Singleton {
     function cornerTaken(outputName: string, corner: string): bool {
         if (root.niri) return NiriService.isOverviewHotCornerActive(outputName, corner)
         if (!root.umbriel) return false
+        if (!root.asked) Qt.callLater(root.ask)
         root.revision
         const key = ({ topLeft: "top-left", topRight: "top-right", bottomLeft: "bottom-left", bottomRight: "bottom-right" })[corner]
         return key !== undefined && String(root.value({ comp: "corners", key: key, fallback: "" })).length > 0
     }
-    // Umbriel's files are read once the service is first asked: a corner or a row needs them before Settings opens.
-    Component.onCompleted: if (root.umbriel) root.readUmbriel()
-    onUmbrielChanged: if (root.umbriel && !root.umbrielRead) root.readUmbriel()
+    // Loaded, it does nothing: a surface reading a capability is not asking. Umbriel's files are read once a corner
+    // (cornerTaken) or Settings (ensure) asks; the screens are followed only once Settings has.
+    property bool asked: false
+    property bool settingsAsked: false
+    function ask(): void {
+        root.asked = true
+        if (root.umbriel && !root.umbrielRead) root.readUmbriel()
+    }
+    onUmbrielChanged: if (root.asked) root.ask()
 
     function entryOf(section: string, key: string): var {
         const entry = root.umbrielKeys[section + ":" + key]
@@ -201,6 +208,8 @@ Singleton {
         return true
     }
     function ensure(): void {
+        root.asked = true
+        root.settingsAsked = true
         if (!root.available) return
         if (!devices.running) devices.running = true
         if (!cursorReader.running) cursorReader.running = true
@@ -221,7 +230,7 @@ Singleton {
         }
         function onOutputsChanged(): void {
             root.stale.outputs = true
-            if (root.umbriel && root.umbrielRead) outputsSettle.restart()
+            if (root.umbriel && root.settingsAsked) outputsSettle.restart()
         }
     }
     function reload(parts: var): void {
