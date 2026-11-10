@@ -297,6 +297,27 @@ function _withdrawn(obj) {
     return changed;
 }
 
+// A list some writes stored as {"0": ..., "1": ...} (a QML sequence kept as it came) becomes a list again where the
+// schema holds one, in index order, so the person's choice loads instead of the default. `isList(path)` asks the
+// schema; Config runs this once every schema, plugins' included, is in place.
+function listsBack(obj, isList, prefix) {
+    if (!_isObject(obj)) return false;
+    let changed = false;
+    for (const key of Object.keys(obj)) {
+        const path = prefix ? prefix + "." + key : key;
+        const value = obj[key];
+        if (!_isObject(value)) continue;
+        const indices = Object.keys(value);
+        if (indices.length > 0 && indices.every(index => /^\d+$/.test(index)) && isList(path)) {
+            obj[key] = indices.sort((a, b) => Number(a) - Number(b)).map(index => value[index]);
+            changed = true;
+        } else if (listsBack(value, isList, path)) {
+            changed = true;
+        }
+    }
+    return changed;
+}
+
 function migrate(obj) {
     if (!_isObject(obj)) return false;
     const fromV2 = Number(_get(obj, "iris.appearance.factoryLook") ?? 0) < 1;

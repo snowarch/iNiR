@@ -198,7 +198,21 @@ Singleton {
         return now !== undefined && (typeof now !== "object" || now === null) && now === value;
     }
 
+    // A list handed over from QML (a typed config list, a list a signal carried) is a sequence, not an Array: the
+    // mirror kept it as one and the file got it as {"0": ..., "1": ...}, which the schema's list then refused at the
+    // next load. Every value is stored as plain JSON data.
+    function _plain(value: var): var {
+        if (value === null || typeof value !== "object" || root._isQtObject(value)) return value;
+        if (Array.isArray(value)) return value.map(item => root._plain(item));
+        if (typeof value.length === "number" && Object.getPrototypeOf(value) !== Object.prototype)
+            return Array.from(value, item => root._plain(item));
+        const out = {};
+        for (const key of Object.keys(value)) out[key] = root._plain(value[key]);
+        return out;
+    }
+
     function setNestedValue(nestedKey, value) {
+        value = root._plain(value);
         if (root._alreadyHolds(nestedKey, value)) return;
         delete root._previewedKeys[Array.isArray(nestedKey) ? nestedKey.join(".") : String(nestedKey ?? "")];
         if (_applyNestedKey(nestedKey, value) === false) return;
@@ -213,7 +227,7 @@ Singleton {
     // revision stays (every Settings row re-reads on a revision). The drag ends with setNestedValue.
     function previewNestedValue(nestedKey, value) {
         root._previewedKeys[Array.isArray(nestedKey) ? nestedKey.join(".") : String(nestedKey ?? "")] = true;
-        _applyNestedKey(nestedKey, value, true);
+        _applyNestedKey(nestedKey, root._plain(value), true);
     }
 
     // Batch multiple key-value pairs, emitting configChanged only once.
@@ -221,6 +235,7 @@ Singleton {
     function setNestedValues(updates) {
         if (!updates || typeof updates !== "object")
             return;
+        updates = root._plain(updates);
         const paths = Object.keys(updates).filter(path => !root._alreadyHolds(path, updates[path]));
         for (let i = 0; i < paths.length; ++i) {
             delete root._previewedKeys[paths[i]];
@@ -778,7 +793,20 @@ Singleton {
                 slot = root._holderFor(disk?.[key]);
             configOptionsJsonAdapter[key] = slot;
         }
+        if (ConfigMigrations.listsBack(disk, path => root._schemaHoldsList(path))) {
+            diskProbe.setText(root._qtJson(disk) + "\n");
+            console.log("[Config] lists stored as maps read back as lists");
+        }
         root._slotsReady = true;
+    }
+
+    function _schemaHoldsList(path: string): bool {
+        let node = configOptionsJsonAdapter;
+        for (const key of path.split(".")) {
+            if (node === null || typeof node !== "object" || !(key in node)) return false;
+            node = node[key];
+        }
+        return node !== null && typeof node === "object" && !root._isQtObject(node) && typeof node.length === "number";
     }
 
     // Keys that changed owner move in the file itself before anything reads it (ConfigMigrations.js), so the person's
