@@ -242,6 +242,13 @@ Singleton {
         return monitors.find(m => focusedName === m.screen?.name) ?? null;
     }
 
+    // The connector first: a compositor may give no model for an output (Umbriel sends "Unknown"), its name it always has.
+    function _ddcMatches(ddc, screen): bool {
+        const name = screen?.name ?? ""
+        if ((ddc.connector ?? "").length > 0 && name.length > 0) return ddc.connector === name
+        return (ddc.model ?? "").length > 0 && (screen?.model ?? "").includes(ddc.model)
+    }
+
     function describe(m): string {
         const how = m.isDdc ? `ddc bus ${m.busNum}` : (root.backlightDevice || "no control")
         const level = Number.isFinite(m.brightness) ? `${Math.round(m.brightness * 100)}%` : "unknown"
@@ -324,6 +331,7 @@ Singleton {
                     const lines = data.split("\n").map(l => l.trim());
                     root._ddcNext.push({
                         model: lines.find(l => l.startsWith("Monitor:")).split(":")[2],
+                        connector: (lines.find(l => l.startsWith("DRM connector:")) ?? "").split(":").pop().trim().replace(/^card\d+-/, ""),
                         busNum: lines.find(l => l.startsWith("I2C bus:")).split("/dev/i2c-")[1]
                     });
                 }
@@ -371,11 +379,11 @@ Singleton {
 
         required property ShellScreen screen
         readonly property bool isDdc: {
-            const match = root.ddcMonitors.find(m => screen?.model?.includes(m.model) && !root.monitors.slice(0, root.monitors.indexOf(this)).some(mon => mon.busNum === m.busNum));
+            const match = root.ddcMonitors.find(m => root._ddcMatches(m, screen) && !root.monitors.slice(0, root.monitors.indexOf(this)).some(mon => mon.busNum === m.busNum));
             return !!match;
         }
         readonly property string busNum: {
-            const match = root.ddcMonitors.find(m => screen?.model?.includes(m.model) && !root.monitors.slice(0, root.monitors.indexOf(this)).some(mon => mon.busNum === m.busNum));
+            const match = root.ddcMonitors.find(m => root._ddcMatches(m, screen) && !root.monitors.slice(0, root.monitors.indexOf(this)).some(mon => mon.busNum === m.busNum));
             return match?.busNum ?? "";
         }
         property int rawMaxBrightness: 100
