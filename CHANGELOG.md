@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **iRiS Settings follow your compositor**: under Niri they show what Niri does; under Umbriel they get their own pages: layouts drawn as pictures, tabs, title bars, compositor blur, effects you press on a drawn desk, hot corners, HDR and colour depth. On a display, drag your screens to where they stand and pick a scale from miniatures of your own screen; a display change can be kept or undone within 15 seconds ([Compositors](docs/COMPOSITORS.md), iRiS 2.33.66 from the Hub).
 
 ### Changed
+- **Another shell can stay**: setup no longer removes Noctalia, DankMaterialShell, Caelestia or BMS. It offers to (default: keep), `-y` keeps them, and with Umbriel installed iNiR defaults to Niri alone, so each shell keeps its own session.
 - **When GitHub is down, iNiR says so**: setup, `inir update`, `inir doctor`, the Hub and the update check name the server that isn't answering (a 504 and the like), with GitHub's status page, instead of red lines that read as iNiR broken. Nothing changes on your system; try again in a while.
 
 ### Fixed
