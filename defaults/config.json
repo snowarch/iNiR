@@ -2362,6 +2362,7 @@
             "musicLightWidth": 5,
             "thickness": 10,
             "radius": 22,
+            "widgets": true,
             "style": "plain",
             "holoLight": 45,
             "holoHalo": 40,
