@@ -466,7 +466,12 @@ Singleton {
             return
         root._current = root._queue[0]
         root._queue = root._queue.slice(1)
-        actionProcess.command = [root.launcher, "hub", root._current.verb, root._current.id, "--json"]
+        const command = [root.launcher, "hub", root._current.verb, root._current.id, "--json"]
+        // A plugin with its own choices undoes what they did before it goes (`run leave`: the person's files back).
+        const script = root._current.verb === "remove" ? Plugins.path(root._current.id, String(Plugins.manifests[root._current.id]?.choices?.run ?? "")) : ""
+        actionProcess.command = script.length > 0
+            ? ["bash", "-c", 'bash "$1" leave >/dev/null 2>&1; shift; exec "$@"', "inir-hub-leave", script].concat(command)
+            : command
         actionProcess.running = true
     }
     function _finish(job: var, reply: var): void {
@@ -523,7 +528,8 @@ Singleton {
     }
 
     // A plugin's own choices (plugin.json `choices`: { title, run }): its script prints them as [{ id, label, on }]
-    // (`run list`) and flips one (`run toggle <id>`); every family's Hub page draws them as chips under it.
+    // (`run list`) and flips one (`run toggle <id>`); every family's Hub page draws them as chips under it, one with
+    // `lead: true` as a switch with its `note`. `run leave` runs before the Hub removes the plugin.
     property var choices: ({})
     function choicesTitle(item: var): string {
         return item?.installed ? String(Plugins.manifests[item.id]?.choices?.title ?? "") : ""
