@@ -722,7 +722,7 @@ Singleton {
                 used = true
             } else if (Toml.get(made, path) === root.rangeEffect) made = Toml.set(made, path, undefined)
         }
-        const files = [].concat(made.include?.files ?? []).filter(file => file !== root.rangeFile).concat(used ? [root.rangeFile] : [])
+        const files = [].concat(made.include?.files ?? []).filter(file => !String(file).endsWith(`/${root.rangeEffect}/effect.toml`)).concat(used ? [root.rangeFile] : [])
         return Toml.set(made, ["include", "files"], files.length > 0 ? files : undefined)
     }
     // A mode changed outside Settings (or the shell started) puts the squeeze right once both the file and the screens are read.
