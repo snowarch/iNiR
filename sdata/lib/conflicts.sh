@@ -97,14 +97,14 @@ check_conflicts() {
         esac
         
         if $installed; then
+            if [[ -n "${shell_map[$pkg]:-}" ]]; then
+                other_shells+=("$pkg")
+                continue
+            fi
             if [[ "$real" != "$pkg" ]]; then
                 conflicts+=("$real (provides $pkg, ${conflict_map[$pkg]})")
             else
                 conflicts+=("$pkg (${conflict_map[$pkg]})")
-            fi
-            if [[ -n "${shell_map[$pkg]:-}" ]]; then
-                other_shells+=("$pkg")
-                continue
             fi
             # Check if it's a systemd service
             if $usable_systemd_user_manager \
@@ -114,37 +114,38 @@ check_conflicts() {
         fi
     done
     
+    if [ ${#other_shells[@]} -gt 0 ]; then
+        echo -e "${STY_YELLOW}Other shells installed:${STY_RST} ${other_shells[*]}"
+        echo -e "${STY_BOLD}They can stay:${STY_RST} iNiR runs on its own runtime and config, and starts only"
+        echo -e "in the compositors you set it up on. Just don't start both shells in the same session."
+        echo ""
+        # INIR_REMOVE_OTHER_SHELLS carries the pick from the inir install wizard; asked here otherwise, and -y keeps them.
+        local remove_shells="${INIR_REMOVE_OTHER_SHELLS:-}"
+        if [[ -z "$remove_shells" ]] && [[ "$package_manager" == "pacman" || "$package_manager" == "xbps" ]]; then
+            tui_confirm "Remove ${other_shells[*]}? (not needed for iNiR)" "no" && remove_shells=yes
+        fi
+        if [[ "$remove_shells" == yes ]]; then
+            # Meta-packages first, then shells, then runtimes.
+            local ordered_remove=()
+            for pkg in cachyos-niri-noctalia noctalia-shell noctalia-qs noctalia-qs-git \
+                       dms-shell dms-shell-git caelestia-shell caelestia-shell-git bms-shell-bin; do
+                [[ " ${other_shells[*]} " == *" $pkg "* ]] && ordered_remove+=("$pkg")
+            done
+            _remove_other_shells "${ordered_remove[@]}"
+        else
+            # The distro's deps step keeps a Quickshell fork they bring instead of swapping it.
+            INIR_KEPT_SHELLS="${other_shells[*]}"
+            export INIR_KEPT_SHELLS
+        fi
+        echo ""
+    fi
+
     if [ ${#conflicts[@]} -gt 0 ]; then
         echo -e "${STY_YELLOW}Found potential conflicting packages:${STY_RST}"
         for c in "${conflicts[@]}"; do
             echo -e "  ${STY_RED}!${STY_RST} $c"
         done
         echo ""
-
-        if [ ${#other_shells[@]} -gt 0 ]; then
-            echo -e "${STY_BOLD}Other shells can stay:${STY_RST} iNiR runs on its own runtime and config, and starts only"
-            echo -e "in the compositors you set it up on. Just don't start both shells in the same session."
-            echo ""
-            # INIR_REMOVE_OTHER_SHELLS carries the pick from the inir install wizard; asked here otherwise, and -y keeps them.
-            local remove_shells="${INIR_REMOVE_OTHER_SHELLS:-}"
-            if [[ -z "$remove_shells" ]] && [[ "$package_manager" == "pacman" || "$package_manager" == "xbps" ]]; then
-                tui_confirm "Remove ${other_shells[*]}? (not needed for iNiR)" "no" && remove_shells=yes
-            fi
-            if [[ "$remove_shells" == yes ]]; then
-                # Meta-packages first, then shells, then runtimes.
-                local ordered_remove=()
-                for pkg in cachyos-niri-noctalia noctalia-shell noctalia-qs noctalia-qs-git \
-                           dms-shell dms-shell-git caelestia-shell caelestia-shell-git bms-shell-bin; do
-                    [[ " ${other_shells[*]} " == *" $pkg "* ]] && ordered_remove+=("$pkg")
-                done
-                _remove_other_shells "${ordered_remove[@]}"
-            else
-                # The distro's deps step keeps a Quickshell fork they bring instead of swapping it.
-                INIR_KEPT_SHELLS="${other_shells[*]}"
-                export INIR_KEPT_SHELLS
-            fi
-            echo ""
-        fi
 
         echo -e "${STY_BOLD}iNiR provides its own bar, notifications, wallpaper, and shell.${STY_RST}"
         echo -e "Running other shells/bars simultaneously causes visual glitches or double notifications."
@@ -200,7 +201,7 @@ check_conflicts() {
         else
             echo "Continuing in non-interactive mode..."
         fi
-    else
+    elif [ ${#other_shells[@]} -eq 0 ]; then
         log_success "No conflicting packages found."
     fi
 }
