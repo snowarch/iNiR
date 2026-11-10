@@ -1,4 +1,5 @@
-# 90 — Yours. iNiR creates this file once and never touches it again; it loads last, so what you set here wins.
+# 90 — Yours. iNiR creates this file once and never touches it again. What you change in Settings goes to
+# 95-settings.toml, which loads after this one: a key set in both follows Settings.
 #
 # Examples:
 #

@@ -60,7 +60,8 @@ The installer asks where iNiR runs. **Niri and Umbriel** sets iNiR up on both (i
 | `config.d/50-startup.toml` | Processes started at login, including **Settings › Autostart** |
 | `config.d/70-binds.toml` | Keybinds |
 | `config.d/80-layer-rules.toml` | Layer rules for the shell |
-| `config.d/90-user-extra.toml` | Your own settings. Updates never touch it, and it loads last |
+| `config.d/90-user-extra.toml` | Your own settings. Updates never touch it |
+| `config.d/95-settings.toml` | What you change in iRiS Settings. It loads last, so a key set here and in `90-user-extra.toml` follows Settings |
 
 Your Niri keybinds (including the ones you added or removed), keyboard layout and key repeat come along: iNiR writes them to `config.d/60-from-niri.toml` when Umbriel is added, at every Umbriel login and on every update, and `inir compositor sync` does it again after you change them in Niri.
 
@@ -70,7 +71,8 @@ Keys Umbriel adds: **Mod+W** tabs a column, **Mod+P** pins a window, **Mod+Shift
 
 ### What differs from Niri
 
-- **Settings › Compositor** (Material) and the window, keyboard and display rows of iRiS edit Niri's files, so they are hidden under Umbriel; its `config.d` files hold the same settings.
+- iRiS: **iRiS Settings** asks the compositor in use what it can do and shows only that. Under Umbriel, **iRiS Settings › Windows** draws the layouts (scrolling, dwindle, main and stack, floating) to pick from, and has tabs, title bars, compositor blur, the effects Umbriel draws (press the screen, a window, its border or the pointer on the drawn desk) and how windows move; **iRiS Settings › Display** lets you drag your screens to where they stand, pick a scale from miniatures of your screen, and set HDR and colour depth, with 15 seconds to keep or undo a display change; hot corners are pressed on a drawn screen. Everything goes to `config.d/95-settings.toml`. If your own `config.toml` lists its files, Settings asks before adding the one line that loads it.
+- Material: **Settings › Compositor** edits Niri's files, so it is hidden under Umbriel; its `config.d` files hold the same settings.
 - **Compositor blur**: iRiS's *Blur* glass asks Umbriel to blur behind the shell through a layer rule. Material and Waffle use their own glass.
 - Window previews are stills, refreshed when you open a surface that shows them; on Niri they can be live.
 - Alt+Tab is iNiR's switcher. Screenshots of a whole screen or a region use `inir region`, as on Niri.
