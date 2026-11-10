@@ -5,7 +5,9 @@
 # `inir compositor add umbriel`, or the installer) puts in ~/.config/umbriel/ for it.
 #
 # Every file below is iNiR's and is refreshed by `inir update` unless you changed it (then yours is kept).
-# Put your own settings in config.d/90-user-extra.toml: it is never touched and loads last, so it wins.
+# Put your own settings in config.d/90-user-extra.toml: it is never touched and wins over iNiR's files.
+# What you change in Settings is written to config.d/95-settings.toml, which loads after it: a key set in both
+# follows Settings.
 #
 #   10  Input and cursor
 #   20  Layout, gaps, look and the overview
@@ -15,6 +17,7 @@
 #   70  Key bindings (iNiR shell + window management)
 #   80  Layer rules for iNiR's surfaces
 #   90  Your additions (optional)
+#   95  What Settings changed (written by the shell)
 #
 # Changes apply live. Reference: https://docs.noctalia.dev/umbriel/  ·  check a file: umbriel config validate
 
@@ -36,4 +39,5 @@ files = [
   # Your Niri keys and keyboard, brought over by `inir compositor sync` (also on add and update).
   "config.d/60-from-niri.toml",
   "config.d/90-user-extra.toml",
+  "config.d/95-settings.toml",
 ]

@@ -14,6 +14,7 @@ BooruResponseData 1.0 BooruResponseData.qml
 singleton Brightness 1.0 Brightness.qml
 singleton CalendarSync 1.0 CalendarSync.qml
 singleton CavaTheme 1.0 CavaTheme.qml
+singleton CompositorConfig 1.0 CompositorConfig.qml
 singleton CompositorService 1.0 CompositorService.qml
 singleton ConflictKiller 1.0 ConflictKiller.qml
 singleton CustomWidgets 1.0 CustomWidgets.qml
