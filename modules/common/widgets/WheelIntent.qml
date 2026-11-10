@@ -35,6 +35,7 @@ Item {
 
     function scrolled(): void {
         root.moved = false
+        root.lastScene = Qt.point(NaN, NaN)
         root.latched = true
         latch.restart()
     }
@@ -46,14 +47,14 @@ Item {
     }
 
     // Content scrolling under a still pointer sends synthetic hover moves at the same scene
-    // position; only a pointer that really moved may take the wheel mid-scroll.
+    // position; only a pointer that really moved may take the wheel mid-scroll. The travel counts from where the
+    // pointer was first seen, never from the last move: a slow hand sends a pixel or two a move and still aims.
     function track(x: real, y: real): void {
         if (!root.target) return
         const scene = root.target.mapToItem(null, x, y)
-        if (!isNaN(root.lastScene.x) && root.hovered
-            && Math.hypot(scene.x - root.lastScene.x, scene.y - root.lastScene.y) > root.travel)
+        if (isNaN(root.lastScene.x)) { root.lastScene = scene; return }
+        if (root.hovered && Math.hypot(scene.x - root.lastScene.x, scene.y - root.lastScene.y) > root.travel)
             root.moved = true
-        root.lastScene = scene
     }
 
     function take(event): bool {
