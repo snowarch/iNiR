@@ -35,6 +35,14 @@ Singleton {
     property var cursorThemes: []
     property bool hasTouchpad: false
     property bool hasTrackpoint: false
+    property bool hasTablet: false
+    property bool hasTouch: false
+    property bool hasNvidia: false
+    // The laptop's own panel, when the machine has one.
+    readonly property var builtin: root.outputs.find(entry => /^(eDP|LVDS|DSI)/.test(String(entry.name))) ?? null
+    function hardware(kind: string): bool {
+        return kind === "tablet" ? root.hasTablet : kind === "touch" ? root.hasTouch : kind === "nvidia" ? root.hasNvidia : kind === "lid" ? root.builtin !== null : true
+    }
     property string selectedOutput: ""
     readonly property var output: root.outputs.find(entry => entry.name === root.selectedOutput) ?? root.outputs.find(entry => entry.enabled !== false) ?? root.outputs[0] ?? null
     readonly property var activeOutputs: root.outputs.filter(entry => entry.enabled !== false)
@@ -159,7 +167,23 @@ Singleton {
         "input:focus-on-activate": { toml: "general.focus_on_activate", only: true },
         "overview:wallpaper": { toml: "overview.workspace_wallpaper", only: true },
         "layout:new-width": { toml: "layout.scrolling.default_extent_fraction", only: true },
-        "apps:x11-native": { toml: "general.xwayland_native_resolution", only: true }
+        "apps:x11-native": { toml: "general.xwayland_native_resolution", only: true },
+        // Room kept free at each edge of every screen, beyond what panels already take.
+        "layout:struts.top": { toml: "layout.struts.top", only: true },
+        "layout:struts.bottom": { toml: "layout.struts.bottom", only: true },
+        "layout:struts.left": { toml: "layout.struts.left", only: true },
+        "layout:struts.right": { toml: "layout.struts.right", only: true },
+        "windows:dialogs-attached": { toml: "general.attach_modal_dialogs", only: true },
+        "windows:restored-maximize": { toml: "general.honor_restored_maximize", only: true },
+        "input:cheatsheet": { toml: "general.show_cheatsheet", only: true },
+        // `wants`: the hardware a row is about; without it the row is not shown.
+        "apps:gpu-sync": { toml: "general.nvidia_sync_workaround", only: true, wants: "nvidia" },
+        "input:tablet.output": { toml: "input.tablet.map_to_output", only: true, wants: "tablet", screens: true },
+        "input:tablet.follows-focus": { toml: "input.tablet.map_to_focused_output", only: true, wants: "tablet" },
+        "input:tablet.left-handed": { toml: "input.tablet.left_handed", only: true, wants: "tablet" },
+        "input:touch.output": { toml: "input.touch.map_to_output", only: true, wants: "touch", screens: true },
+        // Closing the lid takes the laptop's own screen out of the desktop and opening it brings it back.
+        "power:lid-screen-off": { toml: "events.lid_close", only: true, wants: "lid", lid: true }
     })
     // What a hot corner can do, in the shell's words; the value is what the compositor runs.
     readonly property var cornerActions: [
@@ -205,6 +229,7 @@ Singleton {
         if (root.niri) return !entry?.only
         if (!entry) return false
         root.revision
+        if (entry.wants && !root.hardware(entry.wants)) return false
         if (entry.style) return (root.schemaValues[entry.style] ?? []).length > 0
         if (entry.effect) return root.effectChoices(entry.effect, entry.slot ?? "").length > 0
         return true
@@ -292,6 +317,7 @@ Singleton {
             return effect.length > 0 ? effect : "style:" + String(Toml.get(table, entry.style.split(".")) ?? root.schema[entry.style] ?? "")
         }
         let found = Toml.get(table, entry.toml.split("."))
+        if (entry.lid) return String(found ?? "").includes("output-disable")
         if (found === undefined) found = root.schema[entry.toml]
         if (found === undefined) found = entry.device
         if (found === undefined || found === null) return spec.fallback
@@ -327,6 +353,11 @@ Singleton {
                 if (styled && entry.style) made = root.ownLine(made, entry.style, wanted.slice(6))
                 if (entry.needs) made = root.ownLine(made, entry.needs.toml, wanted.length > 0 ? entry.needs.value : undefined)
                 made = root.withEffectFiles(made)
+            } else if (entry.lid) {
+                const panel = root.builtin?.name ?? ""
+                const on = next === true && panel.length > 0
+                made = Toml.set(made, ["events", "lid_close"], on ? `umbriel msg output-disable ${panel}` : undefined)
+                made = Toml.set(made, ["events", "lid_open"], on ? `umbriel msg output-enable ${panel}` : undefined)
             } else if (spec.key === "delay" && spec.comp === "corners") {
                 const delay = Math.round(Number(next))
                 for (const corner of ["top_left", "top_right", "bottom_left", "bottom_right"]) {
@@ -439,6 +470,7 @@ Singleton {
             return [{ label: plain.label, value: "", glyph: plain.glyph }].concat(effects)
         }
         if (entry?.corner) return root.cornerActions
+        if (entry?.screens) return [{ label: "Every screen", value: "", glyph: "select_all" }].concat(root.displayChoices("screen"))
         return []
     }
     // One line of Settings' file, gone when it says what the files below (or Umbriel) already do.
@@ -1104,12 +1136,15 @@ Singleton {
     }
     Process {
         id: devices
-        command: ["grep", "-i", "^N: Name=", "/proc/bus/input/devices"]
+        command: ["sh", "-c", "grep -i '^N: Name=' /proc/bus/input/devices; [ -d /sys/module/nvidia ] && echo nvidia-driver-loaded"]
         stdout: StdioCollector {
             onStreamFinished: {
                 const names = text.toLowerCase()
                 root.hasTouchpad = names.includes("touchpad")
                 root.hasTrackpoint = names.includes("trackpoint")
+                root.hasTablet = /wacom|huion|xp-pen|tablet|stylus/.test(names)
+                root.hasTouch = /touchscreen|touch screen|goodix|elan.*touch(?!pad)/.test(names)
+                root.hasNvidia = names.includes("nvidia-driver-loaded")
             }
         }
     }
