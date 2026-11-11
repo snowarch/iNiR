@@ -101,7 +101,8 @@ compositor_umbriel_session_start() {
 }
 
 # ── Umbriel's config ──────────────────────────────────────────────────────────────────────────────────────────────
-# Puts iNiR's Umbriel config (defaults/umbriel) in ~/.config/umbriel. A file of ours the person never changed is
+# Puts iNiR's Umbriel config (defaults/umbriel: config.toml and config.d; effects/ is read from the shell's own
+# folder, never installed) in ~/.config/umbriel. A file of ours the person never changed is
 # refreshed; one they changed is kept (`.inir-sums` remembers what we wrote); config.d/90-user-extra.toml is theirs
 # and only created. A config.toml that is not iNiR's is their own setup: nothing is touched. The one the early
 # iNiR-Umbriel port wrote ("# iNiR defaults for Umbriel") no longer loads in today's Umbriel: it is moved aside
@@ -149,7 +150,7 @@ compositor_install_umbriel_config() {
         cp -f "$src/$rel" "$dest/$rel" || return 1
         new_sums+="$want $rel"$'\n'
         changed=true
-    done < <(cd "$src" && find . -type f -name '*.toml' ! -name '90-user-extra.toml' | sed 's|^\./||' | sort)
+    done < <(cd "$src" && find config.toml config.d -type f -name '*.toml' ! -name '90-user-extra.toml' | sort)
     if [[ ! -f "$dest/config.d/90-user-extra.toml" && -f "$src/config.d/90-user-extra.toml" ]]; then
         cp "$src/config.d/90-user-extra.toml" "$dest/config.d/90-user-extra.toml" || return 1
     fi
