@@ -65,7 +65,11 @@ Singleton {
     // Extra mascots are the mascot; a person's own widget says its sizes in its manifest, or keeps the size it draws.
     function defaultsOf(key: string): var { return root.byKey[root.baseKey(key)]?.defaultConfig ?? ({}) }
     function baseKey(key: string): string { return String(key).startsWith("mascotInstances.") ? "mascot" : key }
-    function sizesOf(key: string): var { return root.byKey[root.baseKey(key)]?.sizes ?? [] }
+    function sizesOf(key: string): var {
+        if (String(key).startsWith("custom."))
+            return root.customEntry(key)?.sizes ?? []
+        return root.byKey[root.baseKey(key)]?.sizes ?? []
+    }
 
     readonly property var keys: root.entries.map(entry => entry.key)
     readonly property var byKey: root.entries.reduce((all, entry) => { all[entry.key] = entry; return all }, ({}))

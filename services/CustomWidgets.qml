@@ -117,6 +117,7 @@ Singleton {
                     conditions: m.conditions || {},
                     resizableAxes: m.resizableAxes || {},
                     defaultSize: m.defaultSize || { width: 200, height: 100 },
+                    sizes: Array.isArray(m.sizes) ? m.sizes : [],
                     defaultConfig: m.defaultConfig || {},
                     valid: warnings.length === 0,
                     warnings: warnings

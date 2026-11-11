@@ -236,7 +236,7 @@ QtObject {
     function _customRows(entry: var): var {
         const widget = "custom." + entry.id
         if ((entry.options ?? []).length > 0)
-            return entry.options.map(option => root._row(widget, Object.assign({ restorable: true }, option))).concat([
+            return [root.size(widget)].concat(entry.options.map(option => root._row(widget, Object.assign({ restorable: true }, option))), [
                 root.row(widget, "restoreDefaults", "Restore defaults", "action", undefined, { button: "Restore", page: "look",
                     run: () => root.restore(widget), when: () => root.changed(widget),
                     keywords: ["reset", "default", "restore", "restaurar", "predeterminado"] })])
