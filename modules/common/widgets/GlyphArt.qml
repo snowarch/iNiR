@@ -69,9 +69,12 @@ Item {
     readonly property int readFps: 15
     property double _lastFrame: 0
 
+    // Each new frame of the glyphs: what copies them (a widget's glass) copies on these, in the frame already drawn.
+    signal stepped()
     function step(ms: real): void {
         if (root.moving) root.clock += ms / 1000 * root.pace
         if (root.animated) cells.scheduleUpdate()
+        root.stepped()
     }
     function pictureFrame(): void {
         if (!root.seen) return

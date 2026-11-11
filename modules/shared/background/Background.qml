@@ -546,20 +546,22 @@ Scope {
         // copies the layer only after a bump instead of every frame the desktop redraws.
         property int wallpaperLayerRevision: 0
         readonly property bool wallpaperLayerAnimating: bgRoot.internalShaderTransitionRequested
-        // Counts new frames of the layer while it moves by itself (glyphs in motion, a playing video or GIF), four a
-        // second: glass copies and blurs again on each. Under a frost that wide the picture changes by a level or two
-        // between glyph frames, and re-blurring every widget fifteen times a second was most of what the desktop
-        // cost; at the desktop's own pace (a clock, the music) it would be far more.
-        readonly property int wallpaperLayerFrame: layerPacer.frames
-        Timer {
-            id: layerPacer
-            property int frames: 0
-            interval: 250
-            repeat: true
-            running: glyphsLoader.item ? glyphsLoader.item.ticking
-                : !bgRoot.externalMainWallpaperActive
-                    && ((bgRoot.wallpaperIsVideo && videoWallpaper.shouldPlay) || (bgRoot.wallpaperIsGif && gifWallpaper.playing))
-            onTriggered: frames++
+        // Counts new frames of the layer while it moves by itself (glyphs in motion, a playing video or GIF), at most
+        // four a second: glass copies and blurs again on each. Under a frost that wide the picture changes by a level
+        // or two between glyph frames, and re-blurring every widget fifteen times a second was most of what the
+        // desktop cost. It counts on the picture's own frames, never on a clock of its own: a copy on a timer of its
+        // own drew two more frames of the whole desktop each time (the copy, then Qt's pass for the layers it fed).
+        property int wallpaperLayerFrame: 0
+        property double _layerFrameAt: 0
+        function layerMoved(): void {
+            const now = Date.now()
+            if (now - bgRoot._layerFrameAt < 240) return
+            bgRoot._layerFrameAt = now
+            bgRoot.wallpaperLayerFrame++
+        }
+        Connections {
+            target: glyphsLoader.item
+            function onStepped(): void { bgRoot.layerMoved() }
         }
         onWallpaperPathRawChanged: {
             bgRoot.wallpaperLayerRevision++
@@ -1709,6 +1711,7 @@ Scope {
                         animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
                     }
                     cache: false
+                    onCurrentFrameChanged: if (!glyphsLoader.item) bgRoot.layerMoved()
                     playing: visible && bgRoot.enableAnimation && !GlobalStates.screenLocked && !Appearance._gameModeActive && !Wallpapers.batteryPauseActive
                         && Wallpapers.videoMotionAllowedOn(bgRoot.screenName)
                     asynchronous: true
@@ -1761,8 +1764,11 @@ Scope {
                     // Under the glyphs the video is only read, at the glyph grid's size and pace.
                     decodeHeight: glyphsLoader.item?.readHeight ?? -1
                     decodeFps: glyphsLoader.item ? glyphsLoader.item.readFps : 0
-                    reportFrames: glyphsLoader.item !== null
-                    onFrameShown: glyphsLoader.item?.pictureFrame()
+                    reportFrames: true
+                    onFrameShown: {
+                        if (glyphsLoader.item) glyphsLoader.item.pictureFrame()
+                        else bgRoot.layerMoved()
+                    }
                     shouldPlay: bgRoot.enableAnimation && !GlobalStates.screenLocked
                         && !Appearance._gameModeActive && !Wallpapers.batteryPauseActive
                         && Wallpapers.videoMotionAllowedOn(bgRoot.screenName)
