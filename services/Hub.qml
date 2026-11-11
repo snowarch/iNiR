@@ -111,7 +111,9 @@ Singleton {
     }
     // Whether an item does something in the family that is showing it.
     function fits(item: var, family: string): bool {
-        return Array.from(item?.families ?? []).includes(family)
+        // None listed is every family (a component: the hub's check asks to leave it out).
+        const families = Array.from(item?.families ?? [])
+        return families.length === 0 || families.includes(family)
     }
 
     // What a page lists: one kind or all ("" ), a search over name, summary, tags and authors,
@@ -173,7 +175,8 @@ Singleton {
     }
     function familyNames(item: var): string {
         const names = { material: "Material", iris: "iRiS", waffle: "Waffle" }
-        return Array.from(item?.families ?? []).map(family => names[family] ?? family).join(" · ")
+        const families = Array.from(item?.families ?? [])
+        return (families.length > 0 ? families : Object.keys(names)).map(family => names[family] ?? family).join(" · ")
     }
     // Where it shows once installed, in the family that is looking.
     function whereText(item: var, family: string): string {
@@ -184,6 +187,8 @@ Singleton {
             return family === "iris" ? Translation.tr("Works in Material and Waffle") : Translation.tr("Colours the shell and your apps")
         if (item.kind === "iris-theme" || item.kind === "design")
             return family === "iris" ? Translation.tr("Redesigns iRiS") : Translation.tr("Works in iRiS")
+        if (item.kind === "component")
+            return Translation.tr("Works in Material, iRiS and Waffle")
         if (item.kind === "webapp")
             return family === "material" ? Translation.tr("Opens in the left sidebar") : Translation.tr("Works in Material")
         if (family === "iris" && surfaces.includes("island"))

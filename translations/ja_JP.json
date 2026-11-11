@@ -3485,5 +3485,6 @@
   "Touch screen": "タッチスクリーン",
   "Every screen": "すべての画面",
   "Wait for the graphics card": "グラフィックカードを待つ",
-  "Turn the tablet around": "タブレットを回転"
+  "Turn the tablet around": "タブレットを回転",
+  "Works in Material, iRiS and Waffle": "Material、iRiS、Waffle に対応"
 }
