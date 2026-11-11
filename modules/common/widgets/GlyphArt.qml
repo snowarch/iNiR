@@ -1,9 +1,11 @@
 pragma ComponentBehavior: Bound
 
-// A picture as glowing glyphs. `picture` is any item (a wallpaper, a cover, a video): it is read at one texel per
-// 7x9 glyph cell and GlyphArt.frag picks and inks each cell's glyph on the GPU, in one pass. At rest nothing runs:
-// a still picture is drawn once, a moving one once per frame it changes, and the only animation is `appear()`.
-// After winchxyz/afterglyph (MIT).
+// A picture as glowing glyphs. `picture` is any item (a wallpaper, a cover, a video), or `source` names one of the
+// built-in subjects (GlyphArt.js DEMOS) or "word". The picture is reduced to one texel per glyph cell; GlyphStats
+// reads the whole of it (background to cut, levels), GlyphCompose decides every cell, GlyphArt.frag draws them and
+// the screen over them. `settings` is every option of GlyphArt.js, as Glyphs.settings() returns them.
+// At rest nothing runs: a still picture is drawn once. It moves only with `settings.motion`, while it is seen.
+// A port of winchxyz/afterglyph (MIT) to the GPU.
 
 import QtQuick
 import "GlyphArt.js" as Glyphs
@@ -11,31 +13,59 @@ import "GlyphArt.js" as Glyphs
 Item {
     id: root
 
-    required property Item picture
+    property Item picture: null
     // The picture is only an input: never painted by itself.
     property bool hidePicture: false
-    property string lookName: "signal"
-    // Screen px per glyph pixel: 1 is a 7x9 cell.
-    property int glyphPixel: 1
-    property real glowAmount: 1
+    property string source: "picture"
+    property string word: ""
+    property var settings: Glyphs.settings(function () { return undefined })
+    // The shell's own inks for the "theme" palette: dark, middle, light, stroke.
+    property var theme: ["#3b37d6", "#7f8cff", "#e8ebff", "#63e6b4"]
     // Opaque over what is under it; off, only the glyphs and their glow are drawn.
     property bool plate: true
     property real radius: 0
-    // The "theme" look inks with this.
-    property color accent: "white"      // literal: replaced by the owner's accent
-    // 0 hides every glyph (a picture not ready yet).
+    // Off hides every glyph (a picture not ready yet).
     property bool shown: true
+    // Off, it never moves whatever the settings say (a surface that is covered).
+    property bool live: true
+    // A GlyphAtlas to share; without one it paints its own.
+    property Item atlas: null
+    property string fontFamily: "monospace"
 
-    readonly property int unit: Math.max(1, root.glyphPixel)
-    readonly property int columns: Math.max(1, Math.floor(root.width / (Glyphs.CELL_W * root.unit)))
-    readonly property int rows: Math.max(1, Math.floor(root.height / (Glyphs.CELL_H * root.unit)))
-    readonly property var make: Glyphs.look(root.lookName)
-    readonly property bool themed: root.lookName === "theme"
+    readonly property var demo: Glyphs.demo(root.source)
+    readonly property bool ownSubject: root.demo !== null || root.source === "word"
+    readonly property real cellWidth: Math.max(4, Number(root.settings.cell) || 10)
+    readonly property int columns: Math.max(1, Math.min(480, Math.round(root.width / root.cellWidth)))
+    readonly property int rows: Math.max(1, Math.min(300, Math.round(root.height / (root.cellWidth * 9 / 7))))
+    readonly property var inks: Glyphs.inks(root.settings.palette, root.theme,
+        [root.settings.c1, root.settings.c2, root.settings.c3])
+    readonly property Item sheet: root.atlas ?? ownAtlas.item
+    readonly property var set: Glyphs.charset(root.settings.charset, root.sheet?.counts)
+    readonly property real pace: root.settings.speed / 100
+
+    // What moves, and how often it needs a new frame: the shimmer re-rolls 7 times a second, the rest is smooth.
+    readonly property bool turning: root.demo !== null && root.settings.turn
+    readonly property bool smoothMotion: root.settings.rain > 0 || root.settings.glitch > 0 || root.settings.drift > 0
+        || root.settings.camera || root.turning
+    readonly property bool moving: root.live && root.visible && root.shown && root.settings.motion
+        && (root.smoothMotion || root.settings.shimmer > 0)
+    property real clock: 0
     property real grow: 1
 
-    // The picture grows in from its foot, once.
+    Timer {
+        interval: root.smoothMotion ? 66 : Math.max(66, Math.round(1000 / (7 * Math.max(1, root.settings.shimmer / 100))))
+        repeat: true
+        running: root.moving
+        onTriggered: root.clock += interval / 1000 * root.pace
+    }
+
+    // A new picture comes in the way `settings.intro` says, once.
     function appear(): void {
         growing.stop()
+        if (root.settings.intro === "off") {
+            root.grow = 1
+            return
+        }
         root.grow = 0
         growing.start()
     }
@@ -48,52 +78,118 @@ Item {
         target: root
         property: "grow"
         to: 1
-        duration: 1400
+        duration: 2600 / Math.max(0.25, root.pace)
         easing.type: Easing.OutCubic
     }
 
-    // One texel per cell: the smooth reduction is the average each cell needs, and the smallest mip is the picture's
-    // mean, which the shader exposes by. Redrawn only when the picture itself changes.
-    ShaderEffectSource {
-        id: cells
-        sourceItem: root.picture
-        hideSource: root.hidePicture
-        textureSize: Qt.size(root.columns, root.rows)
-        smooth: true
-        mipmap: true
+    Loader {
+        id: ownAtlas
+        active: root.atlas === null
+        sourceComponent: GlyphAtlas {
+            custom: root.settings.charset === "custom" ? root.settings.custom : ""
+            family: root.fontFamily
+        }
     }
 
-    // The glyphs, painted once: one row of 7x9 cells.
-    Canvas {
-        id: sheet
-        width: Glyphs.GLYPHS.length * Glyphs.CELL_W
-        height: Glyphs.CELL_H
-        onPaint: Glyphs.paintAtlas(getContext("2d"))
-        onPainted: atlasTexture.scheduleUpdate()
+    // A built-in subject, drawn at a few samples a cell.
+    Loader {
+        id: subject
+        active: root.ownSubject
+        width: Math.min(640, root.columns * 3)
+        height: Math.min(480, root.rows * 4)
+        sourceComponent: root.demo !== null ? formComponent : wordComponent
+    }
+    Component {
+        id: formComponent
+        ShaderEffect {
+            readonly property vector4d view: Qt.vector4d(root.demo?.form < 0 ? 8 : (root.demo?.form ?? 0),
+                root.turning ? root.clock * 0.5 : 0.6,
+                Math.sin(root.clock * 1.6) * (root.demo?.breath ?? 0),
+                root.width / Math.max(1, root.height))
+            fragmentShader: Qt.resolvedUrl("GlyphForms.frag.qsb")
+        }
+    }
+    Component {
+        id: wordComponent
+        GlyphWord {
+            word: root.word
+            family: root.fontFamily
+        }
+    }
+
+    // One texel per cell. Redrawn only when the picture itself changes.
+    ShaderEffectSource {
+        id: cells
+        sourceItem: root.ownSubject ? subject.item : root.picture
+        hideSource: root.ownSubject || root.hidePicture
+        textureSize: Qt.size(root.columns, root.rows)
+        smooth: true
+    }
+
+    ShaderEffect {
+        id: statsStage
+        width: 2
+        height: 1
+        blending: false
+        readonly property vector4d mode: Qt.vector4d(
+            ["auto", "none", "dark", "light"].indexOf(root.settings.subject), (root.settings.invert ? 1 : 0) + (root.source === "word" ? 0.25 : 0),
+            root.settings.cut / 100 * 0.55, root.settings.cut / 100 * 1.45)
+        readonly property var picture: cells
+        fragmentShader: Qt.resolvedUrl("GlyphStats.frag.qsb")
     }
     ShaderEffectSource {
-        id: atlasTexture
-        sourceItem: sheet
+        id: stats
+        sourceItem: statsStage
         hideSource: true
-        live: false
         smooth: false
-        textureSize: Qt.size(sheet.width, sheet.height)
+        textureSize: Qt.size(2, 1)
+    }
+
+    ShaderEffect {
+        id: composeStage
+        width: root.columns
+        height: root.rows
+        blending: false
+        readonly property vector4d grid: Qt.vector4d(root.columns, root.rows, root.set[0],
+            ["off", "two", "four"].indexOf(root.settings.mirror))
+        readonly property vector4d chars: Qt.vector4d(root.set[1], root.set[2], root.settings.strokes / 100,
+            root.settings.shimmer / 100)
+        readonly property vector4d tone: Qt.vector4d(root.inks === null ? 1 : 0, root.settings.contrast / 100,
+            root.settings.sat / 100, root.settings.invert ? 1 : 0)
+        readonly property vector4d hue: Qt.vector4d(root.settings.hue / 360, root.settings.rainbow / 100,
+            root.settings.drift / 100, root.settings.rain / 100)
+        readonly property vector4d cut: Qt.vector4d(root.settings.cut / 100 * 0.55, root.settings.cut / 100 * 1.45,
+            root.settings.outline ? 1 : 0, ["off", "grow", "scan", "type", "centre", "dissolve"].indexOf(root.settings.intro))
+        readonly property vector4d clock: Qt.vector4d(root.clock, !root.shown ? 0 : root.grow >= 1 ? 2 : root.grow,
+            root.settings.camera && root.settings.motion ? 1 + (Glyphs.cameraAt(root.clock) - 0.6) * 0.875 : 1,
+            root.width / Math.max(1, root.height))
+        readonly property color low: root.inks?.ramp[0] ?? "black"       // literal: unused with the picture's colours
+        readonly property color mid: root.inks?.ramp[1] ?? "black"
+        readonly property color high: root.inks?.ramp[2] ?? "black"
+        readonly property color accent: root.inks?.accent ?? "#c9cede"   // literal: the outline over a picture's colours
+        readonly property var picture: cells
+        readonly property var stats: stats
+        fragmentShader: Qt.resolvedUrl("GlyphCompose.frag.qsb")
+    }
+    ShaderEffectSource {
+        id: composed
+        sourceItem: composeStage
+        hideSource: true
+        smooth: true
+        mipmap: true
+        textureSize: Qt.size(root.columns, root.rows)
     }
 
     ShaderEffect {
         anchors.fill: parent
-        readonly property vector4d box: Qt.vector4d(width, height, root.radius, root.unit)
-        readonly property vector4d grid: Qt.vector4d(root.columns, root.rows, Glyphs.GLYPHS.length, root.make.paper ? 1 : 0)
-        readonly property vector4d make: Qt.vector4d(root.shown ? root.grow : 0, root.make.glow * root.glowAmount,
-            root.make.fringe, root.make.scan)
-        readonly property vector4d tone: Qt.vector4d(root.make.own, root.make.contrast, root.make.strokes,
-            root.plate || root.make.paper ? 1 : 0)
-        readonly property color low: root.themed ? Qt.darker(root.accent, 2.2) : root.make.low
-        readonly property color mid: root.themed ? root.accent : root.make.mid
-        readonly property color high: root.themed ? Qt.lighter(root.accent, 1.7) : root.make.high
-        readonly property color plate: root.make.plate
-        readonly property var picture: cells
-        readonly property var atlas: atlasTexture
+        readonly property vector4d box: Qt.vector4d(width, height, root.radius, width / root.columns)
+        readonly property vector4d grid: Qt.vector4d(root.columns, root.rows, root.settings.paper ? 1 : 0, root.plate ? 1 : 0)
+        readonly property vector4d screen: Qt.vector4d(root.settings.glow / 100, root.settings.scan / 100,
+            root.settings.grain / 100, root.settings.fringe / 100)
+        readonly property vector4d warp: Qt.vector4d(root.settings.curve / 100, root.settings.glitch / 100, root.clock, 0)
+        readonly property color back: root.settings.back
+        readonly property var cells: composed
+        readonly property var atlas: root.sheet?.texture ?? null
         fragmentShader: Qt.resolvedUrl("GlyphArt.frag.qsb")
     }
 }

@@ -1523,12 +1523,46 @@ JsonAdapter {
             property bool enableAnimatedBlur: false // Enable blur for animated wallpapers (video/gif) - has performance impact
             property int dim: 30 // 0-100 percentage (base overlay)
             property int dynamicDim: 20 // Extra dim when there are windows on the current workspace (0-100)
-            // The wallpaper (still, GIF or video) drawn as glowing glyphs.
+            // The wallpaper (still, GIF or video) drawn as glowing glyphs. Every key after `look` is an option of
+            // widgets/GlyphArt.js (percent where it says so); choosing a look writes the ones a look decides.
             property JsonObject glyphs: JsonObject {
                 property bool enable: false
-                property string look: "signal" // signal (the picture's colours), theme, phosphor, amber, blueprint, paper
-                property int size: 1 // screen px per glyph pixel, 1-4
-                property int glow: 100 // 0-200
+                property string source: "wallpaper" // wallpaper, word, or a built-in subject (iris, planet, jelly, helix, knot, heart, crystal, amphora, mushroom)
+                property string word: ""
+                property string look: "signal"
+                property string charset: "signal" // signal, ascii, dense, dots, blocks, lines, digits, binary, custom
+                property string custom: " .oO0@#"
+                property int cell: 10 // a glyph's width in px, 5-28
+                property int strokes: 100
+                property int shimmer: 100
+                property int rain: 0
+                property bool outline: true
+                property string palette: "source" // source, theme, custom, or a palette of GlyphArt.js
+                property string c1: "#3a1c8f"
+                property string c2: "#ff5fd2"
+                property string c3: "#fff3b0"
+                property string back: "#020205"
+                property int sat: 150
+                property int contrast: 100
+                property int hue: 0 // degrees
+                property int rainbow: 0
+                property int drift: 0
+                property int glow: 100
+                property int scan: 0
+                property int grain: 100
+                property int fringe: 100
+                property int curve: 0
+                property int glitch: 0
+                property bool paper: false
+                property string mirror: "off" // off, two, four
+                property string subject: "auto" // the background: auto, none, dark, light
+                property int cut: 16
+                property bool invert: false
+                property bool motion: false // off, the picture is drawn once and nothing runs
+                property string intro: "grow" // off, grow, scan, type, centre, dissolve
+                property int speed: 100
+                property bool camera: false
+                property bool turn: true
             }
             property JsonObject ripple: JsonObject {
                 property bool enable: false

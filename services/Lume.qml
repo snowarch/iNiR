@@ -37,13 +37,32 @@ Singleton {
 
     // {level, spread, color, luminance} of the wallpaper under a rect in output coordinates, null until read.
     function read(output: string, x: real, y: real, w: real, h: real): var {
-        const sample = root.readFrom(root.wallpaperOf(output), output, x, y, w, h)
+        const sample = root.glyphed(root.readFrom(root.wallpaperOf(output), output, x, y, w, h))
         // "Only the backdrop" draws it under a black dim: Qt blends in sRGB, so every channel scales by (1 - dim).
         const keep = 1 - Wallpapers.desktopDim
         if (!sample || keep >= 1) return sample
         const colour = Qt.rgba(sample.color.r * keep, sample.color.g * keep, sample.color.b * keep, 1)
         return { level: sample.level * keep, spread: sample.spread * keep, color: colour,
             luminance: ColorUtils.relativeLuminance(colour) }
+    }
+    // The wallpaper drawn as glyphs (`background.effects.glyphs`) is not the picture any more: its ground is the
+    // look's backdrop or a sheet of paper, with the picture left as ink over about half of each cell.
+    function glyphed(sample: var): var {
+        if (!Wallpapers.glyphs || !sample) return sample
+        const options = Config.options?.background?.effects?.glyphs ?? ({})
+        const own = String(options.source ?? "wallpaper") === "wallpaper"
+        const ink = own ? 0.5 : 0
+        let colour
+        if (options.paper === true) {
+            const keep = 1 - sample.level * ink
+            colour = Qt.rgba(0.93 * keep, 0.90 * keep, 0.84 * keep, 1)
+        } else {
+            const back = Qt.color(String(options.back || "#020205"))
+            colour = Qt.rgba(Math.min(1, back.r * 0.9 + sample.color.r * ink), Math.min(1, back.g * 0.9 + sample.color.g * ink),
+                Math.min(1, back.b * 0.9 + sample.color.b * ink), 1)
+        }
+        const luminance = ColorUtils.relativeLuminance(colour)
+        return { level: Math.pow(luminance, 1 / 2.2), spread: sample.spread * ink, color: colour, luminance: luminance }
     }
     // The same for a surface that shows its own image (Waffle's wallpaper). Read as the desktop scales it
     // (Wallpapers.fillMode): bars are black, span reads this output's slice of the whole canvas.
