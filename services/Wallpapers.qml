@@ -490,6 +490,8 @@ Singleton {
     // A live wallpaper is decoded no larger than it is drawn: a 4K file behind a 1080p output, or
     // under blurred glass, plays from a cached copy at that height. Copies for glass-sized
     // consumers also drop to 30 fps: each of their frames redraws the whole chassis window.
+    // A reader that samples it at its own pace (glyphs, 15 a second) asks for that rate: every frame
+    // decoded beyond it was a frame uploaded and a window redrawn for nothing.
     readonly property string _videoPlaybackDir: {
         const xdgCache = Quickshell.env("XDG_CACHE_HOME") || (Quickshell.env("HOME") + "/.cache")
         return xdgCache + "/quickshell/video_playback"
@@ -499,16 +501,17 @@ Singleton {
     property var videoPlaybackCopies: ({})
     property var _videoPlaybackQueue: []
 
-    function videoPlaybackPath(path: string, height: int): string {
+    function videoPlaybackPath(path: string, height: int, fps = 0): string {
         const clean = FileUtils.trimFileProtocol(String(path ?? ""))
         if (!clean || !root.isVideoFile(clean) || height <= 0) return clean
         const tier = root._videoPlaybackHeights.find(h => h >= height) ?? 0
         if (!tier) return clean
-        const key = clean + "@" + tier
+        const rate = fps > 0 ? fps : tier <= 540 ? 30 : 0
+        const key = clean + "@" + tier + "@" + rate
         const state = root.videoPlaybackCopies[key]
         if (state === undefined) {
             // Recording the request writes videoPlaybackCopies, which the calling binding just read.
-            Qt.callLater(root._requestVideoPlaybackCopy, clean, tier)
+            Qt.callLater(root._requestVideoPlaybackCopy, clean, tier, rate)
             return ""
         }
         if (state === "") return ""
@@ -522,13 +525,12 @@ Singleton {
         root.videoPlaybackCopies = copy
     }
 
-    function _requestVideoPlaybackCopy(path: string, tier: int): void {
-        const key = path + "@" + tier
+    function _requestVideoPlaybackCopy(path: string, tier: int, fps: int): void {
+        const key = path + "@" + tier + "@" + fps
         if (root.videoPlaybackCopies[key] !== undefined) return
         root._setVideoPlaybackState(key, "")
-        root._videoPlaybackQueue.push({ key: key, path: path, tier: tier,
-            fps: tier <= 540 ? 30 : 0,
-            output: root._videoPlaybackDir + "/" + MD5.hash(path) + "-" + tier + (tier <= 540 ? "-30" : "") + ".mp4", check: true })
+        root._videoPlaybackQueue.push({ key: key, path: path, tier: tier, fps: fps,
+            output: root._videoPlaybackDir + "/" + MD5.hash(path) + "-" + tier + (fps > 0 ? "-" + fps : "") + ".mp4", check: true })
         root._runVideoPlaybackQueue()
     }
 

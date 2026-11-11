@@ -285,6 +285,37 @@ function _onePlace(obj) {
     return changed;
 }
 
+// A Hub widget's options were written into every screen's record instead of its base (`background.widgets.custom.<id>`),
+// where its Island and Waffle faces read them: those faces never saw a change (11-11). A value every screen holds alike
+// was set for all of them and goes to the base; where and how big it stands, and a value that differs, stay per screen.
+const _perScreen = ["x", "y", "freeWidth", "freeHeight", "sizeClass", "widgetScale", "placementStrategy", "enable", "locked"];
+function _customToBase(obj) {
+    const widgets = _get(obj, "background.widgets");
+    if (!_isObject(widgets) || !Array.isArray(widgets.outputOverrides)) return false;
+    const records = widgets.outputOverrides.map(record => record?.widgets).filter(_isObject);
+    const ids = new Set();
+    for (const record of records)
+        for (const key of Object.keys(record)) if (key.startsWith("custom.") && _isObject(record[key])) ids.add(key);
+    let changed = false;
+    for (const id of ids) {
+        const holders = records.filter(record => _isObject(record[id])).map(record => record[id]);
+        const keys = new Set();
+        for (const entry of holders) for (const key of Object.keys(entry)) keys.add(key);
+        for (const key of keys) {
+            if (_perScreen.includes(key)) continue;
+            const seen = holders.map(entry => JSON.stringify(entry[key]));
+            if (seen.includes(undefined) || seen.some(value => value !== seen[0])) continue;
+            if (!_isObject(widgets.custom)) widgets.custom = {};
+            const name = id.slice("custom.".length);
+            if (!_isObject(widgets.custom[name])) widgets.custom[name] = {};
+            _set(widgets.custom[name], key, holders[0][key]);
+            for (const entry of holders) delete entry[key];
+            changed = true;
+        }
+    }
+    return changed;
+}
+
 // Choices withdrawn: a file still holding one takes its successor. [path, gone values, successor]
 // iRiS Settings' Pocket and Drawer layouts went (his 11-07, "no son óptimos").
 const withdrawn = [
@@ -325,6 +356,7 @@ function migrate(obj) {
     changed = _widgetSizes(obj, fromV2) || changed;
     changed = _onePlace(obj) || changed;
     changed = _withdrawn(obj) || changed;
+    changed = _customToBase(obj) || changed;
     for (const [from, to] of moves) {
         const value = _get(obj, from);
         if (value === undefined) continue;

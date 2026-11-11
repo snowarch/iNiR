@@ -59,23 +59,38 @@ Item {
         ? (0.7 * Math.sin(root.clock * 0.7) + 0.3 * Math.sin(root.clock * 1.9 + 1)) * Math.PI / 180 : 0
     property real clock: 0
     property real grow: 1
-    // Counts every new drawing while it moves: what copies it (a widget's frosted glass) copies again on each.
-    property int frame: 0
     // It is drawing new frames by itself (motion, a video or GIF read, the intro).
     readonly property bool ticking: ticker.running
+    // The picture announces its own frames (a playing video calls `pictureFrame()` on each): the glyphs then move on
+    // those, one clock for both. Two clocks at fifteen a second redrew the desktop up to thirty times a second.
+    property bool framed: false
+    // What a reader of `picture` should hand it: a grid's worth of rows and the glyphs' pace, nothing finer.
+    readonly property int readHeight: root.rows * 4
+    readonly property int readFps: 15
+    property double _lastFrame: 0
+
+    function step(ms: real): void {
+        if (root.moving) root.clock += ms / 1000 * root.pace
+        if (root.animated) cells.scheduleUpdate()
+    }
+    function pictureFrame(): void {
+        if (!root.seen) return
+        const now = Date.now()
+        root.step(Math.min(250, now - root._lastFrame))
+        root._lastFrame = now
+    }
 
     Timer {
         id: ticker
-        interval: root.smoothMotion ? 66 : Math.max(66, Math.round(1000 / (7 * Math.max(1, root.settings.shimmer / 100))))
+        interval: root.smoothMotion || root.animated ? 66 : Math.max(66, Math.round(1000 / (7 * Math.max(1, root.settings.shimmer / 100))))
         repeat: true
         running: root.moving || (root.animated && root.seen) || growing.running
         onTriggered: {
-            if (root.moving) root.clock += interval / 1000 * root.pace
-            if (root.animated) cells.scheduleUpdate()
-            root.frame++
+            // While the picture's frames drive it, this only stands in when they stop coming.
+            if (root.framed && Date.now() - root._lastFrame < 150) return
+            root.step(interval)
         }
     }
-    onSettingsChanged: root.frame++
 
     // A new picture comes in the way `settings.intro` says, once.
     function appear(): void {

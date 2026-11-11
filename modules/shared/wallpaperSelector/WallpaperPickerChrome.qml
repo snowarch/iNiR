@@ -222,6 +222,14 @@ Item {
             }
         }
 
+        WallpaperPickerChip {
+            slanted: root.slanted
+            icon: "grid_on"
+            active: Wallpapers.glyphs
+            onClicked: Config.setNestedValue("background.effects.glyphs.enable", !Wallpapers.glyphs)
+            StyledToolTip { text: Translation.tr("Draw the wallpaper as glyphs") }
+        }
+
         Item { width: 12; height: 1 }
 
         Repeater {

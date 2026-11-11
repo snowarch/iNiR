@@ -20,6 +20,8 @@ Loader {
     // battery pause, not behind a fullscreen or covering window), and nowhere else.
     property string output: ""
     property bool live: true
+    // The picture tells each new frame through the item's `pictureFrame()` (a playing video).
+    property bool framed: false
     readonly property bool seen: root.live && (Config.options?.background?.enableAnimation ?? true)
         && !GlobalStates.screenLocked && !Appearance._gameModeActive && !Wallpapers.batteryPauseActive
         && Wallpapers.videoMotionAllowedOn(root.output)
@@ -45,6 +47,7 @@ Loader {
         // widgets far more often than the glyphs change, so their last frame is kept.
         animated: Wallpapers.isVideoFile(root.path) || /\.(gif|apng)$/i.test(root.path)
         cached: true
+        framed: root.framed
 
         readonly property string subject: art.source + root.path + art.word
         onSubjectChanged: if (Appearance.animationsEnabled) art.appear()

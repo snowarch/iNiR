@@ -1316,17 +1316,24 @@ Singleton {
             && active.some(workspace => workspace.id === window.workspace_id))
     }
 
-    // True when the tiled columns of the output's active workspace span its width,
-    // so only gaps of the wallpaper remain visible.
+    // True when the output's active workspace hides its wallpaper: tiled columns that span its width, or one floating
+    // window over nearly all of it; only gaps of the wallpaper remain visible.
     function activeWorkspaceCovers(outputName: string): bool {
         const workspace = Object.values(root.workspaces ?? {}).find(entry => entry?.is_active && entry.output === outputName)
         const width = Number(root.outputs?.[outputName]?.logical?.width ?? 0)
+        const height = Number(root.outputs?.[outputName]?.logical?.height ?? 0)
         if (!workspace || width <= 0 || !Array.isArray(root.windows)) return false
         const columns = {}
         for (const window of root.windows) {
-            const pos = window?.layout?.pos_in_scrolling_layout
-            if (window?.workspace_id !== workspace.id || window.is_floating || window.is_minimized || !pos) continue
-            columns[pos[0]] = Math.max(columns[pos[0]] ?? 0, Number(window.layout?.tile_size?.[0] ?? 0))
+            if (window?.workspace_id !== workspace.id || window.is_minimized) continue
+            const size = window.layout?.tile_size ?? [0, 0]
+            if (window.is_floating) {
+                if (height > 0 && Number(size[0]) >= width * 0.95 && Number(size[1]) >= height * 0.9) return true
+                continue
+            }
+            const pos = window.layout?.pos_in_scrolling_layout
+            if (!pos) continue
+            columns[pos[0]] = Math.max(columns[pos[0]] ?? 0, Number(size[0] ?? 0))
         }
         return Object.values(columns).reduce((sum, column) => sum + column, 0) >= width * 0.95
     }

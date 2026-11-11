@@ -677,6 +677,16 @@ MouseArea {
 
                         IconToolbarButton {
                             implicitWidth: height
+                            toggled: Wallpapers.glyphs
+                            onClicked: Config.setNestedValue("background.effects.glyphs.enable", !Wallpapers.glyphs)
+                            text: "grid_on"
+                            StyledToolTip {
+                                text: Translation.tr("Draw the wallpaper as glyphs")
+                            }
+                        }
+
+                        IconToolbarButton {
+                            implicitWidth: height
                             onClicked: {
                                 root.useDarkMode = !root.useDarkMode
                                 MaterialThemeLoader.setDarkMode(root.useDarkMode)

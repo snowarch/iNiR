@@ -24,9 +24,14 @@ Item {
     property int decodeHeight: -1
     readonly property int _decodeHeight: root.decodeHeight >= 0 ? root.decodeHeight
         : Math.ceil(root.height * (root.Window.window?.devicePixelRatio ?? 1))
+    // Decoded no faster than this; 0 keeps the copy's own rate.
+    property int decodeFps: 0
+    // On, `frameShown()` comes with every frame the shown slot gets, for a reader that keeps pace with the video.
+    property bool reportFrames: false
+    signal frameShown()
     // An auto-sized player waits for its size instead of opening the full file first.
     readonly property string playbackSource: !root.source || (root.decodeHeight < 0 && root.height <= 0) ? ""
-        : Wallpapers.videoPlaybackPath(root.source, root._decodeHeight)
+        : Wallpapers.videoPlaybackPath(root.source, root._decodeHeight, root.decodeFps)
     property int fillMode: VideoOutput.PreserveAspectCrop
     property bool shouldPlay: true
     property bool enableTransitions: true
@@ -250,6 +255,12 @@ Item {
             if (size.width > 0 && size.height > 0)
                 root._handleFrame(1, playerB)
         }
+    }
+
+    Connections {
+        target: root.activeSlot === 0 ? outputA.videoSink : outputB.videoSink
+        enabled: root.reportFrames
+        function onVideoFrameChanged(): void { root.frameShown() }
     }
 
     // No audioOutput is assigned, so wallpapers stay silent.

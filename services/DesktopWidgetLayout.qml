@@ -396,7 +396,12 @@ Singleton {
             wrote = true
             // A key the schema doesn't declare (iris.face, iris.tile.wifi...) has no base to live in: the write was dropped
             // and its switch did nothing. Those go to every screen's record, where the widget reads them first.
+            // A Hub widget's base (`background.widgets.custom.<id>`) holds any key: its options live there, where
+            // every face reads them (the Island's and Waffle's have no screen); copied per screen, those faces never
+            // saw a change.
             const declared = key => {
+                if (widget.startsWith("custom."))
+                    return true
                 let node = Config.options?.background?.widgets?.[widget]
                 const parts = String(key).split(".")
                 for (let i = 0; i < parts.length; ++i) {

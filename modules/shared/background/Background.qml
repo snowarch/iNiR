@@ -546,17 +546,19 @@ Scope {
         // copies the layer only after a bump instead of every frame the desktop redraws.
         property int wallpaperLayerRevision: 0
         readonly property bool wallpaperLayerAnimating: bgRoot.internalShaderTransitionRequested
-        // Counts the layer's own new frames while it moves by itself: each frame the glyphs draw, or fifteen a second
-        // of a playing video or GIF. Glass copies again on each, so it stays live at that pace and never at the
-        // desktop's (a clock or the music redraw it far more often than the wallpaper changes).
-        readonly property int wallpaperLayerFrame: glyphsLoader.item ? glyphsLoader.item.frame : layerPacer.frames
+        // Counts new frames of the layer while it moves by itself (glyphs in motion, a playing video or GIF), four a
+        // second: glass copies and blurs again on each. Under a frost that wide the picture changes by a level or two
+        // between glyph frames, and re-blurring every widget fifteen times a second was most of what the desktop
+        // cost; at the desktop's own pace (a clock, the music) it would be far more.
+        readonly property int wallpaperLayerFrame: layerPacer.frames
         Timer {
             id: layerPacer
             property int frames: 0
-            interval: 66
+            interval: 250
             repeat: true
-            running: !glyphsLoader.item && !bgRoot.externalMainWallpaperActive
-                && ((bgRoot.wallpaperIsVideo && videoWallpaper.shouldPlay) || (bgRoot.wallpaperIsGif && gifWallpaper.playing))
+            running: glyphsLoader.item ? glyphsLoader.item.ticking
+                : !bgRoot.externalMainWallpaperActive
+                    && ((bgRoot.wallpaperIsVideo && videoWallpaper.shouldPlay) || (bgRoot.wallpaperIsGif && gifWallpaper.playing))
             onTriggered: frames++
         }
         onWallpaperPathRawChanged: {
@@ -1756,11 +1758,18 @@ Scope {
                     fillMode: Wallpapers.videoFillFor(bgRoot.fillMode)
                     enableTransitions: Config.options?.background?.transition?.enable ?? true
                     transitionBaseDuration: Config.options?.background?.transition?.duration ?? 800
+                    // Under the glyphs the video is only read, at the glyph grid's size and pace.
+                    decodeHeight: glyphsLoader.item?.readHeight ?? -1
+                    decodeFps: glyphsLoader.item ? glyphsLoader.item.readFps : 0
+                    reportFrames: glyphsLoader.item !== null
+                    onFrameShown: glyphsLoader.item?.pictureFrame()
                     shouldPlay: bgRoot.enableAnimation && !GlobalStates.screenLocked
                         && !Appearance._gameModeActive && !Wallpapers.batteryPauseActive
                         && Wallpapers.videoMotionAllowedOn(bgRoot.screenName)
                         && bgRoot._familyOwnsScreen
                         && visible
+                        // Glyphs drawing a word or a subject of their own never read it.
+                        && !(glyphsLoader.item?.ownSubject ?? false)
 
                     layer.enabled: visible && Appearance.effectsEnabled
                         && (bgRoot.effectsOptions.enableAnimatedBlur ?? false)
@@ -1800,6 +1809,7 @@ Scope {
                 picture: bgRoot.glyphsActive ? (textureLoader.item ?? wallpaperContainer) : null
                 path: bgRoot.wallpaperPathRaw
                 output: bgRoot.monitorName
+                framed: bgRoot.wallpaperIsVideo && videoWallpaper.shouldPlay && textureLoader.item === null
                 onItemChanged: bgRoot.wallpaperLayerRevision++
             }
 
