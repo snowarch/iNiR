@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **iRiS Settings follow your compositor**: under Niri they show what Niri does; under Umbriel they get their own pages: layouts drawn as pictures, tabs, title bars, compositor blur, effects you press on a drawn desk, hot corners, HDR and colour depth. On a display, drag your screens to where they stand and pick a scale from miniatures of your own screen; a display change can be kept or undone within 15 seconds ([Compositors](docs/COMPOSITORS.md), iRiS 2.33.66 from the Hub).
+- **Do Not Disturb shows on the Island**: a small moon rests on the iRiS Island while Do Not Disturb is on, in every layout, so nobody spends days without notifications unaware (iRiS 2.33.75 from the Hub).
+- **Workspaces and window width per screen on Umbriel**: **iRiS Settings › Umbriel › Displays › Workspaces** draws each screen's workspaces: press how many it keeps, as needed or fixed, stacked or side by side, looping or not; new windows open at the width you pick from drawn screens, for all screens or one. Displays also gets direct scanout, the curve ordinary colours follow with HDR on, and sharp older apps on a scaled screen (iRiS 2.33.75 from the Hub).
 
 ### Changed
 - **One place for your compositor in iRiS Settings**: screens, layout, windows, glass and effects, movement, keyboard and mouse now sit together in one group of the sidebar named for the compositor you run (Niri or Umbriel), each on its own page, instead of spread across Windows, Display and Keyboard & Mouse. Nothing changes value; a page shows only what your compositor and your machine can do (iRiS 2.33.74 from the Hub).

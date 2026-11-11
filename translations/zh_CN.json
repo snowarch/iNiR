@@ -3289,5 +3289,6 @@
   "Play something and it shows here.": "播放点什么，它会显示在这里。",
   "Shown around workspaces when Niri's overview is open.": "Niri 概览打开时显示在工作区周围。",
   "Display & Input": "显示与输入",
-  "Niri config": "Niri 配置"
+  "Niri config": "Niri 配置",
+  "Where the session starts, new windows open first and one-screen panels appear.": "会话开始、新窗口最先打开以及单屏面板出现的位置。"
 }

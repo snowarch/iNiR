@@ -3289,5 +3289,6 @@
   "Play something and it shows here.": "Arlaannik tusarnaartitsigit, maani takuneqassaaq.",
   "Shown around workspaces when Niri's overview is open.": "Niri-ip overview-ia ammasimatillugu suliffiit eqqaanni takutinneqartarpoq.",
   "Display & Input": "Skærmi & Isertitsineq",
-  "Niri config": "Niri config"
+  "Niri config": "Niri config",
+  "Where the session starts, new windows open first and one-screen panels appear.": "Tassani sessionip aallartiffia, igalaat nutaat siullermik ammartarput paneelillu qarasaasiamut ataatsimut tulluartut takkuttarput."
 }

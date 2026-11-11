@@ -3289,5 +3289,6 @@
   "Play something and it shows here.": "무언가 재생하면 여기에 표시됩니다.",
   "Shown around workspaces when Niri's overview is open.": "Niri 개요가 열리면 작업 공간 주변에 표시됩니다.",
   "Display & Input": "디스플레이 및 입력",
-  "Niri config": "Niri 설정"
+  "Niri config": "Niri 설정",
+  "Where the session starts, new windows open first and one-screen panels appear.": "세션이 시작되고, 새 창이 먼저 열리고, 단일 화면 패널이 나타나는 곳."
 }

@@ -3289,5 +3289,6 @@
   "Play something and it shows here.": "Увімкніть щось — воно з’явиться тут.",
   "Shown around workspaces when Niri's overview is open.": "Показується навколо робочих просторів, коли відкрито огляд Niri.",
   "Display & Input": "Екран і введення",
-  "Niri config": "Конфігурація Niri"
+  "Niri config": "Конфігурація Niri",
+  "Where the session starts, new windows open first and one-screen panels appear.": "Де починається сеанс, першими відкриваються нові вікна й з'являються панелі одного екрана."
 }

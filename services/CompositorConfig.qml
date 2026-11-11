@@ -157,7 +157,9 @@ Singleton {
         "input:cursor.hide-after": { toml: "input.cursor.hide_timeout_ms", only: true },
         "input:focus.hover-raises": { toml: "input.focus.hover_raises", only: true },
         "input:focus-on-activate": { toml: "general.focus_on_activate", only: true },
-        "overview:wallpaper": { toml: "overview.workspace_wallpaper", only: true }
+        "overview:wallpaper": { toml: "overview.workspace_wallpaper", only: true },
+        "layout:new-width": { toml: "layout.scrolling.default_extent_fraction", only: true },
+        "apps:x11-native": { toml: "general.xwayland_native_resolution", only: true }
     })
     // What a hot corner can do, in the shell's words; the value is what the compositor runs.
     readonly property var cornerActions: [
@@ -680,7 +682,12 @@ Singleton {
             hdr_supported: (colour?.supported_transfer_functions ?? []).length > 0, hdr_mode: String(colour?.hdr_mode ?? config.hdr ?? "off"), hdr_active: out.hdr_active === true,
             sdr_white: Number(colour?.sdr_white ?? 203), bit_depth: Number(colour?.bit_depth ?? 8), deep_colour: (colour?.supported_transfer_functions ?? []).length > 0 || Number(colour?.bit_depth ?? 8) > 8,
             tearing: config.tearing === true || tearing?.requested === true, main: config.focus_at_startup === true,
-            scanout: out.direct_scanout?.active === true, workspace_axis: String(config.workspace_axis ?? "vertical")
+            scanout: out.direct_scanout?.active === true, workspace_axis: String(config.workspace_axis ?? "vertical"),
+            // A list of names is the person's own inventory: shown as it is, never replaced by a count.
+            workspaces: Array.isArray(config.workspaces) ? config.workspaces.map(String) : Number(config.workspaces) > 0 ? Math.round(Number(config.workspaces)) : "dynamic",
+            min_workspaces: Math.max(1, Math.round(Number(config.min_workspaces ?? 1))), cyclic: config.cyclic_workspaces === true,
+            direct_scanout: config.direct_scanout !== false, sdr_transfer: String(config.sdr_transfer ?? "gamma22"),
+            new_width: Number(config.layout?.scrolling?.default_extent_fraction ?? 0)
         }
     }
     function outputConfig(out: var): var {
@@ -750,7 +757,9 @@ Singleton {
         if (key === "hdr" || key === "sdr-white") return out.hdr_supported === true
         if (key === "bit-depth") return out.deep_colour === true
         if (key === "limited-range") return String(out.name).startsWith("HDMI")
-        return ["tearing", "main", "workspace-axis"].includes(key)
+        if (key === "sdr-transfer") return out.hdr_supported === true
+        if (key === "workspaces") return !Array.isArray(out.workspaces)
+        return ["tearing", "main", "workspace-axis", "direct-scanout", "new-width"].includes(key)
     }
     function modeOf(output: var): string {
         return output ? `${output.current_resolution}@${output.current_rate_string}` : ""
@@ -802,6 +811,12 @@ Singleton {
         if (key === "main") return out.main === true
         if (key === "workspace-axis") return String(out.workspace_axis ?? "vertical")
         if (key === "limited-range") return root.rangeMarked().includes(out.configName)
+        if (key === "workspaces") return Array.isArray(out.workspaces) ? out.workspaces.length : out.workspaces ?? "dynamic"
+        if (key === "min-workspaces") return Number(out.min_workspaces ?? 1)
+        if (key === "cyclic") return out.cyclic === true
+        if (key === "direct-scanout") return out.direct_scanout !== false
+        if (key === "sdr-transfer") return String(out.sdr_transfer ?? "gamma22")
+        if (key === "new-width") return Number(out.new_width ?? 0)
         return ""
     }
     // Where a screen sits, read against the first other screen: the side it touches, in logical pixels.
@@ -850,6 +865,7 @@ Singleton {
         if (key === "hdr") return [{ label: "Off", value: "off" }, { label: "When asked", value: "auto" }, { label: "Fullscreen", value: "fullscreen" }, { label: "Always", value: "on" }]
         if (key === "bit-depth") return [{ label: "8 bit", value: 8 }, { label: "10 bit", value: 10 }]
         if (key === "workspace-axis") return [{ label: "Stacked", value: "vertical", glyph: "swap_vert" }, { label: "Side by side", value: "horizontal", glyph: "swap_horiz" }]
+        if (key === "sdr-transfer") return [{ label: "Gamma 2.2", value: "gamma22" }, { label: "sRGB", value: "srgb" }]
         return []
     }
     function applyDisplay(key: string, next: var): void {
@@ -881,13 +897,23 @@ Singleton {
             return
         }
         if (root.umbriel) {
-            const names = ({ on: "enabled", vrr: "vrr", hdr: "hdr", "sdr-white": "sdr_white", "bit-depth": "bit_depth", main: "focus_at_startup", "workspace-axis": "workspace_axis" })
+            const names = ({ on: "enabled", vrr: "vrr", hdr: "hdr", "sdr-white": "sdr_white", "bit-depth": "bit_depth", main: "focus_at_startup", "workspace-axis": "workspace_axis",
+                workspaces: "workspaces", "min-workspaces": "min_workspaces", cyclic: "cyclic_workspaces", "direct-scanout": "direct_scanout", "sdr-transfer": "sdr_transfer" })
+            // How wide a new window opens on this screen: its own line, or none and it follows Layout.
+            if (setting === "new-width") {
+                const share = Math.max(0, Math.min(1, Number(next)))
+                root.outputs = root.outputs.map(entry => entry.name === out.name ? Object.assign({}, entry, { new_width: share }) : entry)
+                root.writeOwn(Toml.set(root.own, ["output", out.configName, "layout", "scrolling", "default_extent_fraction"], share >= 0.1 ? share : undefined))
+                return
+            }
             const path = ["output", out.configName, names[setting] ?? setting]
             // A value as the row says it, in the file's own words.
             const inFile = value => {
                 if (setting === "scale" || setting === "sdr-white") return Number(value)
                 if (setting === "bit-depth") return Math.round(Number(value))
-                if (["on", "tearing", "main"].includes(setting)) return value === true || value === "true"
+                if (["on", "tearing", "main", "cyclic", "direct-scanout"].includes(setting)) return value === true || value === "true"
+                if (setting === "workspaces") return Number(value) > 0 ? Math.round(Number(value)) : "dynamic"
+                if (setting === "min-workspaces") return Math.max(1, Math.round(Number(value)))
                 if (setting === "vrr") return ({ on: "always", "on-demand": "fullscreen" })[value] ?? "disabled"
                 return value
             }
@@ -896,6 +922,11 @@ Singleton {
             if (setting === "on" && written === false && root.activeOutputs.length < 2) return
             const before = Toml.get(root.own, path)
             let made = Toml.set(root.own, path, written)
+            // A fixed count has no floor (Umbriel refuses both together); the floor comes back with "as needed".
+            if (setting === "workspaces" && written !== "dynamic") made = Toml.set(made, ["output", out.configName, "min_workspaces"], undefined)
+            if (setting === "min-workspaces") made = Toml.set(made, ["output", out.configName, "workspaces"], undefined)
+            // Games and older apps (X11) ask which screen is the main one: the same answer.
+            if (setting === "main") made = Toml.set(made, ["general", "xwayland_primary_output"], written === true ? out.name : undefined)
             // One main screen: choosing it takes the mark from the others.
             if (setting === "main" && written === true) for (const other of root.outputs) if (other.name !== out.name) made = Toml.set(made, ["output", other.configName, "focus_at_startup"], undefined)
             // The shell's one-screen panels (the wallpaper gallery and its kin) open on the same main screen.
@@ -908,7 +939,9 @@ Singleton {
             }
             // The row shows the new value now; the compositor's own answer replaces it when it comes.
             const shown = ({ vrr: { vrr_mode: wanted }, tearing: { tearing: written }, main: { main: written }, "sdr-white": { sdr_white: written },
-                "workspace-axis": { workspace_axis: wanted }, hdr: { hdr_mode: wanted }, "bit-depth": { bit_depth: written }, scale: { scale: written }, transform: { transform: wanted } })[setting]
+                "workspace-axis": { workspace_axis: wanted }, workspaces: written === "dynamic" ? { workspaces: written } : { workspaces: written, min_workspaces: 1 },
+                "min-workspaces": { min_workspaces: written, workspaces: "dynamic" }, cyclic: { cyclic: written },
+                "direct-scanout": { direct_scanout: written }, "sdr-transfer": { sdr_transfer: wanted }, hdr: { hdr_mode: wanted }, "bit-depth": { bit_depth: written }, scale: { scale: written }, transform: { transform: wanted } })[setting]
             if (shown) root.outputs = root.outputs.map(entry => entry.name === out.name ? Object.assign({}, entry, shown) : entry)
             root.writeOwn(made)
             if (!root.pending) root.tidyLater(path)

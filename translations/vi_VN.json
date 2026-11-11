@@ -3289,5 +3289,6 @@
   "Play something and it shows here.": "Phát gì đó và nó sẽ hiện ở đây.",
   "Shown around workspaces when Niri's overview is open.": "Hiện quanh các không gian làm việc khi màn tổng quan của Niri đang mở.",
   "Display & Input": "Màn hình và nhập liệu",
-  "Niri config": "Cấu hình Niri"
+  "Niri config": "Cấu hình Niri",
+  "Where the session starts, new windows open first and one-screen panels appear.": "Nơi phiên bắt đầu, cửa sổ mới mở trước và các bảng một màn hình xuất hiện."
 }

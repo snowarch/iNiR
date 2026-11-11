@@ -3289,5 +3289,6 @@
   "Play something and it shows here.": "Bir şey çal, burada görünsün.",
   "Shown around workspaces when Niri's overview is open.": "Niri'nin genel bakışı açıkken çalışma alanlarının çevresinde gösterilir.",
   "Display & Input": "Ekran ve Giriş",
-  "Niri config": "Niri yapılandırması"
+  "Niri config": "Niri yapılandırması",
+  "Where the session starts, new windows open first and one-screen panels appear.": "Oturumun başladığı, yeni pencerelerin ilk açıldığı ve tek ekranlık panellerin göründüğü yer."
 }

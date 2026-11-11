@@ -3289,5 +3289,6 @@
   "Play something and it shows here.": "Play something and it shows here.",
   "Shown around workspaces when Niri's overview is open.": "Shown around workspaces when Niri's overview is open.",
   "Display & Input": "Display & Input",
-  "Niri config": "Niri config"
+  "Niri config": "Niri config",
+  "Where the session starts, new windows open first and one-screen panels appear.": "Where the session starts, new windows open first and one-screen panels appear."
 }

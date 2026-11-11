@@ -3289,5 +3289,6 @@
   "Play something and it shows here.": "Riproduci qualcosa e appare qui.",
   "Shown around workspaces when Niri's overview is open.": "Mostrato attorno agli spazi di lavoro quando la panoramica di Niri è aperta.",
   "Display & Input": "Schermo e input",
-  "Niri config": "Configurazione di Niri"
+  "Niri config": "Configurazione di Niri",
+  "Where the session starts, new windows open first and one-screen panels appear.": "Dove inizia la sessione, si aprono prima le nuove finestre e appaiono i pannelli di un solo schermo."
 }

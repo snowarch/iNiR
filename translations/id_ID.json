@@ -3289,5 +3289,6 @@
   "Play something and it shows here.": "Putar sesuatu dan akan tampil di sini.",
   "Shown around workspaces when Niri's overview is open.": "Ditampilkan di sekitar ruang kerja saat ikhtisar Niri terbuka.",
   "Display & Input": "Layar & Input",
-  "Niri config": "Konfigurasi Niri"
+  "Niri config": "Konfigurasi Niri",
+  "Where the session starts, new windows open first and one-screen panels appear.": "Tempat sesi dimulai, jendela baru terbuka lebih dulu, dan panel satu layar muncul."
 }
