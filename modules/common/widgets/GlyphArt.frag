@@ -14,7 +14,7 @@ layout(std140, binding = 0) uniform buf {
     vec4 grid;
     // x: glow, y: scanlines, z: grain, w: lens fringe.
     vec4 screen;
-    // x: screen curve, y: glitch, z: seconds.
+    // x: screen curve, y: glitch, z: seconds, w: sway (radians).
     vec4 warp;
     vec4 back;
 } u;
@@ -50,6 +50,14 @@ void main() {
     float k = u.warp.x * 0.42;
     vec2 uv = c * (1.0 + k * r2) / (1.0 + k * 0.5) * 0.5 + 0.5;
     bool inside = uv.x >= 0.0 && uv.x < 1.0 && uv.y >= 0.0 && uv.y < 1.0;
+
+    if (u.warp.w != 0.0) {
+        // The whole sheet leans a little about a point just above its middle, drawn slightly closer so no edge shows.
+        vec2 p = (uv - vec2(0.5, 0.48)) * u.box.xy;
+        float sn = sin(u.warp.w), cs = cos(u.warp.w);
+        p = vec2(cs * p.x - sn * p.y, sn * p.x + cs * p.y) / (1.026 + 0.006 * sin(u.warp.z * 0.5));
+        uv = p / u.box.xy + vec2(0.5, 0.48);
+    }
 
     if (u.warp.y > 0.0) {
         float band = floor(uv.y * 26.0), tick = floor(u.warp.z * 9.0);

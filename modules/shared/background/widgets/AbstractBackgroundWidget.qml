@@ -691,6 +691,12 @@ AbstractWidget {
         updates["palette.tertiary"] = "tertiary"
         updates["palette.signal"] = "signal"
         updates["palette.surface"] = "surface"
+        // A person's widget: every option of its manifest too.
+        const custom = DesktopWidgetRegistry.customEntry(root.configEntryName)
+        for (const key in custom?.configKeys ?? {})
+            if (custom.configKeys[key].default !== undefined) updates[key] = custom.configKeys[key].default
+        for (const option of custom?.options ?? [])
+            if (option.key && option.default !== undefined && !option.shell) updates[option.key] = option.default
         Object.assign(updates, { sizeClass: root.sizes[0] ?? "", freeWidth: 0, freeHeight: 0 })
         Object.assign(updates, root.look.resetValues(root))
         root._setOutputValues(updates);

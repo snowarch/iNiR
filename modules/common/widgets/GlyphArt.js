@@ -261,12 +261,14 @@ var OPTIONS = [
     { key: "cut",      kind: "range", fallback: 16, min: 3, max: 60, step: 1, unit: "%", group: "Subject", label: "Cut strength" },
     { key: "invert",   kind: "switch", fallback: false, group: "Subject", label: "Swap light and dark" },
 
-    { key: "motion",   kind: "switch", fallback: false, group: "Motion", label: "Keep it moving" },
+    { key: "motion",   kind: "switch", fallback: true, group: "Motion", label: "Keep it moving" },
     { key: "intro",    kind: "choice", fallback: "grow", group: "Motion", label: "A new picture",
       choices: [["off", "Is simply there"], ["grow", "Grows from its base"], ["scan", "Scans from the top"],
                 ["type", "Types out, row by row"], ["centre", "Spreads from the centre"], ["dissolve", "Fades in at random"]] },
     { key: "speed",    kind: "range", fallback: 100, min: 25, max: 200, step: 5, unit: "%", group: "Motion", label: "Speed" },
-    { key: "camera",   kind: "switch", fallback: false, group: "Motion", label: "Slow camera moves", when: ["motion", true] },
+    { key: "sway",     kind: "switch", fallback: true, group: "Motion", label: "Gentle sway", when: ["motion", true] },
+    { key: "camera",   kind: "switch", fallback: true, group: "Motion", label: "Slow camera moves", when: ["motion", true] },
+    { key: "pulse",    kind: "switch", fallback: true, group: "Motion", label: "Rings of light", when: ["motion", true] },
     { key: "turn",     kind: "switch", fallback: true, group: "Motion", label: "Objects turn by themselves", when: ["motion", true] }
 ]
 
@@ -368,6 +370,27 @@ function cameraAt(t) {
         return a[1] + (b[1] - a[1]) * x * x * (3 - 2 * x)
     }
     return 0.6
+}
+
+// The colours a colour option offers by name: nobody types a hex code. [value, label].
+var INKS = [["#020205", "Black"], ["#10131c", "Night"], ["#04102a", "Deep blue"], ["#12042a", "Deep violet"], ["#0a0703", "Umber"],
+    ["#3a1c8f", "Indigo"], ["#3b6cff", "Blue"], ["#2fd6c8", "Teal"], ["#63e6b4", "Mint"], ["#9be85a", "Lime"], ["#ffd23f", "Amber"],
+    ["#ff8a3c", "Orange"], ["#ff4d5e", "Red"], ["#ff5fd2", "Pink"], ["#b78cff", "Violet"], ["#fff3b0", "Cream"], ["#f4f6ff", "White"]]
+
+// Every option at its factory value, each under `prefix`: what "Restore defaults" writes.
+function defaults(prefix) {
+    var out = {}
+    out[prefix + "look"] = LOOKS[0][0]
+    for (var i = 0; i < OPTIONS.length; i++) out[prefix + OPTIONS[i].key] = OPTIONS[i].fallback
+    return out
+}
+// Whether anything left its factory value: `read(key)` returns a stored value or undefined.
+function changed(read) {
+    for (var i = 0; i < OPTIONS.length; i++) {
+        var value = read(OPTIONS[i].key)
+        if (value !== undefined && value !== null && String(value) !== String(OPTIONS[i].fallback)) return true
+    }
+    return false
 }
 
 // What choosing a look writes: the look's name and every value it decides, each under `prefix`.

@@ -4,7 +4,8 @@ pragma ComponentBehavior: Bound
 // built-in subjects (GlyphArt.js DEMOS) or "word". The picture is reduced to one texel per glyph cell; GlyphStats
 // reads the whole of it (background to cut, levels), GlyphCompose decides every cell, GlyphArt.frag draws them and
 // the screen over them. `settings` is every option of GlyphArt.js, as Glyphs.settings() returns them.
-// At rest nothing runs: a still picture is drawn once. It moves only with `settings.motion`, while it is seen.
+// With `settings.motion` a still picture is alive the way Afterglyph's is (shimmer, a gentle sway, slow camera
+// moves, rings of light, moving grain), only while it is seen (`live`); without it a picture is drawn once.
 // A port of winchxyz/afterglyph (MIT) to the GPU.
 
 import QtQuick
@@ -28,6 +29,11 @@ Item {
     property bool shown: true
     // Off, it never moves whatever the settings say (a surface that is covered).
     property bool live: true
+    // The picture moves by itself (a video, a GIF): it is read at the glyphs' pace, never at its own frame rate.
+    property bool animated: false
+    // Kept as one texture between its own frames: a surface that redraws for other reasons (a desktop under its
+    // widgets) blits it instead of running the screen pass again.
+    property bool cached: false
     // A GlyphAtlas to share; without one it paints its own.
     property Item atlas: null
     property string fontFamily: "monospace"
@@ -46,17 +52,22 @@ Item {
     // What moves, and how often it needs a new frame: the shimmer re-rolls 7 times a second, the rest is smooth.
     readonly property bool turning: root.demo !== null && root.settings.turn
     readonly property bool smoothMotion: root.settings.rain > 0 || root.settings.glitch > 0 || root.settings.drift > 0
-        || root.settings.camera || root.turning
-    readonly property bool moving: root.live && root.visible && root.shown && root.settings.motion
-        && (root.smoothMotion || root.settings.shimmer > 0)
+        || root.settings.camera || root.settings.sway || root.settings.pulse || root.turning
+    readonly property bool seen: root.live && root.visible && root.shown
+    readonly property bool moving: root.seen && root.settings.motion && (root.smoothMotion || root.settings.shimmer > 0)
+    readonly property real sway: root.moving && root.settings.sway
+        ? (0.7 * Math.sin(root.clock * 0.7) + 0.3 * Math.sin(root.clock * 1.9 + 1)) * Math.PI / 180 : 0
     property real clock: 0
     property real grow: 1
 
     Timer {
         interval: root.smoothMotion ? 66 : Math.max(66, Math.round(1000 / (7 * Math.max(1, root.settings.shimmer / 100))))
         repeat: true
-        running: root.moving
-        onTriggered: root.clock += interval / 1000 * root.pace
+        running: root.moving || (root.animated && root.seen)
+        onTriggered: {
+            if (root.moving) root.clock += interval / 1000 * root.pace
+            if (root.animated) cells.scheduleUpdate()
+        }
     }
 
     // A new picture comes in the way `settings.intro` says, once.
@@ -124,6 +135,7 @@ Item {
         hideSource: root.ownSubject || root.hidePicture
         textureSize: Qt.size(root.columns, root.rows)
         smooth: true
+        live: !root.animated
     }
 
     ShaderEffect {
@@ -163,6 +175,7 @@ Item {
         readonly property vector4d clock: Qt.vector4d(root.clock, !root.shown ? 0 : root.grow >= 1 ? 2 : root.grow,
             root.settings.camera && root.settings.motion ? 1 + (Glyphs.cameraAt(root.clock) - 0.6) * 0.875 : 1,
             root.width / Math.max(1, root.height))
+        readonly property vector4d extra: Qt.vector4d(root.settings.pulse && root.settings.motion ? 1 : 0, 0, 0, 0)
         readonly property color low: root.inks?.ramp[0] ?? "black"       // literal: unused with the picture's colours
         readonly property color mid: root.inks?.ramp[1] ?? "black"
         readonly property color high: root.inks?.ramp[2] ?? "black"
@@ -182,11 +195,12 @@ Item {
 
     ShaderEffect {
         anchors.fill: parent
+        layer.enabled: root.cached
         readonly property vector4d box: Qt.vector4d(width, height, root.radius, width / root.columns)
         readonly property vector4d grid: Qt.vector4d(root.columns, root.rows, root.settings.paper ? 1 : 0, root.plate ? 1 : 0)
         readonly property vector4d screen: Qt.vector4d(root.settings.glow / 100, root.settings.scan / 100,
             root.settings.grain / 100, root.settings.fringe / 100)
-        readonly property vector4d warp: Qt.vector4d(root.settings.curve / 100, root.settings.glitch / 100, root.clock, 0)
+        readonly property vector4d warp: Qt.vector4d(root.settings.curve / 100, root.settings.glitch / 100, root.clock, root.sway)
         readonly property color back: root.settings.back
         readonly property var cells: composed
         readonly property var atlas: root.sheet?.texture ?? null

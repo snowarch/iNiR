@@ -163,6 +163,7 @@ Variants {
         }
 
         Item {
+            id: backdropMedia
             anchors.fill: parent
             clip: true
 
@@ -558,6 +559,14 @@ Variants {
                     GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, backdropWindow.vignetteIntensity) }
                 }
             }
+        }
+
+        // The glyph wallpaper is the wallpaper here too: the overview's backdrop is the same picture, drawn the same way.
+        WallpaperGlyphs {
+            anchors.fill: backdropMedia
+            picture: backdropWindow.useAuroraStyle ? null : backdropMedia
+            path: backdropWindow.wallpaperPathRaw
+            output: WallpaperListener.getMonitorName(backdropWindow.modelData)
         }
     }
 }

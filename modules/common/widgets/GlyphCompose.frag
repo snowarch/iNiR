@@ -20,6 +20,8 @@ layout(std140, binding = 0) uniform buf {
     vec4 cut;
     // x: seconds; y: intro 0..1 (2 = no intro); z: zoom; w: columns over rows as seen.
     vec4 clock;
+    // x: 1 sends rings of light across the picture.
+    vec4 extra;
     vec4 low;
     vec4 mid;
     vec4 high;
@@ -168,6 +170,20 @@ void main() {
             if (hash(cell + tick * 0.13) < k) glyph = 32.0 + floor(hash(cell * 2.3 + tick) * 10.0);
             light = max(light, k * (me.a > 0.5 ? 1.0 : 0.35));
             colour = mix(colour, behind < 1.0 ? vec3(1.0) : u.accent.rgb, k * 0.6);
+        }
+    }
+
+    if (u.extra.x > 0.5) {
+        // A ring of light leaves a new point every eleven seconds and fades as it widens.
+        float n = floor(u.clock.x / 11.0), age = u.clock.x - n * 11.0;
+        if (age < 2.6 && glyph > 0.5) {
+            vec2 from = vec2(0.15 + 0.7 * hash(vec2(n, 1.0)), 0.15 + 0.7 * hash(vec2(n, 2.0))) * u.grid.xy;
+            float ring = 1.0 - abs(length((cell - from) * vec2(1.0, 1.2857)) - age * 9.0) / 3.5;
+            if (ring > 0.0) {
+                float k = ring * (1.0 - age / 2.6);
+                light *= 1.0 + k * 0.9;
+                colour = mix(colour, vec3(1.0), k * 0.3);
+            }
         }
     }
 

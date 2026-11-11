@@ -1784,6 +1784,7 @@ Scope {
                 anchors.fill: wallpaperContainer
                 picture: bgRoot.glyphsActive ? (textureLoader.item ?? wallpaperContainer) : null
                 path: bgRoot.wallpaperPathRaw
+                output: bgRoot.monitorName
             }
 
             // Blur behind windows. Reads what is actually drawn: the crossfader (QML or awww rendering), the

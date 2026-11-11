@@ -2,11 +2,13 @@ pragma Singleton
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Dialogs
 import Quickshell
 import qs
 import qs.modules.common
 import qs.services
 import "japaneseTypography/JapaneseTypographyPresets.js" as JapanesePresets
+import "root:modules/common/widgets/GlyphArt.js" as Glyphs
 
 // Every desktop widget's options as rows: Settings and the edit sheets draw them. A widget lists its own in `options` of
 // its widget.json and a family its rows in `widgetOptions` of its plugin.json; this file adds what every widget carries
@@ -83,6 +85,35 @@ QtObject {
     }
     function choices(list: var): var {
         return list.map(entry => ({ label: entry[1], value: entry[0], glyph: entry[2] }))
+    }
+    // The colours a `colour` row offers when its manifest lists none: nobody types a hex code.
+    readonly property var inks: Glyphs.INKS
+    // A `file` or `folder` row opens the system's chooser: nobody types a path.
+    property var _picking: null
+    readonly property FileDialog filePicker: FileDialog {
+        title: Translation.tr(String(root._picking?.label ?? ""))
+        fileMode: FileDialog.OpenFile
+        currentFolder: Directories.pictures
+        nameFilters: root._picking?.filters ?? [Translation.tr("Images and animations") + " (*.png *.jpg *.jpeg *.webp *.gif *.apng *.svg)",
+            Translation.tr("All files") + " (*)"]
+        onAccepted: if (root._picking) root.write(root._picking, root._path(selectedFile))
+    }
+    readonly property FolderDialog folderPicker: FolderDialog {
+        title: Translation.tr(String(root._picking?.label ?? ""))
+        currentFolder: Directories.pictures
+        onAccepted: if (root._picking) root.write(root._picking, root._path(selectedFolder))
+    }
+    function _path(url: var): string { return decodeURIComponent(String(url).replace(/^file:\/\//, "")) }
+    function pick(spec: var): void {
+        root._picking = spec
+        if (spec.picks === "folder") root.folderPicker.open()
+        else root.filePicker.open()
+    }
+    // What a row says under its name: a chooser's row names what was chosen.
+    function captionOf(spec: var): string {
+        if (!spec.picks) return String(spec.caption ?? "")
+        const chosen = String(root.read(spec) ?? "")
+        return chosen.length > 0 ? chosen.replace(/\/+$/, "").split("/").pop() : Translation.tr("Nothing chosen")
     }
 
     // What every widget carries: being on the desktop, its design, its plate and where it sits.
@@ -198,15 +229,40 @@ QtObject {
         return root.opening(widget).concat([root.size(widget)], rows(root.familyOptions[widget]), rows(entry.options),
             root.closing(widget, entry.plate !== false))
     }
-    // A person's own widget: its `configKeys` as rows, the same as a manifest's options.
+    // A person's own widget: the `options` of its widget.json, the same rows a built-in widget lists (order, pages,
+    // conditions, choices, colours, choosers). One from before that only has `configKeys` gets a row per key.
     readonly property var customRows: CustomWidgets.widgets.reduce((all, entry) => all.concat(
-        Object.keys(entry.configKeys ?? {}).map(key => root._customRow("custom." + entry.id, key, entry.configKeys[key])),
-        root.closing("custom." + entry.id, true)), [])
+        root._customRows(entry), root.closing("custom." + entry.id, true)), [])
+    function _customRows(entry: var): var {
+        const widget = "custom." + entry.id
+        if ((entry.options ?? []).length > 0)
+            return entry.options.map(option => root._row(widget, Object.assign({ restorable: true }, option))).concat([
+                root.row(widget, "restoreDefaults", "Restore defaults", "action", undefined, { button: "Restore", page: "look",
+                    run: () => root.restore(widget), when: () => root.changed(widget),
+                    keywords: ["reset", "default", "restore", "restaurar", "predeterminado"] })])
+        return Object.keys(entry.configKeys ?? {}).map(key => root._customRow(widget, key, entry.configKeys[key]))
+    }
     function _customRow(widget: string, key: string, option: var): var {
         const number = option.type === "int" || option.type === "real"
         const ranged = number && option.min !== undefined && option.max !== undefined
-        return root.row(widget, key, option.label ?? key, option.type === "bool" ? "switch" : ranged ? "range" : "text", option.default,
-            ranged ? { min: option.min, max: option.max, step: option.step ?? (option.type === "int" ? 1 : 0.1) } : {})
+        const listed = option.type === "string" && Array.isArray(option.options) && option.options.length > 0
+        return root.row(widget, key, option.label ?? key, option.type === "bool" ? "switch" : ranged ? "range" : listed ? "choice" : "text", option.default,
+            Object.assign({ restorable: true }, ranged ? { min: option.min, max: option.max, step: option.step ?? (option.type === "int" ? 1 : 0.1) } : {},
+                listed ? { choices: option.options.map(one => typeof one === "object" ? { label: String(one.label ?? one.displayName ?? one.value), value: one.value ?? one.label }
+                    : { label: String(one), value: one }) } : {}))
+    }
+    // A person's widget back to what its manifest says, every option at once.
+    function _restorable(widget: string): var {
+        return root.customRows.filter(spec => spec.widget === widget && spec.restorable && spec.fallback !== undefined && !spec.shell)
+    }
+    function changed(widget: string): bool {
+        Config.revision
+        return root._restorable(widget).some(spec => String(root.read(spec)) !== String(spec.fallback))
+    }
+    function restore(widget: string): void {
+        const values = ({})
+        for (const spec of root._restorable(widget)) values[spec.key] = spec.fallback
+        DesktopWidgetLayout.setEverywhere(widget, values)
     }
     // A sheet's page of a widget's rows, minus the keys it draws itself.
     function sheetRows(widget: string, page: string, exclude: var): var {
@@ -220,6 +276,16 @@ QtObject {
             delete extra[field]
         if (option.choices)
             extra.choices = root.choices(option.choices)
+        // A colour is picked from swatches; a file or a folder from the system's chooser.
+        let kind = option.type
+        if (kind === "colour") {
+            kind = "choice"
+            extra.choices = (option.choices ?? root.inks).map(entry => ({ label: entry[1], value: entry[0], colour: entry[0], swatch: entry[0] }))
+        } else if (kind === "file" || kind === "folder") {
+            extra.picks = kind
+            extra.button = "Choose"
+            kind = "action"
+        }
         if (option.when !== undefined)
             extra.when = () => root.holds(widget, option.when)
         const writer = root.writers[option.write]
@@ -227,7 +293,9 @@ QtObject {
             extra.apply = next => writer(widget, option.key, next)
         else if (option.sets)
             extra.apply = next => root._sets(widget, option, next)
-        return root.row(widget, option.key, option.label, option.type, option.default, extra)
+        const spec = root.row(widget, option.key, option.label, kind, option.default, extra)
+        if (spec.picks) spec.run = () => root.pick(spec)
+        return spec
     }
     // A manifest's `when`: "face", "material", "plain", a name from its `conditions`, { key: value or values }, { key:
     // { above: n } }, { key: { is: value, otherwise: value while unset } }, a list (all of them), { any: [...] }, { not: ... },
@@ -241,7 +309,7 @@ QtObject {
             if (when === "face") return root.face(widget)
             if (when === "material") return root.material(widget)
             if (when === "plain") return root.plain(widget)
-            return root.holds(widget, DesktopWidgetRegistry.byKey[widget]?.conditions?.[when])
+            return root.holds(widget, (DesktopWidgetRegistry.byKey[widget] ?? DesktopWidgetRegistry.customEntry(widget))?.conditions?.[when])
         }
         if (when.any)
             return when.any.some(part => root.holds(widget, part))
@@ -271,6 +339,9 @@ QtObject {
             return DesktopWidgetRegistry.sizesOf(widget)[0]
         if (key === "showBackground" || key === "showBorder")
             return root.plateDefault(widget)
+        const custom = widget.startsWith("custom.") ? DesktopWidgetRegistry.customEntry(widget) : null
+        if (custom)
+            return (custom.options ?? []).find(row => row.key === key)?.default ?? custom.configKeys?.[key]?.default ?? custom.defaultConfig?.[key]
         const entry = DesktopWidgetRegistry.byKey[widget]
         const option = (entry?.options ?? []).concat(root.familyOptions[widget] ?? []).find(row => row.key === key)
         return option ? option.default : entry?.defaultConfig?.[key]

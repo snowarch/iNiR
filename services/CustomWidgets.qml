@@ -113,6 +113,8 @@ Singleton {
                     faces: faces,
                     dirPath: entry.dir,
                     configKeys: m.configKeys || {},
+                    options: Array.isArray(m.options) ? m.options : [],
+                    conditions: m.conditions || {},
                     resizableAxes: m.resizableAxes || {},
                     defaultSize: m.defaultSize || { width: 200, height: 100 },
                     defaultConfig: m.defaultConfig || {},
@@ -174,6 +176,8 @@ Singleton {
         const configKeys = widget.configKeys || {};
         for (const key in configKeys)
             defaults[key] = root._defaultForSpec(configKeys[key]);
+        for (const option of widget.options || [])
+            if (option.key && option.default !== undefined && !option.shell) defaults[option.key] = option.default;
         return defaults;
     }
 

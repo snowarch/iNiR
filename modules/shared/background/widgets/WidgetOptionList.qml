@@ -24,14 +24,14 @@ ColumnLayout {
     spacing: 10
 
     Repeater {
-        model: ScriptModel { objectProp: "path"; values: root.specs.filter(spec => ["switch", "choice", "range", "text"].includes(spec.kind)) }
+        model: ScriptModel { objectProp: "path"; values: root.specs.filter(spec => ["switch", "choice", "range", "text", "action"].includes(spec.kind)) }
         delegate: Loader {
             id: row
             required property var modelData
             Layout.fillWidth: true
             sourceComponent: row.modelData.kind === "switch" ? switchRow
                 : row.modelData.kind === "choice" ? choiceRow
-                : row.modelData.kind === "range" ? rangeRow : textRow
+                : row.modelData.kind === "range" ? rangeRow : row.modelData.kind === "action" ? actionRow : textRow
             onLoaded: row.item.spec = row.modelData
         }
     }
@@ -84,6 +84,31 @@ ColumnLayout {
                 : range.spec.zeroLabel && Math.round(v) === 0 ? root.label(range.spec.zeroLabel)
                 : Number(v.toFixed(range.stepSize < 1 ? 1 : 0)) + range.unit
             onCommitted: v => DesktopWidgetOptions.write(range.spec, v / range.scale)
+        }
+    }
+
+    // An action: its name, what it holds now (a chosen file), and the button that does it.
+    Component {
+        id: actionRow
+        WidgetQuickSection {
+            id: action
+            property var spec: ({})
+            title: root.label(action.spec.label)
+            detail: {
+                Config.revision
+                return DesktopWidgetOptions.captionOf(action.spec)
+            }
+            RippleButton {
+                Layout.fillWidth: true
+                implicitHeight: 36
+                buttonRadius: Appearance.rounding.small
+                colBackground: Appearance.colors.colLayer2
+                onClicked: action.spec.run?.()
+                contentItem: StyledText {
+                    horizontalAlignment: Text.AlignHCenter
+                    text: root.label(action.spec.button ?? action.spec.label)
+                }
+            }
         }
     }
 
