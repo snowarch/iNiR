@@ -158,8 +158,37 @@ Singleton {
 		const held = root._heldTrack(player)
 		return held ? held.artist : String(player.trackArtist ?? "")
 	}
+	// A browser hands over YouTube's small thumbnail (Firefox: 336x188), which blurs on any cover larger than a chip.
+	// The page video's own 1280x720 is asked for once per video and, where it exists, is that track's art everywhere.
+	property var largeArt: ({})
+	property var _largeArtAsked: ({})
+	function _askLargeArt(id: string): void {
+		if (root._largeArtAsked[id]) return
+		root._largeArtAsked[id] = true
+		const url = `https://i.ytimg.com/vi/${id}/hq720.jpg`
+		const xhr = new XMLHttpRequest()
+		xhr.onreadystatechange = () => {
+			if (xhr.readyState !== XMLHttpRequest.DONE) return
+			if (xhr.status !== 200) {
+				// Offline is asked again on the next track change; a video with no large picture is not.
+				if (xhr.status === 0) delete root._largeArtAsked[id]
+				return
+			}
+			const known = Object.keys(root.largeArt).length < 64 ? Object.assign({}, root.largeArt) : {}
+			known[id] = url
+			root.largeArt = known
+		}
+		xhr.open("HEAD", url)
+		xhr.send()
+	}
 	function artUrlOf(player): string {
 		if (!player) return ""
+		const video = root._pageVideoId(player)
+		if (video.length > 0) {
+			const large = root.largeArt[video] ?? ""
+			if (large.length > 0) return large
+			Qt.callLater(root._askLargeArt, video)
+		}
 		const held = root._heldTrack(player)
 		return held ? held.art : String(player.trackArtUrl ?? "")
 	}

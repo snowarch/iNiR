@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **When GitHub is down, iNiR says so**: setup, `inir update`, `inir doctor`, the Hub and the update check name the server that isn't answering (a 504 and the like), with GitHub's status page, instead of red lines that read as iNiR broken. Nothing changes on your system; try again in a while.
 
 ### Fixed
+- A YouTube cover no longer looks blurred in the player: the shell asks for the large picture of the video instead of the small thumbnail the browser hands over.
 - **A frozen shell says where**: when the shell stops answering and is restarted, it now leaves in 6 seconds instead of 15 and writes what it was doing to `inir service logs`, so a freeze can be reported and fixed.
 - **Do Not Disturb read backwards in iRiS's Control Center**: its tile was lit while notifications were shown and dark while silenced. It now lights when Do Not Disturb is on, named and drawn like the Island's sign, which became a moon disc you can hover and press (iRiS 2.33.76).
 - **A darker picture on Umbriel at a high refresh rate**: some HDMI screens look darker at their own modes (75 Hz, 144 Hz) than at 60 Hz, because the GPU sends those in full range and the screen reads limited. **iRiS Settings › Umbriel › Displays › Colour › Fix a darker picture** gives that screen the range it expects, only at the rates that need it (iRiS 2.33.73 from the Hub).
