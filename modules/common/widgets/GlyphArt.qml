@@ -61,6 +61,18 @@ Item {
     property real grow: 1
     // It is drawing new frames by itself (motion, a video or GIF read, the intro).
     readonly property bool ticking: ticker.running
+    // While steps drive it (motion, a video or GIF read) each stage is drawn once per step, by the step. Left live,
+    // every stage that redrew asked Qt for one more frame of the whole window after it, and drew itself again in it.
+    readonly property bool paced: (root.moving || (root.animated && root.seen)) && !growing.running
+    function redraw(): void {
+        stats.scheduleUpdate()
+        composed.scheduleUpdate()
+        screenCache.scheduleUpdate()
+    }
+    onColumnsChanged: root.redraw()
+    onRowsChanged: root.redraw()
+    onWidthChanged: root.redraw()
+    onHeightChanged: root.redraw()
     // The picture announces its own frames (a playing video calls `pictureFrame()` on each): the glyphs then move on
     // those, one clock for both. Two clocks at fifteen a second redrew the desktop up to thirty times a second.
     property bool framed: false
@@ -74,6 +86,7 @@ Item {
     function step(ms: real): void {
         if (root.moving) root.clock += ms / 1000 * root.pace
         if (root.animated) cells.scheduleUpdate()
+        root.redraw()
         root.stepped()
     }
     function pictureFrame(): void {
@@ -179,6 +192,7 @@ Item {
     }
     ShaderEffectSource {
         id: stats
+        live: !root.paced
         sourceItem: statsStage
         hideSource: true
         smooth: false
@@ -214,6 +228,7 @@ Item {
     }
     ShaderEffectSource {
         id: composed
+        live: !root.paced
         sourceItem: composeStage
         hideSource: true
         smooth: true
@@ -222,8 +237,8 @@ Item {
     }
 
     ShaderEffect {
+        id: screenPass
         anchors.fill: parent
-        layer.enabled: root.cached
         readonly property vector4d box: Qt.vector4d(width, height, root.radius, width / root.columns)
         readonly property vector4d grid: Qt.vector4d(root.columns, root.rows, root.settings.paper ? 1 : 0, root.plate ? 1 : 0)
         readonly property vector4d screen: Qt.vector4d(root.settings.glow / 100, root.settings.scan / 100,
@@ -233,5 +248,13 @@ Item {
         readonly property var cells: composed
         readonly property var atlas: root.sheet?.texture ?? null
         fragmentShader: Qt.resolvedUrl("GlyphArt.frag.qsb")
+    }
+    ShaderEffectSource {
+        id: screenCache
+        anchors.fill: parent
+        visible: root.cached
+        sourceItem: root.cached ? screenPass : null
+        hideSource: root.cached
+        live: !root.paced
     }
 }
