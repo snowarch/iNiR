@@ -3286,5 +3286,8 @@
   "UTC": "UTC",
   "Foot": "底边",
   "Feel": "手感",
-  "Play something and it shows here.": "播放点什么，它会显示在这里。"
+  "Play something and it shows here.": "播放点什么，它会显示在这里。",
+  "Shown around workspaces when Niri's overview is open.": "Niri 概览打开时显示在工作区周围。",
+  "Display & Input": "显示与输入",
+  "Niri config": "Niri 配置"
 }

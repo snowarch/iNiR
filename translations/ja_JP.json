@@ -3286,5 +3286,8 @@
   "UTC": "UTC",
   "Foot": "下辺",
   "Feel": "感触",
-  "Play something and it shows here.": "何か再生するとここに表示されます。"
+  "Play something and it shows here.": "何か再生するとここに表示されます。",
+  "Shown around workspaces when Niri's overview is open.": "Niri のオーバービューが開いているときワークスペースの周りに表示。",
+  "Display & Input": "ディスプレイと入力",
+  "Niri config": "Niri の設定"
 }

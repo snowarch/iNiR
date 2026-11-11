@@ -3286,5 +3286,8 @@
   "UTC": "UTC",
   "Foot": "Foot",
   "Feel": "Misigisaq",
-  "Play something and it shows here.": "Arlaannik tusarnaartitsigit, maani takuneqassaaq."
+  "Play something and it shows here.": "Arlaannik tusarnaartitsigit, maani takuneqassaaq.",
+  "Shown around workspaces when Niri's overview is open.": "Niri-ip overview-ia ammasimatillugu suliffiit eqqaanni takutinneqartarpoq.",
+  "Display & Input": "Skærmi & Isertitsineq",
+  "Niri config": "Niri config"
 }

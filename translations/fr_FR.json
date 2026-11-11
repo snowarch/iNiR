@@ -3286,5 +3286,8 @@
   "UTC": "UTC",
   "Foot": "Pied",
   "Feel": "Ressenti",
-  "Play something and it shows here.": "Lancez une lecture, elle s’affiche ici."
+  "Play something and it shows here.": "Lancez une lecture, elle s’affiche ici.",
+  "Shown around workspaces when Niri's overview is open.": "Affiché autour des espaces de travail quand la vue d'ensemble de Niri est ouverte.",
+  "Display & Input": "Écran et saisie",
+  "Niri config": "Configuration de Niri"
 }

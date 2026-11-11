@@ -3286,5 +3286,8 @@
   "UTC": "UTC",
   "Foot": "निचला किनारा",
   "Feel": "अनुभव",
-  "Play something and it shows here.": "कुछ चलाएँ, वह यहाँ दिखेगा।"
+  "Play something and it shows here.": "कुछ चलाएँ, वह यहाँ दिखेगा।",
+  "Shown around workspaces when Niri's overview is open.": "Niri का ओवरव्यू खुला होने पर वर्कस्पेस के चारों ओर दिखता है।",
+  "Display & Input": "डिस्प्ले और इनपुट",
+  "Niri config": "Niri कॉन्फ़िग"
 }

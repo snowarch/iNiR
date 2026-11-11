@@ -3286,5 +3286,8 @@
   "UTC": "UTC",
   "Foot": "Нижній край",
   "Feel": "Відчуття",
-  "Play something and it shows here.": "Увімкніть щось — воно з’явиться тут."
+  "Play something and it shows here.": "Увімкніть щось — воно з’явиться тут.",
+  "Shown around workspaces when Niri's overview is open.": "Показується навколо робочих просторів, коли відкрито огляд Niri.",
+  "Display & Input": "Екран і введення",
+  "Niri config": "Конфігурація Niri"
 }

@@ -3286,5 +3286,8 @@
   "UTC": "UTC",
   "Foot": "Dasar",
   "Feel": "Rasa",
-  "Play something and it shows here.": "Putar sesuatu dan akan tampil di sini."
+  "Play something and it shows here.": "Putar sesuatu dan akan tampil di sini.",
+  "Shown around workspaces when Niri's overview is open.": "Ditampilkan di sekitar ruang kerja saat ikhtisar Niri terbuka.",
+  "Display & Input": "Layar & Input",
+  "Niri config": "Konfigurasi Niri"
 }

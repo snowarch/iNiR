@@ -3286,5 +3286,8 @@
   "UTC": "UTC",
   "Foot": "القاعدة",
   "Feel": "الإحساس",
-  "Play something and it shows here.": "شغّل شيئًا وسيظهر هنا."
+  "Play something and it shows here.": "شغّل شيئًا وسيظهر هنا.",
+  "Shown around workspaces when Niri's overview is open.": "يظهر حول مساحات العمل حين تكون النظرة العامة في Niri مفتوحة.",
+  "Display & Input": "الشاشة والإدخال",
+  "Niri config": "إعدادات Niri"
 }

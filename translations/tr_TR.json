@@ -3286,5 +3286,8 @@
   "UTC": "UTC",
   "Foot": "Taban",
   "Feel": "His",
-  "Play something and it shows here.": "Bir şey çal, burada görünsün."
+  "Play something and it shows here.": "Bir şey çal, burada görünsün.",
+  "Shown around workspaces when Niri's overview is open.": "Niri'nin genel bakışı açıkken çalışma alanlarının çevresinde gösterilir.",
+  "Display & Input": "Ekran ve Giriş",
+  "Niri config": "Niri yapılandırması"
 }

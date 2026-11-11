@@ -14,7 +14,7 @@ In **Settings › Effects › Glass**:
 - **Allow compositor blur** appears on Niri 26.04 or newer. Shapes Niri cannot blur fall back to the shell's own blur.
 - **Settings › Effects › Areas** sets the backend for **Bars**, **Dock**, **Panels and popups**, **Islands and Ricelin** and **Desktop widgets**. Each one can **Inherit** the default or use any of the four backends.
 
-**Waffle Settings › Effects** has the same options. In iRiS, **iRiS Settings › Windows › Glass behind apps** sets the blur behind apps and **iRiS Settings › Wallpaper › Behind windows** the wallpaper's.
+**Waffle Settings › Effects** has the same options. In iRiS, **iRiS Settings › Glass & effects › Glass behind apps** (in the group named for your compositor) sets the blur behind apps and **iRiS Settings › Wallpaper › Behind windows** the wallpaper's.
 
 ## Motion and power
 
