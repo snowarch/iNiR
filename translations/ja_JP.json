@@ -3486,5 +3486,13 @@
   "Every screen": "すべての画面",
   "Wait for the graphics card": "グラフィックカードを待つ",
   "Turn the tablet around": "タブレットを回転",
-  "Works in Material, iRiS and Waffle": "Material、iRiS、Waffle に対応"
+  "Works in Material, iRiS and Waffle": "Material、iRiS、Waffle に対応",
+  "Draw the wallpaper as glyphs": "壁紙をグリフで描画",
+  "Pictures, GIFs and videos are redrawn as glowing characters.": "画像、GIF、動画を光る文字で描き直します。",
+  "Picture colours": "画像の色",
+  "Phosphor": "蛍光グリーン",
+  "Amber": "アンバー",
+  "Blueprint": "青写真",
+  "Glyph size": "グリフのサイズ",
+  "Paper": "紙"
 }

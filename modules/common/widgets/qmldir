@@ -122,6 +122,8 @@ WindowDialogButtonRow 1.0 WindowDialogButtonRow.qml
 WindowDialogParagraph 1.0 WindowDialogParagraph.qml
 WindowDialog 1.0 WindowDialog.qml
 WindowDialogTitle 1.0 WindowDialogTitle.qml
+GlyphArt 1.0 GlyphArt.qml
+WallpaperGlyphs 1.0 WallpaperGlyphs.qml
 WallpaperCrossfader 1.0 WallpaperCrossfader.qml
 VideoCrossfader 1.0 VideoCrossfader.qml
 ZzzBurst 1.0 ZzzBurst.qml

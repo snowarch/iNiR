@@ -3486,5 +3486,13 @@
   "Every screen": "Every screen",
   "Wait for the graphics card": "Wait for the graphics card",
   "Turn the tablet around": "Turn the tablet around",
-  "Works in Material, iRiS and Waffle": "Works in Material, iRiS and Waffle"
+  "Works in Material, iRiS and Waffle": "Works in Material, iRiS and Waffle",
+  "Draw the wallpaper as glyphs": "Draw the wallpaper as glyphs",
+  "Pictures, GIFs and videos are redrawn as glowing characters.": "Pictures, GIFs and videos are redrawn as glowing characters.",
+  "Picture colours": "Picture colours",
+  "Phosphor": "Phosphor",
+  "Amber": "Amber",
+  "Blueprint": "Blueprint",
+  "Glyph size": "Glyph size",
+  "Paper": "Paper"
 }

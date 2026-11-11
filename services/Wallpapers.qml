@@ -349,6 +349,8 @@ Singleton {
     }
 
     readonly property string effectiveWallpaperUrl: root.stillUrlFor(root.effectiveWallpaperPath)
+    // The wallpaper is drawn as glyphs: the shell draws the picture itself, since the effect reads it.
+    readonly property bool glyphs: Config.options?.background?.effects?.glyphs?.enable ?? false
 
     // An image-safe URL for a wallpaper: the file itself, or a video's cached still frame.
     // Empty until that frame exists, so Image consumers never request a missing file.

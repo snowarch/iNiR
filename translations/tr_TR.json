@@ -3486,5 +3486,13 @@
   "Every screen": "Tüm ekranlar",
   "Wait for the graphics card": "Ekran kartını bekle",
   "Turn the tablet around": "Tableti çevir",
-  "Works in Material, iRiS and Waffle": "Material, iRiS ve Waffle'da çalışır"
+  "Works in Material, iRiS and Waffle": "Material, iRiS ve Waffle'da çalışır",
+  "Draw the wallpaper as glyphs": "Duvar kâğıdını gliflerle çiz",
+  "Pictures, GIFs and videos are redrawn as glowing characters.": "Resimler, GIF’ler ve videolar parlayan karakterlerle yeniden çizilir.",
+  "Picture colours": "Resmin renkleri",
+  "Phosphor": "Fosfor",
+  "Amber": "Kehribar",
+  "Blueprint": "Mavi kopya",
+  "Glyph size": "Glif boyutu",
+  "Paper": "Kâğıt"
 }

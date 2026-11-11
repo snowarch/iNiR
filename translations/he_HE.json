@@ -3486,5 +3486,13 @@
   "Every screen": "כל המסכים",
   "Wait for the graphics card": "המתנה לכרטיס המסך",
   "Turn the tablet around": "הפיכת לוח הציור",
-  "Works in Material, iRiS and Waffle": "עובד ב־Material, ב־iRiS וב־Waffle"
+  "Works in Material, iRiS and Waffle": "עובד ב־Material, ב־iRiS וב־Waffle",
+  "Draw the wallpaper as glyphs": "ציור הרקע בגליפים",
+  "Pictures, GIFs and videos are redrawn as glowing characters.": "תמונות, קובצי GIF וסרטונים מצוירים מחדש בתווים זוהרים.",
+  "Picture colours": "צבעי התמונה",
+  "Phosphor": "זרחן",
+  "Amber": "ענבר",
+  "Blueprint": "שרטוט",
+  "Glyph size": "גודל הגליף",
+  "Paper": "נייר"
 }

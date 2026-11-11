@@ -3486,5 +3486,13 @@
   "Every screen": "Mọi màn hình",
   "Wait for the graphics card": "Chờ card đồ họa",
   "Turn the tablet around": "Xoay ngược bảng vẽ",
-  "Works in Material, iRiS and Waffle": "Chạy trên Material, iRiS và Waffle"
+  "Works in Material, iRiS and Waffle": "Chạy trên Material, iRiS và Waffle",
+  "Draw the wallpaper as glyphs": "Vẽ hình nền bằng ký tự",
+  "Pictures, GIFs and videos are redrawn as glowing characters.": "Ảnh, GIF và video được vẽ lại bằng các ký tự phát sáng.",
+  "Picture colours": "Màu của ảnh",
+  "Phosphor": "Lân quang",
+  "Amber": "Hổ phách",
+  "Blueprint": "Bản thiết kế",
+  "Glyph size": "Cỡ ký tự",
+  "Paper": "Giấy"
 }

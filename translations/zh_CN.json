@@ -3486,5 +3486,13 @@
   "Every screen": "所有屏幕",
   "Wait for the graphics card": "等待显卡",
   "Turn the tablet around": "旋转数位板",
-  "Works in Material, iRiS and Waffle": "适用于 Material、iRiS 和 Waffle"
+  "Works in Material, iRiS and Waffle": "适用于 Material、iRiS 和 Waffle",
+  "Draw the wallpaper as glyphs": "用字符绘制壁纸",
+  "Pictures, GIFs and videos are redrawn as glowing characters.": "图片、GIF 和视频会用发光字符重新绘制。",
+  "Picture colours": "图片颜色",
+  "Phosphor": "荧光绿",
+  "Amber": "琥珀",
+  "Blueprint": "蓝图",
+  "Glyph size": "字符大小",
+  "Paper": "纸张"
 }

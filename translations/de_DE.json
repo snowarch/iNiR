@@ -3486,5 +3486,13 @@
   "Every screen": "Alle Bildschirme",
   "Wait for the graphics card": "Auf die Grafikkarte warten",
   "Turn the tablet around": "Grafiktablett drehen",
-  "Works in Material, iRiS and Waffle": "Läuft in Material, iRiS und Waffle"
+  "Works in Material, iRiS and Waffle": "Läuft in Material, iRiS und Waffle",
+  "Draw the wallpaper as glyphs": "Hintergrund als Glyphen zeichnen",
+  "Pictures, GIFs and videos are redrawn as glowing characters.": "Bilder, GIFs und Videos werden als leuchtende Zeichen neu gezeichnet.",
+  "Picture colours": "Bildfarben",
+  "Phosphor": "Phosphor",
+  "Amber": "Bernstein",
+  "Blueprint": "Blaupause",
+  "Glyph size": "Glyphengröße",
+  "Paper": "Papier"
 }

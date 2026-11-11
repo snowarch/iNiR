@@ -3486,5 +3486,13 @@
   "Every screen": "Sinaakkusiffiit tamarmik",
   "Wait for the graphics card": "Qalipaatip ingerlanneqarnissaa tikillugu",
   "Turn the tablet around": "Tablet ujaqqamik nuunneqarpoq",
-  "Works in Material, iRiS and Waffle": "Material-imi, iRiS-imi Waffle-milu sulisarpoq"
+  "Works in Material, iRiS and Waffle": "Material-imi, iRiS-imi Waffle-milu sulisarpoq",
+  "Draw the wallpaper as glyphs": "Tunuliaqut naqinnernik titartaruk",
+  "Pictures, GIFs and videos are redrawn as glowing characters.": "Assit, GIF-it videollu naqinnernik qaamasunik titartaqqinneqartarput.",
+  "Picture colours": "Assip qalipaatai",
+  "Phosphor": "Fosfor",
+  "Amber": "Rav",
+  "Blueprint": "Titartagaq tungujortoq",
+  "Glyph size": "Naqinnerup angissusia",
+  "Paper": "Pappia"
 }

@@ -3486,5 +3486,13 @@
   "Every screen": "Усі екрани",
   "Wait for the graphics card": "Чекати на відеокарту",
   "Turn the tablet around": "Повернути планшет",
-  "Works in Material, iRiS and Waffle": "Працює в Material, iRiS і Waffle"
+  "Works in Material, iRiS and Waffle": "Працює в Material, iRiS і Waffle",
+  "Draw the wallpaper as glyphs": "Малювати шпалери символами",
+  "Pictures, GIFs and videos are redrawn as glowing characters.": "Зображення, GIF і відео перемальовуються сяйливими символами.",
+  "Picture colours": "Кольори зображення",
+  "Phosphor": "Фосфор",
+  "Amber": "Бурштин",
+  "Blueprint": "Креслення",
+  "Glyph size": "Розмір символів",
+  "Paper": "Папір"
 }

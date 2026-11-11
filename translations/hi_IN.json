@@ -3486,5 +3486,13 @@
   "Every screen": "हर स्क्रीन",
   "Wait for the graphics card": "ग्राफ़िक्स कार्ड की प्रतीक्षा करें",
   "Turn the tablet around": "टैबलेट को घुमाएँ",
-  "Works in Material, iRiS and Waffle": "Material, iRiS और Waffle में चलता है"
+  "Works in Material, iRiS and Waffle": "Material, iRiS और Waffle में चलता है",
+  "Draw the wallpaper as glyphs": "वॉलपेपर को ग्लिफ़ से बनाएँ",
+  "Pictures, GIFs and videos are redrawn as glowing characters.": "चित्र, GIF और वीडियो चमकते अक्षरों से दोबारा बनाए जाते हैं।",
+  "Picture colours": "चित्र के रंग",
+  "Phosphor": "फ़ॉस्फ़र",
+  "Amber": "एम्बर",
+  "Blueprint": "ब्लूप्रिंट",
+  "Glyph size": "ग्लिफ़ का आकार",
+  "Paper": "कागज़"
 }

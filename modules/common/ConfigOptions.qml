@@ -1523,6 +1523,13 @@ JsonAdapter {
             property bool enableAnimatedBlur: false // Enable blur for animated wallpapers (video/gif) - has performance impact
             property int dim: 30 // 0-100 percentage (base overlay)
             property int dynamicDim: 20 // Extra dim when there are windows on the current workspace (0-100)
+            // The wallpaper (still, GIF or video) drawn as glowing glyphs.
+            property JsonObject glyphs: JsonObject {
+                property bool enable: false
+                property string look: "signal" // signal (the picture's colours), theme, phosphor, amber, blueprint, paper
+                property int size: 1 // screen px per glyph pixel, 1-4
+                property int glow: 100 // 0-200
+            }
             property JsonObject ripple: JsonObject {
                 property bool enable: false
                 property bool charging: true

@@ -3486,5 +3486,13 @@
   "Every screen": "모든 화면",
   "Wait for the graphics card": "그래픽 카드 대기",
   "Turn the tablet around": "태블릿 뒤집기",
-  "Works in Material, iRiS and Waffle": "Material, iRiS, Waffle에서 작동"
+  "Works in Material, iRiS and Waffle": "Material, iRiS, Waffle에서 작동",
+  "Draw the wallpaper as glyphs": "배경화면을 글리프로 그리기",
+  "Pictures, GIFs and videos are redrawn as glowing characters.": "이미지, GIF, 동영상을 빛나는 문자로 다시 그립니다.",
+  "Picture colours": "이미지 색상",
+  "Phosphor": "형광 녹색",
+  "Amber": "호박색",
+  "Blueprint": "청사진",
+  "Glyph size": "글리프 크기",
+  "Paper": "종이"
 }

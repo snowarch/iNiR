@@ -863,7 +863,11 @@ Scope {
         // stays drawn here until awww shows it.
         readonly property string irisTexture: (Config.options?.panelFamily ?? "ii") === "iris"
             ? String(Config.options?.iris?.appearance?.texture ?? "solid") : "solid"
-        readonly property bool textureWallpaperActive: (bgRoot.irisTexture === "afterglow"
+        readonly property bool textureWallpaperActive: bgRoot.irisTextureActive || bgRoot.glyphsActive
+        // Glyphs read whatever is drawn here, like a family's texture: the picture is drawn here, not by awww.
+        readonly property bool glyphsActive: Wallpapers.glyphs && bgRoot.wallpaperPathRaw.length > 0
+            && !bgRoot.webWallpaperActive && !bgRoot.wallpaperSafetyTriggered && !bgRoot.backdropActive
+        readonly property bool irisTextureActive: (bgRoot.irisTexture === "afterglow"
                 ? (Config.options?.iris?.appearance?.afterglow?.wallpaper ?? true)
                 : bgRoot.irisTexture === "leak" && (Number(Config.options?.iris?.appearance?.leak?.wallpaper ?? 50) > 0
                     || Config.options?.iris?.appearance?.leak?.backdrop === "light"))
@@ -1760,7 +1764,7 @@ Scope {
                 id: textureLoader
                 z: 0.5
                 anchors.fill: wallpaperContainer
-                when: bgRoot.textureWallpaperActive && bgRoot._familyOwnsScreen
+                when: bgRoot.irisTextureActive && bgRoot._familyOwnsScreen
                 readonly property bool leak: bgRoot.irisTexture === "leak"
                 part: leak ? "wallpaper.leak" : "wallpaper.afterglow"
                 // The light alone never shows the picture: a video under it needs no redraw.
@@ -1772,6 +1776,14 @@ Scope {
                     ignoreUnknownSignals: true
                     function onShown(): void { bgRoot.wallpaperLayerRevision++ }
                 }
+            }
+
+            WallpaperGlyphs {
+                id: glyphsLoader
+                z: 0.6
+                anchors.fill: wallpaperContainer
+                picture: bgRoot.glyphsActive ? (textureLoader.item ?? wallpaperContainer) : null
+                path: bgRoot.wallpaperPathRaw
             }
 
             // Blur behind windows. Reads what is actually drawn: the crossfader (QML or awww rendering), the
@@ -1794,7 +1806,7 @@ Scope {
 
                     GaussianBlur {
                         anchors.fill: parent
-                        source: textureLoader.item ?? (bgRoot.wallpaperIsVideo ? videoWallpaper
+                        source: glyphsLoader.item ?? textureLoader.item ?? (bgRoot.wallpaperIsVideo ? videoWallpaper
                             : bgRoot.wallpaperIsGif ? gifWallpaper : wallpaper)
                         radius: bgRoot.effectsOptions.blurRadius ?? 22
                         // See #159 — cap samples to bound fragment shader cost

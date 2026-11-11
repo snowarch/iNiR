@@ -3486,5 +3486,13 @@
   "Every screen": "Ogni schermo",
   "Wait for the graphics card": "Attendi la scheda grafica",
   "Turn the tablet around": "Ruota la tavoletta",
-  "Works in Material, iRiS and Waffle": "Funziona in Material, iRiS e Waffle"
+  "Works in Material, iRiS and Waffle": "Funziona in Material, iRiS e Waffle",
+  "Draw the wallpaper as glyphs": "Disegna lo sfondo con glifi",
+  "Pictures, GIFs and videos are redrawn as glowing characters.": "Immagini, GIF e video vengono ridisegnati con caratteri luminosi.",
+  "Picture colours": "Colori dell’immagine",
+  "Phosphor": "Fosforo",
+  "Amber": "Ambra",
+  "Blueprint": "Cianografia",
+  "Glyph size": "Dimensione dei glifi",
+  "Paper": "Carta"
 }

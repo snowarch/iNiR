@@ -3486,5 +3486,13 @@
   "Every screen": "Todas as telas",
   "Wait for the graphics card": "Aguardar a placa de vídeo",
   "Turn the tablet around": "Girar a mesa digitalizadora",
-  "Works in Material, iRiS and Waffle": "Funciona no Material, no iRiS e no Waffle"
+  "Works in Material, iRiS and Waffle": "Funciona no Material, no iRiS e no Waffle",
+  "Draw the wallpaper as glyphs": "Desenhar o papel de parede com glifos",
+  "Pictures, GIFs and videos are redrawn as glowing characters.": "Imagens, GIFs e vídeos são redesenhados com caracteres luminosos.",
+  "Picture colours": "Cores da imagem",
+  "Phosphor": "Fósforo",
+  "Amber": "Âmbar",
+  "Blueprint": "Planta",
+  "Glyph size": "Tamanho do glifo",
+  "Paper": "Papel"
 }

@@ -3486,5 +3486,13 @@
   "Every screen": "كل الشاشات",
   "Wait for the graphics card": "انتظار بطاقة الرسوميات",
   "Turn the tablet around": "اقلب اللوحة الرسومية",
-  "Works in Material, iRiS and Waffle": "يعمل في Material و iRiS و Waffle"
+  "Works in Material, iRiS and Waffle": "يعمل في Material و iRiS و Waffle",
+  "Draw the wallpaper as glyphs": "رسم الخلفية بالرموز",
+  "Pictures, GIFs and videos are redrawn as glowing characters.": "يُعاد رسم الصور وملفات GIF والفيديو بأحرف متوهجة.",
+  "Picture colours": "ألوان الصورة",
+  "Phosphor": "فوسفور",
+  "Amber": "كهرماني",
+  "Blueprint": "مخطط أزرق",
+  "Glyph size": "حجم الرمز",
+  "Paper": "الورق"
 }
