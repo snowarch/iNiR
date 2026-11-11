@@ -35,6 +35,13 @@ Item {
     readonly property int effectiveDuration: (root.enableTransitions && Appearance.animationsEnabled)
         ? Appearance.calcEffectiveDuration(root.transitionBaseDuration) : 0
 
+    // A loop never cuts: a little before the end the same file starts again in the other slot and the two blend.
+    // Off, or for a clip too short to blend, the player loops by itself.
+    property bool seamlessLoop: true
+    readonly property int loopBlend: Appearance.animationsEnabled ? 1100 : 0
+    property bool _relapping: false
+    readonly property int _fade: root._relapping ? root.loopBlend : root.effectiveDuration
+
     property int activeSlot: 0
     property string _loadingSource: ""
     property bool _slotAHasFrame: false
@@ -80,6 +87,7 @@ Item {
 
     function _applySource(): void {
         const next = root._normalized(root.playbackSource)
+        root._relapping = false
         if (!next) {
             root._cancelPendingLoad()
             playerA.source = ""
@@ -111,6 +119,28 @@ Item {
         root._loadingSource = next
         root._inactivePlayer().source = next
         root._syncPlayback()
+    }
+
+    // The end is near: the same file opens in the hidden slot, and the usual swap blends into it.
+    function _relap(): void {
+        const active = root._activePlayer()
+        if (root._loadingSource || !String(active.source)) return
+        root._relapping = true
+        root._loadingSource = String(active.source)
+        root._inactivePlayer().source = root._loadingSource
+        root._syncPlayback()
+    }
+
+    // Two looks a second at where the film is, only while it plays; the lead covers opening the file.
+    Timer {
+        interval: 500
+        repeat: true
+        running: root.seamlessLoop && root.shouldPlay && root.loopBlend > 0 && root.hasFrame && root.visible
+        onTriggered: {
+            const active = root._activePlayer()
+            if (active.duration < 6000 || root._loadingSource || cleanupTimer.running) return
+            if (active.duration - active.position <= root.loopBlend + 900) root._relap()
+        }
     }
 
     // Called by a slot once it can actually show a frame.
@@ -160,12 +190,13 @@ Item {
     // Release the slot that finished fading out so it stops decoding.
     Timer {
         id: cleanupTimer
-        interval: Math.max(root.effectiveDuration, 1) + 80
+        interval: Math.max(root._fade, 1) + 80
         onTriggered: {
             const stale = root._inactivePlayer()
             if (root._loadingSource && String(stale.source) === root._loadingSource)
                 return
             stale.source = ""
+            root._relapping = false
         }
     }
 
@@ -178,7 +209,7 @@ Item {
         Behavior on opacity {
             enabled: Appearance.animationsEnabled
             NumberAnimation {
-                duration: root.effectiveDuration
+                duration: root._fade
                 easing.type: Easing.BezierSpline
                 easing.bezierCurve: Appearance.animationCurves.standard
             }
@@ -194,7 +225,7 @@ Item {
         Behavior on opacity {
             enabled: Appearance.animationsEnabled
             NumberAnimation {
-                duration: root.effectiveDuration
+                duration: root._fade
                 easing.type: Easing.BezierSpline
                 easing.bezierCurve: Appearance.animationCurves.standard
             }
