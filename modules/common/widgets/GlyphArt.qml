@@ -59,16 +59,23 @@ Item {
         ? (0.7 * Math.sin(root.clock * 0.7) + 0.3 * Math.sin(root.clock * 1.9 + 1)) * Math.PI / 180 : 0
     property real clock: 0
     property real grow: 1
+    // Counts every new drawing while it moves: what copies it (a widget's frosted glass) copies again on each.
+    property int frame: 0
+    // It is drawing new frames by itself (motion, a video or GIF read, the intro).
+    readonly property bool ticking: ticker.running
 
     Timer {
+        id: ticker
         interval: root.smoothMotion ? 66 : Math.max(66, Math.round(1000 / (7 * Math.max(1, root.settings.shimmer / 100))))
         repeat: true
-        running: root.moving || (root.animated && root.seen)
+        running: root.moving || (root.animated && root.seen) || growing.running
         onTriggered: {
             if (root.moving) root.clock += interval / 1000 * root.pace
             if (root.animated) cells.scheduleUpdate()
+            root.frame++
         }
     }
+    onSettingsChanged: root.frame++
 
     // A new picture comes in the way `settings.intro` says, once.
     function appear(): void {
@@ -128,13 +135,16 @@ Item {
         }
     }
 
-    // One texel per cell. Redrawn only when the picture itself changes.
+    // Four by four texels a cell, mipmapped: the shaders read its third level, one texel that is the average of the
+    // whole cell. One texel a cell read a 4K frame at a single point and the glyphs flickered with every detail.
+    // Redrawn only when the picture itself changes.
     ShaderEffectSource {
         id: cells
         sourceItem: root.ownSubject ? subject.item : root.picture
         hideSource: root.ownSubject || root.hidePicture
-        textureSize: Qt.size(root.columns, root.rows)
+        textureSize: Qt.size(root.columns * 4, root.rows * 4)
         smooth: true
+        mipmap: true
         live: !root.animated
     }
 

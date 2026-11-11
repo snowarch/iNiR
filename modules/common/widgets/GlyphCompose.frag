@@ -42,7 +42,8 @@ vec2 look(vec2 cell) {
 }
 // rgb: the cell's own colour; a: how much of it is subject.
 vec4 subject(vec2 cell, vec4 key) {
-    vec4 s = textureLod(picture, look(cell), 0.0);
+    // Level 2 of a texture four texels a cell wide: the cell's own average.
+    vec4 s = textureLod(picture, look(cell), 2.0);
     vec3 c = s.rgb / max(s.a, 0.001);
     float m = s.a;
     if (key.a > 0.5) m *= smoothstep(u.cut.x, u.cut.y, distance(c, key.rgb));

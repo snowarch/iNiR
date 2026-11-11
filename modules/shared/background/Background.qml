@@ -539,11 +539,26 @@ Scope {
         // An iRiS texture filter (Afterglow's grade, Light leak's exposure) draws the container (and hides it): glass copies
         // what is seen. While awww shows the picture the container draws nothing, and a glass copying it was empty: the
         // wallpaper came through unblurred. Then there is no layer and the glass reads the picture itself.
-        readonly property Item wallpaperLayer: bgRoot.externalMainWallpaperActive ? null : textureLoader.item ?? wallpaperContainer
+        // The glyph wallpaper is what is seen whenever it is on: the glass copies it, never the picture under it.
+        readonly property Item wallpaperLayer: glyphsLoader.item
+            ?? (bgRoot.externalMainWallpaperActive ? null : textureLoader.item ?? wallpaperContainer)
         // Bumped whenever what the wallpaper layer shows can change (picture, parallax, Afterglow arriving): iRiS glass
         // copies the layer only after a bump instead of every frame the desktop redraws.
         property int wallpaperLayerRevision: 0
         readonly property bool wallpaperLayerAnimating: bgRoot.internalShaderTransitionRequested
+        // Counts the layer's own new frames while it moves by itself: each frame the glyphs draw, or fifteen a second
+        // of a playing video or GIF. Glass copies again on each, so it stays live at that pace and never at the
+        // desktop's (a clock or the music redraw it far more often than the wallpaper changes).
+        readonly property int wallpaperLayerFrame: glyphsLoader.item ? glyphsLoader.item.frame : layerPacer.frames
+        Timer {
+            id: layerPacer
+            property int frames: 0
+            interval: 66
+            repeat: true
+            running: !glyphsLoader.item && !bgRoot.externalMainWallpaperActive
+                && ((bgRoot.wallpaperIsVideo && videoWallpaper.shouldPlay) || (bgRoot.wallpaperIsGif && gifWallpaper.playing))
+            onTriggered: frames++
+        }
         onWallpaperPathRawChanged: {
             bgRoot.wallpaperLayerRevision++
             const now = Date.now()
@@ -1785,6 +1800,7 @@ Scope {
                 picture: bgRoot.glyphsActive ? (textureLoader.item ?? wallpaperContainer) : null
                 path: bgRoot.wallpaperPathRaw
                 output: bgRoot.monitorName
+                onItemChanged: bgRoot.wallpaperLayerRevision++
             }
 
             // Blur behind windows. Reads what is actually drawn: the crossfader (QML or awww rendering), the

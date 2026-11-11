@@ -38,6 +38,8 @@ Loader {
         theme: [Qt.darker(Appearance.colors.colPrimary, 2.2), Appearance.colors.colPrimary,
             Qt.lighter(Appearance.colors.colPrimary, 1.7), Appearance.colors.colTertiary]
         fontFamily: Appearance.font.family.monospace
+        // The glyphs cover the picture whole: drawing it under them too was a full-screen pass every video frame.
+        hidePicture: true
         live: root.seen
         // A video or a GIF is read fifteen times a second, whatever its own rate; the desktop redraws for its
         // widgets far more often than the glyphs change, so their last frame is kept.

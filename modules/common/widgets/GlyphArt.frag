@@ -32,7 +32,8 @@ vec3 ink(vec2 uv) {
     vec4 t = textureLod(cells, (cell + 0.5) / u.grid.xy, 0.0);
     float glyph = floor(t.a * 255.0 + 0.5);
     if (glyph < 0.5) return vec3(0.0);
-    float lod = max(0.0, log2(28.0 / max(u.box.w, 1.0)));
+    // Most of a level sharper than the size it is drawn at: a full level softened a 10 px glyph into a smudge.
+    float lod = max(0.0, log2(28.0 / max(u.box.w, 1.0)) - 0.7);
     float pad = 0.5 * exp2(lod) / 28.0;
     vec2 f = clamp(g - cell, vec2(pad), vec2(1.0 - pad));
     vec2 tile = vec2(mod(glyph, 8.0), floor(glyph / 8.0));
@@ -71,7 +72,7 @@ void main() {
     } else {
         col = ink(uv);
     }
-    col += bloom(uv) * u.screen.x;
+    if (u.screen.x > 0.0) col += bloom(uv) * u.screen.x;
     col = 1.0 - exp(-col * 1.25);
     col *= 1.0 - u.screen.y * 0.45 * (0.5 - 0.5 * cos(6.2831853 * uv.y * u.grid.y));
     float grain = (hash(floor(qt_TexCoord0 * u.box.xy) + floor(u.warp.z * 12.0)) - 0.5) * 0.03 * u.screen.z;

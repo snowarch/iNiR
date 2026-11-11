@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Effects
 import Qt5Compat.GraphicalEffects as GE
 import Quickshell
+import qs
 import qs.modules.common
 import qs.modules.common.functions
 import qs.services
@@ -85,8 +86,46 @@ Rectangle {
         }
     }
 
+    // On the desktop the glass copies the window's own wallpaper layer, what is really seen there (the glyph wallpaper,
+    // a playing video), and again on each of its frames while it moves; elsewhere (the lock) the picture itself.
+    readonly property var _host: root.QsWindow?.window ?? null
+    readonly property Item _layer: root._host?.wallpaperLayer ?? null
     Loader {
-        active: root.glass && root.visible
+        active: root.glass && root.visible && root._layer !== null
+        sourceComponent: ShaderEffectSource {
+            id: frosted
+            readonly property int revision: root._host?.wallpaperLayerRevision ?? 0
+            readonly property int frame: root._host?.wallpaperLayerFrame ?? 0
+            readonly property point at: {
+                void (root.surface.screenX + root.surface.screenY + root.width + root.height)
+                return root.mapToItem(root._layer, 0, 0)
+            }
+            // Wide enough for the blur to find picture all round, so the rim does not fade to nothing.
+            readonly property real margin: 40
+            x: -margin
+            y: -margin
+            width: root.width + margin * 2
+            height: root.height + margin * 2
+            sourceItem: root._layer
+            live: GlobalStates.widgetEditMode
+            sourceRect: Qt.rect(at.x - margin, at.y - margin, width, height)
+            textureSize: Qt.size(Math.max(1, Math.round(width * root._blurScale)), Math.max(1, Math.round(height * root._blurScale)))
+            smooth: true
+            onRevisionChanged: scheduleUpdate()
+            onFrameChanged: scheduleUpdate()
+            onAtChanged: scheduleUpdate()
+            layer.enabled: root.surface.powerActive
+            layer.textureSize: frosted.textureSize
+            layer.effect: MultiEffect {
+                saturation: root.glassSaturation
+                blurEnabled: true
+                blurMax: Math.max(1, Math.round(64 * root._blurScale))
+                blur: root.glassBlur
+            }
+        }
+    }
+    Loader {
+        active: root.glass && root.visible && root._layer === null
         sourceComponent: Image {
             id: blurredWallpaper
             x: -root.surface.screenX

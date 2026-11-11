@@ -1532,9 +1532,9 @@ JsonAdapter {
                 property string look: "signal"
                 property string charset: "signal" // signal, ascii, dense, dots, blocks, lines, digits, binary, custom
                 property string custom: " .oO0@#"
-                property int cell: 10 // a glyph's width in px, 5-28
+                property int cell: 12 // a glyph's width in px, 5-28
                 property int strokes: 100
-                property int shimmer: 100
+                property int shimmer: 30
                 property int rain: 0
                 property bool outline: true
                 property string palette: "source" // source, theme, custom, or a palette of GlyphArt.js
@@ -1543,14 +1543,14 @@ JsonAdapter {
                 property string c3: "#fff3b0"
                 property string back: "#020205"
                 property int sat: 150
-                property int contrast: 100
+                property int contrast: 115
                 property int hue: 0 // degrees
                 property int rainbow: 0
                 property int drift: 0
-                property int glow: 100
+                property int glow: 60
                 property int scan: 0
-                property int grain: 100
-                property int fringe: 100
+                property int grain: 30
+                property int fringe: 30
                 property int curve: 0
                 property int glitch: 0
                 property bool paper: false
@@ -1558,10 +1558,12 @@ JsonAdapter {
                 property string subject: "auto" // the background: auto, none, dark, light
                 property int cut: 16
                 property bool invert: false
-                property bool motion: false // off, the picture is drawn once and nothing runs
+                property bool motion: true // off, the picture is drawn once and nothing runs
                 property string intro: "grow" // off, grow, scan, type, centre, dissolve
                 property int speed: 100
-                property bool camera: false
+                property bool sway: true
+                property bool camera: true
+                property bool pulse: true
                 property bool turn: true
             }
             property JsonObject ripple: JsonObject {

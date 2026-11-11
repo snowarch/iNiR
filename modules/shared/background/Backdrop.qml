@@ -128,7 +128,9 @@ Variants {
                 return ""
             const frame = Wallpapers.getVideoFirstFramePath(wallpaperPathRaw)
             if (!frame) {
-                Wallpapers.ensureVideoFirstFrame(wallpaperPathRaw)
+                // Asked after the binding: asking inside it writes the frames it reads (a binding loop).
+                const path = wallpaperPathRaw
+                Qt.callLater(() => Wallpapers.ensureVideoFirstFrame(path))
                 return ""
             }
             return frame.startsWith("file://") ? frame : ("file://" + frame)
@@ -567,6 +569,8 @@ Variants {
             picture: backdropWindow.useAuroraStyle ? null : backdropMedia
             path: backdropWindow.wallpaperPathRaw
             output: WallpaperListener.getMonitorName(backdropWindow.modelData)
+            // Seen only through the overview: elsewhere it is drawn once and waits.
+            live: NiriService.inOverview
         }
     }
 }

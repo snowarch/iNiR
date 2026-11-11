@@ -21,7 +21,7 @@ void main() {
     float solid = 0.0;
     for (int j = 0; j < 16; j++) for (int i = 0; i < 16; i++) {
         if (i == 0 || i == 15 || j == 0 || j == 15) {
-            vec4 s = textureLod(picture, (vec2(float(i), float(j)) + 0.5) / 16.0, 0.0);
+            vec4 s = textureLod(picture, (vec2(float(i), float(j)) + 0.5) / 16.0, 2.0);
             vec3 c = s.rgb / max(s.a, 0.001);
             sum += c * s.a;
             squares += c * c * s.a;
