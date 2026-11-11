@@ -142,10 +142,10 @@ QtObject {
         // A widget that draws its own card in Material (plate false) still wears the iRiS plate as a face.
         const plated = () => root.on(widget) && (plate || root.face(widget))
         out.push(
-            root.row(widget, "showBackground", "Background", "switch", root.plateDefault(widget), { page: "look", tune: false, when: plated,
+            root.row(widget, "showBackground", "Background", "switch", root.bareDefault(widget), { page: "look", tune: false, when: plated,
                 apply: next => root.plateValues(next, root.value(widget, "backgroundOpacity", 0.16)),
                 description: "The plate behind the widget.", keywords: ["background", "plate", "card", "surface", "fondo", "superficie"] }),
-            root.row(widget, "showBorder", "Outline", "switch", root.plateDefault(widget), { page: "look", when: plated,
+            root.row(widget, "showBorder", "Outline", "switch", root.bareDefault(widget), { page: "look", when: plated,
                 apply: next => Object.assign({ showBorder: next }, next && Number(root.value(widget, "borderOpacity", 0.08)) <= 0 ? { borderOpacity: 0.2 } : {},
                     next && Number(root.value(widget, "borderWidth", 1)) <= 0 ? { borderWidth: 1 } : {}),
                 keywords: ["outline", "border", "line", "borde"] }),
@@ -154,7 +154,7 @@ QtObject {
             root.row(widget, "borderWidth", "Outline width", "range", 1, { page: "look", tune: true, min: 0, max: 8, step: 1, unit: " px",
                 when: () => plated() && Boolean(root.value(widget, "showBorder", root.plateDefault(widget))) }))
         if (plate) out.push(
-            root.row(widget, "backgroundOpacity", "Background strength", "range", root.plateDefault(widget) ? 0.16 : 0, { page: "look", min: 0, max: 1, step: 0.02, scale: 100, unit: " %",
+            root.row(widget, "backgroundOpacity", "Background strength", "range", root.bareDefault(widget) ? 0.16 : 0, { page: "look", min: 0, max: 1, step: 0.02, scale: 100, unit: " %",
                 when: () => root.plain(widget) && Boolean(root.value(widget, "showBackground", root.plateDefault(widget))) }),
             // Settings kept these two; the edit sheet lost them when it took over the widget manager (his 10-30)
             root.row(widget, "useBlur", "Blur background", "switch", false, { page: "look", tune: true,
@@ -182,6 +182,9 @@ QtObject {
     function plateValues(on: bool, strength: var): var {
         return on && Number(strength) <= 0 ? { showBackground: true, backgroundOpacity: 0.16 } : { showBackground: on }
     }
+    // The rows are built once per registry: a fallback read there made every Settings row rebuild when the shared
+    // material changed (1.5 s frozen). Built with the bare default; `read` asks the material when it reads.
+    function bareDefault(widget: string): bool { return !(DesktopWidgetRegistry.byKey[widget]?.bare ?? false) }
     function plateDefault(widget: string): bool {
         return DesktopWidgetLook.look.plateByDefault({ bare: DesktopWidgetRegistry.byKey[widget]?.bare ?? false })
     }
@@ -376,7 +379,9 @@ QtObject {
         if (spec.shell) return Config.getNestedValue(spec.shell, spec.fallback)
         if (spec.key === "sizeClass")
             return root.value(spec.widget, "sizeClass", undefined) ?? DesktopWidgetStacks.reported[spec.widget]?.size ?? spec.fallback
-        return root.value(spec.widget, spec.key, spec.key === "showBackground" ? root.plateDefault(spec.widget) : spec.fallback)
+        const plate = ["showBackground", "showBorder"].includes(spec.key) ? root.plateDefault(spec.widget)
+            : spec.key === "backgroundOpacity" ? (root.plateDefault(spec.widget) ? 0.16 : 0) : spec.fallback
+        return root.value(spec.widget, spec.key, plate)
     }
     function write(spec: var, next: var): void {
         if (spec.widgetEnable) { DesktopWidgetLayout.setGloballyEnabled(spec.widget, Boolean(next)); return }
