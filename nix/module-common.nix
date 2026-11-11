@@ -84,7 +84,8 @@
       Restart = "on-failure";
       RestartSec = 5;
       TimeoutStartSec = 300;
-      TimeoutStopSec = 15;
+      TimeoutStopSec = 6;
+      TimeoutStopFailureMode = "abort";
       LimitCORE = 0;
       LimitNOFILE = 65536;
       IOSchedulingPriority = 2;

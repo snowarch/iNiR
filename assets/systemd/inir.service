@@ -45,7 +45,11 @@ KillSignal=SIGTERM
 # infinite crash loops — after 3 rapid failures systemd gives up.
 Restart=on-failure
 RestartSec=5
-TimeoutStopSec=15
+# A shell that does not leave in time is frozen. SIGABRT instead of SIGKILL makes qs-rs print
+# its native and QML stacks to the journal on the way out: the only trace a freeze leaves
+# (`inir service logs`). The exit path ends itself after 3 s, so 6 is a frozen one.
+TimeoutStopSec=6
+TimeoutStopFailureMode=abort
 
 # Disable coredumps and QS crash reports. Stock Quickshell can segfault on
 # hot-reload (extensions freed before the root), each coredump is 45-90 MB and
