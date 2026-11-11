@@ -10,6 +10,7 @@
   "lock": true,
   "palette": true,
   "face": "timer",
+  "bare": true,
   "defaultConfig": {
     "placementStrategy": "free",
     "vertical": false,

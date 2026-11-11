@@ -44,7 +44,10 @@ Rectangle {
     // source pixels, so it's halved too.
     property bool glass: false
     property real glassSaturation: 0.15
+    // The widget's Blur strength scales what the family's style blurs by; the radius grows past 100 %.
     property real glassBlur: 0.8
+    readonly property real _glassAmount: Math.max(0, root.glassBlur * (root.surface.widget?.blurStrength ?? 1))
+    readonly property real _glassReach: Math.max(1, root._glassAmount)
     readonly property real _blurScale: 0.5
 
     property int moveDuration: FamilyStyle.revealDuration
@@ -101,7 +104,7 @@ Rectangle {
                 return root.mapToItem(root._layer, 0, 0)
             }
             // Wide enough for the blur to find picture all round, so the rim does not fade to nothing.
-            readonly property real margin: 40
+            readonly property real margin: Math.round(40 * root._glassReach)
             x: -margin
             y: -margin
             width: root.width + margin * 2
@@ -119,8 +122,8 @@ Rectangle {
             layer.effect: MultiEffect {
                 saturation: root.glassSaturation
                 blurEnabled: true
-                blurMax: Math.max(1, Math.round(64 * root._blurScale))
-                blur: root.glassBlur
+                blurMax: Math.max(1, Math.round(64 * root._glassReach * root._blurScale))
+                blur: Math.min(1, root._glassAmount)
             }
         }
     }
@@ -148,8 +151,8 @@ Rectangle {
                 anchors.fill: source
                 saturation: root.glassSaturation
                 blurEnabled: true
-                blurMax: Math.max(1, Math.round(64 * root._blurScale))
-                blur: root.glassBlur
+                blurMax: Math.max(1, Math.round(64 * root._glassReach * root._blurScale))
+                blur: Math.min(1, root._glassAmount)
             }
         }
     }

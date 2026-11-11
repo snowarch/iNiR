@@ -167,9 +167,11 @@ AbstractWidget {
     readonly property bool bare: DesktopWidgetRegistry.entry(root.configEntryName)?.bare ?? false
     readonly property bool showBackground: root._readConfigKey("showBackground") ?? root.look.plateByDefault(root)
     readonly property bool useBlur: root._readConfigKey("useBlur") ?? false
+    // How much the glass frosts, 0-1 of what the family's style blurs by (100 % = the style's own).
+    readonly property real blurStrength: Math.max(0, Math.min(150, Number(root._readConfigKey("blurStrength") ?? 100))) / 100
     readonly property bool blurAvailable: root.look.blurAvailable(root)
     readonly property bool effectiveBlur: root.showBackground && root.useBlur && root.blurAvailable
-    readonly property bool showBorder: root._readConfigKey("showBorder") ?? !root.bare
+    readonly property bool showBorder: root._readConfigKey("showBorder") ?? (!root.bare || root.familyFaced)
     // Granular card controls — override booleans when present
     // Whether a plate can show at all: a widget that draws its own card in the base design has none to take away.
     readonly property bool plateOffered: root.familyFaced || DesktopWidgetRegistry.entry(root.configEntryName)?.plate !== false

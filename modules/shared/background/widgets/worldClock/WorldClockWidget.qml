@@ -518,9 +518,11 @@ AbstractBackgroundWidget {
                             readonly property bool alternate: (index % 2) === (Math.floor(index / 2) % 2)
                             readonly property string cellRole: cityCell.alternate
                                 ? root.widgetSecondaryRole : root.widgetTertiaryRole
-                            readonly property color cellColor: root.widgetSemanticContainer(cityCell.cellRole)
-                            readonly property color cellInk: root.widgetSemanticOnContainer(cityCell.cellRole)
-                            readonly property color cellAccent: root.widgetSemanticColor(cityCell.cellRole)
+                            // One city on a plate: the plate is its card. A tile filling it read as a card inside a card.
+                            readonly property bool lone: root.cities.length === 1 && root.showBackground
+                            readonly property color cellColor: cityCell.lone ? "transparent" : root.widgetSemanticContainer(cityCell.cellRole)
+                            readonly property color cellInk: cityCell.lone ? root.widgetInk : root.widgetSemanticOnContainer(cityCell.cellRole)
+                            readonly property color cellAccent: cityCell.lone ? root.widgetAccentVisible : root.widgetSemanticColor(cityCell.cellRole)
                             // a tall, wide tile (large, a city a row) sets its city and time a size up
                             readonly property bool roomy: cityGrid.roomy
 

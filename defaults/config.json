@@ -1612,6 +1612,7 @@
             "legibleAlways": false,
             "design": "iris",
             "material": "glass",
+            "blur": 100,
             "weight": "regular",
             "rim": false,
             "outline": "auto",

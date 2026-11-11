@@ -45,10 +45,18 @@ QtObject {
     }
     // Not the face (Material, iNstrument or Readout): the shared card and its plate.
     function plain(widget: string): bool { return root.on(widget) && !root.resolved(widget).face }
-    // What iNstrument or Readout lays over the widget's own keys: those rows have nothing to change while it does.
+    // What iNstrument or Readout lays over the widget's own keys, or the keys a face design draws its own way
+    // (`ignores` in its `faces` entry): those rows have nothing to change while it does.
     function overlay(widget: string): var {
         const design = root.resolved(widget)
-        return design.face ? ({}) : DesktopWidgetDesign.values(widget, design.design)
+        if (!design.face)
+            return DesktopWidgetDesign.values(widget, design.design)
+        const own = ({})
+        if (!root.faced.includes(widget))
+            return own
+        for (const key of DesktopWidgetDesign.faceDesignOf(design.wear)?.ignores ?? [])
+            own[key] = null
+        return own
     }
     function effective(widget: string, key: string, fallback: var): var {
         const over = root.overlay(widget)
@@ -139,8 +147,9 @@ QtObject {
         ]
         out.push(...(root.familyOptions["*"] ?? []).map(option => root._row(widget, option)))
         const look = { page: "look" }
-        // A widget that draws its own card in Material (plate false) still wears the iRiS plate as a face.
-        const plated = () => root.on(widget) && (plate || root.face(widget))
+        // A widget that draws its own card in Material (plate false) still wears the family's plate under its face; one
+        // with no face of the family keeps drawing its own, and has no plate to set.
+        const plated = () => root.on(widget) && (plate || root.face(widget) && root.faced.includes(widget))
         out.push(
             root.row(widget, "showBackground", "Background", "switch", root.bareDefault(widget), { page: "look", tune: false, when: plated,
                 apply: next => root.plateValues(next, root.value(widget, "backgroundOpacity", 0.16)),
@@ -160,6 +169,10 @@ QtObject {
             root.row(widget, "useBlur", "Blur background", "switch", false, { page: "look", tune: true,
                 when: () => root.plain(widget) && Boolean(root.value(widget, "showBackground", root.plateDefault(widget))),
                 keywords: ["blur", "frosted", "glass", "desenfoque"] }),
+            root.row(widget, "blurStrength", "Blur strength", "range", 100, { page: "look", tune: true, min: 0, max: 150, step: 5, unit: " %",
+                when: () => root.plain(widget) && Boolean(root.value(widget, "showBackground", root.plateDefault(widget)))
+                    && Boolean(root.value(widget, "useBlur", false)),
+                keywords: ["blur", "frost", "glass", "strength", "desenfoque"] }),
             root.row(widget, "cornerRadius", "Corners", "range", -1, { page: "look", tune: true, min: -1, max: 48, step: 1, unit: " px", lowLabel: "Theme",
                 when: () => root.plain(widget) && (Boolean(root.value(widget, "showBackground", root.plateDefault(widget)))
                     || Boolean(root.value(widget, "showBorder", root.plateDefault(widget)))),
@@ -186,7 +199,7 @@ QtObject {
     // material changed (1.5 s frozen). Built with the bare default; `read` asks the material when it reads.
     function bareDefault(widget: string): bool { return !(DesktopWidgetRegistry.byKey[widget]?.bare ?? false) }
     function plateDefault(widget: string): bool {
-        return DesktopWidgetLook.look.plateByDefault({ bare: DesktopWidgetRegistry.byKey[widget]?.bare ?? false })
+        return DesktopWidgetLook.look.plateByDefault({ bare: DesktopWidgetRegistry.byKey[widget]?.bare ?? false, familyFaced: root.face(widget) })
     }
     // Every widget at once, from its own row (so the plate still comes on with a visible strength). The state reads the
     // widgets on the desktop: one shared value, or "mixed". Background and outline mean one thing on every design.
@@ -319,7 +332,7 @@ QtObject {
         if (when.not !== undefined)
             return !root.holds(widget, when.not)
         if (when.wears !== undefined)
-            return root.face(widget) && [].concat(when.wears).includes(root.resolved(widget).wear)
+            return root.face(widget) && root.faced.includes(widget) && [].concat(when.wears).includes(root.resolved(widget).wear)
         if (when.widget !== undefined)
             return [].concat(when.widget).includes(widget)
         return Object.keys(when).every(key => {
