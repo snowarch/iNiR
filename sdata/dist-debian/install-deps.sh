@@ -111,9 +111,9 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
     sudo apt install $installflags flatpak >/dev/null 2>&1 || true
     if command -v flatpak &>/dev/null; then
       flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo >/dev/null 2>&1 || true
-      _mc_log="$(mktemp /tmp/inir-missioncenter-log.XXXXXX)"
+      _mc_log="$(mktemp "${TMPDIR:-/tmp}/inir-missioncenter-log.XXXXXX")"
       if flatpak install -y --user flathub io.missioncenter.MissionCenter >"$_mc_log" 2>&1; then
-        _mc_wrapper="$(mktemp /tmp/inir-missioncenter.XXXXXX)"
+        _mc_wrapper="$(mktemp "${TMPDIR:-/tmp}/inir-missioncenter.XXXXXX")"
         printf '%s\n' '#!/bin/sh' 'exec flatpak run io.missioncenter.MissionCenter "$@"' > "$_mc_wrapper"
         sudo install -m 0755 "$_mc_wrapper" /usr/local/bin/missioncenter
         rm -f "$_mc_wrapper"
@@ -127,7 +127,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
   if [[ " ${_deb_special_cmds[*]} " == *" gowall " ]] && ! command -v gowall &>/dev/null; then
     sudo apt install $installflags golang-go >/dev/null 2>&1 || true
     if command -v go &>/dev/null; then
-      _gowall_build="$(mktemp -d /tmp/inir-gowall.XXXXXX)"
+      _gowall_build="$(mktemp -d "${TMPDIR:-/tmp}/inir-gowall.XXXXXX")"
       if git clone --depth 1 https://github.com/Achno/gowall.git "$_gowall_build/src" >/dev/null 2>&1 \
           && (cd "$_gowall_build/src" && go build -o "$_gowall_build/gowall" . >/dev/null 2>&1); then
         sudo install -m 0755 "$_gowall_build/gowall" /usr/local/bin/gowall
@@ -607,7 +607,7 @@ if ! fc-list | grep -qi "JetBrainsMono Nerd"; then
   log_info "Downloading JetBrains Mono Nerd Font..."
   
   NERD_FONTS_URL="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip"
-  TEMP_DIR="/tmp/nerdfonts-$$"
+  TEMP_DIR="${TMPDIR:-/tmp}/nerdfonts-$$"
   mkdir -p "$TEMP_DIR"
   
   if curl -fsSL -o "$TEMP_DIR/JetBrainsMono.zip" "$NERD_FONTS_URL"; then

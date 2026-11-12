@@ -349,7 +349,7 @@ install_github_binary() {
     return 1
   fi
   
-  local temp_dir="/tmp/${name}-install-$$"
+  local temp_dir="${TMPDIR:-/tmp}/${name}-install-$$"
   mkdir -p "$temp_dir"
   
   local filename=$(basename "$download_url")
@@ -404,7 +404,7 @@ if ! command -v gum &>/dev/null; then
   GUM_DEB_URL=$(curl -s "https://api.github.com/repos/charmbracelet/gum/releases/latest" | \
     jq -r ".assets[] | select(.name | test(\"_${ARCH}.deb$\")) | .browser_download_url" | head -1)
   if [[ -n "$GUM_DEB_URL" && "$GUM_DEB_URL" != "null" ]]; then
-    TEMP_DEB="/tmp/gum-$$.deb"
+    TEMP_DEB="${TMPDIR:-/tmp}/gum-$$.deb"
     if curl -fsSL -o "$TEMP_DEB" "$GUM_DEB_URL"; then
       sudo dpkg -i "$TEMP_DEB" 2>/dev/null || sudo apt install -f -y
       rm -f "$TEMP_DEB"
@@ -468,7 +468,7 @@ if ! command -v songrec &>/dev/null; then
     
     # Rust is only needed when the repository/PPA paths above were unavailable.
     if ensure_rust_toolchain; then
-      SONGREC_ROOT="$(mktemp -d /tmp/inir-songrec.XXXXXX)"
+      SONGREC_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/inir-songrec.XXXXXX")"
       if cargo install --root "$SONGREC_ROOT" songrec 2>/dev/null \
           && [[ -x "$SONGREC_ROOT/bin/songrec" ]]; then
         sudo install -m 0755 "$SONGREC_ROOT/bin/songrec" /usr/local/bin/songrec
@@ -494,9 +494,9 @@ if ! command -v missioncenter &>/dev/null; then
   sudo apt install $installflags flatpak >/dev/null 2>&1 || true
   if command -v flatpak &>/dev/null; then
     flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo >/dev/null 2>&1 || true
-    _mc_log="$(mktemp /tmp/inir-missioncenter-log.XXXXXX)"
+    _mc_log="$(mktemp "${TMPDIR:-/tmp}/inir-missioncenter-log.XXXXXX")"
     if flatpak install -y --user flathub io.missioncenter.MissionCenter >"$_mc_log" 2>&1; then
-      _mc_wrapper="$(mktemp /tmp/inir-missioncenter.XXXXXX)"
+      _mc_wrapper="$(mktemp "${TMPDIR:-/tmp}/inir-missioncenter.XXXXXX")"
       printf '%s\n' '#!/bin/sh' 'exec flatpak run io.missioncenter.MissionCenter "$@"' > "$_mc_wrapper"
       sudo install -m 0755 "$_mc_wrapper" /usr/local/bin/missioncenter
       rm -f "$_mc_wrapper"
@@ -516,7 +516,7 @@ if ${INSTALL_TOOLKIT:-true} && ! command -v gowall &>/dev/null; then
   log_info "Installing gowall wallpaper editor..."
   sudo apt install $installflags golang-go >/dev/null 2>&1 || true
   if command -v go &>/dev/null; then
-    _gowall_build="$(mktemp -d /tmp/inir-gowall.XXXXXX)"
+    _gowall_build="$(mktemp -d "${TMPDIR:-/tmp}/inir-gowall.XXXXXX")"
     if git clone --depth 1 https://github.com/Achno/gowall.git "$_gowall_build/src" >/dev/null 2>&1 \
         && (cd "$_gowall_build/src" && go build -o "$_gowall_build/gowall" . >/dev/null 2>&1); then
       sudo install -m 0755 "$_gowall_build/gowall" /usr/local/bin/gowall
@@ -538,7 +538,7 @@ if ${INSTALL_FONTS:-true}; then
       jq -r '.assets[] | select(.name | test("debian.*amd64.deb$")) | .browser_download_url' | head -1)
     
     if [[ -n "$DARKLY_DEB_URL" && "$DARKLY_DEB_URL" != "null" ]]; then
-      TEMP_DEB="/tmp/darkly-$$.deb"
+      TEMP_DEB="${TMPDIR:-/tmp}/darkly-$$.deb"
       curl -fsSL -o "$TEMP_DEB" "$DARKLY_DEB_URL"
       sudo dpkg -i "$TEMP_DEB" || sudo apt install -f -y
       rm -f "$TEMP_DEB"
@@ -560,7 +560,7 @@ if ${INSTALL_FONTS:-true}; then
       jq -r '.assets[] | select(.name | test("adw-gtk3.*\\.tar\\.xz$")) | .browser_download_url' | head -1)
     
     if [[ -n "$ADW_GTK3_URL" && "$ADW_GTK3_URL" != "null" ]]; then
-      TEMP_DIR="/tmp/adw-gtk3-$$"
+      TEMP_DIR="${TMPDIR:-/tmp}/adw-gtk3-$$"
       mkdir -p "$TEMP_DIR"
       
       if curl -fsSL -o "$TEMP_DIR/adw-gtk3.tar.xz" "$ADW_GTK3_URL"; then
@@ -583,7 +583,7 @@ if ${INSTALL_FONTS:-true}; then
       jq -r '.assets[] | select(.name | test("fonts-twemoji-svginot.*_all.deb$")) | .browser_download_url' | head -1)
     
     if [[ -n "$TWEMOJI_DEB_URL" && "$TWEMOJI_DEB_URL" != "null" ]]; then
-      TEMP_DEB="/tmp/twemoji-$$.deb"
+      TEMP_DEB="${TMPDIR:-/tmp}/twemoji-$$.deb"
       if curl -fsSL -o "$TEMP_DEB" "$TWEMOJI_DEB_URL"; then
         sudo dpkg -i "$TEMP_DEB" || sudo apt install -f -y
         rm -f "$TEMP_DEB"
@@ -603,7 +603,7 @@ if ${INSTALL_SCREENCAPTURE:-true}; then
     log_info "Installing swappy from source..."
     sudo apt install $installflags libgtk-3-dev libcairo2-dev libpango1.0-dev scdoc 2>/dev/null || true
     
-    SWAPPY_BUILD_DIR="/tmp/swappy-build-$$"
+    SWAPPY_BUILD_DIR="${TMPDIR:-/tmp}/swappy-build-$$"
     if git clone https://github.com/jtheoof/swappy.git "$SWAPPY_BUILD_DIR" 2>/dev/null; then
       cd "$SWAPPY_BUILD_DIR"
       if meson setup build && ninja -C build; then
@@ -784,7 +784,7 @@ if ! command -v xwayland-satellite &>/dev/null; then
     libclang-dev 2>/dev/null || true
   
   # xwayland-satellite is not on crates.io, must compile from source
-  XWSAT_BUILD_DIR="/tmp/xwayland-satellite-build-$$"
+  XWSAT_BUILD_DIR="${TMPDIR:-/tmp}/xwayland-satellite-build-$$"
   if git clone https://github.com/Supreeeme/xwayland-satellite.git "$XWSAT_BUILD_DIR"; then
     cd "$XWSAT_BUILD_DIR"
     if cargo build --release; then
@@ -812,7 +812,7 @@ if ! command -v awww &>/dev/null; then
   # awww needs libxkbcommon and lz4
   sudo apt install $installflags libxkbcommon-dev liblz4-dev 2>/dev/null || true
 
-  AWWW_BUILD_DIR="/tmp/awww-build-$$"
+  AWWW_BUILD_DIR="${TMPDIR:-/tmp}/awww-build-$$"
   if git clone https://codeberg.org/LGFae/awww.git "$AWWW_BUILD_DIR"; then
     cd "$AWWW_BUILD_DIR"
     if cargo build --release; then
@@ -868,7 +868,7 @@ if ! command -v hyprpicker &>/dev/null; then
   # Compile hyprutils if not available
   if [[ "$HYPRUTILS_INSTALLED" == "false" ]]; then
     log_info "hyprutils not found, compiling from source..."
-    HYPRUTILS_BUILD_DIR="/tmp/hyprutils-build-$$"
+    HYPRUTILS_BUILD_DIR="${TMPDIR:-/tmp}/hyprutils-build-$$"
     
     if git clone --depth 1 https://github.com/hyprwm/hyprutils.git "$HYPRUTILS_BUILD_DIR" 2>/dev/null; then
       cd "$HYPRUTILS_BUILD_DIR"
@@ -885,7 +885,7 @@ if ! command -v hyprpicker &>/dev/null; then
   
   # Now compile hyprpicker
   if [[ "$HYPRUTILS_INSTALLED" == "true" ]]; then
-    HYPRPICKER_BUILD_DIR="/tmp/hyprpicker-build-$$"
+    HYPRPICKER_BUILD_DIR="${TMPDIR:-/tmp}/hyprpicker-build-$$"
     
     if git clone --depth 1 https://github.com/hyprwm/hyprpicker.git "$HYPRPICKER_BUILD_DIR" 2>/dev/null; then
       cd "$HYPRPICKER_BUILD_DIR"
@@ -993,7 +993,7 @@ if ! quickshell_installed_compatible; then
     done
   }
   
-  QUICKSHELL_BUILD_DIR="/tmp/quickshell-build-$$"
+  QUICKSHELL_BUILD_DIR="${TMPDIR:-/tmp}/quickshell-build-$$"
   
   log_info "Cloning Quickshell..."
   if git clone --depth 1 --branch v0.3.1 --recursive https://github.com/quickshell-mirror/quickshell.git "$QUICKSHELL_BUILD_DIR"; then
@@ -1036,7 +1036,7 @@ if ! command -v cava &>/dev/null; then
     automake \
     libtool 2>/dev/null || true
   
-  CAVA_BUILD_DIR="/tmp/cava-build-$$"
+  CAVA_BUILD_DIR="${TMPDIR:-/tmp}/cava-build-$$"
   if git clone https://github.com/karlstav/cava.git "$CAVA_BUILD_DIR"; then
     cd "$CAVA_BUILD_DIR"
     if ./autogen.sh && ./configure && make -j$(nproc); then
@@ -1061,7 +1061,7 @@ mkdir -p "$ICON_DIR"
 if [[ ! -d "$ICON_DIR/WhiteSur-dark" ]]; then
   log_info "Installing WhiteSur icon theme..."
   
-  TEMP_DIR="/tmp/whitesur-icons-$$"
+  TEMP_DIR="${TMPDIR:-/tmp}/whitesur-icons-$$"
   mkdir -p "$TEMP_DIR"
   
   if curl -fsSL -o "$TEMP_DIR/whitesur.tar.gz" \
@@ -1084,7 +1084,7 @@ fi
 if [[ ! -d "$ICON_DIR/MacTahoe" ]]; then
   log_info "Installing MacTahoe icon theme..."
   
-  TEMP_DIR="/tmp/mactahoe-icons-$$"
+  TEMP_DIR="${TMPDIR:-/tmp}/mactahoe-icons-$$"
   mkdir -p "$TEMP_DIR"
   
   if curl -fsSL -o "$TEMP_DIR/mactahoe.tar.gz" \
@@ -1116,7 +1116,7 @@ if [[ ! -d "$CURSOR_DIR/Bibata-Modern-Classic" ]]; then
     jq -r '.assets[] | select(.name | test("Bibata-Modern-Classic.tar.xz$")) | .browser_download_url' | head -1)
   
   if [[ -n "$BIBATA_URL" && "$BIBATA_URL" != "null" ]]; then
-    TEMP_DIR="/tmp/bibata-$$"
+    TEMP_DIR="${TMPDIR:-/tmp}/bibata-$$"
     mkdir -p "$TEMP_DIR"
     
     if curl -fsSL -o "$TEMP_DIR/bibata.tar.xz" "$BIBATA_URL"; then
@@ -1136,7 +1136,7 @@ if [[ ! -d "$CURSOR_DIR/Bibata-Modern-Ice" ]]; then
     jq -r '.assets[] | select(.name | test("Bibata-Modern-Ice.tar.xz$")) | .browser_download_url' | head -1)
   
   if [[ -n "$BIBATA_URL" && "$BIBATA_URL" != "null" ]]; then
-    TEMP_DIR="/tmp/bibata-ice-$$"
+    TEMP_DIR="${TMPDIR:-/tmp}/bibata-ice-$$"
     mkdir -p "$TEMP_DIR"
     
     if curl -fsSL -o "$TEMP_DIR/bibata.tar.xz" "$BIBATA_URL"; then
@@ -1156,7 +1156,7 @@ if [[ ! -d "$CURSOR_DIR/capitaine-cursors-light" ]]; then
     jq -r '.assets[] | select(.name == "Linux.zip") | .browser_download_url' | head -1)
   
   if [[ -n "$CAPITAINE_URL" && "$CAPITAINE_URL" != "null" ]]; then
-    TEMP_DIR="/tmp/capitaine-$$"
+    TEMP_DIR="${TMPDIR:-/tmp}/capitaine-$$"
     mkdir -p "$TEMP_DIR"
     
     if curl -fsSL -o "$TEMP_DIR/capitaine.zip" "$CAPITAINE_URL"; then

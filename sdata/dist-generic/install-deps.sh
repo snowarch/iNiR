@@ -303,7 +303,7 @@ if $ask; then
     # JetBrains Mono Nerd Font
     if ! fc-list 2>/dev/null | grep -qi "JetBrainsMono Nerd"; then
       echo "  Downloading JetBrains Mono Nerd Font..."
-      TEMP_DIR="/tmp/fonts-$$"
+      TEMP_DIR="${TMPDIR:-/tmp}/fonts-$$"
       mkdir -p "$TEMP_DIR"
       
       if curl -fsSL -o "$TEMP_DIR/JetBrainsMono.zip" \

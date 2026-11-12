@@ -64,12 +64,12 @@ cleanup() {
     type _tui_kill_spinner &>/dev/null && _tui_kill_spinner 2>/dev/null || true
     echo ""
     echo -e "\033[33mCancelled.\033[0m"
-    rm -rf /tmp/buildyay /tmp/buildparu 2>/dev/null
+    rm -rf "${TMPDIR:-/tmp}/buildyay" "${TMPDIR:-/tmp}/buildparu" 2>/dev/null
     exit 130
 }
 
 trap cleanup INT
-trap 'type _tui_kill_spinner &>/dev/null && _tui_kill_spinner 2>/dev/null || true; rm -rf /tmp/buildyay /tmp/buildparu 2>/dev/null' EXIT TERM
+trap 'type _tui_kill_spinner &>/dev/null && _tui_kill_spinner 2>/dev/null || true; rm -rf "${TMPDIR:-/tmp}/buildyay" "${TMPDIR:-/tmp}/buildparu" 2>/dev/null' EXIT TERM
 
 # Load core libraries
 source ./sdata/lib/environment-variables.sh

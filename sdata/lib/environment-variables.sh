@@ -28,6 +28,17 @@ case ":${PATH}:" in
   *) export PATH="${PATH}:${XDG_BIN_HOME}" ;;
 esac
 
+# A /tmp mounted noexec (hardening guides advise it) can't run what a build makes there: cargo's build scripts,
+# configure and cmake checks, a wrapper. Every temporary path in setup is ${TMPDIR:-/tmp}; this points it at a
+# cache folder when the system's can't run a program.
+_inir_exec_probe="$(mktemp "${TMPDIR:-/tmp}/inir-exec.XXXXXX" 2>/dev/null)" || _inir_exec_probe=""
+if [[ -z "$_inir_exec_probe" ]] || ! { printf '#!/bin/sh\n' >"$_inir_exec_probe" && chmod +x "$_inir_exec_probe" \
+    && "$_inir_exec_probe"; } 2>/dev/null; then
+  mkdir -p "$XDG_CACHE_HOME/inir/tmp" && export TMPDIR="$XDG_CACHE_HOME/inir/tmp"
+fi
+if [[ -n "$_inir_exec_probe" ]]; then rm -f "$_inir_exec_probe"; fi
+unset _inir_exec_probe
+
 # Setup downloads fonts, themes, binaries and installers from many hosts; one dropped connection used to
 # leave a piece missing until the next run (Deno, in a CI run). Every curl it or its scripts call retries.
 curl() {

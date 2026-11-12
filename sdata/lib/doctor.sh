@@ -908,7 +908,7 @@ _try_install_font_package() {
                 "https://raw.githubusercontent.com/google/material-design-icons/master/variablefont/MaterialSymbols${glyph_set}%5BFILL%2CGRAD%2Copsz%2Cwght%5D.ttf" 2>/dev/null
             ;;
         "JetBrainsMono Nerd Font")
-            local tmp_nf="/tmp/nerdfonts-$$"
+            local tmp_nf="${TMPDIR:-/tmp}/nerdfonts-$$"
             mkdir -p "$tmp_nf"
             if curl -fsSL -o "$tmp_nf/JetBrainsMono.zip" \
                 "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip" 2>/dev/null; then
@@ -919,7 +919,7 @@ _try_install_font_package() {
             rm -rf "$tmp_nf"
             ;;
         "Roboto Flex")
-            local tmp="/tmp/roboto-flex-$$"
+            local tmp="${TMPDIR:-/tmp}/roboto-flex-$$"
             mkdir -p "$tmp"
             if curl -fsSL -o "$tmp/roboto-flex.zip" \
                 "https://github.com/googlefonts/roboto-flex/releases/download/3.200/roboto-flex-fonts.zip" 2>/dev/null; then
@@ -1461,7 +1461,7 @@ check_quickshell_loads() {
     echo -e "${STY_FAINT}Starting quickshell...${STY_RST}"
     
     # Start in background and capture initial output
-    local logfile="/tmp/qs-doctor-$$.log"
+    local logfile="${TMPDIR:-/tmp}/qs-doctor-$$.log"
     nohup "$qs_bin" -p "$target" >"$logfile" 2>&1 &
     local qs_pid=$!
     disown

@@ -114,7 +114,7 @@ install_awww_fedora() {
   sudo dnf install -y lz4-devel libxkbcommon-devel wayland-devel wayland-protocols-devel >/dev/null 2>&1 || return 1
 
   local temp_root
-  temp_root="$(mktemp -d /tmp/inir-awww.XXXXXX)" || return 1
+  temp_root="$(mktemp -d "${TMPDIR:-/tmp}/inir-awww.XXXXXX")" || return 1
   if cargo install --root "$temp_root" --git https://codeberg.org/LGFae/awww.git awww >/dev/null 2>&1 \
       && [[ -x "$temp_root/bin/awww" && -x "$temp_root/bin/awww-daemon" ]]; then
     sudo install -m 0755 "$temp_root/bin/awww" "$temp_root/bin/awww-daemon" /usr/local/bin/
@@ -138,7 +138,7 @@ install_gowall_fedora() {
 
   sudo dnf install -y golang >/dev/null 2>&1 || return 1
   local build_dir
-  build_dir="$(mktemp -d /tmp/inir-gowall.XXXXXX)" || return 1
+  build_dir="$(mktemp -d "${TMPDIR:-/tmp}/inir-gowall.XXXXXX")" || return 1
   if git clone --depth 1 https://github.com/Achno/gowall.git "$build_dir/src" >/dev/null 2>&1 \
       && (cd "$build_dir/src" && go build -o "$build_dir/gowall" . >/dev/null 2>&1); then
     sudo install -m 0755 "$build_dir/gowall" /usr/local/bin/gowall
@@ -154,7 +154,7 @@ install_missioncenter_fedora() {
   flatpak install -y --user flathub io.missioncenter.MissionCenter >/dev/null 2>&1 || return 1
 
   local wrapper
-  wrapper="$(mktemp /tmp/inir-missioncenter.XXXXXX)" || return 1
+  wrapper="$(mktemp "${TMPDIR:-/tmp}/inir-missioncenter.XXXXXX")" || return 1
   printf '%s\n' '#!/bin/sh' 'exec flatpak run io.missioncenter.MissionCenter "$@"' > "$wrapper"
   sudo install -m 0755 "$wrapper" /usr/local/bin/missioncenter
   rm -f "$wrapper"
@@ -175,7 +175,7 @@ install_hyprpicker_fedora() {
     wayland-devel wayland-protocols-devel libxkbcommon-devel hyprutils-devel hyprwayland-scanner-devel \
     >/dev/null 2>&1 || { log_warning "Could not install hyprpicker build dependencies"; return 1; }
   local build_dir
-  build_dir="$(mktemp -d /tmp/inir-hyprpicker.XXXXXX)" || return 1
+  build_dir="$(mktemp -d "${TMPDIR:-/tmp}/inir-hyprpicker.XXXXXX")" || return 1
   if ! git clone --depth 1 --branch v0.4.7 https://github.com/hyprwm/hyprpicker.git "$build_dir/src" 2>/dev/null; then
     rm -rf "$build_dir"
     log_warning "Could not reach hyprpicker upstream; install the Fedora-compatible package manually"
@@ -203,7 +203,7 @@ install_songrec_fedora() {
     >/dev/null 2>&1 || return 1
 
   local temp_root
-  temp_root="$(mktemp -d /tmp/inir-songrec.XXXXXX)" || return 1
+  temp_root="$(mktemp -d "${TMPDIR:-/tmp}/inir-songrec.XXXXXX")" || return 1
   if cargo install --root "$temp_root" songrec --no-default-features -F gui,ffmpeg,pulse,mpris >/dev/null 2>&1 \
       && [[ -x "$temp_root/bin/songrec" ]]; then
     sudo install -m 0755 "$temp_root/bin/songrec" /usr/local/bin/songrec
@@ -235,7 +235,7 @@ install_github_binary() {
     return 1
   fi
   
-  local temp_dir="/tmp/${name}-install-$$"
+  local temp_dir="${TMPDIR:-/tmp}/${name}-install-$$"
   mkdir -p "$temp_dir"
   
   local filename=$(basename "$download_url")
@@ -327,7 +327,7 @@ if ! fc-list | grep -qi "JetBrainsMono Nerd"; then
   log_info "Downloading JetBrains Mono Nerd Font..."
   
   NERD_FONTS_URL="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip"
-  TEMP_DIR="/tmp/nerdfonts-$$"
+  TEMP_DIR="${TMPDIR:-/tmp}/nerdfonts-$$"
   mkdir -p "$TEMP_DIR"
   
   if curl -fsSL --connect-timeout 10 --speed-limit 1024 --speed-time 30 -o "$TEMP_DIR/JetBrainsMono.zip" "$NERD_FONTS_URL"; then
@@ -352,7 +352,7 @@ mkdir -p "$ICON_DIR"
 if [[ ! -d "$ICON_DIR/WhiteSur-dark" ]]; then
   log_info "Installing WhiteSur icon theme..."
   
-  TEMP_DIR="/tmp/whitesur-icons-$$"
+  TEMP_DIR="${TMPDIR:-/tmp}/whitesur-icons-$$"
   mkdir -p "$TEMP_DIR"
   
   if curl -fsSL --connect-timeout 10 --speed-limit 1024 --speed-time 30 -o "$TEMP_DIR/whitesur.tar.gz" \
@@ -378,7 +378,7 @@ fi
 if [[ ! -d "$ICON_DIR/MacTahoe" ]]; then
   log_info "Installing MacTahoe icon theme..."
   
-  TEMP_DIR="/tmp/mactahoe-icons-$$"
+  TEMP_DIR="${TMPDIR:-/tmp}/mactahoe-icons-$$"
   mkdir -p "$TEMP_DIR"
   
   if curl -fsSL --connect-timeout 10 --speed-limit 1024 --speed-time 30 -o "$TEMP_DIR/mactahoe.tar.gz" \
@@ -403,7 +403,7 @@ tui_info "Installing cursor themes..."
 if [[ ! -d "$ICON_DIR/Bibata-Modern-Classic" ]]; then
   log_info "Installing Bibata cursor theme..."
   
-  TEMP_DIR="/tmp/bibata-cursors-$$"
+  TEMP_DIR="${TMPDIR:-/tmp}/bibata-cursors-$$"
   mkdir -p "$TEMP_DIR"
   
   # Download Bibata Modern Classic (dark)
@@ -446,7 +446,7 @@ fi
 # Geist (used by default in iNiR)
 if ! fc-list | grep -qi "Geist"; then
   log_info "Downloading Geist font..."
-  TEMP_DIR="/tmp/geist-font-$$"
+  TEMP_DIR="${TMPDIR:-/tmp}/geist-font-$$"
   mkdir -p "$TEMP_DIR"
   if curl -fsSL --connect-timeout 10 --speed-limit 1024 --speed-time 30 -o "$TEMP_DIR/geist.zip" \
     "https://github.com/vercel/geist-font/releases/download/v1.8.2/geist-font-v1.8.2.zip"; then
@@ -477,13 +477,13 @@ fi
 if ! command -v eza &>/dev/null; then
   log_info "Installing Eza..."
   mkdir -p ~/.local/bin
-  if curl -fsSL --connect-timeout 10 --speed-limit 1024 --speed-time 30 -o /tmp/eza.tar.gz \
+  if curl -fsSL --connect-timeout 10 --speed-limit 1024 --speed-time 30 -o "${TMPDIR:-/tmp}/eza.tar.gz" \
     'https://github.com/eza-community/eza/releases/latest/download/eza_x86_64-unknown-linux-musl.tar.gz'; then
-    tar -xzf /tmp/eza.tar.gz -C ~/.local/bin
+    tar -xzf "${TMPDIR:-/tmp}/eza.tar.gz" -C ~/.local/bin
     chmod +x ~/.local/bin/eza
     log_success "Eza installed"
   fi
-  rm -f /tmp/eza.tar.gz
+  rm -f "${TMPDIR:-/tmp}/eza.tar.gz"
 fi
 }
 
