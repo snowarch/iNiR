@@ -27,10 +27,12 @@ prebuilt_accel_bin() { printf '%s' "${INIR_ACCEL:-$(_prebuilt_home)/accel/curren
 # prebuilt_parts: one "part dest version file sha256 repo with" line (tab separated) per part this machine takes
 prebuilt_parts() {
     [[ "${INIR_PREBUILT:-1}" == 1 && -f "$(_prebuilt_pins)" ]] || return 0
+    # the config is read as a file: one passed as an argument fails past 128 KB (Linux's limit) and nothing is fetched
     local config="${DOTS_CORE_CONFDIR:-${XDG_CONFIG_HOME:-$HOME/.config}/inir}/config.json"
-    jq -r --arg arch "$(uname -m)" --arg want " ${INIR_PREBUILT_WANT:-} " \
-        --argjson cfg "$(jq -c . "$config" 2>/dev/null || echo '{}')" '
-        .parts as $all | .parts | to_entries[] | select(.value.sha256 != "" and (.value.arch // "x86_64") == $arch)
+    jq -e . "$config" >/dev/null 2>&1 || config=/dev/null
+    jq -r --arg arch "$(uname -m)" --arg want " ${INIR_PREBUILT_WANT:-} " --slurpfile config "$config" '
+        ($config[0] // {}) as $cfg
+        | .parts as $all | .parts | to_entries[] | select(.value.sha256 != "" and (.value.arch // "x86_64") == $arch)
         | . as $p
         | select(($p.value.with // "") == "" or ($want | contains(" " + $p.key + " "))
             or (try ($cfg | getpath($p.value.when | split("."))) catch false) == true)
