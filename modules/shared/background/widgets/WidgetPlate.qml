@@ -17,8 +17,12 @@ Rectangle {
     readonly property real strength: Math.max(0, Math.min(1, Number(root.surface.surfaceOpacity) || 0))
     readonly property bool backed: root.strength > 0.001
 
-    // Below ~0.86 the wallpaper washes a container out.
-    property real plateAlpha: root.backed ? Math.min(0.96, 0.86 + root.strength * 0.6) : 0
+    // Below ~0.86 the wallpaper washes a container out (ink is picked against the plate as if it were opaque). Up to
+    // the usual 16 % strength the plate keeps the alpha it always had; past it the rest of the slider reaches solid,
+    // where before it stopped at 0.96 and everything over 17 % did nothing.
+    readonly property real solidAlpha: root.strength <= 0.16 ? 0.86 + root.strength * 0.6
+        : 0.956 + (root.strength - 0.16) / 0.84 * 0.044
+    property real plateAlpha: root.backed ? root.solidAlpha : 0
     // Keeps the generated hue with a predictable ink on it; accent belongs to live data, not the whole card.
     readonly property color plateDark: {
         const accent = Qt.color(root.surface.surfaceAccent)

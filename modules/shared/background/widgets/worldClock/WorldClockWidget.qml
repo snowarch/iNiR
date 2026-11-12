@@ -564,7 +564,7 @@ AbstractBackgroundWidget {
 
                                         StyledText {
                                             // a narrow tile keeps the city's name whole; the offset is the first to go
-                                            visible: cityCell.width >= Math.round(150 * root.scaleFactor)
+                                            visible: root.showOffsets && cityCell.width >= Math.round(150 * root.scaleFactor)
                                             text: cityCell.modelData.offset
                                             color: ColorUtils.applyAlpha(cityCell.cellInk, 0.5)
                                             font.pixelSize: Math.round(Appearance.font.pixelSize.smallest * root.scaleFactor)

@@ -166,12 +166,14 @@ QtObject {
             root.row(widget, "backgroundOpacity", "Background strength", "range", root.bareDefault(widget) ? 0.16 : 0, { page: "look", min: 0, max: 1, step: 0.02, scale: 100, unit: " %",
                 when: () => root.plain(widget) && Boolean(root.value(widget, "showBackground", root.plateDefault(widget))) }),
             // Settings kept these two; the edit sheet lost them when it took over the widget manager (his 10-30)
+            // A style without glass ignores the switch: no row rather than a dead one.
             root.row(widget, "useBlur", "Blur background", "switch", false, { page: "look", tune: true,
-                when: () => root.plain(widget) && Boolean(root.value(widget, "showBackground", root.plateDefault(widget))),
+                when: () => root.plain(widget) && Boolean(root.value(widget, "showBackground", root.plateDefault(widget)))
+                    && root.blurAvailable(widget),
                 keywords: ["blur", "frosted", "glass", "desenfoque"] }),
             root.row(widget, "blurStrength", "Blur strength", "range", 100, { page: "look", tune: true, min: 0, max: 150, step: 5, unit: " %",
                 when: () => root.plain(widget) && Boolean(root.value(widget, "showBackground", root.plateDefault(widget)))
-                    && Boolean(root.value(widget, "useBlur", false)),
+                    && Boolean(root.value(widget, "useBlur", false)) && root.blurAvailable(widget),
                 keywords: ["blur", "frost", "glass", "strength", "desenfoque"] }),
             root.row(widget, "cornerRadius", "Corners", "range", -1, { page: "look", tune: true, min: -1, max: 48, step: 1, unit: " px", lowLabel: "Theme",
                 when: () => root.plain(widget) && (Boolean(root.value(widget, "showBackground", root.plateDefault(widget)))
@@ -198,6 +200,9 @@ QtObject {
     // The rows are built once per registry: a fallback read there made every Settings row rebuild when the shared
     // material changed (1.5 s frozen). Built with the bare default; `read` asks the material when it reads.
     function bareDefault(widget: string): bool { return !(DesktopWidgetRegistry.byKey[widget]?.bare ?? false) }
+    function blurAvailable(widget: string): bool {
+        return DesktopWidgetLook.look.blurAvailable({ bare: DesktopWidgetRegistry.byKey[widget]?.bare ?? false, familyFaced: root.face(widget) })
+    }
     function plateDefault(widget: string): bool {
         return DesktopWidgetLook.look.plateByDefault({ bare: DesktopWidgetRegistry.byKey[widget]?.bare ?? false, familyFaced: root.face(widget) })
     }

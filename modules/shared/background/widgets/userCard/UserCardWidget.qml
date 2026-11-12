@@ -39,7 +39,7 @@ AbstractBackgroundWidget {
         { glyph: "terminal", label: Translation.tr("Shell"), value: String(Quickshell.env("SHELL") ?? "").split("/").pop() || "sh" },
         { glyph: "desktop_windows", label: Translation.tr("Desktop"),
             value: String(SystemInfo.desktopEnvironment || "Wayland").split(":")[0].replace(/^./, first => first.toUpperCase()) },
-        { glyph: "computer", label: Translation.tr("Machine"), value: root.hostname || SystemInfo.distroName }
+        { glyph: "computer", label: Translation.tr("Machine"), value: (root.showHostname && root.hostname) || SystemInfo.distroName }
     ].concat(root.showWeather && root.weatherLine.text !== "" ? [{ glyph: root.weatherLine.icon, label: Translation.tr("Weather"), value: root.weatherLine.text }] : [])
     // Read from the weather code: the description is in the person's language, so matching English words in it never hit.
     readonly property var weatherLine: {
