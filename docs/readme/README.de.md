@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../images/readme/hero.webp" alt="Der iRiS-Desktop über einem verschneiten Wald bei Nacht" width="100%">
+  <img src="../shots/readme-hero.webp" alt="Der iRiS-Desktop im Einsatz: die Island spielt Musik über den Dashboard-Widgets" width="100%">
 </p>
 
 <p align="center">
@@ -39,16 +39,24 @@
 
 ## Familien
 
-<p align="center"><img src="../shots/at-work-iris.webp" alt="iRiS" width="100%"><br><sub><b>iRiS</b> · Eine Island an jedem Rand, die zu dem wird, was du öffnest, plus ein Dock</sub></p>
+<p align="center"><img src="../shots/readme-iris.webp" alt="iRiS" width="100%"><br><sub><b>iRiS</b> · Eine Island an jedem Rand, die zu dem wird, was du öffnest, plus ein Dock</sub></p>
 
 <table>
 <tr>
-<td width="50%" valign="top"><img src="../shots/at-work-material.webp" alt="Material" width="100%"><br><sub><b>Material</b> · Eine Leiste an jedem Rand, Seitenleisten, Übersicht, globale Stile</sub></td>
-<td width="50%" valign="top"><img src="../shots/at-work-waffle.webp" alt="Waffle" width="100%"><br><sub><b>Waffle</b> · Eine Windows-11-Taskleiste und ein Aktionszentrum</sub></td>
+<td width="50%" valign="top"><img src="../shots/readme-material.webp" alt="Material" width="100%"><br><sub><b>Material</b> · Eine Leiste an jedem Rand, Seitenleisten, Übersicht, globale Stile</sub></td>
+<td width="50%" valign="top"><img src="../shots/readme-waffle.webp" alt="Waffle" width="100%"><br><sub><b>Waffle</b> · Eine Windows-11-Taskleiste und ein Aktionszentrum</sub></td>
 </tr>
 </table>
 
 `Super+Shift+W` wechselt zwischen ihnen. Weitere Looks, Widgets, Themes und Web-Apps gibt es im [Hub](https://inir.space/hub).
+
+<table>
+<tr>
+<td width="33%" valign="top"><img src="../shots/readme-settings.webp" alt="Einstellungen" width="100%"><br><sub><b>Einstellungen</b> · Jede Option so gezeichnet, wie das, was sie ändert</sub></td>
+<td width="33%" valign="top"><img src="../shots/readme-edit.webp" alt="Desktop" width="100%"><br><sub><b>Desktop</b> · Widgets, die du platzierst, skalierst und stapelst</sub></td>
+<td width="33%" valign="top"><img src="../shots/readme-lock.webp" alt="Sperre" width="100%"><br><sub><b>Sperre</b> · Ruhig, mit deiner Musik und der Uhrzeit</sub></td>
+</tr>
+</table>
 
 ## Installation
 

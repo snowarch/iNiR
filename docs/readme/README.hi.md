@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../images/readme/hero.webp" alt="रात में बर्फ़ीले जंगल पर iRiS डेस्कटॉप" width="100%">
+  <img src="../shots/readme-hero.webp" alt="काम करता iRiS डेस्कटॉप: डैशबोर्ड विजेट्स के ऊपर Island में संगीत" width="100%">
 </p>
 
 <p align="center">
@@ -39,16 +39,24 @@
 
 ## परिवार
 
-<p align="center"><img src="../shots/at-work-iris.webp" alt="iRiS" width="100%"><br><sub><b>iRiS</b> · किसी भी किनारे पर एक Island, जो आप खोलते हैं वही बन जाता है, साथ में एक डॉक</sub></p>
+<p align="center"><img src="../shots/readme-iris.webp" alt="iRiS" width="100%"><br><sub><b>iRiS</b> · किसी भी किनारे पर एक Island, जो आप खोलते हैं वही बन जाता है, साथ में एक डॉक</sub></p>
 
 <table>
 <tr>
-<td width="50%" valign="top"><img src="../shots/at-work-material.webp" alt="Material" width="100%"><br><sub><b>Material</b> · किसी भी किनारे पर बार, साइडबार, ओवरव्यू, और ग्लोबल स्टाइल</sub></td>
-<td width="50%" valign="top"><img src="../shots/at-work-waffle.webp" alt="Waffle" width="100%"><br><sub><b>Waffle</b> · Windows 11 का टास्कबार और एक्शन सेंटर</sub></td>
+<td width="50%" valign="top"><img src="../shots/readme-material.webp" alt="Material" width="100%"><br><sub><b>Material</b> · किसी भी किनारे पर बार, साइडबार, ओवरव्यू, और ग्लोबल स्टाइल</sub></td>
+<td width="50%" valign="top"><img src="../shots/readme-waffle.webp" alt="Waffle" width="100%"><br><sub><b>Waffle</b> · Windows 11 का टास्कबार और एक्शन सेंटर</sub></td>
 </tr>
 </table>
 
 `Super+Shift+W` से इनके बीच बदलें। और अधिक लुक, विजेट, थीम और वेब ऐप्स [hub](https://inir.space/hub) में हैं।
+
+<table>
+<tr>
+<td width="33%" valign="top"><img src="../shots/readme-settings.webp" alt="सेटिंग्स" width="100%"><br><sub><b>सेटिंग्स</b> · हर विकल्प उसी रूप में जो वह बदलता है</sub></td>
+<td width="33%" valign="top"><img src="../shots/readme-edit.webp" alt="डेस्कटॉप" width="100%"><br><sub><b>डेस्कटॉप</b> · विजेट जिन्हें आप रखते, बड़ा करते और जमाते हैं</sub></td>
+<td width="33%" valign="top"><img src="../shots/readme-lock.webp" alt="लॉक" width="100%"><br><sub><b>लॉक</b> · शांत, आपके संगीत और समय के साथ</sub></td>
+</tr>
+</table>
 
 ## स्थापना
 

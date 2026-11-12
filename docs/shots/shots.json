@@ -1,37 +1,4 @@
 {
- "at-work": {
-  "alt": "Each family at work",
-  "label": "Family",
-  "width": 1600,
-  "height": 900,
-  "variants": [
-   {
-    "key": "material",
-    "label": "Material",
-    "file": "at-work-material.webp",
-    "family": "ii"
-   },
-   {
-    "key": "waffle",
-    "label": "Waffle",
-    "file": "at-work-waffle.webp",
-    "family": "waffle"
-   },
-   {
-    "key": "iris",
-    "label": "iRiS",
-    "file": "at-work-iris.webp",
-    "family": "iris"
-   }
-  ],
-  "made": {
-   "base": "714028a97",
-   "ii": "2de81e6",
-   "iris": "a103e4b",
-   "waffle": "2de81e6"
-  },
-  "spec": "{\"alt\": \"Each family at work\", \"choose\": {\"label\": \"Family\", \"options\": [{\"family\": \"ii\", \"key\": \"material\", \"label\": \"Material\", \"steps\": [[\"ipc\", \"sidebarRight\", \"open\"], [\"ipc\", \"notifications\", \"test\"], [\"wait\", 2500]], \"wallpaper\": \"Green_Peace.png\"}, {\"family\": \"waffle\", \"key\": \"waffle\", \"label\": \"Waffle\", \"steps\": [[\"ipc\", \"search\", \"open\"], [\"wait\", 2500]], \"wallpaper\": \"wallhaven-3kxxj6.png\"}, {\"family\": \"iris\", \"key\": \"iris\", \"label\": \"iRiS\", \"steps\": [[\"config\", \"iris.appearance.accent\", \"wallpaper\"], [\"wait\", 1500], [\"ipc\", \"iris\", \"page\", \"media\"], [\"ipc\", \"iris\", \"dock\", \"reveal\"], [\"wait\", 2500]], \"wallpaper\": \"wallhaven-2edkmx.png\"}]}}"
- },
  "desktop-items": {
   "alt": "Shortcuts on the desktop",
   "label": "",
@@ -127,6 +94,63 @@
    "ii": "5714f9f"
   },
   "spec": "{\"after\": [[\"ipc\", \"notifications\", \"clearAll\"]], \"alt\": \"Notifications in Material\", \"choose\": {\"label\": \"Show\", \"options\": [{\"key\": \"popups\", \"label\": \"Popups\", \"steps\": [[\"ipc\", \"notifications\", \"test\"]]}, {\"after\": [[\"ipc\", \"sidebarRight\", \"close\"]], \"key\": \"history\", \"label\": \"History\", \"steps\": [[\"ipc\", \"sidebarRight\", \"open\"]]}]}, \"family\": \"ii\"}"
+ },
+ "readme": {
+  "alt": "iNiR at work",
+  "label": "Scene",
+  "width": 1600,
+  "height": 900,
+  "variants": [
+   {
+    "key": "hero",
+    "label": "iRiS",
+    "file": "readme-hero.webp",
+    "family": "iris"
+   },
+   {
+    "key": "iris",
+    "label": "iRiS",
+    "file": "readme-iris.webp",
+    "family": "iris"
+   },
+   {
+    "key": "material",
+    "label": "Material",
+    "file": "readme-material.webp",
+    "family": "ii"
+   },
+   {
+    "key": "waffle",
+    "label": "Waffle",
+    "file": "readme-waffle.webp",
+    "family": "waffle"
+   },
+   {
+    "key": "settings",
+    "label": "Settings",
+    "file": "readme-settings.webp",
+    "family": "iris"
+   },
+   {
+    "key": "edit",
+    "label": "Edit mode",
+    "file": "readme-edit.webp",
+    "family": "iris"
+   },
+   {
+    "key": "lock",
+    "label": "Lock",
+    "file": "readme-lock.webp",
+    "family": "iris"
+   }
+  ],
+  "made": {
+   "base": "c55881ce0",
+   "ii": "521d593",
+   "iris": "521d593",
+   "waffle": "521d593"
+  },
+  "spec": "{\"alt\": \"iNiR at work\", \"choose\": {\"label\": \"Scene\", \"options\": [{\"family\": \"iris\", \"key\": \"hero\", \"label\": \"iRiS\", \"steps\": [[\"ipc\", \"background\", \"wearPreset\", \"factory:dashboard\"], [\"wait\", 2500], [\"ipc\", \"iris\", \"accent\", \"wallpaper\"], [\"wait\", 2500], [\"ipc\", \"iris\", \"page\", \"media\"], [\"ipc\", \"iris\", \"dock\", \"reveal\"], [\"pointer\", \"move\", \"1915\", \"1075\"], [\"wait\", 3000]], \"wallpaper\": \"wallhaven-qro197.png\"}, {\"family\": \"iris\", \"key\": \"iris\", \"label\": \"iRiS\", \"steps\": [[\"ipc\", \"background\", \"wearPreset\", \"factory:listening\"], [\"wait\", 2500], [\"ipc\", \"iris\", \"accent\", \"wallpaper\"], [\"wait\", 2500], [\"ipc\", \"iris\", \"controlCenter\", \"open\"], [\"ipc\", \"notifications\", \"test\"], [\"pointer\", \"move\", \"1915\", \"1075\"], [\"wait\", 3000]], \"wallpaper\": \"wallhaven-gw15r3.png\"}, {\"family\": \"ii\", \"key\": \"material\", \"label\": \"Material\", \"steps\": [[\"ipc\", \"background\", \"wearPreset\", \"factory:glance\"], [\"wait\", 2500], [\"ipc\", \"sidebarLeft\", \"open\"], [\"ipc\", \"sidebarRight\", \"open\"], [\"ipc\", \"notifications\", \"test\"], [\"pointer\", \"move\", \"1915\", \"1075\"], [\"wait\", 3000]], \"wallpaper\": \"wallpaper2106.png\"}, {\"family\": \"waffle\", \"key\": \"waffle\", \"label\": \"Waffle\", \"steps\": [[\"ipc\", \"wwidgets\", \"open\"], [\"pointer\", \"move\", \"1915\", \"1075\"], [\"wait\", 3000]], \"wallpaper\": \"wallhaven-2126ex.jpg\"}, {\"family\": \"iris\", \"key\": \"settings\", \"label\": \"Settings\", \"steps\": [[\"ipc\", \"iris\", \"accent\", \"wallpaper\"], [\"wait\", 2500], [\"ipc\", \"iris\", \"settings\", \"appearance\"], [\"pointer\", \"move\", \"1915\", \"1075\"], [\"wait\", 5000]], \"wallpaper\": \"wallhaven-jeeq3q.png\"}, {\"family\": \"iris\", \"key\": \"edit\", \"label\": \"Edit mode\", \"steps\": [[\"ipc\", \"background\", \"wearPreset\", \"factory:dashboard\"], [\"wait\", 2500], [\"ipc\", \"iris\", \"accent\", \"wallpaper\"], [\"wait\", 2500], [\"ipc\", \"background\", \"setEditMode\", \"true\"], [\"ipc\", \"background\", \"toggleWidgetManager\"], [\"pointer\", \"move\", \"1915\", \"1075\"], [\"wait\", 3500]], \"wallpaper\": \"wallhaven-1qdz21.png\"}, {\"family\": \"iris\", \"key\": \"lock\", \"label\": \"Lock\", \"steps\": [[\"ipc\", \"iris\", \"accent\", \"wallpaper\"], [\"wait\", 2500], [\"ipc\", \"lock\", \"activate\"], [\"pointer\", \"move\", \"1915\", \"1075\"], [\"wait\", 3500]], \"wallpaper\": \"wallhaven-3q5lmy.jpg\"}]}}"
  },
  "settings": {
   "alt": "Settings in each family",

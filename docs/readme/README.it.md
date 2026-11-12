@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../images/readme/hero.webp" alt="Il desktop iRiS su un bosco innevato di notte" width="100%">
+  <img src="../shots/readme-hero.webp" alt="Il desktop iRiS al lavoro: l'Island suona musica sopra i widget della dashboard" width="100%">
 </p>
 
 <p align="center">
@@ -39,16 +39,24 @@
 
 ## Famiglie
 
-<p align="center"><img src="../shots/at-work-iris.webp" alt="iRiS" width="100%"><br><sub><b>iRiS</b> · Una Island su qualsiasi bordo che diventa ciò che apri, più un dock</sub></p>
+<p align="center"><img src="../shots/readme-iris.webp" alt="iRiS" width="100%"><br><sub><b>iRiS</b> · Una Island su qualsiasi bordo che diventa ciò che apri, più un dock</sub></p>
 
 <table>
 <tr>
-<td width="50%" valign="top"><img src="../shots/at-work-material.webp" alt="Material" width="100%"><br><sub><b>Material</b> · Una barra su qualsiasi bordo, pannelli laterali, panoramica, stili globali</sub></td>
-<td width="50%" valign="top"><img src="../shots/at-work-waffle.webp" alt="Waffle" width="100%"><br><sub><b>Waffle</b> · Una barra delle applicazioni di Windows 11 e un centro azioni</sub></td>
+<td width="50%" valign="top"><img src="../shots/readme-material.webp" alt="Material" width="100%"><br><sub><b>Material</b> · Una barra su qualsiasi bordo, pannelli laterali, panoramica, stili globali</sub></td>
+<td width="50%" valign="top"><img src="../shots/readme-waffle.webp" alt="Waffle" width="100%"><br><sub><b>Waffle</b> · Una barra delle applicazioni di Windows 11 e un centro azioni</sub></td>
 </tr>
 </table>
 
 `Super+Shift+W` passa da una all'altra. Altri aspetti, widget, temi e web app sono nell'[hub](https://inir.space/hub).
+
+<table>
+<tr>
+<td width="33%" valign="top"><img src="../shots/readme-settings.webp" alt="Impostazioni" width="100%"><br><sub><b>Impostazioni</b> · Ogni opzione disegnata come ciò che cambia</sub></td>
+<td width="33%" valign="top"><img src="../shots/readme-edit.webp" alt="Desktop" width="100%"><br><sub><b>Desktop</b> · Widget che posizioni, ridimensioni e impili</sub></td>
+<td width="33%" valign="top"><img src="../shots/readme-lock.webp" alt="Blocco" width="100%"><br><sub><b>Blocco</b> · Calmo, con la tua musica e l'ora</sub></td>
+</tr>
+</table>
 
 ## Installazione
 

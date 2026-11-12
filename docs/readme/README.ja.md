@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../images/readme/hero.webp" alt="雪の夜の森に置かれた iRiS デスクトップ" width="100%">
+  <img src="../shots/readme-hero.webp" alt="使用中の iRiS デスクトップ：ダッシュボードのウィジェットの上で Island が音楽を再生" width="100%">
 </p>
 
 <p align="center">
@@ -39,16 +39,24 @@
 
 ## ファミリー
 
-<p align="center"><img src="../shots/at-work-iris.webp" alt="iRiS" width="100%"><br><sub><b>iRiS</b> · どの端にも置ける1つの Island。開いたものに変わり、ドックも付きます</sub></p>
+<p align="center"><img src="../shots/readme-iris.webp" alt="iRiS" width="100%"><br><sub><b>iRiS</b> · どの端にも置ける1つの Island。開いたものに変わり、ドックも付きます</sub></p>
 
 <table>
 <tr>
-<td width="50%" valign="top"><img src="../shots/at-work-material.webp" alt="Material" width="100%"><br><sub><b>Material</b> · 任意の端に置けるバー、サイドバー、オーバービュー、グローバルスタイル</sub></td>
-<td width="50%" valign="top"><img src="../shots/at-work-waffle.webp" alt="Waffle" width="100%"><br><sub><b>Waffle</b> · Windows 11 のタスクバーとアクションセンター</sub></td>
+<td width="50%" valign="top"><img src="../shots/readme-material.webp" alt="Material" width="100%"><br><sub><b>Material</b> · 任意の端に置けるバー、サイドバー、オーバービュー、グローバルスタイル</sub></td>
+<td width="50%" valign="top"><img src="../shots/readme-waffle.webp" alt="Waffle" width="100%"><br><sub><b>Waffle</b> · Windows 11 のタスクバーとアクションセンター</sub></td>
 </tr>
 </table>
 
 `Super+Shift+W` で切り替えられます。その他のルック、ウィジェット、テーマ、ウェブアプリは [hub](https://inir.space/hub) にあります。
+
+<table>
+<tr>
+<td width="33%" valign="top"><img src="../shots/readme-settings.webp" alt="設定" width="100%"><br><sub><b>設定</b> · 各オプションを、それが変えるものの姿で</sub></td>
+<td width="33%" valign="top"><img src="../shots/readme-edit.webp" alt="デスクトップ" width="100%"><br><sub><b>デスクトップ</b> · 置いて、大きさを変えて、重ねるウィジェット</sub></td>
+<td width="33%" valign="top"><img src="../shots/readme-lock.webp" alt="ロック" width="100%"><br><sub><b>ロック</b> · 静かに、音楽と時刻とともに</sub></td>
+</tr>
+</table>
 
 ## インストール
 

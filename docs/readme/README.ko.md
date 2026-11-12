@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../images/readme/hero.webp" alt="눈 내린 밤 숲 위의 iRiS 데스크톱" width="100%">
+  <img src="../shots/readme-hero.webp" alt="사용 중인 iRiS 데스크톱: 대시보드 위젯 위에서 Island가 음악을 재생" width="100%">
 </p>
 
 <p align="center">
@@ -39,16 +39,24 @@
 
 ## 패밀리
 
-<p align="center"><img src="../shots/at-work-iris.webp" alt="iRiS" width="100%"><br><sub><b>iRiS</b> · 어느 가장자리에나 둘 수 있는 Island 하나. 여는 내용에 따라 모양이 바뀌며, 도크도 있습니다</sub></p>
+<p align="center"><img src="../shots/readme-iris.webp" alt="iRiS" width="100%"><br><sub><b>iRiS</b> · 어느 가장자리에나 둘 수 있는 Island 하나. 여는 내용에 따라 모양이 바뀌며, 도크도 있습니다</sub></p>
 
 <table>
 <tr>
-<td width="50%" valign="top"><img src="../shots/at-work-material.webp" alt="Material" width="100%"><br><sub><b>Material</b> · 어느 가장자리에나 둘 수 있는 바, 사이드바, 오버뷰, 전역 스타일</sub></td>
-<td width="50%" valign="top"><img src="../shots/at-work-waffle.webp" alt="Waffle" width="100%"><br><sub><b>Waffle</b> · Windows 11 작업 표시줄과 작업 센터</sub></td>
+<td width="50%" valign="top"><img src="../shots/readme-material.webp" alt="Material" width="100%"><br><sub><b>Material</b> · 어느 가장자리에나 둘 수 있는 바, 사이드바, 오버뷰, 전역 스타일</sub></td>
+<td width="50%" valign="top"><img src="../shots/readme-waffle.webp" alt="Waffle" width="100%"><br><sub><b>Waffle</b> · Windows 11 작업 표시줄과 작업 센터</sub></td>
 </tr>
 </table>
 
 `Super+Shift+W`로 전환합니다. 더 많은 룩, 위젯, 테마, 웹 앱은 [hub](https://inir.space/hub)에 있습니다.
+
+<table>
+<tr>
+<td width="33%" valign="top"><img src="../shots/readme-settings.webp" alt="설정" width="100%"><br><sub><b>설정</b> · 각 옵션을 그것이 바꾸는 모습 그대로</sub></td>
+<td width="33%" valign="top"><img src="../shots/readme-edit.webp" alt="데스크톱" width="100%"><br><sub><b>데스크톱</b> · 놓고, 크기를 바꾸고, 쌓는 위젯</sub></td>
+<td width="33%" valign="top"><img src="../shots/readme-lock.webp" alt="잠금" width="100%"><br><sub><b>잠금</b> · 차분하게, 음악과 시간과 함께</sub></td>
+</tr>
+</table>
 
 ## 설치
 

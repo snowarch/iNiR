@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../images/readme/hero.webp" alt="Le bureau iRiS sur une forêt enneigée la nuit" width="100%">
+  <img src="../shots/readme-hero.webp" alt="Le bureau iRiS au travail : l'Island joue de la musique au-dessus des widgets" width="100%">
 </p>
 
 <p align="center">
@@ -39,16 +39,24 @@
 
 ## Familles
 
-<p align="center"><img src="../shots/at-work-iris.webp" alt="iRiS" width="100%"><br><sub><b>iRiS</b> · Une Island sur n'importe quel bord qui devient ce que vous ouvrez, plus un dock</sub></p>
+<p align="center"><img src="../shots/readme-iris.webp" alt="iRiS" width="100%"><br><sub><b>iRiS</b> · Une Island sur n'importe quel bord qui devient ce que vous ouvrez, plus un dock</sub></p>
 
 <table>
 <tr>
-<td width="50%" valign="top"><img src="../shots/at-work-material.webp" alt="Material" width="100%"><br><sub><b>Material</b> · Une barre sur n'importe quel bord, des panneaux latéraux, l'aperçu, des styles globaux</sub></td>
-<td width="50%" valign="top"><img src="../shots/at-work-waffle.webp" alt="Waffle" width="100%"><br><sub><b>Waffle</b> · Une barre des tâches Windows 11 et un centre d'action</sub></td>
+<td width="50%" valign="top"><img src="../shots/readme-material.webp" alt="Material" width="100%"><br><sub><b>Material</b> · Une barre sur n'importe quel bord, des panneaux latéraux, l'aperçu, des styles globaux</sub></td>
+<td width="50%" valign="top"><img src="../shots/readme-waffle.webp" alt="Waffle" width="100%"><br><sub><b>Waffle</b> · Une barre des tâches Windows 11 et un centre d'action</sub></td>
 </tr>
 </table>
 
 `Super+Shift+W` permet de passer de l'une à l'autre. D'autres styles, widgets, thèmes et applications web sont sur le [hub](https://inir.space/hub).
+
+<table>
+<tr>
+<td width="33%" valign="top"><img src="../shots/readme-settings.webp" alt="Réglages" width="100%"><br><sub><b>Réglages</b> · Chaque option dessinée comme ce qu'elle change</sub></td>
+<td width="33%" valign="top"><img src="../shots/readme-edit.webp" alt="Bureau" width="100%"><br><sub><b>Bureau</b> · Des widgets que vous placez, redimensionnez et empilez</sub></td>
+<td width="33%" valign="top"><img src="../shots/readme-lock.webp" alt="Verrouillage" width="100%"><br><sub><b>Verrouillage</b> · Calme, avec votre musique et l'heure</sub></td>
+</tr>
+</table>
 
 ## Installation
 

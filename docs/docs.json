@@ -106,86 +106,6 @@
 				]
 			}
 		},
-		"at-work": {
-			"alt": "Each family at work",
-			"choose": {
-				"label": "Family",
-				"options": [
-					{
-						"key": "material",
-						"label": "Material",
-						"family": "ii",
-						"wallpaper": "Green_Peace.png",
-						"steps": [
-							[
-								"ipc",
-								"sidebarRight",
-								"open"
-							],
-							[
-								"ipc",
-								"notifications",
-								"test"
-							],
-							[
-								"wait",
-								2500
-							]
-						]
-					},
-					{
-						"key": "waffle",
-						"label": "Waffle",
-						"family": "waffle",
-						"wallpaper": "wallhaven-3kxxj6.png",
-						"steps": [
-							[
-								"ipc",
-								"search",
-								"open"
-							],
-							[
-								"wait",
-								2500
-							]
-						]
-					},
-					{
-						"key": "iris",
-						"label": "iRiS",
-						"family": "iris",
-						"wallpaper": "wallhaven-2edkmx.png",
-						"steps": [
-							[
-								"config",
-								"iris.appearance.accent",
-								"wallpaper"
-							],
-							[
-								"wait",
-								1500
-							],
-							[
-								"ipc",
-								"iris",
-								"page",
-								"media"
-							],
-							[
-								"ipc",
-								"iris",
-								"dock",
-								"reveal"
-							],
-							[
-								"wait",
-								2500
-							]
-						]
-					}
-				]
-			}
-		},
 		"settings": {
 			"alt": "Settings in each family",
 			"choose": {
@@ -390,6 +310,295 @@
 				]
 			],
 			"alone": true
+		},
+		"readme": {
+			"alt": "iNiR at work",
+			"choose": {
+				"label": "Scene",
+				"options": [
+					{
+						"key": "hero",
+						"label": "iRiS",
+						"family": "iris",
+						"wallpaper": "wallhaven-qro197.png",
+						"steps": [
+							[
+								"ipc",
+								"background",
+								"wearPreset",
+								"factory:dashboard"
+							],
+							[
+								"wait",
+								2500
+							],
+							[
+								"ipc",
+								"iris",
+								"accent",
+								"wallpaper"
+							],
+							[
+								"wait",
+								2500
+							],
+							[
+								"ipc",
+								"iris",
+								"page",
+								"media"
+							],
+							[
+								"ipc",
+								"iris",
+								"dock",
+								"reveal"
+							],
+							[
+								"pointer",
+								"move",
+								"1915",
+								"1075"
+							],
+							[
+								"wait",
+								3000
+							]
+						]
+					},
+					{
+						"key": "iris",
+						"label": "iRiS",
+						"family": "iris",
+						"wallpaper": "wallhaven-gw15r3.png",
+						"steps": [
+							[
+								"ipc",
+								"background",
+								"wearPreset",
+								"factory:listening"
+							],
+							[
+								"wait",
+								2500
+							],
+							[
+								"ipc",
+								"iris",
+								"accent",
+								"wallpaper"
+							],
+							[
+								"wait",
+								2500
+							],
+							[
+								"ipc",
+								"iris",
+								"controlCenter",
+								"open"
+							],
+							[
+								"ipc",
+								"notifications",
+								"test"
+							],
+							[
+								"pointer",
+								"move",
+								"1915",
+								"1075"
+							],
+							[
+								"wait",
+								3000
+							]
+						]
+					},
+					{
+						"key": "material",
+						"label": "Material",
+						"family": "ii",
+						"wallpaper": "wallpaper2106.png",
+						"steps": [
+							[
+								"ipc",
+								"background",
+								"wearPreset",
+								"factory:glance"
+							],
+							[
+								"wait",
+								2500
+							],
+							[
+								"ipc",
+								"sidebarLeft",
+								"open"
+							],
+							[
+								"ipc",
+								"sidebarRight",
+								"open"
+							],
+							[
+								"ipc",
+								"notifications",
+								"test"
+							],
+							[
+								"pointer",
+								"move",
+								"1915",
+								"1075"
+							],
+							[
+								"wait",
+								3000
+							]
+						]
+					},
+					{
+						"key": "waffle",
+						"label": "Waffle",
+						"family": "waffle",
+						"wallpaper": "wallhaven-2126ex.jpg",
+						"steps": [
+							[
+								"ipc",
+								"wwidgets",
+								"open"
+							],
+							[
+								"pointer",
+								"move",
+								"1915",
+								"1075"
+							],
+							[
+								"wait",
+								3000
+							]
+						]
+					},
+					{
+						"key": "settings",
+						"label": "Settings",
+						"family": "iris",
+						"wallpaper": "wallhaven-jeeq3q.png",
+						"steps": [
+							[
+								"ipc",
+								"iris",
+								"accent",
+								"wallpaper"
+							],
+							[
+								"wait",
+								2500
+							],
+							[
+								"ipc",
+								"iris",
+								"settings",
+								"appearance"
+							],
+							[
+								"pointer",
+								"move",
+								"1915",
+								"1075"
+							],
+							[
+								"wait",
+								5000
+							]
+						]
+					},
+					{
+						"key": "edit",
+						"label": "Edit mode",
+						"family": "iris",
+						"wallpaper": "wallhaven-1qdz21.png",
+						"steps": [
+							[
+								"ipc",
+								"background",
+								"wearPreset",
+								"factory:dashboard"
+							],
+							[
+								"wait",
+								2500
+							],
+							[
+								"ipc",
+								"iris",
+								"accent",
+								"wallpaper"
+							],
+							[
+								"wait",
+								2500
+							],
+							[
+								"ipc",
+								"background",
+								"setEditMode",
+								"true"
+							],
+							[
+								"ipc",
+								"background",
+								"toggleWidgetManager"
+							],
+							[
+								"pointer",
+								"move",
+								"1915",
+								"1075"
+							],
+							[
+								"wait",
+								3500
+							]
+						]
+					},
+					{
+						"key": "lock",
+						"label": "Lock",
+						"family": "iris",
+						"wallpaper": "wallhaven-3q5lmy.jpg",
+						"steps": [
+							[
+								"ipc",
+								"iris",
+								"accent",
+								"wallpaper"
+							],
+							[
+								"wait",
+								2500
+							],
+							[
+								"ipc",
+								"lock",
+								"activate"
+							],
+							[
+								"pointer",
+								"move",
+								"1915",
+								"1075"
+							],
+							[
+								"wait",
+								3500
+							]
+						]
+					}
+				]
+			}
 		}
 	}
 }

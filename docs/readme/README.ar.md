@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../images/readme/hero.webp" alt="سطح مكتب iRiS فوق غابة مثلجة ليلًا" width="100%">
+  <img src="../shots/readme-hero.webp" alt="سطح مكتب iRiS أثناء العمل: الـ Island تشغّل الموسيقى فوق أدوات لوحة المعلومات" width="100%">
 </p>
 
 <p align="center">
@@ -39,16 +39,24 @@
 
 ## العائلات
 
-<p align="center"><img src="../shots/at-work-iris.webp" alt="iRiS" width="100%"><br><sub><b>iRiS</b> · Island واحدة على أي حافة تتحول إلى ما تفتحه، ومعها الرصيف (dock)</sub></p>
+<p align="center"><img src="../shots/readme-iris.webp" alt="iRiS" width="100%"><br><sub><b>iRiS</b> · Island واحدة على أي حافة تتحول إلى ما تفتحه، ومعها الرصيف (dock)</sub></p>
 
 <table>
 <tr>
-<td width="50%" valign="top"><img src="../shots/at-work-material.webp" alt="Material" width="100%"><br><sub><b>Material</b> · شريط على أي حافة، وأشرطة جانبية، ونظرة عامة، وأنماط عامة</sub></td>
-<td width="50%" valign="top"><img src="../shots/at-work-waffle.webp" alt="Waffle" width="100%"><br><sub><b>Waffle</b> · شريط مهام ومركز إجراءات على طراز Windows 11</sub></td>
+<td width="50%" valign="top"><img src="../shots/readme-material.webp" alt="Material" width="100%"><br><sub><b>Material</b> · شريط على أي حافة، وأشرطة جانبية، ونظرة عامة، وأنماط عامة</sub></td>
+<td width="50%" valign="top"><img src="../shots/readme-waffle.webp" alt="Waffle" width="100%"><br><sub><b>Waffle</b> · شريط مهام ومركز إجراءات على طراز Windows 11</sub></td>
 </tr>
 </table>
 
 يتم التبديل بينها عبر `Super+Shift+W`. المزيد من المظاهر والأدوات والسمات وتطبيقات الويب في [hub](https://inir.space/hub).
+
+<table>
+<tr>
+<td width="33%" valign="top"><img src="../shots/readme-settings.webp" alt="الإعدادات" width="100%"><br><sub><b>الإعدادات</b> · كل خيار مرسوم كما يغيّره</sub></td>
+<td width="33%" valign="top"><img src="../shots/readme-edit.webp" alt="سطح المكتب" width="100%"><br><sub><b>سطح المكتب</b> · أدوات تضعها وتغيّر حجمها وتكدّسها</sub></td>
+<td width="33%" valign="top"><img src="../shots/readme-lock.webp" alt="القفل" width="100%"><br><sub><b>القفل</b> · هادئ، مع موسيقاك والوقت</sub></td>
+</tr>
+</table>
 
 ## التثبيت
 

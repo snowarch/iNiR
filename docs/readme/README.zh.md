@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../images/readme/hero.webp" alt="雪夜森林上的 iRiS 桌面" width="100%">
+  <img src="../shots/readme-hero.webp" alt="使用中的 iRiS 桌面：Island 在仪表盘小组件上方播放音乐" width="100%">
 </p>
 
 <p align="center">
@@ -39,16 +39,24 @@
 
 ## 系列
 
-<p align="center"><img src="../shots/at-work-iris.webp" alt="iRiS" width="100%"><br><sub><b>iRiS</b> · 任意边缘上的一个 Island，会变成你打开的内容，另加一个程序坞</sub></p>
+<p align="center"><img src="../shots/readme-iris.webp" alt="iRiS" width="100%"><br><sub><b>iRiS</b> · 任意边缘上的一个 Island，会变成你打开的内容，另加一个程序坞</sub></p>
 
 <table>
 <tr>
-<td width="50%" valign="top"><img src="../shots/at-work-material.webp" alt="Material" width="100%"><br><sub><b>Material</b> · 可放在任意边缘的栏、侧边栏、概览，以及全局样式</sub></td>
-<td width="50%" valign="top"><img src="../shots/at-work-waffle.webp" alt="Waffle" width="100%"><br><sub><b>Waffle</b> · Windows 11 的任务栏和操作中心</sub></td>
+<td width="50%" valign="top"><img src="../shots/readme-material.webp" alt="Material" width="100%"><br><sub><b>Material</b> · 可放在任意边缘的栏、侧边栏、概览，以及全局样式</sub></td>
+<td width="50%" valign="top"><img src="../shots/readme-waffle.webp" alt="Waffle" width="100%"><br><sub><b>Waffle</b> · Windows 11 的任务栏和操作中心</sub></td>
 </tr>
 </table>
 
 `Super+Shift+W` 在它们之间切换。更多外观、小部件、主题和网页应用见 [hub](https://inir.space/hub)。
+
+<table>
+<tr>
+<td width="33%" valign="top"><img src="../shots/readme-settings.webp" alt="设置" width="100%"><br><sub><b>设置</b> · 每个选项都画成它所改变的样子</sub></td>
+<td width="33%" valign="top"><img src="../shots/readme-edit.webp" alt="桌面" width="100%"><br><sub><b>桌面</b> · 可放置、缩放和堆叠的小组件</sub></td>
+<td width="33%" valign="top"><img src="../shots/readme-lock.webp" alt="锁屏" width="100%"><br><sub><b>锁屏</b> · 安静，带着你的音乐和时间</sub></td>
+</tr>
+</table>
 
 ## 安装
 

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../images/readme/hero.webp" alt="El escritorio iRiS sobre un bosque nevado de noche" width="100%">
+  <img src="../shots/readme-hero.webp" alt="El escritorio iRiS en uso: la Island reproduciendo música sobre los widgets del panel" width="100%">
 </p>
 
 <p align="center">
@@ -39,16 +39,24 @@
 
 ## Familias
 
-<p align="center"><img src="../shots/at-work-iris.webp" alt="iRiS" width="100%"><br><sub><b>iRiS</b> · Una Island en cualquier borde que se convierte en lo que abres, más un dock</sub></p>
+<p align="center"><img src="../shots/readme-iris.webp" alt="iRiS" width="100%"><br><sub><b>iRiS</b> · Una Island en cualquier borde que se convierte en lo que abres, más un dock</sub></p>
 
 <table>
 <tr>
-<td width="50%" valign="top"><img src="../shots/at-work-material.webp" alt="Material" width="100%"><br><sub><b>Material</b> · Una barra en cualquier borde, paneles laterales, vista general, estilos globales</sub></td>
-<td width="50%" valign="top"><img src="../shots/at-work-waffle.webp" alt="Waffle" width="100%"><br><sub><b>Waffle</b> · Una barra de tareas de Windows 11 y centro de acción</sub></td>
+<td width="50%" valign="top"><img src="../shots/readme-material.webp" alt="Material" width="100%"><br><sub><b>Material</b> · Una barra en cualquier borde, paneles laterales, vista general, estilos globales</sub></td>
+<td width="50%" valign="top"><img src="../shots/readme-waffle.webp" alt="Waffle" width="100%"><br><sub><b>Waffle</b> · Una barra de tareas de Windows 11 y centro de acción</sub></td>
 </tr>
 </table>
 
 `Super+Shift+W` cambia entre ellas. Más aspectos, widgets, temas y aplicaciones web están en el [hub](https://inir.space/hub).
+
+<table>
+<tr>
+<td width="33%" valign="top"><img src="../shots/readme-settings.webp" alt="Ajustes" width="100%"><br><sub><b>Ajustes</b> · Cada opción dibujada como lo que cambia</sub></td>
+<td width="33%" valign="top"><img src="../shots/readme-edit.webp" alt="Escritorio" width="100%"><br><sub><b>Escritorio</b> · Widgets que colocas, escalas y apilas</sub></td>
+<td width="33%" valign="top"><img src="../shots/readme-lock.webp" alt="Bloqueo" width="100%"><br><sub><b>Bloqueo</b> · Tranquilo, con tu música y la hora</sub></td>
+</tr>
+</table>
 
 ## Instalación
 

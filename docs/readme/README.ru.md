@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../images/readme/hero.webp" alt="рабочий стол iRiS на фоне заснеженного ночного леса" width="100%">
+  <img src="../shots/readme-hero.webp" alt="Рабочий стол iRiS в деле: Island играет музыку над виджетами" width="100%">
 </p>
 
 <p align="center">
@@ -39,16 +39,24 @@
 
 ## Семейства
 
-<p align="center"><img src="../shots/at-work-iris.webp" alt="iRiS" width="100%"><br><sub><b>iRiS</b> · Одна Island у любого края, которая превращается в то, что вы открываете, плюс док</sub></p>
+<p align="center"><img src="../shots/readme-iris.webp" alt="iRiS" width="100%"><br><sub><b>iRiS</b> · Одна Island у любого края, которая превращается в то, что вы открываете, плюс док</sub></p>
 
 <table>
 <tr>
-<td width="50%" valign="top"><img src="../shots/at-work-material.webp" alt="Material" width="100%"><br><sub><b>Material</b> · Панель у любого края, боковые панели, обзор, глобальные стили</sub></td>
-<td width="50%" valign="top"><img src="../shots/at-work-waffle.webp" alt="Waffle" width="100%"><br><sub><b>Waffle</b> · Панель задач Windows 11 и центр действий</sub></td>
+<td width="50%" valign="top"><img src="../shots/readme-material.webp" alt="Material" width="100%"><br><sub><b>Material</b> · Панель у любого края, боковые панели, обзор, глобальные стили</sub></td>
+<td width="50%" valign="top"><img src="../shots/readme-waffle.webp" alt="Waffle" width="100%"><br><sub><b>Waffle</b> · Панель задач Windows 11 и центр действий</sub></td>
 </tr>
 </table>
 
 `Super+Shift+W` переключает между ними. Больше вариантов оформления, виджетов, тем и веб-приложений есть в [hub](https://inir.space/hub).
+
+<table>
+<tr>
+<td width="33%" valign="top"><img src="../shots/readme-settings.webp" alt="Настройки" width="100%"><br><sub><b>Настройки</b> · Каждая опция показана тем, что она меняет</sub></td>
+<td width="33%" valign="top"><img src="../shots/readme-edit.webp" alt="Рабочий стол" width="100%"><br><sub><b>Рабочий стол</b> · Виджеты, которые вы размещаете и складываете</sub></td>
+<td width="33%" valign="top"><img src="../shots/readme-lock.webp" alt="Блокировка" width="100%"><br><sub><b>Блокировка</b> · Спокойно, с музыкой и временем</sub></td>
+</tr>
+</table>
 
 ## Установка
 

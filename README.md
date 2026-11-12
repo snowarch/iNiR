@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/images/readme/hero.webp" alt="The iRiS desktop on a snowy forest at night" width="100%">
+  <img src="docs/shots/readme-hero.webp" alt="The iRiS desktop at work: the Island playing music over the dashboard widgets" width="100%">
 </p>
 
 <p align="center">
@@ -40,16 +40,24 @@
 
 ## Families
 
-<p align="center"><img src="docs/shots/at-work-iris.webp" alt="iRiS" width="100%"><br><sub><b>iRiS</b> · One Island on any edge that becomes what you open, plus a dock</sub></p>
+<p align="center"><img src="docs/shots/readme-iris.webp" alt="iRiS" width="100%"><br><sub><b>iRiS</b> · One Island on any edge that becomes what you open, plus a dock</sub></p>
 
 <table>
 <tr>
-<td width="50%" valign="top"><img src="docs/shots/at-work-material.webp" alt="Material" width="100%"><br><sub><b>Material</b> · A bar on any edge, sidebars, overview, global styles</sub></td>
-<td width="50%" valign="top"><img src="docs/shots/at-work-waffle.webp" alt="Waffle" width="100%"><br><sub><b>Waffle</b> · A Windows 11 taskbar and action center</sub></td>
+<td width="50%" valign="top"><img src="docs/shots/readme-material.webp" alt="Material" width="100%"><br><sub><b>Material</b> · A bar on any edge, sidebars, overview, global styles</sub></td>
+<td width="50%" valign="top"><img src="docs/shots/readme-waffle.webp" alt="Waffle" width="100%"><br><sub><b>Waffle</b> · A Windows 11 taskbar and action center</sub></td>
 </tr>
 </table>
 
 `Super+Shift+W` switches between them. More looks, widgets, themes and web apps are in the [hub](https://inir.space/hub).
+
+<table>
+<tr>
+<td width="33%" valign="top"><img src="docs/shots/readme-settings.webp" alt="Settings" width="100%"><br><sub><b>Settings</b> · Each option drawn as what it changes</sub></td>
+<td width="33%" valign="top"><img src="docs/shots/readme-edit.webp" alt="Desktop" width="100%"><br><sub><b>Desktop</b> · Widgets you place, size and stack</sub></td>
+<td width="33%" valign="top"><img src="docs/shots/readme-lock.webp" alt="Lock" width="100%"><br><sub><b>Lock</b> · Calm, with your music and the time</sub></td>
+</tr>
+</table>
 
 ## Install
 
