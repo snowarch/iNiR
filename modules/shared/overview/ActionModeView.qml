@@ -698,7 +698,7 @@ Item {
             }
             StyledText {
                 Layout.alignment: Qt.AlignHCenter
-                text: Translation.tr("No results for \"%1\"").arg(root.query)
+                text: Voice.miss(Translation.tr("No results for \"%1\"").arg(root.query), root.query)
                 font.pixelSize: Appearance.font.pixelSize.small
                 color: Appearance.colors.colSubtext
             }

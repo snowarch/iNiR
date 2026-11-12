@@ -3593,5 +3593,11 @@
   "Pink": "粉色",
   "Violet": "紫色",
   "Cream": "奶油色",
-  "White": "白色"
+  "White": "白色",
+  "“%1”? Never heard of it": "“%1”？没听说过",
+  "Nothing by that name": "没有叫这个名字的",
+  "Are you… sure about “%1”?": "确定是…“%1”吗？",
+  "Hmm. Nothing here": "嗯。这里什么都没有",
+  "Not quite. Try again": "差一点。再试一次",
+  "Nope. Caps Lock, maybe?": "不对。是不是开了 Caps Lock？"
 }

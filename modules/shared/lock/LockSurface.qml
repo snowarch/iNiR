@@ -1478,7 +1478,7 @@ MouseArea {
                         
                         property bool materialShapeChars: Config.family?.lock?.materialShapeChars ?? false
                         property string placeholder: GlobalStates.screenUnlockFailed 
-                            ? Translation.tr("Incorrect password") 
+                            ? Voice.wrongPassword(Translation.tr("Incorrect password"))
                             : Translation.tr("Password")
                         
                         Text {

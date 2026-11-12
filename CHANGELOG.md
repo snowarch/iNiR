@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Hub components open from the app launcher**: a component with a window of its own is listed by its name in every family's launcher and opens with a click.
 
 ### Changed
+- **A miss sounds like iNiR**: a search that finds nothing or a mistyped password sometimes answers in a line of its own instead of the plain one, in every family.
 - **Widgets share one palette**: every iRiS widget takes its colours from the same hues the widget palette picks (wallpaper, system, spectrum or mono) and your highlight; the player no longer wears its cover's colour, and notes, battery, photo, Screen Time, timers and weather no longer bring hues of their own (iRiS 2.33.79 from the Hub).
 - **Glass you can tune**: **Glass blur** in iRiS Settings › Desktop › Widgets sets how much the glass behind every widget frosts the wallpaper; in Material each widget's Look page has **Blur strength** under its blur switch.
 - **Live wallpapers rest while hidden, in every family**: videos, GIFs and the glyph wallpaper stop behind a fullscreen app or when windows cover the screen, now also under one large floating window; **Settings › Wallpaper › Pause** chooses never, behind fullscreen or when covered (the default) in Material and Waffle too, as in iRiS (Material 2.35.11, Waffle 2.34.11 from the Hub).

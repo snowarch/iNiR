@@ -3593,5 +3593,11 @@
   "Pink": "Aappalaartoq",
   "Violet": "Violet",
   "Cream": "Creme",
-  "White": "Qaqortoq"
+  "White": "Qaqortoq",
+  "“%1”? Never heard of it": "“%1”? Tusaanngisaannarpara",
+  "Nothing by that name": "Taamatut taaguutilimmik peqanngilaq",
+  "Are you… sure about “%1”?": "Qularnanngila… “%1”?",
+  "Hmm. Nothing here": "Hmm. Maani soqanngilaq",
+  "Not quite. Try again": "Qanilliartorpoq. Misileqqiguk",
+  "Nope. Caps Lock, maybe?": "Naamik. Caps Lock, immaqa?"
 }

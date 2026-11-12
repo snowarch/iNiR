@@ -3593,5 +3593,11 @@
   "Pink": "Рожевий",
   "Violet": "Фіолетовий",
   "Cream": "Кремовий",
-  "White": "Білий"
+  "White": "Білий",
+  "“%1”? Never heard of it": "«%1»? Вперше чую",
+  "Nothing by that name": "Нічого з такою назвою",
+  "Are you… sure about “%1”?": "Точно… «%1»?",
+  "Hmm. Nothing here": "Хм. Тут порожньо",
+  "Not quite. Try again": "Майже. Спробуйте ще раз",
+  "Nope. Caps Lock, maybe?": "Ні. Може, Caps Lock?"
 }

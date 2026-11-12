@@ -3593,5 +3593,11 @@
   "Pink": "गुलाबी",
   "Violet": "बैंगनी",
   "Cream": "क्रीम",
-  "White": "सफ़ेद"
+  "White": "सफ़ेद",
+  "“%1”? Never heard of it": "“%1”? कभी नहीं सुना",
+  "Nothing by that name": "इस नाम का कुछ नहीं",
+  "Are you… sure about “%1”?": "पक्का… “%1”?",
+  "Hmm. Nothing here": "हम्म। यहाँ कुछ नहीं है",
+  "Not quite. Try again": "लगभग। फिर से कोशिश करें",
+  "Nope. Caps Lock, maybe?": "नहीं। शायद Caps Lock?"
 }

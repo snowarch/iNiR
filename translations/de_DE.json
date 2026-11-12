@@ -3593,5 +3593,11 @@
   "Pink": "Rosa",
   "Violet": "Violett",
   "Cream": "Creme",
-  "White": "Weiß"
+  "White": "Weiß",
+  "“%1”? Never heard of it": "„%1“? Nie gehört",
+  "Nothing by that name": "Nichts mit diesem Namen",
+  "Are you… sure about “%1”?": "Bist du sicher… „%1“?",
+  "Hmm. Nothing here": "Hm. Hier ist nichts",
+  "Not quite. Try again": "Nicht ganz. Versuch’s nochmal",
+  "Nope. Caps Lock, maybe?": "Nein. Feststelltaste vielleicht?"
 }

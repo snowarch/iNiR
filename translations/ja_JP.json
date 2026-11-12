@@ -3593,5 +3593,11 @@
   "Pink": "ピンク",
   "Violet": "紫",
   "Cream": "クリーム",
-  "White": "白"
+  "White": "白",
+  "“%1”? Never heard of it": "「%1」？聞いたことがありません",
+  "Nothing by that name": "その名前のものはありません",
+  "Are you… sure about “%1”?": "本当に…「%1」？",
+  "Hmm. Nothing here": "うーん。何もありません",
+  "Not quite. Try again": "惜しい。もう一度どうぞ",
+  "Nope. Caps Lock, maybe?": "違います。Caps Lock かも？"
 }

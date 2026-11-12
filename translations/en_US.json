@@ -3593,5 +3593,11 @@
   "Pink": "Pink",
   "Violet": "Violet",
   "Cream": "Cream",
-  "White": "White"
+  "White": "White",
+  "“%1”? Never heard of it": "“%1”? Never heard of it",
+  "Nothing by that name": "Nothing by that name",
+  "Are you… sure about “%1”?": "Are you… sure about “%1”?",
+  "Hmm. Nothing here": "Hmm. Nothing here",
+  "Not quite. Try again": "Not quite. Try again",
+  "Nope. Caps Lock, maybe?": "Nope. Caps Lock, maybe?"
 }

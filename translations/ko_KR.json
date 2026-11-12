@@ -3593,5 +3593,11 @@
   "Pink": "분홍",
   "Violet": "보라",
   "Cream": "크림",
-  "White": "하양"
+  "White": "하양",
+  "“%1”? Never heard of it": "“%1”? 처음 들어봐요",
+  "Nothing by that name": "그런 이름은 없어요",
+  "Are you… sure about “%1”?": "정말… “%1” 맞아요?",
+  "Hmm. Nothing here": "음. 여기엔 아무것도 없어요",
+  "Not quite. Try again": "아깝네요. 다시 해 보세요",
+  "Nope. Caps Lock, maybe?": "아니에요. Caps Lock 아닐까요?"
 }

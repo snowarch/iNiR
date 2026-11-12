@@ -3593,5 +3593,11 @@
   "Pink": "Pembe",
   "Violet": "Mor",
   "Cream": "Krem",
-  "White": "Beyaz"
+  "White": "Beyaz",
+  "“%1”? Never heard of it": "“%1” mi? Hiç duymadım",
+  "Nothing by that name": "Bu adda bir şey yok",
+  "Are you… sure about “%1”?": "Emin misin… “%1”?",
+  "Hmm. Nothing here": "Hmm. Burada bir şey yok",
+  "Not quite. Try again": "Az kalsın. Tekrar dene",
+  "Nope. Caps Lock, maybe?": "Hayır. Caps Lock açık olabilir mi?"
 }

@@ -38,7 +38,7 @@ Item {
         
         StyledText {
             Layout.alignment: Qt.AlignHCenter
-            text: Translation.tr("No matches found")
+            text: Voice.miss(Translation.tr("No matches found"), "")
             font.pixelSize: Appearance.font.pixelSize.large
             color: Appearance.colors.colOnSurface
         }
