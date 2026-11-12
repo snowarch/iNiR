@@ -4,7 +4,5 @@
 # blur rules for its own surfaces to ~/.local/state/quickshell/user/generated/umbriel-colors.toml; nothing here
 # blurs by default, so a solid panel never pays for it.
 
-# The shell's popups and menus follow their panel's choice.
-[[layer_rule]]
-match.namespace = "^quickshell"
-blur_popups = true
+# Popups blur only with the surface they open from, in that generated rule: a rule here blurred every menu of every
+# family as a whole box, shadow margin included.

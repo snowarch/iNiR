@@ -32,6 +32,7 @@ The wallpaper drawn as glyphs, Settings that follow Umbriel, a new iNiR mark, an
 - **When GitHub is down, iNiR says so**: setup, `inir update`, `inir doctor`, the Hub and the update check name the server that isn't answering (a 504 and the like), with GitHub's status page, instead of red lines that read as iNiR broken. Nothing changes on your system; try again in a while.
 
 ### Fixed
+- **Menus on Umbriel without a blurred box**: Material and Waffle menus no longer sit on a square of blur bigger than the menu; menus blur only with iRiS's compositor glass, shaped like the menu.
 - **A first install asks what goes in**: the install command from the README set up Niri on a new machine without asking; it now opens one short list where you tick where iNiR runs (Niri, or Umbriel too), the login screen and extras. On Fedora, Umbriel comes from Terra, which setup adds when it is missing.
 - **Hub widgets in the edit shelf**: they sit in their own aisle (Radio under Media) and search finds them by what they do (Material 2.35.14, iRiS 2.33.82 from the Hub).
 - **Prism Settings reopens where you left it**: closing Settings on a long page (Glyph art, under Desktop) no longer brings it back on that page's first group (iRiS 2.33.82 from the Hub).
