@@ -2910,6 +2910,7 @@
         "retentionDays": 30
     },
     "material": {
+        "factoryLook": 1,
         "style": {
             "globalStyle": "material",
             "island": {
@@ -3457,7 +3458,7 @@
                     "crypto",
                     "worldclock"
                 ],
-                "spacing": 8,
+                "spacing": 24,
                 "crypto_settings": {
                     "refreshInterval": 300,
                     "coins": [
