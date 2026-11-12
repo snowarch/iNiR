@@ -511,8 +511,10 @@
       "widgetName",
       "enabled"
      ],
-     "description": "Enable or disable a built-in desktop widget",
-     "values": []
+     "description": "Enable or disable a desktop widget: a built-in one by its key, a hub one as `custom.<id>`",
+     "values": [
+      "custom."
+     ]
     }
    ]
   },

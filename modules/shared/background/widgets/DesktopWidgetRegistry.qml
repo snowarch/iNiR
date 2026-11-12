@@ -106,5 +106,11 @@ Singleton {
     function glyph(key: string): string { return root.byKey[key]?.icon ?? "widgets" }
     function keywordsOf(key: string): string { return root.byKey[key]?.keywords ?? "" }
     function categoryOf(key: string): string { return root.byKey[key]?.category ?? "decor" }
+    // A hub widget's aisle from its manifest (the hub says "time" where the shelf says "today").
+    function customCategory(custom: var): string {
+        const said = String(custom?.category ?? "") === "time" ? "today" : String(custom?.category ?? "")
+        return root.categoryOrder.includes(said) ? said : "decor"
+    }
+    function customWords(custom: var): string { return ["hub", custom?.id ?? "", custom?.category ?? "", custom?.description ?? ""].join(" ") }
     function tint(key: string): string { return root.byKey[key]?.tint ?? (key.startsWith("custom.") ? root.customTint : root.fallbackTint) }
 }

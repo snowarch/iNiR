@@ -494,9 +494,9 @@ Scope {
             return "widget layer order reset"
         }
 
-        /// Enable or disable a built-in desktop widget
+        /// Enable or disable a desktop widget: a built-in one by its key, a hub one as `custom.<id>`
         function setWidgetEnabled(widgetName: string, enabled: bool): string {
-            if (!DesktopWidgetRegistry.has(widgetName))
+            if (!DesktopWidgetRegistry.has(widgetName) && !DesktopWidgetRegistry.customEntry(widgetName))
                 return "unknown widget: " + widgetName;
             DesktopWidgetLayout.setGloballyEnabled(widgetName, enabled);
             return widgetName + (enabled ? " enabled" : " disabled");
