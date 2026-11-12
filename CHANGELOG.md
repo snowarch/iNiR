@@ -5,6 +5,11 @@ All notable changes to iNiR will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **Hub widgets speak your language**: a widget's own `translations/` folder is read like a plugin's, so its text follows the shell's language instead of staying in English.
+
 ## [3.1.0] - 2026-11-11
 
 The wallpaper drawn as glyphs, Settings that follow Umbriel, a new iNiR mark, and a first install that asks where iNiR runs.
