@@ -3599,5 +3599,7 @@
   "Are you… sure about “%1”?": "पक्का… “%1”?",
   "Hmm. Nothing here": "हम्म। यहाँ कुछ नहीं है",
   "Not quite. Try again": "लगभग। फिर से कोशिश करें",
-  "Nope. Caps Lock, maybe?": "नहीं। शायद Caps Lock?"
+  "Nope. Caps Lock, maybe?": "नहीं। शायद Caps Lock?",
+  "Send to scratchpad": "स्क्रैचपैड में भेजें",
+  "Back to its workspace": "अपने वर्कस्पेस पर वापस"
 }

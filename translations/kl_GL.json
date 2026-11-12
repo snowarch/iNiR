@@ -3599,5 +3599,7 @@
   "Are you… sure about “%1”?": "Qularnanngila… “%1”?",
   "Hmm. Nothing here": "Hmm. Maani soqanngilaq",
   "Not quite. Try again": "Qanilliartorpoq. Misileqqiguk",
-  "Nope. Caps Lock, maybe?": "Naamik. Caps Lock, immaqa?"
+  "Nope. Caps Lock, maybe?": "Naamik. Caps Lock, immaqa?",
+  "Send to scratchpad": "Scratchpad-imut nassiuk",
+  "Back to its workspace": "Suliffimminut uteqqiutiguk"
 }

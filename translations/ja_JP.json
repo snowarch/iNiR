@@ -3599,5 +3599,7 @@
   "Are you… sure about “%1”?": "本当に…「%1」？",
   "Hmm. Nothing here": "うーん。何もありません",
   "Not quite. Try again": "惜しい。もう一度どうぞ",
-  "Nope. Caps Lock, maybe?": "違います。Caps Lock かも？"
+  "Nope. Caps Lock, maybe?": "違います。Caps Lock かも？",
+  "Send to scratchpad": "スクラッチパッドへ送る",
+  "Back to its workspace": "元のワークスペースへ戻す"
 }

@@ -3599,5 +3599,7 @@
   "Are you… sure about “%1”?": "Chắc chưa… “%1”?",
   "Hmm. Nothing here": "Hmm. Ở đây chẳng có gì",
   "Not quite. Try again": "Gần đúng rồi. Thử lại nhé",
-  "Nope. Caps Lock, maybe?": "Không phải. Có lẽ do Caps Lock?"
+  "Nope. Caps Lock, maybe?": "Không phải. Có lẽ do Caps Lock?",
+  "Send to scratchpad": "Gửi vào scratchpad",
+  "Back to its workspace": "Trở về không gian làm việc của nó"
 }

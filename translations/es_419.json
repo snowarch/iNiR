@@ -3599,5 +3599,7 @@
   "Are you… sure about “%1”?": "¿Seguro… que es “%1”?",
   "Hmm. Nothing here": "Mmm. Aquí no hay nada",
   "Not quite. Try again": "Casi. Prueba otra vez",
-  "Nope. Caps Lock, maybe?": "No. ¿Bloq Mayús, tal vez?"
+  "Nope. Caps Lock, maybe?": "No. ¿Bloq Mayús, tal vez?",
+  "Send to scratchpad": "Enviar al scratchpad",
+  "Back to its workspace": "Volver a su espacio de trabajo"
 }

@@ -3599,5 +3599,7 @@
   "Are you… sure about “%1”?": "Are you… sure about “%1”?",
   "Hmm. Nothing here": "Hmm. Nothing here",
   "Not quite. Try again": "Not quite. Try again",
-  "Nope. Caps Lock, maybe?": "Nope. Caps Lock, maybe?"
+  "Nope. Caps Lock, maybe?": "Nope. Caps Lock, maybe?",
+  "Send to scratchpad": "Send to scratchpad",
+  "Back to its workspace": "Back to its workspace"
 }

@@ -3298,6 +3298,41 @@
    ]
   },
   {
+   "name": "scratchpad",
+   "family": "shared",
+   "description": "Umbriel's scratchpad: windows set aside, hidden until shown over whatever workspace is in front.",
+   "notes": "Umbriel only; on Niri every verb does nothing. Without named `[[scratchpad]]` entries Umbriel keeps one\nimplicit pad; with them, these act on the pad the window is in or the one already holding windows.\n\n```kdl\nMod+Grave { spawn \"inir\" \"scratchpad\" \"toggle\"; }\n```",
+   "example": "Mod+Grave { spawn \"inir\" \"scratchpad\" \"toggle\"; }",
+   "functions": [
+    {
+     "name": "toggle",
+     "args": [],
+     "description": "Show or hide the scratchpad",
+     "values": []
+    },
+    {
+     "name": "send",
+     "args": [],
+     "description": "Send the focused window to the scratchpad",
+     "values": []
+    },
+    {
+     "name": "restore",
+     "args": [
+      "windowId"
+     ],
+     "description": "Return a scratchpad window to the workspace it came from (0 for the focused one)",
+     "values": []
+    },
+    {
+     "name": "list",
+     "args": [],
+     "description": "The windows in the scratchpad (JSON array of id, app_id, title, scratchpad, visible)",
+     "values": []
+    }
+   ]
+  },
+  {
    "name": "search",
    "family": "shared",
    "description": "Waffle start menu / search.",

@@ -3599,5 +3599,7 @@
   "Are you… sure about “%1”?": "בטוח… „%1”?",
   "Hmm. Nothing here": "הממ. אין כאן כלום",
   "Not quite. Try again": "כמעט. נסה שוב",
-  "Nope. Caps Lock, maybe?": "לא. אולי Caps Lock?"
+  "Nope. Caps Lock, maybe?": "לא. אולי Caps Lock?",
+  "Send to scratchpad": "שלח ללוח הטיוטה",
+  "Back to its workspace": "חזרה לסביבת העבודה שלו"
 }

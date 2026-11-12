@@ -3599,5 +3599,7 @@
   "Are you… sure about “%1”?": "Tem certeza… de “%1”?",
   "Hmm. Nothing here": "Hmm. Nada por aqui",
   "Not quite. Try again": "Quase. Tente de novo",
-  "Nope. Caps Lock, maybe?": "Não. Caps Lock, talvez?"
+  "Nope. Caps Lock, maybe?": "Não. Caps Lock, talvez?",
+  "Send to scratchpad": "Enviar ao scratchpad",
+  "Back to its workspace": "Voltar ao seu espaço de trabalho"
 }

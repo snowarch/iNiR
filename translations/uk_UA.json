@@ -3599,5 +3599,7 @@
   "Are you… sure about “%1”?": "Точно… «%1»?",
   "Hmm. Nothing here": "Хм. Тут порожньо",
   "Not quite. Try again": "Майже. Спробуйте ще раз",
-  "Nope. Caps Lock, maybe?": "Ні. Може, Caps Lock?"
+  "Nope. Caps Lock, maybe?": "Ні. Може, Caps Lock?",
+  "Send to scratchpad": "Прибрати в скретчпад",
+  "Back to its workspace": "Повернути на свій робочий простір"
 }

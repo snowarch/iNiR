@@ -3599,5 +3599,7 @@
   "Are you… sure about “%1”?": "Bist du sicher… „%1“?",
   "Hmm. Nothing here": "Hm. Hier ist nichts",
   "Not quite. Try again": "Nicht ganz. Versuch’s nochmal",
-  "Nope. Caps Lock, maybe?": "Nein. Feststelltaste vielleicht?"
+  "Nope. Caps Lock, maybe?": "Nein. Feststelltaste vielleicht?",
+  "Send to scratchpad": "In den Notizblock schieben",
+  "Back to its workspace": "Zurück auf seinen Arbeitsbereich"
 }

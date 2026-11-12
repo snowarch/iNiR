@@ -1082,6 +1082,27 @@ Singleton {
                     })
     }
 
+    // ── Scratchpad (Umbriel's: hidden windows that drop over any workspace and go back) ──────────────────────────────
+    // Without named pads Umbriel keeps one implicit pad; with them every action names one, so ours names the pad the
+    // window is in, or the one already holding windows.
+    readonly property bool scratchpadAvailable: root.umbriel
+    readonly property var scratchpadWindows: root.umbriel ? root.windows.filter(w => w.scratchpad) : []
+    readonly property bool scratchpadShown: root.scratchpadWindows.some(w => w.is_visible)
+
+    function _scratchpadOf(windowId): string {
+        const own = root.windows.find(w => w.id === windowId)?.scratchpad
+        return own || (root.scratchpadWindows[0]?.scratchpad ?? "")
+    }
+    function moveWindowToScratchpad(windowId): bool {
+        return root.umbriel && send({ "Action": { "MoveWindowToScratchpad": { "id": windowId, "scratchpad": root._scratchpadOf(-1) } } })
+    }
+    function restoreWindowFromScratchpad(windowId): bool {
+        return root.umbriel && send({ "Action": { "RestoreWindowFromScratchpad": { "id": windowId, "scratchpad": root._scratchpadOf(windowId) } } })
+    }
+    function toggleScratchpad(name): bool {
+        return root.umbriel && send({ "Action": { "ToggleScratchpad": { "scratchpad": name || root._scratchpadOf(-1) } } })
+    }
+
     function closeWindow(windowId) {
         return send({
                         "Action": {
@@ -1522,6 +1543,44 @@ Singleton {
             moveColumnToFirst()
         } else if (currentLayout === "master-right") {
             moveColumnToLast()
+        }
+    }
+
+    /// Umbriel's scratchpad: windows set aside, hidden until shown over whatever workspace is in front.
+    ///
+    /// Umbriel only; on Niri every verb does nothing. Without named `[[scratchpad]]` entries Umbriel keeps one
+    /// implicit pad; with them, these act on the pad the window is in or the one already holding windows.
+    ///
+    /// ```kdl
+    /// Mod+Grave { spawn "inir" "scratchpad" "toggle"; }
+    /// ```
+    IpcHandler {
+        target: "scratchpad"
+
+        /// Show or hide the scratchpad
+        function toggle(): void {
+            NiriService.toggleScratchpad("")
+        }
+
+        /// Send the focused window to the scratchpad
+        function send(): void {
+            const focused = NiriService.liveWindows.find(w => w.is_focused)
+            if (focused)
+                NiriService.moveWindowToScratchpad(focused.id)
+        }
+
+        /// Return a scratchpad window to the workspace it came from (0 for the focused one)
+        function restore(windowId: int): void {
+            const id = windowId > 0 ? windowId : (NiriService.liveWindows.find(w => w.is_focused)?.id ?? -1)
+            if (id > 0)
+                NiriService.restoreWindowFromScratchpad(id)
+        }
+
+        /// The windows in the scratchpad (JSON array of id, app_id, title, scratchpad, visible)
+        function list(): string {
+            return JSON.stringify(NiriService.scratchpadWindows.map(w => ({
+                id: w.id, app_id: w.app_id, title: w.title, scratchpad: w.scratchpad, visible: w.is_visible
+            })))
         }
     }
 

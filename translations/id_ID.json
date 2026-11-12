@@ -3599,5 +3599,7 @@
   "Are you… sure about “%1”?": "Yakin… “%1”?",
   "Hmm. Nothing here": "Hmm. Tidak ada apa-apa di sini",
   "Not quite. Try again": "Hampir. Coba lagi",
-  "Nope. Caps Lock, maybe?": "Bukan. Mungkin Caps Lock?"
+  "Nope. Caps Lock, maybe?": "Bukan. Mungkin Caps Lock?",
+  "Send to scratchpad": "Kirim ke scratchpad",
+  "Back to its workspace": "Kembali ke ruang kerjanya"
 }

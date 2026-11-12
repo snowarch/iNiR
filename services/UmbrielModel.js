@@ -204,6 +204,10 @@ function actionRequests(ids, request, ctx) {
         return before.concat(requests, after)
     }
     switch (name) {
+    // iNiR's own names for Umbriel's scratchpad, which Niri has no equal for. Focusing a hidden member reveals it.
+    case "MoveWindowToScratchpad": return onWindow(args.id, [_a("window-move-to-scratchpad", { scratchpad: args.scratchpad })], false)
+    case "RestoreWindowFromScratchpad": return onWindow(args.id, [_a("window-restore-from-scratchpad", { scratchpad: args.scratchpad })], false)
+    case "ToggleScratchpad": return [_a("scratchpad-toggle", { scratchpad: args.scratchpad })]
     case "FocusWindow": return [_a("window-focus", { window: win(args.id) })]
     case "CloseWindow": return [_a("window-close", { window: win(args.id) })]
     case "ToggleWindowFloating": return [_a("window-toggle-floating", { window: win(args.id) })]

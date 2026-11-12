@@ -3599,5 +3599,7 @@
   "Are you… sure about “%1”?": "确定是…“%1”吗？",
   "Hmm. Nothing here": "嗯。这里什么都没有",
   "Not quite. Try again": "差一点。再试一次",
-  "Nope. Caps Lock, maybe?": "不对。是不是开了 Caps Lock？"
+  "Nope. Caps Lock, maybe?": "不对。是不是开了 Caps Lock？",
+  "Send to scratchpad": "移入暂存区",
+  "Back to its workspace": "放回原工作区"
 }
