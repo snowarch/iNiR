@@ -5,11 +5,6 @@ All notable changes to iNiR will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Fixed
-- **Hub widgets speak your language**: a widget's own `translations/` folder is read like a plugin's, so its text follows the shell's language instead of staying in English.
-
 ## [3.1.0] - 2026-11-11
 
 The wallpaper drawn as glyphs, Settings that follow Umbriel, a new iNiR mark, and a first install that asks where iNiR runs.
@@ -37,6 +32,7 @@ The wallpaper drawn as glyphs, Settings that follow Umbriel, a new iNiR mark, an
 - **When GitHub is down, iNiR says so**: setup, `inir update`, `inir doctor`, the Hub and the update check name the server that isn't answering (a 504 and the like), with GitHub's status page, instead of red lines that read as iNiR broken. Nothing changes on your system; try again in a while.
 
 ### Fixed
+- **Hub widgets speak your language**: a widget's own `translations/` folder is read like a plugin's, so its text follows the shell's language instead of staying in English.
 - **Menus match the panel they open from**: a dock or bar menu takes that panel’s colour and translucency instead of a solid tint, its wallpaper glass shows the wallpaper under it, and it blurs wherever the panel blurs.
 - **Menus on Umbriel without a blurred box**: Material and Waffle menus no longer sit on a square of blur bigger than the menu; menus blur only with iRiS's compositor glass, shaped like the menu.
 - **A first install asks what goes in**: the install command from the README set up Niri on a new machine without asking; it now opens one short list where you tick where iNiR runs (Niri, or Umbriel too), the login screen and extras. On Fedora, Umbriel comes from Terra, which setup adds when it is missing.
