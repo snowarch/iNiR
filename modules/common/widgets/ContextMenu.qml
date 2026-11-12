@@ -227,6 +227,14 @@ Loader {
 
         color: "transparent"
 
+        // Blurred by the compositor where panels are (Niri); elsewhere the plate carries the wallpaper glass.
+        readonly property bool nativeBlurActive: Appearance.useCompositorBlur("panels", Appearance.blurTopology.roundedRectangle)
+        property Region nativeBlurRegion: Region {
+            item: popupWindow.nativeBlurActive ? realContent : null
+            radius: realContent.radius
+        }
+        BackgroundEffect.blurRegion: CompositorService.blurRegions ? nativeBlurRegion : null
+
         StyledRectangularShadow {
             target: realContent
         }
@@ -248,8 +256,13 @@ Loader {
                 leftMargin: popupWindow.isHorizontalPopup && !popupWindow.isLeftSide ? popupWindow.sourceEdgeMargin : (root.ambientShadowWidth + root.visualMargin)
                 rightMargin: popupWindow.isHorizontalPopup && popupWindow.isLeftSide ? popupWindow.sourceEdgeMargin : (root.ambientShadowWidth + root.visualMargin)
             }
-            fallbackColor: Appearance.regaliaEverywhere ? "transparent" : Appearance.colors.colSurfaceContainer
-            inirColor: Appearance.inir.colLayer2
+            // The panel's own layer, so a menu reads as part of the bar or dock it opens from.
+            followWindow: true
+            fallbackColor: Appearance.regaliaEverywhere ? "transparent"
+                : Appearance.editorialEverywhere || Appearance.cookieEverywhere || Appearance.zzzEverywhere ? Appearance.colors.colSurfaceContainer
+                : Appearance.auroraEverywhere && popupWindow.nativeBlurActive ? ColorUtils.applyAlpha(Appearance.colors.colLayer0, 0.46)
+                : Appearance.colors.colLayer0
+            inirColor: Appearance.inir.colLayer1
             auroraTransparency: Appearance.aurora.popupTransparentize
             radius: Appearance.angelEverywhere ? Appearance.angel.roundingNormal
                 : Appearance.inirEverywhere ? Appearance.inir.roundingNormal

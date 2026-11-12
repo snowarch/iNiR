@@ -24,7 +24,53 @@ Rectangle {
     property real screenY: 0
     property real screenWidth: Quickshell.screens[0]?.width ?? 1920
     property real screenHeight: Quickshell.screens[0]?.height ?? 1080
-    
+
+    // Menus and popups set this instead of screenX/screenY: the plate finds where its window sits (a panel by its
+    // edges, a popup by its anchor) so the wallpaper behind it is the one under it, like the panel it opens from.
+    property bool followWindow: false
+    readonly property var _win: root.followWindow && root.useWallpaperBackdrop ? (root.QsWindow?.window ?? null) : null
+    readonly property real _winW: root._win?.width ?? 0
+    readonly property real _winH: root._win?.height ?? 0
+    on_WinWChanged: root.placeOnScreen()
+    on_WinHChanged: root.placeOnScreen()
+    onXChanged: root.placeOnScreen()
+    onYChanged: root.placeOnScreen()
+    Component.onCompleted: Qt.callLater(root.placeOnScreen)
+
+    function _origin(w): point {
+        const sw = w.screen?.width ?? root.screenWidth
+        const sh = w.screen?.height ?? root.screenHeight
+        const an = w.anchor
+        if (an?.window && an.window !== w) {
+            const p = root._origin(an.window)
+            const r = an.rect
+            const tl = an.item ? an.item.mapToItem(null, r.x, r.y) : Qt.point(r.x, r.y)
+            const aw = r.width || (an.item?.width ?? 0)
+            const ah = r.height || (an.item?.height ?? 0)
+            const e = an.edges, g = an.gravity
+            const px = p.x + tl.x + ((e & Edges.Left) ? 0 : (e & Edges.Right) ? aw : aw / 2)
+            const py = p.y + tl.y + ((e & Edges.Top) ? 0 : (e & Edges.Bottom) ? ah : ah / 2)
+            const x = (g & Edges.Left) ? px - w.width : (g & Edges.Right) ? px : px - w.width / 2
+            const y = (g & Edges.Top) ? py - w.height : (g & Edges.Bottom) ? py : py - w.height / 2
+            // The compositor slides a popup back onto the screen.
+            return Qt.point(Math.max(0, Math.min(x, sw - w.width)), Math.max(0, Math.min(y, sh - w.height)))
+        }
+        const a = w.anchors, m = w.margins
+        return Qt.point(!a ? 0 : a.left ? (m?.left ?? 0) : a.right ? sw - w.width - (m?.right ?? 0) : (sw - w.width) / 2,
+            !a ? 0 : a.top ? (m?.top ?? 0) : a.bottom ? sh - w.height - (m?.bottom ?? 0) : (sh - w.height) / 2)
+    }
+    function placeOnScreen(): void {
+        const w = root._win
+        if (!w)
+            return
+        const o = root._origin(w)
+        const inWin = root.mapToItem(null, 0, 0)
+        root.screenX = o.x + inWin.x
+        root.screenY = o.y + inWin.y
+        root.screenWidth = w.screen?.width ?? root.screenWidth
+        root.screenHeight = w.screen?.height ?? root.screenHeight
+    }
+
     readonly property bool angelEverywhere: Appearance.angelEverywhere
     readonly property bool auroraEverywhere: Appearance.auroraEverywhere
     readonly property bool inirEverywhere: Appearance.inirEverywhere
