@@ -1532,10 +1532,10 @@ JsonAdapter {
                 property string look: "signal"
                 property string charset: "signal" // signal, ascii, dense, dots, blocks, lines, digits, binary, custom
                 property string custom: " .oO0@#"
-                property int cell: 12 // a glyph's width in px, 5-28
-                property int strokes: 100
+                property int cell: 5 // a glyph's width in px, 5-28
+                property int strokes: 0
                 property int shimmer: 30
-                property int rain: 0
+                property int rain: 65
                 property bool outline: true
                 property string palette: "source" // source, theme, custom, or a palette of GlyphArt.js
                 property string c1: "#3a1c8f"
@@ -1559,10 +1559,10 @@ JsonAdapter {
                 property int cut: 16
                 property bool invert: false
                 property bool motion: true // off, the picture is drawn once and nothing runs
-                property string intro: "grow" // off, grow, scan, type, centre, dissolve
-                property int speed: 100
+                property string intro: "type" // off, grow, scan, type, centre, dissolve
+                property int speed: 50
                 property bool sway: true
-                property bool camera: true
+                property bool camera: false
                 property bool pulse: true
                 property bool turn: true
             }

@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Hub components open from the app launcher**: a component with a window of its own is listed by its name in every family's launcher and opens with a click.
 
 ### Changed
+- **Finer glyph art out of the box**: the glyph wallpaper and the Afterglyph widget start with small characters, no edge lines and a still camera; the wallpaper adds a light digit rain and types each new picture in, row by row, at half speed. Anyone who already set these keeps their values.
 - **A miss sounds like iNiR**: a search that finds nothing or a mistyped password sometimes answers in a line of its own instead of the plain one, in every family.
 - **Widgets share one palette**: every iRiS widget takes its colours from the same hues the widget palette picks (wallpaper, system, spectrum or mono) and your highlight; the player no longer wears its cover's colour, and notes, battery, photo, Screen Time, timers and weather no longer bring hues of their own (iRiS 2.33.79 from the Hub).
 - **Glass you can tune**: **Glass blur** in iRiS Settings › Desktop › Widgets sets how much the glass behind every widget frosts the wallpaper; in Material each widget's Look page has **Blur strength** under its blur switch.
@@ -28,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **When GitHub is down, iNiR says so**: setup, `inir update`, `inir doctor`, the Hub and the update check name the server that isn't answering (a 504 and the like), with GitHub's status page, instead of red lines that read as iNiR broken. Nothing changes on your system; try again in a while.
 
 ### Fixed
+- **Prism Settings reopens where you left it**: closing Settings on a long page (Glyph art, under Desktop) no longer brings it back on that page's first group (iRiS 2.33.82 from the Hub).
 - **Settings no longer freeze the shell**: picking the widgets' material, a Style or a Design, or switching between Prism, AIRISU and iRiS stopped the whole shell for one or two seconds; it now applies at once (iRiS 2.33.79 from the Hub).
 - **Widget options that did nothing**: under Prism, the world clock's names and offsets, uptime's start, the date's day of the year, the news' source and time, the agenda's grouping and places, and the month's week start and neighbouring days now change the widget; the month's day names no longer stand a day off its dates. Rows a widget can't use hide (Outline under Prism, which draws its own edge), **Rest when paused** shows what the player really does, and an **On the frame** row that changed nothing is gone.
 - **Widget looks in Material**: **Background strength** now reaches a solid plate at 100 % (past 17 % it changed nothing) and sets how deep the glass is tinted in Aurora and Angel; **Blur background** shows only in the styles that have glass. The world clock's **Time difference**, the date's **Day of the year** and the user card's **Computer name** now change the widget in every layout that draws them, and the Controls widget lists its tiles only with the iRiS face that draws them (Material 2.35.13, iRiS 2.33.80 from the Hub).

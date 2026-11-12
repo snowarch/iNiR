@@ -224,8 +224,8 @@ var OPTIONS = [
                 ["blocks", "Shade blocks"], ["lines", "Lines only"], ["digits", "Digits"], ["binary", "Binary"],
                 ["custom", "Your own characters"]] },
     { key: "custom",   kind: "text", fallback: " .oO0@#", group: "Characters", label: "Your characters", when: ["charset", "custom"] },
-    { key: "cell",     kind: "range", fallback: 12, min: 5, max: 28, step: 1, unit: "px", group: "Characters", label: "Character size" },
-    { key: "strokes",  look: true, kind: "range", fallback: 100, min: 0, max: 200, step: 5, unit: "%", group: "Characters", label: "Edge lines" },
+    { key: "cell",     kind: "range", fallback: 5, min: 5, max: 28, step: 1, unit: "px", group: "Characters", label: "Character size" },
+    { key: "strokes",  look: true, kind: "range", fallback: 0, min: 0, max: 200, step: 5, unit: "%", group: "Characters", label: "Edge lines" },
     { key: "shimmer",  look: true, kind: "range", fallback: 30, min: 0, max: 300, step: 10, unit: "%", group: "Characters", label: "Shimmer" },
     { key: "rain",     look: true, kind: "range", fallback: 0, min: 0, max: 100, step: 5, unit: "%", group: "Characters", label: "Digit rain" },
     { key: "outline",  look: true, kind: "switch", fallback: true, group: "Characters", label: "Thin outline around the subject" },
@@ -267,12 +267,20 @@ var OPTIONS = [
                 ["type", "Types out, row by row"], ["centre", "Spreads from the centre"], ["dissolve", "Fades in at random"]] },
     { key: "speed",    kind: "range", fallback: 100, min: 25, max: 200, step: 5, unit: "%", group: "Motion", label: "Speed" },
     { key: "sway",     kind: "switch", fallback: true, group: "Motion", label: "Gentle sway", when: ["motion", true] },
-    { key: "camera",   kind: "switch", fallback: true, group: "Motion", label: "Slow camera moves", when: ["motion", true] },
+    { key: "camera",   kind: "switch", fallback: false, group: "Motion", label: "Slow camera moves", when: ["motion", true] },
     { key: "pulse",    kind: "switch", fallback: true, group: "Motion", label: "Rings of light", when: ["motion", true] },
     { key: "turn",     kind: "switch", fallback: true, group: "Motion", label: "Objects turn by themselves", when: ["motion", true] }
 ]
 
 var GROUPS = ["Characters", "Colour", "Screen", "Subject", "Motion"]
+
+// The wallpaper's own factory values where they differ from a widget's: a whole screen of glyphs reads best with rain,
+// typed in row by row, at half speed (his settings, 11-11).
+var WALLPAPER = { rain: 65, intro: "type", speed: 50 }
+
+function wallpaperFallback(spec) {
+    return WALLPAPER.hasOwnProperty(spec.key) ? WALLPAPER[spec.key] : spec.fallback
+}
 
 function option(key) {
     for (var i = 0; i < OPTIONS.length; i++) if (OPTIONS[i].key === key) return OPTIONS[i]
