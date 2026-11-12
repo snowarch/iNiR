@@ -385,7 +385,12 @@ PanelWindow {
         const cropToStdout = `${cropBase} -`
         const cropInPlace = `${cropBase} '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}'`
         const cleanup = `rm '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}'`
-        const slurpRegion = `${rx},${ry} ${rw}x${rh}`
+        // wf-recorder takes slurp's geometry: logical units in the global layout, not this
+        // output's physical pixels (#304: off on a second monitor or at any scale but 1).
+        const outputLogical = root.useNiri ? NiriService.outputs?.[root.screen.name]?.logical : null
+        const recordX = Math.round(root.regionX + (outputLogical?.x ?? root.monitorOffsetX))
+        const recordY = Math.round(root.regionY + (outputLogical?.y ?? root.monitorOffsetY))
+        const slurpRegion = `${recordX},${recordY} ${Math.round(root.regionWidth)}x${Math.round(root.regionHeight)}`
         const screenshotSaveDir = StringUtils.shellSingleQuoteEscape(Directories.screenshotsPath)
         const uploadAndGetUrl = (filePath) => {
             const escaped = StringUtils.shellSingleQuoteEscape(filePath)
