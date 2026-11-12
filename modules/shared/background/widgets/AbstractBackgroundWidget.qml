@@ -868,13 +868,15 @@ AbstractWidget {
         });
     }
 
-    // The family's face (`face` in the widget's manifest, a part `widgetFace.<face>`), or the worn Design's print of the
-    // widget (`printPart`) when the Design prints one for `printKey`.
+    // The family's face (`face` in the widget's manifest, a part `widgetFace.<face>`), a hub widget's own drawing for
+    // the family's face design (`desktop` in its manifest), or the worn Design's print of the widget (`printPart`) when
+    // the Design prints one for `printKey`.
     property string facePart: DesktopWidgetRegistry.entry(root.configEntryName)?.face ?? ""
     property string printPart: ""
     property string printKey: ""
     readonly property string familyFaceUrl: root.facePart.length > 0 ? Plugins.part(Plugins.active, "widgetFace." + root.facePart)
-        : root.printPart.length > 0 && FamilyStyle.facePrints[root.printKey] ? Plugins.part(Plugins.active, "designFace") : ""
+        : root.printPart.length > 0 && FamilyStyle.facePrints[root.printKey] ? Plugins.part(Plugins.active, "designFace")
+        : DesktopWidgetRegistry.customFace(root.configEntryName, DesktopWidgetDesign.faceDesign)
     readonly property bool hasFamilyFace: root.familyFaceUrl.length > 0
     // Which of the family's face designs draws it (its own, or one of `faces`: Prism in iRiS), and that design's face.
     readonly property string familyFaceDesign: root.familyDesign ? (root._designResolved.wear || DesktopWidgetDesign.faceDesign) : ""

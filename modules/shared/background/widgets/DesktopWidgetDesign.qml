@@ -62,7 +62,8 @@ QtObject {
     function partOf(widget: string, design: string): string {
         const entry = root.faceDesignOf(design)
         const face = DesktopWidgetRegistry.entry(widget)?.face ?? ""
-        return entry && face.length > 0 ? Plugins.part(Plugins.active, entry.part + "." + face) : ""
+        if (!entry) return ""
+        return face.length > 0 ? Plugins.part(Plugins.active, entry.part + "." + face) : DesktopWidgetRegistry.customFace(widget, design)
     }
     function drawsIn(widget: string, design: string): bool { return root.partOf(widget, design).length > 0 }
 

@@ -95,6 +95,10 @@ Singleton {
     function nameOf(key: string): string { return root.byKey[key]?.name ?? key }
     // What people call it, on every sheet, tag and shelf.
     function customEntry(key: string): var { return CustomWidgets.widgets.find(widget => "custom." + widget.id === key) ?? null }
+    // A hub widget's own drawing for one of the active family's widget designs (`desktop` in its manifest).
+    function customFace(key: string, design: string): string {
+        return design.length > 0 && String(key).startsWith("custom.") ? root.customEntry(key)?.faces?.[Plugins.active]?.desktop?.[design] ?? "" : ""
+    }
     function displayName(key: string): string {
         if (key.startsWith("custom."))
             return root.customEntry(key)?.name ?? key.slice(7)

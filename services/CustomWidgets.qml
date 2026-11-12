@@ -103,13 +103,21 @@ Singleton {
                     console.warn("[CustomWidgets]", warnings.join("; "));
                 const qmlFile = m.main || (entry.id.charAt(0).toUpperCase() + entry.id.slice(1) + ".qml");
                 const load = entry.load || entry.dir;
-                // A face per family, under the family's id: { main, slots }.
+                // A face per family, under the family's id: { main, slots, desktop }, `main` or `desktop` at least. `desktop` names the widget's own
+                // drawing for each of that family's widget designs ({ "<design>": "File.qml" }): worn on the desktop
+                // in place of `main`'s card while the person has that design.
                 const faces = {};
                 for (const key of Object.keys(m)) {
                     const face = m[key];
                     const file = face && typeof face === "object" && typeof face.main === "string" ? face.main.trim() : "";
-                    if (file.length > 0)
-                        faces[key] = { path: `file://${load}/${file}`, slots: Array.isArray(face.slots) ? face.slots : [] };
+                    const desktop = {};
+                    const drawn = face && typeof face === "object" && !Array.isArray(face) && face.desktop && typeof face.desktop === "object" ? face.desktop : {};
+                    for (const design of Object.keys(drawn)) {
+                        if (typeof drawn[design] === "string" && drawn[design].trim().length > 0)
+                            desktop[design] = `file://${load}/${drawn[design].trim()}`;
+                    }
+                    if (file.length > 0 || Object.keys(desktop).length > 0)
+                        faces[key] = { path: file.length > 0 ? `file://${load}/${file}` : "", slots: Array.isArray(face.slots) ? face.slots : [], desktop: desktop };
                 }
                 result.push({
                     id: entry.id,
