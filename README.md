@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/images/releases/3.0.0/00-hero.webp" alt="iNiR 3.0: the iRiS desktop on a snowy forest at night" width="100%">
+  <img src="docs/images/readme/hero.webp" alt="The iRiS desktop on a snowy forest at night" width="100%">
 </p>
 
 <h1 align="center">iNiR</h1>
@@ -31,32 +31,16 @@
   </sub>
 </p>
 
-## What's new in 3.0
+## Families
 
-A small base with every family as a plugin, a runtime of its own, a home at [inir.space](https://inir.space), and a
-new Settings for iRiS. One `inir update` brings it and keeps your config. [Read the whole changelog](CHANGELOG.md).
+<p align="center"><img src="docs/shots/at-work-iris.webp" alt="iRiS" width="100%"><br><sub><b>iRiS</b> · One Island on any edge that becomes what you open, plus a dock</sub></p>
 
 <table>
 <tr>
-<td width="50%" valign="top"><img src="docs/images/releases/3.0.0/01-prism.webp" alt="Prism" width="100%"><br><sub><b>Prism</b><br>iRiS Settings rebuilt: every option in one place, with a live preview of what it changes.</sub></td>
-<td width="50%" valign="top"><img src="docs/images/releases/3.0.0/02-island.webp" alt="The Island" width="100%"><br><sub><b>The Island</b><br>Music, timers and live activities in one object at the top, in sixteen designs.</sub></td>
-</tr>
-<tr>
-<td width="50%" valign="top"><img src="docs/images/releases/3.0.0/04-airisu.webp" alt="AIRISU" width="100%"><br><sub><b>AIRISU</b><br>The first Design: its own panels, layout and voice on the iRiS engine.</sub></td>
-<td width="50%" valign="top"><img src="docs/images/releases/3.0.0/03-edit-mode.webp" alt="Edit mode" width="100%"><br><sub><b>Edit mode</b><br>Drag, resize and save desktop widgets, then switch whole desktops in one click.</sub></td>
-</tr>
-<tr>
-<td width="50%" valign="top"><img src="docs/images/releases/3.0.0/06-material.webp" alt="Material" width="100%"><br><sub><b>Material</b><br>The same widgets in Material's own faces, with its rebuilt Settings and type.</sub></td>
-<td width="50%" valign="top"><img src="docs/images/releases/3.0.0/05-hub.webp" alt="iNiR Hub" width="100%"><br><sub><b>iNiR Hub</b><br>Families, Designs, themes and widgets as plugins, at inir.space/hub and inside the shell.</sub></td>
+<td width="50%" valign="top"><img src="docs/shots/at-work-material.webp" alt="Material" width="100%"><br><sub><b>Material</b> · A bar on any edge, sidebars, overview, global styles</sub></td>
+<td width="50%" valign="top"><img src="docs/shots/at-work-waffle.webp" alt="Waffle" width="100%"><br><sub><b>Waffle</b> · A Windows 11 taskbar and action center</sub></td>
 </tr>
 </table>
-
-## Families
-
-| Material | Waffle | iRiS |
-|:---:|:---:|:---:|
-| <img src="docs/shots/families-material.webp" alt="Material" width="290"> | <img src="docs/shots/families-waffle.webp" alt="Waffle" width="290"> | <img src="docs/shots/families-iris.webp" alt="iRiS" width="290"> |
-| A bar on any edge, sidebars, overview, nine global styles | A Windows 11 taskbar and action center | One Island on any edge that becomes what you open, plus a dock |
 
 `Super+Shift+W` switches between them. More looks, widgets, themes and web apps are in the [hub](https://inir.space/hub).
 

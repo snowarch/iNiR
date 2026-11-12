@@ -1,4 +1,37 @@
 {
+ "at-work": {
+  "alt": "Each family at work",
+  "label": "Family",
+  "width": 1600,
+  "height": 900,
+  "variants": [
+   {
+    "key": "material",
+    "label": "Material",
+    "file": "at-work-material.webp",
+    "family": "ii"
+   },
+   {
+    "key": "waffle",
+    "label": "Waffle",
+    "file": "at-work-waffle.webp",
+    "family": "waffle"
+   },
+   {
+    "key": "iris",
+    "label": "iRiS",
+    "file": "at-work-iris.webp",
+    "family": "iris"
+   }
+  ],
+  "made": {
+   "base": "714028a97",
+   "ii": "2de81e6",
+   "iris": "a103e4b",
+   "waffle": "2de81e6"
+  },
+  "spec": "{\"alt\": \"Each family at work\", \"choose\": {\"label\": \"Family\", \"options\": [{\"family\": \"ii\", \"key\": \"material\", \"label\": \"Material\", \"steps\": [[\"ipc\", \"sidebarRight\", \"open\"], [\"ipc\", \"notifications\", \"test\"], [\"wait\", 2500]], \"wallpaper\": \"wallhaven-211xrg.jpg\"}, {\"family\": \"waffle\", \"key\": \"waffle\", \"label\": \"Waffle\", \"steps\": [[\"ipc\", \"search\", \"open\"], [\"wait\", 2500]], \"wallpaper\": \"wallhaven-1qdz21.png\"}, {\"family\": \"iris\", \"key\": \"iris\", \"label\": \"iRiS\", \"steps\": [[\"ipc\", \"iris\", \"page\", \"media\"], [\"ipc\", \"iris\", \"dock\", \"reveal\"], [\"wait\", 2500]], \"wallpaper\": \"wallhaven-5yzd98.png\"}]}}"
+ },
  "desktop-items": {
   "alt": "Shortcuts on the desktop",
   "label": "",

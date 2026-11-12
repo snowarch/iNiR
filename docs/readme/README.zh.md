@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../images/releases/3.0.0/00-hero.webp" alt="iNiR 3.0：雪夜森林上的 iRiS 桌面" width="100%">
+  <img src="../images/readme/hero.webp" alt="雪夜森林上的 iRiS 桌面" width="100%">
 </p>
 
 <h1 align="center">iNiR</h1>
@@ -30,31 +30,16 @@
   </sub>
 </p>
 
-## 3.0 新内容
+## 系列
 
-一个小巧的基础，每个系列都是插件，拥有自己的运行时，在 [inir.space](https://inir.space) 安家，还有为 iRiS 全新打造的 Settings。一次 `inir update` 即可全部带来，并保留你的配置。[阅读完整更新日志](../../CHANGELOG.md)。
+<p align="center"><img src="../shots/at-work-iris.webp" alt="iRiS" width="100%"><br><sub><b>iRiS</b> · 任意边缘上的一个 Island，会变成你打开的内容，另加一个程序坞</sub></p>
 
 <table>
 <tr>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/01-prism.webp" alt="Prism" width="100%"><br><sub><b>Prism</b><br>重做的 iRiS Settings：所有选项集中一处，并实时预览它所改变的内容。</sub></td>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/02-island.webp" alt="Island" width="100%"><br><sub><b>Island</b><br>音乐、计时器和实时活动汇于顶部的一个对象，共有十六种设计。</sub></td>
-</tr>
-<tr>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/04-airisu.webp" alt="AIRISU" width="100%"><br><sub><b>AIRISU</b><br>第一个 Design：在 iRiS 引擎之上拥有自己的面板、布局和风格。</sub></td>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/03-edit-mode.webp" alt="编辑模式" width="100%"><br><sub><b>编辑模式</b><br>拖动、调整大小并保存桌面小部件，一键切换整套桌面。</sub></td>
-</tr>
-<tr>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/06-material.webp" alt="Material" width="100%"><br><sub><b>Material</b><br>同样的小部件换上 Material 自己的外观，配合重做的 Settings 与字体。</sub></td>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/05-hub.webp" alt="iNiR Hub" width="100%"><br><sub><b>iNiR Hub</b><br>系列、Design、主题和小部件都是插件，可在 inir.space/hub 和 shell 内获取。</sub></td>
+<td width="50%" valign="top"><img src="../shots/at-work-material.webp" alt="Material" width="100%"><br><sub><b>Material</b> · 可放在任意边缘的栏、侧边栏、概览，以及全局样式</sub></td>
+<td width="50%" valign="top"><img src="../shots/at-work-waffle.webp" alt="Waffle" width="100%"><br><sub><b>Waffle</b> · Windows 11 的任务栏和操作中心</sub></td>
 </tr>
 </table>
-
-## 系列
-
-| Material | Waffle | iRiS |
-|:---:|:---:|:---:|
-| <img src="../shots/families-material.webp" alt="Material" width="290"> | <img src="../shots/families-waffle.webp" alt="Waffle" width="290"> | <img src="../shots/families-iris.webp" alt="iRiS" width="290"> |
-| 可放在任意边缘的栏、侧边栏、概览，以及九种全局样式 | Windows 11 的任务栏和操作中心 | 任意边缘上的一个 Island，会变成你打开的内容，另加一个程序坞 |
 
 `Super+Shift+W` 在它们之间切换。更多外观、小部件、主题和网页应用见 [hub](https://inir.space/hub)。
 

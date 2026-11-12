@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../images/releases/3.0.0/00-hero.webp" alt="iNiR 3.0: سطح مكتب iRiS فوق غابة مثلجة ليلًا" width="100%">
+  <img src="../images/readme/hero.webp" alt="سطح مكتب iRiS فوق غابة مثلجة ليلًا" width="100%">
 </p>
 
 <h1 align="center">iNiR</h1>
@@ -30,31 +30,16 @@
   </sub>
 </p>
 
-## الجديد في 3.0
+## العائلات
 
-قاعدة صغيرة كل عائلة فيها إضافة، وبيئة تشغيل خاصة بها، وموطن على [inir.space](https://inir.space)، وSettings جديدة لـ iRiS. أمر `inir update` واحد يجلب كل ذلك ويحافظ على إعداداتك. [اقرأ سجل التغييرات كاملًا](../../CHANGELOG.md).
+<p align="center"><img src="../shots/at-work-iris.webp" alt="iRiS" width="100%"><br><sub><b>iRiS</b> · Island واحدة على أي حافة تتحول إلى ما تفتحه، ومعها الرصيف (dock)</sub></p>
 
 <table>
 <tr>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/01-prism.webp" alt="Prism" width="100%"><br><sub><b>Prism</b><br>إعادة بناء Settings في iRiS: كل خيار في مكان واحد، مع معاينة حية لما يغيّره.</sub></td>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/02-island.webp" alt="Island" width="100%"><br><sub><b>Island</b><br>الموسيقى والمؤقتات والأنشطة الحية في كائن واحد في الأعلى، بستة عشر تصميمًا.</sub></td>
-</tr>
-<tr>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/04-airisu.webp" alt="AIRISU" width="100%"><br><sub><b>AIRISU</b><br>أول Design: لوحاته وتخطيطه وطابعه الخاص فوق محرك iRiS.</sub></td>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/03-edit-mode.webp" alt="وضع التحرير" width="100%"><br><sub><b>وضع التحرير</b><br>اسحب أدوات سطح المكتب وغيّر حجمها واحفظها، ثم بدّل أسطح مكتب كاملة بنقرة واحدة.</sub></td>
-</tr>
-<tr>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/06-material.webp" alt="Material" width="100%"><br><sub><b>Material</b><br>الأدوات نفسها بوجوه Material الخاصة، مع Settings وخطوط مُجدَّدة.</sub></td>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/05-hub.webp" alt="iNiR Hub" width="100%"><br><sub><b>iNiR Hub</b><br>العائلات وDesigns والسمات والأدوات كإضافات، على inir.space/hub وداخل الواجهة.</sub></td>
+<td width="50%" valign="top"><img src="../shots/at-work-material.webp" alt="Material" width="100%"><br><sub><b>Material</b> · شريط على أي حافة، وأشرطة جانبية، ونظرة عامة، وأنماط عامة</sub></td>
+<td width="50%" valign="top"><img src="../shots/at-work-waffle.webp" alt="Waffle" width="100%"><br><sub><b>Waffle</b> · شريط مهام ومركز إجراءات على طراز Windows 11</sub></td>
 </tr>
 </table>
-
-## العائلات
-
-| Material | Waffle | iRiS |
-|:---:|:---:|:---:|
-| <img src="../shots/families-material.webp" alt="Material" width="290"> | <img src="../shots/families-waffle.webp" alt="Waffle" width="290"> | <img src="../shots/families-iris.webp" alt="iRiS" width="290"> |
-| شريط على أي حافة، وأشرطة جانبية، ونظرة عامة، وتسعة أنماط عامة | شريط مهام ومركز إجراءات على طراز Windows 11 | Island واحدة على أي حافة تتحول إلى ما تفتحه، ومعها الرصيف (dock) |
 
 يتم التبديل بينها عبر `Super+Shift+W`. المزيد من المظاهر والأدوات والسمات وتطبيقات الويب في [hub](https://inir.space/hub).
 

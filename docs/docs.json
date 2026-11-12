@@ -106,6 +106,77 @@
 				]
 			}
 		},
+		"at-work": {
+			"alt": "Each family at work",
+			"choose": {
+				"label": "Family",
+				"options": [
+					{
+						"key": "material",
+						"label": "Material",
+						"family": "ii",
+						"wallpaper": "wallhaven-211xrg.jpg",
+						"steps": [
+							[
+								"ipc",
+								"sidebarRight",
+								"open"
+							],
+							[
+								"ipc",
+								"notifications",
+								"test"
+							],
+							[
+								"wait",
+								2500
+							]
+						]
+					},
+					{
+						"key": "waffle",
+						"label": "Waffle",
+						"family": "waffle",
+						"wallpaper": "wallhaven-1qdz21.png",
+						"steps": [
+							[
+								"ipc",
+								"search",
+								"open"
+							],
+							[
+								"wait",
+								2500
+							]
+						]
+					},
+					{
+						"key": "iris",
+						"label": "iRiS",
+						"family": "iris",
+						"wallpaper": "wallhaven-5yzd98.png",
+						"steps": [
+							[
+								"ipc",
+								"iris",
+								"page",
+								"media"
+							],
+							[
+								"ipc",
+								"iris",
+								"dock",
+								"reveal"
+							],
+							[
+								"wait",
+								2500
+							]
+						]
+					}
+				]
+			}
+		},
 		"settings": {
 			"alt": "Settings in each family",
 			"choose": {

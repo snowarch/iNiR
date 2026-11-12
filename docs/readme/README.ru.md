@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../images/releases/3.0.0/00-hero.webp" alt="iNiR 3.0: рабочий стол iRiS на фоне заснеженного ночного леса" width="100%">
+  <img src="../images/readme/hero.webp" alt="рабочий стол iRiS на фоне заснеженного ночного леса" width="100%">
 </p>
 
 <h1 align="center">iNiR</h1>
@@ -30,31 +30,16 @@
   </sub>
 </p>
 
-## Что нового в 3.0
+## Семейства
 
-Небольшая база, в которой каждое семейство является плагином, собственный рантайм, дом на [inir.space](https://inir.space) и новые Settings для iRiS. Один `inir update` приносит всё это и сохраняет вашу конфигурацию. [Полный список изменений](../../CHANGELOG.md).
+<p align="center"><img src="../shots/at-work-iris.webp" alt="iRiS" width="100%"><br><sub><b>iRiS</b> · Одна Island у любого края, которая превращается в то, что вы открываете, плюс док</sub></p>
 
 <table>
 <tr>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/01-prism.webp" alt="Prism" width="100%"><br><sub><b>Prism</b><br>Settings iRiS переделаны: все параметры в одном месте, с живым предпросмотром того, что они меняют.</sub></td>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/02-island.webp" alt="Island" width="100%"><br><sub><b>Island</b><br>Музыка, таймеры и живые активности в одном объекте сверху, в шестнадцати дизайнах.</sub></td>
-</tr>
-<tr>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/04-airisu.webp" alt="AIRISU" width="100%"><br><sub><b>AIRISU</b><br>Первый Design: свои панели, раскладка и характер на движке iRiS.</sub></td>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/03-edit-mode.webp" alt="Режим правки" width="100%"><br><sub><b>Режим правки</b><br>Перетаскивайте, меняйте размер и сохраняйте виджеты рабочего стола, а затем переключайте целые рабочие столы одним щелчком.</sub></td>
-</tr>
-<tr>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/06-material.webp" alt="Material" width="100%"><br><sub><b>Material</b><br>Те же виджеты в собственном облике Material, с обновлёнными Settings и шрифтами.</sub></td>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/05-hub.webp" alt="iNiR Hub" width="100%"><br><sub><b>iNiR Hub</b><br>Семейства, Designs, темы и виджеты как плагины, на inir.space/hub и прямо в оболочке.</sub></td>
+<td width="50%" valign="top"><img src="../shots/at-work-material.webp" alt="Material" width="100%"><br><sub><b>Material</b> · Панель у любого края, боковые панели, обзор, глобальные стили</sub></td>
+<td width="50%" valign="top"><img src="../shots/at-work-waffle.webp" alt="Waffle" width="100%"><br><sub><b>Waffle</b> · Панель задач Windows 11 и центр действий</sub></td>
 </tr>
 </table>
-
-## Семейства
-
-| Material | Waffle | iRiS |
-|:---:|:---:|:---:|
-| <img src="../shots/families-material.webp" alt="Material" width="290"> | <img src="../shots/families-waffle.webp" alt="Waffle" width="290"> | <img src="../shots/families-iris.webp" alt="iRiS" width="290"> |
-| Панель у любого края, боковые панели, обзор, девять глобальных стилей | Панель задач Windows 11 и центр действий | Одна Island у любого края, которая превращается в то, что вы открываете, плюс док |
 
 `Super+Shift+W` переключает между ними. Больше вариантов оформления, виджетов, тем и веб-приложений есть в [hub](https://inir.space/hub).
 

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../images/releases/3.0.0/00-hero.webp" alt="iNiR 3.0: रात में बर्फ़ीले जंगल पर iRiS डेस्कटॉप" width="100%">
+  <img src="../images/readme/hero.webp" alt="रात में बर्फ़ीले जंगल पर iRiS डेस्कटॉप" width="100%">
 </p>
 
 <h1 align="center">iNiR</h1>
@@ -30,31 +30,16 @@
   </sub>
 </p>
 
-## 3.0 में नया
+## परिवार
 
-एक छोटा बेस जिसमें हर परिवार एक प्लगइन है, अपना रनटाइम, [inir.space](https://inir.space) पर एक घर, और iRiS के लिए नई Settings। एक `inir update` सब कुछ लाता है और आपकी कॉन्फ़िग बनाए रखता है। [पूरा चेंजलॉग पढ़ें](../../CHANGELOG.md)।
+<p align="center"><img src="../shots/at-work-iris.webp" alt="iRiS" width="100%"><br><sub><b>iRiS</b> · किसी भी किनारे पर एक Island, जो आप खोलते हैं वही बन जाता है, साथ में एक डॉक</sub></p>
 
 <table>
 <tr>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/01-prism.webp" alt="Prism" width="100%"><br><sub><b>Prism</b><br>नई बनी iRiS Settings: हर विकल्प एक जगह, और वह जो बदलता है उसका लाइव पूर्वावलोकन।</sub></td>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/02-island.webp" alt="Island" width="100%"><br><sub><b>Island</b><br>संगीत, टाइमर और लाइव गतिविधियाँ ऊपर एक ही वस्तु में, सोलह डिज़ाइनों में।</sub></td>
-</tr>
-<tr>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/04-airisu.webp" alt="AIRISU" width="100%"><br><sub><b>AIRISU</b><br>पहला Design: iRiS के इंजन पर अपने पैनल, लेआउट और अंदाज़।</sub></td>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/03-edit-mode.webp" alt="एडिट मोड" width="100%"><br><sub><b>एडिट मोड</b><br>डेस्कटॉप विजेट खींचें, आकार बदलें और सहेजें, फिर एक क्लिक में पूरा डेस्कटॉप बदलें।</sub></td>
-</tr>
-<tr>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/06-material.webp" alt="Material" width="100%"><br><sub><b>Material</b><br>वही विजेट Material के अपने रूप में, नई Settings और टाइपोग्राफी के साथ।</sub></td>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/05-hub.webp" alt="iNiR Hub" width="100%"><br><sub><b>iNiR Hub</b><br>परिवार, Design, थीम और विजेट प्लगइन के रूप में, inir.space/hub पर और शेल के अंदर।</sub></td>
+<td width="50%" valign="top"><img src="../shots/at-work-material.webp" alt="Material" width="100%"><br><sub><b>Material</b> · किसी भी किनारे पर बार, साइडबार, ओवरव्यू, और ग्लोबल स्टाइल</sub></td>
+<td width="50%" valign="top"><img src="../shots/at-work-waffle.webp" alt="Waffle" width="100%"><br><sub><b>Waffle</b> · Windows 11 का टास्कबार और एक्शन सेंटर</sub></td>
 </tr>
 </table>
-
-## परिवार
-
-| Material | Waffle | iRiS |
-|:---:|:---:|:---:|
-| <img src="../shots/families-material.webp" alt="Material" width="290"> | <img src="../shots/families-waffle.webp" alt="Waffle" width="290"> | <img src="../shots/families-iris.webp" alt="iRiS" width="290"> |
-| किसी भी किनारे पर बार, साइडबार, ओवरव्यू, और नौ ग्लोबल स्टाइल | Windows 11 का टास्कबार और एक्शन सेंटर | किसी भी किनारे पर एक Island, जो आप खोलते हैं वही बन जाता है, साथ में एक डॉक |
 
 `Super+Shift+W` से इनके बीच बदलें। और अधिक लुक, विजेट, थीम और वेब ऐप्स [hub](https://inir.space/hub) में हैं।
 

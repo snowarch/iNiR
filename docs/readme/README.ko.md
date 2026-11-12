@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../images/releases/3.0.0/00-hero.webp" alt="iNiR 3.0: 눈 내린 밤 숲 위의 iRiS 데스크톱" width="100%">
+  <img src="../images/readme/hero.webp" alt="눈 내린 밤 숲 위의 iRiS 데스크톱" width="100%">
 </p>
 
 <h1 align="center">iNiR</h1>
@@ -30,31 +30,16 @@
   </sub>
 </p>
 
-## 3.0의 새로운 점
+## 패밀리
 
-모든 패밀리를 플러그인으로 만든 작은 베이스, 자체 런타임, [inir.space](https://inir.space)라는 집, 그리고 iRiS의 새 Settings. `inir update` 한 번이면 모두 받고 설정은 그대로 남습니다. [전체 변경 내역 보기](../../CHANGELOG.md).
+<p align="center"><img src="../shots/at-work-iris.webp" alt="iRiS" width="100%"><br><sub><b>iRiS</b> · 어느 가장자리에나 둘 수 있는 Island 하나. 여는 내용에 따라 모양이 바뀌며, 도크도 있습니다</sub></p>
 
 <table>
 <tr>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/01-prism.webp" alt="Prism" width="100%"><br><sub><b>Prism</b><br>새로 만든 iRiS Settings: 모든 옵션을 한곳에, 바뀌는 내용을 실시간 미리보기로.</sub></td>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/02-island.webp" alt="Island" width="100%"><br><sub><b>Island</b><br>음악, 타이머, 라이브 액티비티를 상단의 한 오브젝트에, 열여섯 가지 디자인으로.</sub></td>
-</tr>
-<tr>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/04-airisu.webp" alt="AIRISU" width="100%"><br><sub><b>AIRISU</b><br>첫 번째 Design: iRiS 엔진 위에 자체 패널, 레이아웃, 분위기.</sub></td>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/03-edit-mode.webp" alt="편집 모드" width="100%"><br><sub><b>편집 모드</b><br>데스크톱 위젯을 끌고, 크기를 바꾸고, 저장한 뒤 한 번의 클릭으로 데스크톱 전체를 전환합니다.</sub></td>
-</tr>
-<tr>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/06-material.webp" alt="Material" width="100%"><br><sub><b>Material</b><br>같은 위젯을 Material 고유의 모습으로, 새 Settings와 글꼴과 함께.</sub></td>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/05-hub.webp" alt="iNiR Hub" width="100%"><br><sub><b>iNiR Hub</b><br>패밀리, Design, 테마, 위젯을 플러그인으로, inir.space/hub와 셸 안에서.</sub></td>
+<td width="50%" valign="top"><img src="../shots/at-work-material.webp" alt="Material" width="100%"><br><sub><b>Material</b> · 어느 가장자리에나 둘 수 있는 바, 사이드바, 오버뷰, 전역 스타일</sub></td>
+<td width="50%" valign="top"><img src="../shots/at-work-waffle.webp" alt="Waffle" width="100%"><br><sub><b>Waffle</b> · Windows 11 작업 표시줄과 작업 센터</sub></td>
 </tr>
 </table>
-
-## 패밀리
-
-| Material | Waffle | iRiS |
-|:---:|:---:|:---:|
-| <img src="../shots/families-material.webp" alt="Material" width="290"> | <img src="../shots/families-waffle.webp" alt="Waffle" width="290"> | <img src="../shots/families-iris.webp" alt="iRiS" width="290"> |
-| 어느 가장자리에나 둘 수 있는 바, 사이드바, 오버뷰, 전역 스타일 9종 | Windows 11 작업 표시줄과 작업 센터 | 어느 가장자리에나 둘 수 있는 Island 하나. 여는 내용에 따라 모양이 바뀌며, 도크도 있습니다 |
 
 `Super+Shift+W`로 전환합니다. 더 많은 룩, 위젯, 테마, 웹 앱은 [hub](https://inir.space/hub)에 있습니다.
 

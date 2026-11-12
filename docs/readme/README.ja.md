@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../images/releases/3.0.0/00-hero.webp" alt="iNiR 3.0：雪の夜の森に置かれた iRiS デスクトップ" width="100%">
+  <img src="../images/readme/hero.webp" alt="雪の夜の森に置かれた iRiS デスクトップ" width="100%">
 </p>
 
 <h1 align="center">iNiR</h1>
@@ -30,31 +30,16 @@
   </sub>
 </p>
 
-## 3.0 の新機能
+## ファミリー
 
-すべてのファミリーをプラグインにした小さなベース、専用のランタイム、[inir.space](https://inir.space) という拠点、そして iRiS の新しい Settings。`inir update` ひとつで全部が届き、設定はそのまま残ります。[変更履歴をすべて読む](../../CHANGELOG.md)。
+<p align="center"><img src="../shots/at-work-iris.webp" alt="iRiS" width="100%"><br><sub><b>iRiS</b> · どの端にも置ける1つの Island。開いたものに変わり、ドックも付きます</sub></p>
 
 <table>
 <tr>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/01-prism.webp" alt="Prism" width="100%"><br><sub><b>Prism</b><br>作り直した iRiS の Settings：すべてのオプションが一か所に、変わる内容をライブでプレビュー。</sub></td>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/02-island.webp" alt="Island" width="100%"><br><sub><b>Island</b><br>音楽、タイマー、ライブアクティビティを上部のひとつのオブジェクトに。デザインは16種類。</sub></td>
-</tr>
-<tr>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/04-airisu.webp" alt="AIRISU" width="100%"><br><sub><b>AIRISU</b><br>最初の Design：iRiS のエンジンの上に、独自のパネル、レイアウト、雰囲気。</sub></td>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/03-edit-mode.webp" alt="編集モード" width="100%"><br><sub><b>編集モード</b><br>デスクトップウィジェットをドラッグ、リサイズ、保存し、デスクトップ全体をワンクリックで切り替え。</sub></td>
-</tr>
-<tr>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/06-material.webp" alt="Material" width="100%"><br><sub><b>Material</b><br>同じウィジェットを Material 独自の顔で。Settings とタイポグラフィも一新。</sub></td>
-<td width="50%" valign="top"><img src="../images/releases/3.0.0/05-hub.webp" alt="iNiR Hub" width="100%"><br><sub><b>iNiR Hub</b><br>ファミリー、Design、テーマ、ウィジェットをプラグインとして、inir.space/hub とシェル内で。</sub></td>
+<td width="50%" valign="top"><img src="../shots/at-work-material.webp" alt="Material" width="100%"><br><sub><b>Material</b> · 任意の端に置けるバー、サイドバー、オーバービュー、グローバルスタイル</sub></td>
+<td width="50%" valign="top"><img src="../shots/at-work-waffle.webp" alt="Waffle" width="100%"><br><sub><b>Waffle</b> · Windows 11 のタスクバーとアクションセンター</sub></td>
 </tr>
 </table>
-
-## ファミリー
-
-| Material | Waffle | iRiS |
-|:---:|:---:|:---:|
-| <img src="../shots/families-material.webp" alt="Material" width="290"> | <img src="../shots/families-waffle.webp" alt="Waffle" width="290"> | <img src="../shots/families-iris.webp" alt="iRiS" width="290"> |
-| 任意の端に置けるバー、サイドバー、オーバービュー、9種類のグローバルスタイル | Windows 11 のタスクバーとアクションセンター | どの端にも置ける1つの Island。開いたものに変わり、ドックも付きます |
 
 `Super+Shift+W` で切り替えられます。その他のルック、ウィジェット、テーマ、ウェブアプリは [hub](https://inir.space/hub) にあります。
 
