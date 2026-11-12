@@ -147,6 +147,38 @@ Singleton {
         }
     }
 
+    // A component with a panel opens by mouse in every family: it is listed in the app launchers by its name, and
+    // opening it runs its `toggle` (the hub check holds every such component to `IpcHandler { target: "<id>" }` with
+    // one). Desktop entries are what every launcher already searches, so no family draws anything for it.
+    readonly property var _launchable: root.ready ? root.components
+        .filter(id => /^[a-z0-9][a-z0-9-]*$/.test(id) && root.wornWith(id, root.active))
+        .map(id => {
+            const m = root.manifests[id]
+            const line = value => String(value ?? "").replace(/[\r\n\t]+/g, " ").trim()
+            return [id, line(m.name) || id, line(m.summary), Quickshell.shellPath(m.provides)]
+        }) : null
+    on_LaunchableChanged: if (root._launchable !== null) entriesLater.restart()
+    Timer {
+        id: entriesLater
+        interval: 2000
+        onTriggered: {
+            entries.command = ["sh", "-c", root._entriesScript, "sh", Directories.homePath]
+                .concat(...root._launchable)
+            entries.running = true
+        }
+    }
+    Process { id: entries }
+    // Values arrive as arguments, never inside the script: a plugin's name is someone else's text.
+    readonly property string _entriesScript: 'dir="${XDG_DATA_HOME:-$1/.local/share}/applications"; shift; mkdir -p "$dir"; keep=" "
+while [ $# -ge 4 ]; do
+  f="$dir/inir-plugin-$1.desktop"; icon=applications-other
+  for i in "$4/icon.svg" "$4/icon.png"; do [ -f "$i" ] && { icon=$i; break; }; done
+  printf "[Desktop Entry]\\nType=Application\\nName=%s\\nComment=%s\\nIcon=%s\\nExec=inir %s toggle\\nCategories=Utility;\\nTerminal=false\\n" "$2" "$3" "$icon" "$1" > "$f.new"
+  if cmp -s "$f.new" "$f"; then rm -f "$f.new"; else mv -f "$f.new" "$f"; fi
+  keep="$keep$f "; shift 4
+done
+for f in "$dir"/inir-plugin-*.desktop; do [ -e "$f" ] || continue; case "$keep" in *" $f "*) ;; *) rm -f "$f" ;; esac; done'
+
     Instantiator {
         model: folders
         delegate: FileView {
