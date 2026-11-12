@@ -115,7 +115,7 @@
 						"key": "material",
 						"label": "Material",
 						"family": "ii",
-						"wallpaper": "wallhaven-211xrg.jpg",
+						"wallpaper": "Green_Peace.png",
 						"steps": [
 							[
 								"ipc",
@@ -137,7 +137,7 @@
 						"key": "waffle",
 						"label": "Waffle",
 						"family": "waffle",
-						"wallpaper": "wallhaven-1qdz21.png",
+						"wallpaper": "wallhaven-3kxxj6.png",
 						"steps": [
 							[
 								"ipc",
@@ -154,8 +154,17 @@
 						"key": "iris",
 						"label": "iRiS",
 						"family": "iris",
-						"wallpaper": "wallhaven-5yzd98.png",
+						"wallpaper": "wallhaven-2edkmx.png",
 						"steps": [
+							[
+								"config",
+								"iris.appearance.accent",
+								"wallpaper"
+							],
+							[
+								"wait",
+								1500
+							],
 							[
 								"ipc",
 								"iris",

@@ -30,7 +30,7 @@
    "iris": "a103e4b",
    "waffle": "2de81e6"
   },
-  "spec": "{\"alt\": \"Each family at work\", \"choose\": {\"label\": \"Family\", \"options\": [{\"family\": \"ii\", \"key\": \"material\", \"label\": \"Material\", \"steps\": [[\"ipc\", \"sidebarRight\", \"open\"], [\"ipc\", \"notifications\", \"test\"], [\"wait\", 2500]], \"wallpaper\": \"wallhaven-211xrg.jpg\"}, {\"family\": \"waffle\", \"key\": \"waffle\", \"label\": \"Waffle\", \"steps\": [[\"ipc\", \"search\", \"open\"], [\"wait\", 2500]], \"wallpaper\": \"wallhaven-1qdz21.png\"}, {\"family\": \"iris\", \"key\": \"iris\", \"label\": \"iRiS\", \"steps\": [[\"ipc\", \"iris\", \"page\", \"media\"], [\"ipc\", \"iris\", \"dock\", \"reveal\"], [\"wait\", 2500]], \"wallpaper\": \"wallhaven-5yzd98.png\"}]}}"
+  "spec": "{\"alt\": \"Each family at work\", \"choose\": {\"label\": \"Family\", \"options\": [{\"family\": \"ii\", \"key\": \"material\", \"label\": \"Material\", \"steps\": [[\"ipc\", \"sidebarRight\", \"open\"], [\"ipc\", \"notifications\", \"test\"], [\"wait\", 2500]], \"wallpaper\": \"Green_Peace.png\"}, {\"family\": \"waffle\", \"key\": \"waffle\", \"label\": \"Waffle\", \"steps\": [[\"ipc\", \"search\", \"open\"], [\"wait\", 2500]], \"wallpaper\": \"wallhaven-3kxxj6.png\"}, {\"family\": \"iris\", \"key\": \"iris\", \"label\": \"iRiS\", \"steps\": [[\"config\", \"iris.appearance.accent\", \"wallpaper\"], [\"wait\", 1500], [\"ipc\", \"iris\", \"page\", \"media\"], [\"ipc\", \"iris\", \"dock\", \"reveal\"], [\"wait\", 2500]], \"wallpaper\": \"wallhaven-2edkmx.png\"}]}}"
  },
  "desktop-items": {
   "alt": "Shortcuts on the desktop",
