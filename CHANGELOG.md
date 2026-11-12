@@ -59,8 +59,32 @@ The wallpaper drawn as glyphs, Settings that follow Umbriel, a new iNiR mark, an
 - **Idle and lock timers**: restarting the shell no longer leaves an old `swayidle` behind on each restart.
 - **Family switch**: the logo on the transition between families shows again.
 - **Material's left sidebar on a narrow panel**: with many tabs the current one's name no longer pushes the others out of the strip; tabs that don't fit fade at the edge instead of being cut. The translator's copy, search, paste and clear buttons sit inside their cards again, and the AI chat's message buttons are square (#328, Material 2.35.12 from the Hub).
-- **An update notice at every start**: a shell that stopped right after showing "update available" showed it again at each start; the notice is now remembered before it goes out (#329).
+- **An update notice at every start**: a shell that stopped right after showing "update available" showed it again at each start; the notice is now remembered before it goes out (for #329).
 - **Hub**: a component for every family (Fastfetch) read "For" with no name after it, as if made for another shell. It now says it works in Material, iRiS and Waffle.
+- **Panels and popups open on the screen you are on**: with two or more monitors, bar popups and the session screen always opened on the first one; they follow the screen in use again (#330, qs-rs 0.1.5).
+- **Picture-in-picture floats from any browser**: after updating from 2.33, a Brave or Chromium picture-in-picture window opened tiled; it floats like Firefox's (#302).
+- **A picture gallery widget keeps its interval**: covering the desktop restarted the count, so a long interval almost never turned the picture; it now turns on the clock (#318).
+- **Widget stacks under Prism**: a widget dropped on another was pushed aside instead of stacking, and one turn of the wheel could skip widgets in a stack (#324).
+- **The Settings window wears the theme in use**: with a manual or preset theme it opened in the factory dark colours (#325).
+- **The visualizer hears only what plays**: an app left out of it no longer leaks in when it shares an output with the player, and a lost source ends the bars instead of falling back to the microphone (#306, inir-accel 0.1.1).
+- **Keybinds after updating from an old setup**: zsh logins lost `~/.local/bin`, so Niri's binds could not find `inir`; and an update that stopped halfway no longer retries with the old version's setup (#326).
+- **Aurora and Angel on compositor glass**: the bar and panels went fully clear; they keep their tint.
+- **Brightness of external monitors on Umbriel**: the sliders found no monitor to drive; screens are matched by their connector.
+- **Removing a Hub plugin undoes what it changed**: a plugin that edited your files puts them back before it leaves.
+- **Lists in your config stay lists**: some were saved in a shape the next start could not read, so the family cycle went back to its default; saved ones are read back right.
+- **A power profile picked at login is kept**: one chosen before the power daemon answered was dropped (qs-rs 0.1.5).
+- **Tray and app entries**: a tray click hands the app the right to come to the front, and app entries saved with Windows line ends are read (qs-rs 0.1.5).
+- **NixOS**: `inir doctor` no longer reports the package's unit, plugins or fonts as missing, and a call while the shell is down starts it under its service (inir-cli 0.2.8 to 0.2.12).
+
+### Issues / PRs
+- Fixed [#328](https://github.com/snowarch/iNiR/issues/328) and [#330](https://github.com/snowarch/iNiR/issues/330).
+- Also in this release, closed earlier: [#302](https://github.com/snowarch/iNiR/issues/302), [#306](https://github.com/snowarch/iNiR/issues/306), [#318](https://github.com/snowarch/iNiR/issues/318), [#324](https://github.com/snowarch/iNiR/issues/324), [#325](https://github.com/snowarch/iNiR/issues/325) and [#326](https://github.com/snowarch/iNiR/issues/326).
+- For [#329](https://github.com/snowarch/iNiR/issues/329): the notice no longer repeats at every start, so the loop is gone; the crash under it stays open.
+- Included contributions from [#304](https://github.com/snowarch/iNiR/pull/304) and [#317](https://github.com/snowarch/iNiR/pull/317).
+- Parts: [qs-rs 0.1.5](https://github.com/snowarch/qs-rs/releases/tag/v0.1.5) and [0.1.6](https://github.com/snowarch/qs-rs/releases/tag/v0.1.6), [inir-accel 0.1.1](https://github.com/snowarch/inir-accel/releases/tag/v0.1.1) and [0.1.2](https://github.com/snowarch/inir-accel/releases/tag/v0.1.2), [inir-cli 0.2.12](https://github.com/snowarch/inir-cli/releases/tag/v0.2.12); Material 2.35.15, iRiS 2.33.84, Waffle 2.34.14 and Radio 2.1.2 from the [Hub](https://inir.space/hub).
+
+### Contributors
+Thanks to [@NsCrosu](https://github.com/NsCrosu) for the region recording fix, to [@skrblk](https://github.com/skrblk) for the Waffle taskbar fix, to [@winchxyz](https://github.com/winchxyz) for Afterglyph, and to [@ConorMcCabe29](https://github.com/ConorMcCabe29), [@NourieEXE](https://github.com/NourieEXE), [@TheDinnx](https://github.com/TheDinnx), [@InterstellarOne](https://github.com/InterstellarOne), [@NVitschDEV](https://github.com/NVitschDEV), [@LYOTCHOK](https://github.com/LYOTCHOK), [@Tryprogufi](https://github.com/Tryprogufi) and [@TheStinkyArchUser](https://github.com/TheStinkyArchUser) for the reports behind the fixes.
 
 ## [3.0.1] - 2026-11-08
 
