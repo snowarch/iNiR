@@ -32,6 +32,7 @@ The wallpaper drawn as glyphs, Settings that follow Umbriel, a new iNiR mark, an
 - **When GitHub is down, iNiR says so**: setup, `inir update`, `inir doctor`, the Hub and the update check name the server that isn't answering (a 504 and the like), with GitHub's status page, instead of red lines that read as iNiR broken. Nothing changes on your system; try again in a while.
 
 ### Fixed
+- **Hub widgets answer keybinds**: `inir radio toggle` and any hub widget's own command reach the running shell, and a widget can keep its commands alive with none of its faces on screen.
 - **Covers follow the player at once**: switching players or tracks shows a cover already seen without waiting, a player with no cover of its own no longer keeps the last one's (a browser page's picture under a radio), and a radio station shows its logo.
 - **Hub widgets speak your language**: a widget's own `translations/` folder is read like a plugin's, so its text follows the shell's language instead of staying in English.
 - **Menus match the panel they open from**: a dock or bar menu takes that panel’s colour and translucency instead of a solid tint, its wallpaper glass shows the wallpaper under it, and it blurs wherever the panel blurs.

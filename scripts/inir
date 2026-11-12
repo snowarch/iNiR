@@ -5040,6 +5040,13 @@ case "$command_name" in
         if source_ipc_registry 2>/dev/null; then
             # Check if target is known in registry
             if [[ -z "${IPC_TARGET_FUNCTIONS[$normalized]+_}" ]]; then
+                # A hub item's own target (the radio's `inir radio toggle`) is known only to the running shell.
+                require_qs
+                resolve_config_dir
+                if [[ $# -ge 1 ]] && has_instances "$config_dir" \
+                    && "$qs_bin" -p "$config_dir" ipc call "$command_name" "$@" 2>/dev/null; then
+                    exit 0
+                fi
                 # Unknown target — try to suggest similar ones
                 printf "Unknown command: '%s'\n\n" "$command_name" >&2
                 if ! suggest_ipc_target "$normalized" >&2; then

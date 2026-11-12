@@ -22,6 +22,16 @@ Singleton {
     property int _generation: 0
 
     Component.onCompleted: _scan()
+
+    // A widget's service (widget.json "service": its state and IPC) lives while the widget is installed, not only
+    // while one of its faces shows: a keybind reaches the radio with no face on screen.
+    Instantiator {
+        model: root.widgets.filter(w => w.servicePath.length > 0)
+        delegate: Loader {
+            required property var modelData
+            source: modelData.servicePath
+        }
+    }
     Connections {
         target: Config
         function onReadyChanged() {
@@ -110,6 +120,7 @@ Singleton {
                     description: m.description || "",
                     category: m.category || "",
                     qmlPath: `file://${load}/${qmlFile}`,
+                    servicePath: typeof m.service === "string" && m.service.trim().length > 0 ? `file://${load}/${m.service.trim()}` : "",
                     faces: faces,
                     dirPath: entry.dir,
                     configKeys: m.configKeys || {},
