@@ -16,6 +16,7 @@ RippleButton {
     implicitHeight: Appearance.regaliaEverywhere ? Appearance.regalia.compactControlHeight
         : Appearance.zzzEverywhere ? 32 : (Appearance.inirEverywhere || Appearance.angelEverywhere) ? 32 : 40
     readonly property real _iconOnlyImplicitWidth: icon.implicitWidth + horizontalPadding * 2
+    readonly property real _labelImplicitWidth: labelText.implicitWidth + 6
     implicitWidth: root.showLabel ? (implicitContentWidth + horizontalPadding * 2) : root._iconOnlyImplicitWidth
     buttonRadius: Appearance.regaliaEverywhere ? Appearance.regalia.roundSmall
         : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius

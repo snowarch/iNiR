@@ -38,6 +38,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **NixOS**: the flake installs iNiR like every other distro: your copy lives in `~/.config/quickshell/inir`, the families come from the Hub on the first start and switch like on Arch, and Hub items update from **Settings › Hub** or `inir update`. A rebuild after the 3.0.1 package removes what it left in your home; the page is [NixOS](docs/NIXOS.md).
 - **Idle and lock timers**: restarting the shell no longer leaves an old `swayidle` behind on each restart.
 - **Family switch**: the logo on the transition between families shows again.
+- **Material's left sidebar on a narrow panel**: with many tabs the current one's name no longer pushes the others out of the strip; tabs that don't fit fade at the edge instead of being cut. The translator's copy, search, paste and clear buttons sit inside their cards again, and the AI chat's message buttons are square (#328, Material 2.35.12 from the Hub).
+- **An update notice at every start**: a shell that stopped right after showing "update available" showed it again at each start; the notice is now remembered before it goes out (#329).
 - **Hub**: a component for every family (Fastfetch) read "For" with no name after it, as if made for another shell. It now says it works in Material, iRiS and Waffle.
 
 ## [3.0.1] - 2026-11-08

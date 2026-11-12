@@ -5,6 +5,7 @@ import qs.modules.common.functions
 import qs.services
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Effects
 import QtQuick.Layouts
 
 Item {
@@ -14,6 +15,15 @@ Item {
     property real maxWidth: -1
     property int compactThreshold: 4
     readonly property bool compactMode: (root.tabButtonList?.length ?? 0) >= root.compactThreshold
+    // Compact tabs are icons but the current one; when that label would push tabs out of
+    // maxWidth it goes too, measured on the icons alone so it never flips back and forth (#328).
+    readonly property real _iconsWidth: {
+        let w = groupContainer.padding * 2 + Math.max(0, tabRepeater.count - 1) * contentItem.spacing
+        for (let i = 0; i < tabRepeater.count; i++) w += tabRepeater.itemAt(i)?._iconOnlyImplicitWidth ?? 0
+        return w
+    }
+    readonly property bool _currentLabelFits: root.maxWidth <= 0
+        || root._iconsWidth + (tabRepeater.itemAt(root.currentIndex)?._labelImplicitWidth ?? 0) <= root.maxWidth
     // Emitted only for direct user interaction (click/wheel), never for
     // programmatic setCurrentIndex — lets consumers persist explicit choices.
     signal userSelected(int index)
@@ -141,6 +151,15 @@ Item {
 
         contentWidth: groupContainer.implicitWidth
         contentHeight: height
+        // Tabs scrolled past an edge fade out there instead of being cut (#328): a layer only
+        // while they overflow, so a strip that fits costs nothing.
+        layer.enabled: interactive
+        layer.effect: MultiEffect {
+            maskEnabled: true
+            maskSource: edgeMask
+            maskThresholdMin: 0.5
+            maskSpreadAtMin: 1
+        }
 
         Item {
             width: Math.max(flick.width, groupContainer.implicitWidth)
@@ -247,7 +266,7 @@ Item {
                             readonly property bool dropTarget: root.reorderHoverIndex === index
                                 && root.reorderDragIndex >= 0 && root.reorderDragIndex !== index
                             current: index == root.currentIndex
-                            showLabel: !root.compactMode || current
+                            showLabel: !root.compactMode || (current && root._currentLabelFits)
                             text: modelData.name
                             materialSymbol: modelData.icon
                             opacity: root.reorderEnabled && root.reorderDragIndex >= 0 && !beingDragged ? 0.72 : 1
@@ -339,6 +358,21 @@ Item {
         if (!reorderEnabled) root.cancelReorder()
     }
     Component.onCompleted: Qt.callLater(root.ensureCurrentVisible)
+
+    Rectangle {
+        id: edgeMask
+        readonly property real fade: 20 / Math.max(1, width)
+        anchors.fill: flick
+        visible: false
+        layer.enabled: flick.interactive
+        gradient: Gradient {
+            orientation: Gradient.Horizontal
+            GradientStop { position: 0; color: flick.atXBeginning ? "white" : "transparent" }
+            GradientStop { position: edgeMask.fade; color: "white" }
+            GradientStop { position: 1 - edgeMask.fade; color: "white" }
+            GradientStop { position: 1; color: flick.atXEnd ? "white" : "transparent" }
+        }
+    }
 
     MouseArea {
         anchors.fill: parent

@@ -213,15 +213,18 @@ Singleton {
             if (now - root.lastNotifiedAt < root.remindDays * 86400000) return
         }
 
+        // Saved before the notice goes out: a shell that died right after it notified again at
+        // every start (#329), the debounced write never landed.
+        Config.setNestedValues({
+            "shellUpdates.lastNotifiedCommit": remoteCommit,
+            "shellUpdates.lastNotifiedAt": now
+        })
+        Config.flushWrites()
         const version = root.remoteVersion.length > 0 ? (" v" + root.remoteVersion) : ""
         root.postUpdateNotice(version.length > 0 ? Translation.tr("iNiR %1 is ready").arg(version.trim()) : Translation.tr("An iNiR update is ready"),
             root.repoDiverged
                 ? Translation.tr("iNiR's history changed upstream. The update keeps your local changes and moves you over by itself: update from “What changed”, or run `inir update`.")
                 : Translation.tr("Your settings and edits stay as they are. Update from “What changed”, or run `inir update`."))
-        Config.setNestedValues({
-            "shellUpdates.lastNotifiedCommit": remoteCommit,
-            "shellUpdates.lastNotifiedAt": now
-        })
         print("[ShellUpdates] Notification sent: Update available" + version)
     }
 
