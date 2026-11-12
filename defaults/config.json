@@ -2900,36 +2900,9 @@
         "verbose": false,
         "shuffleMode": false,
         "repeatMode": 0,
-        "recentSearches": [],
-        "queue": [],
-        "playlists": [],
-        "liked": [],
-        "lastLikedSync": "",
         "upNextNotifications": true,
         "suppressUpNextInFullscreen": true,
-        "volume": 100,
-        "profile": {
-            "name": "",
-            "avatar": "",
-            "url": ""
-        },
-        "cache": {
-            "playlists": [],
-            "albums": [],
-            "liked": []
-        },
-        "resume": {
-            "videoId": "",
-            "title": "",
-            "artist": "",
-            "thumbnail": "",
-            "url": "",
-            "position": 0,
-            "wasPlaying": false,
-            "activePlaylist": [],
-            "currentIndex": -1,
-            "activePlaylistSource": ""
-        }
+        "volume": 100
     },
     "screenTime": {
         "enable": false,

@@ -816,11 +816,52 @@ Singleton {
         const text = diskProbe.text() || "";
         let disk = {};
         try { disk = JSON.parse(text || "{}"); } catch (e) { return {}; }
-        if (text.length > 0 && ConfigMigrations.migrate(disk)) {
+        const moved = text.length > 0 && ConfigMigrations.migrate(disk);
+        const departed = text.length > 0 && root._depart(disk);
+        if (moved || departed) {
             diskProbe.setText(root._qtJson(disk) + "\n");
             console.log("[Config] moved keys to their owners (ConfigMigrations.js)");
         }
         return disk;
+    }
+
+    // Data that leaves config.json (ConfigMigrations.departures) goes to its own file first, and out of config.json
+    // only once that file reads back with it; a file that already holds a key keeps its value.
+    function _depart(disk: var): bool {
+        const leaving = ConfigMigrations.departing(disk);
+        let changed = false;
+        for (const item of leaving.filter(item => !item.file)) {
+            ConfigMigrations.drop(disk, item.path);
+            changed = true;
+        }
+        for (const file of [...new Set(leaving.filter(item => item.file).map(item => item.file))]) {
+            const items = leaving.filter(item => item.file === file);
+            departureFile.path = `${Directories.stateUserPath}/${file}`;
+            departureFile.reload();
+            let held = {};
+            try { held = JSON.parse(departureFile.text() || "{}"); } catch (e) { continue; }
+            for (const item of items)
+                if (!(item.key in held)) held[item.key] = item.value;
+            departureFile.setText(JSON.stringify(held));
+            departureFile.reload();
+            let written = null;
+            try { written = JSON.parse(departureFile.text() || "null"); } catch (e) {}
+            if (!written || items.some(item => !(item.key in written))) {
+                console.warn(`[Config] could not write ${departureFile.path}; its data stays in config.json`);
+                continue;
+            }
+            for (const item of items) ConfigMigrations.drop(disk, item.path);
+            changed = true;
+        }
+        return changed;
+    }
+
+    FileView {
+        id: departureFile
+        preload: false
+        blockAllReads: true
+        blockWrites: true
+        printErrors: false
     }
 
     function _holderFor(subtree): QtObject {

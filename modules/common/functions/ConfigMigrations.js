@@ -66,6 +66,32 @@ const copies = [
     ["notifications.scaleOnHover", ["material.notifications.scaleOnHover", "waffles.notifications.scaleOnHover"]]
 ];
 
+// [path, file]: data that leaves config.json for a file of its own in the state folder's user/ (Config writes it there
+// first, under the path's last key, and drops it from config.json only once it is written). What grows with use or
+// changes while music plays is no setting: a long YT Music queue made config.json pass 300 KB, rewritten every few
+// seconds. No file: dropped (nothing read it).
+const departures = [
+    ["ytmusic.queue", "ytmusic.json"],
+    ["ytmusic.playlists", "ytmusic.json"],
+    ["ytmusic.liked", "ytmusic.json"],
+    ["ytmusic.lastLikedSync", "ytmusic.json"],
+    ["ytmusic.recentSearches", "ytmusic.json"],
+    ["ytmusic.profile", "ytmusic.json"],
+    ["ytmusic.resume", "ytmusic.json"],
+    ["ytmusic.cache", ""]
+];
+function departing(obj) {
+    const out = [];
+    for (const [path, file] of departures) {
+        const value = _get(obj, path);
+        if (value !== undefined) out.push({ path, file, key: path.split(".").pop(), value });
+    }
+    return out;
+}
+function drop(obj, path) {
+    _remove(obj, path);
+}
+
 function _isObject(v) {
     return v !== null && typeof v === "object" && !Array.isArray(v);
 }

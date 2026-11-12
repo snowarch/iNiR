@@ -12,45 +12,67 @@ import qs.services.deferred
 Singleton {
     id: root
 
+    // What YT Music keeps between sessions (queue, playlists, liked songs, recent searches, profile, where it was
+    // playing) is its own file in the state folder, never config.json: it grows with use and changes while music plays.
+    // config.json held it until 3.1 (ConfigMigrations.departures moves it here).
+    readonly property string _storePath: Directories.stateUserPath + "/ytmusic.json"
+    property var _stored: ({})
+
+    function _list(value: var): var {
+        return value ? Array.from(value) : []
+    }
+
+    function _store(key: string, value: var): void {
+        if (!root._initialized) return
+        root._stored[key] = value
+        _storeWriteTimer.restart()
+    }
+
+    function _writeStore(): void {
+        _storeWriteTimer.stop()
+        _storeFile.setText(JSON.stringify(root._stored))
+    }
+
+    Timer {
+        id: _storeWriteTimer
+        interval: 1000
+        onTriggered: root._writeStore()
+    }
+
+    FileView {
+        id: _storeFile
+        path: root._initialized ? root._storePath : ""
+        blockAllReads: true
+        printErrors: false
+    }
+
     property bool _resumeRestored: false
-    // What was last written: a paused or stopped track saves nothing new, and each write bumps the config
-    // revision, emits configChanged and rewrites the file.
+    // What was last written: a paused or stopped track saves nothing new.
     property string _resumeSignature: ""
 
     function _persistResume(): void {
         if (!root.currentVideoId) return
         const resume = {
-            'ytmusic.resume.videoId': root.currentVideoId,
-            'ytmusic.resume.title': root.currentTitle,
-            'ytmusic.resume.artist': root.currentArtist,
-            'ytmusic.resume.thumbnail': root.currentThumbnail,
-            'ytmusic.resume.url': root.currentUrl,
-            'ytmusic.resume.position': root.currentPosition,
-            'ytmusic.resume.wasPlaying': root.isPlaying,
-            'ytmusic.resume.activePlaylist': root.activePlaylist,
-            'ytmusic.resume.currentIndex': root.currentIndex,
-            'ytmusic.resume.activePlaylistSource': root.activePlaylistSource
+            videoId: root.currentVideoId,
+            title: root.currentTitle,
+            artist: root.currentArtist,
+            thumbnail: root.currentThumbnail,
+            url: root.currentUrl,
+            position: root.currentPosition,
+            wasPlaying: root.isPlaying,
+            activePlaylist: root._list(root.activePlaylist),
+            currentIndex: root.currentIndex,
+            activePlaylistSource: root.activePlaylistSource
         }
         const signature = JSON.stringify(resume)
         if (signature === root._resumeSignature) return
         root._resumeSignature = signature
-        Config.setNestedValues(resume)
+        root._store("resume", resume)
     }
 
     function _clearResume(): void {
         root._resumeSignature = ""
-        Config.setNestedValues({
-            'ytmusic.resume.videoId': "",
-            'ytmusic.resume.title': "",
-            'ytmusic.resume.artist': "",
-            'ytmusic.resume.thumbnail': "",
-            'ytmusic.resume.url': "",
-            'ytmusic.resume.position': 0,
-            'ytmusic.resume.wasPlaying': false,
-            'ytmusic.resume.activePlaylist': [],
-            'ytmusic.resume.currentIndex': -1,
-            'ytmusic.resume.activePlaylistSource': ""
-        })
+        root._store("resume", {})
     }
 
     Timer {
@@ -62,9 +84,10 @@ Singleton {
     }
 
     Component.onDestruction: {
-        if (root.currentVideoId) {
-            root._persistResume()
-            Config.flushWrites()
+        if (root.currentVideoId) root._persistResume()
+        if (_storeWriteTimer.running) {
+            _storeFile.blockWrites = true
+            root._writeStore()
         }
         _playProc.running = false
         _killOrphanedMpvProc.running = true
@@ -394,7 +417,7 @@ Singleton {
         // Restore previous playback session if applicable.
         if (!root._resumeRestored) {
             root._resumeRestored = true
-            const r = Config.options?.ytmusic?.resume
+            const r = root._stored.resume
             if (r?.videoId && r.wasPlaying && !root.currentVideoId) {
                 const item = {
                     videoId: r.videoId,
@@ -1098,7 +1121,7 @@ Singleton {
         })
         if (liked.length > root.maxLikedSongs) liked = liked.slice(0, root.maxLikedSongs)
         root.likedSongs = liked
-        Config.setNestedValue('ytmusic.liked', root.likedSongs)
+        root._persistLiked()
         // Prefer the InnerTube account login; fall back to the legacy YouTube Data OAuth.
         if (InnerTube.authenticated) {
             InnerTube.rateSong(root.currentVideoId, true)
@@ -1114,7 +1137,7 @@ Singleton {
         let liked = [...root.likedSongs]
         liked.splice(idx, 1)
         root.likedSongs = liked
-        Config.setNestedValue('ytmusic.liked', root.likedSongs)
+        root._persistLiked()
         // Prefer the InnerTube account login; fall back to the legacy YouTube Data OAuth.
         if (InnerTube.authenticated) {
             InnerTube.rateSong(videoId, false)
@@ -1298,11 +1321,9 @@ Singleton {
         root.userChannelUrl = ""
         Config.setNestedValues({
             'ytmusic.connected': false,
-            'ytmusic.resolvedBrowserArg': "",
-            'ytmusic.profile.name': "",
-            'ytmusic.profile.avatar': "",
-            'ytmusic.profile.url': ""
+            'ytmusic.resolvedBrowserArg': ""
         })
+        root._store("profile", {})
         InnerTube.disconnect()
     }
     
@@ -1365,11 +1386,7 @@ Singleton {
     }
     
     function _persistProfile(): void {
-        Config.setNestedValues({
-            'ytmusic.profile.name': root.userName,
-            'ytmusic.profile.avatar': root.userAvatar,
-            'ytmusic.profile.url': root.userChannelUrl
-        })
+        root._store("profile", { name: root.userName, avatar: root.userAvatar, url: root.userChannelUrl })
     }
     
     function openYtMusicInBrowser(): void {
@@ -1424,8 +1441,7 @@ Singleton {
             if (code === 0 && _fetchLikedProc.newLiked.length > 0) {
                 root.likedSongs = _fetchLikedProc.newLiked
                 root.lastLikedSync = new Date().toLocaleString(Qt.locale(), "yyyy-MM-dd hh:mm")
-                Config.setNestedValue('ytmusic.liked', root.likedSongs)
-                Config.setNestedValue('ytmusic.lastLikedSync', root.lastLikedSync)
+                root._persistLiked()
             } else {
                 // Error or empty result — try YouTube LL fallback
                 _fetchLikedFallbackProc.running = true
@@ -1476,8 +1492,7 @@ Singleton {
             if (code === 0 && _fetchLikedFallbackProc.newLiked.length > 0) {
                 root.likedSongs = _fetchLikedFallbackProc.newLiked
                 root.lastLikedSync = new Date().toLocaleString(Qt.locale(), "yyyy-MM-dd hh:mm")
-                Config.setNestedValue('ytmusic.liked', root.likedSongs)
-                Config.setNestedValue('ytmusic.lastLikedSync', root.lastLikedSync)
+                root._persistLiked()
             }
         }
     }
@@ -1512,8 +1527,7 @@ Singleton {
             if (_fetchLikedOAuthProc._items.length > 0) {
                 root.likedSongs = _fetchLikedOAuthProc._items
                 root.lastLikedSync = new Date().toLocaleString(Qt.locale(), "yyyy-MM-dd hh:mm")
-                Config.setNestedValue('ytmusic.liked', root.likedSongs)
-                Config.setNestedValue('ytmusic.lastLikedSync', root.lastLikedSync)
+                root._persistLiked()
                 root.syncingLiked = false
             } else if (root.googleConnected) {
                 // OAuth returned empty or failed — fallback to cookie method
@@ -1603,15 +1617,21 @@ Singleton {
     }
     
     function _loadData(): void {
-        root.recentSearches = Config.options?.ytmusic?.recentSearches ?? []
-        root.queue = Config.options?.ytmusic?.queue ?? []
-        root.playlists = Config.options?.ytmusic?.playlists ?? []
-        root.likedSongs = Config.options?.ytmusic?.liked ?? []
-        root.lastLikedSync = Config.options?.ytmusic?.lastLikedSync ?? ""
+        try {
+            root._stored = JSON.parse(_storeFile.text() || "{}") ?? {}
+        } catch (e) {
+            console.warn("[YtMusic] unreadable " + root._storePath + ", starting empty:", e)
+            root._stored = {}
+        }
+        root.recentSearches = root._stored.recentSearches ?? []
+        root.queue = root._stored.queue ?? []
+        root.playlists = root._stored.playlists ?? []
+        root.likedSongs = root._stored.liked ?? []
+        root.lastLikedSync = root._stored.lastLikedSync ?? ""
         root.customCookiesPath = Config.options?.ytmusic?.cookiesPath ?? ""
         root._useManualCookies = Config.options?.ytmusic?.useManualCookies ?? false
         
-        const profile = Config.options?.ytmusic?.profile
+        const profile = root._stored.profile
         if (profile) {
             root.userName = profile.name ?? ""
             root.userAvatar = profile.avatar ?? ""
@@ -1691,15 +1711,20 @@ Singleton {
     }
 
     function _persistRecentSearches(): void {
-        Config.setNestedValue('ytmusic.recentSearches', root.recentSearches)
+        root._store("recentSearches", root._list(root.recentSearches))
     }
 
     function _persistQueue(): void {
-        Config.setNestedValue('ytmusic.queue', root.queue)
+        root._store("queue", root._list(root.queue))
     }
 
     function _persistPlaylists(): void {
-        Config.setNestedValue('ytmusic.playlists', root.playlists)
+        root._store("playlists", root._list(root.playlists))
+    }
+
+    function _persistLiked(): void {
+        root._store("liked", root._list(root.likedSongs))
+        root._store("lastLikedSync", root.lastLikedSync)
     }
 
     function _resolveBrowserArg(): void {

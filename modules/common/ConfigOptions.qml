@@ -2426,36 +2426,9 @@ JsonAdapter {
         property bool verbose: false
         property bool shuffleMode: false
         property int repeatMode: 0
-        property list<string> recentSearches: []
-        property list<var> queue: []
-        property list<var> playlists: []
-        property list<var> liked: []
-        property string lastLikedSync: ""
         property bool upNextNotifications: true
         property bool suppressUpNextInFullscreen: true
         property int volume: 100
-        property JsonObject profile: JsonObject {
-            property string name: ""
-            property string avatar: ""
-            property string url: ""
-        }
-        property JsonObject cache: JsonObject {
-            property list<var> playlists: []
-            property list<var> albums: []
-            property list<var> liked: []
-        }
-        property JsonObject resume: JsonObject {
-            property string videoId: ""
-            property string title: ""
-            property string artist: ""
-            property string thumbnail: ""
-            property string url: ""
-            property real position: 0
-            property bool wasPlaying: false
-            property list<var> activePlaylist: []
-            property int currentIndex: -1
-            property string activePlaylistSource: ""
-        }
     }
     property JsonObject screenTime: JsonObject {
         property bool enable: false
