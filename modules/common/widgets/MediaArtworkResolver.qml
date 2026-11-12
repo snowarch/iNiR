@@ -117,7 +117,8 @@ QtObject {
         const generation = root._generation;
         const nextSource = root._cacheBust(value);
 
-        if (value.startsWith("file://")) {
+        // Our own cache files land whole (written aside, then moved): only a player's file can still be growing.
+        if (value.startsWith("file://") && !root._pathFromFileUrl(value).startsWith(`${root.cacheDirectory}/`)) {
             root._pendingDisplaySource = nextSource;
             root._pendingDisplayGeneration = generation;
             root._pendingDisplayChecksLeft = 5;
@@ -230,6 +231,18 @@ QtObject {
         if (!root._completed)
             return;
 
+        // A track already resolved (a player switched back to, a repeat) shows at once; the resolve that follows
+        // only confirms it. A track with no art never keeps the last one's while it runs.
+        const cached = MediaArtworkCache.lookup(root.metadataKey);
+        if (cached) {
+            root._stopWorkers();
+            root._lastBase = cached.base;
+            root._adoptBase = cached.base;
+            root.displaySource = cached.source;
+            root.ready = true;
+        } else if (root.normalizedSourceUrl.length === 0) {
+            root._reset(false);
+        }
         root.refresh();
     }
 
@@ -260,8 +273,9 @@ QtObject {
         root._refreshNow();
     }
 
+    // Title, artist and art arrive as separate signals: one short wait gathers them into one resolve.
     property var metadataRefreshTimer: Timer {
-        interval: 500
+        interval: 150
         repeat: false
         onTriggered: {
             root._reset(root.normalizedSourceUrl.length > 0);
@@ -493,7 +507,8 @@ QtObject {
             } else if (root._retryCount < root._maxRetries) {
                 root._retryCount += 1;
                 retryTimer.restart();
-            } else if (root._pathFromFileUrl(root.displaySource) === artFilePath) {
+            } else {
+                // Nothing to show for this track: the cover held from the one before must not stand in for it.
                 root.ready = false;
                 root.displaySource = "";
             }

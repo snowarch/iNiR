@@ -1580,6 +1580,17 @@ Singleton {
 		return urlStr;
 	}
 
+	// A cover offered for a stream by what plays it (a hub radio offers its station's logo): keyed by xesam:url,
+	// used only while the player itself publishes no art.
+	property var offeredCovers: ({})
+	function offerCover(url: string, art: string): void {
+		if (!url.length || (root.offeredCovers[url] ?? "") === art) return
+		const next = Object.keys(root.offeredCovers).length < 32 ? Object.assign({}, root.offeredCovers) : {}
+		if (art.length > 0) next[url] = art
+		else delete next[url]
+		root.offeredCovers = next
+	}
+
 	// Streaming sites (Twitch, live TV, etc.) rarely publish mpris:artUrl —
 	// fall back to the site's favicon, same fetch-and-cache service already
 	// used for AI chat source chips (Favicon.qml).
@@ -1587,7 +1598,8 @@ Singleton {
 		const trackUrl = player?.metadata?.["xesam:url"] ?? "";
 		if (!trackUrl) return "";
 		const domain = StringUtils.getDomain(trackUrl);
-		if (!domain) return "";
+		// A bare address or a host with a port (a stream server) has no site, and so no icon worth a cover.
+		if (!domain || /:\d+$/.test(domain) || /^[\d.]+$/.test(domain) || domain.indexOf(".") < 0) return "";
 		return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
 	}
 
@@ -1596,6 +1608,8 @@ Singleton {
 	function effectiveArtUrl(player): string {
 		const direct = root.artUrlOf(player);
 		if (direct.length > 0) return direct;
+		const offered = root.offeredCovers[String(player?.metadata?.["xesam:url"] ?? "")] ?? "";
+		if (offered.length > 0) return offered;
 		// A player the family itself runs can know its cover better (iRiS's anime: verb `media.cover`).
 		const familyCover = GlobalStates.familyVerb("media", "cover")?.(player) ?? "";
 		if (familyCover.length > 0) return familyCover;
