@@ -238,7 +238,7 @@ Item {
                                 artistColor: root.subInk
                             }
                             StyledText {
-                                text: `${StringUtils.friendlyTimeForSeconds(playerBase.effectivePosition)} / ${StringUtils.friendlyTimeForSeconds(playerBase.effectiveLength)}`
+                                text: `${StringUtils.friendlyTimeForSeconds(playerBase.effectivePosition)} / ${playerBase.lengthText}`
                                 color: root.subInk
                                 font.family: Appearance.font.family.numbers
                                 font.pixelSize: Appearance.font.pixelSize.smaller
@@ -269,7 +269,7 @@ Item {
 
                 StyledText {
                     Layout.alignment: Qt.AlignBottom
-                    text: `${StringUtils.friendlyTimeForSeconds(playerBase.effectivePosition)} / ${StringUtils.friendlyTimeForSeconds(playerBase.effectiveLength)}`
+                    text: `${StringUtils.friendlyTimeForSeconds(playerBase.effectivePosition)} / ${playerBase.lengthText}`
                     color: root.subInk
                     font.family: Appearance.font.family.numbers
                     font.pixelSize: Appearance.font.pixelSize.smaller
@@ -288,6 +288,7 @@ Item {
                     implicitHeight: 16
                     position: playerBase.effectivePosition
                     length: playerBase.effectiveLength
+                    live: playerBase.effectiveIsLive
                     canSeek: playerBase.effectiveCanSeek
                     isPlaying: playerBase.effectiveIsPlaying
                     highlightColor: root.accent

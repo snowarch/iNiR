@@ -181,6 +181,7 @@ Item {
                 implicitHeight: 18
                 position: playerBase.effectivePosition
                 length: playerBase.effectiveLength
+                live: playerBase.effectiveIsLive
                 canSeek: playerBase.effectiveCanSeek
                 isPlaying: playerBase.effectiveIsPlaying
                 highlightColor: Appearance.zzzEverywhere ? (effectiveColors?.colPrimary ?? Appearance.zzz.accent) : "white"
@@ -236,7 +237,7 @@ Item {
                     visible: !root.compact
                     Layout.preferredWidth: Math.max(timeStartLabel.implicitWidth, timeEndLabel.implicitWidth)
                     horizontalAlignment: Text.AlignRight
-                    text: StringUtils.friendlyTimeForSeconds(playerBase.effectiveLength)
+                    text: playerBase.lengthText
                     font.pixelSize: Appearance.font.pixelSize.smallest
                     font.family: Appearance.font.family.numbers
                     color: Appearance.zzzEverywhere ? Appearance.zzz.ink : "white"

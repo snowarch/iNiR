@@ -310,6 +310,7 @@ Item {
                     implicitHeight: 16
                     position: MprisController.positionOf(root.player)
                     length: MprisController.lengthOf(root.player)
+                    live: MprisController.isLive(root.player)
                     canSeek: root.player?.canSeek ?? false
                     isPlaying: root.player?.isPlaying ?? false
                     highlightColor: root.editorial ? Appearance.editorial.accent
@@ -452,7 +453,7 @@ Item {
                         id: timeEndLabel
                         Layout.preferredWidth: Math.max(timeStartLabel.implicitWidth, timeEndLabel.implicitWidth)
                         horizontalAlignment: Text.AlignRight
-                        text: StringUtils.friendlyTimeForSeconds(MprisController.lengthOf(root.player))
+                        text: (MprisController.isLive(root.player) ? Translation.tr("Live") : StringUtils.friendlyTimeForSeconds(MprisController.lengthOf(root.player)))
                         font.pixelSize: Appearance.font.pixelSize.smallest
                         font.family: Appearance.font.family.numbers
                         color: root.editorial ? Appearance.editorial.muted

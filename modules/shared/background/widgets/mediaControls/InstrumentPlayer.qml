@@ -147,7 +147,7 @@ Item {
             Layout.fillWidth: true
             Layout.preferredHeight: Math.round(9 * root.s)
             divisions: root.small ? 24 : 40
-            fraction: playerBase.effectiveLength > 0 ? playerBase.effectivePosition / playerBase.effectiveLength : 0
+            fraction: playerBase.effectiveIsLive ? 1 : playerBase.effectiveLength > 0 ? playerBase.effectivePosition / playerBase.effectiveLength : 0
             ink: root.ink
             accent: root.accent
             animated: root.widget.animationsActive
@@ -178,7 +178,7 @@ Item {
                 visible: !root.small
                 scaleFactor: root.s
                 label: Translation.tr("Length")
-                value: playerBase.effectiveLength > 0 ? root.clock(playerBase.effectiveLength) : ""
+                value: playerBase.effectiveIsLive ? Translation.tr("Live") : playerBase.effectiveLength > 0 ? root.clock(playerBase.effectiveLength) : ""
                 ink: root.ink
                 muted: root.muted
                 family: root.widget.widgetNumbersFamily

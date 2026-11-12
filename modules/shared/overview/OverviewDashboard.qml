@@ -64,7 +64,8 @@ Item {
     readonly property bool effectiveIsPlaying: isYtMusic ? YtMusic.isPlaying : (player?.isPlaying ?? false)
     readonly property real effectivePosition: isYtMusic ? YtMusic.currentPosition : MprisController.positionOf(player)
     readonly property real effectiveLength: isYtMusic ? YtMusic.currentDuration : MprisController.lengthOf(player)
-    readonly property bool effectiveCanSeek: isYtMusic ? YtMusic.canSeek : (player?.canSeek ?? false)
+    readonly property bool effectiveIsLive: !isYtMusic && MprisController.isLive(player)
+    readonly property bool effectiveCanSeek: isYtMusic ? YtMusic.canSeek : (player?.canSeek ?? false) && !effectiveIsLive
 
     // ── Cover art download ──
     property string artDownloadLocation: Directories.coverArt
@@ -776,7 +777,7 @@ Item {
                                 handleColor: root.mediaAccent
                                 scrollable: true
                                 enabled: root.effectiveCanSeek
-                                value: root.effectiveLength > 0 ? root.effectivePosition / root.effectiveLength : 0
+                                value: root.effectiveIsLive ? 1 : root.effectiveLength > 0 ? root.effectivePosition / root.effectiveLength : 0
                                 onMoved: {
                                     if (root.isYtMusic) YtMusic.seek(value * root.effectiveLength)
                                     else if (root.player) MprisController.seek(root.player, value * MprisController.lengthOf(root.player))
@@ -785,7 +786,7 @@ Item {
                                 Binding {
                                     target: mediaSeekSlider
                                     property: "value"
-                                    value: root.effectiveLength > 0 ? root.effectivePosition / root.effectiveLength : 0
+                                    value: root.effectiveIsLive ? 1 : root.effectiveLength > 0 ? root.effectivePosition / root.effectiveLength : 0
                                     when: !mediaSeekSlider.pressed && !mediaSeekSlider._userInteracting
                                     restoreMode: Binding.RestoreNone
                                 }
@@ -800,7 +801,7 @@ Item {
                                 }
                                 Item { Layout.fillWidth: true }
                                 StyledText {
-                                    text: StringUtils.friendlyTimeForSeconds(root.effectiveLength)
+                                    text: root.effectiveIsLive ? Translation.tr("Live") : StringUtils.friendlyTimeForSeconds(root.effectiveLength)
                                     font { pixelSize: Appearance.font.pixelSize.smallest; family: Appearance.font.family.numbers }
                                     color: root.mediaSub
                                 }

@@ -176,6 +176,7 @@ Item {
                     implicitHeight: 14
                     position: playerBase.effectivePosition
                     length: playerBase.effectiveLength
+                    live: playerBase.effectiveIsLive
                     canSeek: playerBase.effectiveCanSeek
                     isPlaying: playerBase.effectiveIsPlaying
                     highlightColor: Appearance.zzzEverywhere ? (effectiveColors?.colPrimary ?? Appearance.zzz.accent)
@@ -198,7 +199,7 @@ Item {
                     Layout.alignment: Qt.AlignRight
                     text: StringUtils.friendlyTimeForSeconds(playerBase.effectivePosition)
                         + " / "
-                        + StringUtils.friendlyTimeForSeconds(playerBase.effectiveLength)
+                        + playerBase.lengthText
                     font.pixelSize: Appearance.font.pixelSize.smallest
                     font.family: Appearance.font.family.numbers
                     color: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted

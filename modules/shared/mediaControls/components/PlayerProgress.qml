@@ -29,11 +29,13 @@ Item {
     property bool scrollable: true
     // False where nobody can see it move (a covered desktop): the wave and the glide hold still.
     property bool motion: true
+    // A live stream: the line runs full to the broadcast's edge, with no knob and nothing to seek.
+    property bool live: false
     
     // Signals
     signal seekRequested(real seconds)
     
-    readonly property real progressValue: length > 0
+    readonly property real progressValue: root.live ? 1 : length > 0
         ? Math.max(0, Math.min(1, position / length)) : 0
     readonly property bool waveAnimationActive: root.motion && root.enableWavy && root.isPlaying
         && root.visible && Appearance.animationsEnabled
@@ -56,7 +58,8 @@ Item {
         anchors.fill: parent
         configuration: root.enableWavy ? StyledSlider.Configuration.Wavy : StyledSlider.Configuration.S
         trackWidth: root.enableWavy ? 2 : StyledSlider.Configuration.S
-        handleHeight: Math.min(14, root.height)
+        handleHeight: root.live ? 0 : Math.min(14, root.height)
+        handleWidth: root.live ? 0 : progressSlider.pressed ? progressSlider.handlePressedWidth : progressSlider.handleDefaultWidth
         stopIndicatorValues: []
         wavy: root.enableWavy && root.isPlaying
         animateWave: root.waveAnimationActive
@@ -65,15 +68,15 @@ Item {
         handleColor: root.highlightColor
         value: root.displayedProgress
         onMoved: {
-            if (root.canSeek)
+            if (root.canSeek && !root.live)
                 root.seekRequested(value * root.length)
         }
-        scrollable: root.canSeek && root.scrollable
+        scrollable: root.canSeek && !root.live && root.scrollable
     }
 
     MouseArea {
         anchors.fill: parent
-        visible: !root.canSeek
+        visible: !root.canSeek || root.live
         acceptedButtons: Qt.AllButtons
         preventStealing: true
         cursorShape: Qt.ArrowCursor

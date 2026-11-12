@@ -34,6 +34,7 @@ The wallpaper drawn as glyphs, Settings that follow Umbriel, a new iNiR mark, an
 ### Fixed
 - **Hub widgets answer keybinds**: `inir radio toggle` and any hub widget's own command reach the running shell, and a widget can keep its commands alive with none of its faces on screen.
 - **Covers follow the player at once**: switching players or tracks shows a cover already seen without waiting, a player with no cover of its own no longer keeps the last one's (a browser page's picture under a radio), and a radio station shows its logo.
+- **Live streams have no timeline to slide**: a radio or a live video no longer shows a bar that runs back and forth as the player buffers; every player, the lock and the desktop widget say Live over a full line, with nothing to seek.
 - **Hub widgets speak your language**: a widget's own `translations/` folder is read like a plugin's, so its text follows the shell's language instead of staying in English.
 - **Menus match the panel they open from**: a dock or bar menu takes that panel’s colour and translucency instead of a solid tint, its wallpaper glass shows the wallpaper under it, and it blurs wherever the panel blurs.
 - **Menus on Umbriel without a blurred box**: Material and Waffle menus no longer sit on a square of blur bigger than the menu; menus blur only with iRiS's compositor glass, shaped like the menu.

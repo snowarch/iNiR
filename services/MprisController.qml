@@ -50,10 +50,33 @@ Singleton {
 		root.knownLengths = next
 	}
 	function lengthOf(player): real {
-		if (!player) return 0
+		if (!player || root.isLive(player)) return 0
 		if (player.lengthSupported) return Number(player.length ?? 0)
 		const known = root.knownLengths[player.dbusName ?? ""]
 		return known && known.title === root.titleOf(player) ? known.length : 0
+	}
+
+	// A live stream (a radio through mpv, a live video) has no end, yet its player publishes a length that grows with
+	// the position (mpv: what it has buffered), so a timeline drawn from it slides back and forth. A length that grew
+	// twice under the same stream is live until it falls (another file) or the stream changes; it then has no length.
+	property var liveNames: ({})
+	property var _lengthTrail: ({})
+	function isLive(player): bool { return !!player && root.liveNames[player.dbusName ?? ""] === true }
+	function _noteLength(player): void {
+		const name = player?.dbusName ?? ""
+		if (!name.length) return
+		const key = String(player.metadata?.["xesam:url"] ?? "") || String(player.trackTitle ?? "")
+		const length = player.lengthSupported ? Number(player.length ?? 0) : 0
+		const was = root._lengthTrail[name]
+		const grew = !was || was.key !== key || length < was.length - 1 || length <= 0 ? 0
+			: length > was.length + 0.5 ? was.grew + 1 : was.grew
+		root._lengthTrail[name] = { key: key, length: length, grew: grew }
+		const live = grew >= 2
+		if (live === root.isLive(player)) return
+		const next = Object.assign({}, root.liveNames)
+		if (live) next[name] = true
+		else delete next[name]
+		root.liveNames = next
 	}
 
 	// YouTube plays the thumbnail a pointer rests on, and that preview sets the page's media session: the browser then
@@ -229,8 +252,8 @@ Singleton {
 	Connections {
 		target: root.activePlayer
 		function onPlaybackStateChanged(): void { root._setPositionOffset(root.activePlayer?.dbusName ?? "", 0) }
-		function onPostTrackChanged(): void { root._setPositionOffset(root.activePlayer?.dbusName ?? "", 0) }
-		function onLengthChanged(): void { root._rememberLength(root.activePlayer) }
+		function onPostTrackChanged(): void { root._setPositionOffset(root.activePlayer?.dbusName ?? "", 0); root._noteLength(root.activePlayer) }
+		function onLengthChanged(): void { root._noteLength(root.activePlayer); root._rememberLength(root.activePlayer) }
 		function onLengthSupportedChanged(): void { root._rememberLength(root.activePlayer) }
 	}
 	Process {

@@ -47,12 +47,16 @@ QtObject {
     readonly property real effectiveLength: isYtMusicPlayer 
         ? YtMusic.currentDuration 
         : MprisController.lengthOf(player)
+    // A live stream has no length to scrub: its timeline shows it is live instead.
+    readonly property bool effectiveIsLive: !isYtMusicPlayer && MprisController.isLive(player)
+    readonly property string lengthText: effectiveIsLive ? Translation.tr("Live")
+        : StringUtils.friendlyTimeForSeconds(effectiveLength)
     readonly property bool effectiveIsPlaying: isYtMusicPlayer 
         ? YtMusic.isPlaying 
         : (player?.isPlaying ?? false)
     readonly property bool effectiveCanSeek: isYtMusicPlayer 
         ? YtMusic.canSeek 
-        : (player?.canSeek ?? false)
+        : (player?.canSeek ?? false) && !effectiveIsLive
     readonly property bool effectiveCanGoPrevious: isYtMusicPlayer
         ? YtMusic.canGoPrevious
         : MprisController.canGoPreviousForPlayer(root.player)
