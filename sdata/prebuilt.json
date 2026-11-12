@@ -12,9 +12,9 @@
     "qs-rs": {
       "repo": "qs-rs",
       "dest": "runtime",
-      "version": "0.1.5",
-      "file": "qs-rs-0.1.5-x86_64.tar.gz",
-      "sha256": "9a3a08acec226f466a4bfe68a8b475aec6130c7f797fef3f74acdb2164851210"
+      "version": "0.1.6",
+      "file": "qs-rs-0.1.6-x86_64.tar.gz",
+      "sha256": "1df9fd0dfb2dce491715486445d903931d61f8bc9f9225d445ed279e9348e9d0"
     },
     "inir-accel": {
       "repo": "inir-accel",
@@ -37,8 +37,8 @@
       "with": "qs-rs",
       "when": "material.sidebar.plugins.enable",
       "title": "Qt WebEngine for the Web Apps tab",
-      "file": "qs-rs-webengine-0.1.5-x86_64.tar.gz",
-      "sha256": "9963e19cd346f9ce78d810ea439ac71c47f0e7834a15cc8786640e4333638677"
+      "file": "qs-rs-webengine-0.1.6-x86_64.tar.gz",
+      "sha256": "0079a8e1272c0fb013b959468a2253b408e4da03bb99836abbbe8c9d92484513"
     }
   }
 }
