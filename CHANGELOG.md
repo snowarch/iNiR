@@ -5,11 +5,6 @@ All notable changes to iNiR will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Fixed
-- **`inir update` brings qs-rs, inir-accel and the inir command again on every system**: with a large `config.json` (past 128 KB, often a long YT Music queue) the update skipped qs-rs and inir-accel without a word, and where the temporary folder does not allow running programs the inir command was refused as "does not run on this system". It is now tried where it will live, and a refusal says why. Reported by khemanshu on Discord.
-
 ## [3.1.0] - 2026-11-12
 
 The wallpaper drawn as glyphs, Settings that follow Umbriel, a new iNiR mark, and a first install that asks where iNiR runs.
