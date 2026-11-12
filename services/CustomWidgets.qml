@@ -142,6 +142,9 @@ Singleton {
                     warnings: warnings
                 });
             }
+            // Ready before the list: a widget's copy from the last load (a singleton holding its IPC) sees itself
+            // gone and steps aside before the new copy registers the same target.
+            root._scanDone = true;
             root.widgets = result;
         } catch (e) {
             console.warn("[CustomWidgets] Failed to parse manifests:", e);
