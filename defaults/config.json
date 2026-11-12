@@ -2141,6 +2141,7 @@
         },
         "bubbles": {
             "scale": 100,
+            "screenList": [],
             "left": {
                 "place": "island",
                 "fx": 0.5,
