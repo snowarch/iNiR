@@ -18,6 +18,7 @@ The wallpaper drawn as glyphs, Settings that follow Umbriel, a new iNiR mark, an
 - **More of Umbriel in Settings**: free space at each screen edge, dialogs that stay with their window, apps opening maximized, the shortcuts sheet at login; and, only on machines that have them, the screen a drawing tablet or touch screen belongs to, the laptop screen off with the lid closed, and the NVIDIA sync option (iRiS and Material).
 - **Umbriel's scratchpad in every family**: on Umbriel, an app's menu in the Material dock and bar, the iRiS dock and the Waffle taskbar sends its window to the scratchpad or back to its workspace; a hidden one stays in the dock and a click brings it over the workspace in front. `inir scratchpad toggle|send|restore|list`, and Mod+` still shows it.
 - **Hub components open from the app launcher**: a component with a window of its own is listed by its name in every family's launcher and opens with a click.
+- **One key for an Island page**: `inir iris togglePage desktop` (or media, calendar, weather...) opens the Island on that page and closes it when it already shows, for a single keybind (iRiS 2.33.84 from the Hub).
 
 ### Changed
 - **A new iNiR mark**: one strip folded into an N whose last leg is the i, like Niri's endless row of columns. In each family's About and the welcome it takes your scheme's colours, light or dark; the app icon and the site wear it too.
@@ -35,6 +36,7 @@ The wallpaper drawn as glyphs, Settings that follow Umbriel, a new iNiR mark, an
 - **Hub widgets answer keybinds**: `inir radio toggle` and any hub widget's own command reach the running shell, and a widget can keep its commands alive with none of its faces on screen.
 - **Covers follow the player at once**: switching players or tracks shows a cover already seen without waiting, a player with no cover of its own no longer keeps the last one's (a browser page's picture under a radio), and a radio station shows its logo.
 - **Live streams have no timeline to slide**: a radio or a live video no longer shows a bar that runs back and forth as the player buffers; every player, the lock and the desktop widget say Live over a full line, with nothing to seek.
+- **A radio shows in the player from its first second**: a station played through mpv was left out of every player when it started with little buffered, and never came back.
 - **Hub widgets speak your language**: a widget's own `translations/` folder is read like a plugin's, so its text follows the shell's language instead of staying in English.
 - **Menus match the panel they open from**: a dock or bar menu takes that panel’s colour and translucency instead of a solid tint, its wallpaper glass shows the wallpaper under it, and it blurs wherever the panel blurs.
 - **Menus on Umbriel without a blurred box**: Material and Waffle menus no longer sit on a square of blur bigger than the menu; menus blur only with iRiS's compositor glass, shaped like the menu.

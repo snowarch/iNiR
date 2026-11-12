@@ -703,8 +703,10 @@ Singleton {
 		const mimeType = player.metadata?.["xesam:mimeType"] ?? "";
 		const trackLength = player.length ?? 0;
 		
-		// Filter very short media (< 5 seconds) - likely GIFs or ads
-		if (trackLength > 0 && trackLength < 5) return false;
+		// Filter very short media (< 5 seconds) - likely GIFs or ads. Never mpv: a live stream through it (a radio)
+		// starts with the length of what it has buffered, and nothing asks again once it has grown.
+		const isMpv = name.startsWith("org.mpris.MediaPlayer2.mpv");
+		if (trackLength > 0 && trackLength < 5 && !isMpv) return false;
 		// Block explicit image/gif mime types even if length unknown
 		const mimeLower = mimeType.toLowerCase();
 		if (mimeLower.includes("image/gif") || mimeLower.includes("image/webp")) return false;

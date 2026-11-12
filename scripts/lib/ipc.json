@@ -1296,6 +1296,14 @@
      ]
     },
     {
+     "name": "togglePage",
+     "args": [
+      "name"
+     ],
+     "description": "One key for a page: expand the island on it, or collapse the island when that page already shows ```kdl Mod+S { spawn \"inir\" \"iris\" \"togglePage\" \"desktop\"; } ```",
+     "values": []
+    },
+    {
      "name": "close",
      "args": [],
      "description": "Collapse the island",
