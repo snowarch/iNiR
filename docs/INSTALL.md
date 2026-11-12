@@ -12,7 +12,7 @@ cd inir
 ./setup install
 ```
 
-Use `./setup install -y` to skip the questions.
+Before anything changes it asks, in one short list you tick, what goes in: where iNiR runs (Niri, or Umbriel too), the login screen theme, icons and wallpapers. `./setup install -y` takes the defaults without asking.
 
 When it finishes, restart the computer. Logging out is not enough, because Niri's environment and your new groups only load at login. Then pick Niri, or Umbriel if you set iNiR up there too, at the login screen.
 

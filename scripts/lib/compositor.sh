@@ -185,7 +185,14 @@ compositor_install_umbriel_package() {
         echo "Umbriel is in the AUR (umbriel-git); install paru or yay, or see $guide" >&2
         return 1
     fi
-    if command -v dnf >/dev/null 2>&1 && dnf repolist 2>/dev/null | grep -qi terra; then
+    if command -v dnf >/dev/null 2>&1; then
+        # Umbriel's Fedora builds live in Terra (Fyra Labs); added the way Terra's docs say, its key checked
+        if ! dnf repolist 2>/dev/null | grep -qi terra; then
+            echo "Umbriel comes from Terra, Fyra Labs' repository: adding it" >&2
+            sudo dnf install -y --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' \
+                --setopt='terra.gpgkey=https://repos.fyralabs.com/terra$releasever/key.asc' terra-release \
+                || { echo "Could not add Terra; see $guide" >&2; return 1; }
+        fi
         sudo dnf install -y umbriel-nightly && return 0
         return 1
     fi

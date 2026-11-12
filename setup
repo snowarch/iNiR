@@ -3225,6 +3225,9 @@ fi
 # everything first and runs this same pipeline back (INIR_CLI_DELEGATED).
 hand_to_inir_cli() {
     [[ -z "${INIR_CLI_DELEGATED:-}" && -z "${INIR_NO_CLI:-}" ]] && $ask && [ -t 1 ] || return 0
+    # a first install has no binary yet: fetch it now, so the person gets the wizard (compositor, login screen,
+    # extras) instead of the bare pipeline; without it the pipeline below runs as before
+    [[ -x "${XDG_DATA_HOME:-$HOME/.local/share}/inir/cli/inir" ]] || install_inir_cli_binary || true
     local cli
     for cli in "${INIR_CLI:-}" "${XDG_DATA_HOME:-$HOME/.local/share}/inir/cli/inir" \
                /usr/local/lib/inir/inir /usr/lib/inir/inir; do

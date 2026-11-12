@@ -14,8 +14,12 @@ install_inir_cli_binary() {
   esac
   # the tag this base was proved with, never "latest": a new cli reaches people with the base it was tested on
   local version base
-  version="$(jq -r '.cli.version // empty' "${REPO_ROOT:-.}/sdata/prebuilt.json" 2>/dev/null)"
-  [[ -n "$version" ]] || version="$(jq -r '.cli.version // empty' "$(dirname "${BASH_SOURCE[0]}")/../prebuilt.json" 2>/dev/null)"
+  # read without jq: a fresh system fetches this before any package is installed
+  local pin
+  for pin in "${REPO_ROOT:-.}/sdata/prebuilt.json" "$(dirname "${BASH_SOURCE[0]}")/../prebuilt.json"; do
+    [[ -n "$version" || ! -f "$pin" ]] && continue
+    version="$(sed -n '/"cli"/,/}/s/.*"version": *"\([^"]*\)".*/\1/p' "$pin" | head -n1)"
+  done
   base="${INIR_CLI_RELEASES:-https://github.com/snowarch/inir-cli/releases/download/v${version:-0.2.0}}"
   local dest="${XDG_DATA_HOME:-$HOME/.local/share}/inir/cli"
   local name="inir_linux_${arch}.tar.gz" tmp rc=1 why=""
