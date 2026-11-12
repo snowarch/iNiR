@@ -3601,5 +3601,7 @@
   "Not quite. Try again": "Casi. Prueba otra vez",
   "Nope. Caps Lock, maybe?": "No. ¿Bloq Mayús, tal vez?",
   "Send to scratchpad": "Enviar al scratchpad",
-  "Back to its workspace": "Volver a su espacio de trabajo"
+  "Back to its workspace": "Volver a su espacio de trabajo",
+  "Shows on your desktop and in the sidebars": "Aparece en tu escritorio y en las barras laterales",
+  "Shows in the sidebars": "Aparece en las barras laterales"
 }

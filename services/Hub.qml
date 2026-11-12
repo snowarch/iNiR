@@ -195,6 +195,8 @@ Singleton {
             return Translation.tr("Shows on the Island")
         if (family === "waffle")
             return surfaces.includes("waffle-widgets") ? Translation.tr("Shows in the Widgets panel") : Translation.tr("Has no Waffle card yet")
+        if (family === "material" && surfaces.includes("sidebar"))
+            return surfaces.includes("desktop") ? Translation.tr("Shows on your desktop and in the sidebars") : Translation.tr("Shows in the sidebars")
         return Translation.tr("Shows on your desktop")
     }
     function votes(item: var): int {

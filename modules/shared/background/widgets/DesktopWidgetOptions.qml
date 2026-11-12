@@ -87,7 +87,10 @@ QtObject {
         // `shell`: the row shows a shell key every surface reads (the weather's place), not one of the widget's own.
         if (spec.shell) spec.path = spec.shell
         const when = spec.when
-        spec.showIf = () => root.on(widget) && root.overlay(widget)[key] === undefined && (when === undefined || when())
+        // A Hub widget's own options are read by every face it has (Material's sidebars, the Island, Waffle), so they
+        // show while it is off the desktop too; its size, look and place stay with the desktop card.
+        const everyFace = widget.startsWith("custom.") && spec.page === "widget" && key !== "sizeClass"
+        spec.showIf = () => (everyFace || root.on(widget)) && root.overlay(widget)[key] === undefined && (when === undefined || when())
         delete spec.when
         return spec
     }

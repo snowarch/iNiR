@@ -3601,5 +3601,7 @@
   "Not quite. Try again": "惜しい。もう一度どうぞ",
   "Nope. Caps Lock, maybe?": "違います。Caps Lock かも？",
   "Send to scratchpad": "スクラッチパッドへ送る",
-  "Back to its workspace": "元のワークスペースへ戻す"
+  "Back to its workspace": "元のワークスペースへ戻す",
+  "Shows on your desktop and in the sidebars": "デスクトップとサイドバーに表示",
+  "Shows in the sidebars": "サイドバーに表示"
 }

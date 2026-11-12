@@ -3601,5 +3601,7 @@
   "Not quite. Try again": "Nicht ganz. Versuch’s nochmal",
   "Nope. Caps Lock, maybe?": "Nein. Feststelltaste vielleicht?",
   "Send to scratchpad": "In den Notizblock schieben",
-  "Back to its workspace": "Zurück auf seinen Arbeitsbereich"
+  "Back to its workspace": "Zurück auf seinen Arbeitsbereich",
+  "Shows on your desktop and in the sidebars": "Erscheint auf deinem Desktop und in den Seitenleisten",
+  "Shows in the sidebars": "Erscheint in den Seitenleisten"
 }

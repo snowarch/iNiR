@@ -3601,5 +3601,7 @@
   "Not quite. Try again": "Az kalsın. Tekrar dene",
   "Nope. Caps Lock, maybe?": "Hayır. Caps Lock açık olabilir mi?",
   "Send to scratchpad": "Karalama alanına gönder",
-  "Back to its workspace": "Kendi çalışma alanına geri dön"
+  "Back to its workspace": "Kendi çalışma alanına geri dön",
+  "Shows on your desktop and in the sidebars": "Masaüstünde ve kenar çubuklarında görünür",
+  "Shows in the sidebars": "Kenar çubuklarında görünür"
 }

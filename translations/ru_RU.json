@@ -3601,5 +3601,7 @@
   "Not quite. Try again": "Почти. Попробуйте ещё раз",
   "Nope. Caps Lock, maybe?": "Нет. Может, Caps Lock?",
   "Send to scratchpad": "Убрать в скретчпад",
-  "Back to its workspace": "Вернуть на своё рабочее место"
+  "Back to its workspace": "Вернуть на своё рабочее место",
+  "Shows on your desktop and in the sidebars": "Появляется на рабочем столе и в боковых панелях",
+  "Shows in the sidebars": "Появляется в боковых панелях"
 }

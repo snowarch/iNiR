@@ -3601,5 +3601,7 @@
   "Not quite. Try again": "Presque. Réessaie",
   "Nope. Caps Lock, maybe?": "Non. Verr. Maj, peut-être ?",
   "Send to scratchpad": "Envoyer au scratchpad",
-  "Back to its workspace": "Revenir à son espace de travail"
+  "Back to its workspace": "Revenir à son espace de travail",
+  "Shows on your desktop and in the sidebars": "S'affiche sur votre bureau et dans les barres latérales",
+  "Shows in the sidebars": "S'affiche dans les barres latérales"
 }
