@@ -77,14 +77,15 @@ shortcut that ships: [Keybinds](https://inir.space/docs/keybinds/).
 
 ## Displays, input and windows
 
-Niri draws the windows; iNiR gives it a Settings page. **Settings › Compositor** sets monitors, resolution, scale,
+Niri or Umbriel draws the windows; iNiR gives it a Settings page. **Settings › Compositor** sets monitors, resolution, scale,
 keyboard, touchpad, mouse, gaps, borders and window rules. See [Compositors](COMPOSITORS.md).
 
 ## The files underneath
 
 - `~/.config/inir/config.json` holds every setting. Settings writes it for you, and the shell reloads when the file
   changes, so an edit by hand shows at once.
-- `~/.config/niri/config.d/` holds Niri's settings, one file per area. See [Compositors](COMPOSITORS.md).
+- `~/.config/niri/config.d/` holds Niri's settings, one file per area; `~/.config/umbriel/` holds Umbriel's. See
+  [Compositors](COMPOSITORS.md).
 
 ## Commands and scripts
 

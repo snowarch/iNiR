@@ -45,9 +45,9 @@ If your distro has no automated path, install the packages yourself, then skip s
 
 After the restart you should see the bar at the top. Then try these:
 
-- Super+Tab opens Niri's overview.
+- Super+Tab opens the compositor's overview.
 - Super+Space opens iNiR's overview and app launcher.
-- Alt+Tab switches windows with Niri's own switcher.
+- Alt+Tab switches windows (Niri's own switcher; on Umbriel, iNiR's).
 - Super+V opens clipboard history.
 - Super+Shift+S opens the region tools.
 

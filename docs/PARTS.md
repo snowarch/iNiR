@@ -7,7 +7,7 @@ this needs your attention. It is here for the curious, and for anyone who wants 
 
 ## The short version
 
-- **Niri** puts your windows on screen. iNiR doesn't replace it; it draws everything around the windows.
+- **Niri** or **Umbriel** puts your windows on screen. iNiR doesn't replace it; it draws everything around the windows.
 - **The base** (this repo) is the shell's engine: services, Settings, the welcome wizard, setup and updates. It has no
   look of its own.
 - **Families** are the looks. Material, Waffle and iRiS are plugins from the Hub, and so are themes, widgets and web
@@ -43,6 +43,7 @@ this needs your attention. It is here for the curious, and for anyone who wants 
 | `~/.local/share/inir/yt-dlp/` | yt-dlp for YouTube Music, upstream's own build. Every update brings it current |
 | `~/.config/inir/` | Your settings (`config.json`), your widgets, themes and web apps |
 | `~/.config/niri/config.d/` | Niri's settings, one file per area. Yours: `90-user-extra.kdl` |
+| `~/.config/umbriel/` | Umbriel's settings, when you use it ([Compositors](COMPOSITORS.md)) |
 | `~/.local/state/quickshell/` | What the shell remembers: generated colours, notifications, update snapshots |
 
 Binaries arrive prebuilt (qs-rs for x86_64, inir-accel for x86_64 and aarch64) and checked against the release's checksums; nothing compiles on your machine. The
