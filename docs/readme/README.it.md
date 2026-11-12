@@ -2,6 +2,13 @@
   <img src="../images/readme/hero.webp" alt="Il desktop iRiS su un bosco innevato di notte" width="100%">
 </p>
 
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: light)" srcset="../images/readme/mark-light.svg">
+    <img src="../images/readme/mark-dark.svg" alt="" width="56">
+  </picture>
+</p>
+
 <h1 align="center">iNiR</h1>
 
 <p align="center">

@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Hub components open from the app launcher**: a component with a window of its own is listed by its name in every family's launcher and opens with a click.
 
 ### Changed
+- **A new iNiR mark**: one strip folded into an N whose last leg is the i, like Niri's endless row of columns. In each family's About and the welcome it takes your scheme's colours, light or dark; the app icon and the site wear it too.
 - **Finer glyph art out of the box**: the glyph wallpaper and the Afterglyph widget start with small characters, no edge lines and a still camera; the wallpaper adds a light digit rain and types each new picture in, row by row, at half speed. Anyone who already set these keeps their values.
 - **A miss sounds like iNiR**: a search that finds nothing or a mistyped password sometimes answers in a line of its own instead of the plain one, in every family.
 - **Widgets share one palette**: every iRiS widget takes its colours from the same hues the widget palette picks (wallpaper, system, spectrum or mono) and your highlight; the player no longer wears its cover's colour, and notes, battery, photo, Screen Time, timers and weather no longer bring hues of their own (iRiS 2.33.79 from the Hub).

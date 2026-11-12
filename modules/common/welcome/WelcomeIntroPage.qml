@@ -59,17 +59,11 @@ Flickable {
                         Layout.fillWidth: true
                         spacing: 7
 
-                        MaterialCookie {
-                            implicitSize: root.compact ? 42 : 48
-                            sides: 8
-                            color: root.welcomeAccentContainer
-
-                            MaterialSymbol {
-                                anchors.centerIn: parent
-                                text: "deployed_code"
-                                iconSize: root.compact ? 22 : 25
-                                color: root.welcomeAccent
-                            }
+                        InirMark {
+                            implicitSize: root.compact ? 34 : 40
+                            Layout.bottomMargin: 4
+                            ink: root.welcomeOnSurface
+                            accent: root.welcomeAccent
                         }
 
                         WelcomeText {

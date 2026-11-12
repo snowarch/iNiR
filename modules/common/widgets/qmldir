@@ -34,6 +34,7 @@ MascotAnimation 1.0 MascotAnimation.qml
 MascotImage 1.0 MascotImage.qml
 MascotCollection 1.0 MascotCollection.qml
 MascotPoseGallery 1.0 MascotPoseGallery.qml
+InirMark 1.0 InirMark.qml
 MaterialCookie 1.0 MaterialCookie.qml
 CookieFace 1.0 CookieFace.qml
 CookiePlate 1.0 CookiePlate.qml

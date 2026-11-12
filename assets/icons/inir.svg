@@ -1,18 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-  <!-- iNiR's app icon: inir.space's mark (the amber dot over the i, niri's columns scrolling off the right edge). -->
-  <defs>
-    <clipPath id="tile"><rect width="128" height="128" rx="30"/></clipPath>
-    <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#161616"/>
-      <stop offset="1" stop-color="#050505"/>
-    </linearGradient>
-  </defs>
-  <g clip-path="url(#tile)">
-    <rect width="128" height="128" fill="url(#ground)"/>
-    <circle cx="34" cy="33" r="10" fill="#ffb224"/>
-    <rect x="24" y="52" width="20" height="52" rx="7" fill="#f5f5f5"/>
-    <rect x="52" y="24" width="34" height="80" rx="7" fill="#f5f5f5"/>
-    <rect x="94" y="24" width="48" height="80" rx="7" fill="#f5f5f5" fill-opacity="0.38"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="116" fill="#0b0b0c"/>
+  <rect x="1.5" y="1.5" width="509" height="509" rx="114.5" fill="none" stroke="#fff" stroke-opacity=".08" stroke-width="3"/>
+  <g transform="translate(97 97) scale(.62)">
+    <path d="M96 416V96h80v320z" fill="#f1efe9"/>
+    <path d="M96 96h80l240 320h-80z" fill="#ffb224"/>
+    <path d="M336 416V214h80v202z" fill="#f1efe9"/>
+    <path d="M336 96h80v80h-80z" fill="#f1efe9"/>
   </g>
-  <rect x="0.75" y="0.75" width="126.5" height="126.5" rx="29.25" fill="none" stroke="#ffffff" stroke-opacity="0.1" stroke-width="1.5"/>
 </svg>
