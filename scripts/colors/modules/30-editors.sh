@@ -72,7 +72,7 @@ apply_code_editors() {
 
       _check_vscode_fork() {
         local jq_key="$1" fork_key="$2" config_dir="$3"
-        if [[ $(echo "$editors_config" | jq -r ".$jq_key // true") == 'true' ]] && [[ -d "$config_dir" ]]; then
+        if [[ $(echo "$editors_config" | jq -r ".$jq_key != false") == 'true' ]] && [[ -d "$config_dir" ]]; then
           enabled_forks+=("$fork_key")
         elif [[ -d "$config_dir" ]]; then
           disabled_forks+=("$fork_key")

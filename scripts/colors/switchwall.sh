@@ -705,12 +705,12 @@ main() {
             (.background.thumbnailPath // ""),
             (.appearance.wallpaperTheming.useBackdropForColors // false),
             (.panelFamily // "ii"),
-            (.waffles.background.backdrop.useMainWallpaper // true),
+            (.waffles.background.backdrop.useMainWallpaper != false),
             (.waffles.background.backdrop.wallpaperPath // ""),
-            (.background.backdrop.useMainWallpaper // true),
+            (.background.backdrop.useMainWallpaper != false),
             (.background.backdrop.wallpaperPath // ""),
-            (.appearance.wallpaperTheming.enableAppsAndShell // true),
-            (.appearance.wallpaperTheming.enableTerminal // true),
+            (.appearance.wallpaperTheming.enableAppsAndShell != false),
+            (.appearance.wallpaperTheming.enableTerminal != false),
             (.appearance.wallpaperTheming.terminalColorAdjustments.saturation // 0.65),
             (.appearance.wallpaperTheming.terminalColorAdjustments.brightness // 0.60),
             (.appearance.wallpaperTheming.terminalColorAdjustments.harmony // .appearance.wallpaperTheming.terminalGenerationProps.harmony // 0.40),
@@ -720,13 +720,13 @@ main() {
             (.appearance.wallpaperTheming.terminalGenerationProps.termFgBoost // 0.35),
             (.appearance.softenColors | tostring),
             (.appearance.wallpaperTheming.terminalGenerationProps.forceDarkMode // false),
-            (.appearance.wallpaperTheming.enableVesktop // true),
+            (.appearance.wallpaperTheming.enableVesktop != false),
             (.background.hideUpscaleNotification // false),
             (if .appearance.customTheme.darkmode == null then true else .appearance.customTheme.darkmode end),
             (.appearance.wallpaperTheming.autoDarkLightMode // false),
             (.appearance.colorInvert // false),
             (.iris.appearance.scheme // "auto"),
-            (.iris.appearance.materialForApps // true)
+            (.iris.appearance.materialForApps != false)
         ] | .[]' "$SHELL_CONFIG_FILE" 2>/dev/null)
     fi
     cfg_palette_type="${_cfg[0]:-auto}"
