@@ -137,10 +137,13 @@ Singleton {
         enabled: root.sortingActive
         // Only the reordering waits for the timer: a window that closed leaves the list at once, since anything built
         // from the list in those 100 ms (a dock icon) kept a toplevel that was already gone.
+        // Niri's list holds enriched copies: each is matched by the handle it came from, or every window that
+        // opened emptied the list for those 100 ms and the dock dropped every open app and grew them back.
         function onValuesChanged() {
             const live = Array.from(ToplevelManager.toplevels.values ?? [])
-            if (root.sortedToplevels.some(toplevel => !live.includes(toplevel)))
-                root.sortedToplevels = root.sortedToplevels.filter(toplevel => live.includes(toplevel))
+            const alive = toplevel => live.includes(toplevel?._sourceToplevel ?? toplevel)
+            if (root.sortedToplevels.some(toplevel => !alive(toplevel)))
+                root.sortedToplevels = root.sortedToplevels.filter(alive)
             root.scheduleSort()
         }
     }
