@@ -2272,7 +2272,7 @@
     {
      "name": "frame",
      "args": [],
-     "description": "Pick a window and drag over the part to keep",
+     "description": "Pick a window to pin whole, or drag over the part to keep",
      "values": []
     },
     {

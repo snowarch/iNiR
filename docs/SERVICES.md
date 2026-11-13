@@ -49,7 +49,7 @@ IpcHandler {
 | `DesktopWidgetStacks` | Widgets stacked in one spot, rotating or paging | `widgetStacks` |
 | `CustomWidgets` | User widgets: scan, create, remove | `customWidgets` (in `shell.qml`) |
 | `WidgetPowerManager` | Pauses widget rendering in game mode, fullscreen, present, edit | `widgetpower` |
-| `LivePins` | Live snips of one window. Niri only, through qs-rs | `livePins` |
+| `LivePins` | A window, or a part of it, kept on screen live. Niri and Umbriel, through qs-rs | `livePins` |
 
 ## Audio, media and network
 

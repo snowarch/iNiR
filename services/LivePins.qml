@@ -149,8 +149,8 @@ Singleton {
         function list(): string { return JSON.stringify(root.pins.map(pin => Object.assign({}, pin, { live: root.windowOf(pin.id) !== null }))) }
         /// Whether this shell can stream windows
         function supported(): bool { return root.supported }
-        // Opens the framer: pick a window, drag over the part to keep.
-        /// Pick a window and drag over the part to keep
+        // Opens the framer on the whole window; a drag keeps a part of it.
+        /// Pick a window to pin whole, or drag over the part to keep
         function frame(): void { root.frame() }
         // Window `windowId`, rectangle x y w h in its logical pixels; returns the new pin's id or "".
         /// Pin that rectangle of the window (its logical pixels); prints the pin's id
