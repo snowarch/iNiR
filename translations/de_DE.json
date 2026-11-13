@@ -1806,7 +1806,7 @@
   "Use safe shell functions. Configuration changes require approval; arbitrary commands are hidden.": "Sichere Shell-Funktionen verwenden. Konfigurationsänderungen brauchen eine Freigabe; beliebige Befehle bleiben verborgen.",
   "Use the mouse wheel over the strip to move between workspaces instead of scrolling the thumbnail list": "Nutze das Mausrad über dem Streifen, um zwischen Arbeitsbereichen zu wechseln, statt die Vorschauliste zu scrollen",
   "Use the provider's native web search when available.": "Die native Websuche des Anbieters verwenden, wenn sie verfügbar ist.",
-  "Very fast hosted inference. Free access may be available.": "Sehr schnelle gehostete Inferenz. Kostenloser Zugang kann verfügbar sein.",
+  "Very fast hosted inference.": "Sehr schnelle gehostete Inferenz.",
   "Very poor": "Sehr schlecht",
   "Very unhealthy": "Sehr ungesund",
   "Vibrant (saturated)": "Kräftig (gesättigt)",

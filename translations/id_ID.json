@@ -1806,7 +1806,7 @@
   "Use safe shell functions. Configuration changes require approval; arbitrary commands are hidden.": "Gunakan fungsi shell yang aman. Perubahan konfigurasi memerlukan persetujuan; perintah arbitrer disembunyikan.",
   "Use the mouse wheel over the strip to move between workspaces instead of scrolling the thumbnail list": "Gunakan roda mouse di atas strip untuk berpindah antar ruang kerja alih-alih menggulir daftar thumbnail",
   "Use the provider's native web search when available.": "Gunakan pencarian web asli penyedia jika tersedia.",
-  "Very fast hosted inference. Free access may be available.": "Inferensi yang dihosting sangat cepat. Akses gratis mungkin tersedia.",
+  "Very fast hosted inference.": "Inferensi yang dihosting sangat cepat.",
   "Very poor": "Sangat buruk",
   "Very unhealthy": "Sangat tidak sehat",
   "Vibrant (saturated)": "Cerah (jenuh)",

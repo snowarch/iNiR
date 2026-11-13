@@ -1806,7 +1806,7 @@
   "Use safe shell functions. Configuration changes require approval; arbitrary commands are hidden.": "Güvenli kabuk işlevlerini kullanın. Yapılandırma değişiklikleri onay gerektirir; rastgele komutlar gizlenir.",
   "Use the mouse wheel over the strip to move between workspaces instead of scrolling the thumbnail list": "Küçük resim listesini kaydırmak yerine, çalışma alanları arasında geçmek için şerit üzerinde fare tekerleğini kullan",
   "Use the provider's native web search when available.": "Varsa sağlayıcının yerleşik web aramasını kullanın.",
-  "Very fast hosted inference. Free access may be available.": "Çok hızlı barındırılan çıkarım. Ücretsiz erişim sunulabilir.",
+  "Very fast hosted inference.": "Çok hızlı barındırılan çıkarım.",
   "Very poor": "Çok kötü",
   "Very unhealthy": "Çok sağlıksız",
   "Vibrant (saturated)": "Canlı (doygun)",

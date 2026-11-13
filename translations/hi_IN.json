@@ -1806,7 +1806,7 @@
   "Use safe shell functions. Configuration changes require approval; arbitrary commands are hidden.": "सुरक्षित shell फ़ंक्शंस का उपयोग करें। कॉन्फ़िगरेशन परिवर्तनों के लिए अनुमोदन की आवश्यकता होती है; मनमाने आदेश छिपे हुए हैं।",
   "Use the mouse wheel over the strip to move between workspaces instead of scrolling the thumbnail list": "थंबनेल सूची को स्क्रॉल करने के बजाय कार्यस्थानों के बीच जाने के लिए पट्टी पर माउस व्हील का उपयोग करें",
   "Use the provider's native web search when available.": "उपलब्ध होने पर प्रदाता की मूल वेब खोज का उपयोग करें।",
-  "Very fast hosted inference. Free access may be available.": "बहुत तेजी से होस्ट किया गया अनुमान। नि:शुल्क पहुंच उपलब्ध हो सकती है।",
+  "Very fast hosted inference.": "बहुत तेजी से होस्ट किया गया अनुमान।",
   "Very poor": "बहुत खराब",
   "Very unhealthy": "बहुत अस्वस्थ",
   "Vibrant (saturated)": "जीवंत (संतृप्त)",

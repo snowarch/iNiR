@@ -1806,7 +1806,7 @@
   "Use safe shell functions. Configuration changes require approval; arbitrary commands are hidden.": "안전한 셸 기능을 사용하십시오. 구성 변경에는 승인이 필요합니다. 임의의 명령은 숨겨져 있습니다.",
   "Use the mouse wheel over the strip to move between workspaces instead of scrolling the thumbnail list": "썸네일 목록을 스크롤하는 대신 스트립 위에 마우스 휠을 사용하여 작업 공간 사이를 이동하세요.",
   "Use the provider's native web search when available.": "가능한 경우 제공자의 기본 웹 검색을 사용하십시오.",
-  "Very fast hosted inference. Free access may be available.": "매우 빠른 호스팅 추론. 무료로 이용이 가능하실 수 있습니다.",
+  "Very fast hosted inference.": "매우 빠른 호스팅 추론.",
   "Very poor": "매우 나쁨",
   "Very unhealthy": "건강에 매우 해로움",
   "Vibrant (saturated)": "활기(포화)",

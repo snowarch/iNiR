@@ -1806,7 +1806,7 @@
   "Use safe shell functions. Configuration changes require approval; arbitrary commands are hidden.": "השתמש בפונקציות של shell בטוחה. שינויים בתצורה דורשים אישור; פקודות שרירותיות מוסתרות.",
   "Use the mouse wheel over the strip to move between workspaces instead of scrolling the thumbnail list": "השתמש בגלגלת העכבר מעל הרצועה כדי לעבור בין סביבות עבודה במקום לגלול ברשימת התמונות הממוזערות",
   "Use the provider's native web search when available.": "השתמש בחיפוש האינטרנט המקורי של הספק כאשר זמין.",
-  "Very fast hosted inference. Free access may be available.": "מסק מתארח מהיר מאוד. גישה חופשית עשויה להיות זמינה.",
+  "Very fast hosted inference.": "מסק מתארח מהיר מאוד.",
   "Very poor": "גרוע מאוד",
   "Very unhealthy": "מאוד לא בריא",
   "Vibrant (saturated)": "תוסס (רווי)",

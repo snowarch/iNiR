@@ -1806,7 +1806,7 @@
   "Use safe shell functions. Configuration changes require approval; arbitrary commands are hidden.": "安全なシェル関数を使います。設定の変更には承認が必要で、任意のコマンドは隠されます。",
   "Use the mouse wheel over the strip to move between workspaces instead of scrolling the thumbnail list": "ストリップの上でマウスホイールを使うと、サムネイル一覧のスクロールではなくワークスペースの移動になります",
   "Use the provider's native web search when available.": "利用できるときは、プロバイダー自身のウェブ検索を使います。",
-  "Very fast hosted inference. Free access may be available.": "非常に高速なホスト型推論。無料で使える場合があります。",
+  "Very fast hosted inference.": "非常に高速なホスト型推論。",
   "Very poor": "とても悪い",
   "Very unhealthy": "健康に非常に良くない",
   "Vibrant (saturated)": "鮮やか（高彩度）",

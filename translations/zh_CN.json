@@ -1806,7 +1806,7 @@
   "Use safe shell functions. Configuration changes require approval; arbitrary commands are hidden.": "使用安全的 shell 函数。配置更改需要批准；任意命令会被隐藏。",
   "Use the mouse wheel over the strip to move between workspaces instead of scrolling the thumbnail list": "在条带上使用鼠标滚轮切换工作区，而不是滚动缩略图列表",
   "Use the provider's native web search when available.": "在可用时使用供应商自带的网页搜索。",
-  "Very fast hosted inference. Free access may be available.": "极快的托管推理。可能提供免费访问。",
+  "Very fast hosted inference.": "极快的托管推理。",
   "Very poor": "很差",
   "Very unhealthy": "对健康非常有害",
   "Vibrant (saturated)": "鲜艳（高饱和）",

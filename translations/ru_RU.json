@@ -1806,7 +1806,7 @@
   "Use safe shell functions. Configuration changes require approval; arbitrary commands are hidden.": "Использовать безопасные функции оболочки. Изменения конфигурации требуют подтверждения; произвольные команды скрыты.",
   "Use the mouse wheel over the strip to move between workspaces instead of scrolling the thumbnail list": "Используйте колесо мыши над лентой, чтобы переходить между рабочими местами, а не прокручивать список миниатюр",
   "Use the provider's native web search when available.": "Использовать собственный веб-поиск поставщика, когда он доступен.",
-  "Very fast hosted inference. Free access may be available.": "Очень быстрый размещённый вывод. Возможен бесплатный доступ.",
+  "Very fast hosted inference.": "Очень быстрый размещённый вывод.",
   "Very poor": "Очень плохое",
   "Very unhealthy": "Очень вредно для здоровья",
   "Vibrant (saturated)": "Яркая (насыщенная)",

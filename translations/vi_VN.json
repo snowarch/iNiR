@@ -1806,7 +1806,7 @@
   "Use safe shell functions. Configuration changes require approval; arbitrary commands are hidden.": "Sử dụng các hàm shell an toàn. Thay đổi cấu hình cần được phê duyệt; các lệnh tùy ý bị ẩn.",
   "Use the mouse wheel over the strip to move between workspaces instead of scrolling the thumbnail list": "Sử dụng con lăn chuột trên dải để di chuyển giữa các không gian làm việc thay vì cuộn danh sách hình thu nhỏ",
   "Use the provider's native web search when available.": "Sử dụng tìm kiếm trên web gốc của nhà cung cấp khi có sẵn.",
-  "Very fast hosted inference. Free access may be available.": "Suy luận được lưu trữ rất nhanh. Có thể có quyền truy cập miễn phí.",
+  "Very fast hosted inference.": "Suy luận được lưu trữ rất nhanh.",
   "Very poor": "Rất kém",
   "Very unhealthy": "Rất không lành mạnh",
   "Vibrant (saturated)": "Sống động (bão hòa)",
