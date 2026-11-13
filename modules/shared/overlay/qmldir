@@ -10,3 +10,5 @@ OverlaySegments 1.0 OverlaySegments.qml
 OverlayPlate 1.0 OverlayPlate.qml
 OverlayButton 1.0 OverlayButton.qml
 OverlaySlider 1.0 OverlaySlider.qml
+OverlayCaptureTile 1.0 OverlayCaptureTile.qml
+OverlaySwitch 1.0 OverlaySwitch.qml

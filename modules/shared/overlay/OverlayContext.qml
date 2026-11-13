@@ -16,11 +16,14 @@ Singleton {
         { identifier: "discord", materialSymbol: "forum", title: "Discord", group: 0 },
         { identifier: "gamePerformance", materialSymbol: "monitor_heart", title: "Game performance", group: 1 },
         { identifier: "resources", materialSymbol: "browse_activity", title: "Resources", group: 1 },
+        { identifier: "network", materialSymbol: "network_ping", title: "Network", group: 1 },
         { identifier: "fpsLimiter", materialSymbol: "speed", title: "FPS limiter", group: 1 },
         { identifier: "crosshair", materialSymbol: "point_scan", title: "Crosshair", group: 1 },
         { identifier: "notes", materialSymbol: "note_stack", title: "Notes", group: 2 },
         { identifier: "floatingImage", materialSymbol: "imagesmode", title: "Floating image", group: 2 },
         { identifier: "notifications", materialSymbol: "notifications", title: "Notifications", group: 2 },
+        { identifier: "clock", materialSymbol: "schedule", title: "Clock", group: 3 },
+        { identifier: "timer", materialSymbol: "timer", title: "Timer", group: 3 },
     ]
 
     function info(identifier: string): var {
@@ -243,6 +246,17 @@ Singleton {
     }
     function screenshotRegion(): void { root.afterClose([Quickshell.shellPath("scripts/inir"), "region", "screenshot"], false) }
     function copyScreen(): void { root.afterClose(["bash", "-c", "grim - | wl-copy"], false) }
+    // How a recording takes sound; the recorder's control and every capture tile name it the same way.
+    readonly property var audioModes: [
+        { value: "none", label: "None", glyph: "volume_off", long: "No audio" },
+        { value: "system", label: "System", glyph: "volume_up", long: "System audio" },
+        { value: "microphone", label: "Mic", glyph: "mic", long: "Microphone" },
+        { value: "both", label: "Both", glyph: "instant_mix", long: "System + mic" }
+    ]
+    function audioLabel(mode: string): string {
+        const found = root.audioModes.find(m => m.value === mode)
+        return Translation.tr(found ? found.long : "System audio")
+    }
     function recordRegion(): void { root.afterClose([Quickshell.shellPath("scripts/inir"), "region", "recordWithSound"], true) }
     function recordScreen(): void { root.afterClose([Directories.recordScriptPath, "--fullscreen", "--sound"], true) }
     function stopRecording(): void {

@@ -40,11 +40,24 @@ Item {
     property real panelOpacityOverride: -1
     property real minimumWidth: root.contentItem.implicitWidth
     property real minimumHeight: root.contentItem.implicitHeight
+    // Content width over height for a tool that keeps its shape (a picture): its width decides and its height follows,
+    // from any edge. 0: free. With nothing saved it opens at its content's implicit width.
+    property real aspectRatio: 0
+    readonly property bool keepsShape: root.resizable && root.aspectRatio > 0
+    // What a person can change about the tool: the header's tune button turns it over to them, drawn by the bench in
+    // the family's controls and written straight to config. [{ key, label, choices: [{ value, label }] }] or
+    // [{ key, label, toggle: true }]; `fallback` is the value when the key is missing; labels untranslated.
+    property var options: []
+    property bool tuning: false
+    readonly property real tuneW: root.tuning ? tunePage.implicitWidth : 0
+    readonly property real tuneH: root.tuning ? tunePage.implicitHeight : 0
 
     readonly property var persistentStateEntry: Persistent.states.overlay[root.identifier]
     readonly property bool pinned: root.persistentStateEntry?.pinned ?? false
     readonly property bool clickthrough: root.persistentStateEntry?.clickthrough ?? true
     readonly property bool benchOpen: GlobalStates.overlayOpen
+    // Closing the bench turns a tool back to its face: a pinned one is a HUD.
+    onBenchOpenChanged: if (!root.benchOpen) root.tuning = false
     property bool dismissing: false
     readonly property bool actuallyPinned: root.pinned && !root.dismissing
     readonly property bool actuallyClickable: root.actuallyPinned && !root.clickthrough
@@ -65,10 +78,28 @@ Item {
     readonly property real chromeW: 2 * (root.resizeMargin + root.padding)
     readonly property real chromeH: 2 * root.resizeMargin + root.headerHeight + root.padding + root.footerHeight
     // A tool that doesn't resize is always its content's size, whatever was saved before.
-    readonly property real contentW: Math.round(root.resizing ? root.liveW : root.fitW(root.resizable ? (root.persistentStateEntry?.width ?? 0) : 0))
-    readonly property real contentH: Math.round(root.resizing ? root.liveH : root.fitH(root.resizable ? (root.persistentStateEntry?.height ?? 0) : 0))
-    function fitW(w: real): real { return Math.max(root.minimumWidth, root.canvasW > 0 ? Math.min(w, root.canvasW - root.chromeW) : w) }
+    readonly property real savedW: root.resizable ? (root.persistentStateEntry?.width ?? 0) : 0
+    readonly property real shapeW: root.keepsShape ? root.fitShape(root.savedW > 0 ? root.savedW : root.contentItem.implicitWidth) : 0
+    readonly property real contentW: Math.round(root.resizing ? root.liveW
+        : root.keepsShape ? Math.max(root.shapeW, root.tuneW)
+        : root.fitW(root.savedW))
+    // Turned over, the plate takes its options' height: no empty half under two rows.
+    readonly property real contentH: Math.round(root.resizing ? root.liveH
+        : root.tuning ? root.tuneH
+        : root.keepsShape ? root.shapeW / root.aspectRatio
+        : root.fitH(root.resizable ? (root.persistentStateEntry?.height ?? 0) : 0))
+    function fitW(w: real): real { return Math.max(root.minimumWidth, root.tuneW, root.canvasW > 0 ? Math.min(w, root.canvasW - root.chromeW) : w) }
     function fitH(h: real): real { return Math.max(root.minimumHeight, root.canvasH > 0 ? Math.min(h, root.canvasH - root.chromeH) : h) }
+    // A width that keeps the shape inside the screen.
+    function fitShape(w: real): real {
+        const most = root.canvasW > 0 ? Math.min(root.canvasW - root.chromeW, (root.canvasH - root.chromeH) * root.aspectRatio) : w
+        return Math.max(Math.min(root.minimumWidth, most), Math.min(w, most))
+    }
+    // The wheel on a shaped tool: larger or smaller by `factor`, its corner held.
+    function scaleBy(factor: real): void {
+        const w = root.fitShape(root.contentW * factor)
+        root.save(root.x, root.y, w, w / root.aspectRatio)
+    }
     // The plate as it stands on the bench, in canvas pixels.
     readonly property real plateX: root.x + root.resizeMargin
     readonly property real plateY: root.y + root.resizeMargin
@@ -291,7 +322,19 @@ Item {
     function resizeTo(px: real, py: real): void {
         const s = root._start
         let w = s.w, h = s.h, x = s.x, y = s.y
-        if (s.xDir !== 0) {
+        if (root.keepsShape) {
+            // Whichever axis was pulled further sets the width; the opposite edges stay put.
+            const a = root.aspectRatio
+            const fromX = s.xDir !== 0 ? s.w + (px - s.px) * s.xDir : -1
+            const fromY = s.yDir !== 0 ? (s.h + (py - s.py) * s.yDir) * a : -1
+            const want = fromX < 0 ? fromY : fromY < 0 ? fromX : Math.abs(fromX - s.w) >= Math.abs(fromY - s.w) ? fromX : fromY
+            const most = Math.min(s.xDir < 0 ? s.x + s.w : root.canvasW - root.chromeW - s.x,
+                (s.yDir < 0 ? s.y + s.h : root.canvasH - root.chromeH - s.y) * a)
+            w = Math.max(Math.min(root.minimumWidth, most), Math.min(want, most))
+            h = w / a
+            x = s.xDir < 0 ? s.x + s.w - w : s.x
+            y = s.yDir < 0 ? s.y + s.h - h : s.y
+        } else if (s.xDir !== 0) {
             w = Math.max(root.minimumWidth, s.w + (px - s.px) * s.xDir)
             if (s.xDir < 0) {
                 x = s.x + s.w - w
@@ -300,7 +343,7 @@ Item {
                 w = Math.min(w, root.canvasW - root.chromeW - x)
             }
         }
-        if (s.yDir !== 0) {
+        if (!root.keepsShape && s.yDir !== 0) {
             h = Math.max(root.minimumHeight, s.h + (py - s.py) * s.yDir)
             if (s.yDir < 0) {
                 y = s.y + s.h - h
@@ -413,6 +456,14 @@ Item {
                     onClicked: root.titlebarActionClicked()
                 }
                 OverlayButton {
+                    visible: root.options.length > 0
+                    size: Math.round(28 * root.d)
+                    glyph: "tune"
+                    toggled: root.tuning
+                    tip: root.tuning ? Translation.tr("Back") : Translation.tr("Options")
+                    onClicked: root.tuning = !root.tuning
+                }
+                OverlayButton {
                     visible: root.showCenterButton
                     size: Math.round(28 * root.d)
                     glyph: "recenter"
@@ -444,6 +495,74 @@ Item {
         width: root.contentW
         height: root.contentH
         children: [root.contentItem]
+    }
+    Binding {
+        target: root.contentItem
+        property: "visible"
+        value: !root.tuning
+    }
+
+    // The tool turned over: its options, one under the other, in the family's controls.
+    Item {
+        id: tunePage
+        x: contentHolder.x
+        y: contentHolder.y
+        width: root.contentW
+        height: root.contentH
+        visible: root.tuning
+        implicitWidth: Math.round(260 * root.d)
+        implicitHeight: tuneList.implicitHeight
+
+        Column {
+            id: tuneList
+            width: parent.width
+            spacing: Math.round(10 * root.d)
+
+            Repeater {
+                model: root.tuning ? root.options : []
+                delegate: Item {
+                    id: option
+                    required property var modelData
+                    readonly property var value: Config.getNestedValue(option.modelData.key, option.modelData.fallback)
+                    readonly property bool toggle: option.modelData.toggle === true
+                    width: tunePage.width
+                    implicitHeight: option.toggle ? Math.round(32 * root.d) : optionName.implicitHeight + Math.round(6 * root.d) + choices.implicitHeight
+
+                    StyledText {
+                        id: optionName
+                        anchors.left: parent.left
+                        anchors.right: option.toggle ? onOff.left : parent.right
+                        anchors.verticalCenter: option.toggle ? parent.verticalCenter : undefined
+                        elide: Text.ElideRight
+                        text: Translation.tr(option.modelData.label)
+                        color: option.toggle ? OverlayLook.colOnLayer1 : OverlayLook.colSubtext
+                        font.family: OverlayLook.fontMain
+                        font.pixelSize: option.toggle ? OverlayLook.typeBody : OverlayLook.typeMeta
+                        font.weight: option.toggle ? Font.Normal : Font.DemiBold
+                    }
+                    OverlaySegments {
+                        id: choices
+                        visible: !option.toggle
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        options: option.toggle ? [] : option.modelData.choices
+                        current: option.value
+                        accessibleName: Translation.tr(option.modelData.label)
+                        onPicked: value => Config.setNestedValue(option.modelData.key, value)
+                    }
+                    OverlaySwitch {
+                        id: onOff
+                        visible: option.toggle
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        checked: option.toggle && option.value === true
+                        name: Translation.tr(option.modelData.label)
+                        onToggled: Config.setNestedValue(option.modelData.key, !(option.value === true))
+                    }
+                }
+            }
+        }
     }
 
     // Footer: how it stays once pinned
@@ -531,7 +650,7 @@ Item {
         id: zone
         required property int xDir
         required property int yDir
-        enabled: root.resizable && root.benchOpen && !dragEscape.letGo
+        enabled: root.resizable && root.benchOpen && !root.tuning && !dragEscape.letGo
         hoverEnabled: true
         preventStealing: true
         cursorShape: zone.xDir === 0 ? Qt.SizeVerCursor : zone.yDir === 0 ? Qt.SizeHorCursor
@@ -564,7 +683,7 @@ Item {
         y: root.height - root.resizeMargin - height - Math.round(5 * root.d)
         width: Math.round(10 * root.d)
         height: width
-        visible: root.resizable && root.benchOpen
+        visible: root.resizable && root.benchOpen && !root.tuning
         opacity: hover.hovered || root.resizing ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: FamilyStyle.feedbackDuration } }
         // Two strokes from the corner, like a window's size grip.

@@ -16,6 +16,9 @@ import qs.modules.shared.overlay.gamePerformance
 import qs.modules.shared.overlay.notes
 import qs.modules.shared.overlay.discord
 import qs.modules.shared.overlay.notifications
+import qs.modules.shared.overlay.clock
+import qs.modules.shared.overlay.timer
+import qs.modules.shared.overlay.network
 
 DelegateChooser {
     id: root
@@ -31,4 +34,7 @@ DelegateChooser {
     DelegateChoice { roleValue: "discord"; Discord {} }
     DelegateChoice { roleValue: "volumeMixer"; VolumeMixer {} }
     DelegateChoice { roleValue: "notifications"; Notifications {} }
+    DelegateChoice { roleValue: "clock"; Clock {} }
+    DelegateChoice { roleValue: "timer"; TimerTool {} }
+    DelegateChoice { roleValue: "network"; Network {} }
 }

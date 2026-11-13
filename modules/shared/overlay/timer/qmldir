@@ -1,0 +1,2 @@
+module qs.modules.shared.overlay.timer
+TimerTool 1.0 TimerTool.qml

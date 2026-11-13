@@ -49,11 +49,19 @@ A pinned tool comes back after a restart.
 - **Crosshair**: a crosshair in the centre of the screen. Paste a Valorant crosshair code to use one you already have.
 - **Notes**: a note that saves as you type.
 - **Floating image**: a picture kept over the game, such as a map or a build. Drop a file on it, choose one, or paste a link.
-  Scroll on it to zoom.
+  It opens at a size that fits the screen; drag an edge or scroll on it to resize it, its shape kept.
 - **Notifications**: what arrived while you played. Clearing them can be undone.
 - **Discord**: mute your microphone or your sound in one click. While Discord (or a client like Vesktop) plays a call,
   the call's own volume shows beside the game's.
+- **Network**: the latency to Cloudflare, Google or your router over its trace, how steady it is (jitter and lost
+  replies), and what flows down and up right now. Nothing is measured while the tool is out of sight.
+- **Clock**: the time in large figures, or an analog dial, with seconds and the date if you want them. It follows the
+  shell's 12 or 24 hour format; drag an edge or scroll to size it.
+- **Timer**: a timer, a stopwatch with laps and focus sessions, drawn as a ring. It is the shell's own timer, so the bar
+  and the sidebars show the same run. Scroll the ring to set the timer a minute at a time.
 - **Game performance**: FPS and frametime from MangoHud, with CPU, GPU and memory. See [Game performance](GAME_PERFORMANCE.md).
+
+Tools with options (Clock, Timer, Network) have a tune button in their header: the tool turns over and shows them.
 
 ## Settings
 

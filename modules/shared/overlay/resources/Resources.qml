@@ -61,7 +61,7 @@ StyledOverlayWidget {
     contentItem: Item {
         anchors.fill: parent
         implicitWidth: Math.round(300 * root.d)
-        implicitHeight: Math.round(196 * root.d)
+        implicitHeight: Math.round(220 * root.d)
 
         ColumnLayout {
             anchors.fill: parent
@@ -83,8 +83,13 @@ StyledOverlayWidget {
                     }
                 }
 
+                // The trace lives under the figure, so a high value never runs into the text.
                 Graph {
-                    anchors.fill: parent
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    anchors.top: readout.bottom
+                    anchors.topMargin: Math.round(6 * root.d)
                     values: root.current.history
                     points: ResourceUsage.historyLength
                     alignment: Graph.Alignment.Right
@@ -93,6 +98,7 @@ StyledOverlayWidget {
                 }
 
                 Column {
+                    id: readout
                     anchors.left: parent.left
                     anchors.top: parent.top
                     anchors.margins: Math.round(12 * root.d)

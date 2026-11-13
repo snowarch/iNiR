@@ -16,7 +16,10 @@ Item {
 
     Keys.onPressed: event => {
         if (event.key === Qt.Key_Escape) {
-            GlobalStates.overlayOpen = false
+            if (strip.choosingRecord)
+                strip.choosingRecord = false
+            else
+                GlobalStates.overlayOpen = false
             event.accepted = true
         }
     }
@@ -34,13 +37,21 @@ Item {
         id: desk
         anchors.fill: parent
         enabled: root.benchOpen
+        // A click away from Record's choice only puts the choice away.
+        property bool putAway: false
         // A press on a tool or the strip is theirs (a tool moves from its empty parts).
         onPressed: mouse => {
+            desk.putAway = strip.choosingRecord
+            if (desk.putAway) {
+                strip.choosingRecord = false
+                mouse.accepted = true
+                return
+            }
             const inStrip = mouse.x >= strip.x && mouse.x <= strip.x + strip.width && mouse.y >= strip.y && mouse.y <= strip.y + strip.height
             const onTool = OverlayContext.plates("").some(r => mouse.x >= r.x && mouse.x <= r.x + r.w && mouse.y >= r.y && mouse.y <= r.y + r.h)
             mouse.accepted = !inStrip && !onTool
         }
-        onClicked: GlobalStates.overlayOpen = false
+        onClicked: if (!desk.putAway) GlobalStates.overlayOpen = false
     }
 
     // The tools' canvas: a sibling of the desk, so a disabled desk never disables a pinned tool.

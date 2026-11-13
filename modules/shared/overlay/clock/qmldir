@@ -1,0 +1,2 @@
+module qs.modules.shared.overlay.clock
+Clock 1.0 Clock.qml

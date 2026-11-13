@@ -346,6 +346,11 @@ StyledOverlayWidget {
         readonly property bool hasPlayer: music.player !== null
         readonly property real length: MprisController.lengthOf(music.player)
         readonly property real position: MprisController.positionOf(music.player)
+        readonly property bool seekable: (music.player?.canSeek ?? false) && !MprisController.isLive(music.player)
+        // Where the thumb is while it is held; the player is asked to move only on release.
+        property real heldFraction: -1
+        readonly property real shownPosition: music.heldFraction >= 0 ? music.heldFraction * music.length : music.position
+        onPlayerChanged: music.heldFraction = -1
         onVisibleChanged: if (music.visible) MediaArtwork.refresh()
 
         Timer {
@@ -437,8 +442,20 @@ StyledOverlayWidget {
                 Layout.fillWidth: true
                 visible: music.length > 0
                 spacing: Math.round(4 * root.d)
+                OverlaySlider {
+                    Layout.fillWidth: true
+                    visible: music.seekable
+                    stepSize: 0.001
+                    value: Math.max(0, Math.min(1, music.position / Math.max(1, music.length)))
+                    onMoved: v => music.heldFraction = v
+                    onCommitted: v => {
+                        MprisController.seek(music.player, v * music.length)
+                        music.heldFraction = -1
+                    }
+                }
                 Rectangle {
                     Layout.fillWidth: true
+                    visible: !music.seekable
                     implicitHeight: Math.round(4 * root.d)
                     radius: height / 2
                     color: OverlayLook.colRecessed
@@ -453,7 +470,7 @@ StyledOverlayWidget {
                     Layout.fillWidth: true
                     StyledText {
                         Layout.fillWidth: true
-                        text: StringUtils.friendlyTimeForSeconds(music.position)
+                        text: StringUtils.friendlyTimeForSeconds(music.shownPosition)
                         color: OverlayLook.colSubtext
                         font.family: OverlayLook.fontNumbers
                         font.features: ({ "tnum": 1 })

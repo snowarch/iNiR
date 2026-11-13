@@ -99,6 +99,7 @@ Item {
         }
 
         Item {
+            id: copyLayer
             anchors.fill: parent
             visible: root.copyLines.length > 0
             Repeater {
@@ -109,7 +110,7 @@ Item {
                     property bool copied: false
                     size: Math.round(24 * root.d)
                     glyphSize: Math.round(14 * root.d)
-                    x: parent.width - width - Math.round(6 * root.d)
+                    x: copyLayer.width - width - Math.round(6 * root.d)
                     y: copyButton.modelData.y - height / 2
                     glyph: copyButton.copied ? "check" : "content_copy"
                     tint: copyButton.copied ? OverlayLook.colSuccess : OverlayLook.colPrimary

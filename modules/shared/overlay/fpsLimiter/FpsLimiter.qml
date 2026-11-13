@@ -176,7 +176,7 @@ StyledOverlayWidget {
                             Keys.onDownPressed: root.step(false)
                         }
                         StyledText {
-                            anchors.baseline: field.visible ? field.baseline : undefined
+                            anchors.baseline: field.baseline
                             text: root.shown > 0 || field.activeFocus ? Translation.tr("fps") : Translation.tr("Uncapped")
                             color: root.shown > 0 || field.activeFocus ? OverlayLook.colSubtext : OverlayLook.colOnLayer1
                             font.family: root.shown > 0 || field.activeFocus ? OverlayLook.fontMain : OverlayLook.fontNumbers

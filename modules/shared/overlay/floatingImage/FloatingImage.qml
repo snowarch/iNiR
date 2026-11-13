@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Dialogs
 import Quickshell
 import Qt5Compat.GraphicalEffects
 import qs
@@ -12,35 +11,40 @@ import qs.modules.common.widgets
 import qs.modules.shared.overlay
 import qs.services
 
-// A picture kept over the game: a map, a build, a reference. Its size is the picture's, scaled by the wheel; pinned,
-// only the picture stays, faded when clicks go through it. A file, a dropped file or a link.
+// A picture kept over the game: a map, a build, a reference. A new one opens small enough to leave the game in view and
+// is resized from any edge or with the wheel, always in its own shape; pinned, only the picture stays, faded when
+// clicks go through it. A file, a dropped file or a link.
 StyledOverlayWidget {
     id: root
-    resizable: false
+    resizable: root.known
     hudPlate: false
+    aspectRatio: root.known ? root.imageWidth / root.imageHeight : 0
+    // Small enough to tuck in a corner, wide enough for its header.
+    minimumWidth: root.known ? Math.round(Math.max(200 * root.d, 96 * root.d * root.aspectRatio)) : frame.implicitWidth
+    minimumHeight: root.known ? 0 : frame.implicitHeight
 
     readonly property string imageSource: (Config.options?.overlay?.floatingImage?.imageSource ?? "").trim()
-    readonly property real scaleFactor: Config.options?.overlay?.floatingImage?.scale ?? 0.5
     property int imageWidth: 0
     property int imageHeight: 0
     property string _requestedPath: ""
     property bool _dialogEngaged: false
     property bool imageFailed: false
-    readonly property bool hasImage: root.imageWidth > 0 && root.imageHeight > 0 && picture.status === Image.Ready
+    // Its size is known once fetched, before it is decoded: the frame takes its shape first and the picture is
+    // decoded once, at that size.
+    readonly property bool known: root.imageWidth > 0 && root.imageHeight > 0
+    readonly property bool hasImage: root.known && picture.status === Image.Ready
     readonly property bool loading: root.imageSource.length > 0 && !root.imageFailed && !root.hasImage
     readonly property string clipboardLink: {
         const text = String(Quickshell.clipboardText ?? "").trim()
         return /^https?:\/\/\S+$/.test(text) ? text : ""
     }
 
-    // The picture never outgrows the screen.
-    readonly property real fit: root.hasImage && root.canvasW > 0
-        ? Math.min(1, (root.canvasW - root.chromeW) / (root.imageWidth * root.scaleFactor), (root.canvasH - root.chromeH) / (root.imageHeight * root.scaleFactor))
-        : 1
-    readonly property real shownW: Math.round(root.imageWidth * root.scaleFactor * root.fit)
-    readonly property real shownH: Math.round(root.imageHeight * root.scaleFactor * root.fit)
+    // Where a new picture opens: a third of the screen's width or half its height at most, never past its own pixels.
+    readonly property real openingW: root.canvasW > 0
+        ? Math.min(root.imageWidth, 0.36 * root.canvasW, 0.5 * root.canvasH * root.aspectRatio)
+        : root.imageWidth
 
-    fact: root.hasImage ? Math.round(root.scaleFactor * root.fit * 100) + "%" : ""
+    fact: root.hasImage ? Math.round(root.contentW / root.imageWidth * 100) + "%" : ""
     titlebarActionSymbol: root.hasImage || root.imageFailed ? "image_search" : ""
     titlebarActionTooltip: Translation.tr("Change image")
     onTitlebarActionClicked: imageDialog.open()
@@ -48,9 +52,12 @@ StyledOverlayWidget {
     function use(source: string): void {
         Config.setNestedValue("overlay.floatingImage.imageSource", source)
     }
-    function zoom(up: bool): void {
-        const next = Math.round((root.scaleFactor + (up ? 0.1 : -0.1)) * 10) / 10
-        Config.setNestedValue("overlay.floatingImage.scale", Math.max(0.1, Math.min(5.0, next)))
+    // Another picture starts again from its opening size.
+    function forgetSize(): void {
+        const e = root.persistentStateEntry
+        if (!e) return
+        e.width = 0
+        e.height = 0
     }
 
     function refreshImage(): void {
@@ -67,7 +74,10 @@ StyledOverlayWidget {
         imageDownloader.filePath = path
         imageDownloader.running = true
     }
-    onImageSourceChanged: refreshImage()
+    onImageSourceChanged: {
+        root.forgetSize()
+        root.refreshImage()
+    }
     Component.onCompleted: refreshImage()
 
     function syncImageDialogLayer(): void {
@@ -102,13 +112,21 @@ StyledOverlayWidget {
     contentItem: Item {
         id: frame
         anchors.fill: parent
-        implicitWidth: root.hasImage ? root.shownW : Math.round(300 * root.d)
-        implicitHeight: root.hasImage ? root.shownH : Math.round(180 * root.d)
+        implicitWidth: root.known ? root.openingW : Math.round(300 * root.d)
+        implicitHeight: root.known ? root.openingW / root.aspectRatio : Math.round(180 * root.d)
 
         WheelHandler {
-            enabled: root.hasImage
+            enabled: root.hasImage && !root.resizing
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-            onWheel: event => root.zoom(event.angleDelta.y > 0)
+            // A tenth per notch; fine wheels and touchpads send parts of one.
+            onWheel: event => {
+                root.scaleBy(Math.pow(1.1, event.angleDelta.y / 120))
+                wheelRest.restart()
+            }
+        }
+        Timer {
+            id: wheelRest
+            interval: 300
         }
 
         DropArea {
@@ -138,8 +156,6 @@ StyledOverlayWidget {
             AnimatedImage {
                 id: picture
                 anchors.fill: parent
-                sourceSize.width: root.shownW
-                sourceSize.height: root.shownH
                 fillMode: Image.PreserveAspectFit
                 playing: root.visible && status === Image.Ready
                 asynchronous: true
@@ -152,6 +168,15 @@ StyledOverlayWidget {
                     }
                 }
             }
+        }
+
+        // Decoded at the size it rests at; while an edge or the wheel moves it the last decode is scaled.
+        Binding {
+            target: picture
+            property: "sourceSize"
+            when: root.known && !root.resizing && !wheelRest.running
+            value: Qt.size(root.contentW, root.contentH)
+            restoreMode: Binding.RestoreNone
         }
 
         // No picture yet, or one that didn't load: a place to drop one.
@@ -228,10 +253,9 @@ StyledOverlayWidget {
         }
     }
 
-    FileDialog {
+    FilePickerDialog {
         id: imageDialog
         title: Translation.tr("Choose source image")
-        fileMode: FileDialog.OpenFile
         currentFolder: Directories.pictures
         nameFilters: [
             Translation.tr("Images and animations") + " (*.png *.jpg *.jpeg *.webp *.tif *.tiff *.gif *.svg)",

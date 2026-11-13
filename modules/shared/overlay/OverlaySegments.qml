@@ -62,6 +62,7 @@ Item {
         }
 
         Row {
+            id: segmentRow
             anchors.fill: parent
             anchors.margins: 2
             Repeater {
@@ -74,7 +75,7 @@ Item {
                     readonly property color ink: segment.selected ? OverlayLook.colOnToggle
                         : segment.containsMouse ? OverlayLook.colOnLayer1 : OverlayLook.colSubtext
                     width: root.slot
-                    height: parent.height
+                    height: segmentRow.height
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     Accessible.role: Accessible.RadioButton

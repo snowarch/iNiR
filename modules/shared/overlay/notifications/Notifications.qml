@@ -15,10 +15,12 @@ StyledOverlayWidget {
 
     Component.onCompleted: Notifications.ensureInitialized()
     readonly property var items: Notifications.list.slice().reverse()
+    // Counted from the rows shown: the service's popup list also holds banners that never reach the history.
+    readonly property int unread: Notifications.list.filter(n => n?.popup).length
     // Nothing to count says itself in the body; only silence is worth the header then.
     fact: Notifications.list.length === 0 ? (Notifications.silent ? Translation.tr("Silent") : "")
         : Notifications.silent ? Translation.tr("Silent · %1 total").arg(Notifications.list.length)
-        : Translation.tr("%1 unread · %2 total").arg(Notifications.unread).arg(Notifications.list.length)
+        : Translation.tr("%1 unread · %2 total").arg(root.unread).arg(Notifications.list.length)
 
     // A row's own button never removes the row inside its click.
     property var _later: null
@@ -99,7 +101,7 @@ StyledOverlayWidget {
                 }
                 OverlayButton {
                     glyph: "done_all"
-                    enabled: Notifications.unread > 0
+                    enabled: root.unread > 0
                     tip: Translation.tr("Mark all as read")
                     onClicked: Notifications.markAllRead()
                 }
@@ -184,8 +186,11 @@ StyledOverlayWidget {
                         font.pixelSize: OverlayLook.typeFootnote
                         font.weight: Font.DemiBold
                     }
+                    // Under the pointer the dismiss button takes the time's place.
                     StyledText {
                         text: NotificationUtils.getFriendlyNotifTimeString(row.notif?.time ?? 0)
+                        opacity: rowHover.hovered ? 0 : 1
+                        Behavior on opacity { NumberAnimation { duration: FamilyStyle.feedbackDuration } }
                         color: OverlayLook.colFaint
                         font.family: OverlayLook.fontNumbers
                         font.pixelSize: OverlayLook.typeFootnote

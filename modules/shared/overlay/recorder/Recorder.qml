@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Dialogs
 import Quickshell
 import Quickshell.Io
 import qs
@@ -29,16 +28,8 @@ StyledOverlayWidget {
     readonly property string screenshotPath: Directories.screenshotsPath
     readonly property string audioMode: RecorderStatus.configuredAudioMode
     readonly property string liveAudioMode: root.recording ? RecorderStatus.effectiveAudioMode : root.audioMode
-    readonly property var audioModes: [
-        { value: "none", label: "None", glyph: "volume_off", long: "No audio" },
-        { value: "system", label: "System", glyph: "volume_up", long: "System audio" },
-        { value: "microphone", label: "Mic", glyph: "mic", long: "Microphone" },
-        { value: "both", label: "Both", glyph: "instant_mix", long: "System + mic" }
-    ]
-    function audioLabel(mode: string): string {
-        const found = root.audioModes.find(m => m.value === mode)
-        return Translation.tr(found ? found.long : "System audio")
-    }
+    readonly property var audioModes: OverlayContext.audioModes
+    function audioLabel(mode: string): string { return OverlayContext.audioLabel(mode) }
 
     // Free space where recordings land, read while the bench is open.
     property string diskFree: ""
@@ -77,7 +68,9 @@ StyledOverlayWidget {
         ShellExec.openDirectory(path, label)
     }
 
-    FolderDialog {
+    FilePickerDialog {
+
+        selectFolder: true
         id: folderDialog
         title: root.folderTarget === "screenshots" ? Translation.tr("Select screenshots folder") : Translation.tr("Select recordings folder")
         currentFolder: `file://${root.folderTarget === "screenshots" ? root.screenshotPath : root.savePath}`
@@ -110,13 +103,13 @@ StyledOverlayWidget {
                     opacity: root.recording ? 0 : 1
                     visible: opacity > 0
                     Behavior on opacity { NumberAnimation { duration: FamilyStyle.revealDuration } }
-                    CaptureTile {
+                    OverlayCaptureTile {
                         glyph: "screen_record"
                         label: Translation.tr("Record region")
                         detail: root.audioLabel(root.audioMode)
                         onClicked: OverlayContext.recordRegion()
                     }
-                    CaptureTile {
+                    OverlayCaptureTile {
                         glyph: "capture"
                         label: Translation.tr("Record screen")
                         detail: root.audioLabel(root.audioMode)
@@ -268,55 +261,6 @@ StyledOverlayWidget {
                 path: root.screenshotPath
                 onOpenRequested: root.openFolder(root.screenshotPath, Translation.tr("Open screenshots folder"))
                 onChangeRequested: root.chooseFolder("screenshots")
-            }
-        }
-    }
-
-    component CaptureTile: RippleButton {
-        id: tile
-        property string glyph
-        property string label
-        property string detail
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        padding: 0
-        rippleEnabled: !OverlayLook.own && !Appearance.regaliaEverywhere && !Appearance.editorialEverywhere
-        buttonRadius: OverlayLook.roundingNormal
-        colBackground: OverlayLook.colLayer2
-        colBackgroundHover: OverlayLook.colLayer2Hover
-        colRipple: OverlayLook.colLayer2Active
-        Accessible.name: tile.label
-        contentItem: Item {
-            Column {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                anchors.margins: Math.round(12 * root.d)
-                spacing: Math.round(1 * root.d)
-                MaterialSymbol {
-                    text: tile.glyph
-                    iconSize: Math.round(24 * root.d)
-                    fill: 1
-                    color: OverlayLook.colError
-                }
-                Item { width: 1; height: Math.round(5 * root.d) }
-                StyledText {
-                    width: parent.width
-                    elide: Text.ElideRight
-                    text: tile.label
-                    color: OverlayLook.colOnLayer1
-                    font.family: OverlayLook.fontMain
-                    font.pixelSize: OverlayLook.typeBody
-                    font.weight: Font.DemiBold
-                }
-                StyledText {
-                    width: parent.width
-                    elide: Text.ElideRight
-                    text: tile.detail
-                    color: OverlayLook.colSubtext
-                    font.family: OverlayLook.fontMain
-                    font.pixelSize: OverlayLook.typeMeta
-                }
             }
         }
     }

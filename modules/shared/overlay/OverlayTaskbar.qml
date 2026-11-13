@@ -17,6 +17,13 @@ Item {
     readonly property real pad: Math.round(6 * root.d)
     readonly property real buttonSize: Math.round(36 * root.d)
     readonly property bool recording: RecorderStatus.isRecording
+    // Record asks what to take: a region or the whole screen.
+    property bool choosingRecord: false
+    readonly property bool benchOpen: GlobalStates.overlayOpen
+    onBenchOpenChanged: if (!root.benchOpen) root.choosingRecord = false
+    onRecordingChanged: root.choosingRecord = false
+    readonly property list<string> openIds: OverlayContext.openIds
+    onOpenIdsChanged: root.choosingRecord = false
 
     implicitWidth: row.implicitWidth + root.pad * 2
     implicitHeight: root.buttonSize + root.pad * 2
@@ -139,9 +146,13 @@ Item {
             glyphSize: Math.round(20 * root.d)
             glyph: "screenshot_region"
             tip: Translation.tr("Screenshot")
-            onClicked: OverlayContext.screenshotRegion()
+            onClicked: {
+                root.choosingRecord = false
+                OverlayContext.screenshotRegion()
+            }
         }
         OverlayButton {
+            id: recordButton
             Layout.alignment: Qt.AlignVCenter
             size: root.buttonSize
             glyphSize: Math.round(18 * root.d)
@@ -149,8 +160,13 @@ Item {
             tint: OverlayLook.colError
             glyph: root.recording ? "stop" : "radio_button_checked"
             label: root.recording ? OverlayContext.elapsed(RecorderStatus.elapsedSeconds) : Translation.tr("Record")
-            tip: root.recording ? Translation.tr("Stop recording") : Translation.tr("Record a region")
-            onClicked: root.recording ? OverlayContext.stopRecording() : OverlayContext.recordRegion()
+            tip: root.recording ? Translation.tr("Stop recording") : ""
+            onClicked: {
+                if (root.recording)
+                    OverlayContext.stopRecording()
+                else
+                    root.choosingRecord = !root.choosingRecord
+            }
         }
 
         Divider {}
@@ -163,7 +179,61 @@ Item {
             glyph: "dashboard"
             tip: Translation.tr("Arrange")
             enabled: OverlayContext.openIds.length > 0
-            onClicked: OverlayContext.arrange()
+            onClicked: {
+                root.choosingRecord = false
+                OverlayContext.arrange()
+            }
+        }
+    }
+
+    // The two recordings, dropped under Record.
+    Item {
+        id: recordMenu
+        readonly property real gap: Math.round(8 * root.d)
+        property real shown: root.choosingRecord ? 1 : 0
+        Behavior on shown { NumberAnimation { duration: FamilyStyle.revealDuration; easing.type: Easing.OutCubic } }
+        width: Math.round(300 * root.d)
+        height: Math.round(104 * root.d)
+        x: Math.round(Math.max(0, Math.min(root.width - recordMenu.width, row.x + recordButton.x + recordButton.width / 2 - recordMenu.width / 2)))
+        y: root.height + recordMenu.gap - (1 - recordMenu.shown) * Math.round(6 * root.d)
+        opacity: recordMenu.shown
+        visible: recordMenu.shown > 0.01
+        scale: 0.97 + 0.03 * recordMenu.shown
+        transformOrigin: Item.Top
+
+        OverlayPlate {
+            anchors.fill: parent
+            radius: OverlayLook.plateRadius
+            fillOpacity: Math.max(0.92, Config.options?.overlay?.backgroundOpacity ?? 0.9)
+            screenX: root.x + recordMenu.x
+            screenY: root.y + recordMenu.y
+        }
+        // The plate is the menu's own: a press between the tiles stays here.
+        MouseArea {
+            anchors.fill: parent
+        }
+        RowLayout {
+            anchors.fill: parent
+            anchors.margins: Math.round(6 * root.d)
+            spacing: Math.round(6 * root.d)
+            OverlayCaptureTile {
+                glyph: "screen_record"
+                label: Translation.tr("Record region")
+                detail: OverlayContext.audioLabel(RecorderStatus.configuredAudioMode)
+                onClicked: {
+                    root.choosingRecord = false
+                    OverlayContext.recordRegion()
+                }
+            }
+            OverlayCaptureTile {
+                glyph: "capture"
+                label: Translation.tr("Record screen")
+                detail: OverlayContext.audioLabel(RecorderStatus.configuredAudioMode)
+                onClicked: {
+                    root.choosingRecord = false
+                    OverlayContext.recordScreen()
+                }
+            }
         }
     }
 
