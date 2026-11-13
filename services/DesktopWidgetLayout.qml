@@ -369,7 +369,7 @@ Singleton {
         if (!enabled)
             DesktopWidgetStacks.leave(root._widgetKey(widgetKey))
         Config.setNestedValue(path + ".enable", Boolean(enabled))
-        root.clearEnableOverrides()
+        root.clearEnableOverrides(widgetKey)
         return true
     }
 
@@ -455,7 +455,8 @@ Singleton {
         return true
     }
 
-    function clearEnableOverrides(): bool {
+    function clearEnableOverrides(onlyWidget = ""): bool {
+        const only = root._widgetKey(onlyWidget)
         const list = root._normalizedRecords()
         let changed = false
         for (let i = 0; i < list.length; ++i) {
@@ -463,6 +464,8 @@ Singleton {
                 continue
             const widgets = list[i].widgets
             for (const widgetKey of Object.keys(widgets)) {
+                if (only && widgetKey !== only)
+                    continue
                 const override = widgets[widgetKey]
                 if (!Object.prototype.hasOwnProperty.call(override, "enable"))
                     continue
