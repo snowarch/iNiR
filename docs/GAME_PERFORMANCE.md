@@ -5,7 +5,7 @@ The Game performance panel shows the game you are playing: its FPS and frametime
 ## Show the panel
 
 1. Press **Super+G** to open the overlay.
-2. Press **Game performance** in the overlay's taskbar.
+2. Press **Game performance** in the strip at the top. More on the bench in [Floating tools](FLOATING_TOOLS.md).
 
 ## Get FPS and frametime
 
@@ -22,12 +22,10 @@ iNiR has no control for MangoHud's log. Set `autostart_log=1` and `output_folder
 
 ## Change the view
 
-Press the view button in the panel's titlebar to cycle through four views. The one you pick is kept.
-
-- **Minimal** is the starting view: four lines with GPU, CPU, average thread load and FPS.
-- **Simple** adds FPS and frametime graphs with a summary.
-- **Compact** shows only numbers, with no graphs: FPS, frametime, CPU, GPU, VRAM, and the average, minimum and maximum FPS.
-- **Detailed** adds frame pacing, CPU core bars and clocks, GPU clocks, power, voltage, RAM, swap, resolution, graphics API, Wine or Proton version and driver.
+The panel starts small: FPS over a trace of its frame times, where a stutter shows as a spike, with CPU, GPU, video
+memory and memory beneath. Press the unfold button
+in its header to see everything: each sensor that reports (clocks, power, temperatures), every CPU core, and the
+game's session (resolution, graphics API, Wine or Proton, driver). The one you pick is kept.
 
 ## Change the background
 
