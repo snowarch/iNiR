@@ -51,9 +51,11 @@ Item {
         Loader {
             anchors.fill: parent
             active: !root.own
+            // its own layer: no compositor blur reaches it, so a glass style's fill showed the tools beneath sharp
             sourceComponent: PanelSurface {
                 elevation: 2
                 cardStyle: true
+                opaqueSurface: true
                 radiusOverride: FamilyStyle.radiusSheet
             }
         }
