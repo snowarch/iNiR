@@ -786,7 +786,7 @@ Singleton {
     // or they sample a wallpaper nobody sees.
     readonly property bool desktopShowsBackdrop: !root.activeOwnBackground && root.useBackdropWallpaper
     readonly property real desktopDim: root.desktopShowsBackdrop
-        ? Math.max(0, Math.min(1, Number(Config.options?.background?.backdrop?.dim ?? 35) / 100)) : 0
+        ? Math.max(0, Math.min(1, Number(Config.options?.background?.backdrop?.dim ?? 0) / 100)) : 0
     readonly property real desktopSaturation: root.desktopShowsBackdrop ? Number(Config.options?.background?.backdrop?.saturation ?? 0) : 0
     readonly property real desktopContrast: root.desktopShowsBackdrop ? Number(Config.options?.background?.backdrop?.contrast ?? 0) : 0
     function desktopWallpaperPath(monitorName = ""): string {

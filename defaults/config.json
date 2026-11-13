@@ -206,7 +206,7 @@
         "backdrop": {
             "blurRadius": 40,
             "contrast": 0,
-            "dim": 40,
+            "dim": 0,
             "enable": true,
             "enableAnimatedBlur": false,
             "saturation": 0,
@@ -226,8 +226,8 @@
         "videoPause": "covered",
         "effects": {
             "blurRadius": 22,
-            "dim": 30,
-            "dynamicDim": 20,
+            "dim": 0,
+            "dynamicDim": 0,
             "enableBlur": true,
             "ripple": {
                 "enable": false,
@@ -1143,8 +1143,7 @@
         "clickthroughOpacity": 0.8,
         "darkenScreen": false,
         "floatingImage": {
-            "imageSource": "",
-            "scale": 0.5
+            "imageSource": ""
         },
         "openingZoomAnimation": false,
         "scrimAnimationDurationMs": 60,
@@ -2600,7 +2599,7 @@
                 "useMainWallpaper": true,
                 "wallpaperPath": "",
                 "blurRadius": 32,
-                "dim": 35,
+                "dim": 0,
                 "saturation": 0,
                 "contrast": 0,
                 "vignetteEnabled": false,

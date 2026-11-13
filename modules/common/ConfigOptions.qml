@@ -1521,8 +1521,8 @@ JsonAdapter {
             property int blurRadius: 22
             property int thumbnailBlurStrength: 50
             property bool enableAnimatedBlur: false // Enable blur for animated wallpapers (video/gif) - has performance impact
-            property int dim: 30 // 0-100 percentage (base overlay)
-            property int dynamicDim: 20 // Extra dim when there are windows on the current workspace (0-100)
+            property int dim: 0 // 0-100 percentage (base overlay)
+            property int dynamicDim: 0 // Extra dim when there are windows on the current workspace (0-100)
             // The wallpaper (still, GIF or video) drawn as glowing glyphs. Every key after `look` is an option of
             // widgets/GlyphArt.js (percent where it says so); choosing a look writes the ones a look decides.
             property JsonObject glyphs: JsonObject {
@@ -1590,7 +1590,7 @@ JsonAdapter {
             property bool enableAnimation: false // Enable animated wallpapers (video/gif) in backdrop (disabled by default for performance)
             property bool enableAnimatedBlur: false // Enable blur for animated wallpapers (video/gif) - has performance impact
             property int blurRadius: 32
-            property int dim: 35
+            property int dim: 0
             property real saturation: 0
             property real contrast: 0
             property bool vignetteEnabled: false
@@ -1850,12 +1850,19 @@ JsonAdapter {
         property int scrimAnimationDurationMs: 140
         property JsonObject floatingImage: JsonObject {
             property string imageSource: "https://media.tenor.com/H5U5bJzj3oAAAAAi/kukuru.gif"
-            property real scale: 0.5
         }
         property JsonObject gamePerformance: JsonObject {
             property bool transparentBackground: false
             // -1 inherits overlay.backgroundOpacity.
             property real backgroundOpacity: -1
+        }
+        property JsonObject clock: JsonObject {
+            property string face: "digital" // digital, analog
+            property bool seconds: false
+            property bool date: true
+        }
+        property JsonObject network: JsonObject {
+            property string target: "cloudflare" // cloudflare, google, router
         }
     }
 
