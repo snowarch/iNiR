@@ -3672,5 +3672,7 @@
   "Whole window": "ウィンドウ全体",
   "Region": "範囲",
   "Drag over it to keep only a part": "一部だけ残すならドラッグ",
-  "It stays live; on another workspace most apps draw once a second": "ライブのまま。別のワークスペースではほとんどのアプリが毎秒1回だけ描画します"
+  "It stays live; on another workspace most apps draw once a second": "ライブのまま。別のワークスペースではほとんどのアプリが毎秒1回だけ描画します",
+  "Changed %1 settings": "%1 件の設定を変更しました",
+  "Changes your settings": "設定を変更します"
 }

@@ -3672,5 +3672,7 @@
   "Whole window": "النافذة كاملة",
   "Region": "منطقة",
   "Drag over it to keep only a part": "اسحب فوقها لتبقي جزءًا منها فقط",
-  "It stays live; on another workspace most apps draw once a second": "يبقى مباشرًا؛ في مساحة عمل أخرى ترسم معظم التطبيقات إطارًا واحدًا في الثانية"
+  "It stays live; on another workspace most apps draw once a second": "يبقى مباشرًا؛ في مساحة عمل أخرى ترسم معظم التطبيقات إطارًا واحدًا في الثانية",
+  "Changed %1 settings": "تم تغيير %1 من الإعدادات",
+  "Changes your settings": "يغيّر إعداداتك"
 }

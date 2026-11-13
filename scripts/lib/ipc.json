@@ -3435,6 +3435,52 @@
    ]
   },
   {
+   "name": "setting",
+   "family": "shared",
+   "description": "Reads and changes settings the way the person's Settings does: only the rows the active family's Settings shows, only the values those rows allow. Each change shows an Undo notice and is kept in a history.",
+   "notes": "Answers are JSON. A value is JSON too (`true`, `0.8`, `\"bottom\"`); a bare word is read as text, a choice may\nbe named by its label, and a number may carry the unit its row shows (`70%`).\n```kdl\nMod+Shift+S { spawn \"inir\" \"setting\" \"set\" \"time.secondPrecision\" \"true\"; }\n```",
+   "example": "Mod+Shift+S { spawn \"inir\" \"setting\" \"set\" \"time.secondPrecision\" \"true\"; }",
+   "functions": [
+    {
+     "name": "find",
+     "args": [
+      "query"
+     ],
+     "description": "The settings a phrase names, best first: key, label, section, value now and what it allows.",
+     "values": []
+    },
+    {
+     "name": "get",
+     "args": [
+      "key"
+     ],
+     "description": "One setting: its label, section, value now and what it allows; null when Settings has no such row.",
+     "values": []
+    },
+    {
+     "name": "set",
+     "args": [
+      "key",
+      "value"
+     ],
+     "description": "Change one setting; returns `{\"changed\": [{key, before, after}]}` or `{\"error\": ...}`.",
+     "values": []
+    },
+    {
+     "name": "undo",
+     "args": [],
+     "description": "Take back the last change made through `setting set` (or a companion); returns the keys it put back, or \"\".",
+     "values": []
+    },
+    {
+     "name": "history",
+     "args": [],
+     "description": "The last changes made this way, newest first: when, who asked, and each key before and after.",
+     "values": []
+    }
+   ]
+  },
+  {
    "name": "settings",
    "family": "shared",
    "description": "Open or toggle the settings window. GUI config so you don't have to edit JSON by hand.",

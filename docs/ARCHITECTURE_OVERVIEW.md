@@ -94,6 +94,11 @@ A new look, Design, theme or widget is a plugin in inir-hub, never a folder here
 - Your file: `~/.config/inir/config.json`, only the keys you changed. A key that moves reaches your file at load
   (`ConfigMigrations.js`); setup never overwrites it.
 - Read `Config.options.path.to.key`; write only with `Config.setNestedValue("path.to.key", value)`.
+- Anything but Settings itself (a plugin, a companion, `inir setting set`) changes a setting through
+  `services/ShellSettings.qml`: only the rows the active family's Settings shows, only the values those rows allow
+  (on or off, one of its choices, a number in its range), each change with an Undo and kept in a history. The
+  family lists its rows with its `settings.index` verb (Material and Waffle from their generated search index, iRiS
+  from its option registry) and may write them itself with `settings.apply`, so whatever else a row does happens too.
 
 See [Config System](CONFIG_SYSTEM.md).
 

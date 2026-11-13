@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Generated from the /// comments on each QML IpcHandler; edit those, then run the IPC registry generator.
-# Targets: 81
+# Targets: 82
 
 declare -gA IPC_TARGET_DESC=(
   [ai]="Shared multi-provider AI service. It supports Gemini, OpenAI-compatible chat and Responses APIs, Mistral and Anthropic; live provider catalogs are normalized into capability-aware model records. Catalog visibility is separate from execution readiness, so public model lists remain browseable without pretending an API key exists. OpenCode Zen and Go resolve their current model lists and per-model API routes dynamically. Normal shell tools use typed actions and approval cards, while arbitrary commands are isolated in Advanced mode."
@@ -60,6 +60,7 @@ declare -gA IPC_TARGET_DESC=(
   [scratchpad]="Umbriel's scratchpad: windows set aside, hidden until shown over whatever workspace is in front."
   [search]="Waffle start menu / search."
   [session]="Power menu. Logout, suspend, reboot, shutdown. The \"I'm done for today\" buttons."
+  [setting]="Reads and changes settings the way the person's Settings does: only the rows the active family's Settings shows, only the values those rows allow. Each change shows an Undo notice and is kept in a history."
   [settings]="Open or toggle the settings window. GUI config so you don't have to edit JSON by hand."
   [settingsNav]="Navigate the settings overlay to a specific page (same as clicking the nav rail). \`inir settings\` toggles the current Settings host; use the \`settings\` IPC target above when you need explicit open/toggle semantics."
   [shellLayout]="Dedicated persistent-shell layout editing and diagnostics. It is independent from desktop widget edit mode. It moves the ii bar and dock, swaps semantic ii sidebars between physical edges, resizes sidebar roles, and moves the Waffle taskbar through validated operations over canonical Config keys."
@@ -144,6 +145,7 @@ declare -gA IPC_TARGET_FAMILY=(
   [scratchpad]="shared"
   [search]="shared"
   [session]="shared"
+  [setting]="shared"
   [settings]="shared"
   [settingsNav]="shared"
   [shellLayout]="shared"
@@ -228,6 +230,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [scratchpad]="toggle send restore list"
   [search]="toggle close open"
   [session]="toggle close open"
+  [setting]="find get set undo history"
   [settings]="open toggle openOverlay openOverlayAt openWindowAt setOverlayStyle"
   [settingsNav]="page section open count current"
   [shellLayout]="toggle open openOn close select lift preview place cancel dragStart dragUpdate dragEnd reset setProperty handleEscape status validate"
@@ -601,6 +604,11 @@ declare -gA IPC_FUNCTION_DESC=(
   ["session:toggle"]="Open/close session menu"
   ["session:close"]="Hide session screen"
   ["session:open"]="Show session screen"
+  ["setting:find"]="The settings a phrase names, best first: key, label, section, value now and what it allows."
+  ["setting:get"]="One setting: its label, section, value now and what it allows; null when Settings has no such row."
+  ["setting:set"]="Change one setting; returns \`{\"changed\": [{key, before, after}]}\` or \`{\"error\": ...}\`."
+  ["setting:undo"]="Take back the last change made through \`setting set\` (or a companion); returns the keys it put back, or \"\"."
+  ["setting:history"]="The last changes made this way, newest first: when, who asked, and each key before and after."
   ["settings:open"]="Open the settings window"
   ["settings:toggle"]="Toggle settings in the active host (overlay or window)"
   ["settings:openOverlay"]="Switch to overlay mode and open Settings"
@@ -882,6 +890,9 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["pill:toggle"]="<surface>"
   ["privacy:simulate"]="<spec>"
   ["scratchpad:restore"]="<windowId>"
+  ["setting:find"]="<query>"
+  ["setting:get"]="<key>"
+  ["setting:set"]="<key> <value>"
   ["settings:openOverlayAt"]="<index>"
   ["settings:openWindowAt"]="<index>"
   ["settings:setOverlayStyle"]="<style> <index>"
@@ -1047,6 +1058,7 @@ Super+Shift+A { spawn "inir" "region" "search"; }
 Ctrl+Shift+S { spawn "inir" "region" "menu"; }'
   [scratchpad]='Mod+Grave { spawn "inir" "scratchpad" "toggle"; }'
   [session]='Super+Shift+E { spawn "inir" "session" "toggle"; }'
+  [setting]='Mod+Shift+S { spawn "inir" "setting" "set" "time.secondPrecision" "true"; }'
   [settings]='Super+Comma { spawn "inir" "settings"; }'
   [shellLayout]='Super+W { spawn "inir" "shellLayout" "toggle"; }'
   [voiceSearch]='Super+Shift+V { spawn "inir" "voiceSearch" "toggle"; }'
@@ -1058,8 +1070,8 @@ Ctrl+Alt+A { spawn "inir" "wallpaperSelector" "openLauncher" "animated"; }'
   [ytmusic]='Mod+M+Space { spawn "inir" "ytmusic" "playPause"; }'
 )
 
-IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode colorPicker connections controlPanel coverflowSelector customWidgets dashboard dev equalizer gamemode globalActions globalStyle hub iris irisDev keyboard livePins lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily pill privacy recordingOsd region scratchpad search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling timer undo voiceSearch vpn wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetStacks widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
-IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio autostart background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode colorPicker connections controlPanel coverflowSelector customWidgets dashboard dev gamemode globalActions globalStyle hub keyboard livePins lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily privacy recordingOsd region scratchpad search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling timer undo voiceSearch vpn wallpaperLauncher wallpaperSelector widgetStacks widgetpower workspaceStrip ytmusic zoom)
+IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode colorPicker connections controlPanel coverflowSelector customWidgets dashboard dev equalizer gamemode globalActions globalStyle hub iris irisDev keyboard livePins lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily pill privacy recordingOsd region scratchpad search session setting settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling timer undo voiceSearch vpn wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetStacks widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
+IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio autostart background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode colorPicker connections controlPanel coverflowSelector customWidgets dashboard dev gamemode globalActions globalStyle hub keyboard livePins lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily privacy recordingOsd region scratchpad search session setting settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling timer undo voiceSearch vpn wallpaperLauncher wallpaperSelector widgetStacks widgetpower workspaceStrip ytmusic zoom)
 IPC_II_TARGETS=(equalizer pill)
 IPC_WAFFLE_TARGETS=(wactionCenter waffleAltSwitcher wbar wnotificationCenter wwidgets)
 IPC_IRIS_TARGETS=(iris irisDev)

@@ -3672,5 +3672,7 @@
   "Whole window": "Fenêtre entière",
   "Region": "Zone",
   "Drag over it to keep only a part": "Faites glisser dessus pour n'en garder qu'une partie",
-  "It stays live; on another workspace most apps draw once a second": "Reste en direct ; sur un autre espace de travail, la plupart des applis se redessinent une fois par seconde"
+  "It stays live; on another workspace most apps draw once a second": "Reste en direct ; sur un autre espace de travail, la plupart des applis se redessinent une fois par seconde",
+  "Changed %1 settings": "%1 paramètres modifiés",
+  "Changes your settings": "Modifie vos paramètres"
 }

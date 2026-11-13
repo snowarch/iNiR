@@ -59,7 +59,7 @@ In Waffle, **Waffle Settings › Waffle Style › Show your widgets** hides the 
 ## Permissions
 
 A shield on a row means the item asks for permissions; its page lists them, with every internet address its code
-talks to under **Reaches**. **Runs commands on your computer** means it starts programs. **Talks to the internet** means it makes network requests. **Reads or writes files outside its own folder** means it uses files elsewhere in your home. **Injects scripts into the site it opens** applies to web apps.
+talks to under **Reaches**. **Runs commands on your computer** means it starts programs. **Talks to the internet** means it makes network requests. **Reads or writes files outside its own folder** means it uses files elsewhere in your home. **Injects scripts into the site it opens** applies to web apps. **Changes your settings** means it changes options your Settings shows, each with an Undo, never anything else.
 
 Items are read before they are added to the catalogue, and every download is checked before it installs. Widgets run inside the shell, so check the permissions before you install one, especially anything that runs commands.
 

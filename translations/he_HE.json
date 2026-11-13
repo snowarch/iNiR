@@ -3672,5 +3672,7 @@
   "Whole window": "חלון שלם",
   "Region": "אזור",
   "Drag over it to keep only a part": "גרור מעליו כדי לשמור רק חלק",
-  "It stays live; on another workspace most apps draw once a second": "נשאר חי; בסביבת עבודה אחרת רוב האפליקציות מתעדכנות פעם בשנייה"
+  "It stays live; on another workspace most apps draw once a second": "נשאר חי; בסביבת עבודה אחרת רוב האפליקציות מתעדכנות פעם בשנייה",
+  "Changed %1 settings": "%1 הגדרות שונו",
+  "Changes your settings": "משנה את ההגדרות שלך"
 }

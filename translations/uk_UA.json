@@ -3672,5 +3672,7 @@
   "Whole window": "Усе вікно",
   "Region": "Область",
   "Drag over it to keep only a part": "Виділіть частину, щоб залишити лише її",
-  "It stays live; on another workspace most apps draw once a second": "Лишається живим; на іншому робочому просторі більшість застосунків малює раз на секунду"
+  "It stays live; on another workspace most apps draw once a second": "Лишається живим; на іншому робочому просторі більшість застосунків малює раз на секунду",
+  "Changed %1 settings": "Змінено налаштувань: %1",
+  "Changes your settings": "Змінює ваші налаштування"
 }
