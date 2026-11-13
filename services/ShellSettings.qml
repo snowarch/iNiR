@@ -135,8 +135,9 @@ Singleton {
     }
 
     // Change settings: { key: value, ... }. Every value is checked first; nothing is written if one doesn't fit.
-    // Returns { changed: [{ key, before, after }] } or { error }. `by` names who asked (shown in the history).
-    function request(changes: var, by: string): var {
+    // Returns { changed: [{ key, before, after }], at } or { error }. `by` names who asked (shown in the history);
+    // `quiet` skips the shell's Undo notice for a caller that shows its own way back (`undo(at)`).
+    function request(changes: var, by: string, quiet: bool): var {
         const steps = []
         for (const key of Object.keys(changes ?? {})) {
             const fit = root.check(key, changes[key])
@@ -146,12 +147,13 @@ Singleton {
         }
         if (steps.length === 0) return { changed: [] }
         root._write(steps.map(step => [step.key, step.after]))
-        const entry = { at: Date.now(), by: String(by ?? ""), steps: steps }
+        // `at` names the change: two in one millisecond still get their own.
+        const entry = { at: Math.max(Date.now(), (root.history[0]?.at ?? 0) + 1), by: String(by ?? ""), steps: steps }
         root._keep([entry].concat(root.history).slice(0, root.historyLimit))
         const first = root.row(steps[0].key)
-        Undo.offer(steps.length === 1 ? Translation.tr(first.label) + ": " + root.say(first, steps[0].after)
+        if (!quiet) Undo.offer(steps.length === 1 ? Translation.tr(first.label) + ": " + root.say(first, steps[0].after)
             : Translation.tr("Changed %1 settings").arg(steps.length), () => root._revert(entry))
-        return { changed: steps }
+        return { changed: steps, at: entry.at }
     }
 
     function _write(pairs: var): void {
@@ -172,6 +174,14 @@ Singleton {
         root._write(entry.steps.filter(step => JSON.stringify(Config.getNestedValue(step.key)) === JSON.stringify(step.after))
             .map(step => [step.key, step.before]))
         root._keep(root.history.filter(other => other !== entry))
+    }
+
+    // Take back one change by its `at`; false when it is no longer in the history.
+    function undo(at: real): bool {
+        const entry = root.history.find(other => other.at === at)
+        if (!entry) return false
+        root._revert(entry)
+        return true
     }
 
     // Take back the last change made through the door; returns what it was, or "" when there is none.
@@ -220,13 +230,13 @@ Singleton {
             return root._json(root.describe(key))
         }
 
-        /// Change one setting; returns `{"changed": [{key, before, after}]}` or `{"error": ...}`.
+        /// Change one setting; returns `{"changed": [{key, before, after}], "at": <its id>}` or `{"error": ...}`.
         function set(key: string, value: string): string {
             let parsed = value
             try { parsed = JSON.parse(value) } catch (e) {}
             const changes = {}
             changes[key] = parsed
-            return root._json(root.request(changes, "ipc"))
+            return root._json(root.request(changes, "ipc", false))
         }
 
         /// Take back the last change made through `setting set` (or a companion); returns the keys it put back, or "".

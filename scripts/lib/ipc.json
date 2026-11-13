@@ -3463,7 +3463,7 @@
       "key",
       "value"
      ],
-     "description": "Change one setting; returns `{\"changed\": [{key, before, after}]}` or `{\"error\": ...}`.",
+     "description": "Change one setting; returns `{\"changed\": [{key, before, after}], \"at\": <its id>}` or `{\"error\": ...}`.",
      "values": []
     },
     {
