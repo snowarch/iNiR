@@ -583,8 +583,8 @@ var algorithmSpaces = (preparedSearch, target, allowPartialMatch) => {
     return result
 }
 
-// we use this instead of just .normalize('NFD').replace(/[\u0300-\u036f]/g, '') because that screws with japanese characters
-var remove_accents = (str) => str.replace(/\p{Script=Latin}+/gu, match => match.normalize('NFD')).replace(/[\u0300-\u036f]/g, '')
+// V4 ignores \p{Script=Latin} (Qt 6.12), so upstream's Latin-only pass never ran: NFC recomposes the kana and hangul NFD split
+var remove_accents = (str) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').normalize('NFC')
 
 var prepareLowerInfo = (str) => {
     str = remove_accents(str)
