@@ -30,6 +30,7 @@ Floating tools rebuilt as a bench with a clock, a timer and your network, live w
 - **Live previews keep playing when focus moves**: tiles in the Overview, Orbit and Task View were rebuilt at each focus change and lost their live picture (iRiS 2.33.86, Waffle 2.34.16 from the Hub).
 - **Large account pictures**: a picture over 1 MB, or a WebP or AVIF, chosen as your avatar is made a PNG the login screen can read, instead of being refused.
 - **Updates with a large config**: past 128 KB of config, an update skipped qs-rs and the helpers without a word; it no longer does, and setup and the `inir` command install and build where `/tmp` can't run programs.
+- **Lists you chose are kept**: the screens picked for the bar, the dock and the Island, the modules and actions of Orbit's shelf and the blocks of the Island's player page were saved but ignored, and the shell kept its defaults; Material's Settings showed the defaults in those editors too (Material 2.36.2, iRiS 2.33.86, Waffle 2.34.16 from the Hub).
 - **Hub widget commands after a reload**: `inir radio toggle` and other widget commands keep reaching the widget after the shell reloads (Radio 2.3.1 from the Hub).
 
 ### Issues / PRs
