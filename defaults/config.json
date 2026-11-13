@@ -2338,6 +2338,8 @@
             "notchCurve": 100,
             "fromCorner": true,
             "reserve": true,
+            "autoHide": false,
+            "revealOnEmpty": true,
             "apps": []
         },
         "anime": {
