@@ -5,7 +5,7 @@ All notable changes to iNiR will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.2.0] - 2026-11-13
+## [3.1.1] - 2026-11-13
 
 Floating tools rebuilt as a bench with a clock, a timer and your network, live windows and pins on Umbriel, pickers in your own colours, and an update that undoes itself whole when the new version won't start.
 
