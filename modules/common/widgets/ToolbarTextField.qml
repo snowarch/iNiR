@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Controls as QQC
 import QtQuick.Layouts
 import QtQuick.Controls
 import qs.modules.common
@@ -9,6 +10,8 @@ import qs.modules.common.widgets
 TextField {
     cursorDelegate: TextCursor {}
     id: filterField
+    QQC.ContextMenu.menu: null
+    QQC.ContextMenu.onRequested: position => TextEditMenu.open(filterField, position)
 
     property alias colBackground: background.color
 

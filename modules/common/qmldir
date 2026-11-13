@@ -6,6 +6,7 @@ singleton Config 1.0 Config.qml
 ConfigOptions 1.0 ConfigOptions.qml
 singleton Directories 1.0 Directories.qml
 singleton FamilyStyle 1.0 FamilyStyle.qml
+singleton TextEditMenu 1.0 TextEditMenu.qml
 FamilyTransitionOverlay 1.0 FamilyTransitionOverlay.qml
 FamilyPartLoader 1.0 FamilyPartLoader.qml
 singleton Icons 1.0 Icons.qml

@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Controls as QQC
 import QtQuick.Layouts
 import QtQuick.Controls
 import qs
@@ -500,6 +501,8 @@ AbstractBackgroundWidget {
                 TextArea {
                     cursorDelegate: TextCursor {}
                     id: taskInput
+                    QQC.ContextMenu.menu: null
+                    QQC.ContextMenu.onRequested: position => TextEditMenu.open(taskInput, position)
                     anchors.fill: parent
                     anchors.margins: Math.round(10 * root.scaleFactor)
                     text: root.editingText
