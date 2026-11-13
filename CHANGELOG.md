@@ -31,15 +31,16 @@ Floating tools rebuilt as a bench with a clock, a timer and your network, live w
 - **Large account pictures**: a picture over 1 MB, or a WebP or AVIF, chosen as your avatar is made a PNG the login screen can read, instead of being refused.
 - **Updates with a large config**: past 128 KB of config, an update skipped qs-rs and the helpers without a word; it no longer does, and setup and the `inir` command install and build where `/tmp` can't run programs.
 - **Lists you chose are kept**: the screens picked for the bar, the dock and the Island, the modules and actions of Orbit's shelf and the blocks of the Island's player page were saved but ignored, and the shell kept its defaults; Material's Settings showed the defaults in those editors too (Material 2.36.2, iRiS 2.33.86, Waffle 2.34.16 from the Hub).
+- **iRiS bubbles off a screen leave it free**: a screen where the bubbles are turned off kept their strip and its reserved space, and panels, menus, notices and the on-screen keyboard still stepped around it ([snowarch/inir-hub#8](https://github.com/snowarch/inir-hub/issues/8), iRiS 2.33.86 from the Hub).
 - **Hub widget commands after a reload**: `inir radio toggle` and other widget commands keep reaching the widget after the shell reloads (Radio 2.3.1 from the Hub).
 
 ### Issues / PRs
-- Fixed [#331](https://github.com/snowarch/iNiR/issues/331).
+- Fixed [#331](https://github.com/snowarch/iNiR/issues/331) and [snowarch/inir-hub#8](https://github.com/snowarch/inir-hub/issues/8).
 - Included contributions from [snowarch/inir-hub#6](https://github.com/snowarch/inir-hub/pull/6) and [snowarch/inir-cli#1](https://github.com/snowarch/inir-cli/pull/1).
 - Parts: [qs-rs 0.1.7](https://github.com/snowarch/qs-rs/releases/tag/v0.1.7), [inir-cli 0.2.13](https://github.com/snowarch/inir-cli/releases/tag/v0.2.13) and [0.2.14](https://github.com/snowarch/inir-cli/releases/tag/v0.2.14); Material 2.36.2, iRiS 2.33.86, Waffle 2.34.16, Countdown 1.1.0, Radio 2.3.1 and iNiR Docker 0.6.0 from the [Hub](https://inir.space/hub).
 
 ### Contributors
-Thanks to [@yukazakiri](https://github.com/yukazakiri) for the iNiR Docker widget, and to [@anseriformas](https://github.com/anseriformas) for the report behind the update fix.
+Thanks to [@yukazakiri](https://github.com/yukazakiri) for the iNiR Docker widget, and to [@anseriformas](https://github.com/anseriformas) and [@Xar0P](https://github.com/Xar0P) for the reports behind the update and bubbles fixes.
 
 ## [3.1.0] - 2026-11-12
 
