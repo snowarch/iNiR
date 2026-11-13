@@ -615,7 +615,30 @@ Singleton {
         }
     }
 
+    // What the last "clear all" took, so it can be undone (without actions, as after a restart).
+    property var lastCleared: []
+    function restoreCleared(): void {
+        if (root.lastCleared.length === 0) return
+        const back = root.lastCleared.map(n => notifComponent.createObject(root, {
+            "notificationId": n.notificationId,
+            "actions": [],
+            "appIcon": n.appIcon,
+            "appName": n.appName,
+            "desktopEntry": n.desktopEntry ?? "",
+            "body": n.body,
+            "image": n.image,
+            "summary": n.summary,
+            "time": n.time,
+            "urgency": n.urgency,
+        })).filter(n => n !== null)
+        root.lastCleared = []
+        root.list = [...back, ...root.list].sort((a, b) => a.time - b.time)
+        triggerListChange()
+        notifFileView.setText(stringifyList(root.list));
+    }
+
     function discardAllNotifications() {
+        root.lastCleared = root.list.map(notif => notifToJSON(notif)).filter(json => json !== null)
         // Cancel and destroy all active timers before clearing the list
         for (const notif of root.list) {
             if (notif.timer) {
