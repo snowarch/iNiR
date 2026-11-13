@@ -5,6 +5,41 @@ All notable changes to iNiR will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0] - 2026-11-13
+
+Floating tools rebuilt as a bench with a clock, a timer and your network, live windows and pins on Umbriel, pickers in your own colours, and an update that undoes itself whole when the new version won't start.
+
+### Added
+- **Floating tools, rebuilt**: **Super+G** opens a bench over your game or video. Tools sit in groups on a strip, snap to the screen's edges and to each other, and **Arrange** lays every open one side by side. A pinned tool stays on screen when the bench closes, as a quiet readout with the plate you pick, clickable or letting clicks through to the game. Three new tools: **Clock** (large figures or a dial), **Timer** (timer, stopwatch with laps and focus sessions) and **Network** (latency, jitter, lost replies and traffic). Clearing your notifications there can be undone, and the floating image opens at a size that fits the screen. Set it up in Material's **Settings › Panels › Floating tools**, iRiS's **Settings › Gaming & Fullscreen › Floating tools** or Waffle's **Settings › Interface › Floating tools** ([Floating tools](docs/FLOATING_TOOLS.md); Material 2.36.2, iRiS 2.33.86, Waffle 2.34.16 from the Hub).
+- **Live windows on Umbriel**: window previews in the Overview, Orbit and Task View, and live pins, now stream under Umbriel as they do under Niri (qs-rs 0.1.7).
+- **Hub widgets in Material's sidebars**: a widget from the Hub can sit as a card in the left sidebar's Widgets column or as a tab in the right one (**Settings › Sidebars**). The Countdown is the first (Countdown 1.1.0, Material 2.36.0 from the Hub).
+- **iNiR Docker in the Hub**: your containers on the desktop in three layouts, with live CPU and memory, start, stop and logs, and sliders for their RAM and CPU limits, by [@yukazakiri](https://github.com/yukazakiri) (iNiR Docker 0.6.0 from the Hub, snowarch/inir-hub#6).
+
+### Changed
+- **Live pins take a whole window**: picking a pin starts on the whole window, and a drag keeps only a part of it. The card's buttons and its resize grip stay put when the pointer comes near, and it keeps the live shape inside its box. Waffle shows pins on the desktop too. On Niri, a pin of a window on another workspace refreshes about once a second, and the picker says so: Niri draws hidden windows that slowly ([niri-wm/niri#2609](https://github.com/niri-wm/niri/issues/2609)).
+- **Pickers in your colours**: choosing a file, a folder, a picture or a colour opens the shell's own sheet in your theme in every family, instead of a white window, and the screen colour picker works on Niri (Material 2.36.1, iRiS 2.33.85, Waffle 2.34.15 from the Hub).
+- **Timers pause and come back**: a timer can be paused, and stopping one can be undone; a paused timer keeps its time across restarts. On the iRiS Island a right click stops a timer, a middle click pauses it, the open Island has pause and stop, and the time reads whole (iRiS 2.33.86 from the Hub).
+- **The wallpaper starts without dim**: the wallpaper and the backdrop no longer start darkened; a dim you set stays as it is.
+- **YT Music keeps its data apart**: your queue, playlists, liked songs, searches, profile and where you left off move out of the config into a file of their own at the next start, so nothing rewrites your config while music plays.
+- **Material's left sidebar breathes**: its widgets sit 24 px apart instead of 8, also in configs that kept the old spacing untouched, and a card with nothing to show (weather offline, no wallpapers) no longer leaves an empty block (Material 2.36.2 from the Hub).
+
+### Fixed
+- **A failed update undoes itself whole**: when a new version didn't start, the rollback put the old shell back but left the new families and recorded the update as done, so `inir update` said "Already up to date", iRiS failed to load and `inir doctor` kept warning about a missing file manifest. The rollback now takes back the version, the families and the manifest together, and a desktop left that way updates again with this release (#331).
+- **Text fields' right-click menu**: it opens in the family's look, inside the panel, instead of a white menu outside it that made a sidebar close under the pointer (Material 2.36.2, iRiS 2.33.86, Waffle 2.34.16 from the Hub).
+- **Docks no longer blink when a window opens**: the list of open apps emptied for a tenth of a second at each new window; the iRiS dock now slides its icons into place (iRiS 2.33.86 from the Hub).
+- **Live previews keep playing when focus moves**: tiles in the Overview, Orbit and Task View were rebuilt at each focus change and lost their live picture (iRiS 2.33.86, Waffle 2.34.16 from the Hub).
+- **Large account pictures**: a picture over 1 MB, or a WebP or AVIF, chosen as your avatar is made a PNG the login screen can read, instead of being refused.
+- **Updates with a large config**: past 128 KB of config, an update skipped qs-rs and the helpers without a word; it no longer does, and setup and the `inir` command install and build where `/tmp` can't run programs.
+- **Hub widget commands after a reload**: `inir radio toggle` and other widget commands keep reaching the widget after the shell reloads (Radio 2.3.1 from the Hub).
+
+### Issues / PRs
+- Fixed [#331](https://github.com/snowarch/iNiR/issues/331).
+- Included contributions from [snowarch/inir-hub#6](https://github.com/snowarch/inir-hub/pull/6) and [snowarch/inir-cli#1](https://github.com/snowarch/inir-cli/pull/1).
+- Parts: [qs-rs 0.1.7](https://github.com/snowarch/qs-rs/releases/tag/v0.1.7), [inir-cli 0.2.13](https://github.com/snowarch/inir-cli/releases/tag/v0.2.13) and [0.2.14](https://github.com/snowarch/inir-cli/releases/tag/v0.2.14); Material 2.36.2, iRiS 2.33.86, Waffle 2.34.16, Countdown 1.1.0, Radio 2.3.1 and iNiR Docker 0.6.0 from the [Hub](https://inir.space/hub).
+
+### Contributors
+Thanks to [@yukazakiri](https://github.com/yukazakiri) for the iNiR Docker widget, and to [@anseriformas](https://github.com/anseriformas) for the report behind the update fix.
+
 ## [3.1.0] - 2026-11-12
 
 The wallpaper drawn as glyphs, Settings that follow Umbriel, a new iNiR mark, and a first install that asks where iNiR runs.

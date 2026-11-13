@@ -6,7 +6,7 @@
 # Safe to remove with: sudo pacman -R inir-deps
 
 pkgname=inir-deps
-pkgver=3.1.0
+pkgver=3.2.0
 pkgrel=1
 pkgdesc='iNiR desktop shell - dependency tracker (meta-package)'
 url='https://github.com/snowarch/inir'
