@@ -109,13 +109,15 @@ Singleton {
         return (Config.options?.enabledPanels ?? []).includes(identifier)
     }
 
+    // A config list reaches JS as a sequence (Array.isArray is false for it): Array.from reads it.
     function outputEnabled(configuredOutputs: var, outputName: string): bool {
-        if (!Array.isArray(configuredOutputs) || configuredOutputs.length === 0)
+        const outputs = Array.from(configuredOutputs ?? [])
+        if (outputs.length === 0)
             return true
-        if (outputName.length > 0 && configuredOutputs.includes(outputName))
+        if (outputName.length > 0 && outputs.includes(outputName))
             return true
         const currentNames = Quickshell.screens.map(screen => screen?.name ?? "")
-        return !configuredOutputs.some(name => currentNames.includes(name))
+        return !outputs.some(name => currentNames.includes(name))
     }
 
     function applyInset(insets: var, edge: string, thickness: real): void {

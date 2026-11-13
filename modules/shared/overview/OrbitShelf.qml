@@ -122,16 +122,14 @@ Item {
         return Translation.tr("Workspace %1").arg(root.activeWorkspace.idx)
     }
     readonly property var pinnedActions: {
-        const ids = Array.isArray(root.shelfOptions.pinnedActions)
-            ? root.shelfOptions.pinnedActions : ["open-clipboard", "toggle-tiling", "toggle-dashboard"]
+        const ids = Array.from(root.shelfOptions.pinnedActions ?? ["open-clipboard", "toggle-tiling", "toggle-dashboard"])
         const byId = {}
         for (const action of GlobalActions.allActions ?? []) byId[action.id] = action
         return ids.map(id => byId[id]).filter(action => action !== undefined).slice(0, 3)
     }
     readonly property var niriActions: {
         const allowed = ["focusLeft", "focusRight", "moveFirst", "moveLast", "maximize", "consume", "expel"]
-        const source = Array.isArray(root.shelfOptions.niriActions)
-            ? root.shelfOptions.niriActions : ["maximize", "consume", "expel"]
+        const source = Array.from(root.shelfOptions.niriActions ?? ["maximize", "consume", "expel"])
         const result = []
         for (const id of source) {
             if (allowed.includes(id) && !result.includes(id)) result.push(id)
@@ -140,7 +138,7 @@ Item {
     }
     readonly property var moduleIds: {
         const defaults = ["locator", "trail", "niri", "actions", "stash"]
-        const source = Array.isArray(root.shelfOptions.modules) ? root.shelfOptions.modules : defaults
+        const source = Array.from(root.shelfOptions.modules ?? defaults)
         const result = []
         for (const id of source) {
             if (!defaults.includes(id) || result.includes(id)) continue
