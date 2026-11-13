@@ -1015,8 +1015,11 @@ Item {
 
             Repeater {
                 id: windowRepeater
+                // Keyed by window: a focus or workspace change moves tiles instead of rebuilding them, so their live
+                // pictures keep their compositor sessions.
                 model: ScriptModel {
                     values: windowSpace.windowItems
+                    objectProp: "id"
                 }
 
                 delegate: Item {

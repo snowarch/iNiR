@@ -129,7 +129,7 @@ PanelSurface {
             rowSpacing: 8
 
             Repeater {
-                model: root.stashedIds
+                model: ScriptModel { values: root.stashedIds }
 
                 delegate: RippleButton {
                     id: pocketCard

@@ -941,7 +941,10 @@ Item {
 
                     Repeater {
                         id: windowRepeater
-                        model: workspaceCard.workspaceWindows
+                        model: ScriptModel {
+                            values: workspaceCard.workspaceWindows
+                            objectProp: "id"
+                        }
 
                         delegate: Item {
                             id: windowItem
