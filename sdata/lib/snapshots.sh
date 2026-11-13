@@ -25,17 +25,33 @@ create_snapshot() {
     local commit_after="${3:-}"
     
     local timestamp=$(date +%Y%m%d-%H%M%S)
-    local commit_before=$(git -C "$REPO_ROOT" rev-parse --short HEAD 2>/dev/null || echo "unknown")
+    # the commit the runtime's files came from, not the checkout's: an update snapshots after its pull, and a
+    # restore that wrote the new commit beside the old version read as up to date from then on (#331)
+    local commit_before
+    commit_before=$(get_installed_commit 2>/dev/null)
+    [[ -n "$commit_before" && "$commit_before" != unknown ]] \
+        || commit_before=$(git -C "$REPO_ROOT" rev-parse --short HEAD 2>/dev/null || echo "unknown")
     local version_before=$(get_installed_version 2>/dev/null || echo "unknown")
     local snapshot_id="${timestamp}-${commit_before}"
     local snapshot_dir="${SNAPSHOTS_DIR}/${snapshot_id}"
-    
+
     mkdir -p "$snapshot_dir"
-    
-    # Copy QML code
+
+    # Copy QML code, with its manifest: without it the next update takes every older file for a change of the person's
     if [[ -d "${XDG_CONFIG_HOME}/quickshell/inir" ]]; then
-        rsync -a --exclude='.inir-manifest' "${XDG_CONFIG_HOME}/quickshell/inir/" "${snapshot_dir}/inir/"
+        rsync -a "${XDG_CONFIG_HOME}/quickshell/inir/" "${snapshot_dir}/inir/"
     fi
+
+    # The hub plugins the runtime links to (sdata/lib/hub-plugins.sh) change with the base, so they go back with it:
+    # an old base wearing the new families loads none of them (#331). The hub replaces a plugin's folder whole, never
+    # a file in place, so hard links keep the old one at no cost.
+    local plugins_dir="${XDG_DATA_HOME:-$HOME/.local/share}/inir/plugins"
+    local hub_installed="${XDG_STATE_HOME:-$HOME/.local/state}/inir/hub/installed.json"
+    if [[ -d "$plugins_dir" ]]; then
+        cp -al "$plugins_dir" "${snapshot_dir}/plugins" 2>/dev/null \
+            || { rm -rf "${snapshot_dir}/plugins"; cp -a "$plugins_dir" "${snapshot_dir}/plugins"; }
+    fi
+    [[ -f "$hub_installed" ]] && cp "$hub_installed" "${snapshot_dir}/hub-installed.json"
 
     if [[ -d "${XDG_CONFIG_HOME}/quickshell/ii" ]]; then
         rsync -a --exclude='.ii-manifest' "${XDG_CONFIG_HOME}/quickshell/ii/" "${snapshot_dir}/ii/"
@@ -179,7 +195,19 @@ restore_snapshot() {
         log_info "Restoring QML code..."
         rsync -a --delete "${snapshot_dir}/ii/" "${XDG_CONFIG_HOME}/quickshell/inir/"
     fi
-    
+
+    if [[ -d "${snapshot_dir}/plugins" ]]; then
+        log_info "Restoring hub plugins..."
+        local plugins_dir="${XDG_DATA_HOME:-$HOME/.local/share}/inir/plugins"
+        local hub_state="${XDG_STATE_HOME:-$HOME/.local/state}/inir/hub"
+        mkdir -p "$plugins_dir"
+        rsync -a --delete "${snapshot_dir}/plugins/" "${plugins_dir}/"
+        if [[ -f "${snapshot_dir}/hub-installed.json" ]]; then
+            mkdir -p "$hub_state"
+            cp "${snapshot_dir}/hub-installed.json" "${hub_state}/installed.json"
+        fi
+    fi
+
     # ~/.local/bin/inir is a copy of the runtime's own launcher: it goes back with it
     local bin_launcher="${XDG_BIN_HOME:-$HOME/.local/bin}/inir"
     if [[ -f "$bin_launcher" && ! -L "$bin_launcher" && -f "$runtime_launcher" ]]; then
