@@ -242,19 +242,11 @@ Singleton {
         return (root.apiKeys[model.key_id]?.length ?? 0) > 0
     }
 
-    function publicCredentialForModel(model): string {
-        // OpenCode itself uses the literal public credential for Zen's free
-        // catalog when no private account key is configured.
-        if ((model?.provider_id ?? "") === "opencode-zen" && model?.free === true)
-            return "public"
-        return ""
-    }
-
+    // Zen's keyless free lane answers only OpenCode itself ("Free models work in OpenCode"), so every Zen model needs a key.
     function credentialForModel(model): string {
         if (!model?.requires_key) return ""
         if (!root.apiKeysLoaded) return ""
-        const stored = root.apiKeys[model.key_id] ?? ""
-        return stored.length > 0 ? stored : root.publicCredentialForModel(model)
+        return root.apiKeys[model.key_id] ?? ""
     }
 
     function modelCanRun(model): bool {
@@ -1327,8 +1319,7 @@ Singleton {
                 return
             }
 
-            // Resolve the stored provider key first. Zen free models use the
-            // same public credential fallback as the official OpenCode client.
+            // Resolve the stored provider key first.
             if (model?.requires_key && !KeyringStorage.loaded) {
                 KeyringStorage.fetchKeyringData()
                 root._pendingRequest = true
