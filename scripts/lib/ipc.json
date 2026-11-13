@@ -787,6 +787,21 @@
    ]
   },
   {
+   "name": "colorPicker",
+   "family": "shared",
+   "description": "Takes one colour from the screen: every screen stands still under a loupe, a click copies that pixel's hex.",
+   "notes": "```kdl\nSuper+Shift+C { spawn \"inir\" \"colorpicker\"; }\n```",
+   "example": "Super+Shift+C { spawn \"inir\" \"colorpicker\"; }",
+   "functions": [
+    {
+     "name": "pick",
+     "args": [],
+     "description": "Take a colour from the screen and copy its hex",
+     "values": []
+    }
+   ]
+  },
+  {
    "name": "connections",
    "family": "shared",
    "description": "Short notices when something is plugged in, connected, unplugged or lost: networks, the internet, Bluetooth devices, USB devices by name (mice, keyboards, controllers, cameras, phones), the charger, the sound output, displays, and drives and memory cards with their name and size. Each family shows them its own way: a pill under the bar in Material, a panel in Waffle, the Island in iRiS. Settings has a switch for each kind.",
@@ -3049,18 +3064,21 @@
       "identifier",
       "action"
      ],
-     "description": "Show or hide one floating tool by id (`crosshair`, `fpsLimiter`, `floatingImage`, `recorder`, `resources`, `notes`, `discord`, `volumeMixer`, `notifications`, `gamePerformance`): `on`, `off` or `toggle`",
+     "description": "Show or hide one floating tool by id (`crosshair`, `fpsLimiter`, `floatingImage`, `recorder`, `resources`, `network`, `notes`, `discord`, `volumeMixer`, `notifications`, `gamePerformance`, `clock`, `timer`): `on`, `off` or `toggle`",
      "values": [
       "crosshair",
       "fpsLimiter",
       "floatingImage",
       "recorder",
       "resources",
+      "network",
       "notes",
       "discord",
       "volumeMixer",
       "notifications",
       "gamePerformance",
+      "clock",
+      "timer",
       "on",
       "off",
       "toggle"
@@ -4584,6 +4602,7 @@
   "cliphist-service": "cliphistService",
   "close-confirm": "closeConfirm",
   "color-mode": "colorMode",
+  "color-picker": "colorPicker",
   "control-panel": "controlPanel",
   "coverflow-selector": "coverflowSelector",
   "custom-widgets": "customWidgets",

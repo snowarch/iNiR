@@ -200,6 +200,8 @@ Singleton {
     }
 
     property bool regionSelectorOpen: false
+    // A colour taken from the screen and copied (the colorPicker IPC, the quick toggles, the region selector).
+    property bool screenColorPickerOpen: false
     property bool japaneseLookupOpen: false
     property bool japaneseLookupExpanded: false
     property var japaneseLookupResult: ({})

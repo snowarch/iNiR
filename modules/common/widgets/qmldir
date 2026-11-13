@@ -153,3 +153,10 @@ WheelIntent 1.0 WheelIntent.qml
 LiveWindowCropView 1.0 LiveWindowCropView.qml
 TextCursor 1.0 TextCursor.qml
 OptionalMaterialSymbol 1.0 OptionalMaterialSymbol.qml
+FilePickerDialog 1.0 FilePickerDialog.qml
+FilePickerSheet 1.0 FilePickerSheet.qml
+ShellSheet 1.0 ShellSheet.qml
+SheetButton 1.0 SheetButton.qml
+ColorPickerDialog 1.0 ColorPickerDialog.qml
+ColorPickerSheet 1.0 ColorPickerSheet.qml
+ScreenColorPicker 1.0 ScreenColorPicker.qml

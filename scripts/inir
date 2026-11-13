@@ -4726,6 +4726,7 @@ case "$command_name" in
         run_runtime_script "$config_dir" "scripts/close-window.sh"
         ;;
     colorpicker)
+        require_qs
         while [[ $# -gt 0 ]]; do
             case "$1" in
                 -h|--help)
@@ -4738,11 +4739,12 @@ case "$command_name" in
                     ;;
             esac
         done
-        if ! command -v hyprpicker >/dev/null 2>&1; then
-            echo "hyprpicker not found — install it to use colorpicker" >&2
+        resolve_config_dir
+        if ! ensure_running_instance "$config_dir"; then
+            echo "Timed out waiting for iNiR to start" >&2
             exit 1
         fi
-        exec hyprpicker -a
+        exec "$qs_bin" -p "$config_dir" ipc call colorPicker pick
         ;;
     ipc)
         require_qs

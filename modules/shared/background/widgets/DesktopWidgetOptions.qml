@@ -2,10 +2,10 @@ pragma Singleton
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Dialogs
 import Quickshell
 import qs
 import qs.modules.common
+import qs.modules.common.widgets
 import qs.services
 import "japaneseTypography/JapaneseTypographyPresets.js" as JapanesePresets
 import "root:modules/common/widgets/GlyphArt.js" as Glyphs
@@ -101,15 +101,15 @@ QtObject {
     readonly property var inks: Glyphs.INKS
     // A `file` or `folder` row opens the system's chooser: nobody types a path.
     property var _picking: null
-    readonly property FileDialog filePicker: FileDialog {
+    readonly property FilePickerDialog filePicker: FilePickerDialog {
         title: Translation.tr(String(root._picking?.label ?? ""))
-        fileMode: FileDialog.OpenFile
         currentFolder: Directories.pictures
         nameFilters: root._picking?.filters ?? [Translation.tr("Images and animations") + " (*.png *.jpg *.jpeg *.webp *.gif *.apng *.svg)",
             Translation.tr("All files") + " (*)"]
         onAccepted: if (root._picking) root.write(root._picking, root._path(selectedFile))
     }
-    readonly property FolderDialog folderPicker: FolderDialog {
+    readonly property FilePickerDialog folderPicker: FilePickerDialog {
+        selectFolder: true
         title: Translation.tr(String(root._picking?.label ?? ""))
         currentFolder: Directories.pictures
         onAccepted: if (root._picking) root.write(root._picking, root._path(selectedFolder))

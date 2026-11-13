@@ -47,10 +47,9 @@ These are top-level `inir` commands that work directly, without going through IP
 
 ### colorpicker
 
-Launch `hyprpicker` to pick a color from anywhere on the screen. The hex value is copied to the clipboard (`-a` flag).
+Take a colour from anywhere on the screen: every screen stands still under a loupe, a click copies that pixel's hex
+to the clipboard (Esc or a right click cancels). Same as `inir colorPicker pick`.
 
 ```kdl
 Super+Shift+C { spawn "inir" "colorpicker"; }
 ```
-
-Requires `hyprpicker` installed.

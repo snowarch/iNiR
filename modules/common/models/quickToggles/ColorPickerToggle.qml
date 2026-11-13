@@ -12,17 +12,10 @@ QuickToggleModel {
     toggled: false
     icon: "colorize"
 
+    // The picker waits for the sidebar to leave before it reads the screen.
     mainAction: () => {
         GlobalStates.sidebarRightOpen = false;
-        delayedActionTimer.start();
-    }
-    Timer {
-        id: delayedActionTimer
-        interval: 300
-        repeat: false
-        onTriggered: {
-            ShellExec.execDetachedArgs(["hyprpicker", "-a"], "Pick color");
-        }
+        GlobalStates.screenColorPickerOpen = true;
     }
 
     tooltipText: Translation.tr("Color picker")

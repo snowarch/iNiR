@@ -738,7 +738,7 @@ PanelWindow {
                             function onFullscreenRequested(): void { root.snipFullscreen() }
                             function onColorPickerRequested(): void {
                                 root.dismiss();
-                                ShellExec.execDetachedArgs(["bash", "-c", "sleep 0.3; hyprpicker -a"], "Pick color");
+                                GlobalStates.screenColorPickerOpen = true;
                             }
                         }
                     }
@@ -758,9 +758,9 @@ PanelWindow {
                             onDismiss: root.dismiss();
                             onFullscreenRequested: root.snipFullscreen()
                             onColorPickerRequested: {
-                                // Dismiss first so hyprpicker grabs the live desktop, not this overlay.
+                                // Dismiss first so the picker reads the desktop, not this overlay.
                                 root.dismiss();
-                                ShellExec.execDetachedArgs(["bash", "-c", "sleep 0.3; hyprpicker -a"], "Pick color");
+                                GlobalStates.screenColorPickerOpen = true;
                             }
                         }
                         Item {

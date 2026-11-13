@@ -2,10 +2,10 @@ pragma Singleton
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Dialogs
 import Quickshell
 import Quickshell.Io
 import qs.modules.common
+import qs.modules.common.widgets
 import qs.services
 
 /**
@@ -278,10 +278,9 @@ Singleton {
             }
         }
     }
-    FileDialog {
+    FilePickerDialog {
         id: importDialog
         title: Translation.tr("Import a VPN profile")
-        fileMode: FileDialog.OpenFile
         currentFolder: "file://" + Directories.homePath
         nameFilters: [Translation.tr("WireGuard or OpenVPN") + " (*.conf *.ovpn)", Translation.tr("All files") + " (*)"]
         onAccepted: root.importProfile(String(selectedFile))

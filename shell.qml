@@ -13,6 +13,7 @@
 //@ pragma Env QTWEBENGINE_CHROMIUM_FLAGS=--disable-features=ThirdPartyCookieBlocking,StorageAccessAPI
 
 import qs.modules.common
+import qs.modules.common.widgets
 import qs.modules.shared.overlay
 
 import QtQuick
@@ -785,6 +786,32 @@ ShellRoot {
     LazyLoader { active: Config.ready && GlobalStates.japaneseLookupOpen; source: "modules/shared/japaneseLookup/JapaneseLookup.qml" }
     LazyLoader { active: Config.ready; source: "modules/shared/tilingOverlay/TilingOverlayRouter.qml" }
     LazyLoader { active: Config.ready; source: "modules/shared/wallpaperSelector/WallpaperSelectorRouter.qml" }
+    LazyLoader {
+        active: Config.ready && GlobalStates.screenColorPickerOpen
+        ScreenColorPicker {
+            Component.onCompleted: pick()
+            onPicked: value => {
+                const hex = String(value).toUpperCase()
+                // Its windows are gone by now and Wayland only lets a focused surface set the selection: wl-copy
+                // owns it instead.
+                Quickshell.execDetached(["wl-copy", hex])
+                toastManager.addToast(Translation.tr("Copied %1").arg(hex), "", "colorize", false, 2400, "colorPicker", value)
+                GlobalStates.screenColorPickerOpen = false
+            }
+            onCancelled: GlobalStates.screenColorPickerOpen = false
+        }
+    }
+
+    /// Takes one colour from the screen: every screen stands still under a loupe, a click copies that pixel's hex.
+    ///
+    /// ```kdl
+    /// Super+Shift+C { spawn "inir" "colorpicker"; }
+    /// ```
+    IpcHandler {
+        target: "colorPicker"
+        /// Take a colour from the screen and copy its hex
+        function pick(): void { GlobalStates.screenColorPickerOpen = true }
+    }
 
     // Same reason as the routers: both panel files declared these, so every
     // family switch registered them twice and Quickshell kept whichever won the
@@ -817,7 +844,8 @@ ShellRoot {
         /// Close Floating tools (pinned tools stay)
         function close(): void { GlobalStates.overlayOpen = false }
         /// Show or hide one floating tool by id (`crosshair`, `fpsLimiter`, `floatingImage`, `recorder`, `resources`,
-        /// `notes`, `discord`, `volumeMixer`, `notifications`, `gamePerformance`): `on`, `off` or `toggle`
+        /// `network`, `notes`, `discord`, `volumeMixer`, `notifications`, `gamePerformance`, `clock`, `timer`): `on`,
+        /// `off` or `toggle`
         function tool(identifier: string, action: string): string {
             if (!OverlayContext.info(identifier)) return "Unknown tool"
             const wanted = action === "on" ? true : action === "off" ? false : !OverlayContext.isOpen(identifier)
@@ -1057,7 +1085,7 @@ ShellRoot {
     LazyLoader { active: Config.ready; source: "modules/shared/closeConfirm/CloseConfirm.qml" }
 
     // Shared (always loaded via ToastManager)
-    ToastManager {}
+    ToastManager { id: toastManager }
 
     // Installed families in the order the switch walks them (familyCycle), the rest after; each lists its panels in
     // its plugin.json (`enabledPanels`).
