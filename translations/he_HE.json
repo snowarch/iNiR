@@ -3671,5 +3671,6 @@
   "Time's up": "הזמן נגמר",
   "Whole window": "חלון שלם",
   "Region": "אזור",
-  "Drag over it to keep only a part": "גרור מעליו כדי לשמור רק חלק"
+  "Drag over it to keep only a part": "גרור מעליו כדי לשמור רק חלק",
+  "It stays live; on another workspace most apps draw once a second": "נשאר חי; בסביבת עבודה אחרת רוב האפליקציות מתעדכנות פעם בשנייה"
 }

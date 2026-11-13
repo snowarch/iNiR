@@ -3671,5 +3671,6 @@
   "Time's up": "시간 종료",
   "Whole window": "창 전체",
   "Region": "영역",
-  "Drag over it to keep only a part": "일부만 남기려면 위에서 드래그하세요"
+  "Drag over it to keep only a part": "일부만 남기려면 위에서 드래그하세요",
+  "It stays live; on another workspace most apps draw once a second": "실시간으로 유지됩니다. 다른 작업 공간에서는 대부분의 앱이 초당 한 번 그려집니다"
 }

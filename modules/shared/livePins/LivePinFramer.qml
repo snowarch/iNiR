@@ -201,7 +201,8 @@ Scope {
                 Item { implicitWidth: 6 }
                 StyledText {
                     text: framer.whole ? Translation.tr("Drag over it to keep only a part")
-                        : framer.boxed ? Translation.tr("It stays live, even on another workspace")
+                        : framer.boxed ? (CompositorService.capturedWindowsDraw ? Translation.tr("It stays live, even on another workspace")
+                            : Translation.tr("It stays live; on another workspace most apps draw once a second"))
                         : Translation.tr("Drag over the part to keep")
                     color: Qt.rgba(1, 1, 1, 0.75)
                     font.pixelSize: Appearance.font.pixelSize.small

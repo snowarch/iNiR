@@ -3671,5 +3671,6 @@
   "Time's up": "Время вышло",
   "Whole window": "Всё окно",
   "Region": "Область",
-  "Drag over it to keep only a part": "Выделите часть, чтобы оставить только её"
+  "Drag over it to keep only a part": "Выделите часть, чтобы оставить только её",
+  "It stays live; on another workspace most apps draw once a second": "Остаётся живым; на другом рабочем пространстве большинство приложений рисуют раз в секунду"
 }

@@ -3671,5 +3671,6 @@
   "Time's up": "समय समाप्त",
   "Whole window": "पूरी विंडो",
   "Region": "क्षेत्र",
-  "Drag over it to keep only a part": "सिर्फ़ एक हिस्सा रखने के लिए उस पर खींचें"
+  "Drag over it to keep only a part": "सिर्फ़ एक हिस्सा रखने के लिए उस पर खींचें",
+  "It stays live; on another workspace most apps draw once a second": "लाइव रहता है; दूसरे वर्कस्पेस पर ज़्यादातर ऐप सेकंड में एक बार बनते हैं"
 }

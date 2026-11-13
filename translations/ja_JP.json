@@ -3671,5 +3671,6 @@
   "Time's up": "時間です",
   "Whole window": "ウィンドウ全体",
   "Region": "範囲",
-  "Drag over it to keep only a part": "一部だけ残すならドラッグ"
+  "Drag over it to keep only a part": "一部だけ残すならドラッグ",
+  "It stays live; on another workspace most apps draw once a second": "ライブのまま。別のワークスペースではほとんどのアプリが毎秒1回だけ描画します"
 }

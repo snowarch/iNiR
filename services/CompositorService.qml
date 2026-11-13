@@ -27,6 +27,9 @@ Singleton {
     readonly property bool windowCapture: SystemInfo.runtimeHas(["toplevel-image-copy"])
         ? (niriNative || isUmbriel) && ToplevelManager.canCaptureWindows
         : niriNative && SystemInfo.runtimeHas(["niri-window-capture"])
+    // A captured window off screen keeps drawing: Umbriel sends it frames while captured. Niri (26.04 and main) sends
+    // windows it doesn't show one frame callback a second, cast or not (niri-wm/niri#2609 is still open).
+    readonly property bool capturedWindowsDraw: isUmbriel
 
     readonly property string hyprlandSignature: Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE")
     readonly property string niriSocket: Quickshell.env("NIRI_SOCKET")

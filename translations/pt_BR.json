@@ -3671,5 +3671,6 @@
   "Time's up": "Tempo esgotado",
   "Whole window": "Janela inteira",
   "Region": "Região",
-  "Drag over it to keep only a part": "Arraste sobre ela para manter só uma parte"
+  "Drag over it to keep only a part": "Arraste sobre ela para manter só uma parte",
+  "It stays live; on another workspace most apps draw once a second": "Continua ao vivo; em outro espaço de trabalho a maioria dos apps desenha uma vez por segundo"
 }

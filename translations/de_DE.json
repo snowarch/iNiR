@@ -3671,5 +3671,6 @@
   "Time's up": "Zeit abgelaufen",
   "Whole window": "Ganzes Fenster",
   "Region": "Bereich",
-  "Drag over it to keep only a part": "Darüber ziehen, um nur einen Teil zu behalten"
+  "Drag over it to keep only a part": "Darüber ziehen, um nur einen Teil zu behalten",
+  "It stays live; on another workspace most apps draw once a second": "Bleibt live; auf einem anderen Arbeitsbereich zeichnen die meisten Apps einmal pro Sekunde"
 }

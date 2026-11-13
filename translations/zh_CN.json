@@ -3671,5 +3671,6 @@
   "Time's up": "时间到",
   "Whole window": "整个窗口",
   "Region": "区域",
-  "Drag over it to keep only a part": "拖动选择以只保留一部分"
+  "Drag over it to keep only a part": "拖动选择以只保留一部分",
+  "It stays live; on another workspace most apps draw once a second": "保持实时；在其他工作区，大多数应用每秒只绘制一次"
 }

@@ -3671,5 +3671,6 @@
   "Time's up": "Se acabó el tiempo",
   "Whole window": "Ventana completa",
   "Region": "Región",
-  "Drag over it to keep only a part": "Arrastra sobre ella para conservar solo una parte"
+  "Drag over it to keep only a part": "Arrastra sobre ella para conservar solo una parte",
+  "It stays live; on another workspace most apps draw once a second": "Sigue en vivo; en otro escritorio la mayoría de las apps se dibuja una vez por segundo"
 }

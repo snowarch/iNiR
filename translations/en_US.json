@@ -3671,5 +3671,6 @@
   "Time's up": "Time's up",
   "Whole window": "Whole window",
   "Region": "Region",
-  "Drag over it to keep only a part": "Drag over it to keep only a part"
+  "Drag over it to keep only a part": "Drag over it to keep only a part",
+  "It stays live; on another workspace most apps draw once a second": "It stays live; on another workspace most apps draw once a second"
 }

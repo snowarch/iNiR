@@ -3671,5 +3671,6 @@
   "Time's up": "Süre doldu",
   "Whole window": "Tüm pencere",
   "Region": "Bölge",
-  "Drag over it to keep only a part": "Yalnızca bir kısmını saklamak için üzerine sürükle"
+  "Drag over it to keep only a part": "Yalnızca bir kısmını saklamak için üzerine sürükle",
+  "It stays live; on another workspace most apps draw once a second": "Canlı kalır; başka bir çalışma alanında çoğu uygulama saniyede bir kez çizer"
 }
