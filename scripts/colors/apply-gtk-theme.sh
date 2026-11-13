@@ -1033,46 +1033,60 @@ then
     gtk_css_changed=true
 fi
 
-# Configure qt6ct to use the Darkly color scheme (fixes Dolphin and other Qt apps being white)
-# qt6ct is the platform theme (QT_QPA_PLATFORMTHEME=qt6ct) — it needs a color scheme
-QT6CT_CONF="$HOME/.config/qt6ct/qt6ct.conf"
-mkdir -p "$(dirname "$QT6CT_CONF")"
-touch "$QT6CT_CONF"
-CURRENT_ICON_THEME="$APPLIED_ICON_THEME"
-[[ -z "$CURRENT_ICON_THEME" ]] && CURRENT_ICON_THEME=$(grep '^icon_theme=' "$QT6CT_CONF" 2>/dev/null | cut -d= -f2 || true)
-if [[ -z "$CURRENT_ICON_THEME" ]]; then
-    if [[ -d "$HOME/.local/share/icons/WhiteSur-dark" || -d "/usr/share/icons/WhiteSur-dark" ]]; then
-        CURRENT_ICON_THEME=$("$SCRIPT_DIR/../lib/accel-run" icon-theme WhiteSur-dark "$THEME_MODE" 2>/dev/null || echo WhiteSur-dark)
-    else
-        CURRENT_ICON_THEME="Adwaita"
+# qt5ct/qt6ct (the platform theme where plasma-integration is missing) read a palette of their own: QPalette's roles in
+# enum order. A KDE .colors file as their color_scheme_path left Qt apps light. Role mapping after jturbide's (#309).
+QTCT_PALETTE="$XDG_DATA_HOME/color-schemes/iNiR-qtct.conf"
+qtct_color() { local h=${1#\#}; printf '#ff%s' "${h,,}"; }
+# a role lighter or darker than the button, as Qt derives Light, Midlight, Dark and Mid
+qtct_shade() {
+    local hex=${1#\#} out="" i v
+    for i in 0 2 4; do
+        v=$(( 16#${hex:i:2} * $2 / 100 ))
+        (( v > 255 )) && v=255
+        out+=$(printf '%02x' "$v")
+    done
+    printf '#ff%s' "$out"
+}
+qtct_roles() {
+    local fg=$FG bright=$KDE_SELECTION_FG high=$KDE_SELECTION_BG high_fg=$KDE_SELECTION_FG link=$PRIMARY
+    if [[ "$1" == disabled ]]; then
+        fg=$FG_INACTIVE bright=$KDE_SELECTION_FG_INACTIVE high=$KDE_VIEW_ALT high_fg=$FG_INACTIVE link=$FG_INACTIVE
     fi
-fi
-CURRENT_QT_STYLE=$(grep '^style=' "$QT6CT_CONF" 2>/dev/null | cut -d= -f2 || true)
-[[ -z "$CURRENT_QT_STYLE" ]] && CURRENT_QT_STYLE="Darkly"
-cat > "$QT6CT_CONF" << EOF
-[Appearance]
-color_scheme_path=${DARKLY_COLORS}
-custom_palette=true
-icon_theme=${CURRENT_ICON_THEME}
-style=${CURRENT_QT_STYLE}
-EOF
+    # WindowText Button Light Midlight Dark Mid Text BrightText ButtonText Base Window Shadow Highlight HighlightedText
+    # Link LinkVisited AlternateBase NoRole ToolTipBase ToolTipText PlaceholderText Accent (Qt 6; Qt 5 stops before it)
+    local roles=(
+        "$(qtct_color "$fg")" "$(qtct_color "$KDE_BUTTON_BG")"
+        "$(qtct_shade "$KDE_BUTTON_BG" 150)" "$(qtct_shade "$KDE_BUTTON_BG" 125)"
+        "$(qtct_shade "$KDE_BUTTON_BG" 67)" "$(qtct_shade "$KDE_BUTTON_BG" 80)"
+        "$(qtct_color "$fg")" "$(qtct_color "$bright")" "$(qtct_color "$fg")"
+        "$(qtct_color "$KDE_VIEW_BG")" "$(qtct_color "$KDE_WINDOW_BG")" "#ff000000"
+        "$(qtct_color "$high")" "$(qtct_color "$high_fg")" "$(qtct_color "$link")" "$(qtct_color "$link")"
+        "$(qtct_color "$KDE_VIEW_ALT")" "$(qtct_color "$KDE_WINDOW_BG")" "$(qtct_color "$KDE_TOOLTIP_BG")"
+        "$(qtct_color "$fg")" "$(qtct_color "$FG_INACTIVE")" "$(qtct_color "$link")"
+    )
+    printf '%s' "${roles[0]}"
+    printf ', %s' "${roles[@]:1}"
+}
 
-# Configure qt5ct to use the Darkly color scheme (mirrors qt6ct setup above)
-QT5CT_CONF="$HOME/.config/qt5ct/qt5ct.conf"
-mkdir -p "$(dirname "$QT5CT_CONF")"
-touch "$QT5CT_CONF"
-CURRENT_QT5_ICON_THEME="$APPLIED_ICON_THEME"
-[[ -z "$CURRENT_QT5_ICON_THEME" ]] && CURRENT_QT5_ICON_THEME=$(grep '^icon_theme=' "$QT5CT_CONF" 2>/dev/null | cut -d= -f2 || true)
-[[ -z "$CURRENT_QT5_ICON_THEME" ]] && CURRENT_QT5_ICON_THEME="$CURRENT_ICON_THEME"
-CURRENT_QT5_STYLE=$(grep '^style=' "$QT5CT_CONF" 2>/dev/null | cut -d= -f2 || true)
-[[ -z "$CURRENT_QT5_STYLE" ]] && CURRENT_QT5_STYLE="Darkly"
-cat > "$QT5CT_CONF" << EOF
-[Appearance]
-color_scheme_path=${DARKLY_COLORS}
-custom_palette=true
-icon_theme=${CURRENT_QT5_ICON_THEME}
-style=${CURRENT_QT5_STYLE}
-EOF
+if [[ "$enable_qt_apps" != "false" ]]; then
+    printf '[ColorScheme]\nactive_colors=%s\ndisabled_colors=%s\ninactive_colors=%s\n' \
+        "$(qtct_roles active)" "$(qtct_roles disabled)" "$(qtct_roles active)" > "$QTCT_PALETTE"
+    # Only the keys iNiR owns change, in place: the person's fonts and other settings stay.
+    for QTCT_CONF in "$HOME/.config/qt6ct/qt6ct.conf" "$HOME/.config/qt5ct/qt5ct.conf"; do
+        "$SCRIPT_DIR/../lib/accel-run" ini-set "$QTCT_CONF" Appearance color_scheme_path "$QTCT_PALETTE" || continue
+        "$SCRIPT_DIR/../lib/accel-run" ini-set "$QTCT_CONF" Appearance custom_palette true
+        QTCT_ICONS="$APPLIED_ICON_THEME"
+        if [[ -z "$QTCT_ICONS" ]] && ! grep -q '^icon_theme=.' "$QTCT_CONF"; then
+            if [[ -d "$HOME/.local/share/icons/WhiteSur-dark" || -d "/usr/share/icons/WhiteSur-dark" ]]; then
+                QTCT_ICONS=$("$SCRIPT_DIR/../lib/accel-run" icon-theme WhiteSur-dark "$THEME_MODE" 2>/dev/null || echo WhiteSur-dark)
+            else
+                QTCT_ICONS="Adwaita"
+            fi
+        fi
+        [[ -z "$QTCT_ICONS" ]] || "$SCRIPT_DIR/../lib/accel-run" ini-set "$QTCT_CONF" Appearance icon_theme "$QTCT_ICONS"
+        grep -q '^style=.' "$QTCT_CONF" || "$SCRIPT_DIR/../lib/accel-run" ini-set "$QTCT_CONF" Appearance style Darkly
+    done
+fi
 
 # Keep static GTK settings aligned with GSettings. GTK applications are split
 # between the desktop settings service and settings.ini readers, so stale files

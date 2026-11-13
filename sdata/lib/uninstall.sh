@@ -59,6 +59,7 @@ declare -A SHARED_PATHS=(
     ["${XDG_CONFIG_HOME}/fontconfig/conf.d/90-inir-shell.conf"]="iNiR shell font rendering||inir_default"
     ["${XDG_CONFIG_HOME}/fontconfig/conf.d/60-inir-void-font-aliases.conf"]="iNiR font aliases (Void)||inir_default"
     ["${XDG_DATA_HOME:-$HOME/.local/share}/color-schemes/Darkly.colors"]="Darkly color scheme||inir_default"
+    ["${XDG_DATA_HOME:-$HOME/.local/share}/color-schemes/iNiR-qtct.conf"]="qt5ct/qt6ct palette||inir_default"
 )
 
 # Quickshell state that may be shared with other quickshell configs
