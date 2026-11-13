@@ -1,8 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
-import Qt5Compat.GraphicalEffects
 import Quickshell
 import qs
 import qs.services
@@ -10,285 +8,248 @@ import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.shared.overlay
+
+// What arrived while playing, newest first, each with its actions; quiet mode, read, and clear with a moment to undo.
 StyledOverlayWidget {
     id: root
 
     Component.onCompleted: Notifications.ensureInitialized()
+    readonly property var items: Notifications.list.slice().reverse()
+    // Nothing to count says itself in the body; only silence is worth the header then.
+    fact: Notifications.list.length === 0 ? (Notifications.silent ? Translation.tr("Silent") : "")
+        : Notifications.silent ? Translation.tr("Silent · %1 total").arg(Notifications.list.length)
+        : Translation.tr("%1 unread · %2 total").arg(Notifications.unread).arg(Notifications.list.length)
 
-    // Evitar que arrastrar una notificación mueva todo el widget
-    draggable: GlobalStates.overlayOpen && !notificationsHoverArea.containsMouse
+    // A row's own button never removes the row inside its click.
+    property var _later: null
+    function later(fn: var): void {
+        root._later = fn
+        laterTimer.restart()
+    }
+    Timer {
+        id: laterTimer
+        interval: 0
+        onTriggered: {
+            const fn = root._later
+            root._later = null
+            if (fn) fn()
+        }
+    }
 
-    minimumWidth: 360
-    minimumHeight: 260
+    // "Clear all" turns into Undo for a few seconds.
+    property bool undoShown: false
+    Timer {
+        id: undoTimer
+        interval: 6000
+        onTriggered: root.undoShown = false
+    }
 
-    contentItem: OverlayBackground {
-        id: contentItem
-        radius: root.contentRadius
-        property real padding: 8
+    contentItem: Item {
+        anchors.fill: parent
+        implicitWidth: Math.round(320 * root.d)
+        implicitHeight: Math.round(300 * root.d)
 
-        Item {
-            id: notificationsRoot
-            anchors {
-                fill: parent
-                margins: contentItem.padding
-            }
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: Math.round(8 * root.d)
 
-            MouseArea {
-                id: notificationsHoverArea
-                anchors.fill: parent
-                hoverEnabled: true
-                acceptedButtons: Qt.NoButton
-            }
-
-            Item {
-                id: header
-                anchors {
-                    left: parent.left
-                    right: parent.right
-                    top: parent.top
-                }
-                height: headerRow.implicitHeight
-
-                RowLayout {
-                    id: headerRow
-                    anchors.fill: parent
-                    spacing: 6
-
-                    Item {
-                        id: iconContainer
-                        visible: !OverlayLook.iris
-                        Layout.alignment: Qt.AlignVCenter
-                        implicitWidth: 28
-                        implicitHeight: 28
-
-                        MaterialSymbol {
-                            id: bellIcon
-                            anchors.centerIn: parent
-                            text: Notifications.silent ? "notifications_paused" : "notifications"
-                            iconSize: Appearance.font.pixelSize.larger
-                            color: OverlayLook.colOnLayer1
-                        }
-
-                        Rectangle {
-                            id: notifBadge
-                            scale: !Notifications.silent && Notifications.unread > 0 ? 1 : 0
-                            visible: scale > 0
-                            anchors {
-                                right: bellIcon.right
-                                top: bellIcon.top
-                                rightMargin: 0
-                                topMargin: 0
-                            }
-                            radius: Math.min(width, height) / 2
-                            color: OverlayLook.colOnLayer0
-                            z: 1
-
-                            implicitHeight: 16
-                            implicitWidth: implicitHeight
-
-                            Behavior on scale {
-                                enabled: Appearance.animationsEnabled
-                                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                            }
-
-                            StyledText {
-                                anchors.centerIn: parent
-                                font.pixelSize: Appearance.font.pixelSize.smallest
-                                color: OverlayLook.colLayer0
-                                text: Notifications.unread
-                            }
-                        }
-                    }
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        Layout.alignment: Qt.AlignVCenter
-                        spacing: 1
-
-                        StyledText {
-                            visible: !OverlayLook.iris
-                            text: Translation.tr("Notifications")
-                            font.pixelSize: Appearance.font.pixelSize.smallie
-                            color: OverlayLook.colOnLayer1
-                        }
-                        StyledText {
-                            text: Notifications.silent
-                                  ? Translation.tr("Silent · %1 total").arg(Notifications.list.length)
-                                  : Translation.tr("%1 unread · %2 total").arg(Notifications.unread).arg(Notifications.list.length)
-                            font.pixelSize: OverlayLook.iris ? Appearance.font.pixelSize.smallie : Appearance.font.pixelSize.smallest
-                            color: OverlayLook.colSubtext
-                        }
-                    }
-
-                    RowLayout {
-                        Layout.alignment: Qt.AlignVCenter
-                        spacing: 2
-
-                        RippleButton {
-                            id: markReadButton
-                            implicitHeight: 22
-                            implicitWidth: 22
-                            Layout.alignment: Qt.AlignVCenter
-                            buttonRadius: OverlayLook.roundingSmall
-                            // Icon button plano: sin background de Button por defecto
-                            background: Item {}
-                            colBackground: "transparent"
-                            colBackgroundHover: "transparent"
-                            colRipple: "transparent"
-
-                            onClicked: {
-                                Notifications.markAllRead();
-                            }
-
-                            contentItem: Item {
-                                anchors.centerIn: parent
-                                width: 22
-                                height: 22
-
-                                Rectangle {
-                                    anchors.fill: parent
-                                    radius: height / 2
-                                    color: markReadButton.hovered
-                                           ? ColorUtils.transparentize(OverlayLook.colLayer1Hover, 0.25)
-                                           : "transparent"
-                                }
-
-                                MaterialSymbol {
-                                    anchors.centerIn: parent
-                                    iconSize: 16
-                                    text: "check"
-                                    color: OverlayLook.colOnLayer1
-                                }
-                            }
-
-                            StyledToolTip {
-                                text: Translation.tr("Mark all as read")
-                            }
-                        }
-
-                        RippleButton {
-                            id: openCenterButton
-                            implicitHeight: 22
-                            implicitWidth: 22
-                            Layout.alignment: Qt.AlignVCenter
-                            buttonRadius: OverlayLook.roundingSmall
-                            // Icon button plano: sin background de Button por defecto
-                            background: Item {}
-                            colBackground: "transparent"
-                            colBackgroundHover: "transparent"
-                            colRipple: "transparent"
-
-                            onClicked: {
-                                GlobalStates.openSidebarRight("");
-                                GlobalStates.overlayOpen = false;
-                            }
-
-                            contentItem: Item {
-                                anchors.centerIn: parent
-                                width: 22
-                                height: 22
-
-                                Rectangle {
-                                    anchors.fill: parent
-                                    radius: height / 2
-                                    color: openCenterButton.hovered
-                                           ? ColorUtils.transparentize(OverlayLook.colLayer1Hover, 0.25)
-                                           : "transparent"
-                                }
-
-                                MaterialSymbol {
-                                    anchors.centerIn: parent
-                                    iconSize: 16
-                                    text: "right_panel_open"
-                                    color: OverlayLook.colOnLayer1
-                                }
-                            }
-
-                            StyledToolTip {
-                                text: Translation.tr("Open notification center")
-                            }
-                        }
-                    }
-                }
-            }
-
-            NotificationListView {
-                id: listview
-                anchors {
-                    left: parent.left
-                    right: parent.right
-                    top: header.bottom
-                    bottom: statusRow.top
-                    bottomMargin: 5
-                }
-
+            ListView {
+                id: list
+                Layout.fillWidth: true
+                Layout.fillHeight: true
                 clip: true
-                layer.enabled: true
-                layer.effect: OpacityMask {
-                    maskSource: Rectangle {
-                        width: listview.width
-                        height: listview.height
-                        radius: OverlayLook.roundingNormal
+                spacing: Math.round(2 * root.d)
+                boundsBehavior: Flickable.StopAtBounds
+                model: ScriptModel {
+                    values: root.items
+                    objectProp: "notificationId"
+                }
+                delegate: NotificationRow {
+                    width: ListView.view.width
+                }
+
+                Column {
+                    anchors.centerIn: parent
+                    visible: root.items.length === 0
+                    spacing: Math.round(6 * root.d)
+                    MaterialSymbol {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: Notifications.silent ? "notifications_paused" : "notifications_active"
+                        iconSize: Math.round(28 * root.d)
+                        color: OverlayLook.colFaint
+                    }
+                    StyledText {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: Translation.tr("All caught up")
+                        color: OverlayLook.colFaint
+                        font.family: OverlayLook.fontMain
+                        font.pixelSize: OverlayLook.typeMeta
                     }
                 }
-
-                popup: false
             }
 
-            MaterialPlaceholderMessage {
-                anchors {
-                    left: parent.left
-                    right: parent.right
-                    top: header.bottom
-                    bottom: statusRow.top
-                    topMargin: 24
-                    bottomMargin: 28
-                }
-                maximumWidth: 280
-                compact: true
-                shown: Notifications.list.length === 0
-                icon: "notifications_active"
-                text: Notifications.silent ? Translation.tr("Muted") : Translation.tr("All caught up")
-                shape: MaterialShape.Shape.Ghostish
-            }
-
-            ButtonGroup {
-                id: statusRow
-                anchors {
-                    left: parent.left
-                    right: parent.right
-                    bottom: parent.bottom
-                }
-
-                StatusButton {
-                    Layout.fillWidth: false
-                    buttonIcon: "notifications_paused"
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: Math.round(2 * root.d)
+                OverlayButton {
+                    glyph: "notifications_paused"
                     toggled: Notifications.silent
+                    tip: Translation.tr("Do not disturb")
+                    onClicked: Notifications.silent = !Notifications.silent
+                }
+                OverlayButton {
+                    glyph: "done_all"
+                    enabled: Notifications.unread > 0
+                    tip: Translation.tr("Mark all as read")
+                    onClicked: Notifications.markAllRead()
+                }
+                OverlayButton {
+                    glyph: "right_panel_open"
+                    tip: Translation.tr("Open notification center")
                     onClicked: {
-                        Notifications.silent = !Notifications.silent;
+                        GlobalStates.overlayOpen = false
+                        GlobalStates.openSidebarRight("")
                     }
                 }
-                StatusButton {
-                    enabled: false
-                    Layout.fillWidth: true
-                    buttonText: Translation.tr("%1 notifications").arg(Notifications.list.length)
-                }
-                StatusButton {
-                    Layout.fillWidth: false
-                    buttonIcon: "delete_sweep"
+                Item { Layout.fillWidth: true }
+                OverlayButton {
+                    visible: root.undoShown && Notifications.lastCleared.length > 0
+                    glyph: "undo"
+                    label: Translation.tr("Undo")
+                    toggled: true
                     onClicked: {
-                        Notifications.discardAllNotifications();
+                        Notifications.restoreCleared()
+                        root.undoShown = false
+                    }
+                }
+                OverlayButton {
+                    visible: !(root.undoShown && Notifications.lastCleared.length > 0)
+                    enabled: Notifications.list.length > 0
+                    glyph: "delete_sweep"
+                    label: Translation.tr("Clear all")
+                    onClicked: {
+                        Notifications.discardAllNotifications()
+                        root.undoShown = true
+                        undoTimer.restart()
                     }
                 }
             }
         }
     }
 
-    component StatusButton: NotificationStatusButton {
-        id: statusButton
-        Binding on colBackground { when: OverlayLook.iris; value: statusButton.toggled ? OverlayLook.colPrimaryContainer : OverlayLook.colLayer2 }
-        Binding on colBackgroundHover { when: OverlayLook.iris; value: statusButton.toggled ? OverlayLook.colPrimaryContainerHover : OverlayLook.colLayer2Hover }
-        Binding on colBackgroundActive { when: OverlayLook.iris; value: OverlayLook.colLayer2Active }
-        Binding on colText { when: OverlayLook.iris; value: statusButton.toggled ? OverlayLook.colOnPrimaryContainer : OverlayLook.colOnLayer1 }
+    component NotificationRow: Item {
+        id: row
+        required property var modelData
+        readonly property var notif: row.modelData
+        readonly property var actions: (row.notif?.actions ?? []).filter(a => a.identifier !== "default")
+        implicitHeight: body.implicitHeight + Math.round(16 * root.d)
+
+        Rectangle {
+            anchors.fill: parent
+            radius: OverlayLook.roundingSmall
+            color: rowHover.hovered ? OverlayLook.colLayer2Hover : row.notif?.popup ? OverlayLook.colLayer2 : "transparent"
+            Behavior on color { ColorAnimation { duration: FamilyStyle.feedbackDuration } }
+        }
+        HoverHandler { id: rowHover }
+
+        RowLayout {
+            id: body
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.margins: Math.round(8 * root.d)
+            spacing: Math.round(10 * root.d)
+
+            NotificationAppIcon {
+                Layout.alignment: Qt.AlignTop
+                implicitSize: Math.round(30 * root.d)
+                appIcon: row.notif?.appIcon ?? ""
+                image: row.notif?.image ?? ""
+                summary: row.notif?.summary ?? ""
+                urgency: row.notif?.urgency ?? 1
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: Math.round(1 * root.d)
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Math.round(6 * root.d)
+                    StyledText {
+                        Layout.fillWidth: true
+                        elide: Text.ElideRight
+                        text: row.notif?.appName ?? ""
+                        color: OverlayLook.colSubtext
+                        font.family: OverlayLook.fontMain
+                        font.pixelSize: OverlayLook.typeFootnote
+                        font.weight: Font.DemiBold
+                    }
+                    StyledText {
+                        text: NotificationUtils.getFriendlyNotifTimeString(row.notif?.time ?? 0)
+                        color: OverlayLook.colFaint
+                        font.family: OverlayLook.fontNumbers
+                        font.pixelSize: OverlayLook.typeFootnote
+                    }
+                }
+                StyledText {
+                    Layout.fillWidth: true
+                    Layout.rightMargin: Math.round(22 * root.d)
+                    elide: Text.ElideRight
+                    text: row.notif?.summary ?? ""
+                    color: OverlayLook.colOnLayer1
+                    font.family: OverlayLook.fontMain
+                    font.pixelSize: OverlayLook.typeBody
+                    font.weight: Font.DemiBold
+                }
+                StyledText {
+                    Layout.fillWidth: true
+                    visible: text.length > 0
+                    wrapMode: Text.Wrap
+                    maximumLineCount: 2
+                    elide: Text.ElideRight
+                    textFormat: Text.PlainText
+                    text: NotificationUtils.processNotificationBody(row.notif?.body ?? "", row.notif?.appName ?? "").replace(/<[^>]*>/g, "")
+                    color: OverlayLook.colSubtext
+                    font.family: OverlayLook.fontMain
+                    font.pixelSize: OverlayLook.typeMeta
+                }
+                Flow {
+                    Layout.fillWidth: true
+                    Layout.topMargin: Math.round(4 * root.d)
+                    visible: row.actions.length > 0
+                    spacing: Math.round(4 * root.d)
+                    Repeater {
+                        model: row.actions
+                        OverlayButton {
+                            required property var modelData
+                            filled: true
+                            size: Math.round(26 * root.d)
+                            label: modelData.text
+                            onClicked: {
+                                const id = row.notif.notificationId
+                                const action = modelData.identifier
+                                root.later(() => Notifications.attemptInvokeAction(id, action))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        OverlayButton {
+            anchors.top: parent.top
+            anchors.right: parent.right
+            anchors.margins: Math.round(4 * root.d)
+            size: Math.round(24 * root.d)
+            opacity: rowHover.hovered ? 1 : 0
+            visible: opacity > 0
+            Behavior on opacity { NumberAnimation { duration: FamilyStyle.feedbackDuration } }
+            glyph: "close"
+            tip: Translation.tr("Dismiss")
+            onClicked: {
+                const id = row.notif.notificationId
+                root.later(() => Notifications.discardNotification(id))
+            }
+        }
     }
 }

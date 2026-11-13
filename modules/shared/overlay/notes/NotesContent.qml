@@ -1,6 +1,6 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import qs
@@ -9,302 +9,163 @@ import qs.modules.common
 import qs.modules.common.widgets
 import qs.modules.shared.overlay
 
-OverlayBackground {
+// A scratch note kept on disk. A line that starts with "- " gets a copy button: a shopping list for a build, codes,
+// whatever has to be pasted into the game one by one.
+Item {
     id: root
 
-    property alias content: textInput.text
-    property bool pendingReload: false
-    property var copyListEntries: []
-    property string lastParsedCopylistText: ""
-    property var parsedCopylistLines: []
-    property bool isClickthrough: false
-    property real maxCopyButtonSize: 20
-    property bool noteStorageReady: false
+    property real d: OverlayLook.d
+    // "saving", "saved", "failed"; empty until the first write.
+    property string saveState: ""
+    property bool storageReady: false
+    property var copyLines: []
+    property var _bullets: []
+    property string _parsed: ""
 
-    Component.onCompleted: {
-        ensureNoteFile.running = true;
-        updateCopyListEntries();
-    }
+    implicitWidth: Math.round(300 * root.d)
+    implicitHeight: Math.round(220 * root.d)
 
-    function saveContent() {
-        if (!textInput)
-            return;
-        noteFile.setText(root.content);
-    }
+    Component.onCompleted: ensureFile.running = true
 
-    function focusAtEnd() {
-        if (!textInput)
-            return;
-        textInput.forceActiveFocus();
-        const endPos = root.content.length;
-        applySelection(endPos, endPos);
-    }
-
-    function applySelection(cursorPos, anchorPos) {
-        if (!textInput)
-            return;
-        const textLength = root.content.length;
-        const cursor = Math.max(0, Math.min(cursorPos, textLength));
-        const anchor = Math.max(0, Math.min(anchorPos, textLength));
-        textInput.select(anchor, cursor);
-        if (cursor === anchor)
-            textInput.deselect();
-    }
-
-    function scheduleCopylistUpdate(immediate = false) {
-        if (!textInput)
-            return;
-        if (immediate) {
-            copyListDebounce?.stop();
-            updateCopyListEntries();
-        } else {
-            copyListDebounce.restart();
+    function parseBullets(): void {
+        const text = editor.text
+        if (text === root._parsed) return
+        root._parsed = text
+        const found = []
+        const lineRegex = /(.*?)(\r?\n|$)/g
+        let match = null
+        while ((match = lineRegex.exec(text)) !== null) {
+            const bullet = match[1].match(/^\s*-\s+(.*\S)\s*$/)
+            if (bullet)
+                found.push({ content: bullet[1].trim(), start: match.index, end: match.index + match[1].length })
+            if (match[2] === "") break
         }
+        root._bullets = found
     }
-
-    function updateCopyListEntries() {
-        if (!textInput)
-            return;
-        const textValue = root.content;
-        if (!textValue || textValue.length === 0) {
-            lastParsedCopylistText = "";
-            parsedCopylistLines = [];
-            root.copyListEntries = [];
-            return;
+    function placeCopyButtons(): void {
+        root.parseBullets()
+        if (root._bullets.length === 0) {
+            root.copyLines = []
+            return
         }
-
-        if (textValue !== lastParsedCopylistText) {
-            const lineRegex = /(.*?)(\r?\n|$)/g;
-            let match = null;
-            const parsed = [];
-            while ((match = lineRegex.exec(textValue)) !== null) {
-                const lineText = match[1];
-                const newlineText = match[2];
-                const lineStart = match.index;
-                const lineEnd = lineStart + lineText.length;
-                const bulletMatch = lineText.match(/^\s*-\s+(.*\S)\s*$/);
-                if (bulletMatch) {
-                    parsed.push({
-                        content: bulletMatch[1].trim(),
-                        start: lineStart,
-                        end: lineEnd
-                    });
-                }
-                if (newlineText === "")
-                    break;
-            }
-            lastParsedCopylistText = textValue;
-            parsedCopylistLines = parsed;
-            if (parsed.length === 0) {
-                root.copyListEntries = [];
-                return;
-            }
-        }
-
-        updateCopylistPositions();
+        const a = editor.selectionStart === -1 ? editor.cursorPosition : editor.selectionStart
+        const b = editor.selectionEnd === -1 ? editor.cursorPosition : editor.selectionEnd
+        const from = Math.min(a, b)
+        const to = Math.max(a, b)
+        root.copyLines = root._bullets.map(line => {
+            // No button on the line being edited.
+            if (to > line.start && from <= line.end) return null
+            const r = editor.positionToRectangle(line.start)
+            if (!isFinite(r.y)) return null
+            return { content: line.content, y: r.y + r.height / 2 }
+        }).filter(line => line !== null)
     }
 
-    function updateCopylistPositions() {
-        if (!textInput || parsedCopylistLines.length === 0)
-            return;
-        const rawSelectionStart = textInput.selectionStart;
-        const rawSelectionEnd = textInput.selectionEnd;
-        const selectionStart = rawSelectionStart === -1 ? textInput.cursorPosition : rawSelectionStart;
-        const selectionEnd = rawSelectionEnd === -1 ? textInput.cursorPosition : rawSelectionEnd;
-        const rangeStart = Math.min(selectionStart, selectionEnd);
-        const rangeEnd = Math.max(selectionStart, selectionEnd);
-
-        const entries = parsedCopylistLines.map(line => {
-            // Don't show copy button if line is (partially) selected
-            const caretIntersects = rangeEnd > line.start && rangeStart <= line.end;
-            if (caretIntersects)
-                return null;
-            const startRect = textInput.positionToRectangle(line.start);
-            let endRect = textInput.positionToRectangle(line.end);
-            if (!isFinite(startRect.y))
-                return null;
-            if (!isFinite(endRect.y))
-                endRect = startRect;
-            const lineBottom = endRect.y + endRect.height;
-            const rectHeight = Math.max(lineBottom - startRect.y, textInput.font.pixelSize + 8);
-            return {
-                content: line.content,
-                y: startRect.y,
-                height: rectHeight
-            };
-        }).filter(entry => entry !== null);
-
-        root.copyListEntries = entries;
-    }
-
-    implicitWidth: 300
-    implicitHeight: 200
-
-    ColumnLayout {
-        id: contentItem
+    ScrollView {
+        id: scroller
         anchors.fill: parent
-        spacing: -16
+        clip: true
+        ScrollBar.vertical.policy: ScrollBar.AsNeeded
+        onWidthChanged: placeTimer.restart()
 
-        ScrollView {
-            id: editorScrollView
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            clip: true
-            ScrollBar.vertical.policy: ScrollBar.AsNeeded
-            onWidthChanged: root.scheduleCopylistUpdate(true)
-
-            StyledTextArea { // This has to be a direct child of ScrollView for proper scrolling
-                id: textInput
-                anchors {
-                    left: parent.left
-                    right: parent.right
+        StyledTextArea {
+            id: editor
+            width: scroller.availableWidth
+            wrapMode: TextEdit.Wrap
+            textFormat: TextEdit.PlainText
+            selectByMouse: true
+            persistentSelection: true
+            background: null
+            padding: Math.round(10 * root.d)
+            rightPadding: Math.round(36 * root.d)
+            color: OverlayLook.colOnLayer1
+            placeholderTextColor: OverlayLook.colFaint
+            selectionColor: OverlayLook.colToggle
+            selectedTextColor: OverlayLook.colOnToggle
+            font.family: OverlayLook.fontMain
+            font.pixelSize: OverlayLook.typeBody
+            placeholderText: Translation.tr("Write something here...\nUse '-' to create copyable bullet points, like this:\n\nSheep fricker\n- 4x Slab\n- 1x Boat\n- 4x Redstone Dust\n- 1x Sticky Piston\n- 1x End Rod\n- 4x Redstone Repeater\n- 1x Redstone Torch\n- 1x Sheep")
+            onTextChanged: {
+                if (editor.activeFocus) {
+                    root.saveState = "saving"
+                    saveTimer.restart()
                 }
-                wrapMode: TextEdit.Wrap
-                placeholderText: Translation.tr("Write something here...\nUse '-' to create copyable bullet points, like this:\n\nSheep fricker\n- 4x Slab\n- 1x Boat\n- 4x Redstone Dust\n- 1x Sticky Piston\n- 1x End Rod\n- 4x Redstone Repeater\n- 1x Redstone Torch\n- 1x Sheep")
-                selectByMouse: true
-                persistentSelection: true
-                textFormat: TextEdit.PlainText
-                background: null
-                padding: 24
-
-                onTextChanged: {
-                    if (textInput.activeFocus) {
-                        saveDebounce.restart();
-                    }
-                    root.scheduleCopylistUpdate(true);
-                }
-                
-                onHeightChanged: root.scheduleCopylistUpdate(true)
-                onContentHeightChanged: root.scheduleCopylistUpdate(true)
-                onCursorPositionChanged: root.scheduleCopylistUpdate()
-                onSelectionStartChanged: root.scheduleCopylistUpdate()
-                onSelectionEndChanged: root.scheduleCopylistUpdate()
+                placeTimer.restart()
             }
-
-            Item {
-                id: copyOverlay
-                anchors.fill: parent
-                visible: root.copyListEntries.length > 0
-                clip: true
-
-                Repeater {
-                    model: ScriptModel {
-                        values: root.copyListEntries
-                    }
-                    delegate: RippleButton {
-                        id: copyButton
-                        required property var modelData
-                        readonly property real lineHeight: Math.min(Math.max(modelData.height, Appearance.font.pixelSize.normal + 6), root.maxCopyButtonSize)
-                        readonly property real iconSizeLocal: Appearance.font.pixelSize.normal
-                        readonly property real hitPadding: 6
-                        property bool justCopied: false
-
-                        implicitHeight: lineHeight
-                        implicitWidth: lineHeight
-                        buttonRadius: height / 2
-                        y: modelData.y
-                        anchors.right: copyOverlay.right
-                        anchors.rightMargin: 10
-                        z: 5
-
-                        Timer {
-                            id: resetState
-                            interval: 700
-                            onTriggered: {
-                                copyButton.justCopied = false;
-                            }
-                        }
-
-                        onClicked: {
-                            Quickshell.clipboardText = copyButton.modelData.content;
-                            justCopied = true;
-                            resetState.start();
-                        }
-
-                        contentItem: Item {
-                            anchors.centerIn: parent
-                            MaterialSymbol {
-                                id: iconItem
-                                anchors.centerIn: parent
-                                text: copyButton.justCopied ? "check" : "content_copy"
-                                iconSize: copyButton.iconSizeLocal
-                                color: OverlayLook.colOnLayer1
-                            }
-                        }
-                    }
-                }
-            }
+            onContentHeightChanged: placeTimer.restart()
+            onCursorPositionChanged: placeTimer.restart()
+            onSelectionStartChanged: placeTimer.restart()
+            onSelectionEndChanged: placeTimer.restart()
         }
 
-        StyledText {
-            id: statusLabel
-            Layout.fillWidth: true
-            Layout.margins: 16
-            horizontalAlignment: Text.AlignRight
-            text: saveDebounce.running ? Translation.tr("Saving...") : Translation.tr("Saved    ")
-            color: OverlayLook.colSubtext
+        Item {
+            anchors.fill: parent
+            visible: root.copyLines.length > 0
+            Repeater {
+                model: ScriptModel { values: root.copyLines }
+                OverlayButton {
+                    id: copyButton
+                    required property var modelData
+                    property bool copied: false
+                    size: Math.round(24 * root.d)
+                    glyphSize: Math.round(14 * root.d)
+                    x: parent.width - width - Math.round(6 * root.d)
+                    y: copyButton.modelData.y - height / 2
+                    glyph: copyButton.copied ? "check" : "content_copy"
+                    tint: copyButton.copied ? OverlayLook.colSuccess : OverlayLook.colPrimary
+                    toggled: copyButton.copied
+                    tip: copyButton.copied ? Translation.tr("Copied") : Translation.tr("Copy")
+                    onClicked: {
+                        Quickshell.clipboardText = copyButton.modelData.content
+                        copyButton.copied = true
+                        copiedTimer.restart()
+                    }
+                    Timer {
+                        id: copiedTimer
+                        interval: 900
+                        onTriggered: copyButton.copied = false
+                    }
+                }
+            }
         }
     }
 
     Timer {
-        id: saveDebounce
+        id: saveTimer
         interval: 500
-        repeat: false
-        onTriggered: saveContent()
+        onTriggered: noteFile.setText(editor.text)
     }
-
     Timer {
-        id: copyListDebounce
-        interval: 100
-        repeat: false
-        onTriggered: updateCopylistPositions()
+        id: placeTimer
+        interval: 60
+        onTriggered: root.placeCopyButtons()
     }
 
     Process {
-        id: ensureNoteFile
-        running: false
-        command: [
-            "bash",
-            "-c",
-            "mkdir -p -- \"$1\" && { [ -e \"$2\" ] || touch -- \"$2\"; }",
-            "bash",
-            Directories.notesPath.substring(0, Directories.notesPath.lastIndexOf('/')),
-            Directories.notesPath
-        ]
-        onExited: (exitCode, exitStatus) => {
-            if (exitCode !== 0) {
-                console.warn("[Overlay Notes] Failed to prepare note storage:", exitCode, exitStatus)
+        id: ensureFile
+        command: ["bash", "-c", "mkdir -p -- \"$1\" && { [ -e \"$2\" ] || touch -- \"$2\"; }", "bash",
+            Directories.notesPath.substring(0, Directories.notesPath.lastIndexOf('/')), Directories.notesPath]
+        onExited: (code, status) => {
+            if (code !== 0) {
+                console.warn("[Overlay Notes] Could not prepare the note:", code, status)
+                root.saveState = "failed"
                 return
             }
-            root.noteStorageReady = true
-            Qt.callLater(noteFile.reload)
+            root.storageReady = true
         }
     }
 
     FileView {
         id: noteFile
-        path: root.noteStorageReady ? Qt.resolvedUrl(Directories.notesPath) : ""
+        path: root.storageReady ? Qt.resolvedUrl(Directories.notesPath) : ""
         onLoaded: {
-            root.content = noteFile.text();
-            if (root.content !== root.content) {
-                const previousCursor = textInput.cursorPosition;
-                const previousAnchor = textInput.selectionStart;
-                root.content = root.content;
-                applySelection(previousCursor, previousAnchor);
-            }
-            if (pendingReload) {
-                pendingReload = false;
-                Qt.callLater(root.focusAtEnd);
-            }
-            Qt.callLater(root.updateCopyListEntries);
+            editor.text = noteFile.text()
+            placeTimer.restart()
         }
-        onLoadFailed: error => {
-            if (error === FileViewError.FileNotFound) {
-                root.noteStorageReady = false
-                ensureNoteFile.running = true
-            } else {
-                console.log("[Overlay Notes] Error loading file: " + error);
-            }
+        onSaved: root.saveState = "saved"
+        onSaveFailed: error => {
+            console.warn("[Overlay Notes] Could not save:", error)
+            root.saveState = "failed"
         }
     }
 }

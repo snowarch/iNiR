@@ -13,6 +13,7 @@
 //@ pragma Env QTWEBENGINE_CHROMIUM_FLAGS=--disable-features=ThirdPartyCookieBlocking,StorageAccessAPI
 
 import qs.modules.common
+import qs.modules.shared.overlay
 
 import QtQuick
 import Quickshell
@@ -801,7 +802,8 @@ ShellRoot {
         function open(): void { GlobalStates.oskOpen = true }
     }
 
-    /// Floating tools (Super+G): notes, images, crosshair, recorder, resources and other pinnable desktop tools.
+    /// Floating tools (Super+G): a bench of game tools over the screen (recorder, mixer, resources, FPS cap,
+    /// crosshair, notes, a picture, notifications, Discord, game performance); a pinned tool stays once it closes.
     ///
     /// ```kdl
     /// Super+G { spawn "inir" "overlay" "toggle"; }
@@ -810,17 +812,29 @@ ShellRoot {
         target: "overlay"
         /// Open/close Floating tools
         function toggle(): void { GlobalStates.overlayOpen = !GlobalStates.overlayOpen }
+        /// Open Floating tools
+        function open(): void { GlobalStates.overlayOpen = true }
+        /// Close Floating tools (pinned tools stay)
+        function close(): void { GlobalStates.overlayOpen = false }
         /// Show or hide one floating tool by id (`crosshair`, `fpsLimiter`, `floatingImage`, `recorder`, `resources`,
         /// `notes`, `discord`, `volumeMixer`, `notifications`, `gamePerformance`): `on`, `off` or `toggle`
         function tool(identifier: string, action: string): string {
-            const state = Persistent.states.overlay
-            if (!state || typeof state[identifier] !== "object") return "Unknown tool"
-            const open = state.open.includes(identifier)
-            const wanted = action === "on" ? true : action === "off" ? false : !open
-            if (wanted && !open) state.open.push(identifier)
-            else if (!wanted && open) state.open = state.open.filter(id => id !== identifier)
+            if (!OverlayContext.info(identifier)) return "Unknown tool"
+            const wanted = action === "on" ? true : action === "off" ? false : !OverlayContext.isOpen(identifier)
+            OverlayContext.setOpen(identifier, wanted)
             return wanted ? "on" : "off"
         }
+        /// Pin one floating tool so it stays over the screen when the bench closes: `on`, `off` or `toggle`
+        function pin(identifier: string, action: string): string {
+            const entry = Persistent.states.overlay?.[identifier]
+            if (!OverlayContext.info(identifier) || typeof entry !== "object") return "Unknown tool"
+            const wanted = action === "on" ? true : action === "off" ? false : !entry.pinned
+            if (wanted) OverlayContext.setOpen(identifier, true)
+            entry.pinned = wanted
+            return wanted ? "on" : "off"
+        }
+        /// Lay every open tool out again, side by side from the screen's edges
+        function arrange(): void { OverlayContext.arrange() }
     }
 
     /// Power menu. Logout, suspend, reboot, shutdown. The "I'm done for today" buttons.

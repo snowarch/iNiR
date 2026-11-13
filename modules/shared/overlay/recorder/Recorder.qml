@@ -11,615 +11,380 @@ import qs.modules.common.functions
 import qs.modules.shared.overlay
 import qs.services
 
+// Capture: the two recordings lead (a region, the whole screen), or the running one with its time and Stop; then the
+// stills, what audio goes in, and where it all lands.
 StyledOverlayWidget {
     id: root
-    minimumWidth: 400
-    minimumHeight: Math.max(250, contentColumn.implicitHeight)
+    resizable: false
 
-    // Dynamic title: "Recorder" normally, "Recorder — 15:23" when recording
-    title: RecorderStatus.isRecording
-        ? Translation.tr("Recorder") + " — " + root.formatElapsed(RecorderStatus.elapsedSeconds)
-        : Translation.tr("Recorder")
+    readonly property bool recording: RecorderStatus.isRecording
+    factColor: OverlayLook.colError
 
-    // Get the effective save path (config or default XDG Videos)
-    readonly property string effectiveSavePath: {
-        const configPath = String(Config.getNestedValue("screenRecord.savePath", ""));
-        if (configPath && configPath.length > 0) return configPath;
-        const videosDir = FileUtils.trimFileProtocol(Directories.videos);
-        return videosDir || `${FileUtils.trimFileProtocol(Directories.home)}/Videos`;
+    readonly property string savePath: {
+        const configured = String(Config.getNestedValue("screenRecord.savePath", ""))
+        if (configured.length > 0) return configured
+        const videos = FileUtils.trimFileProtocol(Directories.videos)
+        return videos || `${FileUtils.trimFileProtocol(Directories.home)}/Videos`
     }
-    readonly property string effectiveScreenshotPath: Directories.screenshotsPath
+    readonly property string screenshotPath: Directories.screenshotsPath
     readonly property string audioMode: RecorderStatus.configuredAudioMode
-    readonly property string statusAudioMode: RecorderStatus.isRecording ? RecorderStatus.effectiveAudioMode : audioMode
-    property string folderDialogTarget: "recordings"
-    property bool _folderDialogEngaged: false
-
-    function audioModeLabel(mode: string): string {
-        switch (mode) {
-        case "none": return Translation.tr("No audio")
-        case "microphone": return Translation.tr("Microphone")
-        case "both": return Translation.tr("System + mic")
-        default: return Translation.tr("System audio")
-        }
+    readonly property string liveAudioMode: root.recording ? RecorderStatus.effectiveAudioMode : root.audioMode
+    readonly property var audioModes: [
+        { value: "none", label: "None", glyph: "volume_off", long: "No audio" },
+        { value: "system", label: "System", glyph: "volume_up", long: "System audio" },
+        { value: "microphone", label: "Mic", glyph: "mic", long: "Microphone" },
+        { value: "both", label: "Both", glyph: "instant_mix", long: "System + mic" }
+    ]
+    function audioLabel(mode: string): string {
+        const found = root.audioModes.find(m => m.value === mode)
+        return Translation.tr(found ? found.long : "System audio")
     }
 
-    function audioModeIcon(mode: string): string {
-        switch (mode) {
-        case "none": return "volume_off"
-        case "microphone": return "mic"
-        case "both": return "instant_mix"
-        default: return "volume_up"
-        }
-    }
-
-    function setAudioMode(mode: string): void {
-        RecorderStatus.setConfiguredAudioMode(mode)
-    }
-
-    function formatElapsed(totalSec: int): string {
-        const hours = Math.floor(totalSec / 3600);
-        const minutes = Math.floor((totalSec % 3600) / 60);
-        const seconds = totalSec % 60;
-        const pad = (n) => n < 10 ? "0" + n : "" + n;
-        if (hours > 0) return pad(hours) + ":" + pad(minutes) + ":" + pad(seconds);
-        return pad(minutes) + ":" + pad(seconds);
-    }
-
-    function getDiskFreeText(): string {
-        return _diskFreeText;
-    }
-
-    property string _diskFreeText: "..."
-    property bool _diskInfoPending: false
-
-    function refreshDiskInfo(): void {
-        if (_diskInfoPending) return;
-        _diskInfoPending = true;
-        diskQueryProcess.running = true;
-    }
-
-    function openFolderDialog(target: string): void {
-        root.folderDialogTarget = target
-        folderDialog.open()
-    }
-
-    function syncFolderDialogLayer(): void {
-        const visible = Boolean(folderDialog.visible)
-        if (visible === root._folderDialogEngaged) return
-        root._folderDialogEngaged = visible
-        OverlayContext.setNativeDialogVisible("recorder-folder", visible)
-    }
-
+    // Free space where recordings land, read while the bench is open.
+    property string diskFree: ""
     Process {
-        id: diskQueryProcess
-        command: ["df", "-BG", "--output=avail", root.effectiveSavePath]
+        id: diskQuery
+        command: ["df", "-BG", "--output=avail", root.savePath]
         stdout: StdioCollector {
             onStreamFinished: {
                 const lines = text.trim().split("\n")
-                root._diskFreeText = lines.length > 1 ? lines[lines.length - 1].trim() : "?"
-                root._diskInfoPending = false;
-            }
-        }
-        onExited: (code, status) => {
-            if (code !== 0) {
-                root._diskFreeText = "?";
-                root._diskInfoPending = false;
+                root.diskFree = lines.length > 1 ? lines[lines.length - 1].trim() : ""
             }
         }
     }
+    Timer {
+        interval: 10000
+        running: root.benchOpen && root.visible
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: if (!diskQuery.running) diskQuery.running = true
+    }
 
-    contentItem: OverlayBackground {
-        id: contentItem
-        radius: root.contentRadius
-        property real padding: 8
-
-        ColumnLayout {
-            id: contentColumn
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.topMargin: 10
-            anchors.bottomMargin: 10
-            width: Math.min(parent.width - 20, 620)
-            spacing: 10
-
-            // ── Recording indicator + timer (only when recording) ──
-            Rectangle {
-                Layout.alignment: Qt.AlignHCenter
-                Layout.fillWidth: true
-                Layout.leftMargin: 4
-                Layout.rightMargin: 4
-                opacity: RecorderStatus.isRecording ? 1 : 0
-                visible: opacity > 0
-                implicitHeight: RecorderStatus.isRecording ? 28 : 0
-                Layout.preferredHeight: implicitHeight
-                radius: Math.min(width, height) / 2
-                color: OverlayLook.colErrorContainer
-
-                Behavior on opacity {
-                    enabled: Appearance.animationsEnabled
-                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
-                }
-                Behavior on implicitHeight {
-                    enabled: Appearance.animationsEnabled
-                    NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
-                }
-
-                RowLayout {
-                    anchors.centerIn: parent
-                    spacing: 6
-
-                    Rectangle {
-                        width: 8; height: 8; radius: 4
-                        color: OverlayLook.colError
-                        SequentialAnimation on opacity {
-                            running: RecorderStatus.isRecording
-                            loops: Animation.Infinite
-                            NumberAnimation { to: 0.3; duration: 600; easing.type: Easing.InOutSine }
-                            NumberAnimation { to: 1.0; duration: 600; easing.type: Easing.InOutSine }
-                        }
-                    }
-
-                    StyledText {
-                        text: root.formatElapsed(RecorderStatus.elapsedSeconds)
-                        color: OverlayLook.colOnErrorContainer
-                        font.family: Appearance.font.family.monospace
-                        font.pixelSize: Appearance.font.pixelSize.normal
-                        font.weight: Font.Medium
-                    }
-
-                    StyledText {
-                        text: Translation.tr("Recording")
-                        color: OverlayLook.colOnErrorContainer
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        opacity: 0.7
-                    }
-                }
-            }
-
-            OverlayPanel {
-                Layout.fillWidth: true
-                implicitHeight: 42
-                elevation: 2
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.margins: 6
-                    spacing: 6
-
-                    StyledText {
-                        text: Translation.tr("Audio")
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        color: OverlayLook.colOnLayer2
-                        Layout.leftMargin: 4
-                    }
-
-                    Item { Layout.fillWidth: true }
-
-                    RecorderAudioButton {
-                        audioModeValue: "none"
-                        materialSymbol: "volume_off"
-                        labelText: Translation.tr("No audio")
-                    }
-                    RecorderAudioButton {
-                        audioModeValue: "system"
-                        materialSymbol: "volume_up"
-                        labelText: Translation.tr("System audio")
-                    }
-                    RecorderAudioButton {
-                        audioModeValue: "microphone"
-                        materialSymbol: "mic"
-                        labelText: Translation.tr("Microphone")
-                    }
-                    RecorderAudioButton {
-                        audioModeValue: "both"
-                        materialSymbol: "instant_mix"
-                        labelText: Translation.tr("System + microphone")
-                    }
-                }
-            }
-
-            GridLayout {
-                Layout.fillWidth: true
-                columns: 2
-                columnSpacing: 8
-                rowSpacing: 8
-
-                RecorderActionButton {
-                    Layout.fillWidth: true
-                    materialSymbol: "screenshot_region"
-                    labelText: Translation.tr("Screenshot region")
-                    detailText: Translation.tr("Save + copy")
-                    onClicked: {
-                        GlobalStates.overlayOpen = false;
-                        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "region", "screenshot"]);
-                    }
-                }
-
-                RecorderActionButton {
-                    Layout.fillWidth: true
-                    materialSymbol: "content_copy"
-                    labelText: Translation.tr("Copy screen")
-                    detailText: Translation.tr("Clipboard only")
-                    onClicked: {
-                        GlobalStates.overlayOpen = false;
-                        Quickshell.execDetached(["bash", "-c", "grim - | wl-copy"]);
-                    }
-                }
-
-                RecorderActionButton {
-                    Layout.fillWidth: true
-                    visible: !RecorderStatus.isRecording
-                    materialSymbol: "screen_record"
-                    labelText: Translation.tr("Record region")
-                    detailText: root.audioModeLabel(root.audioMode)
-                    onClicked: {
-                        GlobalStates.overlayOpen = false;
-                        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "region", "recordWithSound"]);
-                    }
-                }
-
-                RecorderActionButton {
-                    Layout.fillWidth: true
-                    visible: !RecorderStatus.isRecording
-                    materialSymbol: "capture"
-                    labelText: Translation.tr("Record screen")
-                    detailText: root.audioModeLabel(root.audioMode)
-                    onClicked: {
-                        GlobalStates.overlayOpen = false;
-                        Quickshell.execDetached([Directories.recordScriptPath, "--fullscreen", "--sound"]);
-                        RecorderStatus.scheduleQuickCheck();
-                    }
-                }
-
-                RecorderActionButton {
-                    Layout.fillWidth: true
-                    Layout.columnSpan: 2
-                    visible: RecorderStatus.isRecording
-                    materialSymbol: "stop_circle"
-                    labelText: Translation.tr("Stop recording")
-                    detailText: root.formatElapsed(RecorderStatus.elapsedSeconds)
-                    destructive: true
-                    onClicked: {
-                        Quickshell.execDetached([Directories.recordScriptPath, "--stop"]);
-                        RecorderStatus.scheduleQuickCheck();
-                    }
-                }
-            }
-
-            // ── Status bar ──
-            RecorderStatusBar {
-                Layout.alignment: Qt.AlignHCenter
-                Layout.fillWidth: true
-            }
-
-            OverlayPanel {
-                Layout.fillWidth: true
-                implicitHeight: destinationsColumn.implicitHeight + 16
-                elevation: 2
-
-                ColumnLayout {
-                    id: destinationsColumn
-                    anchors.fill: parent
-                    anchors.margins: 8
-                    spacing: 4
-
-                    StyledText {
-                        text: Translation.tr("Capture folders")
-                        font.pixelSize: Appearance.font.pixelSize.small
-                        font.weight: Font.Medium
-                        color: OverlayLook.colOnLayer2
-                    }
-
-                    DestinationRow {
-                        titleText: Translation.tr("Recordings")
-                        pathText: Directories.shortHomePath(root.effectiveSavePath)
-                        onOpenRequested: {
-                            GlobalStates.overlayOpen = false
-                            ShellExec.openDirectory(root.effectiveSavePath, Translation.tr("Open recordings folder"))
-                        }
-                        onChangeRequested: root.openFolderDialog("recordings")
-                    }
-
-                    DestinationRow {
-                        titleText: Translation.tr("Screenshots")
-                        pathText: Directories.shortHomePath(root.effectiveScreenshotPath)
-                        onOpenRequested: {
-                            GlobalStates.overlayOpen = false
-                            ShellExec.openDirectory(root.effectiveScreenshotPath, Translation.tr("Open screenshots folder"))
-                        }
-                        onChangeRequested: root.openFolderDialog("screenshots")
-                    }
-                }
-            }
-        }
+    property string folderTarget: "recordings"
+    property bool _dialogShown: false
+    function chooseFolder(target: string): void {
+        root.folderTarget = target
+        folderDialog.open()
+    }
+    function syncDialog(): void {
+        const shown = Boolean(folderDialog.visible)
+        if (shown === root._dialogShown) return
+        root._dialogShown = shown
+        OverlayContext.setNativeDialogVisible("recorder-folder", shown)
+    }
+    function openFolder(path: string, label: string): void {
+        GlobalStates.overlayOpen = false
+        ShellExec.openDirectory(path, label)
     }
 
     FolderDialog {
         id: folderDialog
-        title: root.folderDialogTarget === "screenshots"
-            ? Translation.tr("Select screenshots folder")
-            : Translation.tr("Select recordings folder")
-        currentFolder: `file://${root.folderDialogTarget === "screenshots" ? root.effectiveScreenshotPath : root.effectiveSavePath}`
+        title: root.folderTarget === "screenshots" ? Translation.tr("Select screenshots folder") : Translation.tr("Select recordings folder")
+        currentFolder: `file://${root.folderTarget === "screenshots" ? root.screenshotPath : root.savePath}`
         onAccepted: {
-            const path = FileUtils.trimFileProtocol(selectedFolder.toString());
-            Config.setNestedValue(root.folderDialogTarget === "screenshots"
-                ? "regionSelector.savePath" : "screenRecord.savePath", path);
+            const path = FileUtils.trimFileProtocol(selectedFolder.toString())
+            Config.setNestedValue(root.folderTarget === "screenshots" ? "regionSelector.savePath" : "screenRecord.savePath", path)
         }
+        onVisibleChanged: root.syncDialog()
     }
+    Component.onDestruction: if (root._dialogShown) OverlayContext.setNativeDialogVisible("recorder-folder", false)
 
-    Connections {
-        target: folderDialog
-        function onVisibleChanged(): void { root.syncFolderDialogLayer() }
-    }
+    contentItem: Item {
+        anchors.fill: parent
+        implicitWidth: Math.round(340 * root.d)
+        implicitHeight: column.implicitHeight
 
-    Component.onDestruction: {
-        if (root._folderDialogEngaged)
-            OverlayContext.setNativeDialogVisible("recorder-folder", false)
-    }
-
-    // ── Sub-components ──
-
-    component RecorderAudioButton: RippleButton {
-        id: audioButton
-        required property string audioModeValue
-        required property string materialSymbol
-        required property string labelText
-        readonly property bool modeSelected: root.audioMode === audioModeValue
-        implicitWidth: 72
-        implicitHeight: 28
-        buttonRadius: height / 2
-        colBackground: modeSelected ? OverlayLook.colPrimaryContainer : OverlayLook.colLayer3
-        colBackgroundHover: modeSelected ? OverlayLook.colPrimaryContainerHover : OverlayLook.colLayer3Hover
-        colRipple: modeSelected ? OverlayLook.colPrimaryContainerActive : OverlayLook.colLayer3Active
-        onClicked: root.setAudioMode(audioModeValue)
-
-        contentItem: Item {
-            implicitWidth: centredRow1.implicitWidth
-            implicitHeight: centredRow1.implicitHeight
-            Row {
-                id: centredRow1
-                anchors.centerIn: parent
-                spacing: 4
-
-                MaterialSymbol {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: audioButton.materialSymbol
-                    iconSize: 15
-                    color: audioButton.modeSelected ? OverlayLook.colOnPrimaryContainer : OverlayLook.colOnLayer3
-                }
-                StyledText {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: audioButton.audioModeValue === "both" ? Translation.tr("Both")
-                        : audioButton.audioModeValue === "microphone" ? Translation.tr("Mic")
-                        : audioButton.audioModeValue === "system" ? Translation.tr("System")
-                        : Translation.tr("None")
-                    font.pixelSize: Appearance.font.pixelSize.smaller
-                    color: audioButton.modeSelected ? OverlayLook.colOnPrimaryContainer : OverlayLook.colOnLayer3
-                }
-            }
-        }
-
-        StyledToolTip {
-            text: audioButton.labelText
-        }
-    }
-
-    component RecorderActionButton: RippleButton {
-        id: actionButton
-        required property string materialSymbol
-        required property string labelText
-        required property string detailText
-        property bool destructive: false
-        implicitHeight: 54
-        buttonRadius: Appearance.regaliaEverywhere ? Appearance.regalia.roundSmall
-            : Appearance.zzzEverywhere ? Appearance.zzz.controlRadius
-            : OverlayLook.roundingNormal
-        colBackground: destructive ? OverlayLook.colErrorContainer : OverlayLook.colLayer3
-        colBackgroundHover: destructive ? OverlayLook.colError : OverlayLook.colLayer3Hover
-        colRipple: destructive ? OverlayLook.colErrorActive : OverlayLook.colLayer3Active
-
-        contentItem: RowLayout {
+        ColumnLayout {
+            id: column
             anchors.fill: parent
-            anchors.leftMargin: 12
-            anchors.rightMargin: 12
-            spacing: 10
+            spacing: Math.round(8 * root.d)
 
-            MaterialSymbol {
-                text: actionButton.materialSymbol
-                iconSize: 22
-                color: actionButton.destructive
-                    ? OverlayLook.colOnErrorContainer : OverlayLook.colOnLayer3
-            }
-
-            ColumnLayout {
+            // The lead: two recordings, or the one running.
+            Item {
                 Layout.fillWidth: true
-                spacing: 1
+                Layout.preferredHeight: Math.round(92 * root.d)
 
-                StyledText {
-                    Layout.fillWidth: true
-                    text: actionButton.labelText
-                    font.pixelSize: Appearance.font.pixelSize.small
-                    font.weight: Font.Medium
-                    color: actionButton.destructive
-                        ? OverlayLook.colOnErrorContainer : OverlayLook.colOnLayer3
-                    elide: Text.ElideRight
+                RowLayout {
+                    anchors.fill: parent
+                    spacing: Math.round(8 * root.d)
+                    opacity: root.recording ? 0 : 1
+                    visible: opacity > 0
+                    Behavior on opacity { NumberAnimation { duration: FamilyStyle.revealDuration } }
+                    CaptureTile {
+                        glyph: "screen_record"
+                        label: Translation.tr("Record region")
+                        detail: root.audioLabel(root.audioMode)
+                        onClicked: OverlayContext.recordRegion()
+                    }
+                    CaptureTile {
+                        glyph: "capture"
+                        label: Translation.tr("Record screen")
+                        detail: root.audioLabel(root.audioMode)
+                        onClicked: OverlayContext.recordScreen()
+                    }
                 }
 
-                StyledText {
+                Rectangle {
+                    anchors.fill: parent
+                    opacity: root.recording ? 1 : 0
+                    visible: opacity > 0
+                    Behavior on opacity { NumberAnimation { duration: FamilyStyle.revealDuration } }
+                    radius: OverlayLook.roundingNormal
+                    color: OverlayLook.colErrorContainer
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: Math.round(16 * root.d)
+                        anchors.rightMargin: Math.round(12 * root.d)
+                        spacing: Math.round(12 * root.d)
+
+                        Rectangle {
+                            Layout.alignment: Qt.AlignVCenter
+                            implicitWidth: Math.round(10 * root.d)
+                            implicitHeight: implicitWidth
+                            radius: width / 2
+                            color: OverlayLook.colError
+                            SequentialAnimation on opacity {
+                                running: root.recording && root.visible
+                                loops: Animation.Infinite
+                                NumberAnimation { to: 0.25; duration: 700; easing.type: Easing.InOutSine }
+                                NumberAnimation { to: 1; duration: 700; easing.type: Easing.InOutSine }
+                            }
+                        }
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignVCenter
+                            spacing: 0
+                            StyledText {
+                                text: OverlayContext.elapsed(RecorderStatus.elapsedSeconds)
+                                color: OverlayLook.colOnErrorContainer
+                                font.family: OverlayLook.fontNumbers
+                                font.features: ({ "tnum": 1 })
+                                font.pixelSize: OverlayLook.typeFigure
+                                font.weight: Font.DemiBold
+                            }
+                            StyledText {
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                                text: Translation.tr("Recording") + " · " + root.audioLabel(root.liveAudioMode)
+                                    + (RecorderStatus.audioFallback ? " · " + Translation.tr("Fallback") : "")
+                                color: OverlayLook.colOnErrorContainer
+                                opacity: 0.75
+                                font.family: OverlayLook.fontMain
+                                font.pixelSize: OverlayLook.typeMeta
+                            }
+                        }
+                        OverlayButton {
+                            Layout.alignment: Qt.AlignVCenter
+                            size: Math.round(36 * root.d)
+                            strong: true
+                            tint: OverlayLook.colError
+                            glyph: "stop"
+                            label: Translation.tr("Stop")
+                            tip: Translation.tr("Stop recording")
+                            onClicked: OverlayContext.stopRecording()
+                        }
+                    }
+                }
+            }
+
+            // Stills
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: Math.round(8 * root.d)
+                OverlayButton {
                     Layout.fillWidth: true
-                    text: actionButton.detailText
-                    font.pixelSize: Appearance.font.pixelSize.smaller
-                    color: actionButton.destructive
-                        ? OverlayLook.colOnErrorContainer : OverlayLook.colSubtext
-                    opacity: 0.78
+                    filled: true
+                    size: Math.round(36 * root.d)
+                    glyphSize: Math.round(18 * root.d)
+                    glyph: "screenshot_region"
+                    label: Translation.tr("Screenshot")
+                    tip: Translation.tr("Screenshot region")
+                    onClicked: OverlayContext.screenshotRegion()
+                }
+                OverlayButton {
+                    Layout.fillWidth: true
+                    filled: true
+                    size: Math.round(36 * root.d)
+                    glyphSize: Math.round(18 * root.d)
+                    glyph: "content_copy"
+                    label: Translation.tr("Copy screen")
+                    tip: Translation.tr("Clipboard only")
+                    onClicked: OverlayContext.copyScreen()
+                }
+            }
+
+            // Audio, and what it will pick up
+            OverlaySegments {
+                Layout.fillWidth: true
+                Layout.topMargin: Math.round(4 * root.d)
+                enabled: !root.recording
+                opacity: enabled ? 1 : 0.5
+                accessibleName: Translation.tr("Audio")
+                options: root.audioModes
+                current: root.audioMode
+                onPicked: value => RecorderStatus.setConfiguredAudioMode(value)
+            }
+            Row {
+                Layout.alignment: Qt.AlignHCenter
+                spacing: Math.round(14 * root.d)
+                Fact {
+                    visible: root.liveAudioMode === "system" || root.liveAudioMode === "both"
+                    glyph: Audio.sink?.audio?.muted ? "volume_off" : "volume_up"
+                    text: Math.round((Audio.sink?.audio?.volume ?? 1) * 100) + "%"
+                    warn: Audio.sink?.audio?.muted ?? false
+                }
+                Fact {
+                    visible: root.liveAudioMode === "microphone" || root.liveAudioMode === "both"
+                    glyph: Audio.micMuted ? "mic_off" : "mic"
+                    text: Audio.micMuted ? Translation.tr("OFF") : Translation.tr("ON")
+                    warn: Audio.micMuted
+                }
+                Fact {
+                    visible: root.diskFree.length > 0
+                    glyph: "storage"
+                    text: root.diskFree + " " + Translation.tr("free")
+                }
+            }
+
+            Item { Layout.fillHeight: true }
+
+            // Where it lands
+            Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: 1
+                color: OverlayLook.colHairline
+            }
+            FolderRow {
+                glyph: "movie"
+                title: Translation.tr("Recordings")
+                path: root.savePath
+                onOpenRequested: root.openFolder(root.savePath, Translation.tr("Open recordings folder"))
+                onChangeRequested: root.chooseFolder("recordings")
+            }
+            FolderRow {
+                glyph: "image"
+                title: Translation.tr("Screenshots")
+                path: root.screenshotPath
+                onOpenRequested: root.openFolder(root.screenshotPath, Translation.tr("Open screenshots folder"))
+                onChangeRequested: root.chooseFolder("screenshots")
+            }
+        }
+    }
+
+    component CaptureTile: RippleButton {
+        id: tile
+        property string glyph
+        property string label
+        property string detail
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        padding: 0
+        rippleEnabled: !OverlayLook.own && !Appearance.regaliaEverywhere && !Appearance.editorialEverywhere
+        buttonRadius: OverlayLook.roundingNormal
+        colBackground: OverlayLook.colLayer2
+        colBackgroundHover: OverlayLook.colLayer2Hover
+        colRipple: OverlayLook.colLayer2Active
+        Accessible.name: tile.label
+        contentItem: Item {
+            Column {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                anchors.margins: Math.round(12 * root.d)
+                spacing: Math.round(1 * root.d)
+                MaterialSymbol {
+                    text: tile.glyph
+                    iconSize: Math.round(24 * root.d)
+                    fill: 1
+                    color: OverlayLook.colError
+                }
+                Item { width: 1; height: Math.round(5 * root.d) }
+                StyledText {
+                    width: parent.width
                     elide: Text.ElideRight
+                    text: tile.label
+                    color: OverlayLook.colOnLayer1
+                    font.family: OverlayLook.fontMain
+                    font.pixelSize: OverlayLook.typeBody
+                    font.weight: Font.DemiBold
+                }
+                StyledText {
+                    width: parent.width
+                    elide: Text.ElideRight
+                    text: tile.detail
+                    color: OverlayLook.colSubtext
+                    font.family: OverlayLook.fontMain
+                    font.pixelSize: OverlayLook.typeMeta
                 }
             }
         }
     }
 
-    component DestinationRow: RowLayout {
-        id: destinationRow
-        required property string titleText
-        required property string pathText
+    component Fact: Row {
+        id: factRow
+        property string glyph
+        property string text
+        property bool warn: false
+        spacing: Math.round(4 * root.d)
+        MaterialSymbol {
+            anchors.verticalCenter: parent.verticalCenter
+            text: factRow.glyph
+            iconSize: Math.round(14 * root.d)
+            color: factRow.warn ? OverlayLook.colError : OverlayLook.colSubtext
+        }
+        StyledText {
+            anchors.verticalCenter: parent.verticalCenter
+            text: factRow.text
+            color: factRow.warn ? OverlayLook.colError : OverlayLook.colSubtext
+            font.family: OverlayLook.fontNumbers
+            font.features: ({ "tnum": 1 })
+            font.pixelSize: OverlayLook.typeMeta
+        }
+    }
+
+    component FolderRow: RowLayout {
+        id: folderRow
+        property string glyph
+        property string title
+        property string path
         signal openRequested()
         signal changeRequested()
         Layout.fillWidth: true
-        spacing: 6
-
+        spacing: Math.round(8 * root.d)
         MaterialSymbol {
-            text: "folder"
-            iconSize: 15
-            color: OverlayLook.colOnLayer2
+            Layout.leftMargin: Math.round(4 * root.d)
+            text: folderRow.glyph
+            iconSize: Math.round(16 * root.d)
+            color: OverlayLook.colSubtext
         }
-
         StyledText {
-            text: destinationRow.titleText
-            font.pixelSize: Appearance.font.pixelSize.smaller
-            color: OverlayLook.colOnLayer2
+            text: folderRow.title
+            color: OverlayLook.colOnLayer1
+            font.family: OverlayLook.fontMain
+            font.pixelSize: OverlayLook.typeMeta
+            font.weight: Font.Medium
         }
-
         StyledText {
             Layout.fillWidth: true
-            text: destinationRow.pathText
-            font.pixelSize: Appearance.font.pixelSize.smaller
-            color: OverlayLook.colSubtext
             horizontalAlignment: Text.AlignRight
             elide: Text.ElideMiddle
+            text: Directories.shortHomePath(folderRow.path)
+            color: OverlayLook.colSubtext
+            font.family: OverlayLook.fontMain
+            font.pixelSize: OverlayLook.typeMeta
         }
-
-        RippleButton {
-            implicitWidth: 26
-            implicitHeight: 26
-            buttonRadius: height / 2
-            colBackground: "transparent"
-            colBackgroundHover: OverlayLook.colLayer3Hover
-            colRipple: OverlayLook.colLayer3Active
-            onClicked: destinationRow.openRequested()
-            contentItem: MaterialSymbol {
-                anchors.centerIn: parent
-                text: "folder_open"
-                iconSize: 15
-                color: OverlayLook.colOnLayer2
-            }
-            StyledToolTip { text: Translation.tr("Open folder") }
+        OverlayButton {
+            size: Math.round(26 * root.d)
+            glyph: "folder_open"
+            tip: Translation.tr("Open folder")
+            onClicked: folderRow.openRequested()
         }
-
-        RippleButton {
-            implicitWidth: 26
-            implicitHeight: 26
-            buttonRadius: height / 2
-            colBackground: "transparent"
-            colBackgroundHover: OverlayLook.colLayer3Hover
-            colRipple: OverlayLook.colLayer3Active
-            onClicked: destinationRow.changeRequested()
-            contentItem: MaterialSymbol {
-                anchors.centerIn: parent
-                text: "drive_file_move"
-                iconSize: 15
-                color: OverlayLook.colOnLayer2
-            }
-            StyledToolTip { text: Translation.tr("Change folder") }
+        OverlayButton {
+            size: Math.round(26 * root.d)
+            glyph: "drive_file_move"
+            tip: Translation.tr("Change folder")
+            onClicked: folderRow.changeRequested()
         }
     }
-
-    component RecorderStatusBar: Item {
-        id: statusBar
-        implicitHeight: statusColumn.implicitHeight
-        implicitWidth: statusColumn.implicitWidth
-
-        ColumnLayout {
-            id: statusColumn
-            anchors.centerIn: parent
-            spacing: 2
-
-            // Capture profile + relevant live source state
-            RowLayout {
-                spacing: 12
-                Layout.alignment: Qt.AlignHCenter
-
-                Row {
-                    spacing: 4
-                    MaterialSymbol {
-                        text: root.audioModeIcon(root.statusAudioMode)
-                        iconSize: 14
-                        color: root.statusAudioMode === "none" ? OverlayLook.colSubtext : OverlayLook.colOnLayer2
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                    StyledText {
-                        text: Translation.tr("Audio") + ": " + root.audioModeLabel(root.statusAudioMode)
-                            + (RecorderStatus.isRecording && RecorderStatus.audioFallback ? " · " + Translation.tr("Fallback") : "")
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                        color: root.statusAudioMode === "none" ? OverlayLook.colSubtext : OverlayLook.colOnLayer2
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
-
-                Row {
-                    visible: root.statusAudioMode === "system" || root.statusAudioMode === "both"
-                    spacing: 4
-                    MaterialSymbol {
-                        text: Audio.sink?.audio?.muted ? "volume_off" : "volume_up"
-                        iconSize: 14
-                        color: Audio.sink?.audio?.muted ? OverlayLook.colError : OverlayLook.colOnLayer2
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                    StyledText {
-                        text: Math.round((Audio.sink?.audio?.volume ?? 1) * 100) + "%"
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                        color: Audio.sink?.audio?.muted ? OverlayLook.colError : OverlayLook.colOnLayer2
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
-
-                Row {
-                    visible: root.statusAudioMode === "microphone" || root.statusAudioMode === "both"
-                    spacing: 4
-                    MaterialSymbol {
-                        text: Audio.micMuted ? "mic_off" : "mic"
-                        iconSize: 14
-                        color: Audio.micMuted ? OverlayLook.colError : OverlayLook.colOnLayer2
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                    StyledText {
-                        text: Audio.micMuted ? Translation.tr("OFF") : Translation.tr("ON")
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                        color: Audio.micMuted ? OverlayLook.colError : OverlayLook.colOnLayer2
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
-            }
-
-            RowLayout {
-                spacing: 12
-                Layout.alignment: Qt.AlignHCenter
-
-                Row {
-                    spacing: 4
-                    MaterialSymbol {
-                        text: "storage"
-                        iconSize: 14
-                        color: OverlayLook.colOnLayer2
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                    StyledText {
-                        text: root.getDiskFreeText() + " " + Translation.tr("free")
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                        color: OverlayLook.colOnLayer2
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
-            }
-        }
-
-        Timer {
-            interval: 10000
-            running: GlobalStates.overlayOpen
-            repeat: true
-            onTriggered: root.refreshDiskInfo()
-            Component.onCompleted: root.refreshDiskInfo()
-        }
-    }
-
 }

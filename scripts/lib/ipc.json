@@ -3021,7 +3021,7 @@
   {
    "name": "overlay",
    "family": "shared",
-   "description": "Floating tools (Super+G): notes, images, crosshair, recorder, resources and other pinnable desktop tools.",
+   "description": "Floating tools (Super+G): a bench of game tools over the screen (recorder, mixer, resources, FPS cap, crosshair, notes, a picture, notifications, Discord, game performance); a pinned tool stays once it closes.",
    "notes": "```kdl\nSuper+G { spawn \"inir\" \"overlay\" \"toggle\"; }\n```",
    "example": "Super+G { spawn \"inir\" \"overlay\" \"toggle\"; }",
    "functions": [
@@ -3029,6 +3029,18 @@
      "name": "toggle",
      "args": [],
      "description": "Open/close Floating tools",
+     "values": []
+    },
+    {
+     "name": "open",
+     "args": [],
+     "description": "Open Floating tools",
+     "values": []
+    },
+    {
+     "name": "close",
+     "args": [],
+     "description": "Close Floating tools (pinned tools stay)",
      "values": []
     },
     {
@@ -3053,6 +3065,25 @@
       "off",
       "toggle"
      ]
+    },
+    {
+     "name": "pin",
+     "args": [
+      "identifier",
+      "action"
+     ],
+     "description": "Pin one floating tool so it stays over the screen when the bench closes: `on`, `off` or `toggle`",
+     "values": [
+      "on",
+      "off",
+      "toggle"
+     ]
+    },
+    {
+     "name": "arrange",
+     "args": [],
+     "description": "Lay every open tool out again, side by side from the screen's edges",
+     "values": []
     }
    ]
   },

@@ -13,25 +13,21 @@ import Quickshell.Hyprland
 Scope {
     id: root
 
+    // A pinned, clickable tool's hole in the mask, bound to its HUD rect: an item-mapped Region would go stale when
+    // the tool moves.
     property Component regionComponent: Component {
-        Region {}
+        Region {
+            required property Item tool
+            x: Math.round(tool.hudX)
+            y: Math.round(tool.hudY)
+            width: Math.round(tool.hudW)
+            height: Math.round(tool.hudH)
+        }
     }
 
     // Keep PanelWindow alive after first open for instant subsequent toggles.
     // The Loader stays active once created; visibility is driven by GlobalStates.overlayOpen.
     property bool _everOpened: false
-
-    // Check persistent state directly to bootstrap the Loader before widgets register
-    readonly property bool _hasPersistentPins: {
-        const overlay = Persistent.states.overlay;
-        const openWidgets = overlay.open;
-        if (!openWidgets || openWidgets.length === 0) return false;
-        for (let i = 0; i < openWidgets.length; i++) {
-            const entry = overlay[openWidgets[i]];
-            if (entry && entry.pinned) return true;
-        }
-        return false;
-    }
 
     // Capture target screen when opening (don't follow focus while open)
     property var targetScreen: null
@@ -72,11 +68,11 @@ Scope {
         id: overlayLoader
         // Once opened, keep alive — no more destroy/recreate on every toggle
         // Also activate if persistent state has pinned widgets (bootstraps before widgets register)
-        active: root._everOpened || root._hasPersistentPins
+        active: root._everOpened || OverlayContext.hasSavedPins
         sourceComponent: PanelWindow {
             id: overlayWindow
-            // Visible when overlay is open OR when there are pinned widgets to show
-            visible: GlobalStates.overlayOpen || OverlayContext.hasPinnedWidgets || OverlayContext.nativeDialogOpen
+            // The bench, its exit, pinned tools, or a picker one of them opened.
+            visible: GlobalStates.overlayOpen || OverlayContext.closing || OverlayContext.hasPinnedWidgets || OverlayContext.nativeDialogOpen
             exclusionMode: ExclusionMode.Ignore
             WlrLayershell.namespace: "quickshell:overlay"
             // Native dialogs are ordinary toplevel windows. Yield the layer-shell
@@ -108,14 +104,15 @@ Scope {
             function _rebuildClickableRegions() {
                 for (const region of overlayWindow._activeClickableRegions) region.destroy();
                 overlayWindow._activeClickableRegions = OverlayContext.clickableWidgets.map((widget) => regionComponent.createObject(overlayWindow, {
-                    item: widget
+                    tool: widget
                 }));
                 clickableRegionMask.regions = overlayWindow._activeClickableRegions;
             }
             Component.onCompleted: overlayWindow._rebuildClickableRegions()
             Connections {
                 target: OverlayContext
-                function onClickableWidgetsChanged() { overlayWindow._rebuildClickableRegions(); }
+                // Tools leaving with a torn-down window still announce it.
+                function onClickableWidgetsChanged() { if (overlayWindow) overlayWindow._rebuildClickableRegions(); }
             }
             mask: Region {
                 id: clickableRegionMask

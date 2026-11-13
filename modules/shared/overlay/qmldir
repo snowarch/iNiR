@@ -1,5 +1,4 @@
 module qs.modules.shared.overlay
-OverlayBackground 1.0 OverlayBackground.qml
 OverlayContent 1.0 OverlayContent.qml
 singleton OverlayContext 1.0 OverlayContext.qml
 Overlay 1.0 Overlay.qml
@@ -8,4 +7,6 @@ OverlayWidgetDelegateChooser 1.0 OverlayWidgetDelegateChooser.qml
 StyledOverlayWidget 1.0 StyledOverlayWidget.qml
 singleton OverlayLook 1.0 OverlayLook.qml
 OverlaySegments 1.0 OverlaySegments.qml
-OverlayPanel 1.0 OverlayPanel.qml
+OverlayPlate 1.0 OverlayPlate.qml
+OverlayButton 1.0 OverlayButton.qml
+OverlaySlider 1.0 OverlaySlider.qml

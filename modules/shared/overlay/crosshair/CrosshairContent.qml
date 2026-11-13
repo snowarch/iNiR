@@ -124,8 +124,6 @@ Item {
     property real outerLineTotalSize: (outerLineTotalOffset + root.outerLineLength + root.borderWidth) * 2
     implicitWidth: Math.max(centerDotTotalSize, innerLineTotalSize, outerLineTotalSize) + 2 // 2 for pixel correction
     implicitHeight: implicitWidth
-    // width: implicitWidth
-    // height: implicitHeight
 
     Rectangle {
         id: centerDot
@@ -134,7 +132,7 @@ Item {
 
         color: root.crosshairColor
         opacity: root.centerDotOpacity
-        width: centerDotTotalSize
+        width: root.centerDotTotalSize
         height: width
 
         border.width: root.borderWidth
@@ -142,7 +140,6 @@ Item {
     }
 
     Repeater {
-        id: innerLines
         model: 4
         Item {
             id: innerHair
@@ -168,7 +165,6 @@ Item {
     }
 
     Repeater {
-        id: outerLines
         model: 4
         Item {
             id: outerHair
@@ -184,7 +180,7 @@ Item {
                 y: parent.height / 2 - height / 2
 
                 color: root.outerLineColor
-                width: hairLength + root.borderWidth * 2
+                width: outerHair.hairLength + root.borderWidth * 2
                 height: root.outerLineThickness + root.borderWidth * 2
 
                 border.width: root.borderWidth
@@ -192,6 +188,4 @@ Item {
             }
         }
     }
-
-    
 }

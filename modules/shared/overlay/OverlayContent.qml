@@ -1,76 +1,92 @@
 import QtQuick
-import QtQuick.Layouts
 import Quickshell
-import Quickshell.Widgets
 import qs
 import qs.services
 import qs.modules.common
-import qs.modules.common.widgets
-import qs.modules.common.widgets.widgetCanvas
+import qs.modules.common.functions
 
+// The bench: the scrim, the strip, the open tools and the guides a drag snaps to. A click on the empty desk or Esc
+// closes it; pinned tools stay as they are.
 Item {
     id: root
     focus: true
-    readonly property bool usePasswordChars: !PolkitService.flow?.responseVisible ?? true
 
-    Keys.onPressed: (event) => { // Esc to close
+    readonly property bool benchOpen: GlobalStates.overlayOpen
+    readonly property real d: OverlayLook.d
+
+    Keys.onPressed: event => {
         if (event.key === Qt.Key_Escape) {
-            GlobalStates.overlayOpen = false;
-        }
-    }
-
-    property real initScale: Config.options.overlay.openingZoomAnimation ? (OverlayLook.iris ? 1.03 : 1.08) : 1.000001
-    scale: initScale
-    Component.onCompleted: {
-        scale = 1
-    }
-    Behavior on scale {
-        NumberAnimation {
-            duration: Config.options?.overlay?.animationDurationMs ?? Appearance.animation.elementMoveEnter.duration
-            easing.type: Appearance.animation.elementMoveEnter.type
-            easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve
+            GlobalStates.overlayOpen = false
+            event.accepted = true
         }
     }
 
     Rectangle {
-        id: bg
+        id: scrim
         anchors.fill: parent
-        color: OverlayLook.iris ? FamilyStyle.scrim : Appearance.colors.colScrim
-        visible: Config.options.overlay.darkenScreen && opacity > 0
-        opacity: (GlobalStates.overlayOpen && root.scale !== initScale)
-                 ? (Config.options.overlay.scrimDim / 100)
-                 : 0
-        Behavior on opacity {
-            animation: NumberAnimation {
-                duration: OverlayLook.iris ? FamilyStyle.emergeDuration : Config.options.overlay.scrimAnimationDurationMs ?? Appearance.animation.elementMoveFast.duration
-                easing.type: Appearance.animation.elementMoveFast.type
-                easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve
-            }
-        }
+        color: FamilyStyle.scrim
+        opacity: root.benchOpen && (Config.options?.overlay?.darkenScreen ?? true) ? (Config.options?.overlay?.scrimDim ?? 35) / 100 : 0
+        visible: opacity > 0
+        Behavior on opacity { NumberAnimation { duration: OverlayLook.scrimDuration; easing.type: Easing.OutCubic } }
     }
 
-    WidgetCanvas {
+    MouseArea {
+        id: desk
         anchors.fill: parent
-        onClicked: GlobalStates.overlayOpen = false
-
-        OverlayTaskbar {
-            anchors {
-                horizontalCenter: parent.horizontalCenter
-                top: parent.top
-                topMargin: OverlayLook.iris ? FamilyStyle.frameInset("top") + Math.round(14 * FamilyStyle.density) : 50
-            }
+        enabled: root.benchOpen
+        // A press on a tool or the strip is theirs (a tool moves from its empty parts).
+        onPressed: mouse => {
+            const inStrip = mouse.x >= strip.x && mouse.x <= strip.x + strip.width && mouse.y >= strip.y && mouse.y <= strip.y + strip.height
+            const onTool = OverlayContext.plates("").some(r => mouse.x >= r.x && mouse.x <= r.x + r.w && mouse.y >= r.y && mouse.y <= r.y + r.h)
+            mouse.accepted = !inStrip && !onTool
         }
+        onClicked: GlobalStates.overlayOpen = false
+    }
+
+    // The tools' canvas: a sibling of the desk, so a disabled desk never disables a pinned tool.
+    Item {
+        id: canvas
+        anchors.fill: parent
 
         Repeater {
             model: ScriptModel {
-                values: Persistent.states.overlay.open.map(identifier => {
-                    return OverlayContext.availableWidgets.find(w => w.identifier === identifier);
-                }).filter(w => w !== undefined && w !== null)
+                values: OverlayContext.openIds.map(identifier => OverlayContext.info(identifier)).filter(w => w !== null)
                 objectProp: "identifier"
             }
-            delegate: OverlayWidgetDelegateChooser {
-                
-            }
+            delegate: OverlayWidgetDelegateChooser {}
         }
+
+        Rectangle {
+            visible: OverlayContext.guideX >= 0
+            x: Math.round(OverlayContext.guideX)
+            width: 1
+            height: parent.height
+            z: 200000
+            color: ColorUtils.applyAlpha(OverlayLook.colPrimary, 0.75)
+        }
+        Rectangle {
+            visible: OverlayContext.guideY >= 0
+            y: Math.round(OverlayContext.guideY)
+            height: 1
+            width: parent.width
+            z: 200000
+            color: ColorUtils.applyAlpha(OverlayLook.colPrimary, 0.75)
+        }
+    }
+
+    OverlayTaskbar {
+        id: strip
+        property real shown: root.benchOpen ? 1 : 0
+        Behavior on shown { NumberAnimation { duration: OverlayLook.openDuration; easing.type: Easing.OutCubic } }
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: Math.max(FamilyStyle.frameInset("top") + Math.round(14 * root.d), 40) - (1 - strip.shown) * Math.round(14 * root.d)
+        opacity: strip.shown
+        visible: strip.shown > 0.01
+    }
+
+    Binding {
+        target: OverlayContext
+        property: "deskTop"
+        value: Math.max(FamilyStyle.frameInset("top") + Math.round(14 * root.d), 40) + strip.height + Math.round(20 * root.d)
     }
 }

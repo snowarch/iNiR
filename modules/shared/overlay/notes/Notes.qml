@@ -1,17 +1,17 @@
 import QtQuick
-import QtQuick.Layouts
-import Quickshell
 import qs.services
 import qs.modules.common
 import qs.modules.shared.overlay
 
 StyledOverlayWidget {
     id: root
-    title: Translation.tr("Notes")
-    showCenterButton: true
+    fact: notes.saveState === "saving" ? Translation.tr("Saving...")
+        : notes.saveState === "saved" ? Translation.tr("Saved")
+        : notes.saveState === "failed" ? Translation.tr("Couldn't save") : ""
+    factColor: notes.saveState === "failed" ? OverlayLook.colError : OverlayLook.colFaint
 
     contentItem: NotesContent {
-        radius: root.contentRadius
-        isClickthrough: root.clickthrough
+        id: notes
+        anchors.fill: parent
     }
 }
