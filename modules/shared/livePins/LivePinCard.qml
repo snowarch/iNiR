@@ -27,9 +27,15 @@ Item {
         const id = card.pin?.appId ?? ""
         return AppSearch.lookupDesktopEntry(id)?.icon || AppSearch.guessIcon(id)
     }
+    // The shape it was cut with and the shape that streams now: a resized window moves the crop's edges (each keeps
+    // to its side). The card fits the live shape inside the box the person gave it, so it never grows past it.
+    readonly property real cutAspect: {
+        const c = card.pin?.crop ?? [0, 0, 16, 9]
+        return Math.max(1, c[3]) / Math.max(1, c[2])
+    }
     readonly property real aspect: {
-        const crop = card.pin?.crop ?? [0, 0, 16, 9]
-        return Math.max(1, crop[3]) / Math.max(1, crop[2])
+        const shown = crop.shownRect
+        return shown.width > 0 && shown.height > 0 ? shown.height / shown.width : card.cutAspect
     }
 
     property bool moving: false
@@ -39,10 +45,13 @@ Item {
     property real liveY: Number(card.pin?.y ?? 120)
     property real liveWidth: Number(card.pin?.width ?? 320)
     readonly property real radius: Appearance.rounding.normal
-    readonly property bool chrome: cardMouse.containsMouse || card.moving || card.sizing
+    // On the card's root, not its MouseArea: the grip and the buttons over that area would take its hover away.
+    readonly property bool chrome: hover.hovered || card.moving || card.sizing
+    HoverHandler { id: hover; enabled: card.enabled }
 
-    width: Math.round(card.liveWidth)
-    height: Math.round(card.liveWidth * card.aspect)
+    readonly property bool taller: card.aspect > card.cutAspect
+    width: Math.round(card.taller ? card.liveWidth * card.cutAspect / card.aspect : card.liveWidth)
+    height: Math.round(card.taller ? card.liveWidth * card.cutAspect : card.liveWidth * card.aspect)
 
     // The stored spot follows the file unless the pointer holds the card.
     onPinChanged: {
@@ -225,8 +234,8 @@ Item {
         onClicked: if (!cardMouse.dragged && Date.now() - cardMouse.pressedAt < 350) LivePins.activate(card.pinId)
     }
 
-    // The corner grip: width follows the pointer, height follows the crop. The card grows from its top left corner,
-    // which neither host moves while it does.
+    // The corner grip: the card's width follows the pointer (its box scaled with it), height follows the crop. The card
+    // grows from its top left corner, which neither host moves while it does.
     MouseArea {
         id: grip
         width: 26
@@ -236,15 +245,18 @@ Item {
         cursorShape: Qt.SizeFDiagCursor
         property real pressX: 0
         property real startWidth: 0
+        property real startShown: 1
         onPressed: mouse => {
             grip.pressX = grip.mapToItem(null, mouse.x, mouse.y).x
             grip.startWidth = card.liveWidth
+            grip.startShown = Math.max(1, card.width)
             card.sizing = true
         }
         onPositionChanged: mouse => {
             if (!grip.pressed) return
             const dx = grip.mapToItem(null, mouse.x, mouse.y).x - grip.pressX
-            card.liveWidth = Math.max(LivePins.minWidth, Math.min(LivePins.maxWidth, grip.startWidth + dx))
+            const k = Math.max(0.05, (grip.startShown + dx) / grip.startShown)
+            card.liveWidth = Math.max(LivePins.minWidth, Math.min(LivePins.maxWidth, grip.startWidth * k))
         }
         onReleased: {
             card.sizing = false

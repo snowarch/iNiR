@@ -3668,5 +3668,8 @@
   "Select folder": "اختيار المجلد",
   "Show hidden files": "إظهار الملفات المخفية",
   "Take a colour from the screen": "التقاط لون من الشاشة",
-  "Time's up": "انتهى الوقت"
+  "Time's up": "انتهى الوقت",
+  "Whole window": "النافذة كاملة",
+  "Region": "منطقة",
+  "Drag over it to keep only a part": "اسحب فوقها لتبقي جزءًا منها فقط"
 }

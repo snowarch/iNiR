@@ -3668,5 +3668,8 @@
   "Select folder": "폴더 선택",
   "Show hidden files": "숨김 파일 표시",
   "Take a colour from the screen": "화면에서 색 가져오기",
-  "Time's up": "시간 종료"
+  "Time's up": "시간 종료",
+  "Whole window": "창 전체",
+  "Region": "영역",
+  "Drag over it to keep only a part": "일부만 남기려면 위에서 드래그하세요"
 }

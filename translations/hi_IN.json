@@ -3668,5 +3668,8 @@
   "Select folder": "फ़ोल्डर चुनें",
   "Show hidden files": "छिपी फ़ाइलें दिखाएँ",
   "Take a colour from the screen": "स्क्रीन से रंग लें",
-  "Time's up": "समय समाप्त"
+  "Time's up": "समय समाप्त",
+  "Whole window": "पूरी विंडो",
+  "Region": "क्षेत्र",
+  "Drag over it to keep only a part": "सिर्फ़ एक हिस्सा रखने के लिए उस पर खींचें"
 }

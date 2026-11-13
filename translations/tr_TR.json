@@ -3668,5 +3668,8 @@
   "Select folder": "Klasör seç",
   "Show hidden files": "Gizli dosyaları göster",
   "Take a colour from the screen": "Ekrandan renk al",
-  "Time's up": "Süre doldu"
+  "Time's up": "Süre doldu",
+  "Whole window": "Tüm pencere",
+  "Region": "Bölge",
+  "Drag over it to keep only a part": "Yalnızca bir kısmını saklamak için üzerine sürükle"
 }

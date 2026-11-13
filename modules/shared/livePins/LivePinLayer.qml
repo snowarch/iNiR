@@ -33,7 +33,9 @@ Scope {
             }
             implicitWidth: card.width + pinWindow.pad * 2
             implicitHeight: card.height + pinWindow.pad * 2
-            mask: Region { item: card }
+            // The card's rect, not `item: card`: a runtime that ignores scale kept the mask of its 0.9 pop-in, and the
+            // grip and buttons on its edges let the pointer through to the window below.
+            mask: Region { x: pinWindow.pad; y: pinWindow.pad; width: card.width; height: card.height }
 
             LivePinCard {
                 id: card

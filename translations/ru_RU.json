@@ -3668,5 +3668,8 @@
   "Select folder": "Выбрать папку",
   "Show hidden files": "Показать скрытые файлы",
   "Take a colour from the screen": "Взять цвет с экрана",
-  "Time's up": "Время вышло"
+  "Time's up": "Время вышло",
+  "Whole window": "Всё окно",
+  "Region": "Область",
+  "Drag over it to keep only a part": "Выделите часть, чтобы оставить только её"
 }

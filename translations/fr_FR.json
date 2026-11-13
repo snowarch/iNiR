@@ -3668,5 +3668,8 @@
   "Select folder": "Sélectionner le dossier",
   "Show hidden files": "Afficher les fichiers cachés",
   "Take a colour from the screen": "Prendre une couleur à l’écran",
-  "Time's up": "Temps écoulé"
+  "Time's up": "Temps écoulé",
+  "Whole window": "Fenêtre entière",
+  "Region": "Zone",
+  "Drag over it to keep only a part": "Faites glisser dessus pour n'en garder qu'une partie"
 }

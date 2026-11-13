@@ -3668,5 +3668,8 @@
   "Select folder": "Вибрати теку",
   "Show hidden files": "Показати приховані файли",
   "Take a colour from the screen": "Узяти колір з екрана",
-  "Time's up": "Час вийшов"
+  "Time's up": "Час вийшов",
+  "Whole window": "Усе вікно",
+  "Region": "Область",
+  "Drag over it to keep only a part": "Виділіть частину, щоб залишити лише її"
 }

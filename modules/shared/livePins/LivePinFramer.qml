@@ -10,8 +10,9 @@ import qs.modules.common
 import qs.modules.common.widgets
 import qs.services
 
-// Framing a live snip: pick a window (the focused one comes first), then drag over the part of its own live picture
-// to keep. niri tells where a floating window is but not a tiled one, so the box is drawn on the window, not the screen.
+// Framing a live snip: pick a window (the focused one comes first); the whole of it is taken unless a drag over its own
+// live picture keeps a part. niri tells where a floating window is but not a tiled one, so the box is drawn on the
+// window, not the screen.
 Scope {
     id: root
 
@@ -40,16 +41,21 @@ Scope {
         // The window's picture fits the middle of the screen; the box is kept in its pixels.
         readonly property real fit: Math.min((framer.width * 0.78) / framer.windowSize.width,
             (framer.height - 260) / framer.windowSize.height, 1.25)
+        // Most snips are a whole window: that is where it starts, and a drag narrows it to a region.
+        property bool whole: true
         property rect box: Qt.rect(0, 0, 0, 0)
-        readonly property bool boxed: framer.box.width >= 16 && framer.box.height >= 16
+        readonly property rect area: framer.whole ? Qt.rect(0, 0, picture.width, picture.height) : framer.box
+        readonly property bool boxed: framer.area.width >= 16 && framer.area.height >= 16
         onChosenIdChanged: framer.box = Qt.rect(0, 0, 0, 0)
 
         function close(): void { LivePins.framing = false }
         function pin(): void {
             if (!framer.boxed || !framer.chosen) return
-            const crop = Qt.rect(framer.box.x / framer.fit, framer.box.y / framer.fit, framer.box.width / framer.fit, framer.box.height / framer.fit)
-            const at = picture.mapToItem(null, framer.box.x, framer.box.y)
-            LivePins.pinWindow(framer.chosen.id, crop, framer.screen?.name ?? "", at.x, at.y, framer.box.width)
+            const a = framer.area
+            const crop = framer.whole ? Qt.rect(0, 0, framer.windowSize.width, framer.windowSize.height)
+                : Qt.rect(a.x / framer.fit, a.y / framer.fit, a.width / framer.fit, a.height / framer.fit)
+            const at = picture.mapToItem(null, a.x, a.y)
+            LivePins.pinWindow(framer.chosen.id, crop, framer.screen?.name ?? "", at.x, at.y, a.width)
             framer.close()
         }
 
@@ -141,34 +147,35 @@ Scope {
 
                 // Outside the box goes dark; the box keeps the picture as it is.
                 Item {
+                    readonly property rect a: framer.area
                     anchors.fill: parent
                     visible: framer.boxed
-                    Rectangle { x: 0; y: 0; width: parent.width; height: framer.box.y; color: Qt.rgba(0, 0, 0, 0.55) }
-                    Rectangle { x: 0; y: framer.box.y + framer.box.height; width: parent.width; height: parent.height - y; color: Qt.rgba(0, 0, 0, 0.55) }
-                    Rectangle { x: 0; y: framer.box.y; width: framer.box.x; height: framer.box.height; color: Qt.rgba(0, 0, 0, 0.55) }
-                    Rectangle { x: framer.box.x + framer.box.width; y: framer.box.y; width: parent.width - x; height: framer.box.height; color: Qt.rgba(0, 0, 0, 0.55) }
+                    Rectangle { x: 0; y: 0; width: parent.width; height: parent.a.y; color: Qt.rgba(0, 0, 0, 0.55) }
+                    Rectangle { x: 0; y: parent.a.y + parent.a.height; width: parent.width; height: parent.height - y; color: Qt.rgba(0, 0, 0, 0.55) }
+                    Rectangle { x: 0; y: parent.a.y; width: parent.a.x; height: parent.a.height; color: Qt.rgba(0, 0, 0, 0.55) }
+                    Rectangle { x: parent.a.x + parent.a.width; y: parent.a.y; width: parent.width - x; height: parent.a.height; color: Qt.rgba(0, 0, 0, 0.55) }
                     Rectangle {
-                        x: framer.box.x - 1
-                        y: framer.box.y - 1
-                        width: framer.box.width + 2
-                        height: framer.box.height + 2
-                        radius: 4
+                        x: parent.a.x - 1
+                        y: parent.a.y - 1
+                        width: parent.a.width + 2
+                        height: parent.a.height + 2
+                        radius: framer.whole ? Appearance.rounding.small + 1 : 4
                         color: "transparent"
                         border.width: 2
                         border.color: "white"
                     }
                 }
 
+                // A drag draws a region; a click alone leaves the frame as it was.
                 MouseArea {
                     anchors.fill: parent
                     cursorShape: Qt.CrossCursor
                     property point from: Qt.point(0, 0)
-                    onPressed: mouse => {
-                        from = Qt.point(mouse.x, mouse.y)
-                        framer.box = Qt.rect(mouse.x, mouse.y, 0, 0)
-                    }
+                    onPressed: mouse => { from = Qt.point(mouse.x, mouse.y) }
                     onPositionChanged: mouse => {
                         const x = Math.max(0, Math.min(parent.width, mouse.x)), y = Math.max(0, Math.min(parent.height, mouse.y))
+                        if (framer.whole && Math.abs(x - from.x) + Math.abs(y - from.y) < 6) return
+                        framer.whole = false
                         framer.box = Qt.rect(Math.min(from.x, x), Math.min(from.y, y), Math.abs(x - from.x), Math.abs(y - from.y))
                     }
                 }
@@ -177,8 +184,24 @@ Scope {
             RowLayout {
                 Layout.alignment: Qt.AlignHCenter
                 spacing: 10
+                // Whole window or a region of it.
+                Rectangle {
+                    implicitWidth: modes.implicitWidth + 6
+                    implicitHeight: 36
+                    radius: height / 2
+                    color: Qt.rgba(1, 1, 1, 0.08)
+                    Row {
+                        id: modes
+                        anchors.centerIn: parent
+                        spacing: 2
+                        ModeButton { icon: "select_window"; text: Translation.tr("Whole window"); on: framer.whole; onActivated: framer.whole = true }
+                        ModeButton { icon: "screenshot_region"; text: Translation.tr("Region"); on: !framer.whole; onActivated: framer.whole = false }
+                    }
+                }
+                Item { implicitWidth: 6 }
                 StyledText {
-                    text: framer.boxed ? Translation.tr("It stays live, even on another workspace")
+                    text: framer.whole ? Translation.tr("Drag over it to keep only a part")
+                        : framer.boxed ? Translation.tr("It stays live, even on another workspace")
                         : Translation.tr("Drag over the part to keep")
                     color: Qt.rgba(1, 1, 1, 0.75)
                     font.pixelSize: Appearance.font.pixelSize.small
@@ -186,6 +209,47 @@ Scope {
                 Item { implicitWidth: 16 }
                 FramerButton { text: Translation.tr("Cancel"); onActivated: framer.close() }
                 FramerButton { text: Translation.tr("Pin live"); primary: true; enabled: framer.boxed; onActivated: framer.pin() }
+            }
+        }
+    }
+
+    component ModeButton: MouseArea {
+        id: mode
+        property string icon: ""
+        property string text: ""
+        property bool on: false
+        signal activated()
+        implicitWidth: modeRow.implicitWidth + 24
+        implicitHeight: 30
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        Accessible.role: Accessible.RadioButton
+        Accessible.name: mode.text
+        Accessible.checked: mode.on
+        onClicked: mode.activated()
+        Rectangle {
+            anchors.fill: parent
+            radius: height / 2
+            color: mode.on ? Qt.rgba(1, 1, 1, 0.92) : Qt.rgba(1, 1, 1, mode.containsMouse ? 0.12 : 0)
+            Behavior on color { ColorAnimation { duration: Appearance.animation.elementMoveFast.duration } }
+        }
+        Row {
+            id: modeRow
+            anchors.centerIn: parent
+            spacing: 6
+            MaterialSymbol {
+                anchors.verticalCenter: parent.verticalCenter
+                text: mode.icon
+                iconSize: 17
+                fill: mode.on ? 1 : 0
+                color: mode.on ? "black" : "white"
+            }
+            StyledText {
+                anchors.verticalCenter: parent.verticalCenter
+                text: mode.text
+                color: mode.on ? "black" : "white"
+                font.pixelSize: Appearance.font.pixelSize.small
+                font.weight: mode.on ? Font.DemiBold : Font.Normal
             }
         }
     }

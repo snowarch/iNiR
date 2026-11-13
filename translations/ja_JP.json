@@ -3668,5 +3668,8 @@
   "Select folder": "フォルダーを選択",
   "Show hidden files": "隠しファイルを表示",
   "Take a colour from the screen": "画面から色を取得",
-  "Time's up": "時間です"
+  "Time's up": "時間です",
+  "Whole window": "ウィンドウ全体",
+  "Region": "範囲",
+  "Drag over it to keep only a part": "一部だけ残すならドラッグ"
 }
