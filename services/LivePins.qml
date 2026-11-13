@@ -6,16 +6,15 @@ import Quickshell
 import Quickshell.Io
 import qs.modules.common
 
-// Live snips: a rectangle of one window kept on screen, streamed at display rate (qs-rs on niri only). A pin is
+// Live snips: a rectangle of one window kept on screen, streamed at display rate (qs-rs on niri and Umbriel). A pin is
 // remembered by app id and crop, not by window id: ids die with the window, so a pin finds its app again when it
 // reopens and waits quietly while it is closed.
 Singleton {
     id: root
 
     readonly property string filePath: `${Directories.stateUserPath}/live-pins.json`
-    // `niriWindowId` and `sourceRect` exist only on qs-rs; elsewhere nothing offers or draws a pin.
-    readonly property bool supported: CompositorService.isNiri
-        && SystemInfo.runtimeHas(["niri-window-capture", "screencopy-source-rect"])
+    // The crop (`sourceRect`) exists only on qs-rs; elsewhere nothing offers or draws a pin.
+    readonly property bool supported: CompositorService.windowCapture && SystemInfo.runtimeHas(["screencopy-source-rect"])
     readonly property int minWidth: 120
     readonly property int maxWidth: 960
 
@@ -24,10 +23,6 @@ Singleton {
     property bool framing: false
     function frame(): void { if (root.supported) root.framing = true }
     property var pins: []
-    readonly property var desktopPins: root.pins.filter(pin => pin.place !== "island")
-    readonly property var islandPins: root.pins.filter(pin => pin.place === "island")
-    // The pin the Island carries: the newest one placed there.
-    readonly property var islandPin: root.islandPins.length > 0 ? root.islandPins[root.islandPins.length - 1] : null
     // Pins whose window is open right now, by pin id: { id: window }.
     readonly property var bound: {
         const out = {}
@@ -63,13 +58,13 @@ Singleton {
         if (!win || crop.width < 8 || crop.height < 8) return null
         const size = win.layout?.window_size ?? [crop.x + crop.width, crop.y + crop.height]
         const pin = {
-            id: "pin-" + Date.now().toString(36),
+            // Two made in one millisecond (a script) still differ.
+            id: "pin-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
             appId: String(win.app_id ?? ""),
             title: String(win.title ?? ""),
             windowId: windowId,
             crop: [Math.round(crop.x), Math.round(crop.y), Math.round(crop.width), Math.round(crop.height)],
             base: [Math.round(Number(size[0])), Math.round(Number(size[1]))],
-            place: "desktop",
             // Above the windows, as a picture in picture: a snip is for watching while working elsewhere.
             onTop: true,
             output: output,
@@ -147,7 +142,7 @@ Singleton {
     }
 
     /// Live snips: a part of a window kept on screen, streamed, even when the window is on another workspace (qs-rs
-    /// on niri).
+    /// on niri and Umbriel).
     IpcHandler {
         target: "livePins"
         /// Every pin as JSON, with `live` when its window is open
@@ -170,12 +165,6 @@ Singleton {
         function remove(id: string): void { root.remove(id) }
         /// Remove every pin
         function clear(): void { root.pins = []; root._save() }
-        /// Where the pin lives
-        function place(id: string, place: string): string {
-            if (!["desktop", "island"].includes(place) || !root.find(id)) return ""
-            root.update(id, { place: place })
-            return place
-        }
         /// Above the windows, or on the desktop
         function onTop(id: string, on: bool): bool { root.update(id, { onTop: on }); return on }
         /// Move a pin

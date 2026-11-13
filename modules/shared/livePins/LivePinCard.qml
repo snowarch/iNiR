@@ -9,7 +9,7 @@ import qs.modules.common.widgets
 import qs.services
 
 // One live snip: the window's rectangle streamed, its controls over the top edge while the pointer is on it. Drag moves
-// it, the corner grip resizes it keeping its crop, a click goes to the window. The host places it at liveX/liveY.
+// it, the corner grip resizes it keeping its crop, a quick click goes to the window. The host places it at liveX/liveY.
 Item {
     id: card
     required property string pinId
@@ -147,9 +147,11 @@ Item {
                     implicitSize: 16
                     source: Quickshell.iconPath(card.appIcon, "application-x-executable")
                 }
+                // What the icon and the buttons leave; at the narrowest the icon says it alone.
                 StyledText {
                     anchors.verticalCenter: parent.verticalCenter
-                    width: Math.min(implicitWidth, card.width - 120)
+                    width: Math.max(0, Math.min(implicitWidth, card.width - 10 - 16 - 7 - 8 - buttons.width - 6))
+                    visible: width >= 24
                     text: card.appName
                     color: "white"
                     font.pixelSize: Appearance.font.pixelSize.smaller
@@ -158,6 +160,7 @@ Item {
                 }
             }
             Row {
+                id: buttons
                 anchors { right: parent.right; rightMargin: 6; verticalCenter: parent.verticalCenter }
                 spacing: 2
                 PinButton {
@@ -186,6 +189,7 @@ Item {
 
     // Move and click, measured in window coordinates from the press: on the desktop the window stays still; above the
     // windows the card's own window moves, and niri keeps a press's coordinates relative to where that window was.
+    // Only a quick click goes to the window: a press held to take the card and let go in place leaves it be.
     MouseArea {
         id: cardMouse
         anchors.fill: parent
@@ -195,9 +199,13 @@ Item {
         cursorShape: card.moving ? Qt.ClosedHandCursor : Qt.PointingHandCursor
         property point press: Qt.point(0, 0)
         property point start: Qt.point(0, 0)
+        property real pressedAt: 0
+        property bool dragged: false
         onPressed: mouse => {
             cardMouse.press = cardMouse.mapToItem(null, mouse.x, mouse.y)
             cardMouse.start = Qt.point(card.liveX, card.liveY)
+            cardMouse.pressedAt = Date.now()
+            cardMouse.dragged = false
         }
         onPositionChanged: mouse => {
             if (!cardMouse.pressed) return
@@ -205,17 +213,16 @@ Item {
             const dx = at.x - cardMouse.press.x, dy = at.y - cardMouse.press.y
             if (!card.moving && Math.abs(dx) + Math.abs(dy) < 5) return
             card.moving = true
+            cardMouse.dragged = true
             card.liveX = Math.max(-card.width + 48, Math.min(card.bounds.width - 48, cardMouse.start.x + dx))
             card.liveY = Math.max(0, Math.min(card.bounds.height - 48, cardMouse.start.y + dy))
         }
         onReleased: {
-            if (card.moving) {
-                card.moving = false
-                LivePins.update(card.pinId, { x: Math.round(card.liveX), y: Math.round(card.liveY) })
-            } else {
-                LivePins.activate(card.pinId)
-            }
+            if (!card.moving) return
+            card.moving = false
+            LivePins.update(card.pinId, { x: Math.round(card.liveX), y: Math.round(card.liveY) })
         }
+        onClicked: if (!cardMouse.dragged && Date.now() - cardMouse.pressedAt < 350) LivePins.activate(card.pinId)
     }
 
     // The corner grip: width follows the pointer, height follows the crop. The card grows from its top left corner,

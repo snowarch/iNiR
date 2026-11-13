@@ -2,7 +2,7 @@ import QtQuick
 import Quickshell
 import qs.services
 
-// A rectangle of a window, live (qs-rs on niri: niri's ScreenCast cropped on the GPU, so it costs what a whole
+// A rectangle of a window, live (qs-rs: the whole window captured and cropped on the GPU, so it costs what a whole
 // window does). `crop` is in the window's logical pixels as it was `base` big; a resize keeps each edge on its side.
 Item {
     id: root

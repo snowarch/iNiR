@@ -1,11 +1,18 @@
 import QtQuick
 import Quickshell.Wayland
+import qs.services
 
-// Loaded by LiveWindowCapture only on qs-rs: `niriWindowId` does not exist in Quickshell.
+// Loaded by LiveWindowCapture only on qs-rs: `niriWindowId` and `toplevelId` do not exist in Quickshell.
 Item {
     id: view
     property Item host: null
     readonly property bool streaming: stream.hasContent
+
+    // Umbriel names its windows by its own ids. `toplevelId` exists only on runtimes with toplevel-image-copy, the
+    // only ones that load this view there (CompositorService.windowCapture), so it is set rather than bound.
+    readonly property string toplevelId: CompositorService.isUmbriel
+        ? String(NiriService.umbrielWindowKey(view.host?.windowId ?? -1) ?? "") : ""
+    onToplevelIdChanged: stream.toplevelId = view.toplevelId
 
     clip: (view.host?.fillMode ?? Image.PreserveAspectCrop) === Image.PreserveAspectCrop
 
@@ -18,7 +25,7 @@ Item {
         anchors.centerIn: parent
         width: stream.crop ? Math.max(view.width, view.height * stream.aspect) : Math.min(view.width, view.height * stream.aspect)
         height: stream.width / stream.aspect
-        niriWindowId: view.host ? view.host.windowId : -1
+        niriWindowId: CompositorService.niriNative && view.host ? view.host.windowId : -1
         live: view.host?.effectiveLive ?? false
         visible: stream.hasContent
     }

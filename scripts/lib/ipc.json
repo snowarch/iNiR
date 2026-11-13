@@ -2253,7 +2253,7 @@
   {
    "name": "livePins",
    "family": "shared",
-   "description": "Live snips: a part of a window kept on screen, streamed, even when the window is on another workspace (qs-rs on niri).",
+   "description": "Live snips: a part of a window kept on screen, streamed, even when the window is on another workspace (qs-rs on niri and Umbriel).",
    "notes": "",
    "example": "",
    "functions": [
@@ -2299,15 +2299,6 @@
      "name": "clear",
      "args": [],
      "description": "Remove every pin",
-     "values": []
-    },
-    {
-     "name": "place",
-     "args": [
-      "id",
-      "place"
-     ],
-     "description": "Where the pin lives",
      "values": []
     },
     {

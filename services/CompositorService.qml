@@ -21,6 +21,12 @@ Singleton {
     // ext-background-effect-v1 blur regions: Niri 26.04 takes them; Umbriel blurs by its layer rules instead (iNiR
     // writes the one compositor glass asks for), so a surface leaves its region unset there.
     readonly property bool blurRegions: niriNative
+    // Live window pictures (qs-rs). A runtime with toplevel-image-copy asks the compositor (its image-copy globals, or
+    // niri's ScreenCast); an older one streams niri windows only. Umbriel's windows go by its own ids
+    // (NiriService.umbrielWindowKey), which only the newer runtime takes.
+    readonly property bool windowCapture: SystemInfo.runtimeHas(["toplevel-image-copy"])
+        ? (niriNative || isUmbriel) && ToplevelManager.canCaptureWindows
+        : niriNative && SystemInfo.runtimeHas(["niri-window-capture"])
 
     readonly property string hyprlandSignature: Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE")
     readonly property string niriSocket: Quickshell.env("NIRI_SOCKET")
