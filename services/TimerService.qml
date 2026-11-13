@@ -39,6 +39,7 @@ Singleton {
 
     Component.onCompleted: {
         if (Config.ready) root._syncPomodoroConfig()
+        if (Persistent.ready) root.restore()
     }
 
     property bool pomodoroRunning: Persistent.states?.timer?.pomodoro?.running ?? false
@@ -78,20 +79,22 @@ Singleton {
     property int countdownDuration: Persistent.states?.timer?.countdown?.duration ?? 300
     property int countdownSecondsLeft: countdownDuration
 
-    // Initialize when Persistent is ready
+    // What the saved state cannot say by itself: a timer at rest starts full, and a paused one keeps what it had
+    // left across restarts (it counted up to the moment it paused).
+    function restore(): void {
+        if (!root.stopwatchRunning) root.stopwatchTime = 0
+        if (!root.countdownRunning) root.countdownSecondsLeft = root.countdownDuration
+        const timer = Persistent.states.timer
+        if (root.pomodoroRunning && root.pomodoroPaused && timer.pomodoro.pausedAt >= timer.pomodoro.start)
+            root.pomodoroSecondsLeft = Math.max(0, root.pomodoroLapDuration - (timer.pomodoro.pausedAt - timer.pomodoro.start))
+        if (root.countdownRunning && root.countdownPaused && timer.countdown.pausedAt >= timer.countdown.start)
+            root.countdownSecondsLeft = Math.max(0, root.countdownDuration - (timer.countdown.pausedAt - timer.countdown.start))
+        if (root.stopwatchRunning && root.stopwatchPaused && timer.stopwatch.pausedAt !== 0)
+            root.stopwatchTime = timer.stopwatch.pausedAt - timer.stopwatch.start
+    }
     Connections {
         target: Persistent
-        function onReadyChanged() {
-            if (Persistent.ready) {
-                // Reset local state if not running (don't write to Persistent, just sync local vars)
-                if (!root.stopwatchRunning) {
-                    root.stopwatchTime = 0
-                }
-                if (!root.countdownRunning) {
-                    root.countdownSecondsLeft = root.countdownDuration
-                }
-            }
-        }
+        function onReadyChanged() { if (Persistent.ready) root.restore() }
     }
 
     function getCurrentTimeInSeconds() {  // Pomodoro uses Seconds
@@ -149,6 +152,7 @@ Singleton {
 
     function togglePomodoro() {
         if (pomodoroRunning) {
+            if (!pomodoroPaused) Persistent.states.timer.pomodoro.pausedAt = getCurrentTimeInSeconds();
             Persistent.states.timer.pomodoro.paused = !pomodoroPaused;
             if (!pomodoroPaused) {
                 // Resuming - adjust start time
@@ -163,6 +167,53 @@ Singleton {
 
     function stopPomodoro() {
         resetPomodoro();
+    }
+
+    // Pauses or resumes one timer (pomodoro, countdown or stopwatch).
+    function toggleTimer(kind: string): void {
+        if (kind === "pomodoro") root.togglePomodoro();
+        else if (kind === "countdown") root.toggleCountdown();
+        else if (kind === "stopwatch") root.toggleStopwatch();
+    }
+
+    // The last timer a quick stop took away, kept so the stop can be taken back.
+    property var lastStopped: null
+
+    // Stops one timer (pomodoro, countdown or stopwatch) the way a quick gesture does: undoStop() brings it back.
+    function stopTimer(kind: string): void {
+        const state = Persistent.states?.timer?.[kind];
+        if (!state?.running) return;
+        root.lastStopped = {
+            kind: kind, paused: state.paused, start: state.start, isBreak: state.isBreak ?? false, cycle: state.cycle ?? 0,
+            laps: (state.laps ?? []).slice(0),
+            left: kind === "pomodoro" ? root.pomodoroSecondsLeft : kind === "countdown" ? root.countdownSecondsLeft : root.stopwatchTime
+        };
+        if (kind === "pomodoro") root.stopPomodoro();
+        else if (kind === "countdown") root.stopCountdown();
+        else if (kind === "stopwatch") root.stopStopwatch();
+    }
+
+    // A running timer keeps its start, so it comes back as if it had never stopped; a paused one keeps what it had left.
+    function undoStop(): bool {
+        const saved = root.lastStopped;
+        root.lastStopped = null;
+        const state = saved ? Persistent.states?.timer?.[saved.kind] : null;
+        if (!state || state.running) return false;
+        if (saved.kind === "pomodoro") {
+            state.isBreak = saved.isBreak;
+            state.cycle = saved.cycle;
+            root.pomodoroSecondsLeft = saved.left;
+        } else if (saved.kind === "countdown") {
+            root.countdownSecondsLeft = saved.left;
+        } else {
+            state.laps = saved.laps;
+            root.stopwatchTime = saved.left;
+        }
+        state.start = saved.start;
+        state.paused = saved.paused;
+        state.running = true;
+        root.refreshSecondTimers();
+        return true;
     }
 
     function resetPomodoro() {
@@ -189,6 +240,7 @@ Singleton {
 
     function toggleStopwatch() {
         if (root.stopwatchRunning) {
+            if (!stopwatchPaused) Persistent.states.timer.stopwatch.pausedAt = getCurrentTimeIn10ms();
             Persistent.states.timer.stopwatch.paused = !stopwatchPaused;
             if (!stopwatchPaused) {
                 // Resuming - adjust start time
@@ -207,6 +259,7 @@ Singleton {
     }
 
     function stopwatchPause() {
+        if (!stopwatchPaused) Persistent.states.timer.stopwatch.pausedAt = getCurrentTimeIn10ms();
         Persistent.states.timer.stopwatch.paused = true;
     }
 
@@ -247,6 +300,7 @@ Singleton {
 
     function toggleCountdown(): void {
         if (countdownRunning) {
+            if (!countdownPaused) Persistent.states.timer.countdown.pausedAt = getCurrentTimeInSeconds();
             Persistent.states.timer.countdown.paused = !countdownPaused;
             if (!countdownPaused) {
                 // Resuming - adjust start time

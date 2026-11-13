@@ -222,6 +222,34 @@ Singleton {
                     property real height: 0
                     property real background: -1
                 }
+                property JsonObject clock: JsonObject {
+                    property bool pinned: false
+                    property bool clickthrough: true
+                    property real x: -1
+                    property real y: -1
+                    property real width: 0
+                    property real height: 0
+                    property real background: -1
+                }
+                property JsonObject timer: JsonObject {
+                    property bool pinned: false
+                    property bool clickthrough: false
+                    property int tabIndex: 0
+                    property real x: -1
+                    property real y: -1
+                    property real width: 0
+                    property real height: 0
+                    property real background: -1
+                }
+                property JsonObject network: JsonObject {
+                    property bool pinned: false
+                    property bool clickthrough: true
+                    property real x: -1
+                    property real y: -1
+                    property real width: 0
+                    property real height: 0
+                    property real background: -1
+                }
             }
 
             property JsonObject timer: JsonObject {
@@ -231,6 +259,7 @@ Singleton {
                     property bool running: false
                     property bool paused: false
                     property int start: 0
+                    property int pausedAt: 0
                     property bool isBreak: false
                     property int cycle: 0
                 }
@@ -238,12 +267,14 @@ Singleton {
                     property bool running: false
                     property bool paused: false
                     property int start: 0
+                    property int pausedAt: 0
                     property list<var> laps: []
                 }
                 property JsonObject countdown: JsonObject {
                     property bool running: false
                     property bool paused: false
                     property int start: 0
+                    property int pausedAt: 0
                     property int duration: 60
                     // Minutes on the iRiS Timers dials, adjusted in place.
                     property list<int> presets: [5, 15, 30]
