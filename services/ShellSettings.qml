@@ -19,16 +19,16 @@ Singleton {
     // Newest first: { at, by, steps: [{ key, before, after }] }. Its own file, written only from here: states.json
     // reloads itself when anyone writes it, and a change landing in that window was lost (11-13, a nest run).
     property var history: []
-    property var _from: null
-    property var _byKey: ({})
-    property var _rows: []
+    // The index built from the family's list, kept in a plain object: filling it while a binding reads it (a chat
+    // button's label) must not notify that binding again.
+    readonly property var _cache: ({ from: null, byKey: {}, rows: [] })
 
     // Every row the active family's Settings can change, by key.
     function index(): var {
         const verb = GlobalStates.familyVerb("settings", "index")
         const listed = verb ? verb() : null
         const rows = Array.isArray(listed) ? listed : []
-        if (rows === root._from) return root._byKey
+        if (rows === root._cache.from) return root._cache.byKey
         const byKey = {}, kept = []
         for (const row of rows) {
             const key = String(row?.key ?? "")
@@ -38,9 +38,9 @@ Singleton {
             byKey[key] = row
             kept.push(row)
         }
-        root._from = rows
-        root._byKey = byKey
-        root._rows = kept
+        root._cache.from = rows
+        root._cache.byKey = byKey
+        root._cache.rows = kept
         return byKey
     }
 
@@ -54,31 +54,33 @@ Singleton {
     }
 
     // The rows a phrase names, best first: each word of it must start a word of the row's name, its key, its section,
-    // its description or its keywords, in the person's language or in English.
+    // its description or its keywords, in the person's language or in English. Each hit carries its `score` and
+    // `whole`: every word started a word (none was found only inside a longer one).
     function find(query: string, limit: int): var {
         const words = root._plain(query).split(/[\s.,;:!?¿¡()\[\]{}"'`\/\\|_+=*&%$#@<>~^\u3000-\u303f\uff01-\uff0f-]+/).filter(word => word.length > 0)
         if (words.length === 0) return []
         root.index()
         const hits = []
-        for (const row of root._rows) {
+        for (const row of root._cache.rows) {
             const fields = [
                 [root._plain(Translation.tr(row.label) + " " + row.label), 4],
                 [root._plain(Translation.tr(row.section ?? "") + " " + (row.section ?? "") + " " + Translation.tr(row.page ?? "")), 2],
                 [root._plain(row.key.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/[.]/g, " ")), 3],
                 [root._plain((row.keywords ?? []).join(" ") + " " + Translation.tr(row.description ?? "") + " " + (row.choices ?? []).map(c => Translation.tr(c.label)).join(" ")), 1]
             ]
-            let score = 0
+            let score = 0, whole = true
             for (const word of words) {
                 // A word that starts one of the row's words counts whole; one inside a longer word, half.
                 const best = Math.max(...fields.map(([text, weight]) => (" " + text).includes(" " + word) ? weight
                     : word.length >= 4 && text.includes(word) ? weight / 2 : 0))
                 if (best === 0) { score = 0; break }
+                if (!fields.some(([text]) => (" " + text).includes(" " + word))) whole = false
                 score += best
             }
-            if (score > 0) hits.push({ row: row, score: score + (root._plain(Translation.tr(row.label)) === words.join(" ") ? 10 : 0) })
+            if (score > 0) hits.push({ row: row, whole: whole, score: score + (root._plain(Translation.tr(row.label)) === words.join(" ") ? 10 : 0) })
         }
         hits.sort((a, b) => b.score - a.score)
-        return hits.slice(0, limit > 0 ? limit : 8).map(hit => root.describe(hit.row.key))
+        return hits.slice(0, limit > 0 ? limit : 8).map(hit => Object.assign(root.describe(hit.row.key), { score: hit.score, whole: hit.whole }))
     }
 
     // One row as a person reads it: its name and section in their language, its value now, what it allows.
