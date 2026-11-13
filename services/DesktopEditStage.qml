@@ -152,7 +152,7 @@ Singleton {
         const next = Object.assign({}, root.arrivals)
         next[output + "::" + key] = { at: at, from: from, glide: Boolean(glide) }
         root.arrivals = next
-        DesktopWidgetLayout.setGloballyEnabled(key, true)
+        DesktopWidgetLayout.setEnabledOn(output, key, true)
     }
     function arrival(output: string, key: string): var { return root.arrivals[output + "::" + key] ?? null }
     function arrived(output: string, key: string): void {
@@ -174,8 +174,10 @@ Singleton {
         onTriggered: {
             const gone = Object.keys(root.departures)
             root.departures = ({})
-            for (const id of gone)
-                DesktopWidgetLayout.setGloballyEnabled(id.slice(id.indexOf("::") + 2), false)
+            for (const id of gone) {
+                const cut = id.indexOf("::")
+                DesktopWidgetLayout.setEnabledOn(id.slice(0, cut), id.slice(cut + 2), false)
+            }
         }
     }
 

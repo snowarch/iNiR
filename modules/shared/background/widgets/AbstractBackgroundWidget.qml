@@ -426,7 +426,7 @@ AbstractWidget {
         if (tile && DesktopEditStage.hosted(root.outputName) && root.animationsActive)
             DesktopEditStage.depart(root.outputName, root.configEntryName, tile)
         else
-            DesktopWidgetLayout.setGloballyEnabled(root.configEntryName, false)
+            DesktopWidgetLayout.setEnabledOn(root.outputName, root.configEntryName, false)
     }
 
     // Heavy controls belong to the explicit selection, never to incidental pointer travel.

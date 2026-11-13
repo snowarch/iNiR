@@ -246,6 +246,15 @@ Singleton {
         return root.setValue(outputName, widgetKey, "enable", Boolean(enabled))
     }
 
+    // Putting a widget on one screen or taking it away there (arranging, a family's gallery). With widgets on a single
+    // screen that is the widget's own switch; with more, that screen's record alone, so the other screens keep theirs.
+    function setEnabledOn(outputName, widgetKey, enabled): bool {
+        if (!root.isLockScope(outputName)
+                && Quickshell.screens.filter(screen => root.outputAllowed(screen?.name)).length <= 1)
+            return root.setGloballyEnabled(widgetKey, enabled)
+        return root.setEnabled(outputName, widgetKey, enabled)
+    }
+
     function initializeOutputLayout(outputName, width, height, widgetValues, leaving): bool {
         const output = root._outputName(outputName)
         const outputWidth = Math.max(0, Math.round(Number(width) || 0))
