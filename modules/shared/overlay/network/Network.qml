@@ -54,12 +54,12 @@ StyledOverlayWidget {
             lostNow: root.samples.length > 0 && root.samples[root.samples.length - 1] < 0
         }
     }
-    // The trace's ceiling: 100 ms, or room above the worst recent reply.
+    // The trace's ceiling: room above the worst recent reply (40 ms at least), so a quiet line still reads as a line.
     readonly property real ceiling: {
         let worst = 0
         for (const v of root.samples)
             worst = Math.max(worst, v)
-        return Math.max(100, Math.ceil(worst * 1.25 / 50) * 50)
+        return Math.max(40, Math.ceil(worst * 1.5 / 20) * 20)
     }
     readonly property list<real> trace: root.samples.map(v => v < 0 ? 1 : Math.min(1, v / root.ceiling))
 
