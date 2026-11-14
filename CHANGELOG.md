@@ -18,6 +18,7 @@ The Hub brings only what you choose, Escape closes everything again, a widget on
 ### Changed
 - **Lighter at rest**: panels, bar popups, menus and sidebar tabs are built the first time you open them, so the shell starts with 704 files compiled instead of 910; the wallpaper is decoded once, widget faces and Now Playing build only the size they show, the iRiS glass rim draws in one pass and the dashboard's song clock ticks only while you see it (Material 2.36.3, iRiS 2.33.88, Waffle 2.34.17 from the Hub; qs-rs 0.1.9).
 - **Quieter under a game**: when a fullscreen window opens, the wallpaper hides only once the window has settled over it, and Material's bar Resources and the iRiS vitals stop sampling while they are covered (Material 2.36.3, iRiS 2.33.88, Waffle 2.34.17 from the Hub).
+- **iRiS Settings, where you look for it**: each bubble has its own card under **Bubbles** with whether it shows, where it sits and its icon (the Control Center bubble's icon included); each surface's look, material and motion sit on its own page instead of Style and Motion; Prism's sidebar has the same sections as Classic and Folio; and where a thing sits is never hidden behind Fine-tune (iRiS 2.33.88 from the Hub).
 - **AI sidebar keys**: OpenCode Zen and Cerebras models now ask for a key of your own. Zen refuses free requests from apps other than OpenCode and Cerebras no longer has a free tier, so the keyless default only failed.
 
 ### Fixed
