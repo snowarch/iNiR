@@ -20,6 +20,10 @@ Item {
     property real activeScale: 1.18
     property int falloff: 4
     property bool showPlaceholder: true
+    // A family that speaks in its own face (Waffle's lock) names it; empty keeps the shell's.
+    property string fontFamily: ""
+    // A short sheet (a lock card) shows only lines that fit whole where the active one rests: no line cut at an edge.
+    property bool wholeLines: false
 
     implicitWidth: 160
     implicitHeight: 72
@@ -171,13 +175,22 @@ Item {
                     text: (modelData.text && modelData.text.length > 0) ? modelData.text : "♪"
 
                     font.pixelSize: root.baseSize
+                    font.family: root.fontFamily.length > 0 ? root.fontFamily : lyricLine.defaultFont
                     font.weight: Font.Medium
                     color: lyricLine.isActive ? root.activeColor : root.textColor
+
+                    // Read at the rest position (targetY), never the moving y: the opacity target changes once per line.
+                    readonly property bool fits: {
+                        if (!root.wholeLines || lyricLine.distance === 0)
+                            return true;
+                        const top = lyricColumn.targetY + lyricLine.y;
+                        return top >= 0 && top + lyricLine.height <= viewport.height;
+                    }
 
                     opacity: {
                         if (lyricLine.distance === 0)
                             return 1.0;
-                        if (lyricLine.distance > root.falloff)
+                        if (lyricLine.distance > root.falloff || !lyricLine.fits)
                             return 0.0;
                         return Math.max(0.06, 0.55 - (lyricLine.distance - 1) * 0.16);
                     }

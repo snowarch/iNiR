@@ -22,6 +22,15 @@ Item {
     visible: hasPlayer
 
     readonly property bool editorial: Appearance.editorialEverywhere
+    // Synced lyrics under the player, as the desktop media widget's lyrics sheet (#307): the sheet opens only once
+    // the song has them, and the service is asked only while this card is shown.
+    property bool lyrics: false
+    readonly property real sheetHeight: root.lyrics && lyricSheet.hasLyrics ? 132 : 0
+    property real sheetShown: root.sheetHeight
+    Behavior on sheetShown {
+        enabled: Appearance.animationsEnabled
+        NumberAnimation { duration: Appearance.animation.elementMove.duration; easing.type: Appearance.animation.elementMove.type; easing.bezierCurve: Appearance.animation.elementMove.bezierCurve }
+    }
 
     required property MprisPlayer player
     readonly property bool hasPlayer: player && MprisController.titleOf(player)
@@ -78,7 +87,7 @@ Item {
         id: card
         anchors.centerIn: parent
         width: parent.width - Appearance.sizes.elevationMargin
-        implicitHeight: 130
+        implicitHeight: 130 + root.sheetShown
         radius: root.editorial ? Appearance.editorial.radius
             : Appearance.angelEverywhere ? Appearance.angel.roundingNormal
             : Appearance.inirEverywhere ? Appearance.inir.roundingNormal : Appearance.rounding.normal
@@ -147,6 +156,7 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: parent.bottom
+            anchors.bottomMargin: root.sheetShown
             height: 30
             live: root.player?.isPlaying ?? false
             points: root.visualizerPoints
@@ -163,6 +173,7 @@ Item {
         RowLayout {
             anchors.fill: parent
             anchors.margins: 10
+            anchors.bottomMargin: 10 + root.sheetShown
             spacing: 10
 
             // Cover art thumbnail
@@ -461,6 +472,47 @@ Item {
                     }
                 }
             }
+        }
+
+        // A hairline between the player and its lyrics, then the lines, the sung one larger in the accent.
+        Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: root.sheetShown
+            anchors.leftMargin: 16
+            anchors.rightMargin: 16
+            height: 1
+            visible: root.sheetShown > 1
+            opacity: root.sheetShown / 132
+            color: root.editorial ? Appearance.editorial.rule
+                : Appearance.inirEverywhere ? Appearance.inir.colBorder
+                : ColorUtils.transparentize(blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0, 0.85)
+        }
+        PlayerLyrics {
+            id: lyricSheet
+            visible: root.lyrics && root.visible
+            showPlaceholder: false
+            wholeLines: true
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.margins: 16
+            height: Math.max(0, root.sheetShown - 32)
+            opacity: root.sheetShown / 132
+            clip: true
+            textAlignment: Text.AlignHCenter
+            lineSpacing: 10
+            baseSize: Appearance.font.pixelSize.normal
+            activeScale: 1.2
+            falloff: 3
+            activeColor: root.editorial ? Appearance.editorial.ink
+                : Appearance.inirEverywhere ? root.jiraColPrimary
+                : (blendedColors?.colPrimary ?? Appearance.colors.colPrimary)
+            textColor: root.editorial ? Appearance.editorial.muted
+                : Appearance.inirEverywhere ? root.jiraColTextSecondary
+                : ColorUtils.transparentize(blendedColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0, 0.3)
+            indicatorColor: blendedColors?.colPrimaryContainer ?? Appearance.colors.colPrimaryContainer
         }
     }
 

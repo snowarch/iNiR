@@ -2770,6 +2770,7 @@
             "widgets": {
                 "weather": true,
                 "media": true,
+                "lyrics": false,
                 "powerButtons": true,
                 "hintText": true
             }
@@ -3621,6 +3622,7 @@
             "widgets": {
                 "weather": true,
                 "media": true,
+                "lyrics": false,
                 "powerButtons": true,
                 "hintText": true
             }

@@ -39,6 +39,7 @@ MouseArea {
     // Widget visibility
     readonly property bool showWeather: Config.family?.lock?.widgets?.weather ?? true
     readonly property bool showMedia: Config.family?.lock?.widgets?.media ?? true
+    readonly property bool showLyrics: Config.family?.lock?.widgets?.lyrics ?? false
     readonly property bool showPowerButtons: Config.family?.lock?.widgets?.powerButtons ?? true
     readonly property bool showHintText: Config.family?.lock?.widgets?.hintText ?? true
 
@@ -683,8 +684,9 @@ MouseArea {
             
             sourceComponent: LockMediaWidget {
                 player: MprisController.activePlayer
+                lyrics: root.showLyrics
                 width: 360
-                height: 120
+                height: 120 + sheetShown
             }
         }
 
