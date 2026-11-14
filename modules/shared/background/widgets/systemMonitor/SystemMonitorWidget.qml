@@ -259,6 +259,8 @@ AbstractBackgroundWidget {
     // exists at once (they crossfade) and iRiS draws its own face over all of them: each body eases only while
     // it is the one shown, or a hidden one repaints the whole desktop window on every reading.
     readonly property bool animatesValues: Appearance.animationsEnabled && root.motionActive
+    // The smallest change of a meter that eases (a fraction of its range).
+    readonly property real _easeStep: 0.04
 
     // Readings behind windows are never seen and each one redraws the desktop: polling follows motionActive.
     property bool _holdingResourceUsage: false
@@ -569,7 +571,9 @@ AbstractBackgroundWidget {
                                 opacity: barRow.big > 0 ? 1 : root.fillOpacity
 
                                 Behavior on width {
+                                    id: barEase
                                     enabled: root.animatesValues && barsBody.visible
+                                        && Math.abs(barEase.targetValue - barFill.width) >= barFill.parent.width * root._easeStep
                                     NumberAnimation { duration: root._animDuration; easing.type: Easing.OutCubic }
                                 }
                             }
@@ -756,7 +760,12 @@ AbstractBackgroundWidget {
                         // Smoothly interpolated value for display
                         property real _animatedValue: _liveValue
                         Behavior on _animatedValue {
+                            id: ringEase
+                            // Most readings move a point or two: easing those repainted the desktop for half of
+                            // every polling cycle. targetValue is set before enabled is read, so only a change
+                            // the eye follows eases; the rest lands in one frame.
                             enabled: root.animatesValues && ringsBody.visible
+                                && Math.abs(ringEase.targetValue - ringCol._animatedValue) >= root._easeStep
                             NumberAnimation { duration: root._animDuration; easing.type: Easing.OutCubic }
                         }
 

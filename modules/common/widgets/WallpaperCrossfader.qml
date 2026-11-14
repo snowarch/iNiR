@@ -922,6 +922,11 @@ Item {
         if (root.source !== "") {
             img0.source = root.source
             internal.displayedSource = root.source
+            // The first value also reached switchTo while the item was made, which began loading it into the
+            // other slot as a transition that then never ran: every desktop kept a second full decode for good.
+            internal.pendingSource = ""
+            internal.loadingSource = ""
+            img1.source = ""
         }
     }
 }
