@@ -5,6 +5,43 @@ All notable changes to iNiR will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+The Hub brings only what you choose, Escape closes everything again, a widget on one screen of several, and a lighter shell at rest and under a game.
+
+### Added
+- **A widget on one screen of several**: with more than one screen, the widget gallery asks where a widget goes, one screen or every screen, and placing or removing a widget acts on its own screen only ([snowarch/inir-hub#9](https://github.com/snowarch/inir-hub/issues/9), iRiS 2.33.87 from the Hub).
+- **Bubbles hide like the Island and the Dock**: turn on **iRiS Settings › Bubbles › Visibility › Automatically hide** and they tuck into their edges until you rest the pointer there, and stay out on empty workspaces ([snowarch/inir-hub#10](https://github.com/snowarch/inir-hub/issues/10), iRiS 2.33.87 from the Hub).
+- **InirCam in the Hub**: your RTSP and ONVIF cameras on the desktop, in a grid, a wall or one enlarged, with the ones you pin kept at hand, by [@yukazakiri](https://github.com/yukazakiri) (InirCam 1.0.1 from the Hub, [snowarch/inir-hub#7](https://github.com/snowarch/inir-hub/pull/7)).
+- **Media Corner sources**: add your own Stremio add-ons and web searches as sources, play through your mpv and pick subtitles, by [@lukatedev](https://github.com/lukatedev) (Media Corner 1.1.1 from the Hub, [snowarch/inir-hub#14](https://github.com/snowarch/inir-hub/pull/14)).
+
+### Changed
+- **Lighter at rest**: panels, bar popups, menus and sidebar tabs are built the first time you open them, so the shell starts with 704 files compiled instead of 910; the wallpaper is decoded once, widget faces and Now Playing build only the size they show, the iRiS glass rim draws in one pass and the dashboard's song clock ticks only while you see it (Material 2.36.3, iRiS 2.33.88, Waffle 2.34.17 from the Hub; qs-rs 0.1.9).
+- **Quieter under a game**: when a fullscreen window opens, the wallpaper hides only once the window has settled over it, and Material's bar Resources and the iRiS vitals stop sampling while they are covered (Material 2.36.3, iRiS 2.33.88, Waffle 2.34.17 from the Hub).
+- **AI sidebar keys**: OpenCode Zen and Cerebras models now ask for a key of your own. Zen refuses free requests from apps other than OpenCode and Cerebras no longer has a free tier, so the keyless default only failed.
+
+### Fixed
+- **The Hub brings only what you choose**: since 3.0.0, every install and every update also put every Hub component and Design on your computer (Media Corner, InirCam, Fastfetch, Prism, AIRISU) without asking. Now only the families and what you install yourself come. This update removes what an earlier one brought that way and names each item; a Design you wear stays, and the Hub brings any of them back with your settings kept.
+- **Escape closes everything again**: in iRiS, Orbit, Spotlight, cards, the gallery and the dock ignored Escape while the Control Center stayed loaded; in Waffle, Escape hid the Action and Notification centers but left them holding the keyboard, and the quick toggles opened on their last page (iRiS 2.33.88, Waffle 2.34.17 from the Hub).
+- **The hidden Island answers its whole edge**: it comes back from anywhere along the edge it lives on and stays open while the pointer rests there ([snowarch/inir-hub#12](https://github.com/snowarch/inir-hub/issues/12), [snowarch/inir-hub#13](https://github.com/snowarch/inir-hub/issues/13), iRiS 2.33.88 from the Hub).
+- **Nothing vanishes after a reload under a game**: bars, panels and the Island stayed hidden when the shell reloaded while a fullscreen window covered them (qs-rs 0.1.9).
+- **Widget edit mode opens without flicker**: the card zooms once the desktop, its pictures and the glass are ready, and Material's bars, Pill and Dock slide away instead of being rebuilt (Material 2.36.3, iRiS 2.33.88 from the Hub).
+- **Days and months in the shell's language**: eight places named them in the system's language, and the classic clock's tooltip forced English order (Material 2.36.3, iRiS 2.33.88, Waffle 2.34.17 from the Hub).
+- **Qt apps in your colours**: qt5ct and qt6ct get a palette they read, so Qt apps no longer stay light, and only the keys iNiR owns change in their files ([#309](https://github.com/snowarch/iNiR/pull/309), by [@jturbide](https://github.com/jturbide)).
+- **A theming switch turned off stays off**: terminals, Qt, Vesktop, editors and the backdrop wallpaper were themed even with their switch off (with [@jturbide](https://github.com/jturbide)).
+- **A widget kept on one screen stays there**: turning any widget on or off no longer undoes another one kept on a single screen ([#332](https://github.com/snowarch/iNiR/pull/332), by [@Xar0P](https://github.com/Xar0P)).
+- **Search without accents**: typing a name without its accents finds it again; the shell's search never folded them.
+- **Tray menus with a silent app**: one tray app that never answered left every tray menu empty (qs-rs 0.1.8, [snowarch/qs-rs#2](https://github.com/snowarch/qs-rs/pull/2), by [@Xar0P](https://github.com/Xar0P)).
+
+### Issues / PRs
+- Fixed [snowarch/inir-hub#12](https://github.com/snowarch/inir-hub/issues/12) and [snowarch/inir-hub#13](https://github.com/snowarch/inir-hub/issues/13).
+- Also in this release, closed earlier: [snowarch/inir-hub#9](https://github.com/snowarch/inir-hub/issues/9), [snowarch/inir-hub#10](https://github.com/snowarch/inir-hub/issues/10) and [snowarch/qs-rs#1](https://github.com/snowarch/qs-rs/issues/1).
+- Included contributions from [#309](https://github.com/snowarch/iNiR/pull/309), [#332](https://github.com/snowarch/iNiR/pull/332), [snowarch/qs-rs#2](https://github.com/snowarch/qs-rs/pull/2), [snowarch/inir-hub#7](https://github.com/snowarch/inir-hub/pull/7) and [snowarch/inir-hub#14](https://github.com/snowarch/inir-hub/pull/14).
+- Parts: [qs-rs 0.1.8](https://github.com/snowarch/qs-rs/releases/tag/v0.1.8) and [0.1.9](https://github.com/snowarch/qs-rs/releases/tag/v0.1.9), [inir-cli 0.2.15](https://github.com/snowarch/inir-cli/releases/tag/v0.2.15); Material 2.36.3, iRiS 2.33.88, Waffle 2.34.17, InirCam 1.0.1 and Media Corner 1.1.1 from the [Hub](https://inir.space/hub).
+
+### Contributors
+Thanks to [@yukazakiri](https://github.com/yukazakiri) for InirCam, [@lukatedev](https://github.com/lukatedev) for Media Corner's sources and subtitles, [@jturbide](https://github.com/jturbide) for the Qt palettes and the theming switches, and [@Xar0P](https://github.com/Xar0P) for the tray menu and widget fixes and the reports behind the Island, bubbles and widget changes.
+
 ## [3.1.1] - 2026-11-13
 
 Floating tools rebuilt as a bench with a clock, a timer and your network, live windows and pins on Umbriel, pickers in your own colours, and an update that undoes itself whole when the new version won't start.
