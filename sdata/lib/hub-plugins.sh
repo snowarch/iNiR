@@ -39,7 +39,7 @@ _hub_worn() {
 # config wears (a Design picked before it came from the hub). Nothing else: a component or Design comes only when the
 # person installs it.
 hub_plugins_needed() {
-    local catalogue runtime="$1" tree="$2" id provides installed kind errors worn rc=0
+    local catalogue runtime="$1" tree="$2" id provides installed kind errors worn unasked rc=0
     if [[ ! -x "${INIR_CLI:-${XDG_DATA_HOME:-$HOME/.local/share}/inir/cli/inir}" ]]; then
         printf '  %s\n' "the inir command is not installed, and the hub lives in it" >&2
         return 1
@@ -53,9 +53,10 @@ hub_plugins_needed() {
     fi
     rm -f "$errors"
     worn=" $(_hub_worn "$runtime" | tr '\n' ' ') "
+    unasked=" $(hub_unasked "$runtime" | tr '\n' ' ') "
     # a unit separator, not a tab: bash folds empty tab-separated fields away
     while IFS=$'\x1f' read -r id provides installed kind; do
-        [[ -n "$provides" && ! -e "$tree/$provides" ]] || continue
+        [[ -n "$provides" && ! -e "$tree/$provides" && "$unasked" != *" $id "* ]] || continue
         if [[ "$installed" == yes || ( -d "$runtime/$provides" && ! -L "$runtime/$provides" ) \
             || "$worn" == *" $id "* || "$kind" == family ]]; then
             printf '%s\n' "$id"
@@ -63,6 +64,32 @@ hub_plugins_needed() {
     # `installed` is the installed version, "" when it is not: jq takes "" as true, so test it for a value (a bare
     # `if .installed` put every component and Design of the hub on every machine that updated).
     done < <(jq -r '.items[] | [.id, (.provides // ""), (if (.installed // "") != "" then "yes" else "" end), (.kind // "")] | map(tostring) | join("\u001f")' <<<"$catalogue")
+}
+
+# hub_unasked RUNTIME: the components and Designs an update put here without the person asking (v3.0.0 to 3.1.1 brought
+# every one the hub listed), one id per line, until hub_drop_unasked has run once on this machine. Nothing tells them
+# apart from one the person picked, so only what the config wears stays; the Hub brings any other back, and its
+# options file under ~/.config/inir/plugins stays for it.
+hub_unasked() {
+    local state="${XDG_STATE_HOME:-$HOME/.local/state}/inir/hub" worn id
+    [[ -f "$state/installed.json" && ! -e "$state/unasked-dropped" ]] || return 0
+    worn=" $(_hub_worn "$1" | tr '\n' ' ') "
+    jq -r '(.items // {}) | to_entries[] | select(.value.kind == "component" or .value.kind == "design") | .key' \
+        "$state/installed.json" 2>/dev/null | while read -r id; do
+        [[ "$worn" == *" $id "* ]] || printf '%s\n' "$id"
+    done
+}
+
+# hub_drop_unasked RUNTIME: removes them one by one (one another item needs stays) and prints the name of each
+# removed, then marks the machine: what the person installs afterwards is theirs.
+hub_drop_unasked() {
+    local state="${XDG_STATE_HOME:-$HOME/.local/state}/inir/hub" id name
+    for id in $(hub_unasked "$1"); do
+        name="$(jq -r --arg id "$id" '.items[$id].name // $id' "$state/installed.json" 2>/dev/null)"
+        _hub remove "$id" >/dev/null 2>&1 && printf '%s\n' "${name:-$id}"
+    done
+    [[ -d "$state" ]] && : >"$state/unasked-dropped"
+    return 0
 }
 
 # hub_fetch_plugins VERSION ID...: into the hub cache, checked against the iNiR version being installed

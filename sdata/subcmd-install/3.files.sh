@@ -237,6 +237,8 @@ case "${SKIP_QUICKSHELL}" in
     if hub_needed="$(hub_plugins_needed "$II_TARGET" "$II_SOURCE")" \
         && hub_fetch_plugins "$(get_repo_version)" $hub_needed && hub_install_plugins $hub_needed; then
       log_success "Families installed from the hub"
+      hub_dropped="$(hub_drop_unasked "$II_TARGET" | paste -sd ',' | sed 's/,/, /g')"
+      [[ -z "$hub_dropped" ]] || log_info "Removed what an earlier update installed without asking: ${hub_dropped}. The Hub brings any of them back"
     else
       log_error "Could not install the families from the hub, so the shell has nothing to show. Run ./setup install again once online"
       return 1

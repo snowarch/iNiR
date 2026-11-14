@@ -2925,6 +2925,11 @@ run_update() {
         restore_update_snapshot >/dev/null || tui_warn "Run './setup rollback' to go back to the previous version"
         return 25
     fi
+    if ((${#hub_plugins[@]})); then
+        local dropped
+        dropped="$(hub_drop_unasked "$II_TARGET" | paste -sd ',' | sed 's/,/, /g')"
+        [[ -z "$dropped" ]] || tui_info "Removed what an earlier update installed without asking: ${dropped}. The Hub brings any of them back"
+    fi
 
     # Fix runtime command permissions without turning test modules into executables.
     find "$II_TARGET/scripts" \( -name "*.sh" -o -name "*.fish" -o \( -name "*.py" ! -name "test-*.py" \) \) -exec chmod +x {} \; 2>/dev/null || true
