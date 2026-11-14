@@ -673,7 +673,7 @@ Scope {
                 x: Math.max(Number(work.left ?? 0), Math.min(maxX, x - size / 2)),
                 y: Math.max(Number(work.top ?? 0), Math.min(maxY, y - size / 2))
             })
-            imageChoice.showNotice(paths.length > 1
+            bgRoot._imageChoice().showNotice(paths.length > 1
                 ? Translation.tr("Decorative image uses the first dropped image.")
                 : Translation.tr("Decorative image added."), x, y)
         }
@@ -689,7 +689,13 @@ Scope {
             imageConversionRouteTimer.restart()
         }
 
+        function _imageChoice(): var {
+            imageChoiceLoader.active = true
+            return imageChoiceLoader.item
+        }
+
         function _handleImageChoice(action): void {
+            const imageChoice = bgRoot._imageChoice()
             const paths = imageChoice.imagePaths.slice()
             const resultPaths = imageChoice.resultPaths.slice()
             const x = imageChoice.requestedX
@@ -721,7 +727,7 @@ Scope {
                     bgRoot._imageConversionRouteAttempts = 0
                     imageConversionRouteTimer.stop()
                     if (placement)
-                        imageChoice.showNotice(Translation.tr("Could not open the image converter."), placement.x, placement.y)
+                        bgRoot._imageChoice().showNotice(Translation.tr("Could not open the image converter."), placement.x, placement.y)
                     return
                 }
                 const paths = bgRoot._pendingImageConversion
@@ -747,7 +753,7 @@ Scope {
                     return
                 const placement = bgRoot._conversionPlacement
                 bgRoot._conversionPlacement = null
-                imageChoice.showResults(paths, placement.x, placement.y)
+                bgRoot._imageChoice().showResults(paths, placement.x, placement.y)
             }
         }
 
@@ -2188,7 +2194,7 @@ Scope {
                     gridSize: Number(Config.getNestedValue("background.widgets.editGrid.size", 16))
                     gridSnap: Boolean(Config.getNestedValue("background.widgets.editGrid.snap", true))
                     interactive: !GlobalStates.screenLocked && !GlobalStates.shellLayoutEditMode
-                    onImageChoiceRequested: (paths, x, y) => imageChoice.openAt(paths, x, y)
+                    onImageChoiceRequested: (paths, x, y) => bgRoot._imageChoice().openAt(paths, x, y)
                 }
 
                 Repeater {
@@ -2222,10 +2228,15 @@ Scope {
                     }
                 }
 
-                DesktopImageChoice {
-                    id: imageChoice
+                // Built by the first drop or conversion that asks (bgRoot._imageChoice()), then kept: it holds the
+                // dropped paths while the choice is open.
+                Loader {
+                    id: imageChoiceLoader
                     anchors.fill: parent
-                    onChosen: action => bgRoot._handleImageChoice(action)
+                    active: false
+                    sourceComponent: DesktopImageChoice {
+                        onChosen: action => bgRoot._handleImageChoice(action)
+                    }
                 }
 
                 function _desktopItemsForOutput(outputName: string): var {
