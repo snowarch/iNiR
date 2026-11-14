@@ -383,7 +383,8 @@ Item {
                             readonly property real dpr: tilePicture.Window.window?.devicePixelRatio ?? 1
                             anchors.fill: parent
                             anchors.margins: Math.round(8 * root.d)
-                            visible: tile.pictured
+                            // Shown once decoded: a plate never goes empty between the glyph and the picture.
+                            visible: tile.pictured && tilePicture.status === Image.Ready
                             source: tile.pictureUrl
                             sourceSize: Qt.size(Math.ceil(tilePicture.width * tilePicture.dpr), Math.ceil(tilePicture.height * tilePicture.dpr))
                             fillMode: Image.PreserveAspectFit
@@ -396,7 +397,7 @@ Item {
                         // Never seen yet: its glyph stands in.
                         MaterialSymbol {
                             anchors.centerIn: parent
-                            visible: !tile.pictured
+                            visible: !(tile.pictured && tilePicture.status === Image.Ready)
                             text: tile.modelData.glyph
                             iconSize: Math.round(40 * root.d)
                             fill: 1

@@ -1435,9 +1435,26 @@ Scope {
         // Arranging widgets under a family that stages it: its paper behind the card, its card edge over it.
         readonly property var editCard: DesktopEditStage.cardFor(bgRoot.screenName, bgRoot.width, bgRoot.height)
         readonly property string editStagePart: Plugins.part(Plugins.active, "editStage")
+        // Arranging asked: what the card needs (the family's stage, the stills, the desktop as one picture) is made
+        // while the desktop still stands, and the family's zoom waits for it (DesktopEditStage.prepared), so its first
+        // frame already has everything: nothing pops in on the way and no frame on it builds a part.
+        readonly property bool editAsked: GlobalStates.widgetEditMode && DesktopEditStage.card && bgRoot.editStagePart.length > 0
+        readonly property bool editStaged: bgRoot.editCard.p > 0 || bgRoot.editAsked
+        readonly property bool editMaking: bgRoot.editAsked && bgRoot.editCard.p <= 0 && !(
+            editUnderLoader.status === Loader.Ready && (editUnderLoader.item?.ready ?? true)
+            && editOverLoader.status === Loader.Ready
+            && (!bgRoot.externalMainWallpaperActive || editStill.status === Image.Ready || editStill.status === Image.Error))
+        onEditMakingChanged: DesktopEditStage.setPreparing(bgRoot.screenName, bgRoot.editMaking)
+        // A still that never decodes never holds the mode.
+        Timer {
+            running: bgRoot.editMaking
+            interval: 600
+            onTriggered: DesktopEditStage.setPreparing(bgRoot.screenName, false)
+        }
         Loader {
+            id: editUnderLoader
             anchors.fill: parent
-            active: bgRoot.editCard.p > 0 && bgRoot.editStagePart.length > 0
+            active: bgRoot.editStaged && bgRoot.editStagePart.length > 0
             source: bgRoot.editStagePart
             onLoaded: {
                 item.side = "under"
@@ -1459,7 +1476,9 @@ Scope {
             // (CardPicture.frag) at the card's scale of the moment, so it reads sharp from the first frame. Mipmaps blurred
             // text; a picture drawn at the card's size aliased it, and switching every text to distance-field glyphs once
             // the card settled made it turn legible late (and walked the whole desktop every 1.5 s while arranging).
-            layer.enabled: bgRoot.editCard.p > 0 && (editOverLoader.item?.cardMask ?? null) !== null
+            // Made at the ask, while the card is still the whole desktop: its first picture is drawn before the zoom,
+            // and at full size the taps sit on one texel, so it shows the desktop pixel for pixel until it moves.
+            layer.enabled: bgRoot.editStaged && (editOverLoader.item?.cardMask ?? null) !== null
             layer.smooth: true
             layer.effect: ShaderEffect {
                 // The layer's texture: declared so the sampler binds at creation, not after a warning.
@@ -1467,9 +1486,10 @@ Scope {
                 readonly property vector2d size: Qt.vector2d(bgRoot.width, bgRoot.height)
                 readonly property real corner: Number(editOverLoader.item?.cardCorner ?? 0)
                 readonly property real edge: 1 / Math.max(0.05, bgRoot.editCard.s * bgRoot.devicePixelRatio)
+                readonly property real tap: bgRoot.editCard.p > 0 ? 0.2 / Math.max(0.2, bgRoot.editCard.s) : 0
                 readonly property vector2d reach: Qt.vector2d(
-                    0.2 / Math.max(0.2, bgRoot.editCard.s) / Math.max(1, bgRoot.width * bgRoot.devicePixelRatio),
-                    0.2 / Math.max(0.2, bgRoot.editCard.s) / Math.max(1, bgRoot.height * bgRoot.devicePixelRatio))
+                    tap / Math.max(1, bgRoot.width * bgRoot.devicePixelRatio),
+                    tap / Math.max(1, bgRoot.height * bgRoot.devicePixelRatio))
                 fragmentShader: Qt.resolvedUrl("edit/CardPicture.frag.qsb")
             }
 
@@ -1478,8 +1498,9 @@ Scope {
                 id: editStill
                 anchors.fill: parent
                 z: -1
+                // Decoded at the ask, shown once the card moves: until then it is the picture the other program draws.
                 visible: bgRoot.editCard.p > 0 && bgRoot.externalMainWallpaperActive
-                source: editStill.visible ? Wallpapers.stillUrlFor(bgRoot.wallpaperPathRaw) : ""
+                source: bgRoot.editStaged && bgRoot.externalMainWallpaperActive ? Wallpapers.stillUrlFor(bgRoot.wallpaperPathRaw) : ""
                 sourceSize: Qt.size(bgRoot.width, bgRoot.height)
                 fillMode: Image.PreserveAspectCrop
                 // Shrunk with the card: a mipmap keeps a pixel-art wall from breaking into uneven pixels.
@@ -2955,7 +2976,7 @@ Scope {
         Loader {
             id: editOverLoader
             anchors.fill: parent
-            active: bgRoot.editCard.p > 0 && bgRoot.editStagePart.length > 0
+            active: bgRoot.editStaged && bgRoot.editStagePart.length > 0
             source: bgRoot.editStagePart
             onLoaded: { item.side = "over"; item.card = Qt.binding(() => bgRoot.editCard) }
         }

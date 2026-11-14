@@ -17,6 +17,9 @@ Singleton {
     property var stages: ({})
     // Settings › Widgets: off, the desktop stays full size and widgets are arranged in place
     readonly property bool card: Config.options?.background?.widgets?.editCard ?? true
+    // What a family moves out of the way while arranging (its bars, its dock) leaves with the card's first frame, never
+    // ahead of it while the desktop is still making the card's parts; it comes back as soon as arranging ends.
+    readonly property bool receding: GlobalStates.widgetEditMode && Object.keys(root.stages).length > 0
     readonly property real gap: 22
 
     function setStage(output: string, progress: real, top: real, bottom: real): void {
@@ -29,6 +32,25 @@ Singleton {
         else
             next[output] = { progress: progress, top: top, bottom: bottom }
         root.stages = next
+    }
+
+    // Outputs whose desktop is still making what the card needs after arranging was asked (the family's stage, the
+    // stills, its picture; the desktop writes it, never longer than 600 ms). A family starts its zoom once its output
+    // is prepared, so the first frame of the motion is drawn with everything in it. A family's own part on that output
+    // (its glass) holds it under `<output>/<what>`.
+    property var preparing: ({})
+    function setPreparing(output: string, on: bool): void {
+        if (Boolean(root.preparing[output]) === on)
+            return
+        const next = Object.assign({}, root.preparing)
+        if (on) next[output] = true
+        else delete next[output]
+        root.preparing = next
+    }
+    function prepared(output: string): bool {
+        for (const key in root.preparing)
+            if (key === output || key.startsWith(output + "/")) return false
+        return true
     }
 
     // Where the desktop of a w x h output sits right now: offset and scale about its top-left corner. The card keeps
