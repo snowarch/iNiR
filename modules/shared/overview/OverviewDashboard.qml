@@ -162,7 +162,7 @@ Item {
     property QtObject resourceMonitor: ResourceUsageMonitor { target: root; active: root.cfgSystem }
 
     Timer {
-        running: root.effectiveIsPlaying
+        running: root.effectiveIsPlaying && root.panelVisible
         interval: 1000; repeat: true
         onTriggered: { if (!root.isYtMusic && root.player) root.player.positionChanged() }
     }
