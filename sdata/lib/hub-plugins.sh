@@ -33,12 +33,13 @@ _hub_worn() {
     done
 }
 
-# hub_plugins_needed RUNTIME TREE [all-families]: one id per line, fails when the catalogue can't be read.
-# Needed: what the hub installed, what the old runtime still holds as a real folder at a plugin's path (a v2.33
-# install carried its families in its own tree), what the config wears (a Design picked before it came from the hub),
-# and with all-families every family listed (a fresh install).
+# hub_plugins_needed RUNTIME TREE: one id per line, fails when the catalogue can't be read.
+# Needed: every family the hub lists (each machine carries all three), what the hub installed, what the old runtime
+# still holds as a real folder at a plugin's path (a v2.33 install carried its families in its own tree) and what the
+# config wears (a Design picked before it came from the hub). Nothing else: a component or Design comes only when the
+# person installs it.
 hub_plugins_needed() {
-    local catalogue runtime="$1" tree="$2" all="${3:-}" id provides installed kind errors worn rc=0
+    local catalogue runtime="$1" tree="$2" id provides installed kind errors worn rc=0
     if [[ ! -x "${INIR_CLI:-${XDG_DATA_HOME:-$HOME/.local/share}/inir/cli/inir}" ]]; then
         printf '  %s\n' "the inir command is not installed, and the hub lives in it" >&2
         return 1
@@ -56,10 +57,12 @@ hub_plugins_needed() {
     while IFS=$'\x1f' read -r id provides installed kind; do
         [[ -n "$provides" && ! -e "$tree/$provides" ]] || continue
         if [[ "$installed" == yes || ( -d "$runtime/$provides" && ! -L "$runtime/$provides" ) \
-            || "$worn" == *" $id "* || ( "$all" == all-families && "$kind" == family ) ]]; then
+            || "$worn" == *" $id "* || "$kind" == family ]]; then
             printf '%s\n' "$id"
         fi
-    done < <(jq -r '.items[] | [.id, (.provides // ""), (if .installed then "yes" else "" end), (.kind // "")] | map(tostring) | join("\u001f")' <<<"$catalogue")
+    # `installed` is the installed version, "" when it is not: jq takes "" as true, so test it for a value (a bare
+    # `if .installed` put every component and Design of the hub on every machine that updated).
+    done < <(jq -r '.items[] | [.id, (.provides // ""), (if (.installed // "") != "" then "yes" else "" end), (.kind // "")] | map(tostring) | join("\u001f")' <<<"$catalogue")
 }
 
 # hub_fetch_plugins VERSION ID...: into the hub cache, checked against the iNiR version being installed

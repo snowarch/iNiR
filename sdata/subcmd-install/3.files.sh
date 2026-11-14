@@ -234,7 +234,7 @@ case "${SKIP_QUICKSHELL}" in
     # The base carries no family: the binary brings them from the hub (sdata/lib/hub-plugins.sh)
     install_inir_cli_binary || log_warning "Could not fetch the inir binary; the Hub needs it"
     # shellcheck disable=SC2086
-    if hub_needed="$(hub_plugins_needed "$II_TARGET" "$II_SOURCE" all-families)" \
+    if hub_needed="$(hub_plugins_needed "$II_TARGET" "$II_SOURCE")" \
         && hub_fetch_plugins "$(get_repo_version)" $hub_needed && hub_install_plugins $hub_needed; then
       log_success "Families installed from the hub"
     else
