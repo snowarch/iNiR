@@ -23,7 +23,7 @@ Settings › System › Lock screen:
 
 - **Use Hyprlock (instead of Quickshell)** is off by default.
 - **Launch on startup** is off by default. Turn it on to use Quickshell as your lock screen provider.
-- **Require password to power off/restart** is on by default. It guards against accidents only.
+- **Require password to power off/restart** is off by default. It guards against accidents only.
 - **Also unlock keyring** is on by default.
 - **Show notifications on lock screen** is off by default.
 

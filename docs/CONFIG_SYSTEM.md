@@ -15,9 +15,9 @@ Settings is where you change how iNiR looks and behaves. Every option is in ther
 
 **Material** groups its pages in the sidebar as Essentials, Appearance, Shell, System and Reference. Pages include Quick, Bar, Wallpaper, Themes, Panels, Dock, Sidebars, Modules and iRiS.
 
-- To reorder the sidebar or hide pages, use Edit navigation in the Settings header, or the Arrange page.
+- To reorder the sidebar or hide pages, use the Arrange page.
 - Hidden pages stay in search.
-- Modules › Settings UI › Overlay layout changes how the overlay looks: Nav rail, Focus, Unified or Editorial.
+- Modules › Settings UI › Design picks Expressive or Classic (the Settings of v2.33); Overlay mode opens Settings over the desktop, so each change shows as you make it.
 
 **Waffle** lists its pages on the left: Quick, General, Taskbar, Background, Themes, Interface, Modules, Waffle Style, Shortcuts, About and more. Ctrl+PageDown and Ctrl+PageUp move to the next and previous page, and Ctrl+Tab does the same.
 

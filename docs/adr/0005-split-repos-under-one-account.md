@@ -31,4 +31,4 @@ before pulling stay at the repo root: `setup`, `shell.qml`, `sdata/lib/`,
 Install, reinstall, update and uninstall run in a clean container per distro
 (Arch, Fedora, Debian, Ubuntu, Void) before a release.
 
-Status: accepted. The bench and the contracts exist; the CLI and Hub repos do not yet.
+Status: accepted. The bench, the contracts, the CLI (snowarch/inir-cli) and the Hub (snowarch/inir-hub) exist.

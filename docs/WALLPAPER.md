@@ -41,14 +41,14 @@ Videos can be mp4, webm, mkv, avi or mov. Pictures can be jpg, png, webp, avif, 
 - **Play videos and GIFs as wallpaper** (Screens › Wallpaper scaling) is on by default. Off shows a still frame instead.
 - **Freeze videos and GIFs while on battery power** is on by default.
 - Waffle: **Waffle Settings › Background › Wallpaper Effects**. iRiS: **Animate on the desktop** in **iRiS Settings › Wallpaper › Live wallpapers**.
-- **Effects › Wallpaper effects**: **Enable wallpaper blur** is off by default. **Blur radius** (32) and **Thumbnail blur strength (%)** tune it, the second for videos.
+- **Effects › Wallpaper effects**: **Enable wallpaper blur** is on by default. **Blur radius** (22) and **Thumbnail blur strength (%)** tune it, the second for videos.
 
 ## Backdrop
 
 The backdrop is a separate, blurred layer that shows while the overview is open. Settings › Wallpaper › Effects › Backdrop (overview):
 
 - **Enable backdrop layer for overview** is on by default. **Use main wallpaper** is on too. Turn it off to **Pick backdrop wallpaper**.
-- **Backdrop blur radius** (64) and **Backdrop dim (%)** (20) tune the look.
+- **Backdrop blur radius** (40) and **Backdrop dim (%)** (0) tune the look.
 - **Hide main wallpaper (show only backdrop)** is off by default.
 - **Aurora glass effect** gives glass panels colours from the wallpaper, like the sidebars.
 

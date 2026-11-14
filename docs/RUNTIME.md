@@ -28,7 +28,7 @@ Boot phases are written to `~/.cache/inir/last-boot.json`, and `inir status` sho
 
 ## systemd (`assets/systemd/inir.service`)
 
-- The unit is `PartOf` and `Requisite` `niri.service` and starts `After` it. It waits for `org.kde.StatusNotifierWatcher` (`Type=dbus`).
+- The unit is `PartOf` `niri.service` and `umbriel.service`, whichever you logged into, and starts `After` it. It waits for `org.kde.StatusNotifierWatcher` (`Type=dbus`).
 - It is enabled by a wants link, `~/.config/systemd/user/niri.service.wants/inir.service`, never by `graphical-session.target`. That keeps it off other desktops.
 - Manage the link with `inir service enable`, `inir service disable` and `inir service status`.
 
