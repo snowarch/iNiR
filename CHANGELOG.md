@@ -7,8 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.1.2] - 2026-11-14
 
-The Hub brings only what you choose, Escape closes everything again, a widget on one screen of several, and a lighter shell at rest and under a game.
-
 ### Added
 - **A widget on one screen of several**: with more than one screen, the widget gallery asks where a widget goes, one screen or every screen, and placing or removing a widget acts on its own screen only ([snowarch/inir-hub#9](https://github.com/snowarch/inir-hub/issues/9), iRiS 2.33.87 from the Hub).
 - **Bubbles hide like the Island and the Dock**: turn on **iRiS Settings › Bubbles › Visibility › Automatically hide** and they tuck into their edges until you rest the pointer there, and stay out on empty workspaces ([snowarch/inir-hub#10](https://github.com/snowarch/inir-hub/issues/10), iRiS 2.33.87 from the Hub).
