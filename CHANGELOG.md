@@ -5,7 +5,7 @@ All notable changes to iNiR will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.1.2] - 2026-11-14
 
 The Hub brings only what you choose, Escape closes everything again, a widget on one screen of several, and a lighter shell at rest and under a game.
 
