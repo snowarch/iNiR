@@ -50,6 +50,34 @@ Singleton {
         return hasFullscreenOnOutput("")
     }
     
+    // Outputs a fullscreen window has covered for a beat. What unmaps under a fullscreen window (the wallpaper) waits
+    // for it, so the window grows to fullscreen with the desktop still around it; it comes back the moment it leaves.
+    readonly property string _coveredNow: {
+        if (!CompositorService.isNiri) return ""
+        return Object.keys(NiriService.outputs ?? {}).filter(name => root.hasFullscreenOnOutput(name)).sort().join("\n")
+    }
+    property var _settled: ({})
+    on_CoveredNowChanged: {
+        const now = root._coveredNow.length > 0 ? root._coveredNow.split("\n") : []
+        const kept = {}
+        for (const name of now) if (root._settled[name]) kept[name] = true
+        if (Object.keys(kept).length !== Object.keys(root._settled).length) root._settled = kept
+        if (now.some(name => !kept[name])) settleTimer.restart()
+        else settleTimer.stop()
+    }
+    Timer {
+        id: settleTimer
+        interval: 900
+        onTriggered: {
+            const next = {}
+            for (const name of (root._coveredNow.length > 0 ? root._coveredNow.split("\n") : [])) next[name] = true
+            root._settled = next
+        }
+    }
+    function fullscreenSettledOn(outputName: string): bool {
+        return Boolean(root._settled[outputName])
+    }
+
     // Suppress niri reload toast briefly after GameMode changes
     property bool suppressNiriToast: false
 
@@ -323,7 +351,7 @@ Singleton {
     readonly property string niriConfigPath: (Quickshell.env("XDG_CONFIG_HOME") || (Quickshell.env("HOME") + "/.config")) + "/niri/config.kdl"
 
     function setNiriAnimations(enabled) {
-        if (!controlNiriAnimations) return
+        if (!controlNiriAnimations || !CompositorService.niriNative) return
 
         // Try modular file first, fall back to root config.kdl
         const targetFile = niriAnimationsPath
@@ -379,7 +407,7 @@ Singleton {
 
     onActiveChanged: {
         root._log("[GameMode] Active:", active, "(manual:", _manualActive, "auto:", _reactiveAutoActive, ")")
-        if (CompositorService.isNiri && controlNiriAnimations) {
+        if (CompositorService.niriNative && controlNiriAnimations) {
             root.suppressNiriToast = true
             niriAnimDebounce.restart()
         }

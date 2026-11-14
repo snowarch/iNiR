@@ -597,7 +597,8 @@ Scope {
             return bgRoot.previewBrisk && Wallpapers.internalPreviewActive ? Math.min(base, 340) : base
         }
 
-        // Hide when fullscreen
+        // Hide when fullscreen: once the window has settled there (GameMode), so it grows over the wallpaper, not over
+        // the compositor's empty backdrop; shown again the moment it leaves.
         property list<HyprlandWorkspace> workspacesForMonitor: CompositorService.isHyprland ? Hyprland.workspaces.values.filter(workspace => workspace.monitor && workspace.monitor.name == monitor.name) : []
         property var activeWorkspaceWithFullscreen: workspacesForMonitor.filter(workspace => ((workspace.toplevels.values.filter(window => window.wayland?.fullscreen)[0] != undefined) && workspace.active))[0]
         property bool hasFullscreenWindow: {
@@ -605,7 +606,7 @@ Scope {
                 return activeWorkspaceWithFullscreen != undefined
             }
             if (CompositorService.isNiri) {
-                return GameMode.hasFullscreenOnOutput(modelData?.name ?? "")
+                return GameMode.fullscreenSettledOn(modelData?.name ?? "")
             }
             return false
         }
