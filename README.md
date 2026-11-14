@@ -1,26 +1,10 @@
 <p align="center">
-  <img src="docs/shots/readme-hero.webp" alt="The iRiS desktop at work: the Island playing music over the dashboard widgets" width="100%">
+  <img src="docs/images/readme/header.webp" alt="iNiR: the iRiS desktop at work, the Island playing music over the dashboard widgets" width="100%">
 </p>
-
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: light)" srcset="docs/images/readme/mark-light.svg">
-    <img src="docs/images/readme/mark-dark.svg" alt="" width="56">
-  </picture>
-</p>
-
-<h1 align="center">iNiR</h1>
 
 <p align="center">
   A complete desktop shell for <a href="https://github.com/YaLTeR/niri">Niri</a> and <a href="https://github.com/noctalia-dev/umbriel">Umbriel</a>.<br>
   Pick a family, make it yours, keep it current with one command.
-</p>
-
-<p align="center">
-  <a href="https://github.com/snowarch/iNiR/releases/latest"><img src="https://img.shields.io/github/v/release/snowarch/iNiR?style=flat-square&label=release&color=111111" alt="Latest release"></a>
-  <a href="https://github.com/snowarch/iNiR/stargazers"><img src="https://img.shields.io/github/stars/snowarch/iNiR?style=flat-square&color=111111" alt="Stars"></a>
-  <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/discord-join-111111?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-111111?style=flat-square" alt="GPL-3.0"></a>
 </p>
 
 <p align="center">

@@ -1,8 +1,7 @@
-# shellcheck configuration for iNiR shell scripts
-# Used by CI (.github/workflows/ci.yml) and local development
+# shellcheck configuration for iNiR shell scripts: shellcheck reads it for every script in the repo
 
-# SC1091: Not following sourced files — our scripts source from venvs,
-#         relative paths, and generated files that aren't available at lint time.
+# SC1091: Not following sourced files — our scripts source relative paths and
+#         generated files that aren't available at lint time.
 disable=SC1091
 
 # SC2034: Variable appears unused — many scripts export or source variables

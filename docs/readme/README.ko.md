@@ -1,25 +1,9 @@
 <p align="center">
-  <img src="../shots/readme-hero.webp" alt="사용 중인 iRiS 데스크톱: 대시보드 위젯 위에서 Island가 음악을 재생" width="100%">
+  <img src="../images/readme/header.webp" alt="iNiR: 사용 중인 iRiS 데스크톱: 대시보드 위젯 위에서 Island가 음악을 재생" width="100%">
 </p>
-
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: light)" srcset="../images/readme/mark-light.svg">
-    <img src="../images/readme/mark-dark.svg" alt="" width="56">
-  </picture>
-</p>
-
-<h1 align="center">iNiR</h1>
 
 <p align="center">
   <a href="https://github.com/YaLTeR/niri">Niri</a>와 <a href="https://github.com/noctalia-dev/umbriel">Umbriel</a>용 완전한 데스크톱 셸입니다. 패밀리를 고르고, 취향대로 꾸미고, 명령어 하나로 최신 상태를 유지하세요.
-</p>
-
-<p align="center">
-  <a href="https://github.com/snowarch/iNiR/releases/latest"><img src="https://img.shields.io/github/v/release/snowarch/iNiR?style=flat-square&label=release&color=111111" alt="Latest release"></a>
-  <a href="https://github.com/snowarch/iNiR/stargazers"><img src="https://img.shields.io/github/stars/snowarch/iNiR?style=flat-square&color=111111" alt="Stars"></a>
-  <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/discord-join-111111?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
-  <a href="../../LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-111111?style=flat-square" alt="GPL-3.0"></a>
 </p>
 
 <p align="center">

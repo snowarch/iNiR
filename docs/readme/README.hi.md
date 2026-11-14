@@ -1,25 +1,9 @@
 <p align="center">
-  <img src="../shots/readme-hero.webp" alt="काम करता iRiS डेस्कटॉप: डैशबोर्ड विजेट्स के ऊपर Island में संगीत" width="100%">
+  <img src="../images/readme/header.webp" alt="iNiR: काम करता iRiS डेस्कटॉप: डैशबोर्ड विजेट्स के ऊपर Island में संगीत" width="100%">
 </p>
-
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: light)" srcset="../images/readme/mark-light.svg">
-    <img src="../images/readme/mark-dark.svg" alt="" width="56">
-  </picture>
-</p>
-
-<h1 align="center">iNiR</h1>
 
 <p align="center">
   <a href="https://github.com/YaLTeR/niri">Niri</a> और <a href="https://github.com/noctalia-dev/umbriel">Umbriel</a> के लिए एक पूरा डेस्कटॉप शेल। कोई परिवार चुनें, उसे अपने हिसाब से ढालें, और एक ही कमांड से उसे नया रखें।
-</p>
-
-<p align="center">
-  <a href="https://github.com/snowarch/iNiR/releases/latest"><img src="https://img.shields.io/github/v/release/snowarch/iNiR?style=flat-square&label=release&color=111111" alt="Latest release"></a>
-  <a href="https://github.com/snowarch/iNiR/stargazers"><img src="https://img.shields.io/github/stars/snowarch/iNiR?style=flat-square&color=111111" alt="Stars"></a>
-  <a href="https://discord.gg/pAPTfAhZUJ"><img src="https://img.shields.io/badge/discord-join-111111?style=flat-square&logo=discord&logoColor=white" alt="Discord"></a>
-  <a href="../../LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-111111?style=flat-square" alt="GPL-3.0"></a>
 </p>
 
 <p align="center">
