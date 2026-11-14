@@ -472,18 +472,18 @@ Singleton {
     /// The login screen you see after starting the computer. It wears your wallpaper and colours.
     IpcHandler {
         target: "loginScreen"
-        /// `auto` (iRiS while you use iRiS, Classic otherwise), `classic` or `iris`
+        /// `auto` (the look of the family you use), `classic`, or a family's own look (`iris`, `waffle`)
         function set(look: string): string {
             const looks = ["auto", "classic"].concat(Plugins.loginScreens)
             if (looks.indexOf(look) < 0) return "unknown look: " + look + " (" + looks.join(", ") + ")"
             Config.setNestedValue("lock.loginScreen", look)
             return look
         }
-        // The composed login's layout: cover (the picture as a cover), frame (hung in a mat), lens (the time as a lens).
-        /// How the iRiS login is composed: `cover` (your picture sharp, the clock in a corner), `frame` (the picture
-        /// hung in a mat) or `lens` (the time cut out of the picture)
+        /// How a look with layouts is composed; iRiS: `cover` (your picture sharp, the clock in a corner), `frame` (the
+        /// picture hung in a mat) or `lens` (the time cut out of the picture)
         function style(name: string): string {
-            if (["cover", "frame", "lens"].indexOf(name) < 0) return "unknown style: " + name + " (cover, frame or lens)"
+            const styles = Plugins.loginScreens.reduce((all, look) => all.concat(Plugins.loginStyles(look)), [])
+            if (styles.indexOf(name) < 0) return "unknown style: " + name + " (" + styles.join(", ") + ")"
             Config.setNestedValue("lock.loginStyle", name)
             return name
         }
@@ -492,7 +492,10 @@ Singleton {
             if (!root.loginScreenInstalled) return "not installed"
             const look = String(Config.options?.lock?.loginScreen ?? "auto")
             const worn = look === "auto" ? (Plugins.loginScreen(Plugins.active) || "classic") : look
-            const shown = Plugins.loginScreens.includes(worn) ? worn + ", " + String(Config.options?.lock?.loginStyle ?? "lens") : "classic"
+            const styles = Plugins.loginStyles(worn)
+            const style = String(Config.options?.lock?.loginStyle ?? "")
+            const shown = !Plugins.loginScreens.includes(worn) ? "classic"
+                : styles.length > 0 ? worn + ", " + (styles.includes(style) ? style : styles[styles.length - 1]) : worn
             return look === "auto" ? "auto (" + shown + ")" : shown
         }
         /// Copy the current colours, wallpaper and style to the login screen now

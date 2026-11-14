@@ -2390,11 +2390,12 @@
      "args": [
       "look"
      ],
-     "description": "`auto` (iRiS while you use iRiS, Classic otherwise), `classic` or `iris`",
+     "description": "`auto` (the look of the family you use), `classic`, or a family's own look (`iris`, `waffle`)",
      "values": [
       "auto",
       "classic",
-      "iris"
+      "iris",
+      "waffle"
      ]
     },
     {
@@ -2402,7 +2403,7 @@
      "args": [
       "name"
      ],
-     "description": "How the iRiS login is composed: `cover` (your picture sharp, the clock in a corner), `frame` (the picture hung in a mat) or `lens` (the time cut out of the picture)",
+     "description": "How a look with layouts is composed; iRiS: `cover` (your picture sharp, the clock in a corner), `frame` (the picture hung in a mat) or `lens` (the time cut out of the picture)",
      "values": [
       "cover",
       "frame",

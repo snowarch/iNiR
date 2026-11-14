@@ -2880,7 +2880,7 @@
   "Span": "跨屏",
   "Fill crops, Fit shows bars, Span lays one picture across every screen.": "填充会裁切，适应会留边，跨屏把一张图铺满所有屏幕。",
   "Login screen": "登录界面",
-  "Where you sign in after starting the computer. Automatic shows iRiS while you use iRiS.": "开机后登录的界面。选择“自动”时，只要你在使用 iRiS，就会显示 iRiS。",
+  "Where you sign in after starting the computer. Automatic wears the look of the family you use.": "开机后登录的界面。选择“自动”时，会采用你正在使用的系列的外观。",
   "Login style": "登录样式",
   "Cover shows your picture sharp, Frame hangs it in a mat, Lens cuts the time out of it.": "“封面”清晰展示你的图片，“框架”把它装进卡纸里，“透镜”从图片中镂空出时间。",
   "Lens": "透镜",

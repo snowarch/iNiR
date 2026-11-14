@@ -60,9 +60,13 @@ Singleton {
         return value === undefined || value === null || value === "" ? (spec.fallback ?? otherwise) : value
     }
     function settingKey(id: string, slot: string): string { return String(root.manifests[id]?.settings?.[slot]?.key ?? "") }
-    // The login look a family wears when the person leaves it on auto (`loginScreen`: { look, reads }), and the keys
-    // that look is drawn from, so a change to them re-syncs it.
+    // The login look a family wears when the person leaves it on auto (`loginScreen`: { look, styles, reads }), the
+    // layouts that look offers (`lock.loginStyle`), and the keys it is drawn from, so a change to them re-syncs it.
     function loginScreen(id: string): string { return String(root.manifests[id]?.loginScreen?.look ?? "") }
+    function loginStyles(look: string): var {
+        const id = Object.keys(root.manifests).find(key => root.loginScreen(key) === look)
+        return id ? Array.from(root.manifests[id].loginScreen?.styles ?? []) : []
+    }
     readonly property var loginScreens: Object.keys(root.manifests).map(id => root.loginScreen(id)).filter(look => look.length > 0)
     readonly property var loginReads: Object.keys(root.manifests).sort().reduce((all, id) => all.concat(Array.from(root.manifests[id].loginScreen?.reads ?? [])), [])
     // Where the dev tools can open a family's own surfaces (`devDestinations`), each tagged with its family.

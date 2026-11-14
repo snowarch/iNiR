@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [3.1.2] - 2026-11-14
 
 ### Added
+- **The login screen follows your family**: on **Automatic** it wears the look of the family you use, and Waffle has its own: its lock clock over your blurred wallpaper, then your picture and password at a key or a click. Choose it under **Login screen** in any family's Settings ([#333](https://github.com/snowarch/iNiR/issues/333), asked by [@NVitschDEV](https://github.com/NVitschDEV); Waffle 2.34.17 from the Hub).
+- **Lyrics on the lock screen**: Material and Waffle's lock player opens the song's synced lyrics under it, the sung line lit; off by default, under **Settings › System › Lock screen** in Material and **Waffle Settings › Interface › Lock Screen** ([#307](https://github.com/snowarch/iNiR/issues/307), asked by [@Turxx](https://github.com/Turxx); Material 2.36.3, Waffle 2.34.17 from the Hub).
+- **iRiS banners where you want them**: notifications can sit in a corner or at the middle of the top or bottom edge instead of the Island, under **iRiS Settings › Notifications › Banners** (iRiS 2.33.88 from the Hub).
 - **A widget on one screen of several**: with more than one screen, the widget gallery asks where a widget goes, one screen or every screen, and placing or removing a widget acts on its own screen only ([snowarch/inir-hub#9](https://github.com/snowarch/inir-hub/issues/9), iRiS 2.33.87 from the Hub).
 - **Bubbles hide like the Island and the Dock**: turn on **iRiS Settings › Bubbles › Visibility › Automatically hide** and they tuck into their edges until you rest the pointer there, and stay out on empty workspaces ([snowarch/inir-hub#10](https://github.com/snowarch/inir-hub/issues/10), iRiS 2.33.87 from the Hub).
 - **InirCam in the Hub**: your RTSP and ONVIF cameras on the desktop, in a grid, a wall or one enlarged, with the ones you pin kept at hand, by [@yukazakiri](https://github.com/yukazakiri) (InirCam 1.0.1 from the Hub, [snowarch/inir-hub#7](https://github.com/snowarch/inir-hub/pull/7)).
@@ -33,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Tray menus with a silent app**: one tray app that never answered left every tray menu empty (qs-rs 0.1.8, [snowarch/qs-rs#2](https://github.com/snowarch/qs-rs/pull/2), by [@Xar0P](https://github.com/Xar0P)).
 
 ### Issues / PRs
-- Fixed [snowarch/inir-hub#12](https://github.com/snowarch/inir-hub/issues/12) and [snowarch/inir-hub#13](https://github.com/snowarch/inir-hub/issues/13).
+- Fixed [#307](https://github.com/snowarch/iNiR/issues/307), [#333](https://github.com/snowarch/iNiR/issues/333), [snowarch/inir-hub#12](https://github.com/snowarch/inir-hub/issues/12) and [snowarch/inir-hub#13](https://github.com/snowarch/inir-hub/issues/13).
 - Also in this release, closed earlier: [snowarch/inir-hub#9](https://github.com/snowarch/inir-hub/issues/9), [snowarch/inir-hub#10](https://github.com/snowarch/inir-hub/issues/10) and [snowarch/qs-rs#1](https://github.com/snowarch/qs-rs/issues/1).
 - Included contributions from [#309](https://github.com/snowarch/iNiR/pull/309), [#332](https://github.com/snowarch/iNiR/pull/332), [snowarch/qs-rs#2](https://github.com/snowarch/qs-rs/pull/2), [snowarch/inir-hub#7](https://github.com/snowarch/inir-hub/pull/7) and [snowarch/inir-hub#14](https://github.com/snowarch/inir-hub/pull/14).
 - Parts: [qs-rs 0.1.8](https://github.com/snowarch/qs-rs/releases/tag/v0.1.8) and [0.1.9](https://github.com/snowarch/qs-rs/releases/tag/v0.1.9), [inir-cli 0.2.15](https://github.com/snowarch/inir-cli/releases/tag/v0.2.15); Material 2.36.3, iRiS 2.33.88, Waffle 2.34.17, InirCam 1.0.1 and Media Corner 1.1.1 from the [Hub](https://inir.space/hub).

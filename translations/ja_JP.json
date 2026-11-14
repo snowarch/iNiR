@@ -2880,7 +2880,7 @@
   "Span": "スパン",
   "Fill crops, Fit shows bars, Span lays one picture across every screen.": "塗りつぶしは切り抜き、フィットは余白を残し、スパンは1枚の画像をすべての画面にまたがせます。",
   "Login screen": "ログイン画面",
-  "Where you sign in after starting the computer. Automatic shows iRiS while you use iRiS.": "コンピューターの起動後にサインインする画面です。「自動」では iRiS を使っている間、iRiS を表示します。",
+  "Where you sign in after starting the computer. Automatic wears the look of the family you use.": "コンピューターの起動後にサインインする画面です。「自動」では使っているファミリーの見た目になります。",
   "Login style": "ログインのスタイル",
   "Cover shows your picture sharp, Frame hangs it in a mat, Lens cuts the time out of it.": "カバーは画像をくっきり見せ、フレームはマットに収めて飾り、レンズは画像から時刻を切り抜きます。",
   "Lens": "レンズ",

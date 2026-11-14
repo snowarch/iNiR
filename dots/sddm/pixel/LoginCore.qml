@@ -44,7 +44,8 @@ QtObject {
     readonly property string wantedClock: String(core.cfg("irisClockFormat", "auto"))
     readonly property bool twelve: core.wantedClock === "12h"
         || (core.wantedClock === "auto" && /a/i.test(Qt.locale().timeFormat(Locale.ShortFormat)))
-    readonly property string hours: Qt.formatDateTime(core.now, core.twelve ? "h" : "HH")
+    // Qt's "h" counts to 23 unless the same format holds AP: the 12-hour figure is worked out here.
+    readonly property string hours: core.twelve ? String((core.now.getHours() + 11) % 12 + 1) : Qt.formatDateTime(core.now, "HH")
     readonly property string minutes: Qt.formatDateTime(core.now, "mm")
     readonly property string meridiem: core.twelve ? Qt.formatDateTime(core.now, "AP") : ""
     function sentence(s) { return s.length > 0 ? s.charAt(0).toUpperCase() + s.slice(1) : s }

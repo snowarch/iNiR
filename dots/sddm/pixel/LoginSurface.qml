@@ -46,7 +46,16 @@ Item {
         function onGranted() { leave.start() }
     }
 
+    // A style with a curtain (Waffle's clock before the sign-in) takes the first key itself.
+    property bool curtain: false
+    signal knocked(string text)
+
     Keys.onPressed: event => {
+        if (surface.curtain) {
+            surface.knocked(event.text)
+            event.accepted = true
+            return
+        }
         const f = surface.field
         if (!f || loginCore.signingIn || f.activeFocus) return
         if (event.text.length === 1 && event.text.charCodeAt(0) >= 32) {

@@ -23,6 +23,8 @@ Item {
     readonly property int count: password.text.length
     signal submitted()
     signal edited()
+    // Escape on an empty field: a style with a curtain goes back to it.
+    signal dismissed()
 
     readonly property var expressive: [0.16, 1, 0.3, 1, 1, 1]
     clip: true
@@ -42,7 +44,10 @@ Item {
         enabled: !entry.busy
         onAccepted: entry.submitted()
         onTextChanged: entry.edited()
-        Keys.onEscapePressed: text = ""
+        Keys.onEscapePressed: {
+            if (text.length === 0) entry.dismissed()
+            text = ""
+        }
         Component.onCompleted: forceActiveFocus()
     }
 
