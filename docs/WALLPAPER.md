@@ -5,7 +5,7 @@ Pick a wallpaper, rotate them, give each monitor its own, and tune videos and th
 ## Change the wallpaper
 
 - Press **Ctrl+Alt+T** to open the wallpaper picker. It works on the monitor you are focused on.
-- In **Settings › Quick › Wallpaper**, **Selector** opens the full picker and **Choose file** picks any image on your system.
+- In **Settings › Home › Wallpaper**, **Selector** opens the full picker and **Choose file** picks any image on your system.
 - The Wallhaven browser in the left sidebar (Material) searches wallhaven.cc. NSFW results need a Wallhaven API key.
 - iRiS: **iRiS Settings › Wallpaper › Library** sets the **Wallpapers folder**. Waffle: **Waffle Settings › Background › Wallpaper**.
 
@@ -40,7 +40,7 @@ Videos can be mp4, webm, mkv, avi or mov. Pictures can be jpg, png, webp, avif, 
 
 - **Play videos and GIFs as wallpaper** (Screens › Wallpaper scaling) is on by default. Off shows a still frame instead.
 - **Freeze videos and GIFs while on battery power** is on by default.
-- Waffle: **Waffle Settings › Background › Wallpaper Effects**. iRiS: **Animate on the desktop** in **iRiS Settings › Wallpaper › Live wallpapers**.
+- Waffle: **Waffle Settings › Background › Wallpaper Effects**. iRiS: **Animate on the desktop** in **iRiS Settings › Desktop › Live wallpapers**.
 - **Effects › Wallpaper effects**: **Enable wallpaper blur** is on by default. **Blur radius** (22) and **Thumbnail blur strength (%)** tune it, the second for videos.
 
 ## Backdrop

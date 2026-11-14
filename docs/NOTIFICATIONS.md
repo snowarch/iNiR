@@ -37,7 +37,7 @@ can't come back.
 
 ## Blocking an app
 
-**Settings › Quick › Filters › App filters** blocks an app's notifications. They are dropped and never reach the history.
+**Settings › Home › Filters › App filters** blocks an app's notifications. They are dropped and never reach the history.
 
 ## Another notification daemon
 

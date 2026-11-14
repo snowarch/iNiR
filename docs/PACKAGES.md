@@ -2,7 +2,7 @@
 
 The installer installs everything listed here. Use it to see what a feature needs, or what is missing when something stops working.
 
-Some fonts come with iNiR itself, on every distro: Geist and Geist Mono (iRiS), Inter, Archivo, Google Sans Flex, Montserrat and Rubik. They live in `assets/fonts` and the shell links them into `~/.local/share/fonts/inir`, so no package is needed.
+Some fonts come with iNiR itself, on every distro: Inter, Google Sans Flex, Montserrat and Rubik. They live in `assets/fonts` and the shell links them into `~/.local/share/fonts/inir`, so no package is needed.
 
 Power profiles come from `power-profiles-daemon` (`tuned-ppd` on Fedora), installed and turned on unless TLP, tuned,
 auto-cpufreq or system76-power already manages power.

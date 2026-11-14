@@ -14,14 +14,14 @@ In **Settings › Effects › Glass**:
 - **Allow compositor blur** appears on Niri 26.04 or newer. Shapes Niri cannot blur fall back to the shell's own blur.
 - **Settings › Effects › Areas** sets the backend for **Bars**, **Dock**, **Panels and popups**, **Islands and Ricelin** and **Desktop widgets**. Each one can **Inherit** the default or use any of the four backends.
 
-**Waffle Settings › Effects** has the same options. In iRiS, **iRiS Settings › Glass & effects › Glass behind apps** (in the group named for your compositor) sets the blur behind apps and **iRiS Settings › Wallpaper › Behind windows** the wallpaper's.
+**Waffle Settings › Effects** has the same options. In iRiS, **iRiS Settings › Windows › Glass behind apps** sets the blur behind apps and **iRiS Settings › Desktop › Behind windows** the wallpaper's.
 
 ## Motion and power
 
 In **Settings › Effects › Motion**:
 
 - **Reduce animations** turns off the shell's animations.
-- **Low power effects** is the same switch as **iRiS Settings › Home › Performance › Low power**. In iRiS it turns glass, blur and heavy wallpaper effects off everywhere.
+- **Low power effects** is the same switch as **iRiS Settings › Home › Shell › Low power**. In iRiS it turns glass, blur and heavy wallpaper effects off everywhere.
 - **Notify when a restart would free memory** watches the shell's memory use and tells you when a restart would free some. It is off by default.
 
 Waffle has both in **Waffle Settings › Effects › Motion and power**.
@@ -34,11 +34,11 @@ Video and GIF wallpapers cost more than still ones. In **Settings › Wallpaper 
 - **Pause animated wallpapers on battery**.
 - **Blur animated wallpapers (videos/GIFs)**. Blurring them costs more.
 
-Waffle: **Waffle Settings › Background › Wallpaper Effects**. iRiS: **Animate on the desktop** in **iRiS Settings › Wallpaper › Live wallpapers**.
+Waffle: **Waffle Settings › Background › Wallpaper Effects**. iRiS: **Animate on the desktop** in **iRiS Settings › Desktop › Live wallpapers**.
 
 ## Game Mode
 
-Game Mode starts by itself when an app goes fullscreen, if **Automatically enable Game Mode when apps go fullscreen** is on. In **Settings › Quick › Game mode**, pick what it turns off:
+Game Mode starts by itself when an app goes fullscreen, if **Automatically enable Game Mode when apps go fullscreen** is on. In **Settings › Home › Game mode**, pick what it turns off:
 
 - **Turn off UI animations when Game Mode is active**
 - **Turn off blur and shadows when Game Mode is active**

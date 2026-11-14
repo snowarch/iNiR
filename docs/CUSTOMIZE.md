@@ -42,7 +42,7 @@ Shortcuts to apps, files and links live on the desktop too: [Desktop items](DESK
 
 - **Super+Shift+W** switches the family: Material, Waffle or iRiS. See [Panel families](PANEL_FAMILIES.md).
 - Material: **Settings › Themes › Global Style** has nine styles: Material, Cards, Aurora, Inir, Angel, Regalia, ZZZ,
-  Cookie Shapes and [Editorial](EDITORIAL_STYLE.md).
+  Cookie and [Editorial](EDITORIAL_STYLE.md).
 - Waffle: **Waffle Settings › Themes › Global Style** takes the same styles' colours and type and keeps Waffle's
   layouts.
 - iRiS: **iRiS Settings › Style › Themes** holds curated looks for the whole family. **Save current** keeps the look you

@@ -4,7 +4,7 @@ By default the shell and the apps you switch on take their colours from your wal
 
 ## Colours from the wallpaper
 
-- **Settings › Quick › Wallpaper & Colors** has **Light** and **Dark** buttons, and **Wallpaper color strength (%)**, which sets how vivid the accents are.
+- **Settings › Home › Wallpaper & Colors** has **Light** and **Dark** buttons, and **Wallpaper color strength (%)**, which sets how vivid the accents are.
 - **Settings › Themes › Colors › Scheme Variant** sets how the palette is built: Auto (the default), Content, Expressive, Fidelity, Fruit Salad, Monochrome, Neutral, Rainbow or Tonal Spot.
 - **Colour family**: **Around the accent** keeps the second and third colours close to the accent. **As generated** uses the scheme's own colours.
 - **Auto light/dark from wallpaper** picks light or dark from each wallpaper's brightness. Pressing Light or Dark by hand turns it off.

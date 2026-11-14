@@ -10,6 +10,7 @@ The gate is the `configKey` under `appearance.wallpaperTheming`. `applycolor.sh`
 |---|---|---|---|
 | `gtk-kde` (GTK, KDE, Qt) | `20-gtk-kde.sh` | `enableAppsAndShell` | `app-palette.json`, `palette.json` |
 | `terminals` | `10-terminals.sh` | `enableTerminal` | `app-palette.json`, `palette.json`, `terminal.json`, `material_colors.scss` |
+| `umbriel` (borders, overview, tab and title bars) | `15-umbriel.sh` | module | `colors.json` |
 | `editors` (VSCode, OpenCode, Neovim) | `30-editors.sh` | module | `app-palette.json`, `palette.json`, `terminal.json`, `material_colors.scss` |
 | `zed` | `31-zed.sh` | `enableZed` | `app-palette.json`, `palette.json`, `terminal.json`, `material_colors.scss` |
 | `chrome` (Chromium family) | `40-chrome.sh` | module | `app-palette.json`, `palette.json`, `theme-meta.json` |
