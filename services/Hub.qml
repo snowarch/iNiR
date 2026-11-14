@@ -63,8 +63,7 @@ Singleton {
         process: "Runs commands on your computer",
         network: "Talks to the internet",
         files: "Reads or writes files outside its own folder",
-        inject: "Injects scripts into the site it opens",
-        settings: "Changes your settings"
+        inject: "Injects scripts into the site it opens"
     })
     // How a page orders the catalogue. Popular weighs downloads by how long an item has been out, and its votes.
     readonly property var sorts: [

@@ -65,7 +65,6 @@ singleton ResourceUsage 1.0 ResourceUsage.qml
 singleton ScreenTime 1.0 ScreenTime.qml
 singleton ShellEditSession 1.0 ShellEditSession.qml
 singleton ShellLayoutController 1.0 ShellLayoutController.qml
-singleton ShellSettings 1.0 ShellSettings.qml
 singleton ShellUpdates 1.0 ShellUpdates.qml
 singleton SystemInfo 1.0 SystemInfo.qml
 singleton TaskbarApps 1.0 TaskbarApps.qml

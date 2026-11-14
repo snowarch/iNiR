@@ -3672,7 +3672,5 @@
   "Whole window": "Всё окно",
   "Region": "Область",
   "Drag over it to keep only a part": "Выделите часть, чтобы оставить только её",
-  "It stays live; on another workspace most apps draw once a second": "Остаётся живым; на другом рабочем пространстве большинство приложений рисуют раз в секунду",
-  "Changed %1 settings": "Изменено настроек: %1",
-  "Changes your settings": "Меняет ваши настройки"
+  "It stays live; on another workspace most apps draw once a second": "Остаётся живым; на другом рабочем пространстве большинство приложений рисуют раз в секунду"
 }

@@ -3672,7 +3672,5 @@
   "Whole window": "Tüm pencere",
   "Region": "Bölge",
   "Drag over it to keep only a part": "Yalnızca bir kısmını saklamak için üzerine sürükle",
-  "It stays live; on another workspace most apps draw once a second": "Canlı kalır; başka bir çalışma alanında çoğu uygulama saniyede bir kez çizer",
-  "Changed %1 settings": "%1 ayar değiştirildi",
-  "Changes your settings": "Ayarlarınızı değiştirir"
+  "It stays live; on another workspace most apps draw once a second": "Canlı kalır; başka bir çalışma alanında çoğu uygulama saniyede bir kez çizer"
 }
