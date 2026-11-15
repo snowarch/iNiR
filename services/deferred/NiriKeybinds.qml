@@ -61,6 +61,7 @@ Singleton {
             return
         keybindParser.running = true
         enrichedBindsLoader.running = true
+        if (root.shippedBinds.length === 0 && !shippedBindsLoader.running) shippedBindsLoader.running = true
     }
 
     // Settings' own file is CompositorConfig's: its binds are read from the copy it keeps, so one written from the
@@ -85,6 +86,7 @@ Singleton {
         const list = UmbrielModel.bindListFrom(texts)
         root.allBinds = list.binds
         root.enrichedCategories = list.categories
+        root.shippedBinds = UmbrielModel.bindListFrom(texts.slice(0, 2)).binds
         if (groups.length === 0)
             return
         root.keybinds = { children: groups, configPath: umbrielBinds.path }
@@ -161,6 +163,36 @@ Singleton {
             return result?.error ?? fallback
         } catch (e) {
             return output.length > 0 ? output : fallback
+        }
+    }
+
+    // The binds iNiR ships, what a key goes back to: Niri's read from `defaults/niri` as a person's config would be,
+    // Umbriel's from the files under Settings' own (iNiR's 70 and the person's 90).
+    property var shippedBinds: []
+    // Several keys changed as one, one write after another (Niri's file takes one at a time): `{ combo, action, options }`
+    // gives a key that bind, `{ combo, action: "" }` frees it, `{ combo, shipped: true }` puts back what iNiR's files say.
+    // Settings keeps them in its own history; nothing here offers Undo.
+    property var _steps: []
+    function applyBinds(steps: var): void {
+        root._steps = root._steps.concat(steps)
+        root._nextStep()
+    }
+    function _nextStep(): void {
+        while (root._steps.length > 0 && !setBindProcess.running && !removeBindProcess.running) {
+            const step = root._steps[0]
+            root._steps = root._steps.slice(1)
+            if (root.umbriel) {
+                const value = step.shipped ? undefined
+                    : String(step.action ?? "").length > 0 ? root._umbrielValue(step.action, step.options ?? "")
+                    : root._umbrielBelow(step.combo) ? "" : undefined
+                if (!CompositorConfig.bind(step.combo, value)) root.bindError(Translation.tr("Umbriel's files are still being read"))
+                continue
+            }
+            if (!CompositorService.niriNative) { root._steps = []; return }
+            const own = step.shipped ? root.shippedBinds.find(bind => bind.key_combo === step.combo && !bind.commented) : null
+            const action = step.shipped ? String(own?.action_raw ?? "") : String(step.action ?? "")
+            if (action.length > 0) root.setBind(step.combo, action, step.shipped ? String(own?.options ?? "") : String(step.options ?? ""))
+            else root.removeBindQuietly(step.combo)
         }
     }
 
@@ -273,6 +305,18 @@ Singleton {
         }
     }
 
+    // niri-config reads `$XDG_CONFIG_HOME/niri`: pointed at the shell's defaults it reads iNiR's binds as shipped.
+    Process {
+        id: shippedBindsLoader
+        command: [root.accelRun, "niri-config", "get-binds"]
+        environment: ({ XDG_CONFIG_HOME: Quickshell.shellPath("defaults") })
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try { root.shippedBinds = JSON.parse(text)?.binds ?? [] } catch (e) {}
+            }
+        }
+    }
+
     // ── Enriched binds loader (inir-accel niri-config get-binds) ─────────────────
     Process {
         id: enrichedBindsLoader
@@ -312,6 +356,7 @@ Singleton {
     Process {
         id: setBindProcess
         running: false
+        onRunningChanged: if (!running) Qt.callLater(root._nextStep)
 
         stdout: StdioCollector {
             id: setBindCollector
@@ -353,6 +398,7 @@ Singleton {
     Process {
         id: removeBindProcess
         running: false
+        onRunningChanged: if (!running) Qt.callLater(root._nextStep)
 
         stdout: StdioCollector {
             id: removeBindCollector

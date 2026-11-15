@@ -54,6 +54,10 @@ Singleton {
 
     // ---- Niri: sections as its config has them ----
     property var data: ({ input: {}, layout: {}, animations: {}, "window-rules": {} })
+    // The same sections read from iNiR's own Niri files as shipped (`defaults/niri`), once: what Restore goes back to.
+    property var shipped: ({})
+    // What the shipped files cannot know: the person's language and their machine. Restore never sends these to "us".
+    readonly property var personal: ["input:keyboard.layout", "input:keyboard.variant", "input:keyboard.options", "input:tablet.output", "input:touch.output"]
     property var local: ({})
     property var queue: []
     property var stale: ({ input: true, layout: true, animations: true, "window-rules": true, outputs: true })
@@ -269,6 +273,8 @@ Singleton {
             }
             const reader = ({ input: inputReader, layout: layoutReader, animations: animationsReader, "window-rules": rulesReader, outputs: outputsReader })[part]
             if (reader && !reader.running) { reader.running = true; if (part in root.stale) root.stale[part] = false }
+            const factoryReader = ({ input: shippedInput, layout: shippedLayout, animations: shippedAnimations, "window-rules": shippedRules })[part]
+            if (factoryReader && !(part in root.shipped) && !factoryReader.running) factoryReader.running = true
         }
     }
 
@@ -276,8 +282,8 @@ Singleton {
     function readPath(spec: var): string {
         return String(spec.read ?? String(spec.key).replace(/-/g, "_"))
     }
-    function lookup(section: string, path: string): var {
-        let at = root.data[section] ?? {}
+    function lookup(section: string, path: string, from: var): var {
+        let at = from[section] ?? {}
         for (const part of path.split(".")) {
             if (at === undefined || at === null) return undefined
             at = at[part]
@@ -293,14 +299,20 @@ Singleton {
             const entry = root.entryOf(spec.comp, spec.key)
             return entry ? root.readFrom(root.effective, entry, spec) : spec.fallback
         }
-        const found = root.lookup(spec.comp, root.readPath(spec))
+        const found = root.lookup(spec.comp, root.readPath(spec), root.data)
         return found === undefined ? spec.fallback : found
     }
-    // What a row reads with nothing set in Settings: the files below it and Umbriel's own defaults, so a row knows
-    // when it left them and Restore puts them back. Unknown under Niri: its defaults are not kept apart from the person's.
+    // What a row reads with nothing set in Settings, so a row knows when it left it and Restore puts it back: under
+    // Umbriel the files below Settings' own and Umbriel's defaults, under Niri iNiR's own files as shipped.
     function factory(spec: var): var {
         root.revision
-        if (!root.umbriel || !root.umbrielRead || spec.comp === "display") return undefined
+        if (spec.comp === "display") return undefined
+        if (root.niri) {
+            if (!(spec.comp in root.shipped) || root.personal.includes(spec.comp + ":" + spec.key)) return undefined
+            const found = root.lookup(spec.comp, root.readPath(spec), root.shipped)
+            return found === undefined ? spec.fallback : found
+        }
+        if (!root.umbriel || !root.umbrielRead) return undefined
         const entry = root.entryOf(spec.comp, spec.key)
         return entry ? root.readFrom(root.below, entry, spec) : undefined
     }
@@ -1107,19 +1119,40 @@ Singleton {
         }
     }
 
+    // `shipped`: the same read of iNiR's own Niri files. niri-config reads `$XDG_CONFIG_HOME/niri`, so pointed at the
+    // shell's defaults it reads them as it reads a person's config.
     component Reader: Process {
         id: reader
         required property string section
+        property bool shipped: false
         command: [root.accelRun, "niri-config", "get-" + reader.section]
+        environment: reader.shipped ? ({ XDG_CONFIG_HOME: Quickshell.shellPath("defaults") }) : ({})
         stdout: StdioCollector {
-            // A read that failed is read again on the next open.
-            onStreamFinished: if (!root.parse(text, value => root.store(reader.section, value))) root.stale[reader.section] = true
+            onStreamFinished: {
+                if (reader.shipped) {
+                    try {
+                        const parsed = JSON.parse(text)
+                        if (!parsed || parsed.error) return
+                        const next = Object.assign({}, root.shipped)
+                        next[reader.section] = parsed
+                        root.shipped = next
+                        root.revision++
+                    } catch (e) {}
+                    return
+                }
+                // A read that failed is read again on the next open.
+                if (!root.parse(text, value => root.store(reader.section, value))) root.stale[reader.section] = true
+            }
         }
     }
     Reader { id: inputReader; section: "input" }
     Reader { id: layoutReader; section: "layout" }
     Reader { id: animationsReader; section: "animations" }
     Reader { id: rulesReader; section: "window-rules" }
+    Reader { id: shippedInput; section: "input"; shipped: true }
+    Reader { id: shippedLayout; section: "layout"; shipped: true }
+    Reader { id: shippedAnimations; section: "animations"; shipped: true }
+    Reader { id: shippedRules; section: "window-rules"; shipped: true }
     Process {
         id: layoutWriter
         stdout: StdioCollector {
