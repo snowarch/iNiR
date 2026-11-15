@@ -307,6 +307,9 @@ Singleton {
             }
         }
     }
+    // Settings' own window first asks for a string after Config is ready: no change comes, and without the scan the
+    // base catalogue was never read there (only plugins' strings were translated).
+    Component.onCompleted: if (Config.ready) scanDefer.start()
 
     component TranslationReader: FileView {
         id: translationReader
