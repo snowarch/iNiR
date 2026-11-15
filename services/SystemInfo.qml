@@ -54,7 +54,12 @@ Singleton {
             const textHostname = fileHostname.text().trim()
             if (textHostname.length > 0) hostname = textHostname.split("\n")[0].trim()
             fileOsRelease.reload()
-            const textOsRelease = fileOsRelease.text()
+            let textOsRelease = fileOsRelease.text()
+            if (textOsRelease.length === 0) {
+                // a stateless /etc (AerynOS) may keep os-release only in /usr/lib
+                fileOsReleaseUsr.path = "/usr/lib/os-release"
+                textOsRelease = fileOsReleaseUsr.text()
+            }
 
             // Extract the friendly name (PRETTY_NAME field, fallback to NAME)
             const prettyNameMatch = textOsRelease.match(/^PRETTY_NAME="(.+?)"/m)
@@ -87,6 +92,7 @@ Singleton {
                 case "nixos": distroIcon = "nixos-symbolic"; break;
                 case "fedora": distroIcon = "fedora-symbolic"; break;
                 case "void": distroIcon = "void-symbolic"; break;
+                case "aerynos": distroIcon = "aerynos-symbolic"; break;
                 case "linuxmint":
                 case "ubuntu":
                 case "zorin":
@@ -143,6 +149,11 @@ Singleton {
     FileView {
         id: fileOsRelease
         path: "/etc/os-release"
+    }
+
+    FileView {
+        id: fileOsReleaseUsr
+        blockLoading: true // read once at start, only when /etc has none
     }
 
     FileView {
