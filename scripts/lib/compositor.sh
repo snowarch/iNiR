@@ -162,9 +162,9 @@ compositor_install_umbriel_config() {
     fi
 }
 
-# Installs the Umbriel package where iNiR knows how: a distribution repository first (CachyOS ships it), then the
-# AUR; Terra on Fedora; AerynOS, which doesn't package it, builds it (provider_umbriel). Elsewhere it prints where
-# Umbriel's own guide is and fails.
+# Installs Umbriel and its screen-sharing portal where iNiR knows how: a distribution repository first (CachyOS ships
+# it), then the AUR; Terra on Fedora; Noctalia's APT repository on Debian and Ubuntu; AerynOS and Void, which don't
+# package it, build both (provider_umbriel). Elsewhere it prints where Umbriel's own guide is and fails.
 compositor_install_umbriel_package() {
     command -v umbriel >/dev/null 2>&1 && umbriel --version >/dev/null 2>&1 && return 0
     local guide="https://docs.noctalia.dev/umbriel/installation/"
@@ -197,7 +197,36 @@ compositor_install_umbriel_package() {
         sudo dnf install -y umbriel-nightly && return 0
         return 1
     fi
-    if command -v moss >/dev/null 2>&1; then
+    if command -v apt-get >/dev/null 2>&1; then
+        # Noctalia's own APT repository, added the way Umbriel's guide says: Debian trixie and Ubuntu 26.04 (from its
+        # backports suites, which apt only takes when asked), sid and Ubuntu 26.10 (and what is built on them). Debian
+        # testing and older Ubuntu have no build there.
+        local codename suite target=() keyring=/usr/share/keyrings/nickh-archive-keyring.gpg
+        codename="$(. /etc/os-release 2>/dev/null; echo "${UBUNTU_CODENAME:-${VERSION_CODENAME:-}}")"
+        apt-cache policy 2>/dev/null | grep -q ' a=unstable,' && codename=sid
+        case "$codename" in
+            trixie|resolute) suite="$codename"; target=(-t "$codename-backports") ;;
+            sid) suite=unstable ;;
+            stonking) suite=stonking ;;
+            *) echo "Noctalia's APT repository has no Umbriel for ${codename:-this release}; its guide: $guide" >&2; return 1 ;;
+        esac
+        if [[ ! -f "$keyring" ]]; then
+            local deb; deb="$(mktemp --suffix=.deb)" || return 1
+            curl -fsSL --max-time 60 -o "$deb" https://pkg.noctalia.dev/deb/nickh-archive-keyring.deb \
+                && sudo dpkg -i "$deb" >/dev/null; rm -f "$deb"
+            [[ -f "$keyring" ]] || { echo "Could not add Noctalia's APT key; see $guide" >&2; return 1; }
+        fi
+        [[ -f "/etc/apt/sources.list.d/noctalia-$suite.sources" ]] \
+            || sudo curl -fsSL --max-time 60 -o "/etc/apt/sources.list.d/noctalia-$suite.sources" \
+                "https://pkg.noctalia.dev/deb/noctalia-$suite.sources" \
+            || { echo "Could not add Noctalia's APT repository; see $guide" >&2; return 1; }
+        sudo apt-get update -qq && sudo apt-get install -y "${target[@]}" umbriel xdg-desktop-portal-umbriel && return 0
+        return 1
+    fi
+    local dist=""
+    command -v moss >/dev/null 2>&1 && dist=aerynos
+    command -v xbps-install >/dev/null 2>&1 && dist=void
+    if [[ -n "$dist" ]]; then
         # setup's own recipe; `inir compositor add umbriel` has none of setup's log helpers, so plain ones stand in
         local repo="${BASH_SOURCE[0]%/scripts/lib/*}"
         (
@@ -205,7 +234,7 @@ compositor_install_umbriel_package() {
             declare -F log_success >/dev/null || log_success() { echo "$*"; }
             declare -F tui_info >/dev/null || tui_info() { echo "$*"; }
             declare -F pkg_sudo >/dev/null || pkg_sudo() { sudo "$@"; }
-            source "$repo/sdata/lib/user-providers.sh" && source "$repo/sdata/dist-aerynos/providers.sh" \
+            source "$repo/sdata/lib/user-providers.sh" && source "$repo/sdata/dist-$dist/providers.sh" \
                 && provider_umbriel
         ) && return 0
         echo "Umbriel could not be built here; its guide: $guide" >&2

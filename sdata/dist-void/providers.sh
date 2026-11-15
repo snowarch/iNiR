@@ -165,3 +165,14 @@ provider_ocr-vertical-models() {
 }
 provider_darkly() { install_darkly_source /usr "$@"; }
 provider_themes-download() { install_user_visual_themes "$@"; }
+# Void packages every library Umbriel and its portal need, but neither program: both are built at their pins
+# (build_umbriel_source, sdata/lib/user-providers.sh)
+provider_umbriel() {
+  umbriel_build_current && return 0
+  pkg_sudo xbps-install -Sy base-devel pkg-config meson ninja curl xorg-server-xwayland wayland-devel wayland-protocols \
+    wlroots0.20-devel libxkbcommon-devel libinput-devel libei-devel pixman-devel tomlplusplus-devel json-c++ \
+    cairo-devel pango-devel libdrm-devel libdisplay-info-devel eudev-libudev-devel lcms2-devel libglvnd-devel \
+    libgbm-devel jemalloc-devel libxcb-devel xcb-util-wm-devel glib-devel sdbus-c++-devel pipewire-devel gtk4-devel \
+    || return 1
+  build_umbriel_source
+}

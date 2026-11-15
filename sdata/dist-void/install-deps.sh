@@ -276,6 +276,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
   _need_visual_providers=false
   _need_font_providers=false
   _need_darkly=false
+  _need_umbriel=false
   _ocr_fallback_models=()
   read -r -a _miss_cmds <<<"$ONLY_MISSING_DEPS"
   for cmd in "${_miss_cmds[@]}"; do
@@ -318,6 +319,11 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
           kf6-frameworkintegration-devel kf6-kdecoration-devel; do
         [[ " ${_miss_pkgs[*]} " == *" ${_miss_pkg} "* ]] || _miss_pkgs+=("$_miss_pkg")
       done
+      continue
+    fi
+    # doctor asks for it when the Umbriel setup built is behind its pins or stopped starting
+    if [[ "$cmd" == umbriel ]]; then
+      _need_umbriel=true
       continue
     fi
     case "$cmd" in
@@ -372,6 +378,9 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
   fi
   if [[ ${#_ocr_fallback_models[@]} -gt 0 ]]; then
     install_void_ocr_models "${_ocr_fallback_models[@]}" || return 1
+  fi
+  if $_need_umbriel; then
+    provider_umbriel || return 1
   fi
 
   unset ONLY_MISSING_DEPS

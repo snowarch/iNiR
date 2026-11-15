@@ -540,3 +540,65 @@ home_build_runs() {
   fi
   ! ldd "$path" 2>/dev/null | grep -q 'not found'
 }
+
+# ── Umbriel from source ──────────────────────────────────────────────────────────────────────────────────────────
+# Where no repository packages Umbriel (AerynOS, Void), setup builds it and xdg-desktop-portal-umbriel (screen
+# sharing) into /usr/local, which no package manager touches. Neither has releases: the pins are the commits iNiR's
+# defaults/umbriel was last proved on in a VM (the portal's is the one Noctalia's own Debian packages carry). A
+# distro's provider_umbriel installs the build dependencies, then calls build_umbriel_source. The record says what is
+# built; doctor asks for a rebuild when a pin moves or a library under either program went away.
+UMBRIEL_COMMIT="70b3724f3a192b3f05562f3c28df84564df5fa06"
+UMBRIEL_SHA256="f3455efbbfe032e743ef9b06d803f7eff4e9be9f17b583f78267d814b3fbbfaa"
+UMBRIEL_PORTAL_COMMIT="56951426eb9931db3f1c57348f226c2427fba4f3"
+UMBRIEL_PORTAL_SHA256="9b06e0b352499dce6a6ed3147998645a0d9959f959c7480da5b6bc0fc41256a8"
+UMBRIEL_PREFIX=/usr/local
+
+umbriel_build_record() { printf '%s\n' "${XDG_DATA_HOME:-$HOME/.local/share}/inir/providers/umbriel"; }
+
+# umbriel_build_current: both pins are what is built here, and both programs still start on today's libraries
+umbriel_build_current() {
+  [[ "$(cat "$(umbriel_build_record)" 2>/dev/null)" == "$UMBRIEL_COMMIT:$UMBRIEL_PORTAL_COMMIT" ]] \
+    && home_build_runs "$UMBRIEL_PREFIX/bin/umbriel" \
+    && home_build_runs "$UMBRIEL_PREFIX/libexec/xdg-desktop-portal-umbriel"
+}
+
+# umbriel_meson_install NAME COMMIT SHA256 DIR JOBS MESON_OPTION...: one noctalia-dev project at its commit, checked
+# against its sha256, built in DIR and installed under UMBRIEL_PREFIX
+umbriel_meson_install() {
+  local name="$1" commit="$2" sha="$3" dir="$4/$1" jobs="$5"
+  shift 5
+  mkdir -p "$dir" || return 1
+  if ! curl -fsSL --max-time 300 -o "$dir.tar.gz" "https://github.com/noctalia-dev/$name/archive/$commit.tar.gz" \
+      || ! printf '%s  %s\n' "$sha" "$dir.tar.gz" | sha256sum -c - >/dev/null 2>&1 \
+      || ! tar -xf "$dir.tar.gz" -C "$dir"; then
+    log_warning "Could not fetch verified $name source"
+    return 1
+  fi
+  meson setup "$dir/build" "$dir/$name-$commit" --prefix "$UMBRIEL_PREFIX" --buildtype release "$@" \
+    && meson compile -C "$dir/build" -j "$jobs" \
+    && pkg_sudo meson install -C "$dir/build" --no-rebuild
+}
+
+build_umbriel_source() {
+  umbriel_build_current && return 0
+  local temp_dir jobs record ok=false
+  temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/inir-umbriel.XXXXXX")" || return 1
+  # a C++23 unit of Umbriel takes up to 1.5 GB: one job per 1.5 GB free, never more than the cores
+  jobs="$(awk '/^MemAvailable:/ { print int($2 / 1500000) }' /proc/meminfo)"
+  (( jobs < 1 )) && jobs=1
+  (( jobs > $(nproc) )) && jobs="$(nproc)"
+  tui_info "Building Umbriel ${UMBRIEL_COMMIT:0:12} and its screen-sharing portal (not packaged here; a few minutes)..."
+  if umbriel_meson_install umbriel "$UMBRIEL_COMMIT" "$UMBRIEL_SHA256" "$temp_dir" "$jobs" \
+        -Dtests=disabled -Dharness=disabled \
+      && umbriel_meson_install xdg-desktop-portal-umbriel "$UMBRIEL_PORTAL_COMMIT" "$UMBRIEL_PORTAL_SHA256" \
+        "$temp_dir" "$jobs" -Dtests=false; then
+    record="$(umbriel_build_record)"
+    mkdir -p "${record%/*}" && printf '%s\n' "$UMBRIEL_COMMIT:$UMBRIEL_PORTAL_COMMIT" > "$record" && ok=true
+  fi
+  rm -rf "$temp_dir"
+  if ! $ok || ! umbriel_build_current; then
+    log_warning "Umbriel ${UMBRIEL_COMMIT:0:12} build failed"
+    return 1
+  fi
+  log_success "Umbriel ${UMBRIEL_COMMIT:0:12} and its portal installed in $UMBRIEL_PREFIX"
+}

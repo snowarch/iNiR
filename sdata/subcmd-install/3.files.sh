@@ -419,7 +419,7 @@ esac
 # installed) is kept in the file "compositor" of iNiR's config dir. Niri alone leaves Umbriel as it is. Otherwise iNiR's
 # config goes in when Umbriel is installed without a config of their own, or already runs iNiR's; with no pick at all
 # a later Umbriel login sets it up by itself. The package comes from the distribution or the AUR where iNiR knows
-# how (AerynOS: built from a pinned commit); its config keeps whatever the person changed.
+# how (AerynOS and Void: built with its portal from pinned commits); its config keeps whatever the person changed.
 source ./scripts/lib/compositor.sh
 local _umbriel_state
 _umbriel_state="$(compositor_umbriel_config_state "${XDG_CONFIG_HOME}/umbriel")"

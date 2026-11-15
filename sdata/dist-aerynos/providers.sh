@@ -20,9 +20,6 @@ SWAPPY_SHA256="f615cc4c61e033cddc60093003ef03646d246a0ac14becb9cdac9b5fabf37bbe"
 BLUEMAN_VERSION="2.4.6"
 BLUEMAN_SHA256="c712a737f9855906684c074d166d4f10c7f165378af96612818bbffcfbf8e566"
 SONGREC_VERSION="0.8.2"
-# Umbriel has no releases: the commit iNiR's defaults/umbriel was last proved on in a VM
-UMBRIEL_COMMIT="70b3724f3a192b3f05562f3c28df84564df5fa06"
-UMBRIEL_SHA256="f3455efbbfe032e743ef9b06d803f7eff4e9be9f17b583f78267d814b3fbbfaa"
 
 # aerynos_detect: AERYNOS_VERSION from os-release (/etc first, then the stateless /usr/lib copy)
 aerynos_detect() {
@@ -193,33 +190,18 @@ provider_songrec() {
 # Umbriel, which AerynOS doesn't package, from what moss has (wlroots 0.20 among it). /usr/local is where systemd
 # looks for its user units and the login screen for its session, and Umbriel finds its data under the prefix it was
 # built for. Run again by the update when the pin moves or a library under it did.
+# Umbriel and its portal, built at their pins (build_umbriel_source, sdata/lib/user-providers.sh)
 provider_umbriel() {
-  local prefix=/usr/local temp_dir src jobs
-  aerynos_build_current umbriel "$UMBRIEL_COMMIT" "$UMBRIEL_SHA256" "$prefix/bin/umbriel" && return 0
-  moss_add clang meson ninja pkgconf xwayland 'binary(wayland-scanner)' 'pkgconfig(wayland-server)' \
-    'pkgconfig(wayland-client)' 'pkgconfig(wayland-protocols)' 'pkgconfig(wlroots-0.20)' 'pkgconfig(xkbcommon)' \
-    'pkgconfig(libinput)' 'pkgconfig(libeis-1.0)' 'pkgconfig(pixman-1)' 'pkgconfig(tomlplusplus)' \
-    'pkgconfig(nlohmann_json)' 'pkgconfig(cairo)' 'pkgconfig(pangocairo)' 'pkgconfig(libdrm)' \
-    'pkgconfig(libdisplay-info)' 'pkgconfig(libudev)' 'pkgconfig(libsystemd)' 'pkgconfig(lcms2)' 'pkgconfig(egl)' \
-    'pkgconfig(glesv2)' 'pkgconfig(gbm)' 'pkgconfig(jemalloc)' 'pkgconfig(xcb)' 'pkgconfig(xcb-icccm)' \
-    'pkgconfig(xcb-ewmh)' 'pkgconfig(xcb-shape)' 'pkgconfig(xcb-randr)' 'pkgconfig(xcb-render)' || return 1
-  temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/inir-umbriel.XXXXXX")" || return 1
-  src="$(aerynos_fetch_source umbriel \
-    "https://github.com/noctalia-dev/umbriel/archive/${UMBRIEL_COMMIT}.tar.gz" \
-    "$UMBRIEL_SHA256" "$temp_dir")" || { rm -rf "$temp_dir"; return 1; }
-  # a C++23 unit of it takes up to 1.5 GB: one job per 1.5 GB free, never more than the cores
-  jobs="$(awk '/^MemAvailable:/ { print int($2 / 1500000) }' /proc/meminfo)"
-  (( jobs < 1 )) && jobs=1
-  (( jobs > $(nproc) )) && jobs="$(nproc)"
-  tui_info "Building Umbriel ${UMBRIEL_COMMIT:0:12} (AerynOS doesn't package it; a few minutes)..."
-  if meson setup "$temp_dir/build" "$src" --prefix "$prefix" --buildtype release -Dtests=disabled -Dharness=disabled \
-      && meson compile -C "$temp_dir/build" -j "$jobs" \
-      && pkg_sudo meson install -C "$temp_dir/build" --no-rebuild; then
-    aerynos_build_record umbriel "$UMBRIEL_COMMIT" "$UMBRIEL_SHA256"
-  fi
-  rm -rf "$temp_dir"
-  home_build_runs "$prefix/bin/umbriel" || { log_warning "Umbriel ${UMBRIEL_COMMIT:0:12} build failed"; return 1; }
-  log_success "Umbriel ${UMBRIEL_COMMIT:0:12} installed in $prefix"
+  umbriel_build_current && return 0
+  moss_add clang meson ninja pkgconf xwayland 'binary(wayland-scanner)' 'binary(glib-compile-resources)' \
+    'pkgconfig(wayland-server)' 'pkgconfig(wayland-client)' 'pkgconfig(wayland-protocols)' 'pkgconfig(wlroots-0.20)' \
+    'pkgconfig(xkbcommon)' 'pkgconfig(libinput)' 'pkgconfig(libeis-1.0)' 'pkgconfig(pixman-1)' \
+    'pkgconfig(tomlplusplus)' 'pkgconfig(nlohmann_json)' 'pkgconfig(cairo)' 'pkgconfig(pangocairo)' \
+    'pkgconfig(libdrm)' 'pkgconfig(libdisplay-info)' 'pkgconfig(libudev)' 'pkgconfig(libsystemd)' 'pkgconfig(lcms2)' \
+    'pkgconfig(egl)' 'pkgconfig(glesv2)' 'pkgconfig(gbm)' 'pkgconfig(jemalloc)' 'pkgconfig(xcb)' \
+    'pkgconfig(xcb-icccm)' 'pkgconfig(xcb-ewmh)' 'pkgconfig(xcb-shape)' 'pkgconfig(xcb-randr)' 'pkgconfig(xcb-render)' \
+    'pkgconfig(sdbus-c++)' 'pkgconfig(libpipewire-0.3)' 'pkgconfig(gtk4)' || return 1
+  build_umbriel_source
 }
 
 # Darkly builds into ~/.local; Qt finds a plugin there only through QT_PLUGIN_PATH, which the user manager takes from

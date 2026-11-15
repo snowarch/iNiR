@@ -1,12 +1,14 @@
 # 50 — Programs started with the session (a change needs a restart)
 #
 # iNiR itself is not here: inir.service starts it with umbriel.service (`inir service enable` wires it), so a crash
-# restarts the shell and logging out stops it. Adding it here too would give you two shells.
+# restarts the shell and logging out stops it. Adding it here too would give you two shells. Without a systemd user
+# manager (Void), runit-session.sh below hands the session to iNiR's runit service instead; with one it does nothing.
 
 [general]
 autostart = [
   # KDE/Qt apps read the menu prefix from the rebuilt sycoca database.
   "kbuildsycoca6",
+  "sh ~/.config/quickshell/inir/scripts/lib/runit-session.sh",
   # Clipboard history: text goes through inir-accel, which strips browser markup; images through iNiR's store.
   # Mod+V opens it.
   "wl-paste --no-newline --type text --watch ~/.config/quickshell/inir/scripts/lib/accel-run clipboard-store",

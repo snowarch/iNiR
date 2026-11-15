@@ -1487,16 +1487,15 @@ spawn-at-startup "bash" "-c" "systemctl --user import-environment XDG_MENU_PREFI
         block="// BEGIN inir-runsvdir-fallback
 // iNiR shell supervisor (runsvdir fallback for non-systemd).
 // Do not add a compositor startup entry here or you'll get two shells.
-spawn-sh-at-startup \"exec runsvdir ~/.config/service\"
+spawn-sh-at-startup \"exec sh ~/.config/quickshell/inir/scripts/lib/runit-session.sh runsvdir\"
 // END inir-runsvdir-fallback" ;;
       *)
         comment="// iNiR is managed by the turnstile user service (service/inir)."
         block=$(cat <<'KDL'
 // BEGIN inir-turnstile-environment
-// Publish Niri's session environment to Turnstile-managed user services.
-spawn-sh-at-startup "export PATH=\"$HOME/.local/bin:$PATH\"; if command -v turnstile-update-runit-env >/dev/null 2>&1 && [ -n \"${WAYLAND_DISPLAY:-}\" ] && [ -n \"${XDG_RUNTIME_DIR:-}\" ] && [ -n \"${DBUS_SESSION_BUS_ADDRESS:-}\" ]; then turnstile-update-runit-env PATH WAYLAND_DISPLAY XDG_RUNTIME_DIR DBUS_SESSION_BUS_ADDRESS NIRI_SOCKET; if command -v sv >/dev/null 2>&1 && [ -d \"$HOME/.config/service/inir\" ]; then sv restart \"$HOME/.config/service/inir\" >/dev/null 2>&1 || true; fi; fi"
-// The shell runs outside this session on Turnstile (QS_DISABLE_POLKIT=1), so Niri starts the agent that answers password prompts.
-spawn-sh-at-startup "for agent in /usr/libexec/polkit-gnome-authentication-agent-1 /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1; do if [ -x \"$agent\" ]; then exec \"$agent\"; fi; done"
+// Publish Niri's session environment to Turnstile-managed user services. The shell runs outside this session on
+// Turnstile (QS_DISABLE_POLKIT=1), so the agent that answers password prompts starts here too.
+spawn-sh-at-startup "exec sh ~/.config/quickshell/inir/scripts/lib/runit-session.sh turnstile"
 // END inir-turnstile-environment
 KDL
 ) ;;
