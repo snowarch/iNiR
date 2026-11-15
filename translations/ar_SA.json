@@ -3693,5 +3693,11 @@
   "Remove rule": "إزالة القاعدة",
   "Identify": "تعريف",
   "One app's windows open their own way: floating, on a workspace or screen, see-through, left out of captures.": "تُفتح نوافذ هذا التطبيق بطريقتها: عائمة، على مساحة عمل أو شاشة، شفافة، ومخفية من اللقطات.",
-  "App rules": "قواعد التطبيقات"
+  "App rules": "قواعد التطبيقات",
+  "Always waiting": "جاهزة دائمًا",
+  "How tall new windows open on this screen": "ارتفاع النوافذ الجديدة عند فتحها على هذه الشاشة",
+  "How wide new windows open on this screen": "عرض النوافذ الجديدة عند فتحها على هذه الشاشة",
+  "Its switch below turns it back on, where it stood.": "مفتاحها أدناه يعيد تشغيلها في مكانها.",
+  "Drag a screen to where it stands on your desk.": "اسحب الشاشة إلى موضعها على مكتبك.",
+  "Titled “%1”": "بعنوان “%1”"
 }

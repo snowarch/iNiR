@@ -1591,7 +1591,7 @@
   "Most used": "最常用",
   "Motion": "动效",
   "Motion and power": "动效与电源",
-  "Movement": "移动方式",
+  "Movement": "动效",
   "Multimedia": "多媒体",
   "Navigation": "导航",
   "New Moon": "新月",
@@ -3693,5 +3693,11 @@
   "Remove rule": "移除规则",
   "Identify": "识别",
   "One app's windows open their own way: floating, on a workspace or screen, see-through, left out of captures.": "该应用的窗口以自定义方式打开:浮动、位于某个工作区或屏幕、透明、不在截图中显示。",
-  "App rules": "应用规则"
+  "App rules": "应用规则",
+  "Always waiting": "始终待命",
+  "How tall new windows open on this screen": "此屏幕上新窗口打开的高度",
+  "How wide new windows open on this screen": "此屏幕上新窗口打开的宽度",
+  "Its switch below turns it back on, where it stood.": "下方的开关可让它在原位置重新开启。",
+  "Drag a screen to where it stands on your desk.": "将屏幕拖到它在桌上的实际位置。",
+  "Titled “%1”": "标题为“%1”"
 }

@@ -3693,5 +3693,11 @@
   "Remove rule": "Rimuovi regola",
   "Identify": "Identifica",
   "One app's windows open their own way: floating, on a workspace or screen, see-through, left out of captures.": "Le finestre di quest'app si aprono a modo loro: fluttuanti, su uno spazio di lavoro o schermo, trasparenti, escluse dalle acquisizioni.",
-  "App rules": "Regole delle app"
+  "App rules": "Regole delle app",
+  "Always waiting": "Sempre pronti",
+  "How tall new windows open on this screen": "Quanto sono alte le nuove finestre su questo schermo",
+  "How wide new windows open on this screen": "Quanto sono larghe le nuove finestre su questo schermo",
+  "Its switch below turns it back on, where it stood.": "Il suo interruttore qui sotto lo riaccende, dov'era.",
+  "Drag a screen to where it stands on your desk.": "Trascina uno schermo dove si trova sulla tua scrivania.",
+  "Titled “%1”": "Titolo “%1”"
 }

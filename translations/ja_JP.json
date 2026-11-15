@@ -3693,5 +3693,11 @@
   "Remove rule": "ルールを削除",
   "Identify": "識別",
   "One app's windows open their own way: floating, on a workspace or screen, see-through, left out of captures.": "このアプリのウィンドウは独自の方法で開きます。フロート、ワークスペースや画面の指定、半透明、キャプチャから除外。",
-  "App rules": "アプリのルール"
+  "App rules": "アプリのルール",
+  "Always waiting": "常に待機",
+  "How tall new windows open on this screen": "この画面で新しいウィンドウが開く高さ",
+  "How wide new windows open on this screen": "この画面で新しいウィンドウが開く幅",
+  "Its switch below turns it back on, where it stood.": "下のスイッチで、元の位置のまま再びオンになります。",
+  "Drag a screen to where it stands on your desk.": "画面を机の上の実際の位置へドラッグします。",
+  "Titled “%1”": "タイトルは「%1」"
 }

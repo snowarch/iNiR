@@ -3693,5 +3693,11 @@
   "Remove rule": "Kuralı kaldır",
   "Identify": "Tanımla",
   "One app's windows open their own way: floating, on a workspace or screen, see-through, left out of captures.": "Bu uygulamanın pencereleri kendi biçimlerinde açılır: yüzen, bir çalışma alanında ya da ekranda, saydam, ekran görüntülerinden gizli.",
-  "App rules": "Uygulama kuralları"
+  "App rules": "Uygulama kuralları",
+  "Always waiting": "Her zaman hazır",
+  "How tall new windows open on this screen": "Bu ekranda yeni pencerelerin açıldığı yükseklik",
+  "How wide new windows open on this screen": "Bu ekranda yeni pencerelerin açıldığı genişlik",
+  "Its switch below turns it back on, where it stood.": "Aşağıdaki anahtarı onu durduğu yerde yeniden açar.",
+  "Drag a screen to where it stands on your desk.": "Bir ekranı masanızda durduğu yere sürükleyin.",
+  "Titled “%1”": "Başlığı “%1”"
 }

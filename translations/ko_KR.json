@@ -1591,7 +1591,7 @@
   "Most used": "가장 많이 사용됨",
   "Motion": "모션",
   "Motion and power": "모션 및 파워",
-  "Movement": "무브먼트",
+  "Movement": "움직임",
   "Multimedia": "멀티미디어",
   "Navigation": "탐색",
   "New Moon": "뉴문",
@@ -3693,5 +3693,11 @@
   "Remove rule": "규칙 삭제",
   "Identify": "식별",
   "One app's windows open their own way: floating, on a workspace or screen, see-through, left out of captures.": "이 앱의 창은 자신만의 방식으로 열립니다: 떠 있기, 작업 공간이나 화면 지정, 투명도, 캡처 제외.",
-  "App rules": "앱 규칙"
+  "App rules": "앱 규칙",
+  "Always waiting": "항상 준비됨",
+  "How tall new windows open on this screen": "이 화면에서 새 창이 열리는 높이",
+  "How wide new windows open on this screen": "이 화면에서 새 창이 열리는 너비",
+  "Its switch below turns it back on, where it stood.": "아래 스위치를 켜면 원래 자리에서 다시 켜집니다.",
+  "Drag a screen to where it stands on your desk.": "화면을 책상 위 실제 위치로 끌어 놓으세요.",
+  "Titled “%1”": "제목 “%1”"
 }

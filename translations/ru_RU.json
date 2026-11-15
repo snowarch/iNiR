@@ -3693,5 +3693,11 @@
   "Remove rule": "Удалить правило",
   "Identify": "Определить",
   "One app's windows open their own way: floating, on a workspace or screen, see-through, left out of captures.": "Окна этого приложения открываются по-своему: плавающие, на рабочем пространстве или экране, полупрозрачные, скрыты из снимков.",
-  "App rules": "Правила приложений"
+  "App rules": "Правила приложений",
+  "Always waiting": "Всегда в готовности",
+  "How tall new windows open on this screen": "Какой высоты открываются новые окна на этом экране",
+  "How wide new windows open on this screen": "Какой ширины открываются новые окна на этом экране",
+  "Its switch below turns it back on, where it stood.": "Его переключатель ниже снова включит его на прежнем месте.",
+  "Drag a screen to where it stands on your desk.": "Перетащите экран туда, где он стоит на вашем столе.",
+  "Titled “%1”": "С заголовком «%1»"
 }

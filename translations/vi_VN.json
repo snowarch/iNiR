@@ -3693,5 +3693,11 @@
   "Remove rule": "Xóa quy tắc",
   "Identify": "Nhận diện",
   "One app's windows open their own way: floating, on a workspace or screen, see-through, left out of captures.": "Cửa sổ của ứng dụng này mở theo cách riêng: nổi, trên một không gian làm việc hoặc màn hình, trong suốt, ẩn khỏi ảnh chụp.",
-  "App rules": "Quy tắc ứng dụng"
+  "App rules": "Quy tắc ứng dụng",
+  "Always waiting": "Luôn sẵn sàng",
+  "How tall new windows open on this screen": "Chiều cao cửa sổ mới khi mở trên màn hình này",
+  "How wide new windows open on this screen": "Chiều rộng cửa sổ mới khi mở trên màn hình này",
+  "Its switch below turns it back on, where it stood.": "Công tắc bên dưới sẽ bật lại nó, ở đúng chỗ cũ.",
+  "Drag a screen to where it stands on your desk.": "Kéo màn hình đến đúng vị trí của nó trên bàn bạn.",
+  "Titled “%1”": "Tiêu đề “%1”"
 }

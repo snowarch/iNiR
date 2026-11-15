@@ -3693,5 +3693,11 @@
   "Remove rule": "הסרת הכלל",
   "Identify": "זיהוי",
   "One app's windows open their own way: floating, on a workspace or screen, see-through, left out of captures.": "החלונות של היישום הזה נפתחים בדרכם: צפים, במרחב עבודה או מסך, שקופים, מוסתרים מצילומים.",
-  "App rules": "כללי יישומים"
+  "App rules": "כללי יישומים",
+  "Always waiting": "תמיד מוכנים",
+  "How tall new windows open on this screen": "באיזה גובה נפתחים חלונות חדשים במסך הזה",
+  "How wide new windows open on this screen": "באיזה רוחב נפתחים חלונות חדשים במסך הזה",
+  "Its switch below turns it back on, where it stood.": "המתג שלו למטה מדליק אותו שוב, במקום שבו עמד.",
+  "Drag a screen to where it stands on your desk.": "גררו מסך למקום שבו הוא עומד על השולחן שלכם.",
+  "Titled “%1”": "בכותרת “%1”"
 }

@@ -3693,5 +3693,11 @@
   "Remove rule": "Hapus aturan",
   "Identify": "Identifikasi",
   "One app's windows open their own way: floating, on a workspace or screen, see-through, left out of captures.": "Jendela aplikasi ini terbuka dengan caranya sendiri: mengambang, di ruang kerja atau layar, transparan, disembunyikan dari tangkapan.",
-  "App rules": "Aturan aplikasi"
+  "App rules": "Aturan aplikasi",
+  "Always waiting": "Selalu siap",
+  "How tall new windows open on this screen": "Setinggi apa jendela baru terbuka di layar ini",
+  "How wide new windows open on this screen": "Selebar apa jendela baru terbuka di layar ini",
+  "Its switch below turns it back on, where it stood.": "Sakelarnya di bawah menyalakannya lagi, di tempat semula.",
+  "Drag a screen to where it stands on your desk.": "Seret layar ke tempatnya di meja Anda.",
+  "Titled “%1”": "Berjudul “%1”"
 }

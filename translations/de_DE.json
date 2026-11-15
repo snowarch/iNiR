@@ -1591,7 +1591,7 @@
   "Most used": "Meistgenutzt",
   "Motion": "Bewegung",
   "Motion and power": "Bewegung und Energie",
-  "Movement": "Fortbewegung",
+  "Movement": "Bewegung",
   "Multimedia": "Multimedia",
   "Navigation": "Navigation",
   "New Moon": "Neumond",
@@ -3693,5 +3693,11 @@
   "Remove rule": "Regel entfernen",
   "Identify": "Identifizieren",
   "One app's windows open their own way: floating, on a workspace or screen, see-through, left out of captures.": "Die Fenster dieser App öffnen auf eigene Art: schwebend, auf einem Arbeitsbereich oder Bildschirm, durchsichtig, aus Aufnahmen ausgeblendet.",
-  "App rules": "App-Regeln"
+  "App rules": "App-Regeln",
+  "Always waiting": "Immer bereit",
+  "How tall new windows open on this screen": "Wie hoch sich neue Fenster auf diesem Bildschirm öffnen",
+  "How wide new windows open on this screen": "Wie breit sich neue Fenster auf diesem Bildschirm öffnen",
+  "Its switch below turns it back on, where it stood.": "Sein Schalter unten schaltet ihn wieder ein, wo er stand.",
+  "Drag a screen to where it stands on your desk.": "Ziehe einen Bildschirm dorthin, wo er auf deinem Schreibtisch steht.",
+  "Titled “%1”": "Mit dem Titel „%1“"
 }

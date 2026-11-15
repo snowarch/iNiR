@@ -123,6 +123,7 @@ WindowDialogButtonRow 1.0 WindowDialogButtonRow.qml
 WindowDialogParagraph 1.0 WindowDialogParagraph.qml
 WindowDialog 1.0 WindowDialog.qml
 WindowDialogTitle 1.0 WindowDialogTitle.qml
+WindowRuleSketch 1.0 WindowRuleSketch.qml
 GlyphArt 1.0 GlyphArt.qml
 GlyphAtlas 1.0 GlyphAtlas.qml
 GlyphLookGrid 1.0 GlyphLookGrid.qml

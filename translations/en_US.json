@@ -3693,5 +3693,11 @@
   "Remove rule": "Remove rule",
   "Identify": "Identify",
   "One app's windows open their own way: floating, on a workspace or screen, see-through, left out of captures.": "One app's windows open their own way: floating, on a workspace or screen, see-through, left out of captures.",
-  "App rules": "App rules"
+  "App rules": "App rules",
+  "Always waiting": "Always waiting",
+  "How tall new windows open on this screen": "How tall new windows open on this screen",
+  "How wide new windows open on this screen": "How wide new windows open on this screen",
+  "Its switch below turns it back on, where it stood.": "Its switch below turns it back on, where it stood.",
+  "Drag a screen to where it stands on your desk.": "Drag a screen to where it stands on your desk.",
+  "Titled “%1”": "Titled “%1”"
 }

@@ -3693,5 +3693,11 @@
   "Remove rule": "Piumasaq peerlugu",
   "Identify": "Takussutissiivik",
   "One app's windows open their own way: floating, on a workspace or screen, see-through, left out of captures.": "Appip igalaatai nalinginnaasumik ammasarput: qaqqatigut pujoriartarlutik, suliffiup imaluunniit skærmip qulaani, qaqqatigut, assiliinerit iluanni ilanngunneqanngitsut.",
-  "App rules": "Appinut piumasaqaatit"
+  "App rules": "Appinut piumasaqaatit",
+  "Always waiting": "Suliffiit piareersarneqarput",
+  "How tall new windows open on this screen": "Igalaat nutaat saqqummersitsivimmi uani qanoq portutigisumik ammartarnersut",
+  "How wide new windows open on this screen": "Igalaat nutaat saqqummersitsivimmi uani qanoq silitsigisumik ammartarnersut",
+  "Its switch below turns it back on, where it stood.": "Ataani ikitsissutaa inissisimaffiani ikitseqqissavaa.",
+  "Drag a screen to where it stands on your desk.": "Qarasaasiaq nerrivinni inissisimaffianut nussuguk.",
+  "Titled “%1”": "Qulequtaq “%1”"
 }

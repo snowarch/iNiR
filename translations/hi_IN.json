@@ -1591,7 +1591,7 @@
   "Most used": "सबसे अधिक उपयोग किया गया",
   "Motion": "गति",
   "Motion and power": "गति और शक्ति",
-  "Movement": "आंदोलन",
+  "Movement": "गति",
   "Multimedia": "मल्टीमीडिया",
   "Navigation": "नेविगेशन",
   "New Moon": "नया चंद्रमा",
@@ -3693,5 +3693,11 @@
   "Remove rule": "नियम हटाएँ",
   "Identify": "पहचानें",
   "One app's windows open their own way: floating, on a workspace or screen, see-through, left out of captures.": "इस ऐप की विंडो अपने तरीके से खुलती हैं: फ़्लोटिंग, किसी कार्यक्षेत्र या स्क्रीन पर, पारदर्शी, कैप्चर से बाहर।",
-  "App rules": "ऐप नियम"
+  "App rules": "ऐप नियम",
+  "Always waiting": "हमेशा तैयार",
+  "How tall new windows open on this screen": "इस स्क्रीन पर नई विंडो कितनी ऊँची खुलती हैं",
+  "How wide new windows open on this screen": "इस स्क्रीन पर नई विंडो कितनी चौड़ी खुलती हैं",
+  "Its switch below turns it back on, where it stood.": "नीचे का स्विच इसे फिर से वहीं चालू कर देता है जहाँ यह था।",
+  "Drag a screen to where it stands on your desk.": "स्क्रीन को अपनी मेज़ पर उसकी असली जगह तक खींचें।",
+  "Titled “%1”": "शीर्षक “%1”"
 }

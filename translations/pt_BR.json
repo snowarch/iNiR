@@ -642,7 +642,7 @@
   "Monochrome": "Monocromático",
   "Most busy": "Mais ocupado",
   "Most recent first": "Mais recente primeiro",
-  "Mouse": "Rato",
+  "Mouse": "Mouse",
   "Move down": "Mover para baixo",
   "Move up": "Subir",
   "Multi-monitor mode active": "Modo multimonitor ativo",
@@ -1591,7 +1591,7 @@
   "Most used": "Mais usados",
   "Motion": "Movimento",
   "Motion and power": "Movimento e energia",
-  "Movement": "Deslocamento",
+  "Movement": "Movimento",
   "Multimedia": "Multimídia",
   "Navigation": "Navegação",
   "New Moon": "Lua nova",
@@ -3693,5 +3693,11 @@
   "Remove rule": "Remover regra",
   "Identify": "Identificar",
   "One app's windows open their own way: floating, on a workspace or screen, see-through, left out of captures.": "As janelas deste app abrem do jeito próprio: flutuantes, em um espaço de trabalho ou tela, transparentes, ocultas das capturas.",
-  "App rules": "Regras de apps"
+  "App rules": "Regras de apps",
+  "Always waiting": "Sempre prontos",
+  "How tall new windows open on this screen": "Altura com que as janelas novas abrem nesta tela",
+  "How wide new windows open on this screen": "Largura com que as janelas novas abrem nesta tela",
+  "Its switch below turns it back on, where it stood.": "O interruptor abaixo a liga de novo, onde estava.",
+  "Drag a screen to where it stands on your desk.": "Arraste uma tela até onde ela fica na sua mesa.",
+  "Titled “%1”": "Com o título “%1”"
 }
