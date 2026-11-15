@@ -187,8 +187,13 @@ Singleton {
             return family === "iris" ? Translation.tr("Works in Material and Waffle") : Translation.tr("Colours the shell and your apps")
         if (item.kind === "iris-theme" || item.kind === "design")
             return family === "iris" ? Translation.tr("Redesigns iRiS") : Translation.tr("Works in iRiS")
-        if (item.kind === "component")
-            return Translation.tr("Works in Material, iRiS and Waffle")
+        if (item.kind === "component") {
+            // A component says the families it declares; none declared is all three.
+            const families = Array.from(item.families ?? [])
+            return families.length === 0 || families.length >= 3 ? Translation.tr("Works in Material, iRiS and Waffle")
+                : families.length === 1 && families[0] === "iris" ? Translation.tr("Works in iRiS")
+                : Translation.tr("For %1").arg(root.familyNames(item))
+        }
         if (item.kind === "webapp")
             return family === "material" ? Translation.tr("Opens in the left sidebar") : Translation.tr("Works in Material")
         if (family === "iris" && surfaces.includes("island"))
