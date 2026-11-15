@@ -15,7 +15,8 @@
 #   { aur = "name" }                    Arch only: through the AUR helper
 #   { build = "recipe" }                a provider in sdata/dist-*/providers.sh, run
 #                                       after the packages when it is still missing
-# `ubuntu` falls back to `debian`. No key: not installed on that distro.
+# `ubuntu` falls back to `debian`. No key: not installed on that distro. AerynOS
+# replaces /usr on every moss transaction, so its recipes install into the home.
 
 schema = 1
 
@@ -28,6 +29,7 @@ arch = "quickshell"
 fedora = "quickshell"
 debian = { pkg = "quickshell", build = "quickshell" }
 void = "quickshell"
+aerynos = "quickshell"
 
 [[dep]]
 name = "niri"
@@ -36,6 +38,7 @@ arch = "niri"
 fedora = "niri"
 debian = { pkg = "niri", build = "niri" }
 void = "niri"
+aerynos = "niri"
 
 [[dep]]
 name = "qt6"
@@ -48,6 +51,8 @@ debian = ["qt6-base-dev", "qt6-declarative-dev", "qt6-svg-dev", "qt6-wayland-dev
           "qt6-multimedia-dev", "qt6-image-formats-plugins"]
 void = ["qt6-base", "qt6-declarative", "qt6-svg", "qt6-wayland", "qt6-qt5compat", "qt6-multimedia",
         "qt6-webengine", "layer-shell-qt", "qt6-imageformats", "qt6-virtualkeyboard"]
+aerynos = ["qt6-base", "qt6-declarative", "qt6-svg", "qt6-wayland", "qt6-5compat", "qt6-imageformats",
+           "qt6-multimedia", "qt6-tools", "layer-shell-qt"]
 
 [[dep]]
 name = "quickshell-libs"
@@ -64,6 +69,7 @@ arch = ["kirigami", "kdialog", "syntax-highlighting"]
 fedora = ["kf6-kirigami", "kdialog", "kf6-syntax-highlighting"]
 debian = ["libkf6syntaxhighlighting6", "qml6-module-org-kde-kirigami", "kdialog"]
 void = ["kf6-syntax-highlighting", "kf6-kirigami", "kdialog"]
+aerynos = ["kf6-kirigami", "kdialog", "kf6-syntax-highlighting"]
 
 [[dep]]
 name = "qt-theming"
@@ -72,6 +78,7 @@ arch = ["qt6ct", "plasma-integration", "frameworkintegration", "kdecoration", "b
 fedora = ["qt6ct", "kde-gtk-config", "breeze-gtk"]
 debian = ["qt6ct", "kde-config-gtk-style", "breeze-gtk-theme"]
 void = ["qt6ct", "breeze-icons"]
+aerynos = ["qt6ct", "kf6-frameworkintegration", "kdecoration", "breeze-icons"]
 
 [[dep]]
 name = "kvantum"
@@ -80,6 +87,7 @@ arch = { pkg = "kvantum", group = "core" }
 fedora = "kvantum"
 debian = { first = ["qt6-style-kvantum", "qt-style-kvantum", "kvantum"] }
 void = "kvantum"
+aerynos = "kvantum"
 
 [[dep]]
 name = "plasma-integration"
@@ -87,6 +95,7 @@ group = "fonts"
 fedora = "plasma-integration"
 debian = "plasma-integration"
 void = ["breeze", "plasma-integration", "kde-cli-tools"]
+aerynos = ["breeze", "plasma-integration", "kde-cli-tools"]
 
 [[dep]]
 name = "kconfig"
@@ -95,6 +104,7 @@ arch = "kconfig"
 fedora = "kf6-kconfig"
 debian = { pkg = "libkf6config-bin", group = "fonts" }
 void = "kf6-kconfig"
+aerynos = "kf6-kconfig"
 
 # --- core: session and desktop ------------------------------------------------------
 
@@ -105,6 +115,7 @@ arch = "polkit"
 fedora = "polkit"
 debian = { first = ["policykit-1", "polkitd+pkexec"] }
 void = ["polkit", "polkit-gnome"]
+aerynos = "polkit"
 
 [[dep]]
 name = "portals"
@@ -113,6 +124,7 @@ arch = ["xdg-desktop-portal", "xdg-desktop-portal-gtk", "xdg-desktop-portal-gnom
 fedora = ["xdg-desktop-portal", "xdg-desktop-portal-gtk", "xdg-desktop-portal-gnome"]
 debian = ["xdg-desktop-portal", "xdg-desktop-portal-gtk", "xdg-desktop-portal-gnome"]
 void = ["xdg-desktop-portal", "xdg-desktop-portal-gtk", "xdg-desktop-portal-wlr", "xdg-desktop-portal-gnome"]
+aerynos = ["xdg-desktop-portal", "xdg-desktop-portal-gtk", "xdg-desktop-portal-gnome"]
 
 [[dep]]
 name = "network"
@@ -121,6 +133,7 @@ arch = ["networkmanager", "nm-connection-editor", "gnome-keyring"]
 fedora = ["NetworkManager", "nm-connection-editor", "gnome-keyring"]
 debian = ["network-manager", "network-manager-gnome", "gnome-keyring"]
 void = ["NetworkManager", "network-manager-applet", "gnome-keyring", "libsecret"]
+aerynos = ["networkmanager", "nm-connection-editor", "gnome-keyring", "libsecret"]
 
 [[dep]]
 name = "void-session"
@@ -134,6 +147,7 @@ group = "core"
 arch = { build = "power-profiles" }
 fedora = { build = "power-profiles" }
 debian = { build = "power-profiles" }
+aerynos = { build = "power-profiles" }
 
 [[dep]]
 name = "login"
@@ -141,6 +155,7 @@ group = "core"
 arch = "sddm"
 fedora = "sddm"
 void = "sddm"
+aerynos = "sddm"
 
 [[dep]]
 name = "files"
@@ -149,6 +164,7 @@ arch = "nautilus"
 fedora = "nautilus"
 debian = "nautilus"
 void = "nautilus"
+aerynos = "nautilus"
 
 [[dep]]
 name = "terminal"
@@ -157,6 +173,7 @@ arch = "kitty"
 fedora = "kitty"
 debian = "kitty"
 void = "kitty"
+aerynos = "kitty"
 
 [[dep]]
 name = "fish"
@@ -165,6 +182,7 @@ arch = "fish"
 fedora = "fish"
 debian = "fish"
 void = "fish-shell"
+aerynos = "fish"
 
 [[dep]]
 name = "xwayland"
@@ -173,6 +191,7 @@ arch = "xwayland-satellite"
 fedora = "xwayland-satellite"
 debian = { pkg = "xwayland-satellite", build = "xwayland-satellite" }
 void = "xwayland-satellite"
+aerynos = "xwayland-satellite"
 
 [[dep]]
 name = "wallpaper-daemon"
@@ -181,12 +200,14 @@ arch = "awww"
 fedora = { build = "awww" }
 debian = { pkg = "awww", build = "awww" }
 void = "awww"
+aerynos = "awww"
 
 [[dep]]
 name = "thumbnails"
 group = "core"
 fedora = ["ffmpegthumbnailer", "tumbler"]
 debian = ["ffmpegthumbnailer", "tumbler"]
+aerynos = "ffmpegthumbnailer"
 
 [[dep]]
 name = "icon-themes"
@@ -194,6 +215,7 @@ group = "core"
 arch = ["hicolor-icon-theme", "adwaita-icon-theme", "papirus-icon-theme"]
 fedora = { pkg = ["hicolor-icon-theme", "adwaita-icon-theme", "papirus-icon-theme"], group = "fonts" }
 debian = ["hicolor-icon-theme", "adwaita-icon-theme", "papirus-icon-theme"]
+aerynos = ["hicolor-icon-theme", "adwaita-icon-theme", "papirus-icon-theme"]
 
 [[dep]]
 name = "mission-center"
@@ -202,6 +224,7 @@ arch = "mission-center"
 fedora = { build = "missioncenter" }
 debian = { build = "missioncenter" }
 void = { build = "missioncenter" }
+aerynos = { build = "missioncenter" }
 
 [[dep]]
 name = "browser-media"
@@ -210,6 +233,7 @@ arch = { pkg = "plasma-browser-integration", group = "core" }
 fedora = "plasma-browser-integration"
 debian = "plasma-browser-integration"
 void = "plasma-browser-integration"
+aerynos = "plasma-browser-integration"
 
 # --- core: command line tools -------------------------------------------------------
 
@@ -224,6 +248,8 @@ debian = ["coreutils", "curl", "ripgrep", "jq", "file", "python3", "xdg-user-dir
           "libnotify-bin", "wlsunset", "unzip"]
 void = ["wl-clipboard", "wlsunset", "jq", "file", "python3", "curl", "wget", "git", "ripgrep", "bc", "xdg-utils",
         "xdg-user-dirs", "libnotify", "rsync", "fuzzel", "dunst"]
+aerynos = ["coreutils", "curl", "ripgrep", "jq", "file", "python", "unzip", "xdg-user-dirs", "xdg-utils", "rsync",
+           "git", "wl-clipboard-rs", "libnotify", "wlsunset", "util-linux", "gawk"]
 
 [[dep]]
 name = "cliphist"
@@ -232,6 +258,7 @@ arch = "cliphist"
 fedora = { pkg = "cliphist", build = "cliphist" }
 debian = { pkg = "cliphist", build = "cliphist" }
 void = "cliphist"
+aerynos = { build = "cliphist" }
 
 [[dep]]
 name = "gum"
@@ -240,6 +267,7 @@ arch = "gum"
 fedora = "gum"
 debian = { pkg = "gum", build = "gum" }
 void = "gum"
+aerynos = { build = "gum" }
 
 [[dep]]
 name = "prompt"
@@ -247,6 +275,7 @@ group = "core"
 arch = ["starship", "eza"]
 fedora = { pkg = "eza", build = "starship-eza" }
 debian = { pkg = ["starship", "eza"], build = "starship-eza" }
+aerynos = ["starship", "eza"]
 
 [[dep]]
 name = "translate"
@@ -255,6 +284,7 @@ arch = { pkg = "translate-shell", groups = ["toolkit", "fonts"] }
 fedora = { pkg = "translate-shell", group = "core" }
 debian = { pkg = "translate-shell", group = "core" }
 void = { pkg = "translate-shell", group = "toolkit" }
+aerynos = { build = "translate-shell", group = "toolkit" }
 
 # Native builds: what setup compiles itself.
 [[dep]]
@@ -275,6 +305,7 @@ arch = ["pipewire", "pipewire-pulse", "pipewire-alsa", "wireplumber"]
 fedora = ["pipewire", "pipewire-utils", "pipewire-pulseaudio", "pipewire-alsa", "wireplumber"]
 debian = ["pipewire", "pipewire-pulse", "pipewire-alsa", "wireplumber"]
 void = ["pipewire", "wireplumber", "alsa-pipewire", "libspa-bluetooth"]
+aerynos = ["pipewire", "wireplumber"]
 
 [[dep]]
 name = "media-control"
@@ -283,6 +314,7 @@ arch = ["playerctl", "pavucontrol"]
 fedora = ["playerctl", "pavucontrol"]
 debian = ["playerctl", "pavucontrol"]
 void = ["playerctl", "libdbusmenu-gtk3", "pavucontrol"]
+aerynos = ["playerctl", "pavucontrol"]
 
 [[dep]]
 name = "cava"
@@ -291,6 +323,7 @@ arch = "cava"
 fedora = "cava"
 debian = { pkg = "cava", build = "cava" }
 void = "cava"
+aerynos = "cava"
 
 [[dep]]
 name = "equalizer"
@@ -299,6 +332,7 @@ arch = ["easyeffects", "lsp-plugins-lv2"]
 fedora = ["easyeffects", "lsp-plugins-lv2"]
 debian = ["easyeffects", "lsp-plugins-lv2"]
 void = ["easyeffects", "lsp-plugins-lv2"]
+aerynos = ["easyeffects", "lsp-plugins-lv2"]
 
 [[dep]]
 name = "player"
@@ -307,6 +341,7 @@ arch = ["mpv", "mpv-mpris", "yt-dlp", "yt-dlp-ejs", "deno", "socat"]
 fedora = ["mpv", "yt-dlp", "socat"]
 debian = ["mpv", "yt-dlp", "socat"]
 void = ["mpv", "mpv-mpris", "yt-dlp", "socat"]
+aerynos = ["mpv", "yt-dlp", "socat"]
 
 [[dep]]
 name = "songrec"
@@ -315,6 +350,7 @@ arch = "songrec"
 fedora = { build = "songrec", group = "audio" }
 debian = { pkg = "songrec", build = "songrec", group = "audio" }
 void = { pkg = "songrec", group = "audio" }
+aerynos = { build = "songrec", group = "audio" }
 
 # --- toolkit -----------------------------------------------------------------------
 
@@ -325,6 +361,7 @@ arch = ["upower", "wtype", "ydotool", "fprintd"]
 fedora = ["upower", "wtype", "ydotool", "fprintd"]
 debian = ["upower", "wtype", "ydotool", "fprintd"]
 void = ["upower", "wtype", "fprintd", "cmake"]
+aerynos = ["upower", "wtype", "ydotool", "fprintd"]
 
 [[dep]]
 name = "ydotool"
@@ -338,6 +375,7 @@ arch = ["brightnessctl", "ddcutil", "geoclue"]
 fedora = ["brightnessctl", "ddcutil", "geoclue2"]
 debian = ["brightnessctl", "ddcutil", "geoclue-2.0"]
 void = ["brightnessctl", "ddcutil", "geoclue2"]
+aerynos = ["brightnessctl", "ddcutil", "geoclue"]
 
 [[dep]]
 name = "idle"
@@ -346,6 +384,7 @@ arch = ["swayidle", "swaylock"]
 fedora = ["swayidle", "swaylock"]
 debian = ["swayidle", "swaylock"]
 void = { pkg = ["swayidle", "swaylock"], group = "core" }
+aerynos = ["swayidle", "swaylock"]
 
 [[dep]]
 name = "screenshot"
@@ -354,6 +393,7 @@ arch = ["grim", "slurp", "imagemagick"]
 fedora = ["grim", "slurp", "ImageMagick"]
 debian = ["grim", "slurp", "imagemagick"]
 void = { pkg = ["grim", "slurp"], group = "core" }
+aerynos = ["grim", "slurp", "imagemagick"]
 
 [[dep]]
 name = "imagemagick-void"
@@ -367,6 +407,7 @@ arch = "hyprpicker"
 fedora = { pkg = "hyprpicker", build = "hyprpicker" }
 debian = { pkg = "hyprpicker", build = "hyprpicker" }
 void = "hyprpicker"
+aerynos = { build = "hyprpicker" }
 
 [[dep]]
 name = "calculator"
@@ -375,6 +416,7 @@ arch = "libqalculate"
 fedora = "qalculate"
 debian = { pkg = "qalc", first = ["qalculate-qt", "qalculate-gtk"] }
 void = "qalculate"
+aerynos = "qalculate"
 
 [[dep]]
 name = "bluetooth"
@@ -383,6 +425,7 @@ arch = "blueman"
 fedora = "blueman"
 debian = "blueman"
 void = ["bluez", "blueman"]
+aerynos = { pkg = "bluez", build = "blueman" }
 
 [[dep]]
 name = "gowall"
@@ -391,11 +434,13 @@ arch = { aur = "gowall-bin", group = "core" }
 fedora = { build = "gowall" }
 debian = { build = "gowall" }
 void = "gowall"
+aerynos = { build = "gowall" }
 
 [[dep]]
 name = "flatpak"
 group = "toolkit"
 void = "flatpak"
+aerynos = { pkg = "flatpak", group = "core" }
 
 [[dep]]
 name = "ocr"
@@ -411,6 +456,9 @@ debian = ["tesseract-ocr", "tesseract-ocr-eng", "tesseract-ocr-spa", "tesseract-
           "tesseract-ocr-chi-tra", "tesseract-ocr-chi-tra-vert"]
 void = ["tesseract-ocr", "tesseract-ocr-eng", "tesseract-ocr-spa", "tesseract-ocr-rus", "tesseract-ocr-jpn",
         "tesseract-ocr-chi_sim", "tesseract-ocr-chi_tra"]
+aerynos = ["tesseract", "tesseract-langpack-eng", "tesseract-langpack-spa", "tesseract-langpack-rus",
+           "tesseract-langpack-jpn", "tesseract-langpack-jpn_vert", "tesseract-langpack-chi_sim",
+           "tesseract-langpack-chi_sim_vert", "tesseract-langpack-chi_tra", "tesseract-langpack-chi_tra_vert"]
 
 [[dep]]
 name = "ocr-vertical-models"
@@ -426,16 +474,19 @@ arch = ["swappy", "wf-recorder", "ffmpeg"]
 fedora = ["swappy", "wf-recorder"]
 debian = ["wf-recorder", "ffmpeg"]
 void = ["swappy", "wf-recorder", "ffmpeg"]
+aerynos = "wf-recorder"
 
 [[dep]]
 name = "swappy"
 group = "screencapture"
 debian = { pkg = "swappy", build = "swappy" }
+aerynos = { build = "swappy" }
 
 [[dep]]
 name = "ffmpeg-core"
 group = "core"
 arch = "ffmpeg"
+aerynos = "ffmpeg"
 
 # --- fonts and theming --------------------------------------------------------------
 
@@ -448,11 +499,14 @@ fedora = ["fontconfig", "dejavu-fonts-all", "liberation-fonts", "google-noto-col
           "jetbrains-mono-fonts-all", "glib2"]
 debian = ["fontconfig", "fonts-dejavu", "fonts-liberation", "fonts-noto-color-emoji", "fonts-jetbrains-mono"]
 void = ["curl", "unzip", "fontconfig", "dejavu-fonts-ttf", "twemoji", "nerd-fonts-ttf", "noto-fonts-emoji"]
+aerynos = ["fontconfig", "dejavu-fonts-ttf", "liberation-fonts-ttf", "font-jetbrains-mono-ttf", "font-symbols-nerd",
+           "glib2", "adw-gtk3"]
 
 [[dep]]
 name = "emoji-core"
 group = "core"
 arch = "noto-fonts-emoji"
+aerynos = "font-noto-emoji"
 
 [[dep]]
 name = "aur-fonts"
@@ -467,6 +521,7 @@ arch = { aur = "darkly-bin" }
 fedora = { build = "darkly" }
 debian = { build = "darkly" }
 void = { build = "darkly" }
+aerynos = { build = "darkly" }
 
 [[dep]]
 name = "darkly-build"
@@ -480,11 +535,13 @@ void = ["cmake", "extra-cmake-modules", "qt6-base-devel", "qt6-declarative-devel
 name = "qt-avif"
 group = "core"
 arch = { aur = "qt6-avif-image-plugin" }
+aerynos = "kf6-kimageformats"
 
 [[dep]]
 name = "fonts-download"
 group = "core"
 fedora = { build = "fonts-download" }
+aerynos = { build = "fonts-download" }
 
 [[dep]]
 name = "theme-download"
@@ -492,3 +549,4 @@ group = "fonts"
 fedora = { build = "themes-download", group = "core" }
 debian = { build = "themes-download" }
 void = { build = "themes-download" }
+aerynos = { build = "themes-download" }

@@ -12,7 +12,8 @@
       "apt": "firefox",
       "dnf": "firefox",
       "flatpak": "org.mozilla.firefox",
-      "xbps": "firefox"
+      "xbps": "firefox",
+      "moss": "firefox"
     }
   },
   {
@@ -69,7 +70,8 @@
       "pacman": "kitty",
       "apt": "kitty",
       "dnf": "kitty",
-      "xbps": "kitty"
+      "xbps": "kitty",
+      "moss": "kitty"
     }
   },
   {
@@ -84,7 +86,8 @@
       "pacman": "foot",
       "apt": "foot",
       "dnf": "foot",
-      "xbps": "foot"
+      "xbps": "foot",
+      "moss": "foot"
     }
   },
   {
@@ -114,7 +117,8 @@
       "apt": "alacritty",
       "dnf": "alacritty",
       "flatpak": "org.alacritty.Alacritty",
-      "xbps": "alacritty"
+      "xbps": "alacritty",
+      "moss": "alacritty"
     }
   },
   {
@@ -142,7 +146,8 @@
       "pacman": "neovim",
       "apt": "neovim",
       "dnf": "neovim",
-      "xbps": "neovim"
+      "xbps": "neovim",
+      "moss": "neovim"
     }
   },
   {
@@ -158,7 +163,8 @@
       "apt": "kate",
       "dnf": "kate",
       "flatpak": "org.kde.kate",
-      "xbps": "kate"
+      "xbps": "kate",
+      "moss": "kate"
     }
   },
   {
@@ -171,7 +177,8 @@
     "tags": ["editor", "code", "fast", "rust", "collaborative"],
     "targets": {
       "aur": "zed-bin",
-      "flatpak": "dev.zed.Zed"
+      "flatpak": "dev.zed.Zed",
+      "moss": "zed"
     }
   },
   {
@@ -187,7 +194,8 @@
       "apt": "vlc",
       "dnf": "vlc",
       "flatpak": "org.videolan.VLC",
-      "xbps": "vlc"
+      "xbps": "vlc",
+      "moss": "vlc"
     }
   },
   {
@@ -203,7 +211,8 @@
       "apt": "mpv",
       "dnf": "mpv",
       "flatpak": "io.mpv.Mpv",
-      "xbps": "mpv"
+      "xbps": "mpv",
+      "moss": "mpv"
     }
   },
   {
@@ -231,7 +240,8 @@
       "pacman": "obs-studio",
       "apt": "obs-studio",
       "dnf": "obs-studio",
-      "flatpak": "com.obsproject.Studio"
+      "flatpak": "com.obsproject.Studio",
+      "moss": "obs-studio"
     }
   },
   {
@@ -247,7 +257,8 @@
       "apt": "easyeffects",
       "dnf": "easyeffects",
       "flatpak": "com.github.wwmm.easyeffects",
-      "xbps": "easyeffects"
+      "xbps": "easyeffects",
+      "moss": "easyeffects"
     }
   },
   {
@@ -262,7 +273,8 @@
       "pacman": "cava",
       "apt": "cava",
       "dnf": "cava",
-      "xbps": "cava"
+      "xbps": "cava",
+      "moss": "cava"
     }
   },
   {
@@ -305,7 +317,8 @@
     "targets": {
       "aur": "signal-desktop",
       "flatpak": "org.signal.Signal",
-      "xbps": "Signal-Desktop"
+      "xbps": "Signal-Desktop",
+      "moss": "signal-desktop"
     }
   },
   {
@@ -320,7 +333,8 @@
       "pacman": "btop",
       "apt": "btop",
       "dnf": "btop",
-      "xbps": "btop"
+      "xbps": "btop",
+      "moss": "btop"
     }
   },
   {
@@ -335,7 +349,8 @@
       "pacman": "fastfetch",
       "apt": "fastfetch",
       "dnf": "fastfetch",
-      "xbps": "fastfetch"
+      "xbps": "fastfetch",
+      "moss": "fastfetch"
     }
   },
   {
@@ -365,7 +380,8 @@
       "pacman": "gnome-disk-utility",
       "apt": "gnome-disk-utility",
       "dnf": "gnome-disk-utility",
-      "xbps": "gnome-disk-utility"
+      "xbps": "gnome-disk-utility",
+      "moss": "gnome-disk-utility"
     }
   },
   {
@@ -381,7 +397,8 @@
       "apt": "filelight",
       "dnf": "filelight",
       "flatpak": "org.kde.filelight",
-      "xbps": "filelight"
+      "xbps": "filelight",
+      "moss": "filelight"
     }
   },
   {
@@ -396,7 +413,8 @@
       "pacman": "docker",
       "apt": "docker.io",
       "dnf": "docker",
-      "xbps": "docker"
+      "xbps": "docker",
+      "moss": "docker"
     }
   },
   {
@@ -411,7 +429,8 @@
       "pacman": "nodejs",
       "apt": "nodejs",
       "dnf": "nodejs",
-      "xbps": "nodejs"
+      "xbps": "nodejs",
+      "moss": "nodejs"
     }
   },
   {
@@ -465,7 +484,8 @@
       "pacman": "qt6ct",
       "apt": "qt6ct",
       "dnf": "qt6ct",
-      "xbps": "qt6ct"
+      "xbps": "qt6ct",
+      "moss": "qt6ct"
     }
   },
   {
@@ -480,7 +500,8 @@
       "pacman": "kvantum",
       "apt": "qt6-style-kvantum",
       "dnf": "kvantum",
-      "xbps": "kvantum"
+      "xbps": "kvantum",
+      "moss": "kvantum"
     }
   },
   {
@@ -516,7 +537,8 @@
     "category": "fonts",
     "tags": ["font", "nerd", "firacode", "ligatures", "coding"],
     "targets": {
-      "pacman": "ttf-firacode-nerd"
+      "pacman": "ttf-firacode-nerd",
+      "moss": "font-firacode-nerd"
     }
   },
   {
@@ -542,7 +564,8 @@
       "pacman": "steam",
       "apt": "steam-installer",
       "dnf": "steam",
-      "flatpak": "com.valvesoftware.Steam"
+      "flatpak": "com.valvesoftware.Steam",
+      "moss": "steam"
     }
   },
   {
@@ -558,7 +581,8 @@
       "apt": "lutris",
       "dnf": "lutris",
       "flatpak": "net.lutris.Lutris",
-      "xbps": "lutris"
+      "xbps": "lutris",
+      "moss": "lutris"
     }
   },
   {
@@ -571,7 +595,8 @@
     "tags": ["games", "epic", "gog", "gaming", "launcher"],
     "targets": {
       "aur": "heroic-games-launcher-bin",
-      "flatpak": "com.heroicgameslauncher.hgl"
+      "flatpak": "com.heroicgameslauncher.hgl",
+      "moss": "heroic-games-launcher"
     }
   },
   {
@@ -586,7 +611,8 @@
       "apt": "mangohud",
       "dnf": "mangohud",
       "flatpak": "org.freedesktop.Platform.VulkanLayer.MangoHud",
-      "xbps": "MangoHud"
+      "xbps": "MangoHud",
+      "moss": "mangohud"
     }
   },
   {
@@ -601,7 +627,8 @@
       "pacman": "gamemode",
       "apt": "gamemode",
       "dnf": "gamemode",
-      "xbps": "gamemode"
+      "xbps": "gamemode",
+      "moss": "gamemode"
     }
   },
   {
@@ -632,7 +659,8 @@
       "apt": "nautilus",
       "dnf": "nautilus",
       "flatpak": "org.gnome.Nautilus",
-      "xbps": "nautilus"
+      "xbps": "nautilus",
+      "moss": "nautilus"
     }
   },
   {
@@ -648,7 +676,8 @@
       "apt": "dolphin",
       "dnf": "dolphin",
       "flatpak": "org.kde.dolphin",
-      "xbps": "dolphin"
+      "xbps": "dolphin",
+      "moss": "dolphin"
     }
   },
   {

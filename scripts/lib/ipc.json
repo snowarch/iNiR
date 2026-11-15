@@ -3145,7 +3145,7 @@
   {
    "name": "packageSearch",
    "family": "shared",
-   "description": "Package search service. Searches pacman/AUR or XBPS repositories and installed packages.",
+   "description": "Package search service. Searches pacman/AUR, XBPS or moss repositories and installed packages.",
    "notes": "",
    "example": "",
    "functions": [

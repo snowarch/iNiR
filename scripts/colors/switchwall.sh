@@ -20,6 +20,8 @@ if ! command -v jq &>/dev/null; then
     echo "[switchwall.sh] Missing required dependency: jq"
     if command -v xbps-install >/dev/null 2>&1; then
         echo "  Void: sudo xbps-install -S jq"
+    elif command -v moss >/dev/null 2>&1; then
+        echo "  AerynOS: sudo moss pkg add jq"
     elif command -v pacman >/dev/null 2>&1; then
         echo "  Arch: sudo pacman -S jq"
     else
@@ -410,6 +412,17 @@ switch() {
                         "Missing dependency: ffmpeg (needed for thumbnail generation)")
                     if [[ "$action" == "install_void" ]]; then
                         kitty -1 sudo xbps-install -S ffmpeg
+                    fi
+                elif command -v moss >/dev/null 2>&1; then
+                    echo "AerynOS: sudo moss pkg add ffmpeg"
+                    action=$(notify_action \
+                        -a "Wallpaper switcher" \
+                        -c "im.error" \
+                        -A "install_aerynos=Install (AerynOS)" \
+                        "Can't switch to video wallpaper" \
+                        "Missing dependency: ffmpeg (needed for thumbnail generation)")
+                    if [[ "$action" == "install_aerynos" ]]; then
+                        kitty -1 sudo moss pkg add ffmpeg
                     fi
                 elif command -v pacman >/dev/null 2>&1; then
                     echo "Arch: sudo pacman -S ffmpeg"

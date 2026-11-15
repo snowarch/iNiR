@@ -11,7 +11,7 @@ import Quickshell.Io
 /**
  * PackageSearch — Async package manager search service.
  *
- * Searches pacman/AUR or XBPS repositories for packages matching a query.
+ * Searches pacman/AUR, XBPS or moss repositories for packages matching a query.
  * Results are parsed into structured objects with name, version, repo,
  * description, and installed status.
  *
@@ -67,9 +67,11 @@ Singleton {
                 "elif command -v paru &>/dev/null; then paru -S -- \"$1\"; " +
                 "elif command -v pacman &>/dev/null; then sudo pacman -S -- \"$1\"; " +
                 "elif command -v xbps-install &>/dev/null; then sudo xbps-install -S -- \"$1\"; " +
+                "elif command -v moss &>/dev/null; then sudo moss pkg add -- \"$1\"; " +
                 "else printf 'No supported package manager found\\n' >&2; exit 127; fi"
             : "if command -v pacman &>/dev/null; then sudo pacman -S -- \"$1\"; " +
                 "elif command -v xbps-install &>/dev/null; then sudo xbps-install -S -- \"$1\"; " +
+                "elif command -v moss &>/dev/null; then sudo moss pkg add -- \"$1\"; " +
                 "else printf 'No supported package manager found\\n' >&2; exit 127; fi"
         root._runTerminalScript(script, [pkg])
         return true
@@ -86,6 +88,7 @@ Singleton {
         root._runTerminalScript(
             "if command -v pacman &>/dev/null; then sudo pacman -Rns -- \"$1\"; " +
             "elif command -v xbps-remove &>/dev/null; then sudo xbps-remove -R -- \"$1\"; " +
+            "elif command -v moss &>/dev/null; then sudo moss pkg remove -- \"$1\"; " +
             "else printf 'No supported package manager found\\n' >&2; exit 127; fi",
             [pkg]
         )
@@ -97,6 +100,7 @@ Singleton {
             "if command -v pacman &>/dev/null; then " +
                 "if command -v yay &>/dev/null; then yay; elif command -v paru &>/dev/null; then paru; else sudo pacman -Syu; fi; " +
             "elif command -v xbps-install &>/dev/null; then sudo xbps-install -Su; " +
+            "elif command -v moss &>/dev/null; then sudo moss sync -u; " +
             "else printf 'No supported package manager found\\n' >&2; exit 127; fi",
             []
         )
@@ -118,6 +122,7 @@ Singleton {
             "if command -v pacman &>/dev/null; then " +
                 "if command -v paccache &>/dev/null; then sudo paccache -rk1; else printf 'paccache is unavailable; install pacman-contrib\\n' >&2; exit 127; fi; " +
             "elif command -v xbps-remove &>/dev/null; then sudo xbps-remove -O; " +
+            "elif command -v moss &>/dev/null; then sudo moss cache prune; " +
             "else printf 'No supported package cache cleaner found\\n' >&2; exit 127; fi",
             []
         )
@@ -129,7 +134,18 @@ Singleton {
             "status=${line:1:1}; rest=${line#*] }; pkgver=${rest%% *}; " +
             "name=$(xbps-uhelper getpkgname \"$pkgver\"); version=${pkgver#\"$name\"-}; " +
             "desc=${rest#\"$pkgver\"}; desc=\"${desc#\"${desc%%[![:space:]]*}\"}\"; " +
-            "printf '__XBPS__\\t%s\\t%s\\t%s\\t%s\\n' \"$status\" \"$name\" \"$version\" \"$desc\"; " +
+            "printf '__ROW__\\txbps\\t%s\\t%s\\t%s\\t%s\\n' \"$status\" \"$name\" \"$version\" \"$desc\"; " +
+            "done"
+    }
+
+    // moss prints "name  version-release - summary", coloured; installed rows are marked from the installed list.
+    function _mossSearchPipeline(list: string, limit: int): string {
+        const plain = "sed 's/\\x1b\\[[0-9;]*m//g'"
+        return "inst=\" $(moss pkg list --installed 2>/dev/null | " + plain + " | awk '{printf \"%s \", $1}') \"; " +
+            "moss pkg list " + list + " 2>/dev/null | " + plain + " | grep -iF -- \"$1\" | head -" + limit + " | " +
+            "while read -r name version rest; do " +
+            "status=' '; [[ \"$inst\" == *\" $name \"* ]] && status='*'; " +
+            "printf '__ROW__\\tmoss\\t%s\\t%s\\t%s\\t%s\\n' \"$status\" \"$name\" \"$version\" \"${rest#- }\"; " +
             "done"
     }
 
@@ -170,6 +186,8 @@ Singleton {
                     "else pacman -Ss \"$1\" 2>/dev/null | head -200; fi; " +
                 "elif command -v xbps-query &>/dev/null && command -v xbps-uhelper &>/dev/null; then " +
                     xbpsSearch + "; " +
+                "elif command -v moss &>/dev/null; then " +
+                    root._mossSearchPipeline("--available", 200) + "; " +
                 "else exit 127; fi",
                 "bash", root.query
             ]
@@ -213,15 +231,15 @@ Singleton {
         let i = 0
         while (i < lines.length) {
             const line = lines[i]
-            if (line.startsWith("__XBPS__\t")) {
+            if (line.startsWith("__ROW__\t")) {
                 const fields = line.split("\t")
-                if (fields.length >= 5) {
+                if (fields.length >= 6) {
                     pkgs.push({
-                        name: fields[2],
-                        version: fields[3],
-                        repo: "xbps",
-                        description: fields.slice(4).join("\t"),
-                        installed: fields[1] === "*",
+                        name: fields[3],
+                        version: fields[4],
+                        repo: fields[1],
+                        description: fields.slice(5).join("\t"),
+                        installed: fields[2] === "*",
                         votes: 0,
                         popularity: 0,
                         isAur: false
@@ -285,6 +303,8 @@ Singleton {
             "if command -v pacman &>/dev/null; then pacman -Qs \"$1\" 2>/dev/null | head -100; " +
             "elif command -v xbps-query &>/dev/null && command -v xbps-uhelper &>/dev/null; then " +
                 xbpsSearch + "; " +
+            "elif command -v moss &>/dev/null; then " +
+                root._mossSearchPipeline("--installed", 100) + "; " +
             "else exit 127; fi",
             "bash", root.query
         ]
@@ -309,7 +329,7 @@ Singleton {
         }
     }
 
-    /// Package search service. Searches pacman/AUR or XBPS repositories and installed packages.
+    /// Package search service. Searches pacman/AUR, XBPS or moss repositories and installed packages.
     IpcHandler {
         target: "packageSearch"
 

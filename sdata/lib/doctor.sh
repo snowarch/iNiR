@@ -143,13 +143,26 @@ check_dependencies() {
 
     # the profile buttons' daemon where nothing manages power yet; Void lists it above
     case "${OS_GROUP_ID:-unknown}" in
-        arch|fedora|debian|ubuntu)
+        arch|fedora|debian|ubuntu|aerynos)
             if power_profiles_wanted; then
                 missing+=("power-profiles-daemon")
                 missing_cmds+=("power-profiles")
             fi
             ;;
     esac
+
+    # AerynOS: what setup built into the home links against a /usr that moss replaces whole; a library that moved
+    # leaves the command there but unable to start, so it is missing too
+    if [[ "${OS_GROUP_ID:-unknown}" == "aerynos" ]]; then
+        local built_path
+        for cmd in hyprpicker swappy songrec blueman-manager; do
+            built_path="$(command -v "$cmd" 2>/dev/null || true)"
+            if [[ "$built_path" == "$HOME/"* ]] && ! home_build_runs "$built_path"; then
+                missing+=("$cmd (rebuild)")
+                missing_cmds+=("$cmd")
+            fi
+        done
+    fi
 
     # Void's source provider is version-pinned, so an old binary is also a
     # repairable dependency rather than merely an available command.
@@ -235,7 +248,7 @@ check_dependencies() {
     IFS=: read -r -a qt_path <<<"${QT_PLUGIN_PATH:-}"
     for nix_profile in "${DOCTOR_NIX_PROFILES[@]}"; do qt_path+=("$nix_profile/lib/qt-6/plugins"); done
     for qt_plugins in "$(qtpaths6 --plugin-dir 2>/dev/null || qtpaths --plugin-dir 2>/dev/null || true)" \
-            "${qt_path[@]}" /usr/lib/qt6/plugins /usr/lib64/qt6/plugins /usr/lib/x86_64-linux-gnu/qt6/plugins; do
+            "${qt_path[@]}" "$HOME/.local/lib/qt6/plugins" /usr/lib/qt6/plugins /usr/lib64/qt6/plugins /usr/lib/x86_64-linux-gnu/qt6/plugins; do
         if [[ -n "$qt_plugins" && -f "$qt_plugins/platformthemes/KDEPlasmaPlatformTheme6.so" ]]; then
             qt_theme_found=true
             break
@@ -307,6 +320,9 @@ check_dependencies() {
                 ;;
             void)
                 echo -e "    ${STY_FAINT}Run: ./setup install (repairs the matching XBPS providers)${STY_RST}"
+                ;;
+            aerynos)
+                echo -e "    ${STY_FAINT}Run: ./setup install (installs the matching moss packages)${STY_RST}"
                 ;;
             *)
                 echo -e "    ${STY_FAINT}Install these tools using your package manager${STY_RST}"
@@ -1758,6 +1774,7 @@ check_qt_theming() {
     for plugindir in "${DOCTOR_NIX_PROFILES[@]}"; do qt_path+=("$plugindir/lib/qt-6/plugins"); done
     for plugindir in "${qt_path[@]}"; do search_dirs+=("$plugindir/platformthemes"); done
     search_dirs+=(
+        "$HOME/.local/lib/qt6/plugins/platformthemes"
         /usr/lib/qt6/plugins/platformthemes
         /usr/lib64/qt6/plugins/platformthemes
         /usr/lib/x86_64-linux-gnu/qt6/plugins/platformthemes
@@ -1777,6 +1794,7 @@ check_qt_theming() {
             fedora) echo -e "    ${STY_FAINT}Run: sudo dnf install plasma-integration${STY_RST}" ;;
             debian|ubuntu) echo -e "    ${STY_FAINT}Run: sudo apt install plasma-integration${STY_RST}" ;;
             void) echo -e "    ${STY_FAINT}Run: ./setup install (repairs the managed Void provider)${STY_RST}" ;;
+            aerynos) echo -e "    ${STY_FAINT}Run: sudo moss pkg add plasma-integration${STY_RST}" ;;
             *) echo -e "    ${STY_FAINT}Install plasma-integration using your package manager${STY_RST}" ;;
         esac
     else
@@ -1811,7 +1829,9 @@ check_qt_theming() {
     IFS=: read -r -a qt_style_path <<<"${QT_PLUGIN_PATH:-}"
     for styledir in "${DOCTOR_NIX_PROFILES[@]}"; do qt_style_path+=("$styledir/lib/qt-6/plugins"); done
     for styledir in "${qt_style_path[@]}"; do style_dirs+=("$styledir/styles"); done
+    # where setup builds Darkly when /usr belongs to the package manager (AerynOS)
     style_dirs+=(
+        "$HOME/.local/lib/qt6/plugins/styles"
         /usr/lib/qt6/plugins/styles
         /usr/lib64/qt6/plugins/styles
         /usr/lib/x86_64-linux-gnu/qt6/plugins/styles
@@ -1827,7 +1847,7 @@ check_qt_theming() {
         doctor_fail "Darkly Qt style not installed (Qt apps won't have Material You style)"
         case "${OS_GROUP_ID:-unknown}" in
             arch) echo -e "    ${STY_FAINT}Run: yay -S darkly-bin${STY_RST}" ;;
-            void) echo -e "    ${STY_FAINT}Run: ./setup install (repairs the pinned Void Darkly provider)${STY_RST}" ;;
+            void|aerynos) echo -e "    ${STY_FAINT}Run: ./setup install (repairs the pinned Darkly provider)${STY_RST}" ;;
             *) echo -e "    ${STY_FAINT}Install darkly from: https://github.com/AlessioC31/darkly${STY_RST}" ;;
         esac
     else
@@ -1847,6 +1867,7 @@ check_qt_theming() {
                 debian|ubuntu) echo -e "    ${STY_FAINT}Run: sudo apt install kde-cli-tools${STY_RST}" ;;
                 opensuse) echo -e "    ${STY_FAINT}Run: sudo zypper install kde-cli-tools6${STY_RST}" ;;
                 void) echo -e "    ${STY_FAINT}Run: sudo xbps-install -S kde-cli-tools${STY_RST}" ;;
+                aerynos) echo -e "    ${STY_FAINT}Run: sudo moss pkg add kde-cli-tools${STY_RST}" ;;
                 *) echo -e "    ${STY_FAINT}Install kde-cli-tools using your package manager${STY_RST}" ;;
             esac
         fi
@@ -1940,7 +1961,7 @@ run_doctor_with_fixes() {
     if _doctor_wants 1 && [[ ${#doctor_missing_deps[@]} -gt 0 ]]; then
         detect_distro
         case "$OS_GROUP_ID" in
-            arch|fedora|debian|ubuntu|void)
+            arch|fedora|debian|ubuntu|void|aerynos)
                 if ! $ask || tui_confirm "Install missing dependencies now?"; then
                     SKIP_SYSUPDATE=true
                     ONLY_MISSING_DEPS="${doctor_missing_deps[*]}"

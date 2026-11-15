@@ -865,6 +865,9 @@ uninstall_show_manual_steps() {
         echo ""
         echo -e "  ${STY_CYAN}# Remove SDDM theme${STY_RST}"
         echo -e "  sudo rm -rf /usr/share/sddm/themes/ii-pixel"
+        if [[ -f /etc/tmpfiles.d/inir-sddm.conf ]]; then
+            echo -e "  sudo rm -rf /etc/tmpfiles.d/inir-sddm.conf /var/lib/inir/sddm"
+        fi
         echo ""
         echo -e "  ${STY_CYAN}# Remove SDDM theme config drop-in${STY_RST}"
         echo -e "  sudo rm -f /etc/sddm.conf.d/99-inir-theme.conf /etc/sddm.conf.d/inir-theme.conf"
@@ -1007,6 +1010,27 @@ uninstall_show_packages() {
                     echo ""
                 fi
                 ;;
+            aerynos)
+                # One name moss does not know fails the whole removal: only what moss installed goes there.
+                local moss_have=() home_built=() name
+                local installed_list
+                installed_list="$(moss pkg list --installed 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g' | awk '{print $1}')"
+                for name in "${safe_to_remove[@]}" "${ask_before_remove[@]}"; do
+                    grep -qxF "$name" <<< "$installed_list" && moss_have+=("$name")
+                done
+                if [[ ${#moss_have[@]} -gt 0 ]]; then
+                    echo -e "  ${STY_YELLOW}# Check before removing:${STY_RST}"
+                    echo -e "  # sudo moss pkg remove ${moss_have[*]}"
+                    echo ""
+                fi
+                for name in "${XDG_DATA_HOME:-$HOME/.local/share}"/inir/providers/*; do
+                    [[ -f "$name" ]] && home_built+=("${name##*/}")
+                done
+                if [[ ${#home_built[@]} -gt 0 ]]; then
+                    echo -e "  ${STY_FAINT}# Built by iNiR into ~/.local (bin, lib, share): ${home_built[*]}${STY_RST}"
+                    echo ""
+                fi
+                ;;
             *)
                 echo -e "${STY_FAINT}Remove packages using your package manager.${STY_RST}"
                 echo -e "${STY_FAINT}Check ~/.cargo/bin and ~/go/bin for tools installed there.${STY_RST}"
@@ -1023,6 +1047,7 @@ uninstall_show_packages() {
 
     case "$distro" in
         void) echo -e "${STY_FAINT}Tip: Run 'xbps-query -X <package>' to see reverse dependencies.${STY_RST}" ;;
+        aerynos) echo -e "${STY_FAINT}Tip: Run 'moss pkg list --explicit' to see what you added yourself.${STY_RST}" ;;
         arch) echo -e "${STY_FAINT}Tip: Run 'pacman -Qi <package>' to inspect package dependencies.${STY_RST}" ;;
         debian|ubuntu) echo -e "${STY_FAINT}Tip: Run 'apt-cache rdepends <package>' to see reverse dependencies.${STY_RST}" ;;
         *) echo -e "${STY_FAINT}Review reverse dependencies with your package manager before removing shared tools.${STY_RST}" ;;

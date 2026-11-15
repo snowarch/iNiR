@@ -76,6 +76,7 @@ source ./sdata/lib/environment-variables.sh
 source ./sdata/lib/functions.sh
 source ./sdata/lib/tui.sh
 source ./sdata/lib/package-installers.sh
+source ./sdata/lib/user-providers.sh
 source ./sdata/lib/dist-determine.sh
 source ./sdata/lib/conflicts.sh
 source ./sdata/lib/versioning.sh
@@ -849,10 +850,12 @@ show_status_environment() {
 
     # Distro
     local distro="unknown"
-    if [[ -r /etc/os-release ]]; then
-        # shellcheck disable=SC1091
+    local os_release=/etc/os-release
+    [[ -s "$os_release" ]] || os_release=/usr/lib/os-release
+    if [[ -r "$os_release" ]]; then
+        # shellcheck disable=SC1090
         local pretty
-        pretty=$(. /etc/os-release && printf '%s' "${PRETTY_NAME:-${NAME:-unknown}}")
+        pretty=$(. "$os_release" && printf '%s' "${PRETTY_NAME:-${NAME:-unknown}}")
         [[ -n "$pretty" ]] && distro="$pretty"
     fi
     tui_table_row "Distro" "$distro" 22 42
@@ -927,6 +930,10 @@ show_status_environment() {
             fi
         done
         [[ -n "$qs_pkg" ]] && tui_table_row "QS Package" "$qs_pkg" 22 42
+    elif command -v moss >/dev/null 2>&1; then
+        local qs_moss
+        qs_moss="$(moss pkg list -i 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g' | awk '$1 == "quickshell" {print $2; exit}')"
+        [[ -n "$qs_moss" ]] && tui_table_row "QS Package" "quickshell ${qs_moss} (moss)" 22 42
     elif command -v xbps-query >/dev/null 2>&1 \
             && xbps-query -p pkgver quickshell >/dev/null 2>&1; then
         local qs_pkgver qs_repo
@@ -1143,8 +1150,10 @@ show_info() {
     # System detection
     local distro_name="Unknown"
     local distro_id="unknown"
-    if [[ -f /etc/os-release ]]; then
-        source /etc/os-release
+    local os_release=/etc/os-release
+    [[ -s "$os_release" ]] || os_release=/usr/lib/os-release
+    if [[ -f "$os_release" ]]; then
+        source "$os_release"
         distro_name="${PRETTY_NAME:-$NAME}"
         distro_id="${ID}"
     fi
@@ -3274,7 +3283,7 @@ case "$COMMAND" in
         detect_distro
         case "$OS_GROUP_ID" in
             ubuntu|debian) _family=debian ;;
-            arch|fedora|void) _family="$OS_GROUP_ID" ;;
+            arch|fedora|void|aerynos) _family="$OS_GROUP_ID" ;;
             *) _family="" ;;
         esac
         _providers="./sdata/dist-${_family}/providers.sh"

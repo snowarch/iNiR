@@ -8,8 +8,10 @@
 #####################################################################################
 detect_system() {
     # Distro detection
-    if [[ -f /etc/os-release ]]; then
-        source /etc/os-release
+    local os_release=/etc/os-release
+    [[ -s "$os_release" ]] || os_release=/usr/lib/os-release
+    if [[ -s "$os_release" ]]; then
+        source "$os_release"
         DETECTED_DISTRO="${PRETTY_NAME:-$NAME}"
         DETECTED_DISTRO_ID="${ID}"
     else
@@ -133,7 +135,7 @@ echo ""
 # Debian/Ubuntu are first-class automated paths now; do not scare those users
 # with the old Arch-only warning.
 case "${OS_GROUP_ID:-unknown}" in
-    arch|fedora|debian|ubuntu|void)
+    arch|fedora|debian|ubuntu|void|aerynos)
         tui_success "${DETECTED_DISTRO} has an automated dependency path."
         ;;
     nixos)

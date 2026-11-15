@@ -103,6 +103,7 @@ Singleton {
             "[ \"$pm\" = unknown ] && command -v xbps-query &>/dev/null && command -v xbps-install &>/dev/null && command -v xbps-remove &>/dev/null && pm=xbps; " +
             "[ \"$pm\" = unknown ] && command -v apt &>/dev/null && pm=apt; " +
             "[ \"$pm\" = unknown ] && command -v dnf &>/dev/null && pm=dnf; " +
+            "[ \"$pm\" = unknown ] && command -v moss &>/dev/null && pm=moss; " +
             "echo \"$pm\"; " +
             "command -v flatpak &>/dev/null && echo flatpak || echo noflatpak; " +
             "command -v yay &>/dev/null && echo yay || (command -v paru &>/dev/null && echo paru || echo noaur)"
@@ -144,6 +145,9 @@ Singleton {
                 break
             case "dnf":
                 cmd = "rpm -qa --qf '%{NAME}\\n' 2>/dev/null"
+                break
+            case "moss":
+                cmd = "moss pkg list --installed 2>/dev/null | sed 's/\\x1b\\[[0-9;]*m//g' | awk '{print $1}'"
                 break
             default:
                 root.checkingInstalled = false
@@ -194,6 +198,7 @@ Singleton {
                 if (targets.xbps && installedSet.has(targets.xbps)) found = true
                 if (targets.apt && installedSet.has(targets.apt)) found = true
                 if (targets.dnf && installedSet.has(targets.dnf)) found = true
+                if (targets.moss && installedSet.has(targets.moss)) found = true
                 if (targets.flatpak && installedSet.has(targets.flatpak)) found = true
 
                 result[app.id] = found
@@ -231,6 +236,7 @@ Singleton {
         if (pm === "xbps" && targets.xbps) return { pm: "xbps", pkg: targets.xbps }
         if (pm === "apt" && targets.apt) return { pm: "apt", pkg: targets.apt }
         if (pm === "dnf" && targets.dnf) return { pm: "dnf", pkg: targets.dnf }
+        if (pm === "moss" && targets.moss) return { pm: "moss", pkg: targets.moss }
 
         // Flatpak fallback
         if (root._flatpakAvailable && targets.flatpak) return { pm: "flatpak", pkg: targets.flatpak }
@@ -273,6 +279,9 @@ Singleton {
                 break
             case "dnf":
                 script = 'sudo dnf install -- "$1"'
+                break
+            case "moss":
+                script = 'sudo moss pkg add -- "$1"'
                 break
             case "flatpak":
                 script = 'flatpak install -y "$1"'
@@ -329,6 +338,17 @@ Singleton {
                 pkg = targets.dnf ?? ""
                 if (pkg.length === 0) return false
                 script = 'sudo dnf remove -- "$1"'
+                break
+            case "moss":
+                pkg = targets.moss ?? ""
+                if (pkg.length > 0) {
+                    script = 'sudo moss pkg remove -- "$1"'
+                } else if (root._flatpakAvailable && targets.flatpak) {
+                    pkg = targets.flatpak
+                    script = 'flatpak uninstall -y "$1"'
+                } else {
+                    return false
+                }
                 break
             default:
                 // Try flatpak remove

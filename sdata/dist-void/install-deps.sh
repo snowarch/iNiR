@@ -356,19 +356,19 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
     install_void_ydotool || return 1
   fi
   if $_need_missioncenter; then
-    install_void_missioncenter || return 1
+    install_user_missioncenter || return 1
   fi
   if $_need_tesseract_adapter; then
     configure_void_tesseract_command || return 1
   fi
   if $_need_visual_providers; then
-    install_void_visual_providers || return 1
+    install_user_visual_themes || return 1
   fi
   if $_need_font_providers; then
-    install_void_font_providers || return 1
+    install_user_fonts || return 1
   fi
   if $_need_darkly; then
-    install_void_darkly || return 1
+    install_darkly_source /usr || return 1
   fi
   if [[ ${#_ocr_fallback_models[@]} -gt 0 ]]; then
     install_void_ocr_models "${_ocr_fallback_models[@]}" || return 1
@@ -426,7 +426,7 @@ if ${INSTALL_TOOLKIT:-true}; then
   tui_info "Installing toolkit packages..."
   v pkg_sudo xbps-install "${installflags[@]}" "${VOID_TOOLKIT_PACKAGES[@]}"
   install_void_ydotool || return 1
-  install_void_missioncenter || return 1
+  install_user_missioncenter || return 1
 fi
 
 if ${INSTALL_SCREENCAPTURE:-true}; then
@@ -446,9 +446,9 @@ fi
 if ${INSTALL_FONTS:-true}; then
   tui_info "Installing fonts and theming packages..."
   v pkg_sudo xbps-install "${installflags[@]}" "${VOID_FONTS_PACKAGES[@]}"
-  install_void_font_providers || return 1
-  install_void_visual_providers || return 1
-  install_void_darkly || return 1
+  install_user_fonts || return 1
+  install_user_visual_themes || return 1
+  install_darkly_source /usr || return 1
 fi
 
 if command -v qs >/dev/null 2>&1; then

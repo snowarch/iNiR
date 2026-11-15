@@ -184,6 +184,32 @@ function print_void_info(){
 }
 
 ###############################################################################
+# AerynOS detection
+###############################################################################
+# AerynOS keeps /etc stateless: os-release may live only in /usr/lib, so both are read.
+os_release_id(){
+  local f
+  for f in /etc/os-release /usr/lib/os-release; do
+    [[ -s "$f" ]] || continue
+    sed -n 's/^ID="\{0,1\}\([^"]*\)"\{0,1\}$/\1/p' "$f" | head -n1
+    return 0
+  done
+}
+
+function print_aerynos_info(){
+  if [[ "$(os_release_id)" == aerynos ]] || [[ -x /usr/bin/moss && -d /.moss ]]; then
+    OS_GROUP_ID="aerynos"
+    OS_SPECIFIC_ID="aerynos"
+    OS_VERSION=$(sed -n 's/^VERSION_ID="\{0,1\}\([^"]*\)"\{0,1\}$/\1/p' /etc/os-release /usr/lib/os-release 2>/dev/null | head -n1)
+    OS_PRETTY_NAME="AerynOS${OS_VERSION:+ $OS_VERSION}"
+
+    if ! ${quiet:-false}; then
+      echo -e "${STY_GREEN}Detected: AerynOS${STY_RST}"
+    fi
+  fi
+}
+
+###############################################################################
 # Gentoo detection
 ###############################################################################
 function print_gentoo_info(){
@@ -233,6 +259,7 @@ function print_alpine_info(){
 
 # Array of detection functions (order matters - more specific first)
 print_os_group_id_functions=(
+  print_aerynos_info
   print_arch_info
   print_fedora_info
   print_debian_info
@@ -281,6 +308,7 @@ detect_distro(){
     echo "  - Debian and derivatives (Ubuntu, Pop!_OS, Mint, elementary, Zorin, MX)"
     echo "  - openSUSE (Tumbleweed, Leap, MicroOS)"
     echo "  - Void Linux"
+    echo "  - AerynOS"
     echo "  - Gentoo"
     echo "  - NixOS (requires manual configuration)"
     echo "  - Alpine Linux"
@@ -335,6 +363,7 @@ get_package_manager() {
     debian|ubuntu) echo "apt" ;;
     opensuse) echo "zypper" ;;
     void) echo "xbps" ;;
+    aerynos) echo "moss" ;;
     gentoo) echo "emerge" ;;
     nixos) echo "nix" ;;
     alpine) echo "apk" ;;

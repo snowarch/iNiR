@@ -184,6 +184,7 @@ kde_platform_theme_present() {
     || pacman -Q plasma-integration >/dev/null 2>&1 \
     || dpkg -l plasma-integration 2>/dev/null | grep -q '^ii' \
     || rpm -q plasma-integration >/dev/null 2>&1 \
+    || [[ -f /usr/lib/qt6/plugins/platformthemes/KDEPlasmaPlatformTheme6.so ]] \
     || qt_plugin_on_path platformthemes/KDEPlasmaPlatformTheme6.so
 }
 

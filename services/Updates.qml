@@ -7,7 +7,7 @@ import Quickshell
 import Quickshell.Io
 
 /*
- * System updates service for pacman/checkupdates and XBPS.
+ * System updates service for pacman/checkupdates, XBPS and moss.
  */
 Singleton {
     id: root
@@ -30,7 +30,8 @@ Singleton {
         // checkupdates syncs a copy of the package databases: background work, at nice 19 and idle IO.
         checkUpdatesProc.command = ["bash", "-c",
             'p=(nice -n 19); command -v ionice >/dev/null && p+=(ionice -c 3); exec "${p[@]}" "$@"', "_"]
-            .concat(root._backend === "xbps" ? ["xbps-install", "-nu"] : ["checkupdates"])
+            .concat(root._backend === "xbps" ? ["xbps-install", "-nu"]
+                : root._backend === "moss" ? ["moss", "pkg", "list", "--sync"] : ["checkupdates"])
         checkUpdatesProc.running = true;
     }
 
@@ -70,6 +71,7 @@ Singleton {
         command: ["bash", "-c",
             "if command -v checkupdates &>/dev/null; then printf 'pacman\\n'; " +
             "elif command -v xbps-install &>/dev/null; then printf 'xbps\\n'; " +
+            "elif command -v moss &>/dev/null; then printf 'moss\\n'; " +
             "else exit 1; fi"
         ]
         stdout: SplitParser {

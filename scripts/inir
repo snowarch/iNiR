@@ -538,7 +538,7 @@ _inir_detect_stale_local_qs() {
 #   arch-git        quickshell-git               -> rebuilt from its AUR recipe
 #   arch-provider   a fork or quickshell-bin providing quickshell
 #                                                -> quickshell from Arch's recipe replaces it (pacman asks)
-#   void-xbps, fedora-pkg, nixos                 -> the distro's own update
+#   void-xbps, aerynos-moss, fedora-pkg, nixos   -> the distro's own update
 #   debian, source, unknown                      -> no automatic path
 _inir_quickshell_install_kind() {
     if command -v pacman >/dev/null 2>&1; then
@@ -553,6 +553,9 @@ _inir_quickshell_install_kind() {
     elif command -v xbps-query >/dev/null 2>&1 \
             && xbps-query -p pkgver quickshell >/dev/null 2>&1; then
         printf 'void-xbps:quickshell'; return
+    elif command -v moss >/dev/null 2>&1 \
+            && moss pkg list --installed 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g' | awk '$1 == "quickshell" { f = 1 } END { exit !f }'; then
+        printf 'aerynos-moss:quickshell'; return
     elif command -v rpm >/dev/null 2>&1; then
         local q
         q="$(rpm -qa 2>/dev/null | grep -E '^quickshell(-git)?-[0-9]' | head -1)"
@@ -580,6 +583,7 @@ _inir_quickshell_fix_plan() {
         arch-git)      printf 'rebuild quickshell-git from its AUR recipe' ;;
         arch-provider) printf "replace %s with quickshell built from Arch's recipe (pacman asks first)" "$pkg" ;;
         void-xbps)     printf 'reinstall quickshell with xbps-install' ;;
+        aerynos-moss)  printf 'update the system with moss sync' ;;
         fedora-pkg)    printf 'upgrade %s with dnf' "$pkg" ;;
         nixos)         printf 'run nixos-rebuild switch --upgrade' ;;
     esac
@@ -633,6 +637,7 @@ _inir_quickshell_fix_run() {
         arch-repo|arch-provider) _inir_quickshell_makepkg "$_INIR_QS_ARCH_RECIPE" "$mode" ;;
         arch-git)                _inir_quickshell_makepkg "$_INIR_QS_AUR_GIT_RECIPE" "$mode" ;;
         void-xbps)               sudo xbps-install -Sf $yes quickshell ;;
+        aerynos-moss)            sudo moss sync -u $yes ;;
         fedora-pkg)              sudo dnf upgrade --refresh $yes "$pkg" ;;
         nixos)                   sudo nixos-rebuild switch --upgrade ;;
         *)                       return 2 ;;

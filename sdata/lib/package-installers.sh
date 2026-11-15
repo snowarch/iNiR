@@ -72,7 +72,11 @@ _show_privilege_instructions() {
     echo -e "${STY_CYAN}Recommended solutions:${STY_RST}" >&2
     echo "  1. Switch to a virtual terminal (Ctrl+Alt+F2-F6) and login as root" >&2
     echo "" >&2
-    if [[ "${OS_GROUP_ID:-}" == "void" || -f /etc/void-release ]]; then
+    if [[ "${OS_GROUP_ID:-}" == "aerynos" ]]; then
+      echo "  2. Login as root (or use su) and install sudo:" >&2
+      echo "     moss pkg add sudo-rs" >&2
+      echo "     # Then configure visudo as below" >&2
+    elif [[ "${OS_GROUP_ID:-}" == "void" || -f /etc/void-release ]]; then
       echo "  2. Login as root (or use su) and install sudo:" >&2
       echo "     xbps-install -S sudo" >&2
       echo "     # Then configure visudo as below" >&2
@@ -109,6 +113,7 @@ _show_privilege_instructions() {
 pkg_command_installs() {
   case "${1:-} ${2:-}" in
     "pacman -S"*|"xbps-install "*|"apt install"|"apt-get install"|"dnf install"|"zypper in"|"zypper install") return 0 ;;
+    "moss pkg"|"moss package"|"moss pad"|"moss sync") return 0 ;;
   esac
   return 1
 }

@@ -290,6 +290,8 @@ get_installed_package_manager() {
         echo "zypper"
     elif command -v xbps-install &>/dev/null; then
         echo "xbps"
+    elif command -v moss &>/dev/null; then
+        echo "moss"
     elif command -v emerge &>/dev/null; then
         echo "emerge"
     elif command -v nixos-rebuild &>/dev/null || command -v nix &>/dev/null; then
@@ -313,6 +315,7 @@ get_default_package_update_hint() {
         rpm-ostree) echo "rpm-ostree upgrade" ;;
         zypper) echo "sudo zypper dup" ;;
         xbps) echo "sudo xbps-install -Su" ;;
+        moss) echo "sudo moss sync -u" ;;
         emerge) echo "sudo emerge --sync && sudo emerge -avuDN @world" ;;
         nix) echo "nixos-rebuild switch" ;;
         apk) echo "sudo apk upgrade" ;;

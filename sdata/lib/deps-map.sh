@@ -22,6 +22,7 @@ declare -A PKG_INSTALL_CMD=(
     [ubuntu]="apt install -y"
     [opensuse]="zypper install -y"
     [void]="xbps-install -y"
+    [aerynos]="moss pkg add -y"
 )
 
 declare -A PKG_UPDATE_CMD=(
@@ -31,6 +32,7 @@ declare -A PKG_UPDATE_CMD=(
     [ubuntu]="apt update && apt upgrade -y"
     [opensuse]="zypper refresh && zypper update -y"
     [void]="xbps-install -Su"
+    [aerynos]="moss sync -u"
 )
 
 declare -A AUR_HELPER_CMD=(

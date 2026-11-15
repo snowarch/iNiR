@@ -23,6 +23,17 @@ GREETER_CONF="/etc/sddm.conf.d/98-inir-greeter.conf"
 GREETER_KDL_SRC="${REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}/dots/sddm/niri-greeter.kdl"
 GREETER_KDL="/usr/share/inir/sddm/niri-greeter.kdl"
 
+# AerynOS swaps /usr whole on every moss transaction, which would take the theme with it. There it lives in /var,
+# and a tmpfiles link, which moss's system triggers and every boot recreate, keeps it at the path SDDM and the
+# colour sync read.
+THEME_LINK=""
+TMPFILES_CONF="/etc/tmpfiles.d/inir-sddm.conf"
+if grep -qsE '^ID="?aerynos"?$' /etc/os-release /usr/lib/os-release; then
+    THEME_LINK="$THEME_DIR"
+    THEME_DIR="/var/lib/inir/sddm/${THEME_NAME}"
+    GREETER_KDL="/var/lib/inir/sddm/niri-greeter.kdl"
+fi
+
 log_info() { echo -e "\033[0;36m[sddm] $*\033[0m"; }
 log_ok()   { echo -e "\033[0;32m[sddm] ✓ $*\033[0m"; }
 log_warn() { echo -e "\033[0;33m[sddm] ⚠ $*\033[0m"; }
@@ -107,6 +118,8 @@ if ! command -v sddm &>/dev/null; then
     log_warn "SDDM not installed. Skipping theme setup."
     if command -v xbps-install >/dev/null 2>&1; then
         log_info "Install with: sudo xbps-install -S sddm xorg-minimal qt6-declarative qt6-qt5compat"
+    elif command -v moss >/dev/null 2>&1; then
+        log_info "Install with: sudo moss pkg add sddm qt6-declarative qt6-5compat"
     elif command -v pacman >/dev/null 2>&1; then
         log_info "Install with: sudo pacman -S sddm qt6-declarative qt6-5compat"
     else
@@ -161,6 +174,17 @@ if $theme_needs_update; then
     fi
 else
     log_ok "Theme files already up to date — skipping copy"
+fi
+
+if [[ -n "$THEME_LINK" ]]; then
+    link_rule="L+ ${THEME_LINK} - - - - ${THEME_DIR}"
+    if [[ "$(cat "$TMPFILES_CONF" 2>/dev/null || true)" != "$link_rule" ]]; then
+        elevate mkdir -p "$(dirname "$TMPFILES_CONF")"
+        echo "$link_rule" | elevate tee "$TMPFILES_CONF" > /dev/null
+    fi
+    if [[ "$(readlink "$THEME_LINK" 2>/dev/null || true)" != "$THEME_DIR" ]]; then
+        elevate systemd-tmpfiles --create "$TMPFILES_CONF" || log_warn "Could not link ${THEME_LINK}; it appears at next boot"
+    fi
 fi
 
 # The iRiS appearance's faces, one static file per weight: the sddm user cannot read the shell's copy.

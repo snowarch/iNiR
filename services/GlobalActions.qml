@@ -836,7 +836,7 @@ Singleton {
             description: Translation.tr("Install Package"),
             icon: "download",
             category: "system",
-            keywords: ["install", "package", "yay", "paru", "pacman", "xbps", "aur", "setup"],
+            keywords: ["install", "package", "yay", "paru", "pacman", "xbps", "moss", "aur", "setup"],
             execute: args => {
                 if (!args || args.trim() === "") {
                     Quickshell.execDetached(["notify-send", Translation.tr("Install Package"),
@@ -854,7 +854,7 @@ Singleton {
             description: Translation.tr("Remove Package"),
             icon: "delete",
             category: "system",
-            keywords: ["remove", "uninstall", "package", "pacman", "xbps"],
+            keywords: ["remove", "uninstall", "package", "pacman", "xbps", "moss"],
             execute: args => {
                 if (!args || args.trim() === "") {
                     Quickshell.execDetached(["notify-send", Translation.tr("Remove Package"),
@@ -872,7 +872,7 @@ Singleton {
             description: Translation.tr("Run a full system update"),
             icon: "system_update_alt",
             category: "system",
-            keywords: ["update", "upgrade", "system", "pacman", "yay", "paru", "xbps"],
+            keywords: ["update", "upgrade", "system", "pacman", "yay", "paru", "xbps", "moss"],
             execute: () => { PackageSearch.updateSystem() }
         },
     ]

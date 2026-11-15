@@ -46,6 +46,11 @@ case "$OS_GROUP_ID" in
     source ./sdata/dist-void/install-deps.sh
     ;;
     
+  aerynos)
+    printf "${STY_GREEN}Using AerynOS installer${STY_RST}\n"
+    source ./sdata/dist-aerynos/install-deps.sh
+    ;;
+
   gentoo)
     printf "${STY_YELLOW}Gentoo support requires manual configuration${STY_RST}\n"
     printf "${STY_YELLOW}Using generic installer with guidance${STY_RST}\n"
