@@ -67,6 +67,7 @@ AerynOS uses moss packages for the same profiles. These names differ from Arch:
 | Calculator | `qalculate` |
 | OCR | `tesseract` with its `tesseract-langpack-*` packages |
 | Emoji font | `font-noto-emoji` |
+| Graphics drivers for Niri | `mesa-dri-drivers`, `mesa-libegl`, `mesa-libgl` (moss doesn't pull them in with Niri) |
 
 Packages with no moss version go to `~/.local` from pinned upstream releases or sources: cliphist, gum, gowall, hyprpicker, swappy, Blueman, SongRec, Darkly and translate-shell. Mission Center comes from Flathub.
 
