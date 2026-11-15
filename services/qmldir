@@ -58,6 +58,7 @@ singleton Notepad 1.0 Notepad.qml
 singleton Notifications 1.0 Notifications.qml
 singleton PolkitService 1.0 PolkitService.qml
 PolkitServiceImpl 1.0 PolkitServiceImpl.qml
+CompositorRules 1.0 CompositorRules.qml
 singleton PowerProfilePersistence 1.0 PowerProfilePersistence.qml
 singleton Privacy 1.0 Privacy.qml
 singleton RecorderStatus 1.0 RecorderStatus.qml

@@ -618,6 +618,8 @@ Singleton {
         linker.running = true
     }
     FileView { id: ownFile; path: root.umbrielOwn; printErrors: false; watchChanges: false }
+    // Each app's own rule (where and how its windows open): CompositorRules.qml.
+    readonly property CompositorRules appRules: CompositorRules { config: root }
     Process {
         id: linker
         onExited: (code) => {
