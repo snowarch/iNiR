@@ -30,6 +30,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
     [tesseract]="tesseract" [kwriteconfig6]="kf6-kconfig" [ddcutil]="ddcutil"
     [nm-connection-editor]="nm-connection-editor" [xdg-settings]="xdg-utils" [mpv]="mpv" [swaylock]="swaylock"
     [swayidle]="swayidle" [lsp-plugins-lv2]="lsp-plugins-lv2" [plasma-integration]="plasma-integration"
+    [kde-cli-tools]="kde-cli-tools"
     [font-noto-color-emoji]="font-noto-emoji"
     [ocr-eng]="tesseract-langpack-eng" [ocr-spa]="tesseract-langpack-spa" [ocr-rus]="tesseract-langpack-rus"
     [ocr-jpn]="tesseract-langpack-jpn" [ocr-jpn-vert]="tesseract-langpack-jpn_vert"

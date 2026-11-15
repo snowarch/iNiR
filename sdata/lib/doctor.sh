@@ -271,6 +271,11 @@ check_dependencies() {
         missing+=("plasma-integration")
         missing_cmds+=("plasma-integration")
     fi
+    # The platform theme opens KDE apps' Open With dialog through keditfiletype (the Qt theming step fails without it).
+    if ! command -v keditfiletype &>/dev/null && ! command -v keditfiletype6 &>/dev/null; then
+        missing+=("kde-cli-tools")
+        missing_cmds+=("kde-cli-tools")
+    fi
     if command -v fc-list &>/dev/null && ! fc-list : family 2>/dev/null | grep -qi 'Noto Color Emoji'; then
         missing+=("Noto Color Emoji")
         missing_cmds+=("font-noto-color-emoji")

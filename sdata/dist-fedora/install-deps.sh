@@ -57,7 +57,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
     [ocr-jpn-vert]="tesseract-langpack-jpn_vert"
     [ocr-chi-sim]="tesseract-langpack-chi_sim" [ocr-chi-sim-vert]="tesseract-langpack-chi_sim_vert"
     [ocr-chi-tra]="tesseract-langpack-chi_tra" [ocr-chi-tra-vert]="tesseract-langpack-chi_tra_vert"
-    [plasma-integration]="plasma-integration" [font-noto-color-emoji]="google-noto-color-emoji-fonts"
+    [plasma-integration]="plasma-integration" [kde-cli-tools]="kde-cli-tools" [font-noto-color-emoji]="google-noto-color-emoji-fonts"
   )
 
   _fed_installflags=""
@@ -339,6 +339,8 @@ FEDORA_FONT_PKGS=(
   fontconfig
   # KDE platform theme: Qt apps follow the shell colors (doctor checks for it).
   plasma-integration
+  # keditfiletype: the Open With dialogs of KDE apps (doctor checks for it).
+  kde-cli-tools
   dejavu-fonts-all
   liberation-fonts
   google-noto-color-emoji-fonts

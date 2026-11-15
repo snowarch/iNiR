@@ -93,8 +93,8 @@ aerynos = "kvantum"
 [[dep]]
 name = "plasma-integration"
 group = "fonts"
-fedora = "plasma-integration"
-debian = "plasma-integration"
+fedora = ["plasma-integration", "kde-cli-tools"]
+debian = ["plasma-integration", "kde-cli-tools"]
 void = ["breeze", "plasma-integration", "kde-cli-tools"]
 aerynos = ["breeze", "plasma-integration", "kde-cli-tools"]
 

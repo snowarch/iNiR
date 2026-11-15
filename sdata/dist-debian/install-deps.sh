@@ -55,7 +55,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
     [ocr-jpn]="tesseract-ocr-jpn" [ocr-jpn-vert]="tesseract-ocr-jpn-vert"
     [ocr-chi-sim]="tesseract-ocr-chi-sim" [ocr-chi-sim-vert]="tesseract-ocr-chi-sim-vert"
     [ocr-chi-tra]="tesseract-ocr-chi-tra" [ocr-chi-tra-vert]="tesseract-ocr-chi-tra-vert"
-    [plasma-integration]="plasma-integration" [font-noto-color-emoji]="fonts-noto-color-emoji"
+    [plasma-integration]="plasma-integration" [kde-cli-tools]="kde-cli-tools" [font-noto-color-emoji]="fonts-noto-color-emoji"
   )
 
   _deb_miss_cmds=()
@@ -412,6 +412,8 @@ DEBIAN_FONT_PKGS=(
   fontconfig
   # KDE platform theme: Qt apps follow the shell colors (doctor checks for it).
   plasma-integration
+  # keditfiletype: the Open With dialogs of KDE apps (doctor checks for it).
+  kde-cli-tools
   fonts-dejavu
   fonts-liberation
   fonts-noto-color-emoji
