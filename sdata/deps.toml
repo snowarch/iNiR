@@ -38,7 +38,8 @@ arch = "niri"
 fedora = "niri"
 debian = { pkg = "niri", build = "niri" }
 void = "niri"
-aerynos = "niri"
+# moss pulls libgbm and glvnd by soname, never the Mesa drivers they load: without them a base install has no GL
+aerynos = ["niri", "mesa-dri-drivers", "mesa-libegl", "mesa-libgl"]
 
 [[dep]]
 name = "qt6"

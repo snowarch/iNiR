@@ -108,6 +108,10 @@ esac
 AERYNOS_CORE_PKGS=(
   quickshell
   niri
+  # the GL niri and Quickshell draw with: moss pulls libgbm and glvnd by soname, never the Mesa drivers they load
+  mesa-dri-drivers
+  mesa-libegl
+  mesa-libgl
   sddm
 
   # Qt6 and KDE pieces the shell and Settings load
