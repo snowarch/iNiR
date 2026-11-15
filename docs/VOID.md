@@ -20,6 +20,7 @@ Updates later on use `inir update`. iNiR is installed per user for now. There is
 - The login screen is SDDM. It starts Void's packaged Niri session.
 - If you decline SDDM, start Niri from a TTY with `niri --session`. That is also the recovery path. Plain `niri` is not supported.
 - Setup never replaces a display manager that is already enabled.
+- **Umbriel**: pick **Niri and Umbriel** in the installer, or run `inir compositor add umbriel` later. Void doesn't package it, so setup builds it and its screen-sharing portal from pinned commits into `/usr/local`, and `inir update` builds them again when iNiR pins newer ones. SDDM lists it beside Niri; from a TTY, run `start-umbriel`.
 
 ## Services
 
@@ -31,7 +32,7 @@ The shell has to stay up without systemd, so setup picks one of three ways based
 
 1. **systemd**, if its user manager answers. The shell runs as `inir.service`, as on Arch.
 2. **Turnstile**, if `turnstiled` is active. The shell runs as a per-user runit service.
-3. **runsvdir**, otherwise. Niri starts a runsvdir for the shell.
+3. **runsvdir**, otherwise. Niri or Umbriel starts a runsvdir for the shell.
 
 You don't choose. `inir doctor` checks the supervisor and repairs what it can.
 
