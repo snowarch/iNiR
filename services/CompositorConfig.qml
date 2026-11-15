@@ -654,7 +654,10 @@ Singleton {
         // "warning: FILE:LINE:COL: what" is a setting Umbriel skipped (the rest applies); "error:" a file it could not
         // read at all. The first is said in a person's words, with the file it is in.
         onExited: (code) => {
-            const lines = `${validErr.text}\n${validOut.text}`.split("\n").map(line => line.trim()).filter(line => line.length > 0)
+            // Its log lines come coloured and stamped ("21:50:14.577 [ERR] [config] …"): Settings says only the words.
+            const lines = `${validErr.text}\n${validOut.text}`.split("\n")
+                .map(line => line.replace(/\x1b\[[0-9;]*m/g, "").replace(/^\d{2}:\d{2}:\d{2}(\.\d+)?\s+(\[\w+\]\s*)+/, "").trim())
+                .filter(line => line.length > 0)
             const told = lines.map(line => /^(warning|error): (.+?):(\d+):\d+: (.*)$/.exec(line)).filter(found => found !== null)
             const first = told.find(found => found[1] === "error") ?? told[0]
             root.errorFile = first ? first[2] : code === 0 ? "" : root.umbrielOwn
