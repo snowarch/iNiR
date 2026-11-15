@@ -23,6 +23,8 @@ GABARITO_SHA256="8650e2bd7747f7d74619fd7aecbcb0309e6f37b7964024f3fb15ae4833b67ca
 OXANIUM_SHA256="2ce01d946e1e1ffc8d7eecfffbda8623bedd63eaf811a20488c4b69af45babb0"
 RUBIK_SHA256="1b3a7437ba2af80e465e773ed60c5036d1ba6ace492d89046dbcf18fb31e4e88"
 RUBIK_ITALIC_SHA256="08c6c4018a5ada8b517407b46897e46cf6ebb106853fbd3e89addb51d3b59c62"
+SPACE_GROTESK_SHA256="acad6de1fc93436f5c0f1f4137751ef04f1aea3063e7036535970ffcfbd79f72"
+READEX_PRO_SHA256="268bba7e1e8f3b14d798b3fb0e40ebaa3fc39308c9ac0020e2faf6df181cc30e"
 DARKLY_VERSION="0.5.39"
 DARKLY_SOURCE_SHA256="5fed786f78ac3a6153e99920e722c981348c01fc781fb511371f6bfedee0f0c2"
 DARKLY_SOURCE_URL="https://github.com/Bali10050/Darkly/archive/refs/tags/v${DARKLY_VERSION}.tar.gz"
@@ -252,6 +254,17 @@ install_user_fonts() {
     "https://raw.githubusercontent.com/google/fonts/${GOOGLE_FONTS_COMMIT}/ofl/rubik/Rubik-Italic%5Bwght%5D.ttf" \
     "$RUBIK_ITALIC_SHA256" \
     "$font_dir/Rubik-Italic.ttf" || return 1
+  # Space Grotesk is the desktop clock's default face and Readex Pro the reading one; the shell falls back without them
+  install_user_verified_file \
+    "Space Grotesk" \
+    "https://raw.githubusercontent.com/google/fonts/${GOOGLE_FONTS_COMMIT}/ofl/spacegrotesk/SpaceGrotesk%5Bwght%5D.ttf" \
+    "$SPACE_GROTESK_SHA256" \
+    "$font_dir/SpaceGrotesk.ttf" || true
+  install_user_verified_file \
+    "Readex Pro" \
+    "https://raw.githubusercontent.com/google/fonts/${GOOGLE_FONTS_COMMIT}/ofl/readexpro/ReadexPro%5BHEXP%2Cwght%5D.ttf" \
+    "$READEX_PRO_SHA256" \
+    "$font_dir/ReadexPro.ttf" || true
 
   mkdir -p "$fontconfig_dir"
   # the alias file's name before it was shared by every distro

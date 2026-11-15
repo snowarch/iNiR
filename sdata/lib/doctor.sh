@@ -723,7 +723,6 @@ check_fonts() {
         "Rubik:Rubik:optional"
         "Space Grotesk:Space Grotesk:optional"
         "Readex Pro:Readex Pro:optional"
-        "Twemoji\|Twitter Color Emoji:Twemoji:optional"
     )
 
     if ! command -v fc-list &>/dev/null; then
