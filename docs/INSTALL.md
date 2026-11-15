@@ -30,7 +30,7 @@ See the [Void Linux guide](VOID.md) for the details.
 
 ## AerynOS
 
-AerynOS uses the same command. Setup installs everything AerynOS packages with moss, and puts the few tools it doesn't package yet (cliphist, gum, gowall, hyprpicker, swappy, Blueman, SongRec, Darkly) in `~/.local`, from their pinned upstream releases, because moss replaces the whole of `/usr` on every change. For the same reason the login screen theme lives in `/var/lib/inir/sddm`: a link puts it back in `/usr/share/sddm/themes` after every moss change and at every boot. `sudo moss sync -u` updates the system, `inir update` updates iNiR. AerynOS doesn't package Umbriel yet, so iNiR runs on Niri there and the installer doesn't ask where it runs.
+AerynOS uses the same command. Setup installs everything AerynOS packages with moss, and puts the few tools it doesn't package yet (cliphist, gum, gowall, hyprpicker, swappy, Blueman, SongRec, Darkly) in `~/.local`, from their pinned upstream releases, because moss replaces the whole of `/usr` on every change. For the same reason the login screen theme lives in `/var/lib/inir/sddm`: a link puts it back in `/usr/share/sddm/themes` after every moss change and at every boot. `sudo moss sync -u` updates the system, `inir update` updates iNiR. AerynOS doesn't package Umbriel either: pick **Niri and Umbriel** in the installer (or run `inir compositor add umbriel` later) and setup builds it from a pinned upstream commit into `/usr/local`, which moss leaves alone, in a few minutes; `inir update` builds it again when iNiR pins a newer commit or a library under it moved.
 
 ## Ubuntu 26.04
 

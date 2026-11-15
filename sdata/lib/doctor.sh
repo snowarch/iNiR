@@ -162,6 +162,15 @@ check_dependencies() {
                 missing_cmds+=("$cmd")
             fi
         done
+        # Umbriel when setup built it (its record exists): again once iNiR pins a newer commit, or it stopped starting
+        local umbriel_built umbriel_pin repo="${REPO_ROOT:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)}"
+        umbriel_built="$(cat "${XDG_DATA_HOME:-$HOME/.local/share}/inir/providers/umbriel" 2>/dev/null || true)"
+        umbriel_pin="$(sed -n 's/^UMBRIEL_COMMIT="\([0-9a-f]*\)"$/\1/p' "$repo/sdata/dist-aerynos/providers.sh" 2>/dev/null)"
+        if [[ -n "$umbriel_built" ]] && source "$repo/scripts/lib/compositor.sh" 2>/dev/null && compositor_umbriel_wanted \
+            && { [[ -n "$umbriel_pin" && "$umbriel_built" != "$umbriel_pin:"* ]] || ! home_build_runs /usr/local/bin/umbriel; }; then
+            missing+=("umbriel (rebuild)")
+            missing_cmds+=("umbriel")
+        fi
     fi
 
     # Void's source provider is version-pinned, so an old binary is also a

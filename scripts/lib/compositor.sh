@@ -163,7 +163,8 @@ compositor_install_umbriel_config() {
 }
 
 # Installs the Umbriel package where iNiR knows how: a distribution repository first (CachyOS ships it), then the
-# AUR. Elsewhere it prints where Umbriel's own guide is and fails.
+# AUR; Terra on Fedora; AerynOS, which doesn't package it, builds it (provider_umbriel). Elsewhere it prints where
+# Umbriel's own guide is and fails.
 compositor_install_umbriel_package() {
     command -v umbriel >/dev/null 2>&1 && umbriel --version >/dev/null 2>&1 && return 0
     local guide="https://docs.noctalia.dev/umbriel/installation/"
@@ -197,7 +198,17 @@ compositor_install_umbriel_package() {
         return 1
     fi
     if command -v moss >/dev/null 2>&1; then
-        echo "AerynOS doesn't package Umbriel yet: iNiR runs on Niri here. Its guide has a manual build: $guide" >&2
+        # setup's own recipe; `inir compositor add umbriel` has none of setup's log helpers, so plain ones stand in
+        local repo="${BASH_SOURCE[0]%/scripts/lib/*}"
+        (
+            declare -F log_warning >/dev/null || log_warning() { echo "$*" >&2; }
+            declare -F log_success >/dev/null || log_success() { echo "$*"; }
+            declare -F tui_info >/dev/null || tui_info() { echo "$*"; }
+            declare -F pkg_sudo >/dev/null || pkg_sudo() { sudo "$@"; }
+            source "$repo/sdata/lib/user-providers.sh" && source "$repo/sdata/dist-aerynos/providers.sh" \
+                && provider_umbriel
+        ) && return 0
+        echo "Umbriel could not be built here; its guide: $guide" >&2
         return 1
     fi
     echo "Install Umbriel the way its guide says for your distribution: $guide" >&2

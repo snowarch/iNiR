@@ -39,7 +39,7 @@ if [[ -n "${ONLY_MISSING_DEPS:-}" ]]; then
   declare -A cmd_to_recipe=(
     [power-profiles]="power-profiles" [cliphist]="cliphist" [gowall]="gowall" [trans]="translate-shell"
     [missioncenter]="missioncenter" [hyprpicker]="hyprpicker" [swappy]="swappy" [blueman-manager]="blueman"
-    [songrec]="songrec"
+    [songrec]="songrec" [umbriel]="umbriel"
   )
 
   _aeryn_installflags=""
