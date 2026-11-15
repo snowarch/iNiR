@@ -250,7 +250,7 @@ debian = ["coreutils", "curl", "ripgrep", "jq", "file", "python3", "xdg-user-dir
 void = ["wl-clipboard", "wlsunset", "jq", "file", "python3", "curl", "wget", "git", "ripgrep", "bc", "xdg-utils",
         "xdg-user-dirs", "libnotify", "rsync", "fuzzel", "dunst"]
 aerynos = ["coreutils", "curl", "ripgrep", "jq", "file", "python", "unzip", "xdg-user-dirs", "xdg-utils", "rsync",
-           "git", "wl-clipboard-rs", "libnotify", "wlsunset", "util-linux", "gawk"]
+           "git", "wl-clipboard-rs", "libnotify", "wlsunset", "util-linux", "gawk", "diffutils"]
 
 [[dep]]
 name = "cliphist"

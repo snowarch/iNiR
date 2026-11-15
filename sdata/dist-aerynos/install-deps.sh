@@ -172,6 +172,8 @@ AERYNOS_CORE_PKGS=(
   wlsunset
   util-linux
   gawk
+  # cmp: setup and the colour scripts rewrite a file only when it changed; AerynOS's base has no diffutils
+  diffutils
 
   # Icons and emoji
   hicolor-icon-theme
