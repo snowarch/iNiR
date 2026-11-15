@@ -196,6 +196,10 @@ compositor_install_umbriel_package() {
         sudo dnf install -y umbriel-nightly && return 0
         return 1
     fi
+    if command -v moss >/dev/null 2>&1; then
+        echo "AerynOS doesn't package Umbriel yet: iNiR runs on Niri here. Its guide has a manual build: $guide" >&2
+        return 1
+    fi
     echo "Install Umbriel the way its guide says for your distribution: $guide" >&2
     echo "Then run: inir compositor add umbriel" >&2
     return 1

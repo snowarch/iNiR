@@ -50,7 +50,7 @@ cd inir
 ./setup install
 ```
 
-Arch, Fedora, Debian, Ubuntu, Void, NixOS를 지원합니다. 각 환경에 필요한 것은 [설치 가이드](https://inir.space/docs/install/)에 나와 있습니다. Niri와 Umbriel 모두에서 동작하며, Umbriel을 추가하는 방법은 [컴포지터](https://inir.space/docs/compositors/)에 있습니다.
+Arch, Fedora, Debian, Ubuntu, Void, AerynOS, NixOS를 지원합니다. 각 환경에 필요한 것은 [설치 가이드](https://inir.space/docs/install/)에 나와 있습니다. Niri와 Umbriel 모두에서 동작하며, Umbriel을 추가하는 방법은 [컴포지터](https://inir.space/docs/compositors/)에 있습니다.
 
 ## 업데이트
 

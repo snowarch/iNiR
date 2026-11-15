@@ -1,6 +1,6 @@
 # Install
 
-iNiR installs with one script. Arch is the main target. Void Linux (glibc and runit), Fedora 43 or newer, Debian testing and Ubuntu 25.10 or newer have automated dependency paths too. Debian 13 installs with a warning, because it ships Qt 6.8. Debian 12 and older, and Ubuntu 25.04 and older, stop early, because iNiR needs Qt 6.9 or newer. NixOS has [its own page](NIXOS.md). iNiR runs on Niri and on Umbriel, the Noctalia team's compositor: [Compositors](COMPOSITORS.md#umbriel) shows how to add Umbriel, during the install or later.
+iNiR installs with one script. Arch is the main target. Void Linux (glibc and runit), AerynOS, Fedora 43 or newer, Debian testing and Ubuntu 25.10 or newer have automated dependency paths too. Debian 13 installs with a warning, because it ships Qt 6.8. Debian 12 and older, and Ubuntu 25.04 and older, stop early, because iNiR needs Qt 6.9 or newer. NixOS has [its own page](NIXOS.md). iNiR runs on Niri and on Umbriel, the Noctalia team's compositor: [Compositors](COMPOSITORS.md#umbriel) shows how to add Umbriel, during the install or later.
 
 ## Arch
 
@@ -27,6 +27,10 @@ If the login screen is black on a laptop with NVIDIA and integrated graphics, th
 Void uses the same command. Run the first install without `-y`. Setup shows a system snapshot and the install plan, then asks before it changes networking or the login screen. A `-y` run takes the default for both: NetworkManager replaces dhcpcd or wpa_supplicant (expect a short network blip) and SDDM becomes the login screen, unless another display manager is already enabled. Graphics drivers come from your base system. Setup checks that the graphics stack works, but it does not install GPU drivers.
 
 See the [Void Linux guide](VOID.md) for the details.
+
+## AerynOS
+
+AerynOS uses the same command. Setup installs everything AerynOS packages with moss, and puts the few tools it doesn't package yet (cliphist, gum, gowall, hyprpicker, swappy, Blueman, SongRec, Darkly) in `~/.local`, from their pinned upstream releases, because moss replaces the whole of `/usr` on every change. For the same reason the login screen theme lives in `/var/lib/inir/sddm`: a link puts it back in `/usr/share/sddm/themes` after every moss change and at every boot. `sudo moss sync -u` updates the system, `inir update` updates iNiR. AerynOS doesn't package Umbriel yet, so iNiR runs on Niri there and the installer doesn't ask where it runs.
 
 ## Ubuntu 26.04
 

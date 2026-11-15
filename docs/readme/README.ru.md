@@ -50,7 +50,7 @@ cd inir
 ./setup install
 ```
 
-Arch, Fedora, Debian, Ubuntu, Void и NixOS. В [руководстве по установке](https://inir.space/docs/install/) написано, что нужно каждой из них. Работает в Niri и в Umbriel: как добавить Umbriel, описано на странице [Композиторы](https://inir.space/docs/compositors/).
+Arch, Fedora, Debian, Ubuntu, Void, AerynOS и NixOS. В [руководстве по установке](https://inir.space/docs/install/) написано, что нужно каждой из них. Работает в Niri и в Umbriel: как добавить Umbriel, описано на странице [Композиторы](https://inir.space/docs/compositors/).
 
 ## Обновление
 

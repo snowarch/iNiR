@@ -50,7 +50,7 @@ cd inir
 ./setup install
 ```
 
-Arch、Fedora、Debian、Ubuntu、Void、NixOS に対応しています。それぞれに必要なことは [インストールガイド](https://inir.space/docs/install/) にあります。Niri と Umbriel の両方で動きます。Umbriel の追加方法は [コンポジター](https://inir.space/docs/compositors/) にあります。
+Arch、Fedora、Debian、Ubuntu、Void、AerynOS、NixOS に対応しています。それぞれに必要なことは [インストールガイド](https://inir.space/docs/install/) にあります。Niri と Umbriel の両方で動きます。Umbriel の追加方法は [コンポジター](https://inir.space/docs/compositors/) にあります。
 
 ## アップデート
 

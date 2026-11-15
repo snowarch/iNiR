@@ -52,6 +52,26 @@ Packages with no XBPS version come from pinned upstream sources: ydotool, Cloudf
 
 Package search, install and remove run through XBPS in the left sidebar's Software view.
 
+## AerynOS
+
+AerynOS uses moss packages for the same profiles. These names differ from Arch:
+
+| Capability | AerynOS package |
+|---|---|
+| Qt 6 compatibility | `qt6-5compat` |
+| Clipboard | `wl-clipboard-rs` |
+| Kirigami, syntax highlighting | `kf6-kirigami`, `kf6-syntax-highlighting` |
+| KDE config | `kf6-kconfig`, `plasma-integration` |
+| Network | `networkmanager`, `nm-connection-editor` |
+| ImageMagick | `imagemagick` |
+| Calculator | `qalculate` |
+| OCR | `tesseract` with its `tesseract-langpack-*` packages |
+| Emoji font | `font-noto-emoji` |
+
+Packages with no moss version go to `~/.local` from pinned upstream releases or sources: cliphist, gum, gowall, hyprpicker, swappy, Blueman, SongRec, Darkly and translate-shell. Mission Center comes from Flathub.
+
+Package search, install and remove run through moss in the left sidebar's Software view, and the update count reads `moss pkg list --sync`.
+
 ## Optional
 
 These are not installed by default. Without them the feature stays hidden or says what is missing.

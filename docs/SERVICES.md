@@ -146,7 +146,7 @@ IpcHandler {
 |---|---|---|
 | `TimerService` | Countdown, Pomodoro and stopwatch | `timer` |
 | `Undo` | The way back for the last removal, offered on a notice | `undo` |
-| `Updates` | Package updates: `checkupdates` on Arch, `xbps-install -nu` on Void | |
+| `Updates` | Package updates: `checkupdates` on Arch, `xbps-install -nu` on Void, `moss pkg list --sync` on AerynOS | |
 | `ShellUpdates` | iNiR updates from git: commits behind the remote | `shellUpdate` |
 | `Translation` | Strings from the 18 catalogues in `translations/`, plus each installed plugin's own | |
 | `DevNavigation` | Development navigation: loads lazy surfaces and Settings pages by name | `dev` |

@@ -50,7 +50,7 @@ cd inir
 ./setup install
 ```
 
-Arch、Fedora、Debian、Ubuntu、Void 和 NixOS。[安装指南](https://inir.space/docs/install/) 列出了每个系统所需的内容。它可以运行在 Niri 和 Umbriel 上：[合成器](https://inir.space/docs/compositors/) 说明了如何添加 Umbriel。
+Arch、Fedora、Debian、Ubuntu、Void、AerynOS 和 NixOS。[安装指南](https://inir.space/docs/install/) 列出了每个系统所需的内容。它可以运行在 Niri 和 Umbriel 上：[合成器](https://inir.space/docs/compositors/) 说明了如何添加 Umbriel。
 
 ## 更新
 
