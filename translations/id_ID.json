@@ -3673,5 +3673,12 @@
   "Region": "Area",
   "Drag over it to keep only a part": "Seret di atasnya untuk menyimpan sebagian saja",
   "It stays live; on another workspace most apps draw once a second": "Tetap langsung; di ruang kerja lain sebagian besar aplikasi menggambar sekali per detik",
-  "Under the player, once the song has them.": "Di bawah pemutar, begitu lagunya punya lirik."
+  "Under the player, once the song has them.": "Di bawah pemutar, begitu lagunya punya lirik.",
+  "Umbriel's files are still being read": "File Umbriel masih dibaca",
+  "Esc": "Esc",
+  "PrtSc": "PrtSc",
+  "PgUp": "PgUp",
+  "Del": "Del",
+  "PgDn": "PgDn",
+  "Shift": "Shift"
 }

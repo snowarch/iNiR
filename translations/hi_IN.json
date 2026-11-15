@@ -3673,5 +3673,12 @@
   "Region": "क्षेत्र",
   "Drag over it to keep only a part": "सिर्फ़ एक हिस्सा रखने के लिए उस पर खींचें",
   "It stays live; on another workspace most apps draw once a second": "लाइव रहता है; दूसरे वर्कस्पेस पर ज़्यादातर ऐप सेकंड में एक बार बनते हैं",
-  "Under the player, once the song has them.": "प्लेयर के नीचे, जब गाने के बोल मिलें।"
+  "Under the player, once the song has them.": "प्लेयर के नीचे, जब गाने के बोल मिलें।",
+  "Umbriel's files are still being read": "Umbriel की फ़ाइलें अभी पढ़ी जा रही हैं",
+  "Esc": "Esc",
+  "PrtSc": "PrtSc",
+  "PgUp": "PgUp",
+  "Del": "Del",
+  "PgDn": "PgDn",
+  "Shift": "Shift"
 }

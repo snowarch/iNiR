@@ -3673,5 +3673,12 @@
   "Region": "Area",
   "Drag over it to keep only a part": "Trascina sopra per tenerne solo una parte",
   "It stays live; on another workspace most apps draw once a second": "Resta dal vivo; su un altro spazio di lavoro la maggior parte delle app si ridisegna una volta al secondo",
-  "Under the player, once the song has them.": "Sotto il lettore, quando la canzone li ha."
+  "Under the player, once the song has them.": "Sotto il lettore, quando la canzone li ha.",
+  "Umbriel's files are still being read": "I file di Umbriel sono ancora in lettura",
+  "Esc": "Esc",
+  "PrtSc": "Stamp",
+  "PgUp": "PagSu",
+  "Del": "Canc",
+  "PgDn": "PagGiù",
+  "Shift": "Maiusc"
 }

@@ -6,17 +6,18 @@ import Quickshell
 import Quickshell.Io
 import qs.services
 import "../UmbrielModel.js" as UmbrielModel
+import "../UmbrielToml.js" as Toml
 
 /**
  * Keybinds for Niri compositor with iNiR shell.
  * Dynamically parses user's ~/.config/niri/config.kdl
  * Falls back to defaults if parsing fails.
  *
- * Under Umbriel the cheatsheet reads ~/.config/umbriel/config.d/70-binds.toml and
- * 90-user-extra.toml instead (read-only: Umbriel's keys are edited in its files).
+ * Under Umbriel it reads ~/.config/umbriel/config.d/70-binds.toml, 90-user-extra.toml and Settings'
+ * 95-settings.toml instead, in the same shape (UmbrielModel.bindListFrom).
  *
- * Read/write support: setBind() and removeBind() write back
- * to the keybinds KDL file via inir-accel niri-config.
+ * Read/write support: setBind() and removeBind() write back to the keybinds KDL file via
+ * inir-accel niri-config under Niri, to Settings' own 95-settings.toml under Umbriel (CompositorConfig.bind).
  */
 Singleton {
     id: root
@@ -62,10 +63,28 @@ Singleton {
         enrichedBindsLoader.running = true
     }
 
+    // Settings' own file is CompositorConfig's: its binds are read from the copy it keeps, so one written from the
+    // keyboard shows at once (watching the file never saw a first one: it did not exist yet).
+    function _settingsText(): string {
+        const own = CompositorConfig.own?.keybinds
+        return own ? Toml.stringify({ keybinds: own }, "") : ""
+    }
+    property string _settingsSeen: ""
+    Connections {
+        target: CompositorConfig
+        enabled: root.umbriel
+        function onRevisionChanged() {
+            if (root._settingsText() !== root._settingsSeen) root._readUmbrielBinds()
+        }
+    }
+
     function _readUmbrielBinds(): void {
-        const groups = UmbrielModel.bindsFrom([umbrielBinds.text(), umbrielUserBinds.text()], "Super")
-        root.allBinds = []
-        root.enrichedCategories = []
+        root._settingsSeen = root._settingsText()
+        const texts = [umbrielBinds.text(), umbrielUserBinds.text(), root._settingsSeen]
+        const groups = UmbrielModel.bindsFrom(texts, "Super")
+        const list = UmbrielModel.bindListFrom(texts)
+        root.allBinds = list.binds
+        root.enrichedCategories = list.categories
         if (groups.length === 0)
             return
         root.keybinds = { children: groups, configPath: umbrielBinds.path }
@@ -92,8 +111,32 @@ Singleton {
         onFileChanged: reload()
     }
 
+    // A bind in Umbriel's words: the action alone, or a table with its options ("repeat=false" → repeat = false).
+    function _umbrielValue(action: string, options: string): var {
+        const pairs = String(options ?? "").trim().split(/\s+/).filter(pair => pair.includes("="))
+        if (pairs.length === 0) return action
+        const out = { action: action }
+        for (const pair of pairs) {
+            const [name, raw] = [pair.slice(0, pair.indexOf("=")), pair.slice(pair.indexOf("=") + 1)]
+            out[name] = raw === "true" ? true : raw === "false" ? false : /^-?\d+(\.\d+)?$/.test(raw) ? Number(raw) : raw.replace(/^"|"$/g, "")
+        }
+        return out
+    }
+    // Is this key set by a file under Settings' own (iNiR's 70 or the person's 90)? Removing it then needs "".
+    function _umbrielBelow(keyCombo: string): bool {
+        return UmbrielModel.bindListFrom([umbrielBinds.text(), umbrielUserBinds.text()]).binds.some(bind => bind.key_combo === keyCombo)
+    }
+
     // False when a save is already in flight; the result comes back as bindSaved or bindError.
     function setBind(keyCombo: string, action: string, options: string): bool {
+        if (root.umbriel) {
+            if (!CompositorConfig.bind(keyCombo, root._umbrielValue(action, options))) {
+                root.bindError(Translation.tr("Umbriel's files are still being read"))
+                return false
+            }
+            root.bindSaved(keyCombo)
+            return true
+        }
         if (!CompositorService.niriNative)
             return false
         if (setBindProcess.running) {
@@ -122,17 +165,25 @@ Singleton {
     }
 
     function removeBind(keyCombo: string): void {
-        if (!CompositorService.niriNative) return
+        if (!CompositorService.niriNative && !root.umbriel) return
         root._removeBind(keyCombo, true)
     }
 
     // A rename drops the old combo after saving the new one: nothing was removed, so no Undo.
     function removeBindQuietly(keyCombo: string): void {
-        if (!CompositorService.niriNative) return
+        if (!CompositorService.niriNative && !root.umbriel) return
         root._removeBind(keyCombo, false)
     }
 
     function _removeBind(keyCombo: string, offerUndo: bool): void {
+        const gone = root.allBinds.find(bind => bind.key_combo === keyCombo)
+        if (root.umbriel) {
+            if (!CompositorConfig.bind(keyCombo, root._umbrielBelow(keyCombo) ? "" : undefined)) return
+            root.bindRemoved(keyCombo)
+            if (offerUndo && gone)
+                Undo.offer(Translation.tr("Removed %1").arg(keyCombo), () => root.setBind(keyCombo, gone.action_raw, gone.options ?? ""))
+            return
+        }
         if (removeBindProcess.running) {
             console.warn("[NiriKeybinds] removeBind: process already running, ignoring")
             return
@@ -140,9 +191,9 @@ Singleton {
         root._pendingRemoveCombo = keyCombo
         removeBindProcess.command = [root.accelRun, "niri-config", "remove-bind", keyCombo]
         removeBindProcess.running = true
-        const gone = root.allBinds.find(bind => bind.keyCombo === keyCombo)
-        if (offerUndo && gone && String(gone.actionRaw ?? "").length > 0)
-            Undo.offer(Translation.tr("Removed %1").arg(keyCombo), () => root.setBind(keyCombo, gone.actionRaw, gone.optionsStr ?? ""))
+        // get-binds names its fields in snake case: `keyCombo` never matched, and a removed key had no Undo.
+        if (offerUndo && gone && String(gone.action_raw ?? "").length > 0)
+            Undo.offer(Translation.tr("Removed %1").arg(keyCombo), () => root.setBind(keyCombo, gone.action_raw, gone.options ?? ""))
     }
 
     // Niri's config is the truth (a managed block in 90-user-extra.kdl, inir-accel niri-config);

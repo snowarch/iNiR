@@ -286,33 +286,66 @@ function _humanize(action) {
     return text.charAt(0).toUpperCase() + text.slice(1)
 }
 
-function bindsFrom(texts, modKey) {
+// Every bind the files set, in their order, a later file's line replacing an earlier one ("" removes it): the combo as
+// written, the heading over its first line, the action and what else its table says ("repeat=false").
+function _bindLines(texts) {
     const order = []
     const byCombo = {}
     for (const text of texts) {
         let inBinds = false
+        // A bind written as a table of its own ([keybinds."Mod+U"], its action and options under it), as Settings
+        // writes one with options.
+        let table = ""
         let heading = "Other"
         for (const raw of String(text ?? "").split("\n")) {
             const line = raw.trim()
-            if (/^\[[^\]]+\]$/.test(line)) { inBinds = line === "[keybinds]"; continue }
+            if (/^\[[^\]]+\]$/.test(line)) {
+                table = (line.match(/^\[keybinds\."([^"]+)"\]$/) ?? [])[1] ?? ""
+                inBinds = line === "[keybinds]"
+                if (table.length > 0) {
+                    if (!(table in byCombo)) order.push(table)
+                    byCombo[table] = { heading: byCombo[table]?.heading ?? heading, action: "", options: "" }
+                }
+                continue
+            }
+            if (table.length > 0) {
+                const pair = line.match(/^([A-Za-z_-]+)\s*=\s*(.+?)\s*(#.*)?$/)
+                if (!pair) continue
+                const bind = byCombo[table]
+                if (pair[1] === "action") bind.action = ((pair[2].match(/^"((?:[^"\\]|\\.)*)"$/) ?? [])[1] ?? "").replace(/\\"/g, '"')
+                else bind.options = [bind.options, pair[1] + "=" + pair[2]].filter(part => part.length > 0).join(" ")
+                continue
+            }
             if (!inBinds) continue
+            // A heading's aside goes when it makes the name long ("Media and hardware keys (work on the lock screen)").
             const head = line.match(/^#\s*([^#].*)$/)
-            if (head && head[1].length <= 40) { heading = head[1].trim(); continue }
+            const named = head ? (head[1].trim().length > 40 ? head[1].replace(/\s*\(.*$/, "") : head[1]).trim() : ""
+            if (head && named.length <= 40) { heading = named; continue }
             const m = line.match(/^"([^"]+)"\s*=\s*(.+)$/)
             if (!m) continue
             const value = m[2]
             const action = (value.match(/^"((?:[^"\\]|\\.)*)"/) ?? value.match(/action\s*=\s*"((?:[^"\\]|\\.)*)"/) ?? [])[1]
             if (action === undefined) continue
+            const options = value.startsWith("{") ? value.replace(/^\{|\}\s*(#.*)?$/g, "").split(",").map(part => part.trim())
+                .filter(part => part.length > 0 && !/^action\s*=/.test(part)).map(part => part.replace(/\s*=\s*/, "=")).join(" ") : ""
             if (!(m[1] in byCombo)) order.push(m[1])
-            byCombo[m[1]] = { heading: byCombo[m[1]]?.heading ?? heading, action: action.replace(/\\"/g, '"') }
+            byCombo[m[1]] = { heading: byCombo[m[1]]?.heading ?? heading, action: action.replace(/\\"/g, '"'), options: options }
         }
     }
+    // A bind from a file without headings (Settings' own) goes under the heading its action has elsewhere.
+    const binds = order.map(combo => Object.assign({ combo: combo }, byCombo[combo])).filter(bind => bind.action.length > 0)
+    for (const bind of binds) {
+        if (bind.heading !== "Other") continue
+        bind.heading = binds.find(one => one.action === bind.action && one.heading !== "Other")?.heading ?? "Other"
+    }
+    return binds
+}
+
+function bindsFrom(texts, modKey) {
     const groups = []
     const index = {}
-    for (const combo of order) {
-        const bind = byCombo[combo]
-        if (!bind.action) continue
-        const parts = combo.split("+")
+    for (const bind of _bindLines(texts)) {
+        const parts = bind.combo.split("+")
         const key = parts.pop()
         const mods = parts.map(p => p === "Mod" ? (modKey || "Super") : p)
         if (!(bind.heading in index)) {
@@ -322,4 +355,18 @@ function bindsFrom(texts, modKey) {
         groups[index[bind.heading]].children[0].keybinds.push({ mods: mods, key: key, comment: _humanize(bind.action) })
     }
     return groups
+}
+
+// The same binds in the shape inir-accel's `niri-config get-binds` gives Niri's, so one editor reads both.
+function bindListFrom(texts) {
+    const binds = []
+    const categories = []
+    for (const bind of _bindLines(texts)) {
+        let category = categories.find(entry => entry.name === bind.heading)
+        if (!category) { category = { name: bind.heading, binds: [] }; categories.push(category) }
+        category.binds.push(binds.length)
+        binds.push({ key_combo: bind.combo, options: bind.options, action: bind.action, action_raw: bind.action,
+            category: bind.heading, description: _humanize(bind.action), commented: false })
+    }
+    return { binds: binds, categories: categories }
 }

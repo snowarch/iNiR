@@ -3673,5 +3673,12 @@
   "Region": "אזור",
   "Drag over it to keep only a part": "גרור מעליו כדי לשמור רק חלק",
   "It stays live; on another workspace most apps draw once a second": "נשאר חי; בסביבת עבודה אחרת רוב האפליקציות מתעדכנות פעם בשנייה",
-  "Under the player, once the song has them.": "מתחת לנגן, כשיש לשיר."
+  "Under the player, once the song has them.": "מתחת לנגן, כשיש לשיר.",
+  "Umbriel's files are still being read": "הקבצים של Umbriel עדיין נקראים",
+  "Esc": "Esc",
+  "PrtSc": "PrtSc",
+  "PgUp": "PgUp",
+  "Del": "Del",
+  "PgDn": "PgDn",
+  "Shift": "Shift"
 }

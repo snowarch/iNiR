@@ -573,6 +573,14 @@ Singleton {
         root.revision++
         root.syncRange()
     }
+    // A key of Umbriel's [keybinds] in Settings' own file, which loads last: an action (or a table with its options),
+    // "" to unbind a key the files below set, undefined to drop Settings' line. False until the files were read: a
+    // write before that would replace Settings' file with this one line.
+    function bind(combo: string, action: var): bool {
+        if (!root.umbriel || !root.umbrielRead || combo.length === 0) return false
+        root.writeOwn(Toml.set(root.own, ["keybinds", combo], action))
+        return true
+    }
     function writeOwn(made: var): void {
         made = root.withRange(made, root.rangeMarked())
         root.own = made

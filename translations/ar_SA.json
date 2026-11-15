@@ -3673,5 +3673,12 @@
   "Region": "منطقة",
   "Drag over it to keep only a part": "اسحب فوقها لتبقي جزءًا منها فقط",
   "It stays live; on another workspace most apps draw once a second": "يبقى مباشرًا؛ في مساحة عمل أخرى ترسم معظم التطبيقات إطارًا واحدًا في الثانية",
-  "Under the player, once the song has them.": "تحت المشغّل، حين تتوفر للأغنية."
+  "Under the player, once the song has them.": "تحت المشغّل، حين تتوفر للأغنية.",
+  "Umbriel's files are still being read": "لا تزال ملفات Umbriel قيد القراءة",
+  "Esc": "Esc",
+  "PrtSc": "PrtSc",
+  "PgUp": "PgUp",
+  "Del": "Del",
+  "PgDn": "PgDn",
+  "Shift": "Shift"
 }

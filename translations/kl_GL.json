@@ -3673,5 +3673,12 @@
   "Region": "Immikkoortoq",
   "Drag over it to keep only a part": "Ilaannaa pigiinnarniarukku qulaatigut nusuguk",
   "It stays live; on another workspace most apps draw once a second": "Uumaannartarpoq; suliffimmi allami qinnutit amerlanerit sekundimut ataasiarlutik titartaasarput",
-  "Under the player, once the song has them.": "Nipilersornerup ataani, erinarsuummi taakku pigineqarpata."
+  "Under the player, once the song has them.": "Nipilersornerup ataani, erinarsuummi taakku pigineqarpata.",
+  "Umbriel's files are still being read": "Umbriel-ip fiilii suli atuarneqarput",
+  "Esc": "Esc",
+  "PrtSc": "PrtSc",
+  "PgUp": "PgUp",
+  "Del": "Del",
+  "PgDn": "PgDn",
+  "Shift": "Shift"
 }

@@ -3673,5 +3673,12 @@
   "Region": "Область",
   "Drag over it to keep only a part": "Выделите часть, чтобы оставить только её",
   "It stays live; on another workspace most apps draw once a second": "Остаётся живым; на другом рабочем пространстве большинство приложений рисуют раз в секунду",
-  "Under the player, once the song has them.": "Под плеером, когда у песни они есть."
+  "Under the player, once the song has them.": "Под плеером, когда у песни они есть.",
+  "Umbriel's files are still being read": "Файлы Umbriel ещё читаются",
+  "Esc": "Esc",
+  "PrtSc": "PrtSc",
+  "PgUp": "PgUp",
+  "Del": "Del",
+  "PgDn": "PgDn",
+  "Shift": "Shift"
 }

@@ -3673,5 +3673,12 @@
   "Region": "区域",
   "Drag over it to keep only a part": "拖动选择以只保留一部分",
   "It stays live; on another workspace most apps draw once a second": "保持实时；在其他工作区，大多数应用每秒只绘制一次",
-  "Under the player, once the song has them.": "在播放器下方，歌曲有歌词时显示。"
+  "Under the player, once the song has them.": "在播放器下方，歌曲有歌词时显示。",
+  "Umbriel's files are still being read": "仍在读取 Umbriel 的文件",
+  "Esc": "Esc",
+  "PrtSc": "PrtSc",
+  "PgUp": "PgUp",
+  "Del": "Del",
+  "PgDn": "PgDn",
+  "Shift": "Shift"
 }

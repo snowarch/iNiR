@@ -3673,5 +3673,12 @@
   "Region": "範囲",
   "Drag over it to keep only a part": "一部だけ残すならドラッグ",
   "It stays live; on another workspace most apps draw once a second": "ライブのまま。別のワークスペースではほとんどのアプリが毎秒1回だけ描画します",
-  "Under the player, once the song has them.": "プレーヤーの下に、曲に歌詞があるときに。"
+  "Under the player, once the song has them.": "プレーヤーの下に、曲に歌詞があるときに。",
+  "Umbriel's files are still being read": "Umbriel のファイルを読み込み中です",
+  "Esc": "Esc",
+  "PrtSc": "PrtSc",
+  "PgUp": "PgUp",
+  "Del": "Del",
+  "PgDn": "PgDn",
+  "Shift": "Shift"
 }

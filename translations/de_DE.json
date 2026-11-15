@@ -3673,5 +3673,12 @@
   "Region": "Bereich",
   "Drag over it to keep only a part": "Darüber ziehen, um nur einen Teil zu behalten",
   "It stays live; on another workspace most apps draw once a second": "Bleibt live; auf einem anderen Arbeitsbereich zeichnen die meisten Apps einmal pro Sekunde",
-  "Under the player, once the song has them.": "Unter dem Player, sobald das Lied welche hat."
+  "Under the player, once the song has them.": "Unter dem Player, sobald das Lied welche hat.",
+  "Umbriel's files are still being read": "Umbriels Dateien werden noch gelesen",
+  "Esc": "Esc",
+  "PrtSc": "Druck",
+  "PgUp": "Bild↑",
+  "Del": "Entf",
+  "PgDn": "Bild↓",
+  "Shift": "Umschalt"
 }
