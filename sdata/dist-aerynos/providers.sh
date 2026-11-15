@@ -129,7 +129,9 @@ provider_swappy() {
   src="$(aerynos_fetch_source swappy \
     "https://github.com/jtheoof/swappy/releases/download/v${SWAPPY_VERSION}/swappy-${SWAPPY_VERSION}.tar.gz" \
     "$SWAPPY_SHA256" "$temp_dir")" || { rm -rf "$temp_dir"; return 1; }
-  if meson setup "$temp_dir/build" "$src" --prefix "$prefix" --buildtype release -Dman-pages=disabled \
+  # its meson.build asks git for the commit with check:true, so the release tarball fails wherever git is installed
+  sed -i 's/check:true)/check:false)/' "$src/meson.build"
+  if meson setup "$temp_dir/build" "$src" --prefix "$prefix" --buildtype release -Dman-pages=disabled -Dwerror=false \
       && meson compile -C "$temp_dir/build" \
       && meson install -C "$temp_dir/build"; then
     aerynos_build_record swappy "$SWAPPY_VERSION" "$SWAPPY_SHA256"
@@ -170,8 +172,8 @@ provider_blueman() {
 provider_songrec() {
   local prefix="$HOME/.local" temp_dir
   aerynos_build_current songrec "$SONGREC_VERSION" crates.io "$prefix/bin/songrec" && return 0
-  # clang-devel: libspa-sys runs bindgen, which needs libclang
-  moss_add rust clang clang-devel pkgconf alsa-lib-devel pulseaudio-devel pipewire-devel openssl-devel dbus-devel \
+  # clang-devel: libspa-sys runs bindgen, which needs libclang; binutils: cc-rs archives its C parts with ar
+  moss_add rust clang clang-devel binutils pkgconf alsa-lib-devel pulseaudio-devel pipewire-devel openssl-devel dbus-devel \
     glib2-devel gtk-4-devel libsoup-devel libadwaita-devel || return 1
   temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/inir-songrec.XXXXXX")" || return 1
   if CARGO_HOME="$temp_dir/cargo" CARGO_TARGET_DIR="$temp_dir/target" cargo install --locked --root "$temp_dir/root" \

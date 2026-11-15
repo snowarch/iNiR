@@ -188,7 +188,7 @@ install_user_roboto_flex() {
       "https://github.com/googlefonts/roboto-flex/releases/download/${ROBOTO_FLEX_VERSION}/roboto-flex-fonts.zip" \
       || ! printf '%s  %s\n' "$ROBOTO_FLEX_SHA256" "$archive" | sha256sum -c - >/dev/null 2>&1 \
       || ! name="$(unzip -Z1 "$archive" | grep -m1 '/variable/.*\.ttf$')" \
-      || ! unzip -p "$archive" "$name" > "$extracted"; then
+      || ! unzip -p "$archive" "${name//\[/[[]}" > "$extracted"; then  # unzip reads [...] as a wildcard: [[] is a [
     rm -rf "$temp_dir"
     log_warning "Could not extract verified Roboto Flex ${ROBOTO_FLEX_VERSION}"
     return 1

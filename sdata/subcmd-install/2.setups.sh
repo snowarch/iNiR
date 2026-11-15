@@ -146,7 +146,8 @@ function setup_systemd_services(){
   
   # i2c-dev module for ddcutil. Written only when it is not there: a reinstall needs no sudo.
   if ! grep -qx 'i2c-dev' /etc/modules-load.d/i2c-dev.conf 2>/dev/null; then
-    v pkg_sudo sh -c 'printf "%s\n" i2c-dev > /etc/modules-load.d/i2c-dev.conf'
+    # AerynOS's stateless /etc starts without the folder
+    v pkg_sudo sh -c 'mkdir -p /etc/modules-load.d && printf "%s\n" i2c-dev > /etc/modules-load.d/i2c-dev.conf'
   fi
   
   # ydotool service - create user service symlink if needed
