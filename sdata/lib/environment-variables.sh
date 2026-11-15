@@ -8,7 +8,7 @@
 if [[ -z "${INIR_SETUP_HANDOFF:-}" && -n "${SCRIPT_DIR:-}" && -f "${SCRIPT_DIR}/setup" \
       && -f "${PWD}/setup" && -f "${PWD}/shell.qml" \
       && "$(basename -- "${BASH_SOURCE[${#BASH_SOURCE[@]}-1]}")" == setup ]] \
-    && ! cmp -s -- "${SCRIPT_DIR}/setup" "${PWD}/setup"; then
+    && [[ "$(< "${SCRIPT_DIR}/setup")" != "$(< "${PWD}/setup")" ]]; then  # bash alone: cmp may not be installed yet
   export INIR_SETUP_HANDOFF=1
   exec bash "${PWD}/setup" "$@"
 fi
