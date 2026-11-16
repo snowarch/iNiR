@@ -6,6 +6,14 @@
 *~
 .backups/
 
+# ── Plugins linked into modules/ (each person's own) ─────────
+# `inir hub` links every family, component and Design a person installs at modules/<id>: theirs, never the
+# base's. Only the base's own modules are tracked; a new one is listed here.
+/modules/*
+!/modules/background/
+!/modules/common/
+!/modules/shared/
+
 # ── AI tooling (local development only; never distributed) ───
 AGENTS.md
 AGENTS.override.md
