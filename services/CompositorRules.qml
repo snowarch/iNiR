@@ -29,6 +29,8 @@ Scope {
         : root.niri ? root.niriRules : []
     property var niriRules: []
     property string error: ""
+    // Niri's config.kdl could not be read (Niri started with another -c): nothing is written, Settings says so.
+    property bool unread: false
     // What "On workspace" offers: Niri opens only on a named workspace; Umbriel takes a position or a name too.
     readonly property var workspaceNames: Array.from(NiriService.allWorkspaces ?? []).map(ws => String(ws?.name ?? "")).filter((name, at, all) => name.length > 0 && all.indexOf(name) === at)
     readonly property int positions: root.umbriel ? Math.max(5, ...Object.values(Array.from(NiriService.allWorkspaces ?? [])
@@ -209,7 +211,11 @@ Scope {
         watchChanges: true
         printErrors: false
         onFileChanged: niriMain.reload()
-        onLoaded: if (!root.niriSplit) root.niriRules = root.niriParse(niriMain.text())
+        onLoadFailed: root.unread = true
+        onLoaded: {
+            root.unread = false
+            if (!root.niriSplit) root.niriRules = root.niriParse(niriMain.text())
+        }
     }
     FileView {
         id: niriOwn
