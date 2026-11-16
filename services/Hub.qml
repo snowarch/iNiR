@@ -152,6 +152,10 @@ Singleton {
             return item.installed && item.update && item.compatible ? "update" : Plugins.active === item.id ? "active" : "present"
         if (item.installed)
             return item.update && item.compatible ? "update" : "installed"
+        // The same holds for a Design or component the shell has under this id and kind, linked from a folder of
+        // one's own (`inir hub link`): it is that item, not a clash (11-16: Prism read "Name taken" on its own link).
+        if (item.conflict && Plugins.manifests[item.id]?.kind === item.kind)
+            return "installed"
         if (item.conflict)
             return "conflict"
         if (!item.compatible)
