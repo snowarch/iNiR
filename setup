@@ -1833,7 +1833,13 @@ run_install() {
         tui_task_finalize
         tui_step 3 3 "Installing config files" "User configs, backups, wallpaper defaults, and generated theme inputs."
         inir_event stage files
-        source ./sdata/subcmd-install/3.files.sh
+        # A step that stops here (no families from the hub, a sync that failed) left the Niri config, the service and
+        # the theme undone: reported as installed, the person met Niri's own binds and an unthemed desktop (11-17).
+        if ! source ./sdata/subcmd-install/3.files.sh; then
+            tui_task_fail 2 "stopped"
+            tui_error "Installing the config files stopped; fix what it printed above and run ./setup install again"
+            return 1
+        fi
         echo ""
         tui_task_init \
             "Install dependencies" \

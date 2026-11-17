@@ -1276,3 +1276,6 @@ if ! ${quiet:-false}; then
   fi
 
 fi  # end quiet check
+
+# ./setup reads a non-zero return as this step failing: only an explicit return 1 above may give one.
+return 0
