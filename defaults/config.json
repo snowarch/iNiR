@@ -1754,6 +1754,7 @@
             "settingsPanel": "prism",
             "settingsHost": "overlay",
             "settingsRail": "auto",
+            "prismLook": "folders",
             "settingsLayout": "classic",
             "settingsOriginal": false,
             "settingsHome": [
