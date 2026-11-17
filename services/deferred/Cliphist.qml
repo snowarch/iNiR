@@ -69,16 +69,19 @@ Singleton {
     // byte, which keeps images intact.
     readonly property string _markupFilter: `'${Directories.scriptsPath}/lib/accel-run' clipboard-store --filter`
 
-    function decodeCommand(entry): string {
+    // Decodes one history entry to stdout. Returns { script, args }: the entry never
+    // enters the script text when it is a plain value; it is positional argument $n.
+    // The escaped fallback (no id) stays inline, already quoted by shellSingleQuoteEscape.
+    function decodeCommand(entry, n = 1): var {
         if (root.cliphistBinary.includes("cliphist")) {
             const id = root.entryId(entry)
             if (id.length > 0)
-                return `${root.cliphistBinary} decode ${id} | ${root._markupFilter}`
-            return `printf '%s\n' '${StringUtils.shellSingleQuoteEscape(entry)}' | ${root.cliphistBinary} decode | ${root._markupFilter}`
+                return { script: `${root.cliphistBinary} decode ${id} | ${root._markupFilter}`, args: [] }
+            return { script: `printf '%s\n' '${StringUtils.shellSingleQuoteEscape(entry)}' | ${root.cliphistBinary} decode | ${root._markupFilter}`, args: [] }
         }
 
         const entryNumber = String(entry ?? "").split("\t")[0]
-        return `${root.cliphistBinary} decode ${entryNumber} | ${root._markupFilter}`
+        return { script: `${root.cliphistBinary} decode "$${n}" | ${root._markupFilter}`, args: [entryNumber] }
     }
 
     function refresh() {
@@ -94,12 +97,14 @@ Singleton {
         root._log("[Cliphist] copy()", String(entry).slice(0, 120))
         root._selfCopy = true
         selfCopyResetTimer.restart()
-        Quickshell.execDetached(["bash", "-c", `${root.decodeCommand(entry)} | wl-copy`]);
+        const d = root.decodeCommand(entry)
+        Quickshell.execDetached(["bash", "-c", `${d.script} | wl-copy`, "copy", ...d.args]);
     }
 
     function paste(entry) {
         root._selfCopy = true
-        Quickshell.execDetached(["bash", "-c", `${root.decodeCommand(entry)} | wl-copy\n${root.pressPasteCommand}`]);
+        const d = root.decodeCommand(entry)
+        Quickshell.execDetached(["bash", "-c", `${d.script} | wl-copy\n${root.pressPasteCommand}`, "paste", ...d.args]);
     }
 
     function superpaste(count, isImage = false) {
@@ -108,9 +113,14 @@ Singleton {
             if (!isImage) return true;
             return entryIsImage(entry);
         }).slice(0, count)
-        const pasteCommands = [...targetEntries].reverse().map(entry => `${root.decodeCommand(entry)} | wl-copy\nsleep ${root.pasteDelay}\n${root.pressPasteCommand}`)
+        const args = []
+        const pasteCommands = [...targetEntries].reverse().map(entry => {
+            const d = root.decodeCommand(entry, args.length + 1)
+            args.push(...d.args)
+            return `${d.script} | wl-copy\nsleep ${root.pasteDelay}\n${root.pressPasteCommand}`
+        })
         // Act
-        Quickshell.execDetached(["bash", "-c", pasteCommands.join(`\nsleep ${root.pasteDelay}\n`)]);
+        Quickshell.execDetached(["bash", "-c", pasteCommands.join(`\nsleep ${root.pasteDelay}\n`), "superpaste", ...args]);
     }
 
     Process {
@@ -226,7 +236,8 @@ Singleton {
 
     function pinEntry(entry): void {
         if (!root.isPinnable(entry)) return
-        pinProc.command = ["bash", "-c", root.decodeCommand(entry)]
+        const d = root.decodeCommand(entry)
+        pinProc.command = ["bash", "-c", d.script, "pin", ...d.args]
         pinProc.running = true
     }
 

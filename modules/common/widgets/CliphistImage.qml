@@ -68,19 +68,20 @@ Rectangle {
         // Multiple clipboard surfaces can render the same entry concurrently.
         // Decode through a per-process temporary file and publish it atomically;
         // the shared session cache is cleaned once by Directories on shell start.
+        // $1 target, $2 folder, $3 the clipboard entry (from the clipboard: data), $4 cliphist binary.
         command: ["bash", "-c", `
-            if [ -s '${imageDecodeFilePath}' ]; then
+            if [ -s "$1" ]; then
                 exit 0
             fi
-            mkdir -p '${imageDecodePath}'
-            _tmp='${imageDecodeFilePath}'.$$
-            if echo '${StringUtils.shellSingleQuoteEscape(root.entry)}' | ${Cliphist.cliphistBinary} decode > "$_tmp" && [ -s "$_tmp" ]; then
-                mv -f "$_tmp" '${imageDecodeFilePath}'
+            mkdir -p "$2"
+            _tmp="$1".$$
+            if printf '%s\\n' "$3" | "$4" decode > "$_tmp" && [ -s "$_tmp" ]; then
+                mv -f "$_tmp" "$1"
             else
                 rm -f "$_tmp"
                 exit 1
             fi
-        `]
+        `, "_", imageDecodeFilePath, imageDecodePath, root.entry, Cliphist.cliphistBinary]
         onExited: (exitCode, exitStatus) => {
             root.source = exitCode === 0 ? imageDecodeFilePath : ""
         }

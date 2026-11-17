@@ -15,22 +15,14 @@ Process {
     property string downloadUserAgent: Config.options?.networking.userAgent ?? ""
     property string activeFilePath: ""
 
-    function processFilePath(): string {
-        return StringUtils.shellSingleQuoteEscape(
-            FileUtils.trimFileProtocol(root.filePath))
-    }
-
-    function processSourceUrl(): string {
-        return StringUtils.shellSingleQuoteEscape(root.sourceUrl.trim())
-    }
-
+    // The URL comes from the web and the path from the cache: both reach the script as $1 and $2, never as text.
     running: false
     command: [
         "bash",
         "-c",
         `set -euo pipefail
-src='${root.processSourceUrl()}'
-dst='${root.processFilePath()}'
+src="$1"
+dst="$2"
 [ -n "$src" ] && [ -n "$dst" ] || exit 2
 mkdir -p "$(dirname "$dst")"
 if [ -s "$dst" ] && ! magick identify -quiet "$dst"'[0]' >/dev/null 2>&1; then
@@ -59,7 +51,8 @@ if [ ! -s "$dst" ]; then
     mv -f "$tmp" "$dst"
     trap - EXIT
 fi
-magick identify -format '%w %h' "$dst"'[0]'`
+magick identify -format '%w %h' "$dst"'[0]'`,
+        "_", root.sourceUrl.trim(), FileUtils.trimFileProtocol(root.filePath)
     ]
 
     stdout: StdioCollector {

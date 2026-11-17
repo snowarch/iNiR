@@ -562,8 +562,8 @@ Singleton {
         } else {
             query = encodeURIComponent(root.location.name.split(',')[0].trim());
         }
-        const cmd = `curl -s --max-time 15 'https://wttr.in/${query}?format=j1'`;
-        fetcher.command = ["bash", "-c", cmd];
+        // The place name comes from the web (geocoder, IP lookup): curl gets the URL as an argument, no shell.
+        fetcher.command = ["curl", "-s", "--max-time", "15", "https://wttr.in/" + query + "?format=j1"];
         fetcher.running = true;
     }
 

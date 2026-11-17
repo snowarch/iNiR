@@ -3965,19 +3965,20 @@ Singleton {
 
     function _doWriteGeneratedFiles(colorsJson, paletteJson, appPaletteJson, terminalJson, themeMeta, scss, chromiumRgb) {
         const genDir = Directories.stateUserPath + "/generated";
-        // Build a single bash script that writes all files atomically.
-        // JSON uses double quotes only, so single-quoting is safe.
-        let script = `set -e; mkdir -p '${genDir}'\n`;
-        script += `printf '%s' '${colorsJson}' > '${Directories.generatedMaterialThemePath}'\n`;
-        script += `printf '%s' '${paletteJson}' > '${Directories.generatedPalettePath}'\n`;
-        script += `printf '%s' '${appPaletteJson}' > '${Directories.generatedAppPalettePath}'\n`;
-        script += `printf '%s' '${terminalJson}' > '${Directories.generatedTerminalPalettePath}'\n`;
-        script += `printf '%s' '${themeMeta}' > '${Directories.generatedThemeMetaPath}'\n`;
-        script += `printf '%s' '${scss}' > '${Directories.generatedMaterialScssPath}'\n`;
-        if (chromiumRgb.length > 0) {
-            script += `printf '%s\\n' '${chromiumRgb}' > '${Directories.generatedChromiumThemePath}'\n`;
-        }
-        Quickshell.execDetached(["bash", "-c", script]);
+        // One bash pass writes all files: the script is constant, each content and path is a positional
+        // argument (theme metadata can carry a name typed by someone else; it never enters the script text).
+        const writes = [
+            [colorsJson, Directories.generatedMaterialThemePath],
+            [paletteJson, Directories.generatedPalettePath],
+            [appPaletteJson, Directories.generatedAppPalettePath],
+            [terminalJson, Directories.generatedTerminalPalettePath],
+            [themeMeta, Directories.generatedThemeMetaPath],
+            [scss, Directories.generatedMaterialScssPath]
+        ];
+        if (chromiumRgb.length > 0)
+            writes.push([chromiumRgb + "\n", Directories.generatedChromiumThemePath]);
+        const script = 'set -e; mkdir -p -- "$1"; shift; while [ "$#" -ge 2 ]; do printf "%s" "$1" > "$2"; shift 2; done';
+        Quickshell.execDetached(["bash", "-c", script, "_", genDir].concat(...writes));
     }
 
     function buildTerminalJson(c) {

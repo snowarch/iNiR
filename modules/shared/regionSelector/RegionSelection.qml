@@ -392,14 +392,6 @@ PanelWindow {
         const recordY = Math.round(root.regionY + (outputLogical?.y ?? root.monitorOffsetY))
         const slurpRegion = `${recordX},${recordY} ${Math.round(root.regionWidth)}x${Math.round(root.regionHeight)}`
         const screenshotSaveDir = StringUtils.shellSingleQuoteEscape(Directories.screenshotsPath)
-        const uploadAndGetUrl = (filePath) => {
-            const escaped = StringUtils.shellSingleQuoteEscape(filePath)
-            const primary = `curl -s --max-time 15 -F reqtype=fileupload -F time=1h -F fileToUpload=@'${escaped}' '${root.fileUploadApiEndpoint}'`
-            const fallback1 = `curl -s --max-time 15 -F reqtype=fileupload -F fileToUpload=@'${escaped}' '${root.fileUploadApiFallback}'`
-            const fallback2 = `curl -sf --max-time 10 -F file=@'${escaped}' '${root.fileUploadApiFallback2}'`
-            // Try primary, then fallback1, then fallback2 if all fail or return empty/non-URL response
-            return `url=$(${primary} 2>/dev/null); if [[ -z "$url" || "$url" != http* ]]; then url=$(${fallback1}); fi; if [[ -z "$url" || "$url" != http* ]]; then url=$(${fallback2}); fi; echo "$url"`
-        }
         const annotationCommand = `${(Config.options?.regionSelector?.annotation?.useSatty ?? false) ? "satty" : "swappy"} -f -`;
         const clipboardCopy = StringUtils.shellSingleQuoteEscape(Quickshell.shellPath("scripts/clipboard-copy.sh"));
         // Words in the notification, the folder by its name: the full path read as a log line in the Island.
@@ -423,7 +415,11 @@ PanelWindow {
                 snipProc.command = ["bash", "-c", `${cropToStdout} | ${annotationCommand} && ${cleanup}`]
                 break;
             case RegionSelection.SnipAction.Search:
-                snipProc.command = ["bash", "-c", `${cropInPlace} && uploaded_url="$(${uploadAndGetUrl(root.screenshotPath)})"; if [[ -n "$uploaded_url" && "$uploaded_url" == http* ]]; then xdg-open "${root.effectiveImageSearchEngineBaseUrl}$uploaded_url"; else notify-send "Image search failed" "Could not upload the image for reverse search" -a "Image Search" -i image; fi; ${cleanup}`]
+                // Endpoints (Config), the search base and the file go in as $1..$5: none of them is script text.
+                // Try primary, then fallback1, then fallback2 if all fail or return empty/non-URL response.
+                snipProc.command = ["bash", "-c", `${cropInPlace} && uploaded_url="$(url=$(curl -s --max-time 15 -F reqtype=fileupload -F time=1h -F fileToUpload=@"$5" "$1" 2>/dev/null); if [[ -z "$url" || "$url" != http* ]]; then url=$(curl -s --max-time 15 -F reqtype=fileupload -F fileToUpload=@"$5" "$2"); fi; if [[ -z "$url" || "$url" != http* ]]; then url=$(curl -sf --max-time 10 -F file=@"$5" "$3"); fi; echo "$url")"; if [[ -n "$uploaded_url" && "$uploaded_url" == http* ]]; then xdg-open "$4$uploaded_url"; else notify-send "Image search failed" "Could not upload the image for reverse search" -a "Image Search" -i image; fi; ${cleanup}`,
+                    "_", root.fileUploadApiEndpoint, root.fileUploadApiFallback, root.fileUploadApiFallback2,
+                    root.effectiveImageSearchEngineBaseUrl, root.screenshotPath]
                 break;
             case RegionSelection.SnipAction.CharRecognition: {
                 const ocrLanguage = String(Config.options?.regionSelector?.ocrLanguage ?? "auto");

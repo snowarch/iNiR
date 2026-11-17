@@ -16,7 +16,7 @@ IconImage {
     property string downloadUserAgent: Config.options?.networking.userAgent ?? ""
     property string faviconDownloadPath: Directories.favicons
     property string domainName: url.includes("vertexaisearch") ? displayText : StringUtils.getDomain(url)
-    property string faviconUrl: `https://www.google.com/s2/favicons?domain=${domainName}&sz=32`
+    property string faviconUrl: `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domainName)}&sz=32`
     property string fileName: `${domainName}.ico`
     property string faviconFilePath: `${faviconDownloadPath}/${fileName}`
     property string urlToLoad
@@ -29,7 +29,7 @@ IconImage {
         // without this the error page is cached as an .ico that the image
         // loader then fails to decode on every startup, forever, because the
         // [ -f ] guard never re-fetches it.
-        command: ["bash", "-c", `[ -f ${faviconFilePath} ] || curl -sfL --remove-on-error '${root.faviconUrl}' -o '${faviconFilePath}' -H 'User-Agent: ${downloadUserAgent}'`]
+        command: ["bash", "-c", '[ -f "$1" ] || curl -sfL --remove-on-error "$2" -o "$1" -H "User-Agent: $3"', "favicon", root.faviconFilePath, root.faviconUrl, root.downloadUserAgent]
         onExited: (exitCode, exitStatus) => {
             if (exitCode === 0) root.urlToLoad = root.faviconFilePath
         }
