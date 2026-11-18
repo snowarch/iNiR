@@ -12,8 +12,6 @@ Singleton {
 
     readonly property bool own: FamilyStyle.p !== null
     readonly property real d: root.own ? FamilyStyle.density : 1
-    // A family of square sheets: its plates cast a hard shadow and nothing on them is round.
-    readonly property bool square: root.own && FamilyStyle.radiusSheet === 0
     readonly property var _c: Appearance.colors
 
     readonly property color colOnLayer1: root.own ? FamilyStyle.text : root._c.colOnLayer1

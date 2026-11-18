@@ -32,7 +32,7 @@ Item {
 
     OverlayPlate {
         anchors.fill: parent
-        radius: OverlayLook.square ? 0 : Math.min(height / 2, OverlayLook.plateRadius + 6)
+        radius: Math.min(height / 2, OverlayLook.plateRadius + 6)
         fillOpacity: Math.max(0.92, Config.options?.overlay?.backgroundOpacity ?? 0.9)
         screenX: root.x
         screenY: root.y

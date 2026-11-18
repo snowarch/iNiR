@@ -33,15 +33,11 @@ Item {
     RectangularShadow {
         visible: OverlayLook.own && root.shadow && root.fillOpacity > 0.02
         anchors.fill: body
-        anchors.topMargin: OverlayLook.square ? 0 : Math.round(6 * OverlayLook.d)
-        anchors.leftMargin: OverlayLook.square ? Math.round(5 * OverlayLook.d) : 0
-        anchors.rightMargin: OverlayLook.square ? -Math.round(5 * OverlayLook.d) : 0
-        anchors.bottomMargin: OverlayLook.square ? -Math.round(5 * OverlayLook.d) : 0
+        anchors.topMargin: Math.round(6 * OverlayLook.d)
         radius: root.radius
-        blur: OverlayLook.square ? 0 : Math.round(28 * OverlayLook.d)
-        spread: OverlayLook.square ? 0 : -Math.round(6 * OverlayLook.d)
-        color: OverlayLook.square ? ColorUtils.applyAlpha(FamilyStyle.text, root.fillOpacity)
-            : ColorUtils.applyAlpha(FamilyStyle.shadow, FamilyStyle.shadow.a * root.fillOpacity)
+        blur: Math.round(28 * OverlayLook.d)
+        spread: -Math.round(6 * OverlayLook.d)
+        color: ColorUtils.applyAlpha(FamilyStyle.shadow, FamilyStyle.shadow.a * root.fillOpacity)
     }
 
     Loader {
@@ -63,7 +59,7 @@ Item {
         visible: OverlayLook.own && root.fillOpacity > 0.005
         radius: root.radius
         color: ColorUtils.applyAlpha(FamilyStyle.bodySurface, FamilyStyle.bodySurface.a * root.fillOpacity)
-        border.width: OverlayLook.square ? 2 : 1
+        border.width: 1
         border.color: ColorUtils.applyAlpha(FamilyStyle.border, FamilyStyle.border.a * Math.min(1, root.fillOpacity * 1.5))
     }
 }

@@ -38,7 +38,7 @@ Item {
         id: track
         visible: familySegmented.url.length === 0
         anchors.fill: parent
-        radius: OverlayLook.square ? 0 : height / 2
+        radius: height / 2
         color: OverlayLook.colRecessed
 
         WheelHandler {
@@ -56,7 +56,7 @@ Item {
             height: parent.height - 4
             width: root.slot
             x: 2 + root.slot * Math.max(0, root.selectedIndex)
-            radius: OverlayLook.square ? 0 : height / 2
+            radius: height / 2
             color: OverlayLook.colToggle
             Behavior on x { NumberAnimation { duration: FamilyStyle.morphDuration; easing.type: Easing.BezierSpline; easing.bezierCurve: FamilyStyle.morphCurve } }
         }
