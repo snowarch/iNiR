@@ -62,7 +62,7 @@ PanelWindow {
         return configured
     }
 
-    readonly property bool useIris: Config.options?.panelFamily === "iris"
+    readonly property bool useIris: ["iris", "nihil"].includes(Config.options?.panelFamily)
     // The toolbar rests against a screen edge the shell may already own.
     readonly property var shellInsets: ShellLayoutController.desktopInsets(root.screen?.name ?? "")
 

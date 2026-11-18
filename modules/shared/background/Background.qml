@@ -887,13 +887,15 @@ Scope {
         // An iRiS texture over the wallpaper (Afterglow's grade, Light leak's exposure) filters whatever is drawn here
         // (still, transition, preview, video, GIF), so the picture is drawn here, not by awww; leaving it, the picture
         // stays drawn here until awww shows it.
-        readonly property string irisTexture: (Config.options?.panelFamily ?? "ii") === "iris"
+        // A family flagged `printedWallpaper` draws the picture through its part `wallpaper.print` while its option is on.
+        readonly property bool printTexture: Plugins.flag(Plugins.active, "printedWallpaper") && (Config.family?.appearance?.printed ?? true)
+        readonly property string irisTexture: bgRoot.printTexture ? "print" : (Config.options?.panelFamily ?? "ii") === "iris"
             ? String(Config.options?.iris?.appearance?.texture ?? "solid") : "solid"
         readonly property bool textureWallpaperActive: bgRoot.irisTextureActive || bgRoot.glyphsActive
         // Glyphs read whatever is drawn here, like a family's texture: the picture is drawn here, not by awww.
         readonly property bool glyphsActive: Wallpapers.glyphs && bgRoot.wallpaperPathRaw.length > 0
             && !bgRoot.webWallpaperActive && !bgRoot.wallpaperSafetyTriggered && !bgRoot.backdropActive
-        readonly property bool irisTextureActive: (bgRoot.irisTexture === "afterglow"
+        readonly property bool irisTextureActive: (bgRoot.irisTexture === "print" ? true : bgRoot.irisTexture === "afterglow"
                 ? (Config.options?.iris?.appearance?.afterglow?.wallpaper ?? true)
                 : bgRoot.irisTexture === "leak" && (Number(Config.options?.iris?.appearance?.leak?.wallpaper ?? 50) > 0
                     || Config.options?.iris?.appearance?.leak?.backdrop === "light"))
@@ -1824,7 +1826,7 @@ Scope {
                 anchors.fill: wallpaperContainer
                 when: bgRoot.irisTextureActive && bgRoot._familyOwnsScreen
                 readonly property bool leak: bgRoot.irisTexture === "leak"
-                part: leak ? "wallpaper.leak" : "wallpaper.afterglow"
+                part: bgRoot.irisTexture === "print" ? "wallpaper.print" : leak ? "wallpaper.leak" : "wallpaper.afterglow"
                 // The light alone never shows the picture: a video under it needs no redraw.
                 props: leak ? ({ source: wallpaperContainer, picture: bgRoot.wallpaperPathRaw,
                         live: (bgRoot.wallpaperIsVideo || bgRoot.wallpaperIsGif) && Config.options?.iris?.appearance?.leak?.backdrop !== "light" })
