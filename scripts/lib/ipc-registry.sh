@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Generated from the /// comments on each QML IpcHandler; edit those, then run the IPC registry generator.
-# Targets: 81
+# Targets: 82
 
 declare -gA IPC_TARGET_DESC=(
   [ai]="Shared multi-provider AI service. It supports Gemini, OpenAI-compatible chat and Responses APIs, Mistral and Anthropic; live provider catalogs are normalized into capability-aware model records. Catalog visibility is separate from execution readiness, so public model lists remain browseable without pretending an API key exists. OpenCode Zen and Go resolve their current model lists and per-model API routes dynamically. Normal shell tools use typed actions and approval cards, while arbitrary commands are isolated in Advanced mode."
@@ -43,6 +43,7 @@ declare -gA IPC_TARGET_DESC=(
   [minimize]="Window minimization (Niri workaround - moves windows to hidden workspace)."
   [mpris]="Media player control. Automatically detects and uses YtMusic controls when active, otherwise uses the active MPRIS player."
   [network]="Whether the shell can reach the internet, as NetworkManager sees it. Surfaces that show online content (wallpaper sources, news, anime, weather, calendars, lyrics) read this to say why they are empty instead of failing quietly."
+  [nihil]="NiHiL's panels: \`control\`, \`start\`, \`power\`, \`menu\`, \`tray\`."
   [niriAnimations]="Presets for Niri's own window, workspace and overview animations. Applying one rewrites the animations in \`config.d/60-animations.kdl\` and keeps \`off\` and \`slowdown\` as they were. The same picker lives in Settings in every family. Your own presets go in \`~/.config/inir/niri-animation-presets.json\` as \`{\"presets\": [...]}\`, in the same shape as \`defaults/niri-animation-presets.json\`; one with a shipped id replaces it."
   [notifications]="Notification management."
   [orbit]="Niri-only session navigator. On ii it presents nearby workspaces and readable window previews, with MRU Trail navigation and temporary Stash parking. On iRiS it is the Island growing into one strip per workspace, with a search that lights up the windows that match; \`stage\`, \`orbital\`, \`studio\` and \`toggleView\` are ii's and do nothing there, \`pocket\` and \`find\` open Orbit, and \`next\` and \`previous\` move Niri to the workspace below or above."
@@ -127,6 +128,7 @@ declare -gA IPC_TARGET_FAMILY=(
   [minimize]="shared"
   [mpris]="shared"
   [network]="shared"
+  [nihil]="nihil"
   [niriAnimations]="shared"
   [notifications]="shared"
   [orbit]="shared"
@@ -211,6 +213,7 @@ declare -gA IPC_TARGET_FUNCTIONS=(
   [minimize]="minimize minimizeId restore restoreOriginal"
   [mpris]="pauseAll playPause previous next select"
   [network]="status check simulate simulateLink"
+  [nihil]="toggle close"
   [niriAnimations]="list active apply"
   [notifications]="test clearAll toggleSilent invokeAction"
   [orbit]="toggle close open pocket studio find stage orbital next previous status toggleView"
@@ -525,6 +528,8 @@ declare -gA IPC_FUNCTION_DESC=(
   ["network:check"]="Ask NetworkManager to check connectivity again, for example after signing in to a captive portal"
   ["network:simulate"]="Pretend the connectivity is \`none\`, \`limited\`, \`portal\` or \`full\` until the shell restarts; any other value clears it. For testing"
   ["network:simulateLink"]="Pretend the link is \`\"wifi 40\"\` (a signal strength), \`searching\`, \`connecting\`, \`\"radio off\"\`, \`ethernet\` or \`none\` (no adapter) until \`off\` or a restart. For testing"
+  ["nihil:toggle"]="Open or close one of NiHiL's panels by name (\`control\`, \`start\`, \`power\`, \`menu\`, \`tray\`)"
+  ["nihil:close"]="Close every NiHiL panel"
   ["niriAnimations:list"]="List the presets; \`*\` marks the one your config matches"
   ["niriAnimations:active"]="Print the preset your config matches, or \`custom\` after hand edits"
   ["niriAnimations:apply"]="Apply a preset: \`snappy\`, \`niri\`, \`material\`, \`bouncy\`, \`gentle\`, \`instant\` or one of yours"
@@ -870,6 +875,7 @@ declare -gA IPC_FUNCTION_ARGS=(
   ["mpris:select"]="<which>"
   ["network:simulate"]="<state>"
   ["network:simulateLink"]="<spec>"
+  ["nihil:toggle"]="<panel>"
   ["niriAnimations:apply"]="<id>"
   ["notifications:invokeAction"]="<identifier>"
   ["orbit:find"]="<query>"
@@ -995,6 +1001,7 @@ declare -gA IPC_FUNCTION_VALUES=(
   ["mpris:select"]="next prev spotify firefox"
   ["network:simulate"]="none limited portal full"
   ["network:simulateLink"]="searching connecting ethernet none off"
+  ["nihil:toggle"]="control start power menu tray"
   ["niriAnimations:apply"]="snappy niri material bouncy gentle instant"
   ["osd:media"]="play pause next previous"
   ["overlay:tool"]="crosshair fpsLimiter floatingImage recorder resources network notes discord volumeMixer notifications gamePerformance clock timer on off toggle"
@@ -1035,6 +1042,7 @@ Super+M { spawn "inir" "globalActions" "run" "toggle-mute"; }'
   [mpris]='Ctrl+Mod+Space { spawn "inir" "mpris" "playPause"; }
 Mod+Alt+N { spawn "inir" "mpris" "next"; }
 Mod+Alt+P { spawn "inir" "mpris" "previous"; }'
+  [nihil]='Mod+A { spawn "inir" "nihil" "toggle" "control"; }'
   [niriAnimations]='Super+Alt+A { spawn "inir" "niriAnimations" "apply" "snappy"; }'
   [osd]='Mod+Shift+K { spawn "inir" "osd" "keyboard"; }'
   [overlay]='Super+G { spawn "inir" "overlay" "toggle"; }'
@@ -1058,7 +1066,7 @@ Ctrl+Alt+A { spawn "inir" "wallpaperSelector" "openLauncher" "animated"; }'
   [ytmusic]='Mod+M+Space { spawn "inir" "ytmusic" "playPause"; }'
 )
 
-IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode colorPicker connections controlPanel coverflowSelector customWidgets dashboard dev equalizer gamemode globalActions globalStyle hub iris irisDev keyboard livePins lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily pill privacy recordingOsd region scratchpad search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling timer undo voiceSearch vpn wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetStacks widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
+IPC_ALL_TARGETS=(ai altSwitcher appCatalog audio autostart background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode colorPicker connections controlPanel coverflowSelector customWidgets dashboard dev equalizer gamemode globalActions globalStyle hub iris irisDev keyboard livePins lock loginScreen mascot mascotMood mediaControls memory minimize mpris network nihil niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily pill privacy recordingOsd region scratchpad search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling timer undo voiceSearch vpn wactionCenter waffleAltSwitcher wallpaperLauncher wallpaperSelector wbar widgetStacks widgetpower wnotificationCenter workspaceStrip wwidgets ytmusic zoom)
 IPC_SHARED_TARGETS=(ai altSwitcher appCatalog audio autostart background bar battery bluetooth brightness cheatsheet clipboard cliphistService closeConfirm colorMode colorPicker connections controlPanel coverflowSelector customWidgets dashboard dev gamemode globalActions globalStyle hub keyboard livePins lock loginScreen mascot mascotMood mediaControls memory minimize mpris network niriAnimations notifications orbit osd osdVolume osk overlay overview packageSearch panelFamily privacy recordingOsd region scratchpad search session settings settingsNav shellLayout shellUpdate sidebarLeft sidebarRight taskview tiling timer undo voiceSearch vpn wallpaperLauncher wallpaperSelector widgetStacks widgetpower workspaceStrip ytmusic zoom)
 IPC_II_TARGETS=(equalizer pill)
 IPC_WAFFLE_TARGETS=(wactionCenter waffleAltSwitcher wbar wnotificationCenter wwidgets)

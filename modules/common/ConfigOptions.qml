@@ -2459,6 +2459,8 @@ JsonAdapter {
 
     property JsonObject waffles
 
+    property JsonObject nihil
+
     property JsonObject material
     property JsonObject workSafety: JsonObject {
         property JsonObject enable: JsonObject {

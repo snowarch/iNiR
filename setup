@@ -1344,7 +1344,7 @@ run_config() {
     local action
     action=$(tui_choose_rich "Configuration" \
         "${ICON_ARROW}|Edit in Editor|Open config.json in your editor" \
-        "${ICON_DOT}|Panel Family|Switch between Material ii, Waffle and iRiS" \
+        "${ICON_DOT}|Panel Family|Switch between Material ii, Waffle, iRiS and NiHiL" \
         "${ICON_DOT}|Open Config Dir|Open the config directory" \
         "${ICON_DOT}|Reset to Defaults|Restore default configuration" \
         "${ICON_CIRCLE}|Back|Return to main menu")
@@ -1359,7 +1359,7 @@ run_config() {
         "Panel Family")
             echo ""
             local new_family
-            new_family=$(tui_choose "Select panel family:" "ii" "waffle" "iris")
+            new_family=$(tui_choose "Select panel family:" "ii" "waffle" "iris" "nihil")
             if [[ -n "$new_family" && "$new_family" != "$panel_family" ]]; then
                 # A running shell owns the config in memory and would overwrite a direct write: ask it.
                 if bash "${REPO_ROOT}/scripts/inir" panelFamily set "$new_family" &>/dev/null; then
