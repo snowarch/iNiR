@@ -2766,6 +2766,35 @@
    ]
   },
   {
+   "name": "nihil",
+   "family": "nihil",
+   "description": "NiHiL's panels: `control`, `start`, `power`, `menu`, `tray`.",
+   "notes": "```kdl\nMod+A { spawn \"inir\" \"nihil\" \"toggle\" \"control\"; }\n```",
+   "example": "Mod+A { spawn \"inir\" \"nihil\" \"toggle\" \"control\"; }",
+   "functions": [
+    {
+     "name": "toggle",
+     "args": [
+      "panel"
+     ],
+     "description": "Open or close one of NiHiL's panels by name (`control`, `start`, `power`, `menu`, `tray`)",
+     "values": [
+      "control",
+      "start",
+      "power",
+      "menu",
+      "tray"
+     ]
+    },
+    {
+     "name": "close",
+     "args": [],
+     "description": "Close every NiHiL panel",
+     "values": []
+    }
+   ]
+  },
+  {
    "name": "niriAnimations",
    "family": "shared",
    "description": "Presets for Niri's own window, workspace and overview animations. Applying one rewrites the animations in `config.d/60-animations.kdl` and keeps `off` and `slowdown` as they were. The same picker lives in Settings in every family. Your own presets go in `~/.config/inir/niri-animation-presets.json` as `{\"presets\": [...]}`, in the same shape as `defaults/niri-animation-presets.json`; one with a shipped id replaces it.",
