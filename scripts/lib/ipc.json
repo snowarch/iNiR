@@ -2768,29 +2768,49 @@
   {
    "name": "nihil",
    "family": "nihil",
-   "description": "NiHiL's panels: `control`, `start`, `power`, `menu`, `tray`.",
-   "notes": "```kdl\nMod+A { spawn \"inir\" \"nihil\" \"toggle\" \"control\"; }\n```",
-   "example": "Mod+A { spawn \"inir\" \"nihil\" \"toggle\" \"control\"; }",
+   "description": "NiHiL's surfaces: `overview`, `apps`, `search`, `control`, `today`, `power`.",
+   "notes": "```kdl\nMod+A { spawn \"inir\" \"nihil\" \"toggle\" \"apps\"; }\n```",
+   "example": "Mod+A { spawn \"inir\" \"nihil\" \"toggle\" \"apps\"; }",
    "functions": [
     {
      "name": "toggle",
      "args": [
       "panel"
      ],
-     "description": "Open or close one of NiHiL's panels by name (`control`, `start`, `power`, `menu`, `tray`)",
+     "description": "Open or close one of NiHiL's surfaces by name (`overview`, `apps`, `search`, `control`, `today`, `power`)",
      "values": [
+      "overview",
+      "apps",
+      "search",
       "control",
-      "start",
-      "power",
-      "menu",
-      "tray"
+      "today",
+      "power"
      ]
     },
     {
      "name": "close",
      "args": [],
-     "description": "Close every NiHiL panel",
+     "description": "Close every NiHiL surface",
      "values": []
+    },
+    {
+     "name": "superKey",
+     "args": [],
+     "description": "The overview key: one press and two quick presses do what Settings says",
+     "values": []
+    },
+    {
+     "name": "profile",
+     "args": [
+      "id"
+     ],
+     "description": "Apply a desktop profile (`vertical`, `horizontal`, `corner`, `dock`)",
+     "values": [
+      "vertical",
+      "horizontal",
+      "corner",
+      "dock"
+     ]
     }
    ]
   },
