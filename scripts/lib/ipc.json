@@ -2768,28 +2768,875 @@
   {
    "name": "nihil",
    "family": "nihil",
-   "description": "NiHiL's panels: `control`, `start`, `power`, `menu`, `tray`.",
-   "notes": "```kdl\nMod+A { spawn \"inir\" \"nihil\" \"toggle\" \"control\"; }\n```",
-   "example": "Mod+A { spawn \"inir\" \"nihil\" \"toggle\" \"control\"; }",
+   "description": "NiHiL bar and Island design. Available while the NiHiL bar is enabled.",
+   "notes": "```bash\ninir iris open\ninir iris page desktop\ninir iris toggle\ninir iris dock toggle\ninir iris card toggle\ninir iris bubble right top-right\ninir iris appBubble kitty top-right\ninir iris pin right\ninir iris status\ninir iris close\n```",
+   "example": "",
    "functions": [
     {
-     "name": "toggle",
+     "name": "open",
+     "args": [],
+     "description": "Expand the island on the focused output",
+     "values": []
+    },
+    {
+     "name": "page",
      "args": [
-      "panel"
+      "name"
      ],
-     "description": "Open or close one of NiHiL's panels by name (`control`, `start`, `power`, `menu`, `tray`)",
+     "description": "Expand the island on a page: `media`, `activity`, `desktop`, `tray` or `tools`, or step through its navigation with `next` / `prev` (the same path as scrolling over the navigation row)",
      "values": [
-      "control",
-      "start",
-      "power",
-      "menu",
-      "tray"
+      "media",
+      "activity",
+      "desktop",
+      "tray",
+      "tools",
+      "next",
+      "prev"
      ]
+    },
+    {
+     "name": "togglePage",
+     "args": [
+      "name"
+     ],
+     "description": "One key for a page: expand the island on it, or collapse the island when that page already shows ```kdl Mod+S { spawn \"inir\" \"nihil\" \"togglePage\" \"desktop\"; } ```",
+     "values": []
     },
     {
      "name": "close",
      "args": [],
-     "description": "Close every NiHiL panel",
+     "description": "Collapse the island",
+     "values": []
+    },
+    {
+     "name": "shelf",
+     "args": [
+      "action"
+     ],
+     "description": "`open`, `close` or `toggle` the Island's Shelf page (open on another page counts as closed)",
+     "values": [
+      "open",
+      "close",
+      "toggle"
+     ]
+    },
+    {
+     "name": "toggle",
+     "args": [],
+     "description": "Expand or collapse the island on the focused output",
+     "values": []
+    },
+    {
+     "name": "card",
+     "args": [
+      "action"
+     ],
+     "description": "`open`, `close` or `toggle` the media bubble's floating card, or `pin` to keep it open",
+     "values": [
+      "open",
+      "close",
+      "toggle",
+      "pin"
+     ]
+    },
+    {
+     "name": "theme",
+     "args": [
+      "action"
+     ],
+     "description": "NiHiL themes, each a whole redesign of the family: `list`, `apply:<id>`, `save:<name>` (what you see now becomes a theme file), `import:<path>` (a shared `.json`), `export` or `export:<id>` (prints the theme as JSON to share) and `folder` (where theme files live, `~/.config/inir/iris/themes`)",
+     "values": [
+      "list",
+      "apply:",
+      "save:",
+      "import:",
+      "export",
+      "export:",
+      "folder"
+     ]
+    },
+    {
+     "name": "settings",
+     "args": [
+      "section"
+     ],
+     "description": "Open NiHiL Settings on a section: `general`, `appearance`, `motion`, `bar`, `bubbles`, `dock`, `desktop`, `windows`, `sidebars`, `controlCenter`, `spotlight`, `orbit`, `notifications`, `sound`, `capture`, `display`, `keyboard`, `battery`, `gaming`, `lock`, `player`, `anime`, `sources` or `system`; add `/<group>` to open that group, e.g. `bubbles/behaviour` or `lock/security`. It also takes `next`, `prev`, `back`, `forward` (the history), `search:<words>` and `open` (the first result), and `tune:open` / `tune:close` (every Fine-tune fold on the page)",
+     "values": [
+      "general",
+      "appearance",
+      "motion",
+      "bar",
+      "bubbles",
+      "dock",
+      "desktop",
+      "windows",
+      "sidebars",
+      "controlCenter",
+      "spotlight",
+      "orbit",
+      "notifications",
+      "sound",
+      "capture",
+      "display",
+      "keyboard",
+      "battery",
+      "gaming",
+      "lock",
+      "player",
+      "anime",
+      "sources",
+      "system",
+      "lock/security",
+      "next",
+      "prev",
+      "back",
+      "forward",
+      "search:",
+      "open"
+     ]
+    },
+    {
+     "name": "settingsClose",
+     "args": [],
+     "description": "Close NiHiL Settings in either host, over the desktop or as a window; a bare `inir settings` is a toggle",
+     "values": []
+    },
+    {
+     "name": "bubble",
+     "args": [
+      "slot",
+      "place"
+     ],
+     "description": "Place an Island bubble (`left`, `right`, `utility`) or an extra bubble (`weather`, `notifications`, `controls`, `sound`, `mic`, `tools`, `media`, `visualizer`, `tray`): a zone (`top-left`, `top-right`, `left`, `right`, `bottom-left`, `bottom-right`, or down and up a side from its corner: `left-top`, `left-bottom`, `right-top`, `right-bottom`), `edge:<top|bottom|left|right>` with an optional `:<fraction>` along that edge (e.g. `edge:top:0.3`), `x,y` fractions of the output, `island` (slots) or `off` (extras)",
+     "values": [
+      "left",
+      "right",
+      "utility",
+      "weather",
+      "notifications",
+      "controls",
+      "sound",
+      "mic",
+      "tools",
+      "media",
+      "visualizer",
+      "tray",
+      "top-left",
+      "top-right",
+      "bottom-left",
+      "bottom-right",
+      "left-top",
+      "left-bottom",
+      "right-top",
+      "right-bottom",
+      "edge:",
+      "island",
+      "off"
+     ]
+    },
+    {
+     "name": "dock",
+     "args": [
+      "action"
+     ],
+     "description": "`reveal`, `hide` or `toggle` the NiHiL Dock (revealed stays until hidden or an app is chosen)",
+     "values": [
+      "reveal",
+      "hide",
+      "toggle"
+     ]
+    },
+    {
+     "name": "dockApp",
+     "args": [
+      "appId",
+      "mode"
+     ],
+     "description": "Open a Dock app's `windows` or `menu` by app id (e.g. `kitty windows`), `pin` to keep it in the Dock or unpin it (prints which), or `<any> close`",
+     "values": [
+      "windows",
+      "menu",
+      "pin"
+     ]
+    },
+    {
+     "name": "dockMove",
+     "args": [
+      "appId",
+      "position"
+     ],
+     "description": "Move a Dock app to a position, counting icons from 1 with the separator between pinned and open apps (e.g. `firefox 2`): before the separator pins it, after it lines it up among the open apps",
+     "values": []
+    },
+    {
+     "name": "appBubble",
+     "args": [
+      "appId",
+      "place"
+     ],
+     "description": "Carry a Dock app out as a bubble of its own (e.g. `kitty right`): a zone, `x,y` fractions of the output, or `dock` to send it back",
+     "values": [
+      "dock"
+     ]
+    },
+    {
+     "name": "focus",
+     "args": [
+      "action"
+     ],
+     "description": "`open`, `close` or `toggle` the Focus panel (the left one), and say whether it is open",
+     "values": [
+      "open",
+      "close",
+      "toggle"
+     ]
+    },
+    {
+     "name": "today",
+     "args": [
+      "action"
+     ],
+     "description": "`open`, `close` or `toggle` the Today panel (the right one), and say whether it is open",
+     "values": [
+      "open",
+      "close",
+      "toggle"
+     ]
+    },
+    {
+     "name": "controlCenter",
+     "args": [
+      "action"
+     ],
+     "description": "`open`, `close` or `toggle` the Control Center, and say whether it is open",
+     "values": [
+      "open",
+      "close",
+      "toggle"
+     ]
+    },
+    {
+     "name": "pin",
+     "args": [
+      "side"
+     ],
+     "description": "Keep the `left` (Focus) or `right` (Today) panel open beside windows, or stop",
+     "values": [
+      "left",
+      "right"
+     ]
+    },
+    {
+     "name": "layout",
+     "args": [
+      "name"
+     ],
+     "description": "How the Island sits on its edge: `island`, `left`, `right`, `full` or `menubar` (top or bottom)",
+     "values": [
+      "island",
+      "left",
+      "right",
+      "full",
+      "menubar"
+     ]
+    },
+    {
+     "name": "strip",
+     "args": [
+      "name"
+     ],
+     "description": "What the menu bar lays under its items: `transparent` (on the wallpaper) or `band`",
+     "values": [
+      "transparent",
+      "band"
+     ]
+    },
+    {
+     "name": "edge",
+     "args": [
+      "name"
+     ],
+     "description": "Move the Island to a screen edge: `top`, `bottom`, `left` or `right` (on a side edge it rests as an upright capsule and its pages grow inward)",
+     "values": [
+      "top",
+      "bottom",
+      "left",
+      "right"
+     ]
+    },
+    {
+     "name": "dockEdge",
+     "args": [
+      "name"
+     ],
+     "description": "Move the Dock: `auto` (opposite the Island), `top`, `bottom`, `left` or `right`",
+     "values": [
+      "auto",
+      "top",
+      "bottom",
+      "left",
+      "right"
+     ]
+    },
+    {
+     "name": "zone",
+     "args": [
+      "name",
+      "kinds"
+     ],
+     "description": "What a full-width Island carries in a zone: `start`, `center` or `end`, then kinds joined by `+` (`island`, `workspaces`, `window`, `time` or a piece kind), or `none`",
+     "values": [
+      "start",
+      "center",
+      "end",
+      "island",
+      "workspaces",
+      "window",
+      "time",
+      "none"
+     ]
+    },
+    {
+     "name": "barPiece",
+     "args": [
+      "kind",
+      "action"
+     ],
+     "description": "Turn one of the Island's own pieces on or off: `weather`, `notifications`, `controls`, `sound`, `mic`, `tools`, `media`, `visualizer` or `tray`, plus `on`, `off` or `toggle`",
+     "values": [
+      "weather",
+      "notifications",
+      "controls",
+      "sound",
+      "mic",
+      "tools",
+      "media",
+      "visualizer",
+      "tray",
+      "on",
+      "off",
+      "toggle"
+     ]
+    },
+    {
+     "name": "arrange",
+     "args": [
+      "action"
+     ],
+     "description": "Arrange the Island's desktop page in place — move, remove and add its blocks: `on`, `off` or `toggle`",
+     "values": [
+      "on",
+      "off",
+      "toggle"
+     ]
+    },
+    {
+     "name": "edit",
+     "args": [
+      "action"
+     ],
+     "description": "Customize NiHiL on the shell itself: the Island grows a capsule (Themes, Look, Pieces, undo, Done) and whatever you click (a piece, the Island, the Dock) grows its own options: `on`, `off`, `toggle`, a sheet (`themes`, `pieces`, or a Look tab: `material`, `colour`, `type`, `motion`, `bodies`, `places`, `transients`, `desktop`), `island`, `dock` or a piece to inspect (`vitals`, `left`, `app:kitty`)",
+     "values": [
+      "on",
+      "off",
+      "toggle",
+      "themes",
+      "pieces",
+      "material",
+      "colour",
+      "type",
+      "motion",
+      "bodies",
+      "places",
+      "transients",
+      "desktop",
+      "island",
+      "dock",
+      "vitals",
+      "left"
+     ]
+    },
+    {
+     "name": "studio",
+     "args": [
+      "action"
+     ],
+     "description": "Customize as a panel beside the screen (Studio): `on`, `off`, `toggle`, an area to open it on (`material`, `colour`, `type`, `motion`, `island`, `pieces`, `bodies`, `places`, `transients`, `dock`, `desktop`, `themes`) or `search:<words>` to open it with a search typed",
+     "values": [
+      "on",
+      "off",
+      "toggle",
+      "material",
+      "colour",
+      "type",
+      "motion",
+      "island",
+      "pieces",
+      "bodies",
+      "places",
+      "transients",
+      "dock",
+      "desktop",
+      "themes",
+      "search:"
+     ]
+    },
+    {
+     "name": "notch",
+     "args": [
+      "action"
+     ],
+     "description": "Melt the Island into its edge (or into the Surround band): `on`, `off` or `toggle`",
+     "values": [
+      "on",
+      "off",
+      "toggle"
+     ]
+    },
+    {
+     "name": "surround",
+     "args": [
+      "action"
+     ],
+     "description": "Close the shell around the screen with a band on every edge: `on`, `off` or `toggle`",
+     "values": [
+      "on",
+      "off",
+      "toggle"
+     ]
+    },
+    {
+     "name": "accent",
+     "args": [
+      "name"
+     ],
+     "description": "Set NiHiL accent: `blue`, `mint`, `rose`, `lilac` or `wallpaper`",
+     "values": [
+      "blue",
+      "mint",
+      "rose",
+      "lilac",
+      "wallpaper"
+     ]
+    },
+    {
+     "name": "spotlight",
+     "args": [
+      "query"
+     ],
+     "description": "Open Spotlight with a query already typed, e.g. `firefox` or `12*7` (empty for suggestions); while it is open, replaces the query",
+     "values": []
+    },
+    {
+     "name": "gallerySource",
+     "args": [
+      "source",
+      "state"
+     ],
+     "description": "Show or hide an online source in the wallpaper gallery: `wallhaven`, `live`, `konachan` or `yandere`, then `on`, `off` or `toggle`; returns the sources shown, in order",
+     "values": [
+      "wallhaven",
+      "live",
+      "konachan",
+      "yandere",
+      "on",
+      "off",
+      "toggle"
+     ]
+    },
+    {
+     "name": "orbit",
+     "args": [
+      "query"
+     ],
+     "description": "Open Orbit with a search already typed, e.g. `firefox` (empty for all the workspaces)",
+     "values": []
+    },
+    {
+     "name": "orbitCorner",
+     "args": [],
+     "description": "The corner each output's Orbit hot corner is on right now, as JSON (empty where Niri's own corner or the setting leaves none)",
+     "values": []
+    },
+    {
+     "name": "orbitClose",
+     "args": [],
+     "description": "Close Orbit",
+     "values": []
+    },
+    {
+     "name": "spotlightClose",
+     "args": [],
+     "description": "Close Spotlight",
+     "values": []
+    },
+    {
+     "name": "bubbleCard",
+     "args": [
+      "kind"
+     ],
+     "description": "Grow a bubble's own card: `weather`, `notifications`, `sound`, `mic`, `tools` or `tray` (from the bubble showing it, else the Island), or `close`",
+     "values": [
+      "weather",
+      "notifications",
+      "sound",
+      "mic",
+      "tools",
+      "tray",
+      "close"
+     ]
+    },
+    {
+     "name": "tap",
+     "args": [
+      "kind"
+     ],
+     "description": "Tap a piece the Island carries (`controls`, `sound`, `tray`, `notifications`, `weather`…) as a click would: its card or page grows from it, or says the focused screen's bar has no such piece",
+     "values": [
+      "controls",
+      "sound",
+      "tray",
+      "notifications",
+      "weather"
+     ]
+    },
+    {
+     "name": "bubbleMenu",
+     "args": [
+      "kind"
+     ],
+     "description": "Open a floating bubble's own menu — what it opens, where it rests and how to put it away — by kind (`weather`, `sound`, …) or piece id (`app:kitty`)",
+     "values": [
+      "weather",
+      "sound"
+     ]
+    },
+    {
+     "name": "morph",
+     "args": [
+      "name"
+     ],
+     "description": "Set how NiHiL morphs: `direct`, `liquid`, `glide`, `snap`, `elastic` or `instant`",
+     "values": [
+      "direct",
+      "liquid",
+      "glide",
+      "snap",
+      "elastic",
+      "instant"
+     ]
+    },
+    {
+     "name": "activity",
+     "args": [
+      "action",
+      "id",
+      "value"
+     ],
+     "description": "Publish a live activity into the Island from any script: `<action> <id> <value>` — `start <id> <title>`, `title`, `progress` (`0.4`, `40`, `40%` or `-1` for indeterminate), `detail`, `glyph` (a Material Symbol), `tint` (`blue`, `sky`, `teal`, `green`, `yellow`, `orange`, `red`, `pink`, `indigo`, `purple`, `lavender`, `gray`), `end <id> <detail>` (shows a done event and retires), `dismiss <id> -`, `clear all -`. Values cannot contain commas",
+     "values": [
+      "title",
+      "progress",
+      "detail",
+      "glyph",
+      "tint",
+      "blue",
+      "sky",
+      "teal",
+      "green",
+      "yellow",
+      "orange",
+      "red",
+      "pink",
+      "indigo",
+      "purple",
+      "lavender",
+      "gray"
+     ]
+    },
+    {
+     "name": "activities",
+     "args": [],
+     "description": "Return the live activities scripts have published, as JSON",
+     "values": []
+    },
+    {
+     "name": "set",
+     "args": [
+      "path",
+      "value"
+     ],
+     "description": "Set any NiHiL option by path, e.g. `nihil.appearance.theme.pieceShape squircle` or `nihil.bubbles.scale 120` (values are JSON when they parse)",
+     "values": []
+    },
+    {
+     "name": "adaptive",
+     "args": [
+      "amount"
+     ],
+     "description": "How much the wallpaper shapes NiHiL, `0`-`100`; any other word prints what was read from the wallpaper",
+     "values": []
+    },
+    {
+     "name": "tokens",
+     "args": [],
+     "description": "JSON with the colours NiHiL resolved for the current look and the contrast of each text, accent and fill on the surface it sits on (worst case over glass), plus the ones below their target",
+     "values": []
+    },
+    {
+     "name": "options",
+     "args": [
+      "section"
+     ],
+     "description": "JSON with every row NiHiL Settings declares in a section (`appearance`, `dock`...; empty for all): the paths it writes, whether it is shown now, whether the Design owns it, its value and choices. `<section>@<page>` lists 40 rows at a time, for sections too long for one reply",
+     "values": [
+      "appearance",
+      "dock"
+     ]
+    },
+    {
+     "name": "preview",
+     "args": [
+      "path",
+      "value"
+     ],
+     "description": "Apply a value in memory only, the way a Settings slider does while it is dragged; nothing is saved. Returns the value it replaced, as JSON, to put it back",
+     "values": []
+    },
+    {
+     "name": "proof",
+     "args": [
+      "path"
+     ],
+     "description": "Draw every control the active Design skins, in each state a person reaches (rest, pointer, press, keyboard, inactive), and save it as one image at an absolute `.png` path",
+     "values": []
+    },
+    {
+     "name": "palette",
+     "args": [
+      "id"
+     ],
+     "description": "The colour theme the shell and your apps wear: an id such as `catppuccin-mocha` or `iris-ink`, `auto` to follow the wallpaper, `list` for the ones NiHiL shows, or `current` for the one in use",
+     "values": [
+      "catppuccin-mocha",
+      "iris-ink",
+      "auto",
+      "list",
+      "current"
+     ]
+    },
+    {
+     "name": "preset",
+     "args": [
+      "name"
+     ],
+     "description": "Set the NiHiL appearance preset: `nihil`, `soft`, `round`, `crisp`, `angular` or `contrast`",
+     "values": [
+      "nihil",
+      "soft",
+      "round",
+      "crisp",
+      "angular",
+      "contrast"
+     ]
+    },
+    {
+     "name": "icon",
+     "args": [
+      "piece",
+      "glyph"
+     ],
+     "description": "Choose the glyph a piece wears: `controls`, `tools`, `focus`, `notifications`, `bluetooth`, `updates`, `anime` or `watching`, then a Material Symbol name (e.g. `inir iris icon controls settings`) or `reset` to go back to its own face",
+     "values": [
+      "controls",
+      "tools",
+      "focus",
+      "notifications",
+      "bluetooth",
+      "updates",
+      "anime",
+      "watching",
+      "reset"
+     ]
+    },
+    {
+     "name": "control",
+     "args": [
+      "action"
+     ],
+     "description": "Arrange the Control Center in place (drag controls, resize them from a corner, add or take them out): `edit`, `done`, `toggle`, `undo`, `tab:<controls|layouts|panel>` to open the side library on that page, `expand:<display|system|devices|network|bluetooth|none>` to open the Control Center with that expansion unfolded, or a layout (`nihil`, `discs`, `compact`, `glance`, `studio`, `everything`)",
+     "values": [
+      "edit",
+      "done",
+      "toggle",
+      "undo",
+      "tab:",
+      "expand:",
+      "nihil",
+      "discs",
+      "compact",
+      "glance",
+      "studio",
+      "everything"
+     ]
+    },
+    {
+     "name": "lock",
+     "args": [
+      "action"
+     ],
+     "description": "Rehearse the lock screen (the real surface, editable, with nothing to unlock): `edit`, `done`, `toggle`, `page:<name>` to open the inspector on a page (`layouts`, `scene`, `type`, `clock`, `widgets`…), `widget:<key>` to put a desktop widget on the lock or take it off (`clock`, `weather`, `monthCalendar`…), `select:<key>` to select one on the lock and open its controls in the inspector (`select:<key>/look` for shape, material and opacity; `/arrange`, `/widget`), `select:<block>` to take a block (`clock`, `glance`, `media`, `activity`, `session`, `status`), `peek` and `unpeek` to see the lock without the handles, or a layout (`nihil`, `centered`, `corner`, `minimal`)",
+     "values": [
+      "edit",
+      "done",
+      "toggle",
+      "page:",
+      "layouts",
+      "scene",
+      "type",
+      "clock",
+      "widgets",
+      "widget:",
+      "weather",
+      "monthCalendar",
+      "select:",
+      "glance",
+      "media",
+      "activity",
+      "session",
+      "status",
+      "peek",
+      "unpeek",
+      "nihil",
+      "centered",
+      "corner",
+      "minimal"
+     ]
+    },
+    {
+     "name": "utility",
+     "args": [
+      "name"
+     ],
+     "description": "Set the utility satellite: `tray`, `tools`, `sound`, `mic` or `none`",
+     "values": [
+      "tray",
+      "tools",
+      "sound",
+      "mic",
+      "none"
+     ]
+    },
+    {
+     "name": "watch",
+     "args": [
+      "which"
+     ],
+     "description": "What the Continue bubble has in progress, or resume one of them: no argument lists them numbered with the episode and saved position, a number or part of a title resumes that show. Anything that matches nothing in progress starts a search instead. Only ani-cli can be pointed at one show; jerry and curd run their own picker",
+     "values": []
+    },
+    {
+     "name": "watchPick",
+     "args": [
+      "value"
+     ],
+     "description": "Answer whatever the Continue bubble is asking (which show, which episode, what next once one ends, which quality): no argument lists the options, a number or part of a label chooses one, `cancel` stops the run",
+     "values": [
+      "cancel"
+     ]
+    },
+    {
+     "name": "desktopAction",
+     "args": [
+      "id"
+     ],
+     "description": "Run a desktop menu entry on the focused output as a click would: `wallpaper`, `wallpaperNext` (the round button on the wallpaper) or an action id such as `nextWallpaper`, `terminal`, `screenshot`",
+     "values": [
+      "wallpaper",
+      "wallpaperNext",
+      "nextWallpaper",
+      "terminal",
+      "screenshot"
+     ]
+    },
+    {
+     "name": "desktopMenu",
+     "args": [
+      "x",
+      "y"
+     ],
+     "description": "Open the desktop menu on the focused output at that point, in pixels; no point opens it in the middle",
+     "values": []
+    },
+    {
+     "name": "menuClose",
+     "args": [],
+     "description": "Close whichever NiHiL or shell context menu is open",
+     "values": []
+    },
+    {
+     "name": "watchSubs",
+     "args": [
+      "command"
+     ],
+     "description": "Subtitles of the episode that is playing: `size+`, `size-` (kept for every episode), `delay+`, `delay-`, `delay0` (this episode), `off`, `track:<id>`, `file:<path>` to load one. No argument lists the tracks",
+     "values": [
+      "size+",
+      "size-",
+      "delay+",
+      "delay-",
+      "delay0",
+      "off",
+      "track:",
+      "file:"
+     ]
+    },
+    {
+     "name": "watchSeek",
+     "args": [
+      "seconds"
+     ],
+     "description": "Jump inside the episode that is playing by seconds: `85` skips an opening, `-10` goes back",
+     "values": []
+    },
+    {
+     "name": "watchSkip",
+     "args": [
+      "direction"
+     ],
+     "description": "Close the episode that is playing and start the `next` (default) or `previous` one without searching again. Its place is saved first",
+     "values": [
+      "next",
+      "previous"
+     ]
+    },
+    {
+     "name": "motion",
+     "args": [
+      "target"
+     ],
+     "description": "Measure how a Place opens, closes and reverses halfway, from the expanded Island: `spotlight`, `orbit`, `gallery`, `settings`, `focus`, `today` or `card` (the music card). Read the result with `motioned`",
+     "values": [
+      "spotlight",
+      "orbit",
+      "gallery",
+      "settings",
+      "focus",
+      "today",
+      "card",
+      "motioned"
+     ]
+    },
+    {
+     "name": "motioned",
+     "args": [],
+     "description": "The last `motion` measurement as JSON: frame pace, continuity, material, one surface, origin and a clean end, each passed or not, with the numbers behind them",
+     "values": []
+    },
+    {
+     "name": "status",
+     "args": [],
+     "description": "JSON with the Island, Dock, Control Center, Spotlight and side panel state, which edit modes, Settings or the wallpaper gallery hold the screen (`editing`, `settings`, `gallery`), plus the player the Island follows (title, position, length)",
      "values": []
     }
    ]
