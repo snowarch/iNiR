@@ -2766,60 +2766,6 @@
    ]
   },
   {
-   "name": "nihil",
-   "family": "nihil",
-   "description": "NiHiL's surfaces: `overview`, `search`, the dashboard's pages (`apps`, `control`, `today`, `media`, `focus`, `clipboard`, `wallpapers`), `dashboard` (the last page) and `power`.",
-   "notes": "```kdl\nMod+A { spawn \"inir\" \"nihil\" \"toggle\" \"apps\"; }\n```",
-   "example": "Mod+A { spawn \"inir\" \"nihil\" \"toggle\" \"apps\"; }",
-   "functions": [
-    {
-     "name": "toggle",
-     "args": [
-      "panel"
-     ],
-     "description": "Open or close one of NiHiL's surfaces by name (`overview`, `search`, `apps`, `control`, `today`, `media`, `focus`, `clipboard`, `wallpapers`, `dashboard`, `power`)",
-     "values": [
-      "overview",
-      "search",
-      "apps",
-      "control",
-      "today",
-      "media",
-      "focus",
-      "clipboard",
-      "wallpapers",
-      "dashboard",
-      "power"
-     ]
-    },
-    {
-     "name": "close",
-     "args": [],
-     "description": "Close every NiHiL surface",
-     "values": []
-    },
-    {
-     "name": "superKey",
-     "args": [],
-     "description": "The overview key: one press and two quick presses do what Settings says",
-     "values": []
-    },
-    {
-     "name": "profile",
-     "args": [
-      "id"
-     ],
-     "description": "Apply a desktop profile (`vertical`, `horizontal`, `corner`, `dock`)",
-     "values": [
-      "vertical",
-      "horizontal",
-      "corner",
-      "dock"
-     ]
-    }
-   ]
-  },
-  {
    "name": "niriAnimations",
    "family": "shared",
    "description": "Presets for Niri's own window, workspace and overview animations. Applying one rewrites the animations in `config.d/60-animations.kdl` and keeps `off` and `slowdown` as they were. The same picker lives in Settings in every family. Your own presets go in `~/.config/inir/niri-animation-presets.json` as `{\"presets\": [...]}`, in the same shape as `defaults/niri-animation-presets.json`; one with a shipped id replaces it.",
