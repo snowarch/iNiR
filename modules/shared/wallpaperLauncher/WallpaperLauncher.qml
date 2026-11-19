@@ -25,7 +25,7 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.namespace: "quickshell:wallpaperLauncher"
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: GlobalStates.wallpaperLauncherOpen
+    WlrLayershell.keyboardFocus: PolkitService.active ? WlrKeyboardFocus.None : GlobalStates.wallpaperLauncherOpen
         ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
     color: "transparent"
     anchors { top: true; right: true; bottom: true; left: true }

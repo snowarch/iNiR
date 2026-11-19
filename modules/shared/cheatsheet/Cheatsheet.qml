@@ -72,7 +72,7 @@ Scope {
         color: "transparent"
         WlrLayershell.namespace: "quickshell:cheatsheet"
         WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.keyboardFocus: root.cheatsheetOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+        WlrLayershell.keyboardFocus: PolkitService.active ? WlrKeyboardFocus.None : root.cheatsheetOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
         anchors {
             top: true

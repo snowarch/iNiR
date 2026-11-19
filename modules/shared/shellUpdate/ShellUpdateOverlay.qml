@@ -151,7 +151,7 @@ Scope {
         color: "transparent"
         WlrLayershell.namespace: "quickshell:shellUpdate"
         WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.keyboardFocus: root.isOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+        WlrLayershell.keyboardFocus: PolkitService.active ? WlrKeyboardFocus.None : root.isOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
         anchors {
             top: true

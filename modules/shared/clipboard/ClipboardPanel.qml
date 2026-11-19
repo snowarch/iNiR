@@ -290,7 +290,7 @@ Scope {
         color: "transparent"
         WlrLayershell.namespace: "quickshell:clipboardPanel"
         WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.keyboardFocus: GlobalStates.clipboardOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+        WlrLayershell.keyboardFocus: PolkitService.active ? WlrKeyboardFocus.None : GlobalStates.clipboardOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
         anchors {
             top: true

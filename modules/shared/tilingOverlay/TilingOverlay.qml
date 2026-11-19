@@ -53,7 +53,7 @@ Scope {
 
             WlrLayershell.layer: WlrLayer.Overlay
             WlrLayershell.namespace: "quickshell:tilingOverlay"
-            WlrLayershell.keyboardFocus: root.showPicker ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+            WlrLayershell.keyboardFocus: PolkitService.active ? WlrKeyboardFocus.None : root.showPicker ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
             // Scrim
             Rectangle {

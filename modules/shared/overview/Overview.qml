@@ -763,7 +763,7 @@ Scope {
             WlrLayershell.namespace: root.orbitMode ? "quickshell:orbit" : "quickshell:overview"
             WlrLayershell.layer: WlrLayer.Overlay
             // Keyboard focus only on the monitor that should show
-            WlrLayershell.keyboardFocus: root.shouldShow
+            WlrLayershell.keyboardFocus: PolkitService.active ? WlrKeyboardFocus.None : root.shouldShow
                 && !root.applicationDragActive
                 && !GlobalStates.regionSelectorOpen
                 ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None

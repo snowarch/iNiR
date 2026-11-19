@@ -29,7 +29,8 @@ Scope {
 
                 color: "transparent"
                 WlrLayershell.namespace: "quickshell:polkit"
-                WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+                // An auth prompt takes the keys at once; every shell surface that holds them gives them up meanwhile.
+                WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
                 WlrLayershell.layer: WlrLayer.Overlay
                 exclusionMode: ExclusionMode.Ignore
 

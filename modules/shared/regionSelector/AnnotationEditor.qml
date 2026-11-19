@@ -24,7 +24,7 @@ PanelWindow {
 
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "quickshell:annotationEditor"
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+    WlrLayershell.keyboardFocus: PolkitService.active ? WlrKeyboardFocus.None : WlrKeyboardFocus.Exclusive
     screen: Quickshell.screens.find(s => s.name === GlobalStates.annotationEditorScreenName)
         ?? GlobalStates.primaryScreen ?? null
     color: "transparent"

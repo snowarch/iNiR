@@ -101,7 +101,7 @@ Scope {
                 color: "transparent"
                 WlrLayershell.namespace: "quickshell:mediaControls"
                 WlrLayershell.layer: WlrLayer.Overlay
-                WlrLayershell.keyboardFocus: GlobalStates.mediaControlsOpen
+                WlrLayershell.keyboardFocus: PolkitService.active ? WlrKeyboardFocus.None : GlobalStates.mediaControlsOpen
                     && String(mediaControlsRoot.screen?.name ?? "") === root.keyboardScreenName
                     ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 

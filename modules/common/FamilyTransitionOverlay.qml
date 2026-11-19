@@ -239,7 +239,7 @@ Scope {
 
             WlrLayershell.namespace: "quickshell:familyTransition"
             WlrLayershell.layer: WlrLayer.Overlay
-            WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+            WlrLayershell.keyboardFocus: PolkitService.active ? WlrKeyboardFocus.None : WlrKeyboardFocus.Exclusive
 
             implicitWidth: screen?.width ?? 1920
             implicitHeight: screen?.height ?? 1080

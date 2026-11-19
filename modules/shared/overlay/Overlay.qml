@@ -81,7 +81,7 @@ Scope {
                 ? WlrLayer.Bottom : WlrLayer.Overlay
             // Exclusive focus when open; OnDemand for pinned clickable widgets when closed;
             // None otherwise (avoids input capture during GameMode)
-            WlrLayershell.keyboardFocus: OverlayContext.nativeDialogOpen
+            WlrLayershell.keyboardFocus: PolkitService.active ? WlrKeyboardFocus.None : OverlayContext.nativeDialogOpen
                 ? WlrKeyboardFocus.None
                 : GlobalStates.overlayOpen
                 ? WlrKeyboardFocus.Exclusive

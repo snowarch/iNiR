@@ -124,7 +124,7 @@ Scope {
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.namespace: "quickshell:boot-greeting"
         WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.keyboardFocus: root._visible && !root._dismissing ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+        WlrLayershell.keyboardFocus: PolkitService.active ? WlrKeyboardFocus.None : root._visible && !root._dismissing ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
         anchors { top: true; bottom: true; left: true; right: true }
         screen: GlobalStates.primaryScreen
         implicitWidth: screen?.width ?? 1920

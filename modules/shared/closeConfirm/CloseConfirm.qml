@@ -155,7 +155,7 @@ Scope {
 
             color: "transparent"
             WlrLayershell.namespace: "quickshell:closeConfirm"
-            WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+            WlrLayershell.keyboardFocus: PolkitService.active ? WlrKeyboardFocus.None : WlrKeyboardFocus.Exclusive
             WlrLayershell.layer: WlrLayer.Overlay
             exclusionMode: ExclusionMode.Ignore
 

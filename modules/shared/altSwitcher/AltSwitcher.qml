@@ -420,7 +420,7 @@ Scope {
         color: "transparent"
         WlrLayershell.namespace: "quickshell:altSwitcher"
         WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.keyboardFocus: root.panelVisible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+        WlrLayershell.keyboardFocus: PolkitService.active ? WlrKeyboardFocus.None : root.panelVisible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
         anchors {
             top: true
             bottom: true
