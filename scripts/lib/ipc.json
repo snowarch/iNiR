@@ -2768,7 +2768,7 @@
   {
    "name": "nihil",
    "family": "nihil",
-   "description": "NiHiL's surfaces: `overview`, `search`, the deck's pages (`apps`, `control`, `today`, `media`, `focus`, `clipboard`, `wallpapers`), `deck` (the last page) and `power`.",
+   "description": "NiHiL's surfaces: `overview`, `search`, the dashboard's pages (`apps`, `control`, `today`, `media`, `focus`, `clipboard`, `wallpapers`), `dashboard` (the last page) and `power`.",
    "notes": "```kdl\nMod+A { spawn \"inir\" \"nihil\" \"toggle\" \"apps\"; }\n```",
    "example": "Mod+A { spawn \"inir\" \"nihil\" \"toggle\" \"apps\"; }",
    "functions": [
@@ -2777,7 +2777,7 @@
      "args": [
       "panel"
      ],
-     "description": "Open or close one of NiHiL's surfaces by name (`overview`, `search`, `apps`, `control`, `today`, `media`, `focus`, `clipboard`, `wallpapers`, `deck`, `power`)",
+     "description": "Open or close one of NiHiL's surfaces by name (`overview`, `search`, `apps`, `control`, `today`, `media`, `focus`, `clipboard`, `wallpapers`, `dashboard`, `power`)",
      "values": [
       "overview",
       "search",
@@ -2788,7 +2788,7 @@
       "focus",
       "clipboard",
       "wallpapers",
-      "deck",
+      "dashboard",
       "power"
      ]
     },
