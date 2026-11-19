@@ -212,43 +212,39 @@ awk_in_place() {
   return "$rc"
 }
 
-# repair_java_awt_environment: the Niri and Umbriel environment setup wrote gets _JAVA_AWT_WM_NONREPARENTING where a
-# fresh install has it (Java AWT apps on xwayland-satellite draw blank windows without it). Never twice, never where
-# the person's config names it already. Sets INIR_JAVA_ENV_REPAIRED.
+# repair_java_awt_environment: the Niri and Umbriel environment setup wrote gets _JAVA_AWT_WM_NONREPARENTING, as a
+# fresh install has it (Java AWT apps on xwayland-satellite draw blank windows without it): first in the block, so no
+# brace or table end has to be found. Never twice, never where the person's config names it already. Sets
+# INIR_JAVA_ENV_REPAIRED.
 repair_java_awt_environment() {
   local cfg="${XDG_CONFIG_HOME:-$HOME/.config}" name=_JAVA_AWT_WM_NONREPARENTING f rc
   local why="Java (AWT/Swing) apps on xwayland-satellite draw blank windows without it."
   INIR_JAVA_ENV_REPAIRED=0
 
-  # Niri: the file the launcher reads the environment from (_niri_app_environment_file, scripts/inir), at the end of
-  # its environment block
+  # Niri: the file the launcher reads the environment from (_niri_app_environment_file, scripts/inir)
   f="$cfg/niri/config.d/40-environment.kdl"
   if [[ ! -f "$f" ]] || { [[ -f "$cfg/niri/config.kdl" ]] \
-      && ! grep -Eq '^[[:space:]]*include[[:space:]]+"config\.d/40-environment\.kdl"' "$cfg/niri/config.kdl"; }; then
+      && ! grep -Eq '^[[:space:]]*include[[:space:]]+"config\.d/40-environment\.kdl"[[:space:]]*(//.*)?$' "$cfg/niri/config.kdl"; }; then
     f="$cfg/niri/config.kdl"
   fi
   if [[ -f "$f" ]] && ! nix_managed "$f" && ! grep -qs "$name" "$cfg/niri/config.kdl" "$cfg/niri"/config.d/*.kdl; then
     rc=0
     awk_in_place "$f" -v c="    // $why" -v v="    $name \"1\"" '
-      !done && /^[[:space:]]*environment[[:space:]]*[{][[:space:]]*$/ { env = 1 }
-      env && /^[[:space:]]*[}][[:space:]]*$/ { print ""; print c; print v; env = 0; done = 1 }
       { print }
+      !done && /^[[:space:]]*environment[[:space:]]*[{][[:space:]]*(\/\/.*)?$/ { print c; print v; print ""; done = 1 }
       END { exit !done }' || rc=$?
     [[ "$rc" -eq 2 ]] && return 1
     [[ "$rc" -eq 0 ]] && INIR_JAVA_ENV_REPAIRED=$((INIR_JAVA_ENV_REPAIRED + 1))
   fi
 
-  # Umbriel: the end of the [environment] table in its 40-environment.toml
+  # Umbriel: its 40-environment.toml, under the [environment] header
   f="$cfg/umbriel/config.d/40-environment.toml"
   if [[ -f "$f" ]] && ! nix_managed "$f" && ! grep -qs "$name" "$cfg/umbriel/config.toml" "$cfg/umbriel"/config.d/*.toml; then
     rc=0
     awk_in_place "$f" -v c="# $why" -v v="$name = \"1\"" '
-      function add() { print c; print v; done = 1 }
-      function flush() { for (; held > 0; held--) print "" }
-      /^[[:space:]]*\[/ { if (env && !done) add(); env = ($0 ~ /^[[:space:]]*\[environment\][[:space:]]*$/) }
-      env && !done && /^[[:space:]]*$/ { held++; next }
-      { flush(); print }
-      END { if (env && !done) add(); flush(); exit !done }' || rc=$?
+      { print }
+      !done && /^[[:space:]]*\[[[:space:]]*environment[[:space:]]*\][[:space:]]*(#.*)?$/ { print c; print v; done = 1 }
+      END { exit !done }' || rc=$?
     [[ "$rc" -eq 2 ]] && return 1
     [[ "$rc" -eq 0 ]] && INIR_JAVA_ENV_REPAIRED=$((INIR_JAVA_ENV_REPAIRED + 1))
   fi

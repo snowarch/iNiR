@@ -1760,7 +1760,7 @@ _niri_app_environment_file() {
     local modular_cfg="${niri_dir}/config.d/40-environment.kdl"
 
     if [[ -f "$modular_cfg" ]] && { [[ ! -f "$root_cfg" ]] \
-            || grep -Eq '^[[:space:]]*include[[:space:]]+"config\.d/40-environment\.kdl"[[:space:]]*$' "$root_cfg"; }; then
+            || grep -Eq '^[[:space:]]*include[[:space:]]+"config\.d/40-environment\.kdl"[[:space:]]*(//.*)?$' "$root_cfg"; }; then
         printf '%s' "$modular_cfg"
     elif [[ -f "$root_cfg" ]]; then
         printf '%s' "$root_cfg"
