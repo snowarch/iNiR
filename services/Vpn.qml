@@ -5,6 +5,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.modules.common
+import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.services
 
@@ -151,20 +152,20 @@ Singleton {
     function newProfile(kind: string): void {
         if (!root.canCreate) return
         root.handOff()
-        if (root.hasEditor) Quickshell.execDetached(["nm-connection-editor", "--create", "--type=" + (kind === "vpn" ? "vpn" : "wireguard")])
+        if (root.hasEditor) ShellExec.execDetachedArgs(["nm-connection-editor", "--create", "--type=" + (kind === "vpn" ? "vpn" : "wireguard")], "New VPN profile")
         else root.inTerminal(["nmtui", "edit"])
     }
     function editProfile(uuid: string): void {
         const entry = root.profiles.find(item => item.uuid === uuid)
         if (!entry || !root.canCreate) return
         root.handOff()
-        if (root.hasEditor) Quickshell.execDetached(["nm-connection-editor", "--edit=" + uuid])
+        if (root.hasEditor) ShellExec.execDetachedArgs(["nm-connection-editor", "--edit=" + uuid], "Edit VPN profile")
         else root.inTerminal(["nmtui", "edit", entry.name])
     }
     function inTerminal(command: var): void {
         const configured = String(Config.options?.apps?.terminal ?? "kitty").trim()
         const terminal = /^[A-Za-z0-9._+-]+$/.test(configured) ? configured : "kitty"
-        Quickshell.execDetached(terminal === "wezterm" ? [terminal, "start", "--", ...command] : [terminal, "-e", ...command])
+        ShellExec.execDetachedArgs(terminal === "wezterm" ? [terminal, "start", "--", ...command] : [terminal, "-e", ...command], "VPN in terminal")
     }
     // Tailscale's own login: it prints a URL and waits; the URL reaches `status --json` and the browser opens on it.
     function signInTailscale(): void {

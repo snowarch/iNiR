@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Io
 import qs
 import qs.modules.common
+import qs.modules.common.functions
 
 Singleton {
     id: root
@@ -291,7 +292,7 @@ Singleton {
                         ? Translation.tr("Deck downloaded; opening with the default app")
                         : (data.error ?? Translation.tr("Deck download failed"))
                     if (!data.ok && data.sourceUrl)
-                        Quickshell.execDetached(["xdg-open", data.sourceUrl])
+                        ShellExec.execDetachedArgs(["xdg-open", data.sourceUrl], "Open dictionary source")
                 } catch (e) {
                     root.studyDeckStatus = Translation.tr("Deck download failed")
                 }

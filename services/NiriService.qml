@@ -990,6 +990,21 @@ Singleton {
         return true
     }
 
+    // Starts a program as the compositor's own child, as a keybind does: the session's environment, the compositor's
+    // transient scope and an activation token. False while no socket is open (the caller starts it itself then).
+    function spawn(command): bool {
+        const argv = Array.from(command ?? []).map(arg => String(arg ?? ""))
+        if (argv.length === 0 || argv[0].length === 0)
+            return false
+        const request = { "Action": { "Spawn": { "command": argv } } }
+        if (root.umbriel)
+            return root._umbrielSend(root._umbrielRequests(request))
+        if (!requestSocket.socketConnected)
+            return false
+        requestSocket.send(request)
+        return true
+    }
+
     // Only PipeWire casts can be stopped; wlr-screencopy ones have no IPC for it.
     function stopCast(sessionId) {
         return send({ "Action": { "StopCast": { "session_id": Number(sessionId) } } })

@@ -2,6 +2,7 @@ pragma Singleton
 pragma ComponentBehavior: Bound
 
 import qs.modules.common
+import qs.modules.common.functions
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -141,9 +142,9 @@ Singleton {
 
     function openWindow(): void {
         if (root.nativeInstalled) {
-            Quickshell.execDetached(["easyeffects"])
+            ShellExec.execDetachedArgs(["easyeffects"], "Open EasyEffects")
         } else if (root.available) {
-            Quickshell.execDetached(["flatpak", "run", "com.github.wwmm.easyeffects"])
+            ShellExec.execDetachedArgs(["flatpak", "run", "com.github.wwmm.easyeffects"], "Open EasyEffects")
         }
     }
 

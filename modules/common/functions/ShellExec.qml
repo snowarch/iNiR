@@ -6,6 +6,7 @@ import Quickshell
 import Quickshell.Io
 
 import qs.modules.common
+import qs.services
 
 Singleton {
     id: root
@@ -45,6 +46,24 @@ Singleton {
 
         const desc = String(description ?? "").trim()
         const workDir = String(workingDirectory ?? "").trim()
+
+        // The compositor (Niri or Umbriel) starts it, exactly as it starts a keybind's command: from the session's
+        // own environment (never the shell's Qt scaling, allocator or GPU policy), in the compositor's transient
+        // scope, with an activation token. The shell writes one line to the socket it already holds: no shell, no
+        // environment rebuild and no systemd-run round trip before the app runs (~60 ms a launch before). Neither
+        // compositor takes a working directory, so a Path= entry goes through a one-line sh.
+        const command = workDir.length > 0
+            ? ["sh", "-c", 'cd -- "$1" 2>/dev/null; shift; exec "$@"', "inir-launch", workDir, ...argv]
+            : argv
+        // Java (AWT) apps on xwayland-satellite draw blank windows without it. The compositor's environment carries it
+        // on fresh installs (the launcher mirrors Niri's into the shell); an older config lacks it, so the launch adds it.
+        const spawned = String(Quickshell.env("_JAVA_AWT_WM_NONREPARENTING") ?? "").length > 0
+            ? command
+            : ["env", "_JAVA_AWT_WM_NONREPARENTING=1", ...command]
+        if (NiriService.spawn(spawned))
+            return
+
+        // No compositor socket is open (another compositor, or it is still connecting): start it from here.
         // A transient scope, never a service. Launchers like zeditor and
         // /usr/bin/code fork the real process and exit immediately; a service
         // treats that first exit as the unit finishing and kills the rest of
@@ -67,30 +86,24 @@ Singleton {
                 case $? in 0|124) systemd_user_manager_usable=true ;; esac
             fi
 
-            manager_value() {
-                [ -n "$manager_env" ] || return 0
-                while IFS='=' read -r _key _entry_value; do
-                    [ "$_key" = "$1" ] || continue
-                    printf '%s' "$_entry_value"
-                    return 0
-                done <<< "$manager_env"
-            }
+            # One pass over the manager's environment into a table that every
+            # lookup below reads in place (a subshell per variable cost ~30 ms).
+            declare -A manager=()
+            while IFS='=' read -r _key _entry_value; do
+                [ -n "$_key" ] && manager[$_key]="$_entry_value"
+            done <<< "$manager_env"
 
             restore_from_manager() {
-                _name="$1"
-                _value="$(manager_value "$_name")"
-                if [ -n "$_value" ]; then
-                    export "$_name=$_value"
+                if [ -n "\${manager[$1]-}" ]; then
+                    export "$1=\${manager[$1]}"
                 else
-                    unset "$_name"
+                    unset "$1"
                 fi
             }
 
             import_if_missing() {
-                _name="$1"
-                [[ -v $_name ]] && return 0
-                _value="$(manager_value "$_name")"
-                [ -n "$_value" ] && export "$_name=$_value"
+                [[ -v $1 ]] && return 0
+                [ -n "\${manager[$1]-}" ] && export "$1=\${manager[$1]}"
             }
 
             # apply_shell_scale()/apply_qt_runtime_env() own these for iNiR's
@@ -130,7 +143,7 @@ Singleton {
                 import_if_missing "$_var"
             done
 
-            _manager_path="$(manager_value PATH)"
+            _manager_path="\${manager[PATH]-}"
             if [ -n "$_manager_path" ]; then
                 _merged_path="$_manager_path"
                 IFS=: read -r -a _path_parts <<< "$PATH"
@@ -148,15 +161,13 @@ Singleton {
             # published to the user manager, but preserve an inherited value
             # for manual invocations where the manager has no session snapshot.
             for _var in DISPLAY WAYLAND_DISPLAY NIRI_SOCKET UMBRIEL_SOCKET; do
-                _value="$(manager_value "$_var")"
-                [ -n "$_value" ] && export "$_var=$_value"
+                [ -n "\${manager[$_var]-}" ] && export "$_var=\${manager[$_var]}"
             done
 
             # The shell on its own Qt (qs-rs) runs without the session's Qt plugin and QML paths, built for another
             # Qt (Nix sets them): apps get the session's back.
             for _var in QT_PLUGIN_PATH QML2_IMPORT_PATH QML_IMPORT_PATH; do
-                _value="$(manager_value "$_var")"
-                [ -n "$_value" ] && export "$_var=$_value"
+                [ -n "\${manager[$_var]-}" ] && export "$_var=\${manager[$_var]}"
             done
 
             # Recommended by xwayland-satellite for Java/AWT clients. Keep an

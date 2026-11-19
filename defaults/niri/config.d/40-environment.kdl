@@ -29,4 +29,7 @@ environment {
 
     // Darkly is a modern Qt style that follows kdeglobals color schemes.
     QT_STYLE_OVERRIDE "Darkly"
+
+    // Java (AWT/Swing) apps on xwayland-satellite draw blank windows without it.
+    _JAVA_AWT_WM_NONREPARENTING "1"
 }

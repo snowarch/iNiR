@@ -1784,7 +1784,7 @@ apply_niri_app_environment() {
 
     local name value
     for name in XDG_MENU_PREFIX QT_QPA_PLATFORM QT_QPA_PLATFORMTHEME \
-                QT_STYLE_OVERRIDE ELECTRON_OZONE_PLATFORM_HINT; do
+                QT_STYLE_OVERRIDE ELECTRON_OZONE_PLATFORM_HINT _JAVA_AWT_WM_NONREPARENTING; do
         value="$(_niri_app_environment_value "$name" "$cfg")"
         if [[ -n "$value" ]]; then export "${name}=${value}"; fi
     done
