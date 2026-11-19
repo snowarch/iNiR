@@ -541,14 +541,11 @@ Singleton {
     // leave every window's identity untouched. The configured desktopId is
     // intentionally not resolved during parsing: desktop entries can load
     // after the first window event.
-    property var _identityRules: []
-    property var _identityRulesKey: null
+    // A pure parse bound to the config: nothing is written while a binding
+    // evaluates resolveWindowIdentity().
+    readonly property var _identityRules: root._parseIdentityRules(Config.options?.windows?.appIdentityRules ?? [])
 
-    function _parseIdentityRules(): var {
-        const rules = Config.options?.windows?.appIdentityRules ?? []
-        const key = JSON.stringify(rules)
-        if (root._identityRulesKey === key)
-            return root._identityRules
+    function _parseIdentityRules(rules): var {
         const parsed = []
         for (const rule of rules) {
             if (!rule || typeof rule !== "object") continue
@@ -571,8 +568,6 @@ Singleton {
             if (!valid) continue
             parsed.push({ appIdRe: appIdRe, titleRe: titleRe, desktopId: desktopId })
         }
-        root._identityRules = parsed
-        root._identityRulesKey = key
         return parsed
     }
 
@@ -582,7 +577,7 @@ Singleton {
     function resolveWindowIdentity(toplevel): string {
         const appId = String(toplevel?.appId ?? toplevel?.app_id ?? "")
         if (appId.length === 0) return appId
-        const rules = root._parseIdentityRules()
+        const rules = root._identityRules
         if (rules.length === 0) return appId
         const title = String(toplevel?.title ?? "")
         for (const rule of rules) {
