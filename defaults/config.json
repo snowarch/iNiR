@@ -3588,7 +3588,9 @@
             "separatePinnedFromRunning": true,
             "enableDragReorder": true,
             "notificationBadge": true,
-            "style": "m3"
+            "style": "m3",
+            "lift": 0,
+            "styleBeforeNotch": "m3"
         },
         "controlPanel": {
             "keepLoaded": false,
