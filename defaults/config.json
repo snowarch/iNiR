@@ -1644,7 +1644,7 @@
             "radius": 22,
             "opacity": 100,
             "tint": "wallpaper",
-            "vibrance": 85,
+            "vibrance": 60,
             "legibleAlways": false,
             "design": "iris",
             "material": "glass",
@@ -1763,19 +1763,19 @@
                     "tone": 0,
                     "warmth": 20,
                     "colour": 100,
-                    "widgets": 100
+                    "widgets": 90
                 },
                 "ink": {
                     "tone": 0,
                     "warmth": 50,
                     "colour": 100,
-                    "widgets": 100
+                    "widgets": 90
                 },
                 "light": {
                     "tone": -8,
                     "warmth": 38,
                     "colour": 85,
-                    "widgets": 110
+                    "widgets": 85
                 }
             },
             "expandedRadius": 22,

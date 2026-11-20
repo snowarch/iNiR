@@ -19,6 +19,8 @@ GroupButton {
     property real maxTextWidth: Math.round(240 * Appearance.fontSizeScale)
     property bool leftmost: false
     property bool rightmost: false
+    property color colTextOverride: "transparent"
+    property color colTextToggledOverride: "transparent"
     readonly property bool showZzzPreview: Appearance.zzzEverywhere && buttonPreviewKind.length > 0
     // chosen while the group is off: on GroupButton's neutral plate, in full ink
     readonly property bool held: root.toggled && !root.enabled
@@ -149,7 +151,9 @@ GroupButton {
                 visible: !root.showZzzPreview
                 text: root.buttonIcon
                 iconSize: Appearance.font.pixelSize.normal
-                color: root.held ? Appearance.colors.colOnSurface
+                color: root.toggled && root.colTextToggledOverride.a > 0 ? root.colTextToggledOverride
+                    : !root.toggled && root.colTextOverride.a > 0 ? root.colTextOverride
+                    : root.held ? Appearance.colors.colOnSurface
                     : Appearance.regaliaEverywhere
                     ? (root.toggled ? Appearance.regalia.primaryPlateInk : Appearance.regalia.onColor)
                     : Appearance.zzzEverywhere
@@ -191,7 +195,9 @@ GroupButton {
                 verticalAlignment: Text.AlignVCenter
                 elide: Text.ElideRight
                 maximumLineCount: 1
-                color: root.held ? Appearance.colors.colOnSurface
+                color: root.toggled && root.colTextToggledOverride.a > 0 ? root.colTextToggledOverride
+                    : !root.toggled && root.colTextOverride.a > 0 ? root.colTextOverride
+                    : root.held ? Appearance.colors.colOnSurface
                     : Appearance.regaliaEverywhere
                     ? (root.toggled ? Appearance.regalia.primaryPlateInk : Appearance.regalia.onColor)
                     : Appearance.zzzEverywhere
