@@ -61,6 +61,7 @@ NotificationItem 1.0 NotificationItem.qml
 OrganicAudioBlob 1.0 OrganicAudioBlob.qml
 NotificationListView 1.0 NotificationListView.qml
 PagePlaceholder 1.0 PagePlaceholder.qml
+PaletteFade 1.0 PaletteFade.qml
 PanelSurface 1.0 PanelSurface.qml
 EditorialRule 1.0 EditorialRule.qml
 EditorialPaperStack 1.0 EditorialPaperStack.qml

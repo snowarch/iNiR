@@ -22,6 +22,7 @@ Singleton {
     id: root
     property string filePath: Directories.generatedMaterialThemePath
     property bool ready: false
+    signal aboutToApplyColors()
 
     // Set to true ONLY when a variant generation process exits successfully.
     // Consumed by the next applyColors call. Unlike the old _schemeVariantPending
@@ -165,16 +166,30 @@ Singleton {
                 next[m3Key] = json[key]
         }
         root.harmonize(next)
+        let anyChanged = false
+        for (const key in next) {
+            const now = Appearance.m3colors[key]
+            const same = typeof now === "boolean" ? now === Boolean(next[key]) : Qt.colorEqual(now, next[key])
+            if (!same) {
+                anyChanged = true
+                break
+            }
+        }
+        const dark = typeof json.darkmode === "boolean" ? json.darkmode
+            : typeof json.darkmode === "string" ? json.darkmode === "true"
+            : Appearance.m3colors.m3background.hslLightness < 0.5
+        if (Appearance.m3colors.darkmode !== dark)
+            anyChanged = true
+        if (anyChanged && root.ready)
+            root.aboutToApplyColors()
         for (const key in next) {
             const now = Appearance.m3colors[key]
             const same = typeof now === "boolean" ? now === Boolean(next[key]) : Qt.colorEqual(now, next[key])
             if (!same) Appearance.m3colors[key] = next[key]
         }
 
-        const dark = typeof json.darkmode === "boolean" ? json.darkmode
-            : typeof json.darkmode === "string" ? json.darkmode === "true"
-            : Appearance.m3colors.m3background.hslLightness < 0.5
         if (Appearance.m3colors.darkmode !== dark) Appearance.m3colors.darkmode = dark
+        root.ready = true
         _log("[MaterialThemeLoader] Colors applied successfully, darkmode:", Appearance.m3colors.darkmode)
     }
 

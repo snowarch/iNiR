@@ -19,6 +19,12 @@ AbstractBackgroundWidget {
             ? pixelClockLoader.width
         : root.clockStyle === "instrument"
             ? instrumentClockLoader.width
+        : root.clockStyle === "poster"
+            ? posterClockLoader.width
+        : root.clockStyle === "oval"
+            ? ovalClockLoader.width
+        : root.clockStyle === "shape"
+            ? shapeClockLoader.width
         : root.clockStyle === "androidStacked"
             ? androidStackedClockLoader.width : digitalClockLoader.width
     readonly property real activeClockHeight: root.clockStyle === "cookie"
@@ -27,6 +33,12 @@ AbstractBackgroundWidget {
             ? pixelClockLoader.height
         : root.clockStyle === "instrument"
             ? instrumentClockLoader.height
+        : root.clockStyle === "poster"
+            ? posterClockLoader.height
+        : root.clockStyle === "oval"
+            ? ovalClockLoader.height
+        : root.clockStyle === "shape"
+            ? shapeClockLoader.height
         : root.clockStyle === "androidStacked"
             ? androidStackedClockLoader.height : digitalClockLoader.height
     readonly property bool statusShown: root.wallpaperSafetyTriggered
@@ -51,8 +63,10 @@ AbstractBackgroundWidget {
         : root.clockStyle === "androidStacked" ? 80 : 40
 
     property string clockStyle: root._readConfigKey("style") ?? "digital"
+    readonly property string clockShapeName: String(root._readConfigKey("shape") ?? "Cookie9Sided")
     readonly property bool textClockStyle: root.clockStyle === "digital"
         || root.clockStyle === "androidStacked"
+        || root.clockStyle === "poster"
     property bool adaptDigitalToWallpaper: root._readConfigKey("digital.adaptToWallpaper") ?? true
     readonly property bool shellLocked: GlobalStates.screenLocked && Plugins.part(Plugins.active, "lockSurface").length === 0
     property bool forceCenter: (root.shellLocked && (Config.family?.lock?.centerClock ?? false))
@@ -495,6 +509,185 @@ AbstractBackgroundWidget {
                 softColor: root.widgetSemanticContainer(root.widgetPrimaryRole)
                 boldColor: root.widgetAccent
                 showShadow: root.showShadow
+            }
+        }
+        FadeLoader {
+            id: posterClockLoader
+            x: Math.round((parent.width - width) / 2)
+            shown: !root.familyFaced && root.clockStyle === "poster"
+            width: Math.round(230 * root.scaleFactor * root.timeScale / 100)
+            height: width
+            sourceComponent: Item {
+                id: posterClock
+                readonly property real side: Math.round(230 * root.scaleFactor * root.timeScale / 100)
+                readonly property bool is12h: root.timeFormat === "12h"
+                    || (root.timeFormat === "system" && String(Config.options?.time?.format ?? "").includes("AP"))
+                readonly property int rawHour: displayClock.date.getHours()
+                readonly property int dispHour: posterClock.is12h ? ((posterClock.rawHour % 12) || 12) : posterClock.rawHour
+                readonly property string hourStr: String(posterClock.dispHour).padStart(2, "0")
+                readonly property string minStr: String(displayClock.date.getMinutes()).padStart(2, "0")
+                readonly property real px: Math.round(posterClock.side * 0.56)
+
+                Column {
+                    anchors.centerIn: parent
+                    spacing: -Math.round(posterClock.px * 0.24)
+
+                    StyledText {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: posterClock.hourStr
+                        color: root.digitalTimeColor
+                        style: root.showShadow ? Text.Raised : Text.Normal
+                        styleColor: root.colHalo
+                        font {
+                            family: root.widgetNumbersFamily
+                            pixelSize: posterClock.px
+                            weight: Font.Black
+                            variableAxes: Appearance.font.variableAxes.numbersAt(posterClock.px)
+                            features: ({ "tnum": 1 })
+                        }
+                    }
+
+                    StyledText {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: posterClock.minStr
+                        color: root.digitalDateColor
+                        style: root.showShadow ? Text.Raised : Text.Normal
+                        styleColor: root.colHalo
+                        font {
+                            family: root.widgetNumbersFamily
+                            pixelSize: posterClock.px
+                            weight: Font.Black
+                            variableAxes: Appearance.font.variableAxes.numbersAt(posterClock.px)
+                            features: ({ "tnum": 1 })
+                        }
+                    }
+                }
+            }
+        }
+        FadeLoader {
+            id: ovalClockLoader
+            x: Math.round((parent.width - width) / 2)
+            shown: !root.familyFaced && root.clockStyle === "oval"
+            width: Math.round(230 * root.scaleFactor * root.timeScale / 100)
+            height: width
+            sourceComponent: Item {
+                id: ovalClock
+                readonly property real side: Math.round(230 * root.scaleFactor * root.timeScale / 100)
+                readonly property real bandW: ovalClock.side * 0.80
+                readonly property real bandH: ovalClock.side * 0.36
+                readonly property real secAngle: (displayClock.date.getSeconds() / 60 - 0.25) * 2 * Math.PI
+                readonly property real orbitR: ovalClock.side / 2 - Math.round(14 * root.scaleFactor)
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: width / 2
+                    color: root.cookieFace
+                }
+
+                StyledText {
+                    visible: root.showDate
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    y: Math.round((ovalClock.side - ovalClock.bandH) / 4 - height / 2 + Math.round(4 * root.scaleFactor))
+                    text: Translation.locale.toString(displayClock.date, "dddd")
+                    color: root.cookieInfo
+                    font {
+                        family: root.widgetBodyFamily
+                        pixelSize: Math.round(ovalClock.side * 0.065)
+                        weight: Font.DemiBold
+                    }
+                }
+
+                Rectangle {
+                    anchors.centerIn: parent
+                    width: ovalClock.bandW
+                    height: ovalClock.bandH
+                    radius: height / 2
+                    color: root.accentPrimary
+
+                    StyledText {
+                        anchors.centerIn: parent
+                        text: root.timeText.replace(/:\d{2}(?=\s|$)/, "")
+                        color: root.widgetSemanticOnColor(root.widgetPrimaryRole)
+                        font {
+                            family: root.widgetNumbersFamily
+                            pixelSize: Math.round(ovalClock.bandH * 0.62)
+                            weight: Font.Bold
+                            variableAxes: Appearance.font.variableAxes.numbersAt(Math.round(ovalClock.bandH * 0.62))
+                            features: ({ "tnum": 1 })
+                        }
+                    }
+                }
+
+                StyledText {
+                    visible: root.showDate
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    y: Math.round(ovalClock.side - (ovalClock.side - ovalClock.bandH) / 4 - height / 2 - Math.round(4 * root.scaleFactor))
+                    text: Translation.locale.toString(displayClock.date, "MMM d")
+                    color: root.cookieInk
+                    font {
+                        family: root.widgetBodyFamily
+                        pixelSize: Math.round(ovalClock.side * 0.065)
+                        weight: Font.DemiBold
+                    }
+                }
+
+                Rectangle {
+                    visible: root.showSeconds
+                    width: Math.round(8 * root.scaleFactor)
+                    height: width
+                    radius: width / 2
+                    color: root.accentPrimary
+                    x: ovalClock.side / 2 + Math.cos(ovalClock.secAngle) * ovalClock.orbitR - width / 2
+                    y: ovalClock.side / 2 + Math.sin(ovalClock.secAngle) * ovalClock.orbitR - height / 2
+                }
+            }
+        }
+        FadeLoader {
+            id: shapeClockLoader
+            x: Math.round((parent.width - width) / 2)
+            shown: !root.familyFaced && root.clockStyle === "shape"
+            width: Math.round(230 * root.scaleFactor * root.timeScale / 100)
+            height: width
+            sourceComponent: Item {
+                id: shapeClock
+                readonly property real side: Math.round(230 * root.scaleFactor * root.timeScale / 100)
+
+                MaterialShape {
+                    anchors.centerIn: parent
+                    implicitSize: shapeClock.side * 0.94
+                    shape: DesktopWidgetShapes.shapeForName(root.clockShapeName)
+                    color: root.cookieFace
+                }
+
+                Column {
+                    anchors.centerIn: parent
+                    spacing: -Math.round(2 * root.scaleFactor)
+
+                    StyledText {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: root.timeText.replace(/:\d{2}(?=\s|$)/, "")
+                        color: root.cookieInk
+                        font {
+                            family: root.widgetNumbersFamily
+                            pixelSize: Math.round(shapeClock.side * 0.24)
+                            weight: Font.Bold
+                            variableAxes: Appearance.font.variableAxes.numbersAt(Math.round(shapeClock.side * 0.24))
+                            features: ({ "tnum": 1 })
+                        }
+                    }
+
+                    StyledText {
+                        visible: root.showDate
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: Translation.locale.toString(displayClock.date, "ddd, MMM d")
+                        color: root.cookieInfo
+                        font {
+                            family: root.widgetBodyFamily
+                            pixelSize: Math.round(shapeClock.side * 0.064)
+                            weight: Font.DemiBold
+                        }
+                    }
+                }
             }
         }
         Item {

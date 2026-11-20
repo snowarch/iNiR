@@ -851,6 +851,23 @@ Singleton {
             property int hugeass: Math.round(23 * root.fontSizeScale)
             property int title: huge
         }
+        // Optical vertical centering offset for a bold digit inside a small badge/chip.
+        // Qt's Text.AlignVCenter centers the full ascent+descent box, which leaves cap-height
+        // digits sitting low by half the descent-minus-headroom gap.
+        readonly property FontMetrics _digitFm: FontMetrics {
+            font.family: root.font.family.numbers
+            font.pixelSize: 100
+            font.weight: Font.Bold
+        }
+        readonly property TextMetrics _digitTm: TextMetrics {
+            font: root.font._digitFm.font
+            text: "8"
+        }
+        readonly property real _digitCenterRatio: (root.font._digitFm.ascent - root.font._digitFm.descent) / 200
+            - (root.font._digitTm.tightBoundingRect.y + root.font._digitTm.tightBoundingRect.height / 2) / 100
+        function digitCenterOffset(pixelSize: real): real {
+            return pixelSize * root.font._digitCenterRatio
+        }
     }
 
     animationCurves: QtObject {

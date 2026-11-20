@@ -547,6 +547,7 @@ JsonAdapter {
                     property bool enable: false
                     property string text: ""
                 }
+                property string shape: "Cookie9Sided"
             }
             property JsonObject weather: JsonObject {
                 property bool enable: false
@@ -1098,6 +1099,7 @@ JsonAdapter {
                 property real cornerRadius: -1
                 property string colorMode: "auto"
                 property string style: "ring"
+                property string span: "day"
                 property bool comet: true
                 property bool showIcon: true
                 property bool showDate: true
@@ -1154,8 +1156,26 @@ JsonAdapter {
                 property bool enable: false
                 property bool locked: false
                 property string placementStrategy: "free"
+                property string style: "shapes"
+                property string set: "connect"
                 property int widgetScale: 100
+                property int widgetOpacity: 100
+                property bool showBackground: false
+                property bool useBlur: false
+                property bool showBorder: false
+                property real backgroundOpacity: 0.16
+                property real borderWidth: 1
+                property real borderOpacity: 0.20
                 property real cornerRadius: -1
+                property string colorMode: "auto"
+                property JsonObject palette: JsonObject {
+                    property string primary: "primary"
+                    property string secondary: "secondary"
+                    property string tertiary: "tertiary"
+                    property string signal: "signal"
+                    property string surface: "surface"
+                }
+                property int dim: 0
                 property real x: 120
                 property real y: 420
                 property string sizeClass: ""
@@ -1180,8 +1200,26 @@ JsonAdapter {
                 property bool enable: false
                 property bool locked: false
                 property string placementStrategy: "free"
+                property string style: "swatches"
+                property bool showHex: true
                 property int widgetScale: 100
+                property int widgetOpacity: 100
+                property bool showBackground: true
+                property bool useBlur: false
+                property bool showBorder: true
+                property real backgroundOpacity: 0.16
+                property real borderWidth: 1
+                property real borderOpacity: 0.20
                 property real cornerRadius: -1
+                property string colorMode: "auto"
+                property JsonObject palette: JsonObject {
+                    property string primary: "primary"
+                    property string secondary: "secondary"
+                    property string tertiary: "tertiary"
+                    property string signal: "signal"
+                    property string surface: "surface"
+                }
+                property int dim: 0
                 property real x: 120
                 property real y: 600
                 property string sizeClass: ""
@@ -1193,8 +1231,28 @@ JsonAdapter {
                 property bool enable: false
                 property bool locked: false
                 property string placementStrategy: "free"
+                property string style: "words"
+                property bool outline: true
+                property string lines: "two"
+                property bool idleFade: true
                 property int widgetScale: 100
+                property int widgetOpacity: 100
+                property bool showBackground: false
+                property bool useBlur: false
+                property bool showBorder: false
+                property real backgroundOpacity: 0.16
+                property real borderWidth: 1
+                property real borderOpacity: 0.20
                 property real cornerRadius: -1
+                property string colorMode: "auto"
+                property JsonObject palette: JsonObject {
+                    property string primary: "primary"
+                    property string secondary: "secondary"
+                    property string tertiary: "tertiary"
+                    property string signal: "signal"
+                    property string surface: "surface"
+                }
+                property int dim: 0
                 property real x: 520
                 property real y: 600
                 property string sizeClass: ""

@@ -45,7 +45,7 @@
     "y": 240
   },
   "options": [
-    {"key":"playerPreset","label":"Player style","type":"choice","default":"full","when":"material","choices":[["full","Full"],["compact","Compact"],["minimal","Minimal"],["albumart","Album Art"],["visualizer","Visualizer"],["classic","Classic"],["lyrics","Lyrics"],["lyricsSplit","Lyrics wide"],["expandingLyrics","Cover"]]},
+    {"key":"playerPreset","label":"Player style","type":"choice","default":"full","when":"material","choices":[["full","Full"],["compact","Compact"],["minimal","Minimal"],["shape","Shape"],["disc","Disc"],["albumart","Album Art"],["visualizer","Visualizer"],["classic","Classic"],["lyrics","Lyrics"],["lyricsSplit","Lyrics wide"],["expandingLyrics","Cover"]]},
     {"key":"visualizerType","label":"Visualizer","type":"choice","default":"wave","when":"material","choices":[["wave","Wave"],["bars","Bars"],["organic","Organic"]],"sets":{"organic":{"visualizerPosition":{"if":"none","to":"fill"}}}},
     {"key":"visualizerPosition","label":"Placement","type":"choice","default":"bottom","when":"material","choices":[["bottom","Bottom"],["top","Top"],["fill","Fill"],["none","Off"]]},
     {"key":"visualizerPaletteMode","label":"Colors","type":"choice","default":"cava","when":"material","tune":true,"choices":[["cava","Cava palette"],["accent","Accent"],["player","Album"]]},

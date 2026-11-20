@@ -2,20 +2,35 @@
   "name": "Controls",
   "group": "Controls",
   "main": "ControlsWidget.qml",
-  "icon": "toggle_on",
+  "icon": "tune",
   "tint": "#0a84ff",
   "category": "system",
-  "keywords": "toggles wifi bluetooth volume brightness quick settings",
-  "sizes": ["medium", "small", "large"],
+  "keywords": "controls switches wifi bluetooth focus night volume brightness toggles",
+  "sizes": ["small", "medium", "large"],
+  "freeShape": true,
   "lock": true,
-  "faceOnly": true,
+  "palette": true,
   "face": "controls",
   "defaultConfig": {
     "placementStrategy": "free",
+    "style": "shapes",
+    "set": "connect",
     "widgetScale": 100,
+    "widgetOpacity": 100,
+    "colorMode": "auto",
+    "dim": 0,
+    "showBackground": false,
+    "showBorder": false,
+    "backgroundOpacity": 0.16,
+    "borderWidth": 1,
+    "borderOpacity": 0.2,
     "cornerRadius": -1,
+    "useBlur": false,
     "x": 120,
     "y": 420
   },
-  "plate": false
+  "options": [
+    {"key":"style","label":"Style","type":"choice","default":"shapes","when":"material","choices":[["shapes","Shapes"],["row","Row"],["tiles","Tiles"],["instrument","Instrument"]]},
+    {"key":"set","label":"Set","type":"choice","default":"connect","when":["material",{"not":{"style":"instrument"}}],"choices":[["connect","Connect"],["evening","Evening"],["sound","Sound"]]}
+  ]
 }

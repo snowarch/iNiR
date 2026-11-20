@@ -3,19 +3,34 @@
   "group": "Palette",
   "main": "PaletteWidget.qml",
   "icon": "palette",
-  "tint": "#ff375f",
+  "tint": "#bf5af2",
   "category": "decor",
-  "keywords": "colours colors swatches hex wallpaper cover accent theme",
-  "sizes": ["medium", "small", "large"],
+  "keywords": "palette colors colours swatches wallpaper cover hex",
+  "sizes": ["small", "medium", "large"],
+  "freeShape": true,
   "lock": true,
-  "faceOnly": true,
+  "palette": true,
   "face": "palette",
   "defaultConfig": {
     "placementStrategy": "free",
+    "style": "swatches",
+    "showHex": true,
     "widgetScale": 100,
+    "widgetOpacity": 100,
+    "colorMode": "auto",
+    "dim": 0,
+    "showBackground": true,
+    "showBorder": true,
+    "backgroundOpacity": 0.16,
+    "borderWidth": 1,
+    "borderOpacity": 0.2,
     "cornerRadius": -1,
+    "useBlur": false,
     "x": 120,
     "y": 600
   },
-  "plate": false
+  "options": [
+    {"key":"style","label":"Style","type":"choice","default":"swatches","when":"material","choices":[["swatches","Swatches"],["ramp","Ramp"],["scheme","Scheme"]]},
+    {"key":"showHex","label":"Hex codes","type":"switch","default":true,"when":["material",{"style":"swatches"}],"tune":true}
+  ]
 }

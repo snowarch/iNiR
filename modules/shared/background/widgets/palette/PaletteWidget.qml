@@ -1,108 +1,442 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Layouts
 import Quickshell
+import qs
 import qs.services
 import qs.modules.common
+import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.shared.background.widgets
 
-// SekaiPop's palette card, our way: five colours read from the wallpaper, the cover that plays or a
-// harmony. A tap copies one, a right click keeps it through the next read. Looking never touches the
-// theme: only "Use as accent" does, and it can be taken back for a few seconds.
+// The colours of the wallpaper or the song's cover (or five random ones), read by ColorQuantizer in iRiS,
+// and in Material: three expressive views of the active Material 3 scheme ("swatches", "ramp", "scheme").
 AbstractBackgroundWidget {
     id: root
 
     configEntryName: "palette"
+    needsColText: true
+    resizeMinWidth: 220
+    resizeMinHeight: 150
     familyOptions: [
-        { key: "source", label: Translation.tr("Colours from"), fallback: "wallpaper", choices: [
-            { label: Translation.tr("Wallpaper"), icon: "wallpaper", value: "wallpaper" },
-            { label: Translation.tr("Music"), icon: "album", value: "music" },
-            { label: Translation.tr("Random"), icon: "shuffle", value: "random" }] }
+        { key: "source", label: Translation.tr("Colors from"), icon: "palette", fallback: "wallpaper", choices: [
+            { value: "wallpaper", label: Translation.tr("Wallpaper"), icon: "wallpaper" },
+            { value: "music", label: Translation.tr("Music"), icon: "album" },
+            { value: "random", label: Translation.tr("Random"), icon: "shuffle" }
+        ] }
     ]
-    semanticPaletteControls: false
-    widgetSurfaceEnabled: false
-    needsColText: false
 
+    readonly property string paletteStyle: String(root._readConfigKey("style") ?? "swatches")
+    readonly property bool showHex: Boolean(root._readConfigKey("showHex") ?? true)
     readonly property string colourSource: String(root.familyOption("source", "wallpaper"))
-    readonly property var kept: Array.from(root.familyOption("kept", []) ?? [])
-    readonly property var drawn: Array.from(root.familyOption("drawn", []) ?? [])
-    readonly property var player: MprisController.activePlayer
-    // Music with nothing playing reads the wallpaper and says so.
-    readonly property bool coverRead: root.colourSource === "music" && artwork.displaySource.length > 0
-    readonly property string from: root.colourSource === "random" ? "random" : root.coverRead ? "music" : "wallpaper"
-    readonly property var screen: Quickshell.screens.find(entry => entry.name === root.outputName) ?? null
-    readonly property string wallpaperStill: Wallpapers.stillUrlFor(WallpaperListener.wallpaperUrlForScreen(root.screen))
+    readonly property string coverUrl: MprisController.activePlayer
+        ? MprisController.effectiveArtUrl(MprisController.activePlayer) : ""
 
     MediaArtworkResolver {
-        id: artwork
-        sourceUrl: root.colourSource === "music" && root.player ? MprisController.effectiveArtUrl(root.player) : ""
-        title: MprisController.titleOf(root.player) ?? ""
-        artist: MprisController.artistOf(root.player) ?? ""
-        album: root.player?.trackAlbum ?? ""
-    }
-    ColorQuantizer {
-        id: quant
-        source: root.from === "music" ? artwork.displaySource : root.from === "wallpaper" ? root.wallpaperStill : ""
-        depth: 3
-        rescaleSize: 96
+        id: coverResolver
+        sourceUrl: root.colourSource === "music" ? root.coverUrl : ""
+        title: MprisController.titleOf(MprisController.activePlayer) ?? ""
+        artist: MprisController.artistOf(MprisController.activePlayer) ?? ""
+        album: MprisController.activePlayer?.trackAlbum ?? ""
+        cacheDirectory: Directories.coverArt
     }
 
-    function hex(c: color): string {
-        const part = value => Math.round(Math.max(0, Math.min(1, value)) * 255).toString(16).padStart(2, "0")
-        return ("#" + part(c.r) + part(c.g) + part(c.b)).toUpperCase()
+    readonly property bool readingMusic: root.colourSource === "music" && coverResolver.displaySource.length > 0
+    readonly property string imageSource: root.colourSource === "random" ? ""
+        : root.readingMusic ? coverResolver.displaySource
+        : Wallpapers.effectiveWallpaperUrl
+    readonly property string from: root.colourSource === "random" || root.shuffled.length === 5 ? "random"
+        : root.readingMusic ? "music" : "wallpaper"
+
+    ColorQuantizer {
+        id: quantizer
+        source: root.visible && root.powerActive ? root.imageSource : ""
+        depth: 3
+        rescaleSize: 64
     }
-    // Five that stand apart: the most telling colour first, then each one farthest from those taken,
-    // laid dark to light. A picture with fewer than five gives tints of what it has.
-    function pickFive(list: var): var {
-        const pool = Array.from(list ?? []).map(entry => Qt.color(entry))
-        if (pool.length === 0) return []
-        const hue = c => c.hslHue < 0 ? 0 : c.hslHue
-        const gap = (a, b) => {
-            const dh = Math.min(Math.abs(hue(a) - hue(b)), 1 - Math.abs(hue(a) - hue(b)))
-            return Math.hypot(dh * 2 * Math.min(a.hslSaturation, b.hslSaturation), a.hslLightness - b.hslLightness,
-                (a.hslSaturation - b.hslSaturation) * 0.5)
-        }
-        const telling = c => c.hslSaturation * (1 - Math.abs(c.hslLightness - 0.5) * 1.4)
-        const taken = [pool.reduce((best, c) => telling(c) > telling(best) ? c : best, pool[0])]
-        while (taken.length < Math.min(5, pool.length)) {
-            let far = null, farGap = -1
-            for (const c of pool) {
-                if (taken.includes(c)) continue
-                const near = Math.min(...taken.map(t => gap(c, t)))
-                if (near > farGap) { far = c; farGap = near }
-            }
-            taken.push(far)
-        }
-        for (let i = 0; taken.length < 5; i++) {
-            const base = taken[i % taken.length]
-            taken.push(Qt.hsla(hue(base), base.hslSaturation, Math.min(0.9, base.hslLightness + 0.18 * (1 + Math.floor(i / taken.length))), 1))
-        }
-        return taken.sort((a, b) => a.hslLightness - b.hslLightness).map(c => root.hex(c))
+
+    property var shuffled: []
+    property var kept: ["", "", "", "", ""]
+    onImageSourceChanged: root.shuffled = []
+
+    function _hex(c: var): string {
+        const q = Qt.color(c)
+        const b = v => Math.max(0, Math.min(255, Math.round(v * 255))).toString(16).padStart(2, "0")
+        return "#" + b(q.r) + b(q.g) + b(q.b)
     }
-    function harmony(): var {
-        const base = Math.random()
-        const shapes = [[0, 0.04, 0.5, 0.54, 0.08], [0, 0.33, 0.66, 0.05, 0.38], [0, 0.08, 0.16, 0.58, 0.5], [0, 0.42, 0.58, 0.02, 0.5]]
-        const shape = shapes[Math.floor(Math.random() * shapes.length)]
-        const light = [0.22, 0.38, 0.52, 0.66, 0.82]
-        return shape.map((offset, i) => root.hex(Qt.hsla((base + offset) % 1, 0.42 + Math.random() * 0.38, light[i], 1)))
+
+    readonly property var fallback: [
+        root._hex(Appearance.m3colors.m3background),
+        root._hex(Appearance.m3colors.m3secondaryContainer),
+        root._hex(Appearance.m3colors.m3primary),
+        root._hex(Appearance.m3colors.m3tertiary),
+        root._hex(Appearance.m3colors.m3onSurface)
+    ]
+
+    readonly property var read: {
+        const raw = quantizer.colors ?? []
+        if (raw.length < 5)
+            return root.fallback
+        const seen = []
+        for (const c of raw) {
+            const h = root._hex(c)
+            if (!seen.includes(h)) seen.push(h)
+        }
+        seen.sort((a, b) => ColorUtils.relativeLuminance(a) - ColorUtils.relativeLuminance(b))
+        if (seen.length <= 5) {
+            while (seen.length < 5) seen.push(root.fallback[seen.length])
+            return seen
+        }
+        const out = []
+        for (let i = 0; i < 5; i++)
+            out.push(seen[Math.round(i * (seen.length - 1) / 4)])
+        return out
     }
-    readonly property var read: root.from === "random" ? root.drawn : root.pickFive(quant.colors)
-    readonly property var colours: [0, 1, 2, 3, 4].map(i => String(root.kept[i] || root.read[i] || ""))
-    readonly property bool ready: root.colours.every(entry => entry.length > 0)
+
+    readonly property var colours: {
+        const base = root.shuffled.length === 5 ? root.shuffled : root.read
+        return base.map((c, i) => root.kept[i] ? root.kept[i] : c)
+    }
 
     function shuffle(): void {
-        root.setFamilyOptions({ "source": "random", "drawn": root.harmony() })
+        const h0 = Math.random()
+        const step = 0.14 + Math.random() * 0.12
+        const next = []
+        for (let i = 0; i < 5; i++) {
+            const h = (h0 + (i - 2) * step + 1) % 1
+            const s = 0.45 + Math.random() * 0.35
+            const l = 0.18 + i * 0.16 + (Math.random() - 0.5) * 0.05
+            next.push(root._hex(Qt.hsla(h, s, Math.max(0.12, Math.min(0.88, l)), 1)))
+        }
+        root.shuffled = next
     }
+
+    onColourSourceChanged: if (root.colourSource === "random" && root.shuffled.length < 5) root.shuffle()
+    Component.onCompleted: if (root.colourSource === "random") root.shuffle()
+
     function keep(index: int): void {
-        const next = [0, 1, 2, 3, 4].map(i => String(root.kept[i] ?? ""))
-        next[index] = next[index].length > 0 ? "" : root.colours[index]
-        root.setFamilyOption("kept", next)
+        const next = root.kept.slice()
+        next[index] = next[index] ? "" : root.colours[index]
+        root.kept = next
     }
-    function copy(text: string): void {
-        Quickshell.clipboardText = text
+
+    property string copiedHex: ""
+    Timer {
+        id: copiedClearTimer
+        interval: 1600
+        onTriggered: root.copiedHex = ""
     }
-    // A first turn to Random deals a hand; written after the change settles, never inside it.
-    onColourSourceChanged: if (root.colourSource === "random" && root.drawn.length < 5)
-        Qt.callLater(() => root.setFamilyOption("drawn", root.harmony()))
+
+    function copy(value: var): void {
+        const hex = root._hex(value)
+        Quickshell.clipboardText = hex
+        root.copiedHex = hex
+        copiedClearTimer.restart()
+    }
+
+    // Material roles for "swatches" and "scheme"
+    readonly property var materialRoles: [
+        { name: Translation.tr("Primary"), color: Appearance.colors.colPrimary, on: Appearance.colors.colOnPrimary, shape: MaterialShape.Shape.Cookie9Sided },
+        { name: Translation.tr("Secondary"), color: Appearance.colors.colSecondaryContainer, on: Appearance.colors.colOnSecondaryContainer, shape: MaterialShape.Shape.Clover4Leaf },
+        { name: Translation.tr("Tertiary"), color: Appearance.colors.colTertiaryContainer, on: Appearance.colors.colOnTertiaryContainer, shape: MaterialShape.Shape.Sunny },
+        { name: Translation.tr("Container"), color: Appearance.colors.colPrimaryContainer, on: Appearance.colors.colOnPrimaryContainer, shape: MaterialShape.Shape.Pentagon },
+        { name: Translation.tr("Surface"), color: Appearance.colors.colSurfaceContainerHigh, on: Appearance.colors.colOnSurface, shape: MaterialShape.Shape.Square },
+        { name: Translation.tr("Error"), color: Appearance.colors.colError, on: Appearance.colors.colOnError, shape: MaterialShape.Shape.Gem }
+    ]
+    readonly property var rampTones: [95, 90, 80, 70, 60, 50, 40, 30, 20, 10]
+    readonly property var schemeFamilies: [
+        { name: Translation.tr("Primary"), seed: Appearance.colors.colPrimary },
+        { name: Translation.tr("Secondary"), seed: Appearance.colors.colSecondary },
+        { name: Translation.tr("Tertiary"), seed: Appearance.colors.colTertiary },
+        { name: Translation.tr("Error"), seed: Appearance.colors.colError }
+    ]
+
+    readonly property string themeTitle: {
+        const t = String(Config.options?.appearance?.theme ?? "auto")
+        if (t === "auto") return Translation.tr("Wallpaper palette")
+        return t.charAt(0).toUpperCase() + t.slice(1).replace(/-/g, " ")
+    }
+
+    Loader {
+        anchors.fill: parent
+        active: !root.familyFaced
+        sourceComponent: Item {
+            id: materialFace
+
+            WidgetSurface {
+                widget: root
+                anchors.fill: parent
+                shown: !root.familyFaced
+                surfaceColor: root.widgetInk
+            }
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: Math.round(14 * root.scaleFactor)
+                spacing: Math.round(8 * root.scaleFactor)
+
+                // Header
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Math.round(8 * root.scaleFactor)
+
+                    MaterialSymbol {
+                        text: root.copiedHex !== "" ? "content_copy" : "palette"
+                        fill: 1
+                        iconSize: Math.round(18 * root.scaleFactor)
+                        color: root.widgetAccentVisible
+                    }
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        elide: Text.ElideRight
+                        text: root.copiedHex !== ""
+                            ? Translation.tr("Copied") + " " + root.copiedHex.toUpperCase()
+                            : root.themeTitle
+                        color: root.widgetInk
+                        font.family: root.widgetTitleFamily
+                        font.pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
+                        font.weight: Font.DemiBold
+                    }
+                }
+
+                // 1. "swatches": 6 expressive shapes in a 3x2 grid, click to copy hex
+                GridLayout {
+                    id: swatchesGrid
+                    visible: root.paletteStyle === "swatches"
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    columns: 3
+                    columnSpacing: Math.round(4 * root.scaleFactor)
+                    rowSpacing: Math.round(4 * root.scaleFactor)
+
+                    Repeater {
+                        model: root.paletteStyle === "swatches" ? root.materialRoles : []
+
+                        Item {
+                            id: swCell
+                            required property var modelData
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            Layout.preferredWidth: 1
+                            Layout.preferredHeight: 1
+
+                            readonly property real shapeDiameter: Math.max(24, Math.min(
+                                width - Math.round(10 * root.scaleFactor),
+                                height - Math.round((root.showHex && !root.isSmall ? 28 : 16) * root.scaleFactor)))
+
+                            MaterialShape {
+                                id: swShape
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                y: Math.max(0, Math.round((parent.height - height - swLabels.implicitHeight - Math.round(2 * root.scaleFactor)) / 2))
+                                implicitSize: swCell.shapeDiameter
+                                shape: swCell.modelData.shape
+                                color: swCell.modelData.color
+                                rotation: swTap.containsMouse ? 20 : 0
+                                scale: swTap.pressed ? 0.90 : 1.0
+
+                                Behavior on rotation {
+                                    enabled: root.animationsActive
+                                    NumberAnimation {
+                                        duration: Appearance.animation.elementMove.duration
+                                        easing.type: Easing.BezierSpline
+                                        easing.bezierCurve: Appearance.animationCurves.expressiveDefaultSpatial
+                                    }
+                                }
+                                Behavior on scale {
+                                    enabled: root.animationsActive
+                                    NumberAnimation {
+                                        duration: Appearance.animation.elementMoveFast.duration
+                                        easing.type: Easing.BezierSpline
+                                        easing.bezierCurve: Appearance.animationCurves.expressiveFastSpatial
+                                    }
+                                }
+
+                                StyledText {
+                                    anchors.centerIn: parent
+                                    rotation: -swShape.rotation
+                                    text: "Aa"
+                                    color: swCell.modelData.on
+                                    font.family: root.widgetTitleFamily
+                                    font.pixelSize: Math.max(9, Math.round(swCell.shapeDiameter * 0.28))
+                                    font.weight: Font.Bold
+                                }
+                            }
+
+                            Column {
+                                id: swLabels
+                                anchors.top: swShape.bottom
+                                anchors.topMargin: Math.round(2 * root.scaleFactor)
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                spacing: -Math.round(1 * root.scaleFactor)
+
+                                StyledText {
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    text: swCell.modelData.name
+                                    color: root.widgetInk
+                                    font.family: root.widgetBodyFamily
+                                    font.pixelSize: Math.round(10 * root.scaleFactor)
+                                    font.weight: Font.Medium
+                                }
+
+                                StyledText {
+                                    visible: root.showHex && !root.isSmall
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    text: root._hex(swCell.modelData.color).toUpperCase()
+                                    color: root.widgetInkMuted
+                                    font.family: root.widgetNumbersFamily
+                                    font.pixelSize: Math.round(9 * root.scaleFactor)
+                                    font.features: ({ "tnum": 1 })
+                                }
+                            }
+
+                            MouseArea {
+                                id: swTap
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.copy(swCell.modelData.color)
+                            }
+                        }
+                    }
+                }
+
+                // 2. "ramp": tonal scale 95..10 of the primary accent
+                Row {
+                    id: rampRow
+                    visible: root.paletteStyle === "ramp"
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    spacing: Math.round(3 * root.scaleFactor)
+
+                    Repeater {
+                        model: root.paletteStyle === "ramp" ? root.rampTones : []
+
+                        Rectangle {
+                            id: stopRect
+                            required property int modelData
+                            required property int index
+                            readonly property color stopColor: ColorUtils.atTone(Appearance.colors.colPrimary, stopRect.modelData)
+                            readonly property bool hot: stopTap.containsMouse
+                            readonly property real endRad: Math.round(14 * root.scaleFactor)
+                            readonly property real midRad: Math.round(4 * root.scaleFactor)
+
+                            width: Math.max(6, (rampRow.width - rampRow.spacing * (root.rampTones.length - 1)) / root.rampTones.length)
+                            height: rampRow.height
+                            topLeftRadius: stopRect.index === 0 ? endRad : midRad
+                            bottomLeftRadius: stopRect.index === 0 ? endRad : midRad
+                            topRightRadius: stopRect.index === root.rampTones.length - 1 ? endRad : midRad
+                            bottomRightRadius: stopRect.index === root.rampTones.length - 1 ? endRad : midRad
+                            color: stopRect.stopColor
+                            scale: stopRect.hot ? 1.06 : 1.0
+                            z: stopRect.hot ? 1 : 0
+
+                            Behavior on scale {
+                                enabled: root.animationsActive
+                                NumberAnimation {
+                                    duration: Appearance.animation.elementMoveFast.duration
+                                    easing.type: Easing.BezierSpline
+                                    easing.bezierCurve: Appearance.animationCurves.expressiveFastSpatial
+                                }
+                            }
+
+                            StyledText {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                anchors.bottom: parent.bottom
+                                anchors.bottomMargin: Math.round(6 * root.scaleFactor)
+                                text: String(stopRect.modelData)
+                                color: stopRect.modelData > 55 ? Qt.rgba(0, 0, 0, 0.72) : Qt.rgba(1, 1, 1, 0.82)
+                                font.family: root.widgetNumbersFamily
+                                font.pixelSize: Math.round(9.5 * root.scaleFactor)
+                                font.weight: Font.DemiBold
+                                font.features: ({ "tnum": 1 })
+                            }
+
+                            MouseArea {
+                                id: stopTap
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.copy(stopRect.stopColor)
+                            }
+                        }
+                    }
+                }
+
+                // 3. "scheme": 4 key color families, each a column of 5 chromatic tones
+                Row {
+                    id: schemeRow
+                    visible: root.paletteStyle === "scheme"
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    spacing: Math.round(6 * root.scaleFactor)
+
+                    Repeater {
+                        model: root.paletteStyle === "scheme" ? root.schemeFamilies : []
+
+                        Column {
+                            id: famCol
+                            required property var modelData
+                            readonly property var steps: [75, 62, 50, 38, 28]
+                            readonly property real labelH: famLabel.implicitHeight + Math.round(4 * root.scaleFactor)
+                            readonly property real barH: Math.max(8, (schemeRow.height - labelH - spacing * 4) / 5)
+
+                            width: Math.max(16, (schemeRow.width - schemeRow.spacing * 3) / 4)
+                            spacing: Math.round(2 * root.scaleFactor)
+
+                            Repeater {
+                                model: famCol.steps
+
+                                Rectangle {
+                                    id: famBar
+                                    required property int modelData
+                                    required property int index
+                                    readonly property color barColor: ColorUtils.atTone(famCol.modelData.seed, famBar.modelData)
+                                    readonly property real endRad: Math.round(11 * root.scaleFactor)
+                                    readonly property real midRad: Math.round(3 * root.scaleFactor)
+
+                                    width: famCol.width
+                                    height: famCol.barH
+                                    topLeftRadius: famBar.index === 0 ? endRad : midRad
+                                    topRightRadius: famBar.index === 0 ? endRad : midRad
+                                    bottomLeftRadius: famBar.index === famCol.steps.length - 1 ? endRad : midRad
+                                    bottomRightRadius: famBar.index === famCol.steps.length - 1 ? endRad : midRad
+                                    color: famBar.barColor
+                                    scale: famTap.containsMouse ? 1.04 : 1.0
+                                    z: famTap.containsMouse ? 1 : 0
+
+                                    Behavior on scale {
+                                        enabled: root.animationsActive
+                                        NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                                    }
+
+                                    MouseArea {
+                                        id: famTap
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: root.copy(famBar.barColor)
+                                    }
+                                }
+                            }
+
+                            StyledText {
+                                id: famLabel
+                                width: famCol.width
+                                topPadding: Math.round(2 * root.scaleFactor)
+                                horizontalAlignment: Text.AlignHCenter
+                                elide: Text.ElideRight
+                                text: famCol.modelData.name
+                                color: root.widgetInkMuted
+                                font.family: root.widgetBodyFamily
+                                font.pixelSize: Math.round(10 * root.scaleFactor)
+                                font.weight: Font.Medium
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

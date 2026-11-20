@@ -23,6 +23,7 @@ AbstractBackgroundWidget {
     readonly property bool showOrdinal: Boolean(root._readConfigKey("showOrdinal") ?? true)
     readonly property bool instrumentMarks: Boolean(root._readConfigKey("instrumentMarks") ?? true)
     readonly property bool instrument: root.badgeStyle === "instrument"
+    readonly property bool glance: root.badgeStyle === "glance"
     readonly property date today: DateTime.clock.date
     readonly property bool horizontal: root.badgeStyle === "ticket" && root.width >= 200 * root.scaleFactor
         && !root.isLarge
@@ -106,7 +107,7 @@ AbstractBackgroundWidget {
         sourceComponent: Item {
             StyledText {
                 id: dayNumber
-                visible: !root.familyFaced && !root.instrument
+                visible: !root.familyFaced && !root.instrument && !root.glance
                 x: root.horizontal ? 10 * root.scaleFactor : 0
                 y: root.horizontal ? (root.height - height) / 2 : root.height * (root.isLarge ? 0.08 : 0.14)
                 width: root.horizontal ? root.width * 0.36 : root.width
@@ -130,7 +131,7 @@ AbstractBackgroundWidget {
         active: !root.familyFaced
         sourceComponent: Item {
             ColumnLayout {
-                visible: !root.familyFaced && !root.instrument
+                visible: !root.familyFaced && !root.instrument && !root.glance
                 x: root.horizontal ? root.width * 0.36 + 24 * root.scaleFactor : root.width * 0.14
                 y: root.horizontal ? (root.height - implicitHeight) / 2 : root.height * (root.isLarge ? 0.49 : 0.59)
                 width: root.horizontal ? root.width - x - 14 * root.scaleFactor : root.width * 0.72
@@ -166,7 +167,7 @@ AbstractBackgroundWidget {
         active: !root.familyFaced
         sourceComponent: Item {
             ColumnLayout {
-                visible: !root.familyFaced && !root.instrument && root.isLarge
+                visible: !root.familyFaced && !root.instrument && !root.glance && root.isLarge
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
@@ -378,6 +379,111 @@ AbstractBackgroundWidget {
                                 }
                             }
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    // Glance: Android at-a-glance date + live weather + smart context line (now playing, battery, sun).
+    Loader {
+        anchors.fill: parent
+        active: !root.familyFaced
+        sourceComponent: Item {
+            ColumnLayout {
+                anchors.centerIn: parent
+                width: parent.width - Math.round(28 * root.scaleFactor)
+                visible: !root.familyFaced && root.glance
+                spacing: Math.round(4 * root.scaleFactor)
+
+                readonly property string weatherTemp: String(Weather.data?.temp ?? "")
+                readonly property bool hasWeather: Weather.enabled && weatherTemp.length > 0 && !weatherTemp.startsWith("--")
+                readonly property string weatherGlyph: Icons.getWeatherIcon(Weather.data?.wCode, Weather.isNightNow()) ?? "partly_cloudy_day"
+                readonly property string playerTitle: MprisController.titleOf(MprisController.activePlayer) ?? ""
+                readonly property string playerArtist: MprisController.artistOf(MprisController.activePlayer) ?? ""
+                readonly property bool playingNow: (MprisController.activePlayer?.isPlaying ?? false) && playerTitle.length > 0
+                readonly property bool lowBattery: Battery.available && !Battery.isCharging && Battery.percentage > 0 && Battery.percentage <= 0.25
+                readonly property string sunNext: String((Weather.sunState === "day" ? Weather.data?.sunset : Weather.data?.sunrise) ?? "")
+                readonly property var contextInfo: {
+                    if (playingNow) {
+                        return {
+                            icon: "music_note",
+                            text: playerArtist.length > 0 ? `${playerTitle} · ${playerArtist}` : playerTitle
+                        }
+                    }
+                    if (lowBattery) {
+                        return {
+                            icon: "battery_alert",
+                            text: `${Translation.tr("Battery")} ${Math.round(Battery.percentage * 100)}%`
+                        }
+                    }
+                    if (sunNext.length > 0) {
+                        return {
+                            icon: Weather.sunState === "day" ? "wb_twilight" : "wb_sunny",
+                            text: `${Weather.sunState === "day" ? Translation.tr("Sunset") : Translation.tr("Sunrise")} ${sunNext}`
+                        }
+                    }
+                    return {
+                        icon: "today",
+                        text: `${Translation.tr("Day")} ${root.dayOfYear} / ${root.daysInYear}`
+                    }
+                }
+
+                // Headline: date
+                StyledText {
+                    Layout.fillWidth: true
+                    elide: Text.ElideRight
+                    text: Translation.locale.toString(root.today, root.showWeekday ? "ddd, MMM d" : "MMMM d")
+                    color: root.widgetInk
+                    font.family: root.widgetTitleFamily
+                    font.pixelSize: Math.round((root.isSmall ? 20 : root.isLarge ? 30 : 24) * root.scaleFactor)
+                    font.weight: Font.Bold
+                }
+
+                // Weather + context line
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Math.round(6 * root.scaleFactor)
+
+                    MaterialSymbol {
+                        visible: parent.parent.hasWeather
+                        text: parent.parent.weatherGlyph
+                        fill: 1
+                        iconSize: Math.round(18 * root.scaleFactor)
+                        color: root.widgetAccentVisible
+                    }
+
+                    StyledText {
+                        visible: parent.parent.hasWeather
+                        text: parent.parent.weatherTemp
+                        color: root.widgetInk
+                        font.family: root.widgetNumbersFamily
+                        font.pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
+                        font.weight: Font.DemiBold
+                    }
+
+                    StyledText {
+                        visible: parent.parent.hasWeather
+                        text: "·"
+                        color: root.widgetInkMuted
+                        font.pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
+                    }
+
+                    MaterialSymbol {
+                        text: parent.parent.contextInfo.icon
+                        fill: 1
+                        iconSize: Math.round(16 * root.scaleFactor)
+                        color: root.widgetAccentVisible
+                    }
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        elide: Text.ElideRight
+                        text: parent.parent.contextInfo.text
+                        color: root.widgetInkMuted
+                        font.family: root.widgetBodyFamily
+                        font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
+                        font.weight: Font.Medium
                     }
                 }
             }

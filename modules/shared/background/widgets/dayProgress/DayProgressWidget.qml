@@ -8,65 +8,126 @@ import qs.modules.common
 import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.shared.background.widgets
+
 AbstractBackgroundWidget {
     id: root
 
     configEntryName: "dayProgress"
     resizeMinWidth: 190
-    resizeMinHeight: 190
+    resizeMinHeight: 160
     needsColText: true
-    widgetSurfaceEnabled: false
+    readonly property string ringStyle: String(root._readConfigKey("style") ?? "ring")
+    readonly property string progressSpan: String(root._readConfigKey("span") ?? "day")
+    readonly property bool isDialStyle: ["ring", "arc", "ticks"].includes(root.ringStyle)
+    widgetSurfaceEnabled: !root.isDialStyle
 
     // ── Tokens ───────────────────────────────────────────────
-    // Bare on the wallpaper by design: Lume's ink, and the shadow under the whole dial that iRiS's bare faces wear.
-    bareShadow: true
+    // Bare on the wallpaper by design for the dial styles; bars/dots can wear a plate when background is on.
+    bareShadow: root.isDialStyle
     readonly property color ink: root.widgetInk
     readonly property color inkMuted: root.widgetInkMuted
     readonly property color accent: root.widgetAccentVisible
-    // M3's track is the indicator's quiet partner; bare, a veil of the ink is what reads on any wallpaper
     readonly property color track: ColorUtils.applyAlpha(root.ink, 0.24)
 
     // ── Customization ────────────────────────────────────────
-    readonly property string ringStyle: String(root._readConfigKey("style") ?? "ring")
     readonly property bool showArc: root.ringStyle !== "ticks"
     readonly property bool showComet: root.showArc && Boolean(root._readConfigKey("comet") ?? true)
     readonly property bool showIcon: Boolean(root._readConfigKey("showIcon") ?? true)
     readonly property bool showDate: Boolean(root._readConfigKey("showDate") ?? true)
     readonly property bool showHourLabels: Boolean(root._readConfigKey("hourLabels") ?? true)
-    // Text emphasis control: 100% keeps the ring-relative defaults.
     readonly property real textScale: {
         const v = Number(root._readConfigKey("fontScale") ?? 100)
         return Math.max(0.6, Math.min(1.8, Number.isFinite(v) ? v / 100 : 1))
     }
 
-    // ── Day state ────────────────────────────────────────────
-    // to the minute: the dial never redraws for a second hand nobody sees
-    readonly property real dayFraction: {
-        const d = DateTime.clock.date
-        return (d.getHours() * 60 + d.getMinutes()) / 1440
+    // ── Time & Span State ────────────────────────────────────
+    readonly property date now: DateTime.clock.date
+    readonly property int currentYear: root.now.getFullYear()
+    readonly property int daysInYear: {
+        const y = root.currentYear
+        return ((y % 4 === 0 && y % 100 !== 0) || y % 400 === 0) ? 366 : 365
     }
+    readonly property int dayOfYearZeroBased: {
+        const y = root.currentYear
+        const cur = Date.UTC(y, root.now.getMonth(), root.now.getDate())
+        const start = Date.UTC(y, 0, 1)
+        return Math.max(0, Math.floor((cur - start) / 86400000))
+    }
+    readonly property var monthOfDay: {
+        const out = []
+        const y = root.currentYear
+        for (let m = 0; m < 12; m++) {
+            const n = new Date(y, m + 1, 0).getDate()
+            for (let d = 0; d < n; d++) out.push(m)
+        }
+        return out
+    }
+
+    function boundsOf(kind: string): var {
+        const y = root.now.getFullYear()
+        const m = root.now.getMonth()
+        const d = root.now.getDate()
+        const back = (root.now.getDay() - Qt.locale().firstDayOfWeek + 7) % 7
+        switch (kind) {
+        case "week":
+            return [new Date(y, m, d - back), new Date(y, m, d - back + 7)]
+        case "month":
+            return [new Date(y, m, 1), new Date(y, m + 1, 1)]
+        case "year":
+            return [new Date(y, 0, 1), new Date(y + 1, 0, 1)]
+        default:
+            return [new Date(y, m, d), new Date(y, m, d + 1)]
+        }
+    }
+
+    function fractionOf(kind: string): real {
+        const b = root.boundsOf(kind)
+        return Math.max(0, Math.min(1, (root.now - b[0]) / Math.max(1, b[1] - b[0])))
+    }
+
+    function percentOf(kind: string): string {
+        return Math.floor(root.fractionOf(kind) * 100) + "%"
+    }
+
+    function titleOf(kind: string): string {
+        switch (kind) {
+        case "week": return Translation.tr("This week")
+        case "month": return Translation.locale.toString(root.now, "MMMM")
+        case "year": return String(root.currentYear)
+        default: return Translation.tr("Today")
+        }
+    }
+
+    function remainingOf(kind: string): string {
+        const mins = Math.floor(Math.max(0, root.boundsOf(kind)[1] - root.now) / 60000)
+        if (mins < 60)
+            return Translation.tr("%1 min left").arg(mins)
+        if (mins < 1440)
+            return Translation.tr("%1 h %2 min").arg(Math.floor(mins / 60)).arg(mins % 60)
+        const d = Math.floor(mins / 1440)
+        return Translation.tr("%1d left").arg(d)
+    }
+
+    readonly property real dayFraction: root.fractionOf("day")
+    readonly property real activeFraction: root.fractionOf(root.progressSpan)
     readonly property bool isDaytime: {
-        const h = DateTime.clock.date.getHours()
+        const h = root.now.getHours()
         return h >= 6 && h < 19
     }
 
-    // Medium is wide: the dial keeps the day, the time and what the sun does next sit beside it.
-    readonly property bool wide: root.sizeClass === "medium"
+    readonly property bool wide: root.sizeClass === "medium" && root.isDialStyle
     readonly property bool sunUp: Weather.sunState === "day"
     readonly property string sunNext: String((root.sunUp ? Weather.data?.sunset : Weather.data?.sunrise) ?? "")
     readonly property string sunLine: root.sunNext.length > 0
         ? (root.sunUp ? Translation.tr("Sunset") : Translation.tr("Sunrise")) + " " + root.sunNext : ""
 
-    // The day as M3's circular indicator: a thick track, the elapsed day in the accent with a gap at both ends,
-    // midnight at the top. Comet: the last three hours lead and the rest of the day steps back. Ticks: one dot
-    // an hour, the passed ones lit and the current one larger.
     component DayDial: Item {
         id: dial
         property real thickness: 8
         property bool labels: false
         readonly property real size: Math.min(width, height)
         readonly property real r: size / 2 - thickness
-        readonly property real degree: root.dayFraction * 360
+        readonly property real degree: root.activeFraction * 360
         readonly property real labelSize: Math.max(11, Math.round(size * 0.058))
         readonly property real labelRadius: dial.r - dial.thickness / 2 - dial.labelSize * 0.75 - Math.round(4 * root.scaleFactor)
 
@@ -75,7 +136,7 @@ AbstractBackgroundWidget {
             visible: root.showArc
             implicitSize: dial.size
             lineWidth: dial.thickness
-            value: root.dayFraction
+            value: root.activeFraction
             enableAnimation: false
             colPrimary: root.showComet ? ColorUtils.applyAlpha(root.accent, 0.42) : root.accent
             colSecondary: root.ringStyle === "ring" ? root.track : "transparent"
@@ -116,7 +177,7 @@ AbstractBackgroundWidget {
             }
         }
         Repeater {
-            model: dial.labels ? ["00", "06", "12", "18"] : []
+            model: dial.labels && root.progressSpan === "day" ? ["00", "06", "12", "18"] : []
             StyledText {
                 required property string modelData
                 required property int index
@@ -144,9 +205,17 @@ AbstractBackgroundWidget {
         anchors.fill: parent
         active: !root.familyFaced
         sourceComponent: Item {
-            // ── Medium: the dial with the sun in it, the time and what the sun does next beside it ──
+            WidgetSurface {
+                widget: root
+                anchors.fill: parent
+                shown: !root.familyFaced && !root.isDialStyle
+                    && (root.backgroundOpacity > 0 || root.borderWidth > 0 || root.effectiveBlur)
+                surfaceColor: root.ink
+            }
+
+            // ── Medium Dial: the dial with the sun in it, the time and what the sun does next beside it ──
             Item {
-                visible: root.wide
+                visible: root.isDialStyle && root.wide
                 anchors.fill: parent
                 anchors.margins: Math.round(16 * root.scaleFactor)
 
@@ -167,7 +236,7 @@ AbstractBackgroundWidget {
                     spacing: Math.round(2 * root.scaleFactor)
                     StyledText {
                         Layout.fillWidth: true
-                        text: DateTime.time
+                        text: root.progressSpan === "day" ? DateTime.time : root.percentOf(root.progressSpan)
                         elide: Text.ElideRight
                         color: root.ink
                         font.family: root.widgetNumbersFamily
@@ -178,7 +247,7 @@ AbstractBackgroundWidget {
                     StyledText {
                         Layout.fillWidth: true
                         visible: root.showDate
-                        text: DateTime.date
+                        text: root.progressSpan === "day" ? DateTime.date : `${root.titleOf(root.progressSpan)} · ${root.remainingOf(root.progressSpan)}`
                         elide: Text.ElideRight
                         color: root.inkMuted
                         font.family: root.widgetBodyFamily
@@ -208,12 +277,11 @@ AbstractBackgroundWidget {
                 }
             }
 
-            // ── Small and large: the whole day around the time ──
+            // ── Small and Large Dial: the whole day/span around the readout ──
             DayDial {
                 id: dial
-                visible: !root.wide
+                visible: root.isDialStyle && !root.wide
                 anchors.centerIn: parent
-                // from the box, not its own size: the inset depends on it
                 readonly property bool roomy: Math.min(parent.width, parent.height) >= Math.round(320 * root.scaleFactor)
                 width: Math.min(parent.width, parent.height) - 2 * Math.round((roomy ? 16 : 10) * root.scaleFactor)
                 height: width
@@ -222,7 +290,6 @@ AbstractBackgroundWidget {
 
                 ColumnLayout {
                     anchors.centerIn: parent
-                    // between the 06 and 18 labels when they show, inside the track when they don't
                     width: dial.labels ? 2 * (dial.labelRadius - dial.labelSize - Math.round(4 * root.scaleFactor))
                         : 2 * (dial.r - dial.thickness)
                     spacing: 0
@@ -235,7 +302,7 @@ AbstractBackgroundWidget {
                     StyledText {
                         Layout.fillWidth: true
                         horizontalAlignment: Text.AlignHCenter
-                        text: DateTime.time
+                        text: root.progressSpan === "day" ? DateTime.time : root.percentOf(root.progressSpan)
                         fontSizeMode: Text.HorizontalFit
                         minimumPixelSize: 12
                         color: root.ink
@@ -248,7 +315,7 @@ AbstractBackgroundWidget {
                         Layout.fillWidth: true
                         visible: root.showDate
                         horizontalAlignment: Text.AlignHCenter
-                        text: DateTime.date
+                        text: root.progressSpan === "day" ? DateTime.date : `${root.titleOf(root.progressSpan)} · ${root.remainingOf(root.progressSpan)}`
                         elide: Text.ElideRight
                         color: root.inkMuted
                         font.family: root.widgetBodyFamily
@@ -269,7 +336,148 @@ AbstractBackgroundWidget {
                     }
                 }
             }
+
+            // ── Bars: Day, Week, Month, and Year progress bars stacked vertically ──
+            ColumnLayout {
+                id: barsLayout
+                visible: root.ringStyle === "bars"
+                anchors.fill: parent
+                anchors.margins: Math.round(16 * root.scaleFactor)
+                spacing: Math.round((root.isSmall ? 6 : 10) * root.scaleFactor)
+
+                Repeater {
+                    model: root.ringStyle === "bars" ? ["day", "week", "month", "year"] : []
+
+                    ColumnLayout {
+                        id: barItem
+                        required property string modelData
+                        Layout.fillWidth: true
+                        spacing: Math.round(3 * root.scaleFactor)
+
+                        RowLayout {
+                            Layout.fillWidth: true
+
+                            StyledText {
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                                text: root.titleOf(barItem.modelData)
+                                color: root.ink
+                                font.family: root.widgetBodyFamily
+                                font.pixelSize: Math.round((root.isSmall ? 11.5 : 13) * root.scaleFactor * root.textScale)
+                                font.weight: Font.DemiBold
+                            }
+
+                            StyledText {
+                                text: root.percentOf(barItem.modelData)
+                                color: root.accent
+                                font.family: root.widgetNumbersFamily
+                                font.pixelSize: Math.round((root.isSmall ? 11.5 : 13) * root.scaleFactor * root.textScale)
+                                font.weight: Font.Bold
+                                font.features: ({ "tnum": 1 })
+                            }
+                        }
+
+                        StyledProgressBar {
+                            Layout.fillWidth: true
+                            valueBarWidth: parent.width
+                            valueBarHeight: Math.round(5 * root.scaleFactor)
+                            value: root.fractionOf(barItem.modelData)
+                            wavy: true
+                            animateWave: root.containsMouse && root.motionActive
+                            highlightColor: root.accent
+                            trackColor: root.track
+                        }
+                    }
+                }
+            }
+
+            // ── Dots: 365 days of the year dot matrix, past days filled, today in accent ──
+            ColumnLayout {
+                id: dotsLayout
+                visible: root.ringStyle === "dots"
+                anchors.fill: parent
+                anchors.margins: Math.round(16 * root.scaleFactor)
+                spacing: Math.round(8 * root.scaleFactor)
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 0
+
+                    RowLayout {
+                        Layout.fillWidth: true
+
+                        StyledText {
+                            text: String(root.currentYear)
+                            color: root.ink
+                            font.family: root.widgetNumbersFamily
+                            font.pixelSize: Math.round((root.isSmall ? 18 : 22) * root.scaleFactor * root.textScale)
+                            font.weight: Font.Bold
+                            font.features: ({ "tnum": 1 })
+                        }
+
+                        Item { Layout.fillWidth: true }
+
+                        StyledText {
+                            text: root.percentOf("year")
+                            color: root.accent
+                            font.family: root.widgetNumbersFamily
+                            font.pixelSize: Math.round((root.isSmall ? 18 : 22) * root.scaleFactor * root.textScale)
+                            font.weight: Font.Bold
+                            font.features: ({ "tnum": 1 })
+                        }
+                    }
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        elide: Text.ElideRight
+                        text: `${Translation.tr("Day")} ${root.dayOfYearZeroBased + 1} · ${root.remainingOf("year")}`
+                        color: root.inkMuted
+                        font.family: root.widgetBodyFamily
+                        font.pixelSize: Math.round(11.5 * root.scaleFactor * root.textScale)
+                    }
+                }
+
+                Item {
+                    id: dotField
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+
+                    readonly property int cols: {
+                        if (width <= 0 || height <= 0) return 20
+                        let best = 7
+                        let bestPitch = 0
+                        for (let c = 7; c <= 60; c++) {
+                            const p = Math.min(width / c, height / Math.ceil(root.daysInYear / c))
+                            if (p > bestPitch) {
+                                bestPitch = p
+                                best = c
+                            }
+                        }
+                        return best
+                    }
+                    readonly property real pitch: Math.max(2, Math.min(
+                        width / dotField.cols,
+                        height / Math.max(1, Math.ceil(root.daysInYear / dotField.cols))))
+                    readonly property real offX: (width - dotField.cols * dotField.pitch) / 2
+
+                    Repeater {
+                        model: root.ringStyle === "dots" ? root.daysInYear : 0
+
+                        Rectangle {
+                            required property int index
+                            readonly property bool isToday: index === root.dayOfYearZeroBased
+                            x: dotField.offX + (index % dotField.cols) * dotField.pitch + (dotField.pitch - width) / 2
+                            y: Math.floor(index / dotField.cols) * dotField.pitch + (dotField.pitch - height) / 2
+                            width: Math.max(2, Math.round(dotField.pitch * (isToday ? 1.0 : 0.64)))
+                            height: width
+                            radius: width / 2
+                            color: isToday ? root.accent
+                                : index < root.dayOfYearZeroBased ? ColorUtils.applyAlpha(root.ink, 0.78)
+                                : ColorUtils.applyAlpha(root.ink, (root.monthOfDay[index] ?? 0) % 2 === 0 ? 0.14 : 0.26)
+                        }
+                    }
+                }
+            }
         }
     }
-
 }

@@ -7,15 +7,35 @@
   "category": "media",
   "keywords": "lyrics words song sing karaoke music lines",
   "sizes": ["medium", "small", "large"],
+  "freeShape": true,
   "lock": true,
-  "faceOnly": true,
+  "bare": true,
+  "palette": true,
   "face": "lyrics",
   "defaultConfig": {
     "placementStrategy": "free",
+    "style": "words",
+    "outline": true,
+    "lines": "two",
+    "idleFade": true,
     "widgetScale": 100,
+    "widgetOpacity": 100,
+    "colorMode": "auto",
+    "dim": 0,
+    "showBackground": false,
+    "showBorder": false,
+    "backgroundOpacity": 0.16,
+    "borderWidth": 1,
+    "borderOpacity": 0.2,
     "cornerRadius": -1,
+    "useBlur": false,
     "x": 520,
     "y": 600
   },
-  "plate": false
+  "options": [
+    {"key":"style","label":"Style","type":"choice","default":"words","when":"material","choices":[["words","Words"],["karaoke","Karaoke"],["classic","Classic"]]},
+    {"key":"lines","label":"Lines","type":"choice","default":"two","when":["material",{"style":"words"}],"choices":[["one","One"],["two","Two"]]},
+    {"key":"outline","label":"Outline words","type":"switch","default":true,"when":["material",{"style":"words"}],"tune":true},
+    {"key":"idleFade","label":"Fade when idle","type":"switch","default":true,"when":"material","tune":true}
+  ]
 }

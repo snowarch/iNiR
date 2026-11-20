@@ -25,6 +25,7 @@ AbstractBackgroundWidget {
     needsColText: true
     readonly property string cardStyle: root._readConfigKey("style") ?? "card"
     readonly property bool instrument: root.cardStyle === "instrument"
+    readonly property bool fetchMode: root.cardStyle === "fetch"
     readonly property bool showAvatar: root._readConfigKey("showAvatar") ?? true
     readonly property bool showWeather: root._readConfigKey("showWeather") ?? true
     readonly property bool showHostname: root._readConfigKey("showHostname") ?? true
@@ -78,8 +79,8 @@ AbstractBackgroundWidget {
     ColumnLayout {
         id: cardColumn
         visible: !root.familyFaced && opacity > 0
-        opacity: root.instrument ? 0 : 1
-        enabled: !root.instrument
+        opacity: (root.instrument || root.fetchMode) ? 0 : 1
+        enabled: !root.instrument && !root.fetchMode
         Behavior on opacity {
             enabled: root.animationsActive
             NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
@@ -487,6 +488,126 @@ AbstractBackgroundWidget {
                             colRipple: ColorUtils.applyAlpha(root.widgetAccent, 0.22)
                             downAction: modelData.action
                             contentItem: MaterialSymbol { anchors.centerIn: parent; text: modelData.icon; iconSize: Math.round(16 * root.scaleFactor); color: root.widgetInk }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Fetch: terminal-inspired neofetch system readout with palette swatches
+    Loader {
+        anchors.fill: parent
+        active: !root.familyFaced
+        sourceComponent: Item {
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: Math.round(14 * root.scaleFactor)
+                spacing: Math.round(6 * root.scaleFactor)
+                visible: !root.familyFaced && opacity > 0
+                opacity: root.fetchMode ? 1 : 0
+                enabled: root.fetchMode
+                Behavior on opacity {
+                    enabled: root.animationsActive
+                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Math.round(8 * root.scaleFactor)
+
+                    Rectangle {
+                        width: Math.round(28 * root.scaleFactor)
+                        height: width
+                        radius: width / 2
+                        color: root.widgetSemanticContainer(root.widgetPrimaryRole)
+                        MaterialSymbol {
+                            anchors.centerIn: parent
+                            text: "terminal"
+                            fill: 1
+                            iconSize: Math.round(16 * root.scaleFactor)
+                            color: root.widgetSemanticOnContainer(root.widgetPrimaryRole)
+                        }
+                    }
+
+                    StyledText {
+                        Layout.fillWidth: true
+                        elide: Text.ElideRight
+                        text: root.userDisplay
+                        color: root.widgetAccentVisible
+                        font.family: Appearance.font.family.monospace
+                        font.pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
+                        font.weight: Font.Bold
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 1
+                    color: ColorUtils.applyAlpha(root.surfaceInk, 0.14)
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    spacing: Math.round(3 * root.scaleFactor)
+
+                    Repeater {
+                        model: [
+                            { k: "os", v: SystemInfo.distroName || "Linux" },
+                            { k: "wm", v: String(SystemInfo.desktopEnvironment || "Wayland").split(":")[0] },
+                            { k: "sh", v: String(Quickshell.env("SHELL") ?? "").split("/").pop() || "sh" },
+                            { k: "up", v: DateTime.uptime || "--" }
+                        ].concat(root.isLarge ? [
+                            { k: "host", v: root.hostname || "localhost" },
+                            { k: "mem", v: ResourceUsage.memoryTotal > 0 ? `${Math.round(ResourceUsage.memoryUsedPercentage * 100)}% (${ResourceUsage.maxAvailableMemoryString})` : "--" }
+                        ] : []).slice(0, root.isSmall ? 2 : (root.isLarge ? 6 : 4))
+
+                        RowLayout {
+                            required property var modelData
+                            Layout.fillWidth: true
+                            spacing: Math.round(8 * root.scaleFactor)
+
+                            StyledText {
+                                Layout.preferredWidth: Math.round(38 * root.scaleFactor)
+                                text: modelData.k
+                                color: root.widgetAccentVisible
+                                font.family: Appearance.font.family.monospace
+                                font.pixelSize: Math.round(11.5 * root.scaleFactor)
+                                font.weight: Font.Bold
+                            }
+
+                            StyledText {
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                                text: modelData.v
+                                color: root.surfaceInk
+                                font.family: Appearance.font.family.monospace
+                                font.pixelSize: Math.round(11.5 * root.scaleFactor)
+                            }
+                        }
+                    }
+                }
+
+                // Terminal palette swatch pills
+                Row {
+                    Layout.alignment: Qt.AlignLeft
+                    spacing: Math.round(5 * root.scaleFactor)
+                    Repeater {
+                        model: [
+                            Appearance.colors.colPrimary,
+                            Appearance.colors.colSecondary,
+                            Appearance.colors.colTertiary,
+                            Appearance.colors.colPrimaryContainer,
+                            Appearance.colors.colSecondaryContainer,
+                            Appearance.colors.colError
+                        ]
+                        Rectangle {
+                            required property color modelData
+                            width: Math.round(16 * root.scaleFactor)
+                            height: Math.round(8 * root.scaleFactor)
+                            radius: height / 2
+                            color: modelData
                         }
                     }
                 }

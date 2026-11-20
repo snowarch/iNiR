@@ -26,6 +26,8 @@ AbstractBackgroundWidget {
         "compact": { w: 380, h: 122 },
         "minimal": { w: 340, h: 110 },
         "classic": { w: 380, h: 150 },
+        "shape": { w: 380, h: 150 },
+        "disc": { w: 280, h: 280 },
         "visualizer": { w: 380, h: 164 },
         "albumart": { w: 300, h: 330 },
         "lyrics": { w: 340, h: 400, hBare: 190 },
@@ -60,11 +62,13 @@ AbstractBackgroundWidget {
     // A size class picks the player that fits it: Small the cover tile, Medium the chosen wide player, Large the
     // cover or the lyrics sheet.
     readonly property string selectedPreset: {
+        if (root.chosenPreset === "disc")
+            return "disc"
         const tall = ["albumart", "lyrics", "lyricsSplit"].includes(root.chosenPreset)
         if (root.sizeClass === "small")
             return "albumart"
         if (root.sizeClass === "large")
-            return tall ? root.chosenPreset : "albumart"
+            return tall ? root.chosenPreset : (root.chosenPreset === "shape" ? "shape" : "albumart")
         return tall || root.chosenPreset === "expandingLyrics" ? "full" : root.chosenPreset
     }
     property string renderedPreset: ""
@@ -232,6 +236,8 @@ AbstractBackgroundWidget {
             case "albumart": return albumArtPlayerComponent
             case "visualizer": return visualizerPlayerComponent
             case "classic": return classicPlayerComponent
+            case "disc": return discPlayerComponent
+            case "shape": return shapePlayerComponent
             case "lyrics": return lyricsPlayerComponent
             case "lyricsSplit": return lyricsSplitPlayerComponent
             case "expandingLyrics": return expandingLyricsPlayerComponent
@@ -298,6 +304,16 @@ AbstractBackgroundWidget {
     Component {
         id: expandingLyricsPlayerComponent
         ExpandingLyricsPlayer {}
+    }
+
+    Component {
+        id: discPlayerComponent
+        DiscPlayer {}
+    }
+
+    Component {
+        id: shapePlayerComponent
+        ShapePlayer {}
     }
 
     Loader {
