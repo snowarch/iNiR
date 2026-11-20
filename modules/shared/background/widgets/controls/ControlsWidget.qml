@@ -29,153 +29,103 @@ AbstractBackgroundWidget {
         || root.widgetSharedDesign === "readout"
         || root.controlsStyle === "instrument"
 
-    readonly property var toggleItems: {
-        if (root.toggleSet === "evening") {
-            return [
-                {
-                    id: "night",
-                    label: Translation.tr("Night light"),
-                    sub: Hyprsunset.active ? Translation.tr("On") : Translation.tr("Off"),
-                    icon: "nightlight",
-                    active: Hyprsunset.active,
-                    available: true,
-                    shape: MaterialShape.Shape.Cookie9Sided,
-                    role: root.widgetPrimaryRole,
-                    action: () => Hyprsunset.toggle()
-                },
-                {
-                    id: "dnd",
-                    label: Translation.tr("Focus"),
-                    sub: Notifications.manualDndActive ? Translation.tr("Quiet") : Translation.tr("Off"),
-                    icon: Notifications.manualDndActive ? "do_not_disturb_on" : "notifications",
-                    active: Notifications.manualDndActive,
-                    available: true,
-                    shape: MaterialShape.Shape.Clover4Leaf,
-                    role: root.widgetSecondaryRole,
-                    action: () => Notifications.toggleSilent()
-                },
-                {
-                    id: "dark",
-                    label: Translation.tr("Dark mode"),
-                    sub: Appearance.m3colors.darkmode ? Translation.tr("On") : Translation.tr("Light"),
-                    icon: Appearance.m3colors.darkmode ? "dark_mode" : "light_mode",
-                    active: Appearance.m3colors.darkmode,
-                    available: true,
-                    shape: MaterialShape.Shape.Sunny,
-                    role: root.widgetTertiaryRole,
-                    action: () => Appearance.toggleDarkMode()
-                },
-                {
-                    id: "awake",
-                    label: Translation.tr("Keep awake"),
-                    sub: Idle.inhibit ? Translation.tr("Active") : Translation.tr("Off"),
-                    icon: "coffee",
-                    active: Idle.inhibit,
-                    available: true,
-                    shape: MaterialShape.Shape.Flower,
-                    role: root.widgetPrimaryRole,
-                    action: () => Idle.toggleInhibit()
-                }
-            ]
-        }
-        if (root.toggleSet === "sound") {
-            const sinkMuted = Audio.sink?.audio?.muted ?? false
-            const micActive = Audio.source !== null && !Audio.micMuted
-            return [
-                {
-                    id: "mute",
-                    label: Translation.tr("Output"),
-                    sub: sinkMuted ? Translation.tr("Muted") : Math.round(Math.min(1, Audio.value ?? 0) * 100) + "%",
-                    icon: sinkMuted ? "volume_off" : "volume_up",
-                    active: !sinkMuted,
-                    available: Audio.sink !== null,
-                    shape: MaterialShape.Shape.Cookie9Sided,
-                    role: root.widgetPrimaryRole,
-                    action: () => Audio.toggleMute()
-                },
-                {
-                    id: "mic",
-                    label: Translation.tr("Microphone"),
-                    sub: micActive ? Translation.tr("Live") : Translation.tr("Muted"),
-                    icon: micActive ? "mic" : "mic_off",
-                    active: micActive,
-                    available: Audio.source !== null,
-                    shape: MaterialShape.Shape.Clover4Leaf,
-                    role: root.widgetSecondaryRole,
-                    action: () => Audio.toggleMicMute()
-                },
-                {
-                    id: "dnd",
-                    label: Translation.tr("Focus"),
-                    sub: Notifications.manualDndActive ? Translation.tr("Quiet") : Translation.tr("Off"),
-                    icon: Notifications.manualDndActive ? "do_not_disturb_on" : "notifications",
-                    active: Notifications.manualDndActive,
-                    available: true,
-                    shape: MaterialShape.Shape.Sunny,
-                    role: root.widgetTertiaryRole,
-                    action: () => Notifications.toggleSilent()
-                },
-                {
-                    id: "gamemode",
-                    label: Translation.tr("Game mode"),
-                    sub: GameMode.active ? Translation.tr("Active") : Translation.tr("Off"),
-                    icon: "sports_esports",
-                    active: GameMode.active,
-                    available: true,
-                    shape: MaterialShape.Shape.Flower,
-                    role: root.widgetPrimaryRole,
-                    action: () => GameMode.toggle()
-                }
-            ]
-        }
-        const wifiOn = Network.ethernet || Network.wifiEnabled
-        const btSummary = BluetoothStatus.activeDeviceSummary() || ""
-        return [
-            {
-                id: "wifi",
-                label: Network.ethernet ? Translation.tr("Ethernet") : (Network.networkName || Translation.tr("Wi-Fi")),
-                sub: Network.ethernet ? Translation.tr("Wired") : (Network.wifiEnabled ? (Network.networkName ? Translation.tr("Connected") : Translation.tr("On")) : Translation.tr("Off")),
-                icon: Network.ethernet ? "lan" : (Network.wifiEnabled ? "wifi" : "wifi_off"),
-                active: wifiOn,
-                available: true,
-                shape: MaterialShape.Shape.Cookie9Sided,
-                role: root.widgetPrimaryRole,
-                action: () => Network.toggleWifi()
-            },
-            {
-                id: "bt",
-                label: btSummary.length > 0 ? btSummary : Translation.tr("Bluetooth"),
-                sub: btSummary.length > 0 ? Translation.tr("Connected") : (BluetoothStatus.enabled ? Translation.tr("On") : Translation.tr("Off")),
-                icon: BluetoothStatus.enabled ? "bluetooth" : "bluetooth_disabled",
-                active: BluetoothStatus.enabled,
-                available: BluetoothStatus.available,
-                shape: MaterialShape.Shape.Clover4Leaf,
-                role: root.widgetSecondaryRole,
-                action: () => { if (Bluetooth.defaultAdapter) Bluetooth.defaultAdapter.enabled = !Bluetooth.defaultAdapter.enabled }
-            },
-            {
-                id: "dnd",
-                label: Translation.tr("Focus"),
-                sub: Notifications.manualDndActive ? Translation.tr("Quiet") : Translation.tr("Off"),
-                icon: Notifications.manualDndActive ? "do_not_disturb_on" : "notifications",
-                active: Notifications.manualDndActive,
-                available: true,
-                shape: MaterialShape.Shape.Sunny,
-                role: root.widgetTertiaryRole,
-                action: () => Notifications.toggleSilent()
-            },
-            {
-                id: "night",
-                label: Translation.tr("Night light"),
-                sub: Hyprsunset.active ? Translation.tr("On") : Translation.tr("Off"),
-                icon: "nightlight",
-                active: Hyprsunset.active,
-                available: true,
-                shape: MaterialShape.Shape.Flower,
-                role: root.widgetPrimaryRole,
-                action: () => Hyprsunset.toggle()
+    // Stable list of toggle ids: it changes only with the chosen set. Each delegate reads its live state
+    // from the services through ControlsToggle, so a state change never rebuilds a delegate and the Behaviors play.
+    readonly property var toggleIds: root.toggleSet === "evening" ? ["night", "dnd", "dark", "awake"]
+        : root.toggleSet === "sound" ? ["mute", "mic", "dnd", "gamemode"]
+        : ["wifi", "bt", "dnd", "night"]
+
+    // One toggle: its state comes from the services by id; shape and role come from its slot in the set.
+    component ControlsToggle: QtObject {
+        id: toggle
+        required property string tid
+        required property int slot
+        readonly property var shapes: [MaterialShape.Shape.Cookie9Sided, MaterialShape.Shape.Clover4Leaf, MaterialShape.Shape.Sunny, MaterialShape.Shape.Flower]
+        readonly property var roles: [root.widgetPrimaryRole, root.widgetSecondaryRole, root.widgetTertiaryRole, root.widgetPrimaryRole]
+        readonly property var shape: toggle.shapes[toggle.slot % 4]
+        readonly property string role: toggle.roles[toggle.slot % 4]
+
+        readonly property bool sinkMuted: Audio.sink?.audio?.muted ?? false
+        readonly property bool micActive: Audio.source !== null && !Audio.micMuted
+        readonly property string btSummary: toggle.tid === "bt" ? (BluetoothStatus.activeDeviceSummary() || "") : ""
+
+        readonly property string label: {
+            switch (toggle.tid) {
+            case "night": return Translation.tr("Night light")
+            case "dnd": return Translation.tr("Focus")
+            case "dark": return Translation.tr("Dark mode")
+            case "awake": return Translation.tr("Keep awake")
+            case "mute": return Translation.tr("Output")
+            case "mic": return Translation.tr("Microphone")
+            case "gamemode": return Translation.tr("Game mode")
+            case "wifi": return Network.ethernet ? Translation.tr("Ethernet") : (Network.networkName || Translation.tr("Wi-Fi"))
+            case "bt": return toggle.btSummary.length > 0 ? toggle.btSummary : Translation.tr("Bluetooth")
             }
-        ]
+            return ""
+        }
+        readonly property string sub: {
+            switch (toggle.tid) {
+            case "night": return Hyprsunset.active ? Translation.tr("On") : Translation.tr("Off")
+            case "dnd": return Notifications.manualDndActive ? Translation.tr("Quiet") : Translation.tr("Off")
+            case "dark": return Appearance.m3colors.darkmode ? Translation.tr("On") : Translation.tr("Light")
+            case "awake": return Idle.inhibit ? Translation.tr("Active") : Translation.tr("Off")
+            case "mute": return toggle.sinkMuted ? Translation.tr("Muted") : Math.round(Math.min(1, Audio.value ?? 0) * 100) + "%"
+            case "mic": return toggle.micActive ? Translation.tr("Live") : Translation.tr("Muted")
+            case "gamemode": return GameMode.active ? Translation.tr("Active") : Translation.tr("Off")
+            case "wifi": return Network.ethernet ? Translation.tr("Wired") : (Network.wifiEnabled ? (Network.networkName ? Translation.tr("Connected") : Translation.tr("On")) : Translation.tr("Off"))
+            case "bt": return toggle.btSummary.length > 0 ? Translation.tr("Connected") : (BluetoothStatus.enabled ? Translation.tr("On") : Translation.tr("Off"))
+            }
+            return ""
+        }
+        readonly property string icon: {
+            switch (toggle.tid) {
+            case "night": return "nightlight"
+            case "dnd": return Notifications.manualDndActive ? "do_not_disturb_on" : "notifications"
+            case "dark": return Appearance.m3colors.darkmode ? "dark_mode" : "light_mode"
+            case "awake": return "coffee"
+            case "mute": return toggle.sinkMuted ? "volume_off" : "volume_up"
+            case "mic": return toggle.micActive ? "mic" : "mic_off"
+            case "gamemode": return "sports_esports"
+            case "wifi": return Network.ethernet ? "lan" : (Network.wifiEnabled ? "wifi" : "wifi_off")
+            case "bt": return BluetoothStatus.enabled ? "bluetooth" : "bluetooth_disabled"
+            }
+            return ""
+        }
+        readonly property bool active: {
+            switch (toggle.tid) {
+            case "night": return Hyprsunset.active
+            case "dnd": return Notifications.manualDndActive
+            case "dark": return Appearance.m3colors.darkmode
+            case "awake": return Idle.inhibit
+            case "mute": return !toggle.sinkMuted
+            case "mic": return toggle.micActive
+            case "gamemode": return GameMode.active
+            case "wifi": return Network.ethernet || Network.wifiEnabled
+            case "bt": return BluetoothStatus.enabled
+            }
+            return false
+        }
+        readonly property bool available: {
+            switch (toggle.tid) {
+            case "mute": return Audio.sink !== null
+            case "mic": return Audio.source !== null
+            case "bt": return BluetoothStatus.available
+            }
+            return true
+        }
+        function trigger() {
+            switch (toggle.tid) {
+            case "night": Hyprsunset.toggle(); break
+            case "dnd": Notifications.toggleSilent(); break
+            case "dark": Appearance.toggleDarkMode(); break
+            case "awake": Idle.toggleInhibit(); break
+            case "mute": Audio.toggleMute(); break
+            case "mic": Audio.toggleMicMute(); break
+            case "gamemode": GameMode.toggle(); break
+            case "wifi": Network.toggleWifi(); break
+            case "bt": if (Bluetooth.defaultAdapter) Bluetooth.defaultAdapter.enabled = !Bluetooth.defaultAdapter.enabled; break
+            }
+        }
     }
 
     Loader {
@@ -210,21 +160,23 @@ AbstractBackgroundWidget {
                     parent.height - Math.round(28 * root.scaleFactor)) - spacing) / 2)
 
                 Repeater {
-                    model: root.controlsStyle === "shapes" ? root.toggleItems : []
+                    model: root.controlsStyle === "shapes" ? root.toggleIds : []
 
                     Item {
                         id: shapeToggle
-                        required property var modelData
+                        required property string modelData
+                        required property int index
+                        ControlsToggle { id: shapeInfo; tid: shapeToggle.modelData; slot: shapeToggle.index }
                         width: shapesGrid.cellSize
                         height: shapesGrid.cellSize
-                        opacity: shapeToggle.modelData.available ? 1 : 0.45
+                        opacity: shapeInfo.available ? 1 : 0.45
 
-                        readonly property var mark: root.widgetMark(shapeToggle.modelData.role)
+                        readonly property var mark: root.widgetMark(shapeInfo.role)
                         readonly property color activeFill: root.widgetHasSurface
-                            ? root.widgetSemanticColor(shapeToggle.modelData.role)
+                            ? root.widgetSemanticColor(shapeInfo.role)
                             : shapeToggle.mark.fill
                         readonly property color activeInk: root.widgetHasSurface
-                            ? root.widgetSemanticOnColor(shapeToggle.modelData.role)
+                            ? root.widgetSemanticOnColor(shapeInfo.role)
                             : shapeToggle.mark.ink
                         readonly property color offFill: root.widgetHasSurface
                             ? ColorUtils.applyAlpha(root.widgetInk, shapeTap.containsMouse ? 0.16 : 0.10)
@@ -232,9 +184,9 @@ AbstractBackgroundWidget {
 
                         MaterialShape {
                             anchors.fill: parent
-                            shape: shapeToggle.modelData.active ? shapeToggle.modelData.shape : MaterialShape.Shape.Circle
-                            color: shapeToggle.modelData.active ? shapeToggle.activeFill : shapeToggle.offFill
-                            rotation: shapeToggle.modelData.active ? 18 : 0
+                            shape: shapeInfo.active ? shapeInfo.shape : MaterialShape.Shape.Circle
+                            color: shapeInfo.active ? shapeToggle.activeFill : shapeToggle.offFill
+                            rotation: shapeInfo.active ? 18 : 0
                             scale: shapeTap.pressed ? 0.90 : (shapeTap.containsMouse ? 1.05 : 1.0)
 
                             Behavior on color {
@@ -261,25 +213,25 @@ AbstractBackgroundWidget {
                             MaterialSymbol {
                                 anchors.centerIn: parent
                                 rotation: -parent.rotation
-                                text: shapeToggle.modelData.icon
-                                fill: shapeToggle.modelData.active ? 1 : 0
+                                text: shapeInfo.icon
+                                fill: shapeInfo.active ? 1 : 0
                                 iconSize: Math.round(shapeToggle.width * 0.36)
-                                color: shapeToggle.modelData.active ? shapeToggle.activeInk : root.widgetInk
+                                color: shapeInfo.active ? shapeToggle.activeInk : root.widgetInk
                             }
                         }
 
                         MouseArea {
                             id: shapeTap
                             anchors.fill: parent
-                            enabled: shapeToggle.modelData.available
+                            enabled: shapeInfo.available
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: shapeToggle.modelData.action()
+                            onClicked: shapeInfo.trigger()
                         }
 
                         StyledToolTip {
                             extraVisibleCondition: shapeTap.containsMouse
-                            text: `${shapeToggle.modelData.label} · ${shapeToggle.modelData.sub}`
+                            text: `${shapeInfo.label} · ${shapeInfo.sub}`
                         }
                     }
                 }
@@ -296,17 +248,19 @@ AbstractBackgroundWidget {
                     Math.floor((parent.width - Math.round(28 * root.scaleFactor) - spacing * 3) / 4)))
 
                 Repeater {
-                    model: root.controlsStyle === "row" ? root.toggleItems : []
+                    model: root.controlsStyle === "row" ? root.toggleIds : []
 
                     Rectangle {
                         id: rowBtn
-                        required property var modelData
+                        required property string modelData
+                        required property int index
+                        ControlsToggle { id: rowInfo; tid: rowBtn.modelData; slot: rowBtn.index }
                         width: rowStrip.btnSize
                         height: rowStrip.btnSize
-                        radius: rowBtn.modelData.active ? Math.round(14 * root.scaleFactor) : width / 2
-                        opacity: rowBtn.modelData.available ? 1 : 0.45
-                        color: rowBtn.modelData.active
-                            ? root.widgetSemanticColor(rowBtn.modelData.role)
+                        radius: rowInfo.active ? Math.round(14 * root.scaleFactor) : width / 2
+                        opacity: rowInfo.available ? 1 : 0.45
+                        color: rowInfo.active
+                            ? root.widgetSemanticColor(rowInfo.role)
                             : ColorUtils.applyAlpha(root.widgetInk, rowTap.containsMouse ? 0.16 : 0.10)
                         scale: rowTap.pressed ? 0.90 : (rowTap.containsMouse ? 1.05 : 1.0)
 
@@ -329,26 +283,26 @@ AbstractBackgroundWidget {
 
                         MaterialSymbol {
                             anchors.centerIn: parent
-                            text: rowBtn.modelData.icon
-                            fill: rowBtn.modelData.active ? 1 : 0
+                            text: rowInfo.icon
+                            fill: rowInfo.active ? 1 : 0
                             iconSize: Math.round(rowBtn.width * 0.44)
-                            color: rowBtn.modelData.active
-                                ? root.widgetSemanticOnColor(rowBtn.modelData.role)
+                            color: rowInfo.active
+                                ? root.widgetSemanticOnColor(rowInfo.role)
                                 : root.widgetInk
                         }
 
                         MouseArea {
                             id: rowTap
                             anchors.fill: parent
-                            enabled: rowBtn.modelData.available
+                            enabled: rowInfo.available
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: rowBtn.modelData.action()
+                            onClicked: rowInfo.trigger()
                         }
 
                         StyledToolTip {
                             extraVisibleCondition: rowTap.containsMouse
-                            text: `${rowBtn.modelData.label} · ${rowBtn.modelData.sub}`
+                            text: `${rowInfo.label} · ${rowInfo.sub}`
                         }
                     }
                 }
@@ -365,28 +319,30 @@ AbstractBackgroundWidget {
                 rowSpacing: Math.round(8 * root.scaleFactor)
 
                 Repeater {
-                    model: root.controlsStyle === "tiles" ? root.toggleItems : []
+                    model: root.controlsStyle === "tiles" ? root.toggleIds : []
 
                     Rectangle {
                         id: tileCard
-                        required property var modelData
+                        required property string modelData
+                        required property int index
+                        ControlsToggle { id: tileInfo; tid: tileCard.modelData; slot: tileCard.index }
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         Layout.preferredWidth: 1
                         Layout.preferredHeight: 1
-                        opacity: tileCard.modelData.available ? 1 : 0.45
-                        radius: tileCard.modelData.active
+                        opacity: tileInfo.available ? 1 : 0.45
+                        radius: tileInfo.active
                             ? Math.min(root.widgetCardRadius, Math.round(16 * root.scaleFactor))
                             : height / 2
-                        color: tileCard.modelData.active
-                            ? root.widgetSemanticContainer(tileCard.modelData.role)
+                        color: tileInfo.active
+                            ? root.widgetSemanticContainer(tileInfo.role)
                             : ColorUtils.applyAlpha(root.widgetInk, tileTap.containsMouse ? 0.14 : 0.08)
                         scale: tileTap.pressed ? 0.96 : 1.0
 
-                        readonly property color fg: tileCard.modelData.active
-                            ? root.widgetSemanticOnContainer(tileCard.modelData.role)
+                        readonly property color fg: tileInfo.active
+                            ? root.widgetSemanticOnContainer(tileInfo.role)
                             : root.widgetInk
-                        readonly property color subFg: tileCard.modelData.active
+                        readonly property color subFg: tileInfo.active
                             ? ColorUtils.applyAlpha(tileCard.fg, 0.78)
                             : root.widgetInkMuted
 
@@ -414,8 +370,8 @@ AbstractBackgroundWidget {
                             spacing: Math.round(8 * root.scaleFactor)
 
                             MaterialSymbol {
-                                text: tileCard.modelData.icon
-                                fill: tileCard.modelData.active ? 1 : 0
+                                text: tileInfo.icon
+                                fill: tileInfo.active ? 1 : 0
                                 iconSize: Math.round((root.isSmall ? 18 : 20) * root.scaleFactor)
                                 color: tileCard.fg
                             }
@@ -427,7 +383,7 @@ AbstractBackgroundWidget {
                                 StyledText {
                                     Layout.fillWidth: true
                                     elide: Text.ElideRight
-                                    text: tileCard.modelData.label
+                                    text: tileInfo.label
                                     color: tileCard.fg
                                     font.family: root.widgetBodyFamily
                                     font.pixelSize: Math.round((root.isSmall ? 11 : 12.5) * root.scaleFactor)
@@ -438,7 +394,7 @@ AbstractBackgroundWidget {
                                     visible: !root.isSmall && tileCard.height >= Math.round(44 * root.scaleFactor)
                                     Layout.fillWidth: true
                                     elide: Text.ElideRight
-                                    text: tileCard.modelData.sub
+                                    text: tileInfo.sub
                                     color: tileCard.subFg
                                     font.family: root.widgetBodyFamily
                                     font.pixelSize: Math.round(10.5 * root.scaleFactor)
@@ -449,10 +405,10 @@ AbstractBackgroundWidget {
                         MouseArea {
                             id: tileTap
                             anchors.fill: parent
-                            enabled: tileCard.modelData.available
+                            enabled: tileInfo.available
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: tileCard.modelData.action()
+                            onClicked: tileInfo.trigger()
                         }
                     }
                 }

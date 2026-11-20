@@ -42,7 +42,7 @@ GroupButton {
         enabled: Appearance.animationsEnabled
         animation: NumberAnimation { duration: Appearance.animation.elementResize.duration; easing.type: Appearance.animation.elementResize.type; easing.bezierCurve: Appearance.animation.elementResize.bezierCurve }
     }
-    // Unselected keys are the neutral highest container, the chosen one the accent (Lucid's button group); the
+    // Unselected keys are the neutral highest container, the chosen one the accent, as in an M3 button group; the
     // secondary container made a whole row of heavy tinted keys.
     // ZZZ: idle segments are NEUTRAL plate, not bright secondary. Under zzz
     // colSecondaryContainer resolves to zzz.secondary (a signal) — using it for

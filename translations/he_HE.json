@@ -3786,5 +3786,16 @@
   "The selection snaps to the Island, the dock and other panels.": "הבחירה נצמדת לאיילנד, ל-Dock וללוחות אחרים.",
   "Windows make room for the Focus panel while you keep it open.": "חלונות מפנים מקום ללוח מיקוד כל עוד הוא פתוח.",
   "Windows make room for the Today panel while you keep it open.": "חלונות מפנים מקום ללוח היום כל עוד הוא פתוח.",
-  "Adaptive goes further the faster you move; Flat keeps one speed.": "אדפטיבי מתקדם יותר ככל שזזים מהר יותר; שטוח שומר על מהירות אחת."
+  "Adaptive goes further the faster you move; Flat keeps one speed.": "אדפטיבי מתקדם יותר ככל שזזים מהר יותר; שטוח שומר על מהירות אחת.",
+  "Leave this mode and arrange the desktop widgets": "צא ממצב זה וסדר את הווידג׳טים בשולחן העבודה",
+  "Edit bar and dock": "עריכת הסרגל והמעגן",
+  "Quiet": "שקט",
+  "%1 · %2": "%1 · %2",
+  "Battery %1%": "סוללה %1%",
+  "Sunset %1": "שקיעה %1",
+  "Sunrise %1": "זריחה %1",
+  "Day %1 of %2": "יום %1 מתוך %2",
+  "%1 h %2 min left": "נותרו %1 ש׳ %2 ד׳",
+  "%1 day left": "נותר %1 יום",
+  "%1 days left": "נותרו %1 ימים"
 }

@@ -370,6 +370,16 @@ function _withdrawn(obj) {
     return changed;
 }
 
+// "Dodge windows" (dock shown on an empty workspace under Hover) was what "Show on desktop" already does: it turns
+// that switch on and goes.
+function _dodgeWindows(obj) {
+    const dock = _get(obj, "material.dock");
+    if (!_isObject(dock) || !("dodgeWindows" in dock)) return false;
+    if (dock.dodgeWindows === true) dock.showOnDesktop = true;
+    delete dock.dodgeWindows;
+    return true;
+}
+
 // A list some writes stored as {"0": ..., "1": ...} (a QML sequence kept as it came) becomes a list again where the
 // schema holds one, in index order, so the person's choice loads instead of the default. `isList(path)` asks the
 // schema; Config runs this once every schema, plugins' included, is in place.
@@ -415,5 +425,6 @@ function migrate(obj) {
         _remove(obj, from);
         changed = true;
     }
+    changed = _dodgeWindows(obj) || changed;
     return changed;
 }

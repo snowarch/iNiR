@@ -10,17 +10,19 @@ import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.shared.background.widgets
 
-// The colours of the wallpaper or the song's cover (or five random ones), read by ColorQuantizer in iRiS,
-// and in Material: three expressive views of the active Material 3 scheme ("swatches", "ramp", "scheme").
+// Material draws three expressive views of the active Material 3 scheme ("swatches", "ramp", "scheme"); it
+// never reads the wallpaper. iRiS and Prism draw their own faces: five colours read from the wallpaper, the
+// cover that plays or a harmony. A tap copies one, a right click keeps it through the next read. Looking never
+// touches the theme.
 AbstractBackgroundWidget {
     id: root
 
     configEntryName: "palette"
-    needsColText: true
+    needsColText: !root.familyFaced
     resizeMinWidth: 220
     resizeMinHeight: 150
     familyOptions: [
-        { key: "source", label: Translation.tr("Colors from"), icon: "palette", fallback: "wallpaper", choices: [
+        { key: "source", label: Translation.tr("Colours from"), icon: "palette", fallback: "wallpaper", choices: [
             { value: "wallpaper", label: Translation.tr("Wallpaper"), icon: "wallpaper" },
             { value: "music", label: Translation.tr("Music"), icon: "album" },
             { value: "random", label: Translation.tr("Random"), icon: "shuffle" }
@@ -30,110 +32,101 @@ AbstractBackgroundWidget {
     readonly property string paletteStyle: String(root._readConfigKey("style") ?? "swatches")
     readonly property bool showHex: Boolean(root._readConfigKey("showHex") ?? true)
     readonly property string colourSource: String(root.familyOption("source", "wallpaper"))
-    readonly property string coverUrl: MprisController.activePlayer
-        ? MprisController.effectiveArtUrl(MprisController.activePlayer) : ""
+    readonly property var kept: Array.from(root.familyOption("kept", []) ?? [])
+    readonly property var drawn: Array.from(root.familyOption("drawn", []) ?? [])
+    readonly property var player: MprisController.activePlayer
+    // Music with nothing playing reads the wallpaper and says so.
+    readonly property bool coverRead: root.colourSource === "music" && artwork.displaySource.length > 0
+    readonly property string from: root.colourSource === "random" ? "random" : root.coverRead ? "music" : "wallpaper"
+    readonly property var screen: Quickshell.screens.find(entry => entry.name === root.outputName) ?? null
+    readonly property string wallpaperStill: Wallpapers.stillUrlFor(WallpaperListener.wallpaperUrlForScreen(root.screen))
 
     MediaArtworkResolver {
-        id: coverResolver
-        sourceUrl: root.colourSource === "music" ? root.coverUrl : ""
-        title: MprisController.titleOf(MprisController.activePlayer) ?? ""
-        artist: MprisController.artistOf(MprisController.activePlayer) ?? ""
-        album: MprisController.activePlayer?.trackAlbum ?? ""
-        cacheDirectory: Directories.coverArt
+        id: artwork
+        sourceUrl: root.familyFaced && root.colourSource === "music" && root.player ? MprisController.effectiveArtUrl(root.player) : ""
+        title: MprisController.titleOf(root.player) ?? ""
+        artist: MprisController.artistOf(root.player) ?? ""
+        album: root.player?.trackAlbum ?? ""
     }
-
-    readonly property bool readingMusic: root.colourSource === "music" && coverResolver.displaySource.length > 0
-    readonly property string imageSource: root.colourSource === "random" ? ""
-        : root.readingMusic ? coverResolver.displaySource
-        : Wallpapers.effectiveWallpaperUrl
-    readonly property string from: root.colourSource === "random" || root.shuffled.length === 5 ? "random"
-        : root.readingMusic ? "music" : "wallpaper"
-
+    // Only a family face shows read colours; the Material styles show scheme roles and decode nothing.
     ColorQuantizer {
-        id: quantizer
-        source: root.visible && root.powerActive ? root.imageSource : ""
+        id: quant
+        source: !root.familyFaced ? "" : root.from === "music" ? artwork.displaySource : root.from === "wallpaper" ? root.wallpaperStill : ""
         depth: 3
-        rescaleSize: 64
+        rescaleSize: 96
     }
 
-    property var shuffled: []
-    property var kept: ["", "", "", "", ""]
-    onImageSourceChanged: root.shuffled = []
-
-    function _hex(c: var): string {
-        const q = Qt.color(c)
-        const b = v => Math.max(0, Math.min(255, Math.round(v * 255))).toString(16).padStart(2, "0")
-        return "#" + b(q.r) + b(q.g) + b(q.b)
+    function hex(c: color): string {
+        const part = value => Math.round(Math.max(0, Math.min(1, value)) * 255).toString(16).padStart(2, "0")
+        return ("#" + part(c.r) + part(c.g) + part(c.b)).toUpperCase()
     }
-
-    readonly property var fallback: [
-        root._hex(Appearance.m3colors.m3background),
-        root._hex(Appearance.m3colors.m3secondaryContainer),
-        root._hex(Appearance.m3colors.m3primary),
-        root._hex(Appearance.m3colors.m3tertiary),
-        root._hex(Appearance.m3colors.m3onSurface)
-    ]
-
-    readonly property var read: {
-        const raw = quantizer.colors ?? []
-        if (raw.length < 5)
-            return root.fallback
-        const seen = []
-        for (const c of raw) {
-            const h = root._hex(c)
-            if (!seen.includes(h)) seen.push(h)
+    // Five that stand apart: the most telling colour first, then each one farthest from those taken,
+    // laid dark to light. A picture with fewer than five gives tints of what it has.
+    function pickFive(list: var): var {
+        const pool = Array.from(list ?? []).map(entry => Qt.color(entry))
+        if (pool.length === 0) return []
+        const hue = c => c.hslHue < 0 ? 0 : c.hslHue
+        const gap = (a, b) => {
+            const dh = Math.min(Math.abs(hue(a) - hue(b)), 1 - Math.abs(hue(a) - hue(b)))
+            return Math.hypot(dh * 2 * Math.min(a.hslSaturation, b.hslSaturation), a.hslLightness - b.hslLightness,
+                (a.hslSaturation - b.hslSaturation) * 0.5)
         }
-        seen.sort((a, b) => ColorUtils.relativeLuminance(a) - ColorUtils.relativeLuminance(b))
-        if (seen.length <= 5) {
-            while (seen.length < 5) seen.push(root.fallback[seen.length])
-            return seen
+        const telling = c => c.hslSaturation * (1 - Math.abs(c.hslLightness - 0.5) * 1.4)
+        const taken = [pool.reduce((best, c) => telling(c) > telling(best) ? c : best, pool[0])]
+        while (taken.length < Math.min(5, pool.length)) {
+            let far = null, farGap = -1
+            for (const c of pool) {
+                if (taken.includes(c)) continue
+                const near = Math.min(...taken.map(t => gap(c, t)))
+                if (near > farGap) { far = c; farGap = near }
+            }
+            taken.push(far)
         }
-        const out = []
-        for (let i = 0; i < 5; i++)
-            out.push(seen[Math.round(i * (seen.length - 1) / 4)])
-        return out
+        for (let i = 0; taken.length < 5; i++) {
+            const base = taken[i % taken.length]
+            taken.push(Qt.hsla(hue(base), base.hslSaturation, Math.min(0.9, base.hslLightness + 0.18 * (1 + Math.floor(i / taken.length))), 1))
+        }
+        return taken.sort((a, b) => a.hslLightness - b.hslLightness).map(c => root.hex(c))
     }
-
-    readonly property var colours: {
-        const base = root.shuffled.length === 5 ? root.shuffled : root.read
-        return base.map((c, i) => root.kept[i] ? root.kept[i] : c)
+    function harmony(): var {
+        const base = Math.random()
+        const shapes = [[0, 0.04, 0.5, 0.54, 0.08], [0, 0.33, 0.66, 0.05, 0.38], [0, 0.08, 0.16, 0.58, 0.5], [0, 0.42, 0.58, 0.02, 0.5]]
+        const shape = shapes[Math.floor(Math.random() * shapes.length)]
+        const light = [0.22, 0.38, 0.52, 0.66, 0.82]
+        return shape.map((offset, i) => root.hex(Qt.hsla((base + offset) % 1, 0.42 + Math.random() * 0.38, light[i], 1)))
     }
+    readonly property var read: root.from === "random" ? root.drawn : root.pickFive(quant.colors)
+    readonly property var colours: [0, 1, 2, 3, 4].map(i => String(root.kept[i] || root.read[i] || ""))
+    readonly property bool ready: root.colours.every(entry => entry.length > 0)
 
     function shuffle(): void {
-        const h0 = Math.random()
-        const step = 0.14 + Math.random() * 0.12
-        const next = []
-        for (let i = 0; i < 5; i++) {
-            const h = (h0 + (i - 2) * step + 1) % 1
-            const s = 0.45 + Math.random() * 0.35
-            const l = 0.18 + i * 0.16 + (Math.random() - 0.5) * 0.05
-            next.push(root._hex(Qt.hsla(h, s, Math.max(0.12, Math.min(0.88, l)), 1)))
-        }
-        root.shuffled = next
+        root.setFamilyOptions({ "source": "random", "drawn": root.harmony() })
     }
-
-    onColourSourceChanged: if (root.colourSource === "random" && root.shuffled.length < 5) root.shuffle()
-    Component.onCompleted: if (root.colourSource === "random") root.shuffle()
-
     function keep(index: int): void {
-        const next = root.kept.slice()
-        next[index] = next[index] ? "" : root.colours[index]
-        root.kept = next
+        const next = [0, 1, 2, 3, 4].map(i => String(root.kept[i] ?? ""))
+        next[index] = next[index].length > 0 ? "" : root.colours[index]
+        root.setFamilyOption("kept", next)
     }
-
+    // Copies what it is given, as given.
+    function copy(text: string): void {
+        Quickshell.clipboardText = text
+    }
+    // The Material face copies one colour as hex and says so in its header for a moment.
     property string copiedHex: ""
     Timer {
         id: copiedClearTimer
         interval: 1600
         onTriggered: root.copiedHex = ""
     }
-
-    function copy(value: var): void {
-        const hex = root._hex(value)
-        Quickshell.clipboardText = hex
-        root.copiedHex = hex
+    function copyColour(value: color): void {
+        const text = root.hex(value)
+        root.copy(text)
+        root.copiedHex = text
         copiedClearTimer.restart()
     }
+    // A first turn to Random deals a hand; written after the change settles, never inside it.
+    onColourSourceChanged: if (root.colourSource === "random" && root.drawn.length < 5)
+        Qt.callLater(() => root.setFamilyOption("drawn", root.harmony()))
 
     // Material roles for "swatches" and "scheme"
     readonly property var materialRoles: [
@@ -192,8 +185,8 @@ AbstractBackgroundWidget {
                         Layout.fillWidth: true
                         elide: Text.ElideRight
                         text: root.copiedHex !== ""
-                            ? Translation.tr("Copied") + " " + root.copiedHex.toUpperCase()
-                            : root.themeTitle
+                            ? Translation.tr("Copied") + " " + root.copiedHex
+                            : root.isSmall ? Translation.tr("Palette") : root.themeTitle
                         color: root.widgetInk
                         font.family: root.widgetTitleFamily
                         font.pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)
@@ -283,7 +276,7 @@ AbstractBackgroundWidget {
                                 StyledText {
                                     visible: root.showHex && !root.isSmall
                                     anchors.horizontalCenter: parent.horizontalCenter
-                                    text: root._hex(swCell.modelData.color).toUpperCase()
+                                    text: root.hex(swCell.modelData.color)
                                     color: root.widgetInkMuted
                                     font.family: root.widgetNumbersFamily
                                     font.pixelSize: Math.round(9 * root.scaleFactor)
@@ -296,7 +289,7 @@ AbstractBackgroundWidget {
                                 anchors.fill: parent
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: root.copy(swCell.modelData.color)
+                                onClicked: root.copyColour(swCell.modelData.color)
                             }
                         }
                     }
@@ -358,7 +351,7 @@ AbstractBackgroundWidget {
                                 anchors.fill: parent
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: root.copy(stopRect.stopColor)
+                                onClicked: root.copyColour(stopRect.stopColor)
                             }
                         }
                     }
@@ -416,7 +409,7 @@ AbstractBackgroundWidget {
                                         anchors.fill: parent
                                         hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
-                                        onClicked: root.copy(famBar.barColor)
+                                        onClicked: root.copyColour(famBar.barColor)
                                     }
                                 }
                             }

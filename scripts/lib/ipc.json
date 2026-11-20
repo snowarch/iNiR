@@ -3654,9 +3654,36 @@
      ]
     },
     {
+     "name": "undo",
+     "args": [],
+     "description": "Take back the last settled change to the bar, dock or sidebars made in this edit mode",
+     "values": []
+    },
+    {
+     "name": "revert",
+     "args": [],
+     "description": "Put everything this edit mode can move back to how it was when the mode was entered",
+     "values": []
+    },
+    {
+     "name": "sheet",
+     "args": [
+      "kind",
+      "id"
+     ],
+     "description": "Open the sheet of a bar, a module (id) or the dock on the target output; kind is bar, module or dock",
+     "values": []
+    },
+    {
+     "name": "closeSheet",
+     "args": [],
+     "description": "Close the open sheet",
+     "values": []
+    },
+    {
      "name": "handleEscape",
      "args": [],
-     "description": "Apply editor Escape priority: cancel pending work, then leave edit mode",
+     "description": "Apply editor Escape priority: close the open sheet, then cancel pending work, then leave edit mode",
      "values": []
     },
     {

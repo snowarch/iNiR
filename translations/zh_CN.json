@@ -3786,5 +3786,16 @@
   "The selection snaps to the Island, the dock and other panels.": "选区会吸附到岛屿、Dock 和其他面板。",
   "Windows make room for the Focus panel while you keep it open.": "保持专注面板打开时，窗口为它让出空间。",
   "Windows make room for the Today panel while you keep it open.": "保持今天面板打开时，窗口为它让出空间。",
-  "Adaptive goes further the faster you move; Flat keeps one speed.": "自适应移动越快走得越远；平直保持同一速度。"
+  "Adaptive goes further the faster you move; Flat keeps one speed.": "自适应移动越快走得越远；平直保持同一速度。",
+  "Leave this mode and arrange the desktop widgets": "退出此模式并排列桌面小组件",
+  "Edit bar and dock": "编辑栏和程序坞",
+  "Quiet": "安静",
+  "%1 · %2": "%1 · %2",
+  "Battery %1%": "电池 %1%",
+  "Sunset %1": "日落 %1",
+  "Sunrise %1": "日出 %1",
+  "Day %1 of %2": "第 %1 天，共 %2 天",
+  "%1 h %2 min left": "剩余 %1 小时 %2 分钟",
+  "%1 day left": "剩余 %1 天",
+  "%1 days left": "剩余 %1 天"
 }

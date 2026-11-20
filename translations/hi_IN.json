@@ -3786,5 +3786,16 @@
   "The selection snaps to the Island, the dock and other panels.": "चयन द्वीप, Dock और दूसरे पैनलों से जुड़ जाता है।",
   "Windows make room for the Focus panel while you keep it open.": "जब तक फ़ोकस पैनल खुला है, विंडो उसके लिए जगह छोड़ती हैं।",
   "Windows make room for the Today panel while you keep it open.": "जब तक Today पैनल खुला है, विंडो उसके लिए जगह छोड़ती हैं।",
-  "Adaptive goes further the faster you move; Flat keeps one speed.": "अनुकूली जितनी तेज़ हिलाएँ उतना आगे जाता है; Flat एक ही गति रखता है।"
+  "Adaptive goes further the faster you move; Flat keeps one speed.": "अनुकूली जितनी तेज़ हिलाएँ उतना आगे जाता है; Flat एक ही गति रखता है।",
+  "Leave this mode and arrange the desktop widgets": "इस मोड से बाहर निकलें और डेस्कटॉप विजेट व्यवस्थित करें",
+  "Edit bar and dock": "बार और डॉक संपादित करें",
+  "Quiet": "शांत",
+  "%1 · %2": "%1 · %2",
+  "Battery %1%": "बैटरी %1%",
+  "Sunset %1": "सूर्यास्त %1",
+  "Sunrise %1": "सूर्योदय %1",
+  "Day %1 of %2": "%2 में से दिन %1",
+  "%1 h %2 min left": "%1 घं %2 मि बाकी",
+  "%1 day left": "%1 दिन बाकी",
+  "%1 days left": "%1 दिन बाकी"
 }

@@ -2083,7 +2083,7 @@ Scope {
                         action: () => { GlobalActions.runLauncher(["wallpaperSelector", "toggle"]) } },
                     { text: Translation.tr("Edit widgets"), iconName: "edit", monochromeIcon: true,
                         action: () => { GlobalStates.setWidgetEditMode(true) } },
-                    { text: Translation.tr("Edit shell layout"), iconName: "dashboard_customize", monochromeIcon: true,
+                    { text: Translation.tr("Edit bar and dock"), iconName: "dashboard_customize", monochromeIcon: true,
                         action: () => { ShellEditSession.toggle() } },
                     { type: "separator" },
                     { text: Translation.tr("Reload shell"), iconName: "refresh", monochromeIcon: true,
@@ -2670,6 +2670,19 @@ Scope {
                     Behavior on opacity {
                         enabled: Appearance.animationsEnabled
                         NumberAnimation { duration: Appearance.animation.elementMoveEnter.duration; easing.type: Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve }
+                    }
+                }
+
+                // Shell layout edit mode: a calm veil over the wallpaper so the bar and the dock read as what is edited.
+                Rectangle {
+                    anchors.fill: parent
+                    z: -2
+                    visible: opacity > 0
+                    opacity: GlobalStates.shellLayoutEditMode ? 1 : 0
+                    color: Qt.rgba(0, 0, 0, 0.3)
+                    Behavior on opacity {
+                        enabled: Appearance.animationsEnabled
+                        NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
                     }
                 }
 

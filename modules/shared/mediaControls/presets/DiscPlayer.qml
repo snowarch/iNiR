@@ -12,12 +12,14 @@ import qs.services
 import qs.modules.shared.mediaControls.components
 
 /**
- * DiscPlayer - Spinning Cookie12Sided vinyl record inside a circular progress ring.
- * Click the disc to toggle play/pause; wheel to seek; hover reveals previous/next controls.
+ * DiscPlayer - Spinning Cookie12Sided vinyl record. Click the disc to toggle play/pause; wheel to seek.
+ * Small: the disc alone inside its progress ring, with a play key. Medium: the disc, title and artist, play key.
+ * Large: Medium plus the progress bar and previous / next.
  */
 Item {
     id: root
     property bool motion: true
+    property string sizeClass: "medium"
     property MprisPlayer player: null
     property list<real> visualizerPoints: []
     property real radius: Appearance.rounding.large
@@ -34,26 +36,29 @@ Item {
     readonly property QtObject effectiveColors: Appearance.editorialEverywhere && Appearance.colors
         ? Appearance.colors : root.blendedColors
 
-    readonly property real side: Math.max(96, Math.min(root.width, root.height) - Appearance.sizes.elevationMargin)
+    readonly property bool small: root.sizeClass === "small"
+    readonly property bool large: root.sizeClass === "large"
+    readonly property real inset: Math.max(8, Appearance.sizes.elevationMargin)
+    // the disc's square: the whole box when small, the box's height when medium, the upper part when large
+    readonly property real side: root.small ? Math.max(96, Math.min(root.width, root.height) - Appearance.sizes.elevationMargin)
+        : root.large ? Math.max(64, Math.min(root.width - root.inset * 2, root.height * 0.52))
+        : Math.max(64, root.height - root.inset * 2)
     readonly property real ringDiameter: root.side - 18
-    readonly property real discDiameter: root.ringDiameter - 24
+    readonly property real discDiameter: root.small ? root.ringDiameter - 24 : Math.round(root.side * 0.94)
     readonly property real progress: playerBase.effectiveIsLive ? 1 : playerBase.effectiveLength > 0
         ? Math.max(0, Math.min(1, playerBase.effectivePosition / playerBase.effectiveLength)) : 0
-
-    property real discAngle: 0
-    FrameAnimation {
-        running: root.visible && root.motion && playerBase.effectiveIsPlaying && Appearance.animationsEnabled
-        onTriggered: root.discAngle = (root.discAngle + frameTime * 28) % 360
-    }
+    readonly property bool spinning: root.visible && root.motion && playerBase.effectiveIsPlaying && Appearance.animationsEnabled
 
     Item {
         id: discContainer
-        anchors.centerIn: parent
         width: root.side
         height: root.side
+        x: root.sizeClass === "medium" ? root.inset : Math.round((root.width - width) / 2)
+        y: root.large ? root.inset : Math.round((root.height - height) / 2)
 
         CircularProgress {
             anchors.centerIn: parent
+            visible: root.small
             implicitSize: Math.round(root.ringDiameter)
             lineWidth: 6
             value: root.progress
@@ -68,8 +73,17 @@ Item {
             anchors.centerIn: parent
             width: root.discDiameter
             height: root.discDiameter
-            rotation: root.discAngle
             scale: discTap.pressed ? 0.94 : 1.0
+
+            // On the render thread; pausing keeps the angle and play goes on from it.
+            RotationAnimator on rotation {
+                from: 0
+                to: 360
+                duration: 12860
+                loops: Animation.Infinite
+                running: true
+                paused: !root.spinning
+            }
 
             Behavior on scale {
                 enabled: Appearance.animationsEnabled
@@ -134,66 +148,6 @@ Item {
             }
         }
 
-        // Hover overlay with title and transport buttons
-        Rectangle {
-            anchors.centerIn: vinyl
-            width: vinyl.width
-            height: vinyl.height
-            radius: width / 2
-            color: ColorUtils.applyAlpha("#000000", discHover.hovered ? 0.46 : 0.0)
-            visible: opacity > 0
-            opacity: discHover.hovered ? 1 : 0
-
-            Behavior on opacity {
-                enabled: Appearance.animationsEnabled
-                NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
-            }
-
-            ColumnLayout {
-                anchors.centerIn: parent
-                width: parent.width * 0.76
-                spacing: 4
-
-                StyledText {
-                    Layout.fillWidth: true
-                    horizontalAlignment: Text.AlignHCenter
-                    elide: Text.ElideRight
-                    text: playerBase.effectiveTitle
-                    color: "#ffffff"
-                    font.pixelSize: Appearance.font.pixelSize.smaller
-                    font.weight: Font.Bold
-                }
-
-                StyledText {
-                    Layout.fillWidth: true
-                    horizontalAlignment: Text.AlignHCenter
-                    elide: Text.ElideRight
-                    text: playerBase.effectiveArtist
-                    color: ColorUtils.applyAlpha("#ffffff", 0.78)
-                    font.pixelSize: Appearance.font.pixelSize.smallest
-                }
-
-                PlayerControls {
-                    Layout.alignment: Qt.AlignHCenter
-                    isPlaying: playerBase.effectiveIsPlaying
-                    canGoPrevious: playerBase.effectiveCanGoPrevious
-                    canGoNext: playerBase.effectiveCanGoNext
-                    buttonSize: 28
-                    playButtonSize: 36
-                    iconSize: 18
-                    playIconSize: 22
-                    iconColor: "#ffffff"
-                    playIconColor: "#ffffff"
-                    playButtonColor: root.themeSourceColor
-                    onPreviousClicked: playerBase.previous()
-                    onPlayPauseClicked: playerBase.togglePlaying()
-                    onNextClicked: playerBase.next()
-                }
-            }
-        }
-
-        HoverHandler { id: discHover }
-
         MouseArea {
             id: discTap
             anchors.fill: vinyl
@@ -205,6 +159,95 @@ Item {
                 const delta = event.angleDelta.y > 0 ? 5 : -5
                 playerBase.seek(Math.max(0, Math.min(playerBase.effectiveLength, playerBase.effectivePosition + delta)))
             }
+        }
+
+        PlayKey {
+            visible: root.small
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            size: 34
+            isPlaying: playerBase.effectiveIsPlaying
+            color: root.themeSourceColor
+            onClicked: playerBase.togglePlaying()
+        }
+    }
+
+    // Medium: beside the disc
+    ColumnLayout {
+        visible: root.sizeClass === "medium"
+        x: discContainer.x + discContainer.width + 14
+        y: root.inset
+        width: Math.max(0, root.width - x - root.inset)
+        height: Math.max(0, root.height - root.inset * 2)
+        spacing: 6
+
+        PlayerInfo {
+            Layout.fillWidth: true
+            title: playerBase.effectiveTitle
+            artist: playerBase.effectiveArtist
+            titleColor: effectiveColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0
+            artistColor: effectiveColors?.colSubtext ?? Appearance.colors.colSubtext
+            titleSize: Appearance.font.pixelSize.normal
+            artistSize: Appearance.font.pixelSize.smaller
+            slideDirection: playerBase.slideDirection
+        }
+        Item { Layout.fillHeight: true }
+        PlayKey {
+            Layout.alignment: Qt.AlignLeft
+            size: 40
+            isPlaying: playerBase.effectiveIsPlaying
+            color: root.themeSourceColor
+            onClicked: playerBase.togglePlaying()
+        }
+    }
+
+    // Large: under the disc
+    ColumnLayout {
+        visible: root.large
+        x: root.inset
+        y: discContainer.y + discContainer.height + 8
+        width: Math.max(0, root.width - root.inset * 2)
+        height: Math.max(0, root.height - y - root.inset)
+        spacing: 6
+
+        PlayerInfo {
+            Layout.fillWidth: true
+            title: playerBase.effectiveTitle
+            artist: playerBase.effectiveArtist
+            titleColor: effectiveColors?.colOnLayer0 ?? Appearance.colors.colOnLayer0
+            artistColor: effectiveColors?.colSubtext ?? Appearance.colors.colSubtext
+            titleSize: Appearance.font.pixelSize.normal
+            artistSize: Appearance.font.pixelSize.smaller
+            slideDirection: playerBase.slideDirection
+        }
+        Item { Layout.fillHeight: true }
+        PlayerProgress {
+            motion: root.motion
+            Layout.fillWidth: true
+            implicitHeight: 16
+            position: playerBase.effectivePosition
+            length: playerBase.effectiveLength
+            live: playerBase.effectiveIsLive
+            canSeek: playerBase.effectiveCanSeek
+            isPlaying: playerBase.effectiveIsPlaying
+            highlightColor: root.themeSourceColor
+            trackColor: ColorUtils.applyAlpha(root.themeSourceColor, 0.24)
+            onSeekRequested: seconds => playerBase.seek(seconds)
+        }
+        PlayerControls {
+            Layout.alignment: Qt.AlignHCenter
+            isPlaying: playerBase.effectiveIsPlaying
+            canGoPrevious: playerBase.effectiveCanGoPrevious
+            canGoNext: playerBase.effectiveCanGoNext
+            buttonSize: 32
+            playButtonSize: 40
+            iconSize: 20
+            playIconSize: 22
+            playButtonColor: root.themeSourceColor
+            playIconColor: ColorUtils.contrastColor(root.themeSourceColor)
+            onPreviousClicked: playerBase.previous()
+            onPlayPauseClicked: playerBase.togglePlaying()
+            onNextClicked: playerBase.next()
         }
     }
 }

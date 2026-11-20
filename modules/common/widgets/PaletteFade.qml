@@ -5,9 +5,10 @@ import qs.services
 
 /**
  * PaletteFade - Crossfades a surface across palette/theme swaps.
- * Freezes `target` into a ShaderEffectSource snapshot (`live: false`), parked
- * outside the window while capturing so it is invisible until the fade out runs,
- * using awww's wallpaper transition bezier curve so the shell and wallpaper fade together.
+ * When the loader is about to apply new colours it holds them, snapshots `target` in its old colours, lets the new
+ * ones in and fades the snapshot out over them, on the wallpaper transition's bezier curve so the shell and the
+ * wallpaper change together. It sits inside its target (give it `anchors.fill: parent`): the source is recursive and
+ * is set only for the swap, so no texture is kept at rest.
  */
 Item {
     id: root
@@ -20,47 +21,68 @@ Item {
     property real bottomRightRadius: root.radius
     property bool active: Appearance.animationsEnabled
 
-    visible: fade.running
+    // true from the grab request until the fade ends; the only time the snapshot exists
+    property bool _swapping: false
+    // true while this surface holds the recolour
+    property bool _holding: false
+
+    visible: root._swapping
     z: 999
     clip: root.radius > 0 || root.topLeftRadius > 0 || root.topRightRadius > 0
         || root.bottomLeftRadius > 0 || root.bottomRightRadius > 0
 
-    function snap(): void {
-        if (!root.active || !root.target || !root.target.visible
-                || root.width < 2 || root.height < 2)
+    function _release(): void {
+        if (!root._holding)
             return
+        root._holding = false
+        MaterialThemeLoader.releaseRecolour()
+    }
+
+    function _end(): void {
+        root._release()
         fade.stop()
-        root.opacity = 1
-        shot.x = -root.width - 64
-        shot.scheduleUpdate()
-        begin.restart()
+        root._swapping = false
+        shot.sourceItem = null
+        guard.stop()
     }
 
     Connections {
         target: MaterialThemeLoader
         enabled: root.active
         function onAboutToApplyColors(): void {
-            root.snap()
+            if (root._swapping || !root.target || !root.target.visible
+                    || !root.target.Window.window?.visible || root.width < 2 || root.height < 2)
+                return
+            root._swapping = true
+            root._holding = true
+            MaterialThemeLoader.holdRecolour()
+            root.opacity = 1
+            shot.sourceItem = root.target
+            shot.scheduleUpdate()
+            guard.restart()
         }
     }
 
     ShaderEffectSource {
         id: shot
-        x: -root.width - 64
-        width: root.width
-        height: root.height
-        sourceItem: root.target
+        anchors.fill: parent
+        sourceItem: null
+        recursive: true
         live: false
         hideSource: false
-    }
-
-    Timer {
-        id: begin
-        interval: 24
-        onTriggered: {
-            shot.x = 0
+        onScheduledUpdateCompleted: {
+            if (!root._swapping || fade.running)
+                return
+            root._release()
             fade.restart()
         }
+    }
+
+    // The grab never answered (window hidden meanwhile): give the colours back and drop the snapshot.
+    Timer {
+        id: guard
+        interval: 400
+        onTriggered: root._end()
     }
 
     NumberAnimation {
@@ -72,5 +94,6 @@ Item {
         duration: Config.options?.background?.transition?.duration ?? 700
         easing.type: Easing.BezierSpline
         easing.bezierCurve: [0.54, 0, 0.34, 0.99, 1, 1]
+        onFinished: root._end()
     }
 }

@@ -388,16 +388,17 @@ AbstractBackgroundWidget {
     // Glance: Android at-a-glance date + live weather + smart context line (now playing, battery, sun).
     Loader {
         anchors.fill: parent
-        active: !root.familyFaced
+        active: !root.familyFaced && root.glance
         sourceComponent: Item {
             ColumnLayout {
                 anchors.centerIn: parent
                 width: parent.width - Math.round(28 * root.scaleFactor)
-                visible: !root.familyFaced && root.glance
                 spacing: Math.round(4 * root.scaleFactor)
 
                 readonly property string weatherTemp: String(Weather.data?.temp ?? "")
                 readonly property bool hasWeather: Weather.enabled && weatherTemp.length > 0 && !weatherTemp.startsWith("--")
+                // Small has no room for the weather beside a song: the song wins
+                readonly property bool weatherShown: hasWeather && !(root.isSmall && playingNow)
                 readonly property string weatherGlyph: Icons.getWeatherIcon(Weather.data?.wCode, Weather.isNightNow()) ?? "partly_cloudy_day"
                 readonly property string playerTitle: MprisController.titleOf(MprisController.activePlayer) ?? ""
                 readonly property string playerArtist: MprisController.artistOf(MprisController.activePlayer) ?? ""
@@ -408,24 +409,24 @@ AbstractBackgroundWidget {
                     if (playingNow) {
                         return {
                             icon: "music_note",
-                            text: playerArtist.length > 0 ? `${playerTitle} · ${playerArtist}` : playerTitle
+                            text: playerArtist.length > 0 && !root.isSmall ? Translation.tr("%1 · %2").arg(playerTitle).arg(playerArtist) : playerTitle
                         }
                     }
                     if (lowBattery) {
                         return {
                             icon: "battery_alert",
-                            text: `${Translation.tr("Battery")} ${Math.round(Battery.percentage * 100)}%`
+                            text: Translation.tr("Battery %1%").arg(Math.round(Battery.percentage * 100))
                         }
                     }
                     if (sunNext.length > 0) {
                         return {
                             icon: Weather.sunState === "day" ? "wb_twilight" : "wb_sunny",
-                            text: `${Weather.sunState === "day" ? Translation.tr("Sunset") : Translation.tr("Sunrise")} ${sunNext}`
+                            text: (Weather.sunState === "day" ? Translation.tr("Sunset %1") : Translation.tr("Sunrise %1")).arg(sunNext)
                         }
                     }
                     return {
                         icon: "today",
-                        text: `${Translation.tr("Day")} ${root.dayOfYear} / ${root.daysInYear}`
+                        text: Translation.tr("Day %1 of %2").arg(root.dayOfYear).arg(root.daysInYear)
                     }
                 }
 
@@ -446,7 +447,7 @@ AbstractBackgroundWidget {
                     spacing: Math.round(6 * root.scaleFactor)
 
                     MaterialSymbol {
-                        visible: parent.parent.hasWeather
+                        visible: parent.parent.weatherShown
                         text: parent.parent.weatherGlyph
                         fill: 1
                         iconSize: Math.round(18 * root.scaleFactor)
@@ -454,7 +455,7 @@ AbstractBackgroundWidget {
                     }
 
                     StyledText {
-                        visible: parent.parent.hasWeather
+                        visible: parent.parent.weatherShown
                         text: parent.parent.weatherTemp
                         color: root.widgetInk
                         font.family: root.widgetNumbersFamily
@@ -463,7 +464,7 @@ AbstractBackgroundWidget {
                     }
 
                     StyledText {
-                        visible: parent.parent.hasWeather
+                        visible: parent.parent.weatherShown
                         text: "·"
                         color: root.widgetInkMuted
                         font.pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)

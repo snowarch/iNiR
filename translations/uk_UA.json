@@ -3786,5 +3786,16 @@
   "The selection snaps to the Island, the dock and other panels.": "Виділення прилипає до Острова, доку та інших панелей.",
   "Windows make room for the Focus panel while you keep it open.": "Вікна звільняють місце для панелі «Фокус», поки ви тримаєте її відкритою.",
   "Windows make room for the Today panel while you keep it open.": "Вікна звільняють місце для панелі «Сьогодні», поки ви тримаєте її відкритою.",
-  "Adaptive goes further the faster you move; Flat keeps one speed.": "Адаптивне йде далі, що швидший рух; Пласке тримає одну швидкість."
+  "Adaptive goes further the faster you move; Flat keeps one speed.": "Адаптивне йде далі, що швидший рух; Пласке тримає одну швидкість.",
+  "Leave this mode and arrange the desktop widgets": "Вийти з цього режиму й розставити віджети робочого столу",
+  "Edit bar and dock": "Змінити панель і док",
+  "Quiet": "Тихо",
+  "%1 · %2": "%1 · %2",
+  "Battery %1%": "Батарея %1%",
+  "Sunset %1": "Захід %1",
+  "Sunrise %1": "Схід %1",
+  "Day %1 of %2": "День %1 з %2",
+  "%1 h %2 min left": "Залишилося %1 год %2 хв",
+  "%1 day left": "Залишився %1 день",
+  "%1 days left": "Залишилося %1 дн."
 }

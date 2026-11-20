@@ -515,10 +515,13 @@ AbstractBackgroundWidget {
             id: posterClockLoader
             x: Math.round((parent.width - width) / 2)
             shown: !root.familyFaced && root.clockStyle === "poster"
-            width: Math.round(230 * root.scaleFactor * root.timeScale / 100)
-            height: width
+            // The stack's own size: the engine fits it into the box, so the digits never pass the plate
+            width: item?.implicitWidth ?? 0
+            height: item?.implicitHeight ?? 0
             sourceComponent: Item {
                 id: posterClock
+                implicitWidth: Math.ceil(posterColumn.implicitWidth)
+                implicitHeight: Math.ceil(posterColumn.implicitHeight)
                 readonly property real side: Math.round(230 * root.scaleFactor * root.timeScale / 100)
                 readonly property bool is12h: root.timeFormat === "12h"
                     || (root.timeFormat === "system" && String(Config.options?.time?.format ?? "").includes("AP"))
@@ -529,7 +532,7 @@ AbstractBackgroundWidget {
                 readonly property real px: Math.round(posterClock.side * 0.56)
 
                 Column {
-                    anchors.centerIn: parent
+                    id: posterColumn
                     spacing: -Math.round(posterClock.px * 0.24)
 
                     StyledText {

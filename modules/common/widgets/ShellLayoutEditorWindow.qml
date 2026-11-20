@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
+import qs
 import qs.services
 import qs.modules.common
 import qs.modules.common.functions
@@ -534,6 +535,33 @@ Scope {
                             enabled: editorWindow.selectedDescriptor !== null
                             onTriggered: ShellEditSession.resetSurface(
                                 ShellEditSession.selectedSurfaceId)
+                        }
+
+                        EditorButton {
+                            anchors.verticalCenter: parent.verticalCenter
+                            label: Translation.tr("Undo")
+                            icon: "undo"
+                            enabled: ShellEditSession.canUndo
+                            onTriggered: ShellEditSession.undo()
+                        }
+
+                        EditorButton {
+                            anchors.verticalCenter: parent.verticalCenter
+                            label: Translation.tr("Revert")
+                            icon: "history"
+                            enabled: ShellEditSession.changed
+                            onTriggered: ShellEditSession.revert()
+                        }
+
+                        EditorButton {
+                            anchors.verticalCenter: parent.verticalCenter
+                            label: Translation.tr("Widgets")
+                            icon: "widgets"
+                            accessibleDescription: Translation.tr("Leave this mode and arrange the desktop widgets")
+                            onTriggered: {
+                                ShellEditSession.exit()
+                                GlobalStates.setWidgetEditMode(true)
+                            }
                         }
 
                         EditorButton {

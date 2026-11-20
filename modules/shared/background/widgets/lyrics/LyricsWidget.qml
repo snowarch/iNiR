@@ -24,6 +24,13 @@ AbstractBackgroundWidget {
     resizeMinWidth: 220
     resizeMinHeight: 110
 
+    // Ink for text bare on the wallpaper: like the clock, picked among the generated tokens by the contrast it makes
+    // with the region under it (the polarity guess of colText alone read dark grey on dark and mid-grey regions).
+    readonly property color ink: root.widgetHasSurface ? root.widgetInk
+        : root.widgetSemanticForeground(root.widgetSurfaceRole, root.accentBackdrop, 4.5)
+    readonly property color inkMuted: root.widgetHasSurface ? root.widgetInkMuted : ColorUtils.applyAlpha(root.ink, 0.74)
+    readonly property color inkSubtle: root.widgetHasSurface ? root.widgetInkSubtle : ColorUtils.applyAlpha(root.ink, 0.6)
+
     readonly property string lyricsStyle: String(root._readConfigKey("style") ?? "words")
     readonly property string wordsLines: String(root._readConfigKey("lines") ?? "two")
     readonly property bool wordsOutline: Boolean(root._readConfigKey("outline") ?? true)
@@ -161,7 +168,7 @@ AbstractBackgroundWidget {
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.WordWrap
                     text: root.statusMessage
-                    color: root.widgetInkMuted
+                    color: root.inkMuted
                     font.family: root.widgetTitleFamily
                     font.pixelSize: Math.round(Appearance.font.pixelSize.normal * root.scaleFactor)
                     font.weight: Font.DemiBold
@@ -172,7 +179,7 @@ AbstractBackgroundWidget {
                     horizontalAlignment: Text.AlignHCenter
                     elide: Text.ElideRight
                     text: root.trackArtist.length > 0 ? `${root.trackTitle} · ${root.trackArtist}` : root.trackTitle
-                    color: root.widgetInkSubtle
+                    color: root.inkSubtle
                     font.pixelSize: Math.round(Appearance.font.pixelSize.smaller * root.scaleFactor)
                 }
             }
@@ -243,10 +250,10 @@ AbstractBackgroundWidget {
                                     font.weight: Font.Black
                                     style: wordCell.outlined ? Text.Outline : (root.widgetHasSurface ? Text.Normal : Text.Raised)
                                     styleColor: wordCell.outlined
-                                        ? (wordCell.current ? root.widgetAccentVisible : root.widgetInk)
+                                        ? (wordCell.current ? root.widgetAccentVisible : root.ink)
                                         : root.colHalo
                                     color: wordCell.outlined ? "transparent"
-                                        : (wordCell.current ? root.widgetAccentVisible : root.widgetInk)
+                                        : (wordCell.current ? root.widgetAccentVisible : root.ink)
                                     opacity: wordCell.spoken ? 1.0 : 0.0
                                     scale: wordCell.current ? 1.05 : (wordCell.spoken ? 1.0 : 0.72)
                                     transformOrigin: Item.BottomLeft
@@ -277,7 +284,7 @@ AbstractBackgroundWidget {
                         Layout.fillWidth: true
                         elide: Text.ElideRight
                         text: root.nextLineText
-                        color: root.widgetInkMuted
+                        color: root.inkMuted
                         style: root.widgetHasSurface ? Text.Normal : Text.Raised
                         styleColor: root.colHalo
                         font.family: root.widgetBodyFamily
@@ -303,13 +310,17 @@ AbstractBackgroundWidget {
                         Layout.fillWidth: true
                         implicitHeight: karaokeBase.implicitHeight
 
+                        // One line that fits its width: the fill below is cut in this text's own coordinates
                         StyledText {
                             id: karaokeBase
                             width: parent.width
                             horizontalAlignment: Text.AlignHCenter
-                            wrapMode: Text.WordWrap
+                            wrapMode: Text.NoWrap
+                            elide: Text.ElideNone
+                            fontSizeMode: Text.HorizontalFit
+                            minimumPixelSize: Math.round(11 * root.scaleFactor)
                             text: root.currentLineText.length > 0 ? root.currentLineText : "♪"
-                            color: ColorUtils.applyAlpha(root.widgetInk, 0.34)
+                            color: ColorUtils.applyAlpha(root.ink, 0.34)
                             style: root.widgetHasSurface ? Text.Normal : Text.Raised
                             styleColor: root.colHalo
                             font.family: root.widgetTitleFamily
@@ -317,15 +328,22 @@ AbstractBackgroundWidget {
                             font.weight: Font.Bold
                         }
 
+                        // From the centred text's left edge, as wide as the sung part of it
                         Item {
-                            width: Math.round(karaokeStage.width * root.lineProgress)
+                            visible: root.lineProgress > 0
+                            x: Math.round((karaokeStage.width - karaokeBase.contentWidth) / 2)
+                            width: Math.round(karaokeBase.contentWidth * root.lineProgress)
                             height: karaokeBase.implicitHeight
                             clip: true
 
                             StyledText {
+                                x: -parent.x
                                 width: karaokeStage.width
                                 horizontalAlignment: Text.AlignHCenter
-                                wrapMode: Text.WordWrap
+                                wrapMode: Text.NoWrap
+                                elide: Text.ElideNone
+                                fontSizeMode: karaokeBase.fontSizeMode
+                                minimumPixelSize: karaokeBase.minimumPixelSize
                                 text: karaokeBase.text
                                 color: root.widgetAccentVisible
                                 font: karaokeBase.font
@@ -339,7 +357,7 @@ AbstractBackgroundWidget {
                         horizontalAlignment: Text.AlignHCenter
                         elide: Text.ElideRight
                         text: root.nextLineText
-                        color: root.widgetInkMuted
+                        color: root.inkMuted
                         font.family: root.widgetBodyFamily
                         font.pixelSize: Math.round((root.isSmall ? 12 : 14) * root.scaleFactor)
                         font.weight: Font.Medium
@@ -360,7 +378,7 @@ AbstractBackgroundWidget {
                     horizontalAlignment: Text.AlignHCenter
                     elide: Text.ElideRight
                     text: root.prevLineText
-                    color: root.widgetInkSubtle
+                    color: root.inkSubtle
                     font.family: root.widgetBodyFamily
                     font.pixelSize: Math.round(13 * root.scaleFactor)
                 }
@@ -386,7 +404,7 @@ AbstractBackgroundWidget {
                     horizontalAlignment: Text.AlignHCenter
                     elide: Text.ElideRight
                     text: root.nextLineText
-                    color: root.widgetInkMuted
+                    color: root.inkMuted
                     font.family: root.widgetBodyFamily
                     font.pixelSize: Math.round(14 * root.scaleFactor)
                     font.weight: Font.Medium

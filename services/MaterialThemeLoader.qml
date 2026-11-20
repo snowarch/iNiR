@@ -180,8 +180,46 @@ Singleton {
             : Appearance.m3colors.m3background.hslLightness < 0.5
         if (Appearance.m3colors.darkmode !== dark)
             anyChanged = true
-        if (anyChanged && root.ready)
+        // A surface may hold the new colours while it snapshots the old ones (PaletteFade). The first load never does.
+        if (anyChanged && root.ready && !root._pendingColors)
             root.aboutToApplyColors()
+        if (root.ready && root._recolourHolds > 0) {
+            root._pendingColors = { next: next, dark: dark }
+            recolourFailsafe.restart()
+            return
+        }
+        root._commitColors(next, dark)
+    }
+
+    // Counted: the colours land when the last holder lets go (or the failsafe fires).
+    property int _recolourHolds: 0
+    property var _pendingColors: null
+    function holdRecolour(): void {
+        root._recolourHolds++
+    }
+    function releaseRecolour(): void {
+        if (root._recolourHolds > 0)
+            root._recolourHolds--
+        if (root._recolourHolds === 0)
+            root._flushColors()
+    }
+    function _flushColors(): void {
+        recolourFailsafe.stop()
+        const pending = root._pendingColors
+        root._pendingColors = null
+        if (pending)
+            root._commitColors(pending.next, pending.dark)
+    }
+    Timer {
+        id: recolourFailsafe
+        interval: 150
+        onTriggered: {
+            root._recolourHolds = 0
+            root._flushColors()
+        }
+    }
+
+    function _commitColors(next, dark) {
         for (const key in next) {
             const now = Appearance.m3colors[key]
             const same = typeof now === "boolean" ? now === Boolean(next[key]) : Qt.colorEqual(now, next[key])

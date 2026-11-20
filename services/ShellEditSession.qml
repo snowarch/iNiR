@@ -6,6 +6,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
 import qs
+import qs.modules.common
 import qs.services
 
 Singleton {
@@ -27,6 +28,24 @@ Singleton {
     property real dragX: 0
     property real dragY: 0
     property string _dragCandidateSlot: ""
+
+    // The sheet a family draws for the thing being edited: "" | "bar" | "module" | "dock". sheetAnchor is the rect of
+    // that thing in screen-local coordinates (x, y, width, height) so the family can place the sheet beside it.
+    property string sheetKind: ""
+    property string sheetId: ""
+    property string sheetOutput: ""
+    property var sheetAnchor: ({ x: 0, y: 0, width: 0, height: 0 })
+
+    // History while the mode is on: each burst of Config changes that settles becomes one step over the subtrees named
+    // by the family's editKeys. Undo steps back; Revert goes back to how things were on entry. Restoring never records.
+    readonly property bool canUndo: root.historyDepth > 0
+    property int historyDepth: 0
+    property bool changed: false
+    property var _entry: ({})
+    property var _head: ({})
+    property var _steps: []
+    property bool _restoring: false
+    readonly property int _maxSteps: 100
 
     // Fraction of the output dimension that counts as an edge drop zone while
     // dragging. The center remains a cancel zone.
@@ -75,6 +94,184 @@ Singleton {
             }
         }
         return snapshot
+    }
+
+    function openSheet(kind: string, id: string, outputName: string, anchor: var): void {
+        if (!root.active || !["bar", "module", "dock"].includes(String(kind ?? ""))) {
+            root.closeSheet()
+            return
+        }
+        const rect = anchor ?? ({})
+        root.sheetAnchor = {
+            x: Number(rect.x ?? 0),
+            y: Number(rect.y ?? 0),
+            width: Number(rect.width ?? 0),
+            height: Number(rect.height ?? 0)
+        }
+        root.sheetId = String(id ?? "")
+        root.sheetOutput = String(outputName ?? "").length > 0 ? String(outputName) : root.targetOutputName
+        root.sheetKind = String(kind)
+    }
+
+    function closeSheet(): void {
+        if (root.sheetKind.length === 0 && root.sheetId.length === 0)
+            return
+        root.sheetKind = ""
+        root.sheetId = ""
+        root.sheetOutput = ""
+        root.sheetAnchor = ({ x: 0, y: 0, width: 0, height: 0 })
+    }
+
+    function toggleSheet(kind: string, id: string, outputName: string, anchor: var): void {
+        const output = String(outputName ?? "").length > 0 ? String(outputName) : root.targetOutputName
+        if (root.sheetKind === String(kind) && root.sheetId === String(id ?? "") && root.sheetOutput === output)
+            root.closeSheet()
+        else
+            root.openSheet(kind, id, outputName, anchor)
+    }
+
+    function _plainValue(value: var): var {
+        if (value === null || value === undefined)
+            return null
+        if (typeof value !== "object")
+            return value
+        if (Array.isArray(value))
+            return value.map(item => root._plainValue(item))
+        if (value.objectName === undefined && typeof value.length === "number")
+            return Array.from(value, item => root._plainValue(item))
+        const out = {}
+        for (const key of Object.keys(value)) {
+            if (key === "objectName")
+                continue
+            const item = value[key]
+            if (typeof item !== "function")
+                out[key] = root._plainValue(item)
+        }
+        return out
+    }
+
+    function _snapshot(): var {
+        const keys = ShellLayoutController.editKeys()
+        const snap = {}
+        for (let i = 0; i < keys.length; ++i)
+            snap[keys[i]] = root._plainValue(Config.getNestedValue(keys[i], null))
+        return snap
+    }
+
+    // Objects recurse, arrays and scalars are leaves.
+    function _leaves(value: var, path: string, out: var): var {
+        if (value !== null && typeof value === "object" && !Array.isArray(value)) {
+            const names = Object.keys(value)
+            for (let i = 0; i < names.length; ++i)
+                root._leaves(value[names[i]], path + "." + names[i], out)
+        } else {
+            out[path] = value
+        }
+        return out
+    }
+
+    function _refreshHistory(): void {
+        root.historyDepth = root._steps.length
+        root.changed = JSON.stringify(root._head) !== JSON.stringify(root._entry)
+    }
+
+    function _beginHistory(): void {
+        settleTimer.stop()
+        root._entry = root._snapshot()
+        root._head = root._entry
+        root._steps = []
+        root._refreshHistory()
+    }
+
+    function _clearHistory(): void {
+        settleTimer.stop()
+        root._entry = ({})
+        root._head = ({})
+        root._steps = []
+        root._refreshHistory()
+    }
+
+    function _settle(): void {
+        settleTimer.stop()
+        if (!root.active || root._restoring)
+            return
+        const snap = root._snapshot()
+        if (JSON.stringify(snap) === JSON.stringify(root._head))
+            return
+        const steps = root._steps.concat([root._head])
+        root._steps = steps.length > root._maxSteps ? steps.slice(steps.length - root._maxSteps) : steps
+        root._head = snap
+        root._refreshHistory()
+    }
+
+    // Writes only the leaves that differ from `target`, in one batch.
+    function _restore(target: var): void {
+        const now = root._snapshot()
+        const have = ({})
+        const want = ({})
+        const keys = Object.keys(target)
+        for (let i = 0; i < keys.length; ++i) {
+            root._leaves(now[keys[i]], keys[i], have)
+            root._leaves(target[keys[i]], keys[i], want)
+        }
+        const updates = ({})
+        const paths = Object.keys(want)
+        for (let i = 0; i < paths.length; ++i) {
+            if (JSON.stringify(want[paths[i]]) !== JSON.stringify(have[paths[i]]))
+                updates[paths[i]] = want[paths[i]]
+        }
+        root._restoring = true
+        try {
+            if (Object.keys(updates).length > 0) {
+                if (Config.setNestedValues) {
+                    Config.setNestedValues(updates)
+                } else {
+                    for (const path of Object.keys(updates))
+                        Config.setNestedValue(path, updates[path])
+                }
+            }
+        } finally {
+            root._restoring = false
+        }
+        settleTimer.stop()
+        root._head = root._snapshot()
+        root._clearPending(false)
+        root.presentationRevision = (root.presentationRevision + 1) % 2147483647
+        root._refreshHistory()
+    }
+
+    function undo(): bool {
+        root._settle()
+        if (!root.active || root._steps.length === 0)
+            return false
+        const previous = root._steps[root._steps.length - 1]
+        root._steps = root._steps.slice(0, -1)
+        root._restore(previous)
+        return true
+    }
+
+    function revert(): bool {
+        root._settle()
+        if (!root.active || !root.changed)
+            return false
+        root._steps = []
+        root._restore(root._entry)
+        return true
+    }
+
+    Timer {
+        id: settleTimer
+        interval: 450
+        repeat: false
+        onTriggered: root._settle()
+    }
+
+    Connections {
+        target: Config
+        enabled: root.active && !root._restoring
+        function onConfigChanged(): void {
+            settleTimer.restart()
+        }
     }
 
     function reportHost(edge: string, report: var): void {
@@ -153,6 +350,7 @@ Singleton {
     }
 
     function _clearTransient(): void {
+        root.closeSheet()
         root.targetOutputName = ""
         root.selectedSurfaceId = ""
         root._clearPending(true)
@@ -387,6 +585,10 @@ Singleton {
     function handleEscape(): bool {
         if (!root.active)
             return false
+        if (root.sheetKind.length > 0) {
+            root.closeSheet()
+            return true
+        }
         if (root.cancelPending())
             return true
         root.exit()
@@ -397,6 +599,9 @@ Singleton {
         target: ShellLayoutController
 
         function onActiveFamilyChanged(): void {
+            root.closeSheet()
+            if (root.active)
+                Qt.callLater(() => root._beginHistory())
             Qt.callLater(() => root.reconcileEnvironment("panel family change"))
         }
     }
@@ -415,6 +620,7 @@ Singleton {
 
         function onShellLayoutEditModeChanged(): void {
             if (GlobalStates.shellLayoutEditMode) {
+                root._beginHistory()
                 if (root.targetOutputName.length === 0)
                     root.targetOutputName = root._resolvedOutputName("")
                 if (root.selectedSurfaceId.length === 0) {
@@ -424,6 +630,7 @@ Singleton {
                         root.selectedSurfaceId = surfaces[0].id
                 }
             } else {
+                root._clearHistory()
                 root._clearTransient()
             }
         }
@@ -556,7 +763,33 @@ Singleton {
             return JSON.stringify(result)
         }
 
-        /// Apply editor Escape priority: cancel pending work, then leave edit mode
+        /// Take back the last settled change to the bar, dock or sidebars made in this edit mode
+        function undo(): string {
+            return root.undo() ? "undone" : "nothing to undo"
+        }
+
+        /// Put everything this edit mode can move back to how it was when the mode was entered
+        function revert(): string {
+            return root.revert() ? "reverted" : "nothing to revert"
+        }
+
+        /// Open the sheet of a bar, a module (id) or the dock on the target output; kind is bar, module or dock
+        function sheet(kind: string, id: string): string {
+            if (!root.active)
+                return "edit mode is off"
+            if (!["bar", "module", "dock"].includes(kind))
+                return "unknown sheet kind: " + kind
+            root.openSheet(kind, id, root.targetOutputName, ({ x: 0, y: 0, width: 0, height: 0 }))
+            return "sheet: " + kind + (id.length > 0 ? " " + id : "")
+        }
+
+        /// Close the open sheet
+        function closeSheet(): string {
+            root.closeSheet()
+            return "sheet closed"
+        }
+
+        /// Apply editor Escape priority: close the open sheet, then cancel pending work, then leave edit mode
         function handleEscape(): string {
             return root.handleEscape() ? "handled" : "inactive"
         }
@@ -575,6 +808,11 @@ Singleton {
                     gestureKind: root.gestureKind,
                     dragActive: root.dragActive,
                     statusMessage: root.statusMessage,
+                    canUndo: root.canUndo,
+                    changed: root.changed,
+                    sheetKind: root.sheetKind,
+                    sheetId: root.sheetId,
+                    sheetOutput: root.sheetOutput,
                     interactions: root._interactionSnapshot(),
                     hosts: root.hostReports
                 },

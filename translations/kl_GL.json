@@ -3786,5 +3786,16 @@
   "The selection snaps to the Island, the dock and other panels.": "Toqqaneq Island-imut, Dock-imut allanullu panelinut ilanngullugu.",
   "Windows make room for the Focus panel while you keep it open.": "Focus panel ammasoq, windows-it taamaattut inissiffigitsisimavoq.",
   "Windows make room for the Today panel while you keep it open.": "Today panel ammasoq, windows-it taamaattut inissiffigitsisimavoq.",
-  "Adaptive goes further the faster you move; Flat keeps one speed.": "Adaptive angerlarsimaffik ingerlanneqarnera; Flat ataatsimik ingerlatsivoq."
+  "Adaptive goes further the faster you move; Flat keeps one speed.": "Adaptive angerlarsimaffik ingerlanneqarnera; Flat ataatsimik ingerlatsivoq.",
+  "Leave this mode and arrange the desktop widgets": "Leave this mode and arrange the desktop widgets",
+  "Edit bar and dock": "Edit bar and dock",
+  "Quiet": "Quiet",
+  "%1 · %2": "%1 · %2",
+  "Battery %1%": "Battery %1%",
+  "Sunset %1": "Sunset %1",
+  "Sunrise %1": "Sunrise %1",
+  "Day %1 of %2": "Day %1 of %2",
+  "%1 h %2 min left": "%1 h %2 min left",
+  "%1 day left": "%1 day left",
+  "%1 days left": "%1 days left"
 }

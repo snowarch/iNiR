@@ -66,7 +66,7 @@ AbstractBackgroundWidget {
             return "disc"
         const tall = ["albumart", "lyrics", "lyricsSplit"].includes(root.chosenPreset)
         if (root.sizeClass === "small")
-            return "albumart"
+            return root.chosenPreset === "shape" ? "shape" : "albumart"
         if (root.sizeClass === "large")
             return tall ? root.chosenPreset : (root.chosenPreset === "shape" ? "shape" : "albumart")
         return tall || root.chosenPreset === "expandingLyrics" ? "full" : root.chosenPreset
@@ -308,12 +308,12 @@ AbstractBackgroundWidget {
 
     Component {
         id: discPlayerComponent
-        DiscPlayer {}
+        DiscPlayer { sizeClass: root.sizeClass }
     }
 
     Component {
         id: shapePlayerComponent
-        ShapePlayer {}
+        ShapePlayer { sizeClass: root.sizeClass }
     }
 
     Loader {

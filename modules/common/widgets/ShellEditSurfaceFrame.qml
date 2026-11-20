@@ -27,12 +27,15 @@ Item {
     property string slotHint: ""
     property real screenWidth: 0
     property real screenHeight: 0
+    // Rects (frame coordinates) the frame leaves to what is under it, e.g. the bar's modules.
+    property var holes: []
 
     signal activated(string surfaceId)
     signal dragStarted(string surfaceId)
     signal dragMoved(string surfaceId, real screenX, real screenY)
     signal dragEnded(string surfaceId)
     signal dragCanceled(string surfaceId)
+    signal contextRequested(string surfaceId)
 
     visible: root.active
     enabled: root.active
@@ -161,6 +164,20 @@ Item {
         hoverEnabled: true
         acceptedButtons: Qt.AllButtons
         preventStealing: true
+        containmentMask: QtObject {
+            function contains(point: point): bool {
+                if (point.x >= labelPlate.x && point.x <= labelPlate.x + labelPlate.width
+                        && point.y >= labelPlate.y && point.y <= labelPlate.y + labelPlate.height)
+                    return true
+                const holes = root.holes
+                for (let i = 0; i < holes.length; ++i) {
+                    const h = holes[i]
+                    if (point.x >= h.x && point.x <= h.x + h.width && point.y >= h.y && point.y <= h.y + h.height)
+                        return false
+                }
+                return true
+            }
+        }
         cursorShape: dragging ? Qt.ClosedHandCursor
             : root.dragEnabled ? Qt.OpenHandCursor : Qt.PointingHandCursor
         onPressed: mouse => {
@@ -170,6 +187,8 @@ Item {
             pressY = mouse.y
             if (mouse.button === Qt.LeftButton)
                 root.activated(root.surfaceId)
+            else if (mouse.button === Qt.RightButton)
+                root.contextRequested(root.surfaceId)
             mouse.accepted = true
         }
         onPositionChanged: mouse => {

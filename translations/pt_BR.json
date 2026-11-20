@@ -3786,5 +3786,16 @@
   "The selection snaps to the Island, the dock and other panels.": "A seleção se encaixa na Ilha, no dock e em outros painéis.",
   "Windows make room for the Focus panel while you keep it open.": "As janelas abrem espaço para o painel Foco enquanto você o mantém aberto.",
   "Windows make room for the Today panel while you keep it open.": "As janelas abrem espaço para o painel Hoje enquanto você o mantém aberto.",
-  "Adaptive goes further the faster you move; Flat keeps one speed.": "Adaptativa vai mais longe quanto mais rápido você move; Plana mantém uma só velocidade."
+  "Adaptive goes further the faster you move; Flat keeps one speed.": "Adaptativa vai mais longe quanto mais rápido você move; Plana mantém uma só velocidade.",
+  "Leave this mode and arrange the desktop widgets": "Sair deste modo e organizar os widgets da área de trabalho",
+  "Edit bar and dock": "Editar barra e dock",
+  "Quiet": "Silencioso",
+  "%1 · %2": "%1 · %2",
+  "Battery %1%": "Bateria %1%",
+  "Sunset %1": "Pôr do sol %1",
+  "Sunrise %1": "Nascer do sol %1",
+  "Day %1 of %2": "Dia %1 de %2",
+  "%1 h %2 min left": "Faltam %1 h %2 min",
+  "%1 day left": "Falta %1 dia",
+  "%1 days left": "Faltam %1 dias"
 }

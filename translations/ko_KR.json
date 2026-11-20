@@ -3786,5 +3786,16 @@
   "The selection snaps to the Island, the dock and other panels.": "선택 영역이 아일랜드, 독, 다른 패널에 달라붙습니다.",
   "Windows make room for the Focus panel while you keep it open.": "포커스 패널을 열어 둔 동안 창이 자리를 내줍니다.",
   "Windows make room for the Today panel while you keep it open.": "오늘 패널을 열어 둔 동안 창이 자리를 내줍니다.",
-  "Adaptive goes further the faster you move; Flat keeps one speed.": "적응형은 빠를수록 멀리, 평탄형은 늘 같은 속도."
+  "Adaptive goes further the faster you move; Flat keeps one speed.": "적응형은 빠를수록 멀리, 평탄형은 늘 같은 속도.",
+  "Leave this mode and arrange the desktop widgets": "이 모드를 나가고 데스크톱 위젯 배치",
+  "Edit bar and dock": "바와 독 편집",
+  "Quiet": "조용히",
+  "%1 · %2": "%1 · %2",
+  "Battery %1%": "배터리 %1%",
+  "Sunset %1": "일몰 %1",
+  "Sunrise %1": "일출 %1",
+  "Day %1 of %2": "%2일 중 %1일째",
+  "%1 h %2 min left": "%1시간 %2분 남음",
+  "%1 day left": "%1일 남음",
+  "%1 days left": "%1일 남음"
 }

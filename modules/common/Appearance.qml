@@ -758,7 +758,7 @@ Singleton {
         property int normal: root.editorialEverywhere ? Math.max(5, Math.round(10 * root.editorial.radiusScale)) : root.regaliaEverywhere ? root.regalia.roundNormal : root.cookieEverywhere ? root.cookie.roundNormal : root.zzzEverywhere ? root.zzz.roundNormal : Math.max(0, Math.round(17 * scale))
         property int large: root.editorialEverywhere ? Math.max(7, Math.round(14 * root.editorial.radiusScale)) : root.regaliaEverywhere ? root.regalia.roundLarge : root.cookieEverywhere ? root.cookie.roundLarge : root.zzzEverywhere ? root.zzz.roundLarge : Math.max(0, Math.round(23 * scale))
         property int verylarge: root.editorialEverywhere ? Math.max(9, Math.round(18 * root.editorial.radiusScale)) : root.regaliaEverywhere ? root.regalia.panelRadius : root.cookieEverywhere ? root.cookie.panelRadius : root.zzzEverywhere ? root.zzz.panelRadius : Math.max(0, Math.round(30 * scale))
-        // M3's extra-large (28): cards and desktop widgets, the plate Lucid gives every widget.
+        // M3's extra-large (28): cards and desktop widgets, the plate every desktop widget sits on.
         property int extralarge: root.editorialEverywhere ? Math.max(9, Math.round(18 * root.editorial.radiusScale)) : root.regaliaEverywhere ? root.regalia.roundLarge : root.cookieEverywhere ? root.cookie.roundLarge : root.zzzEverywhere ? root.zzz.roundLarge : Math.max(0, Math.round(28 * scale))
         property int full: root.zzzEverywhere ? (root.zzz.round ? 9999 : root.zzz.controlRadius) : 9999
         property int screenRounding: large
@@ -826,7 +826,7 @@ Singleton {
             property var numbers: ({
                 "ROND": 100,
             })
-            // Figures in Google Sans Flex round out as they grow (Lucid's display roles): a big reading is soft, a small
+            // Figures in Google Sans Flex round out as they grow (the display roles): a big reading is soft, a small
             // one stays plain, and the optical size snaps to a few stops so each size doesn't build its own glyphs.
             function numbersAt(px: real): var {
                 const stops = [9, 13, 18, 28, 48, 96]
@@ -850,23 +850,6 @@ Singleton {
             property int huge: Math.round(22 * root.fontSizeScale)
             property int hugeass: Math.round(23 * root.fontSizeScale)
             property int title: huge
-        }
-        // Optical vertical centering offset for a bold digit inside a small badge/chip.
-        // Qt's Text.AlignVCenter centers the full ascent+descent box, which leaves cap-height
-        // digits sitting low by half the descent-minus-headroom gap.
-        readonly property FontMetrics _digitFm: FontMetrics {
-            font.family: root.font.family.numbers
-            font.pixelSize: 100
-            font.weight: Font.Bold
-        }
-        readonly property TextMetrics _digitTm: TextMetrics {
-            font: root.font._digitFm.font
-            text: "8"
-        }
-        readonly property real _digitCenterRatio: (root.font._digitFm.ascent - root.font._digitFm.descent) / 200
-            - (root.font._digitTm.tightBoundingRect.y + root.font._digitTm.tightBoundingRect.height / 2) / 100
-        function digitCenterOffset(pixelSize: real): real {
-            return pixelSize * root.font._digitCenterRatio
         }
     }
 

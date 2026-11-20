@@ -3786,5 +3786,16 @@
   "The selection snaps to the Island, the dock and other panels.": "Vùng chọn bám vào Đảo, dock và các bảng khác.",
   "Windows make room for the Focus panel while you keep it open.": "Cửa sổ chừa chỗ cho bảng Tập trung khi bạn giữ nó mở.",
   "Windows make room for the Today panel while you keep it open.": "Cửa sổ chừa chỗ cho bảng Hôm nay khi bạn giữ nó mở.",
-  "Adaptive goes further the faster you move; Flat keeps one speed.": "Thích ứng đi xa hơn khi bạn di nhanh hơn; Phẳng giữ một tốc độ."
+  "Adaptive goes further the faster you move; Flat keeps one speed.": "Thích ứng đi xa hơn khi bạn di nhanh hơn; Phẳng giữ một tốc độ.",
+  "Leave this mode and arrange the desktop widgets": "Thoát chế độ này và sắp xếp tiện ích màn hình",
+  "Edit bar and dock": "Sửa thanh và dock",
+  "Quiet": "Yên lặng",
+  "%1 · %2": "%1 · %2",
+  "Battery %1%": "Pin %1%",
+  "Sunset %1": "Hoàng hôn %1",
+  "Sunrise %1": "Bình minh %1",
+  "Day %1 of %2": "Ngày %1 trên %2",
+  "%1 h %2 min left": "Còn %1 giờ %2 phút",
+  "%1 day left": "Còn %1 ngày",
+  "%1 days left": "Còn %1 ngày"
 }

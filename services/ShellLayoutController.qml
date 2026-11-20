@@ -105,6 +105,12 @@ Singleton {
             .map(item => root._clone(item))
     }
 
+    // Config paths the active family's layout part moves (e.g. "material.bar"): the edit session snapshots these
+    // subtrees to give Undo and Revert.
+    function editKeys(): var {
+        return Array.from(root._family?.editKeys ?? [])
+    }
+
     function panelEnabled(identifier: string): bool {
         return (Config.options?.enabledPanels ?? []).includes(identifier)
     }

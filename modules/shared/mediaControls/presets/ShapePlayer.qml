@@ -15,10 +15,13 @@ import qs.modules.shared.mediaControls.components
 /**
  * ShapePlayer - Cover cut to a track-hashed MaterialShape silhouette that morphs on every track change,
  * with expressive PlayShape (Circle -> Square) and SkipShape (Sunny -> Clover4Leaf) transport buttons.
+ * Small: the cover alone with a play key. Medium: cover, title and artist, play key. Large: Medium plus the
+ * progress bar and previous / next, the cover over the rest.
  */
 Item {
     id: root
     property bool motion: true
+    property string sizeClass: "medium"
     property MprisPlayer player: null
     property list<real> visualizerPoints: []
     property real radius: Appearance.rounding.normal
@@ -34,6 +37,9 @@ Item {
     property QtObject blendedColors: AdaptedMaterialScheme { color: root.themeSourceColor }
     readonly property QtObject effectiveColors: Appearance.editorialEverywhere && Appearance.colors
         ? Appearance.colors : root.blendedColors
+
+    readonly property bool small: root.sizeClass === "small"
+    readonly property bool large: root.sizeClass === "large"
 
     readonly property var coverShapes: [
         MaterialShape.Shape.Cookie9Sided,
@@ -83,17 +89,21 @@ Item {
             }
         }
 
-        RowLayout {
+        GridLayout {
             anchors.fill: parent
             anchors.margins: 12
-            spacing: 12
+            columns: root.large || root.small ? 1 : 2
+            rowSpacing: 8
+            columnSpacing: 12
 
             // Track-hashed morphing MaterialShape cover
             Item {
                 id: shapeArtBox
-                Layout.preferredWidth: Math.min(parent.height, parent.width * 0.42)
+                Layout.preferredWidth: root.small ? Math.min(parent.width, parent.height)
+                    : root.large ? Math.min(parent.width, parent.height * 0.5)
+                    : Math.min(parent.height, parent.width * 0.42)
                 Layout.preferredHeight: Layout.preferredWidth
-                Layout.alignment: Qt.AlignVCenter
+                Layout.alignment: root.sizeClass === "medium" ? Qt.AlignVCenter : Qt.AlignHCenter
 
                 MaterialShape {
                     id: artShapeMask
@@ -132,10 +142,21 @@ Item {
                         maskSource: artShapeMask
                     }
                 }
+
+                PlayKey {
+                    visible: root.small
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    size: 34
+                    isPlaying: playerBase.effectiveIsPlaying
+                    color: root.themeSourceColor
+                    onClicked: playerBase.togglePlaying()
+                }
             }
 
             // Track info + progress + shape-morphing transport buttons
             ColumnLayout {
+                visible: !root.small
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 spacing: 4
@@ -153,7 +174,17 @@ Item {
 
                 Item { Layout.fillHeight: true }
 
+                PlayKey {
+                    visible: root.sizeClass === "medium"
+                    Layout.alignment: Qt.AlignLeft
+                    size: 40
+                    isPlaying: playerBase.effectiveIsPlaying
+                    color: root.themeSourceColor
+                    onClicked: playerBase.togglePlaying()
+                }
+
                 PlayerProgress {
+                    visible: root.large
                     motion: root.motion
                     Layout.fillWidth: true
                     implicitHeight: 16
@@ -168,6 +199,7 @@ Item {
                 }
 
                 RowLayout {
+                    visible: root.large
                     Layout.fillWidth: true
                     spacing: 8
 

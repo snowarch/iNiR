@@ -53,7 +53,7 @@ AbstractBackgroundWidget {
         : root.widgetSemanticContainer(root.widgetSecondaryRole)
     readonly property color pickInk: root.instrument ? root.widgetAccentVisible : root.widgetSemanticOnContainer(root.widgetSecondaryRole)
 
-    // A day with something on it keeps a dot under its number (Lucid's month view).
+    // A day with something on it keeps a dot under its number.
     function hasEvents(year: int, month: int, day: int): bool {
         const date = new Date(year, month, day)
         if (typeof Events !== "undefined" && (Events.getAllEventsForDate(date) ?? []).length > 0) return true
@@ -278,7 +278,7 @@ AbstractBackgroundWidget {
                         StyledText {
                             required property string modelData
                             required property int index
-                            // Saturday and Sunday take the accent (Lucid): the week's shape reads before its numbers.
+                            // Saturday and Sunday take the accent: the week's shape reads before its numbers.
                             readonly property bool weekend: !root.instrument && [0, 6].includes((index + root.weekStart) % 7)
                             Layout.fillWidth: true
                             horizontalAlignment: Text.AlignHCenter

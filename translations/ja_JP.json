@@ -3786,5 +3786,16 @@
   "The selection snaps to the Island, the dock and other panels.": "選択範囲がアイランド、ドック、ほかのパネルに吸い付きます。",
   "Windows make room for the Focus panel while you keep it open.": "フォーカスパネルを開いたままにしているあいだ、ウィンドウが場所を空けます。",
   "Windows make room for the Today panel while you keep it open.": "今日パネルを開いたままにしているあいだ、ウィンドウが場所を空けます。",
-  "Adaptive goes further the faster you move; Flat keeps one speed.": "アダプティブは速く動かすほど遠くへ、フラットは一定の速さ。"
+  "Adaptive goes further the faster you move; Flat keeps one speed.": "アダプティブは速く動かすほど遠くへ、フラットは一定の速さ。",
+  "Leave this mode and arrange the desktop widgets": "このモードを終了してデスクトップウィジェットを配置",
+  "Edit bar and dock": "バーとドックを編集",
+  "Quiet": "静か",
+  "%1 · %2": "%1 · %2",
+  "Battery %1%": "バッテリー %1%",
+  "Sunset %1": "日の入り %1",
+  "Sunrise %1": "日の出 %1",
+  "Day %1 of %2": "%2日中%1日目",
+  "%1 h %2 min left": "残り %1 時間 %2 分",
+  "%1 day left": "残り %1 日",
+  "%1 days left": "残り %1 日"
 }

@@ -495,22 +495,32 @@ AbstractBackgroundWidget {
         }
     }
 
+    // The memory line of Large reads ResourceUsage, which polls only while someone holds it: held only while
+    // that line is on screen.
+    readonly property bool wantsUsage: root.fetchMode && root.isLarge && !root.familyFaced && root.visible && root.motionActive
+    property bool _holdingUsage: false
+    onWantsUsageChanged: root._syncUsage()
+    Component.onCompleted: root._syncUsage()
+    Component.onDestruction: if (root._holdingUsage) ResourceUsage.releaseKeepAlive(root)
+    function _syncUsage(): void {
+        if (root.wantsUsage && !root._holdingUsage) {
+            root._holdingUsage = true
+            ResourceUsage.keepAlive(root)
+        } else if (!root.wantsUsage && root._holdingUsage) {
+            root._holdingUsage = false
+            ResourceUsage.releaseKeepAlive(root)
+        }
+    }
+
     // Fetch: terminal-inspired neofetch system readout with palette swatches
     Loader {
         anchors.fill: parent
-        active: !root.familyFaced
+        active: !root.familyFaced && root.fetchMode
         sourceComponent: Item {
             ColumnLayout {
                 anchors.fill: parent
                 anchors.margins: Math.round(14 * root.scaleFactor)
                 spacing: Math.round(6 * root.scaleFactor)
-                visible: !root.familyFaced && opacity > 0
-                opacity: root.fetchMode ? 1 : 0
-                enabled: root.fetchMode
-                Behavior on opacity {
-                    enabled: root.animationsActive
-                    NumberAnimation { duration: Appearance.animation.elementMoveFast.duration }
-                }
 
                 RowLayout {
                     Layout.fillWidth: true
@@ -533,7 +543,7 @@ AbstractBackgroundWidget {
                     StyledText {
                         Layout.fillWidth: true
                         elide: Text.ElideRight
-                        text: root.userDisplay
+                        text: root.isSmall ? root.username : root.userDisplay
                         color: root.widgetAccentVisible
                         font.family: Appearance.font.family.monospace
                         font.pixelSize: Math.round(Appearance.font.pixelSize.small * root.scaleFactor)

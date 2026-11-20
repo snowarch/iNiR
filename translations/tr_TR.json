@@ -3786,5 +3786,16 @@
   "The selection snaps to the Island, the dock and other panels.": "Seçim Ada'ya, dock'a ve diğer panellere yapışır.",
   "Windows make room for the Focus panel while you keep it open.": "Odak paneli açık tuttuğun sürece pencereler ona yer açar.",
   "Windows make room for the Today panel while you keep it open.": "Bugün paneli açık tuttuğun sürece pencereler ona yer açar.",
-  "Adaptive goes further the faster you move; Flat keeps one speed.": "Uyarlamalı hızlandıkça daha uzağa gider; Düz tek hızda kalır."
+  "Adaptive goes further the faster you move; Flat keeps one speed.": "Uyarlamalı hızlandıkça daha uzağa gider; Düz tek hızda kalır.",
+  "Leave this mode and arrange the desktop widgets": "Bu moddan çık ve masaüstü widget'larını düzenle",
+  "Edit bar and dock": "Çubuğu ve dock'u düzenle",
+  "Quiet": "Sessiz",
+  "%1 · %2": "%1 · %2",
+  "Battery %1%": "Pil %1%",
+  "Sunset %1": "Gün batımı %1",
+  "Sunrise %1": "Gün doğumu %1",
+  "Day %1 of %2": "%2 günün %1. günü",
+  "%1 h %2 min left": "%1 sa %2 dk kaldı",
+  "%1 day left": "%1 gün kaldı",
+  "%1 days left": "%1 gün kaldı"
 }
