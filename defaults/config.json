@@ -1754,6 +1754,12 @@
             "settingsPanel": "prism",
             "settingsHost": "overlay",
             "settingsRail": "auto",
+            "settingsAside": [
+                "profile",
+                "page",
+                "player"
+            ],
+            "settingsPlayer": "cover",
             "prismLook": "folders",
             "settingsLayout": "classic",
             "settingsOriginal": false,
