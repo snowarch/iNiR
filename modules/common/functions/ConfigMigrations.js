@@ -47,7 +47,9 @@ const moves = [
     ["material.bar.resources.cpuWarningThreshold", "resources.cpuWarningThreshold"],
     ["material.bar.resources.gpuWarningThreshold", "resources.gpuWarningThreshold"],
     ["material.bar.workspaces.invertScroll", "interactions.scrolling.invertWorkspaces"],
-    ["material.sidebar.cornerOpen", "cornerOpen"]
+    ["material.sidebar.cornerOpen", "cornerOpen"],
+    // Intensity moves every colour, not the widgets' alone, so it lives with the accent.
+    ["iris.widgets.vibrance", "iris.appearance.intensity"],
 ];
 
 // [from, [to...]]: a look two families shared becomes one value each, both starting from the shared one.
@@ -401,6 +403,22 @@ function listsBack(obj, isList, prefix) {
     return changed;
 }
 
+// Widget colour said more than it did: the solve took 78 % of Dark's and Ink's value and 68 % of Light's. The key
+// now holds what the widgets wear (widgetColour), so the person's widgets keep the colour they had.
+function _honestWidgets(obj) {
+    let changed = false;
+    for (const [mode, scale] of [["dark", 0.78], ["ink", 0.78], ["light", 0.68]]) {
+        const tune = _get(obj, "iris.appearance.tune." + mode);
+        if (!_isObject(tune) || tune.widgets === undefined) continue;
+        const value = Number(tune.widgets);
+        if (tune.widgetColour === undefined && Number.isFinite(value))
+            tune.widgetColour = Math.max(40, Math.min(160, Math.round(value * scale / 5) * 5));
+        delete tune.widgets;
+        changed = true;
+    }
+    return changed;
+}
+
 function migrate(obj) {
     if (!_isObject(obj)) return false;
     const fromV2 = Number(_get(obj, "iris.appearance.factoryLook") ?? 0) < 1;
@@ -410,6 +428,7 @@ function migrate(obj) {
     changed = _onePlace(obj) || changed;
     changed = _withdrawn(obj) || changed;
     changed = _customToBase(obj) || changed;
+    changed = _honestWidgets(obj) || changed;
     for (const [from, to] of moves) {
         const value = _get(obj, from);
         if (value === undefined) continue;

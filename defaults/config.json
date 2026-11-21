@@ -1644,7 +1644,6 @@
             "radius": 22,
             "opacity": 100,
             "tint": "wallpaper",
-            "vibrance": 60,
             "legibleAlways": false,
             "design": "iris",
             "material": "glass",
@@ -1750,6 +1749,7 @@
             "motion": true,
             "motionDuration": 220,
             "accent": "blue",
+            "intensity": 60,
             "scheme": "auto",
             "language": "iris",
             "variant": "tonalSpot",
@@ -1763,19 +1763,19 @@
                     "tone": 0,
                     "warmth": 20,
                     "colour": 100,
-                    "widgets": 90
+                    "widgetColour": 70
                 },
                 "ink": {
                     "tone": 0,
                     "warmth": 50,
                     "colour": 100,
-                    "widgets": 90
+                    "widgetColour": 70
                 },
                 "light": {
                     "tone": -8,
                     "warmth": 38,
                     "colour": 85,
-                    "widgets": 85
+                    "widgetColour": 60
                 }
             },
             "expandedRadius": 22,
