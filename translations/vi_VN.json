@@ -3845,5 +3845,7 @@
   "Volume down": "Giảm âm lượng",
   "Smoked": "Khói",
   "See the rest screen": "Xem màn hình nghỉ",
-  "Show dock when no window is focused (Empty workspace mode only)": "Hiện dock khi không cửa sổ nào có tiêu điểm (chỉ chế độ Desktop trống)"
+  "Show dock when no window is focused (Empty workspace mode only)": "Hiện dock khi không cửa sổ nào có tiêu điểm (chỉ chế độ Desktop trống)",
+  "Swap accent colours": "Hoán đổi màu nhấn",
+  "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "Màu thứ ba của bảng màu dẫn đầu, và màu nhấn thế chỗ của nó. Chỉ trong shell: ứng dụng giữ bảng màu như đã tạo."
 }

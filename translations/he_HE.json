@@ -3845,5 +3845,7 @@
   "Volume down": "הנמכת עוצמת הקול",
   "Smoked": "מעושן",
   "See the rest screen": "הצגת מסך המנוחה",
-  "Show dock when no window is focused (Empty workspace mode only)": "הצגת ה-Dock כשאף חלון אינו ממוקד (במצב שולחן עבודה ריק בלבד)"
+  "Show dock when no window is focused (Empty workspace mode only)": "הצגת ה-Dock כשאף חלון אינו ממוקד (במצב שולחן עבודה ריק בלבד)",
+  "Swap accent colours": "החלפת צבעי ההדגשה",
+  "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "הצבע השלישי של הסכמה מוביל, וצבע ההדגשה תופס את מקומו. במעטפת בלבד: היישומים שומרים על הסכמה כפי שנוצרה."
 }

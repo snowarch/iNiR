@@ -165,6 +165,8 @@ Singleton {
             if (Appearance.m3colors[m3Key] !== undefined)
                 next[m3Key] = json[key]
         }
+        if (root.swapAccents)
+            root.swapAccentRoles(next)
         root.harmonize(next)
         let anyChanged = false
         for (const key in next) {
@@ -241,6 +243,47 @@ Singleton {
         root._forceApply = true
         root.applyColors(content)
     }
+    // Swapped (appearance.palette.swapAccents), the accent and the scheme's third colour trade roles, every tone with
+    // them, so the wallpaper's second colour leads. Before harmony, which then gathers the rest around the new accent.
+    // The shell only: apps keep the scheme as generated.
+    readonly property bool swapAccents: Config.options?.appearance?.palette?.swapAccents ?? false
+    onSwapAccentsChanged: {
+        const variant = (Config.options?.appearance?.palette?.type ?? "auto") !== "auto"
+        if (!root.isAutoTheme && !variant) {
+            ThemePresets.applyPreset(Config.options?.appearance?.theme ?? "", false, true)
+            return
+        }
+        const content = themeFileView.text()
+        if (!content) return
+        root._forceApply = true
+        root.applyColors(content)
+    }
+    function swapAccentRoles(next: var): void {
+        for (const key in next) {
+            if (!/^m3(on)?[Pp]rimary/.test(key)) continue
+            const twin = key.replace("primary", "tertiary").replace("Primary", "Tertiary")
+            if (next[twin] === undefined) continue
+            const held = next[key]
+            next[key] = next[twin]
+            next[twin] = held
+        }
+        if (next.m3surfaceTint !== undefined && next.m3primary !== undefined)
+            next.m3surfaceTint = next.m3primary
+        const hue = Qt.color(next.m3primary ?? "transparent").hslHue
+        if (next.m3inversePrimary !== undefined && hue >= 0)
+            next.m3inversePrimary = ColorUtils.atHue(next.m3inversePrimary, hue)
+    }
+    // A preset's colours as the shell shows them: a plain copy with the roles traded.
+    function swappedAccents(colors: var): var {
+        const next = {}
+        for (const key in colors) {
+            const value = colors[key]
+            if (typeof value !== "function") next[key] = value
+        }
+        root.swapAccentRoles(next)
+        return next
+    }
+
     function harmonize(next: var): void {
         const primary = Qt.color(next.m3primary ?? Appearance.m3colors.m3primary)
         if (root.harmony !== "accent" || primary.hslHue < 0 || primary.hslSaturation < 0.08)

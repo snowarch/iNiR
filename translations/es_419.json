@@ -3845,5 +3845,7 @@
   "Volume down": "Bajar volumen",
   "Smoked": "Ahumado",
   "See the rest screen": "Ver la pantalla de reposo",
-  "Show dock when no window is focused (Empty workspace mode only)": "Mostrar el dock cuando no hay ventana enfocada (solo en modo Escritorio vacío)"
+  "Show dock when no window is focused (Empty workspace mode only)": "Mostrar el dock cuando no hay ventana enfocada (solo en modo Escritorio vacío)",
+  "Swap accent colours": "Intercambiar colores de acento",
+  "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "El tercer color del esquema pasa adelante, y el acento toma su lugar. Solo el shell: las apps mantienen el esquema tal como se generó."
 }

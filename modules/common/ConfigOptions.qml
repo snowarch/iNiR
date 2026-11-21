@@ -301,6 +301,7 @@ JsonAdapter {
             property string type: "auto" // Allowed: auto, scheme-content, scheme-expressive, scheme-fidelity, scheme-fruit-salad, scheme-monochrome, scheme-neutral, scheme-rainbow, scheme-tonal-spot
             property string accentColor: "" // Seed color hex for scheme variant (e.g. "#ab1234"), empty = use theme primary
             property string harmony: "accent" // accent = secondary and tertiary stay beside the accent's hue; scheme = as generated
+            property bool swapAccents: false // the accent and the tertiary trade roles in the shell; apps keep the scheme
         }
         property JsonObject typography: JsonObject {
             property string mainFont: "Google Sans Flex"

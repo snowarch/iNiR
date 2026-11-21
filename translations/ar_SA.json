@@ -3845,5 +3845,7 @@
   "Volume down": "خفض الصوت",
   "Smoked": "مدخَّن",
   "See the rest screen": "عرض شاشة الراحة",
-  "Show dock when no window is focused (Empty workspace mode only)": "إظهار Dock حين لا تكون أي نافذة مركّزة (في وضع سطح المكتب الفارغ فقط)"
+  "Show dock when no window is focused (Empty workspace mode only)": "إظهار Dock حين لا تكون أي نافذة مركّزة (في وضع سطح المكتب الفارغ فقط)",
+  "Swap accent colours": "تبديل ألوان التمييز",
+  "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "يتصدّر اللون الثالث في المخطط، ويأخذ لون التمييز مكانه. للواجهة فقط: تحتفظ التطبيقات بالمخطط كما أُنشئ."
 }

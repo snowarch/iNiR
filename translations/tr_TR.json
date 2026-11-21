@@ -3845,5 +3845,7 @@
   "Volume down": "Sesi azalt",
   "Smoked": "Füme",
   "See the rest screen": "Dinlenme ekranını gör",
-  "Show dock when no window is focused (Empty workspace mode only)": "Odakta pencere yokken dock'u göster (yalnızca Boş çalışma alanı modu)"
+  "Show dock when no window is focused (Empty workspace mode only)": "Odakta pencere yokken dock'u göster (yalnızca Boş çalışma alanı modu)",
+  "Swap accent colours": "Vurgu renklerini değiştir",
+  "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "Şemanın üçüncü rengi öne geçer, vurgu onun yerini alır. Yalnızca kabukta: uygulamalar şemayı üretildiği gibi tutar."
 }

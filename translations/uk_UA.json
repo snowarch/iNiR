@@ -3845,5 +3845,7 @@
   "Volume down": "Тихіше",
   "Smoked": "Димчастий",
   "See the rest screen": "Переглянути екран спокою",
-  "Show dock when no window is focused (Empty workspace mode only)": "Показувати док, коли жодне вікно не у фокусі (лише режим Порожня стільниця)"
+  "Show dock when no window is focused (Empty workspace mode only)": "Показувати док, коли жодне вікно не у фокусі (лише режим Порожня стільниця)",
+  "Swap accent colours": "Поміняти акцентні кольори",
+  "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "Третій колір схеми стає головним, а акцент займає його місце. Лише в оболонці: застосунки зберігають схему як є."
 }

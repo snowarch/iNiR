@@ -3845,5 +3845,7 @@
   "Volume down": "Volume turun",
   "Smoked": "Berasap",
   "See the rest screen": "Lihat layar istirahat",
-  "Show dock when no window is focused (Empty workspace mode only)": "Tampilkan dok saat tidak ada jendela yang difokuskan (Hanya mode ruang kerja kosong)"
+  "Show dock when no window is focused (Empty workspace mode only)": "Tampilkan dok saat tidak ada jendela yang difokuskan (Hanya mode ruang kerja kosong)",
+  "Swap accent colours": "Tukar warna aksen",
+  "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "Warna ketiga skema memimpin, dan aksen mengambil tempatnya. Hanya shell: aplikasi tetap memakai skema seperti yang dibuat."
 }

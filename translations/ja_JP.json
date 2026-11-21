@@ -3845,5 +3845,7 @@
   "Volume down": "音量を下げる",
   "Smoked": "スモーク",
   "See the rest screen": "休止画面を見る",
-  "Show dock when no window is focused (Empty workspace mode only)": "どのウィンドウにもフォーカスがないときドックを表示（空のワークスペースモードのみ）"
+  "Show dock when no window is focused (Empty workspace mode only)": "どのウィンドウにもフォーカスがないときドックを表示（空のワークスペースモードのみ）",
+  "Swap accent colours": "アクセントカラーを入れ替え",
+  "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "スキームの3番目の色が主役になり、アクセントがその位置に移ります。シェルのみ:アプリは生成されたスキームのままです。"
 }

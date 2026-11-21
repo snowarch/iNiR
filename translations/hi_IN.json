@@ -3845,5 +3845,7 @@
   "Volume down": "आवाज़ घटाएँ",
   "Smoked": "धुँधला",
   "See the rest screen": "विश्राम स्क्रीन देखें",
-  "Show dock when no window is focused (Empty workspace mode only)": "जब कोई विंडो फ़ोकस में न हो तब Dock दिखाएँ (सिर्फ़ खाली वर्कस्पेस मोड)"
+  "Show dock when no window is focused (Empty workspace mode only)": "जब कोई विंडो फ़ोकस में न हो तब Dock दिखाएँ (सिर्फ़ खाली वर्कस्पेस मोड)",
+  "Swap accent colours": "एक्सेंट रंग बदलें",
+  "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "स्कीम का तीसरा रंग आगे आता है, और एक्सेंट उसकी जगह लेता है। केवल शेल में: ऐप्स स्कीम को वैसा ही रखते हैं जैसा वह बना था।"
 }
