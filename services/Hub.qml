@@ -252,7 +252,9 @@ Singleton {
     }
     // What the person did with each item (hub.social in config.json) and what everyone else did: read from the relays
     // by `inir hub counts` when a page opens (the command keeps its last read five minutes), else the catalogue's
-    // daily counts. Their own act is added to the others', so it shows at once and is never counted twice.
+    // counts, the ones inir.space/hub shows. Every figure a page shows (who has it, votes, reactions) comes from here.
+    // The person's own act is added to the others' while they share it, so it shows at once and is never counted
+    // twice; with sharing off `inir hub social` publishes an empty state, everyone else leaves them out, and so does this.
     readonly property var quickReactions: ["❤️", "🔥", "✨", "😂", "🤯", "👏"] // inir-cli hub.Reactions
     readonly property int maxReactions: 12 // inir-cli maxReactions
     // the picker's first row with no search: the quick set and two more, eight across
@@ -271,14 +273,19 @@ Singleton {
         return Math.max(0, Number(catalogue ?? 0) - (own ? 1 : 0))
     }
     function voteCount(item: var, vote: string): int {
-        const own = root.mine(item?.id).vote === vote
+        const own = root.sharing && root.mine(item?.id).vote === vote
         return root._others(item, vote, vote === "up" ? item?.votesUp : item?.votesDown, own) + (own ? 1 : 0)
     }
     function _othersReactions(item: var): var {
         return root.liveCounts ? (root.liveCounts[item?.id]?.reactions ?? {}) : (item?.reactions ?? {})
     }
+    // People who have it: the figure every family's lists and inir.space/hub lead with.
+    function installCount(item: var): int {
+        const own = root.sharing && Boolean(item?.installed)
+        return root._others(item, "installs", item?.installs, own) + (own ? 1 : 0)
+    }
     function reactionCount(item: var, emoji: string): int {
-        const own = Array.from(root.mine(item?.id).reactions ?? []).includes(emoji)
+        const own = root.sharing && Array.from(root.mine(item?.id).reactions ?? []).includes(emoji)
         const others = Number(root._othersReactions(item)[emoji] ?? 0)
         return (root.liveCounts ? others : Math.max(0, others - (own ? 1 : 0))) + (own ? 1 : 0)
     }
@@ -287,7 +294,7 @@ Singleton {
         const own = Array.from(root.mine(item?.id).reactions ?? [])
         const emojis = Object.keys(root._othersReactions(item)).concat(own.filter(e => !(e in root._othersReactions(item))))
         return emojis.map(emoji => ({ emoji: emoji, count: root.reactionCount(item, emoji), mine: own.includes(emoji) }))
-            .filter(r => r.count > 0)
+            .filter(r => r.count > 0 || r.mine)
             .sort((a, b) => b.count - a.count || (b.mine ? 1 : 0) - (a.mine ? 1 : 0))
     }
     function canReact(id: string): bool {
