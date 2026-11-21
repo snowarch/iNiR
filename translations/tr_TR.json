@@ -3848,5 +3848,6 @@
   "Show dock when no window is focused (Empty workspace mode only)": "Odakta pencere yokken dock'u göster (yalnızca Boş çalışma alanı modu)",
   "Swap accent colours": "Vurgu renklerini değiştir",
   "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "Şemanın üçüncü rengi öne geçer, vurgu onun yerini alır. Yalnızca kabukta: uygulamalar şemayı üretildiği gibi tutar.",
-  "Pick the sound each event plays: one from your sound theme, or any audio file": "Her olayda çalacak sesi seçin: ses temanızdan bir ses veya herhangi bir ses dosyası"
+  "Pick the sound each event plays: one from your sound theme, or any audio file": "Her olayda çalacak sesi seçin: ses temanızdan bir ses veya herhangi bir ses dosyası",
+  "Until": "Şuna kadar"
 }

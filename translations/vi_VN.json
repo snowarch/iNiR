@@ -3848,5 +3848,6 @@
   "Show dock when no window is focused (Empty workspace mode only)": "Hiện dock khi không cửa sổ nào có tiêu điểm (chỉ chế độ Desktop trống)",
   "Swap accent colours": "Hoán đổi màu nhấn",
   "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "Màu thứ ba của bảng màu dẫn đầu, và màu nhấn thế chỗ của nó. Chỉ trong shell: ứng dụng giữ bảng màu như đã tạo.",
-  "Pick the sound each event plays: one from your sound theme, or any audio file": "Chọn âm thanh mà mỗi sự kiện phát: một âm thanh từ chủ đề âm thanh của bạn hoặc bất kỳ tệp âm thanh nào"
+  "Pick the sound each event plays: one from your sound theme, or any audio file": "Chọn âm thanh mà mỗi sự kiện phát: một âm thanh từ chủ đề âm thanh của bạn hoặc bất kỳ tệp âm thanh nào",
+  "Until": "Đến"
 }

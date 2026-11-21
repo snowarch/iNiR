@@ -3848,5 +3848,6 @@
   "Show dock when no window is focused (Empty workspace mode only)": "Показувати док, коли жодне вікно не у фокусі (лише режим Порожня стільниця)",
   "Swap accent colours": "Поміняти акцентні кольори",
   "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "Третій колір схеми стає головним, а акцент займає його місце. Лише в оболонці: застосунки зберігають схему як є.",
-  "Pick the sound each event plays: one from your sound theme, or any audio file": "Виберіть звук, який відтворюватиме кожна подія: один із вашої звукової теми чи будь-якого аудіофайлу"
+  "Pick the sound each event plays: one from your sound theme, or any audio file": "Виберіть звук, який відтворюватиме кожна подія: один із вашої звукової теми чи будь-якого аудіофайлу",
+  "Until": "До"
 }

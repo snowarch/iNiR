@@ -3848,5 +3848,6 @@
   "Show dock when no window is focused (Empty workspace mode only)": "Dock anzeigen, wenn kein Fenster fokussiert ist (nur Modus Leerer Desktop)",
   "Swap accent colours": "Akzentfarben tauschen",
   "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "Die dritte Farbe des Schemas führt, und der Akzent nimmt ihren Platz ein. Nur die Shell: Apps behalten das Schema, wie es erzeugt wurde.",
-  "Pick the sound each event plays: one from your sound theme, or any audio file": "Wähle den Ton, den jedes Ereignis abspielt: einen aus deinem Klangthema, oder eine beliebige Audiodatei"
+  "Pick the sound each event plays: one from your sound theme, or any audio file": "Wähle den Ton, den jedes Ereignis abspielt: einen aus deinem Klangthema, oder eine beliebige Audiodatei",
+  "Until": "Bis"
 }

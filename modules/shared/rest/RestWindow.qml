@@ -60,7 +60,8 @@ Scope {
             WlrLayershell.keyboardFocus: root.shown && win.primary && !PolkitService.active
                 ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
             // Leaving, it lets every click through at once.
-            mask: Region { item: root.shown ? stage : null }
+            mask: Region { item: root.shown ? stage : emptyMask }
+            Item { id: emptyMask; width: 0; height: 0 }
 
             Item {
                 id: stage

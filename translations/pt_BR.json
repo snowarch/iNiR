@@ -3848,5 +3848,6 @@
   "Show dock when no window is focused (Empty workspace mode only)": "Mostrar o dock quando nenhuma janela está em foco (só no modo Área de trabalho vazia)",
   "Swap accent colours": "Trocar cores de destaque",
   "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "A terceira cor do esquema passa à frente, e o destaque fica no lugar dela. Só no shell: os apps mantêm o esquema como foi gerado.",
-  "Pick the sound each event plays: one from your sound theme, or any audio file": "Escolha o som que cada evento toca: um do seu tema de som, ou qualquer arquivo de áudio"
+  "Pick the sound each event plays: one from your sound theme, or any audio file": "Escolha o som que cada evento toca: um do seu tema de som, ou qualquer arquivo de áudio",
+  "Until": "Até"
 }

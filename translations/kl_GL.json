@@ -3825,5 +3825,6 @@
   "Volume down": "Naalagaaq appaaruk",
   "Smoked": "Pujortoq",
   "Show dock when no window is focused (Empty workspace mode only)": "Window focus-eqanngippat dock takutiguk (Empty workspace mode kisimi)",
-  "Pick the sound each event plays: one from your sound theme, or any audio file": "Event tamarmik nipi play-gassaa toqqaruk: sound theme-mit ataaseq imaluunniit audio file sumilluunniit"
+  "Pick the sound each event plays: one from your sound theme, or any audio file": "Event tamarmik nipi play-gassaa toqqaruk: sound theme-mit ataaseq imaluunniit audio file sumilluunniit",
+  "Until": "Tikillugu"
 }

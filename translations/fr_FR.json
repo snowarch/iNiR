@@ -3848,5 +3848,6 @@
   "Show dock when no window is focused (Empty workspace mode only)": "Afficher le dock quand aucune fenêtre n'a le focus (mode Bureau vide uniquement)",
   "Swap accent colours": "Échanger les couleurs d'accent",
   "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "La troisième couleur du schéma passe en tête, et l'accent prend sa place. Shell uniquement : les applications gardent le schéma tel que généré.",
-  "Pick the sound each event plays: one from your sound theme, or any audio file": "Choisissez le son que joue chaque événement : un son de votre thème sonore, ou n'importe quel fichier audio"
+  "Pick the sound each event plays: one from your sound theme, or any audio file": "Choisissez le son que joue chaque événement : un son de votre thème sonore, ou n'importe quel fichier audio",
+  "Until": "Jusqu'à"
 }
