@@ -278,6 +278,8 @@ Singleton {
                 pageName: entry.pageName,
                 panelFamily: entry.panelFamily || "",
                 task: entry.task || "",
+                // the tab's title, so a row of one name in two tabs reads apart
+                taskTitle: entry.taskTitle || "",
                 section: entry.section || "",
                 label: entry.label || "",
                 labelHighlighted: highlightTerms(entry.label || "", terms),
