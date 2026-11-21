@@ -7,6 +7,7 @@ JsonAdapter {
     // Panel system
     property list<string> enabledPanels: ["iiBar", "iiBackground", "iiBackdrop", "iiCheatsheet", "iiControlPanel", "iiDock", "iiLock", "iiMediaControls", "iiNotificationPopup", "iiOnScreenDisplay", "iiOnScreenKeyboard", "iiOverlay", "iiOverview", "iiPolkit", "iiRegionSelector", "iiScreenCorners", "iiSessionScreen", "iiSidebarLeft", "iiSidebarRight", "iiTilingOverlay", "iiVerticalBar", "iiWallpaperSelector", "iiWallpaperLauncher", "iiCoverflowSelector", "iiClipboard", "iiShellUpdate", "iiDashboard", "iiBootGreeting", "iiMascotCompanion"]
     property list<string> knownPanels: [] // Tracks panels the user has seen; used to distinguish "user disabled" from "new in update"
+    property int factoryPanels: 0 // The last step of ConfigMigrations' factoryPanelSteps this file took
     property string panelFamily: "ii" // an installed family's id (Plugins.families)
     property bool familyTransitionAnimation: true // Show animated overlay when switching families
     property list<string> familyCycle: ["ii", "waffle", "iris"] // Families the switch shortcut (panelFamily cycle) walks through

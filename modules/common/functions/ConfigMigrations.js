@@ -428,12 +428,20 @@ function _soundsKeepTheme(obj) {
     return true;
 }
 
-// The welcome screen's panel was missing from the factory panel list (each family's own list has it): turned on, it
-// never showed until the family was switched.
-function _bootGreetingPanel(obj) {
+// Panels the factory list was missing (each family's own list has them), on iRiS's terms above: each step adds its
+// panel once, so a panel the person takes out later stays out. knownPanels cannot tell: it already holds them.
+const factoryPanels = 1;
+const factoryPanelSteps = [
+    // The welcome screen: turned on, it never showed until the family was switched.
+    [1, "iiBootGreeting"],
+];
+function _factoryPanels(obj) {
     const panels = obj.enabledPanels;
-    if (!Array.isArray(panels) || panels.includes("iiBootGreeting")) return false;
-    panels.push("iiBootGreeting");
+    const at = Number(obj.factoryPanels ?? 0);
+    if (!Array.isArray(panels) || at >= factoryPanels) return false;
+    for (const [since, panel] of factoryPanelSteps)
+        if (since > at && !panels.includes(panel)) panels.push(panel);
+    obj.factoryPanels = factoryPanels;
     return true;
 }
 
@@ -448,7 +456,7 @@ function migrate(obj) {
     changed = _customToBase(obj) || changed;
     changed = _honestWidgets(obj) || changed;
     changed = _soundsKeepTheme(obj) || changed;
-    changed = _bootGreetingPanel(obj) || changed;
+    changed = _factoryPanels(obj) || changed;
     for (const [from, to] of moves) {
         const value = _get(obj, from);
         if (value === undefined) continue;
