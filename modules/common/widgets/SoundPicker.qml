@@ -26,12 +26,8 @@ ColumnLayout {
     property bool expanded: false
 
     readonly property string currentValue: Config.options?.sounds?.events?.[root.eventId] ?? ""
-    readonly property string themeDefault: Audio.soundEvents[root.eventId] ?? ""
     readonly property bool isFile: currentValue.startsWith("/") || currentValue.startsWith("file://")
-    // What plays with no choice of its own: the pack's sound, or under Classic the theme's (some events have none).
-    readonly property string defaultLabel: Audio.soundPack !== "classic"
-        ? Translation.tr("Sound pack (%1)").arg(Audio.packLabel(Audio.soundPack))
-        : root.themeDefault.length > 0 ? Translation.tr("Theme default (%1)").arg(root.themeDefault) : Translation.tr("Silent")
+    readonly property string defaultLabel: Audio.eventDefaultLabel(root.eventId)
     readonly property string displayValue: currentValue === ""
         ? root.defaultLabel
         : (isFile ? currentValue.split("/").pop() : currentValue)
@@ -121,6 +117,8 @@ ColumnLayout {
     Loader {
         Layout.fillWidth: true
         Layout.preferredHeight: root.expanded ? 280 : 0
+        // a closed row takes no layout spacing for its hidden parts
+        visible: root.expanded
         active: root.expanded
         asynchronous: false
 
@@ -198,6 +196,7 @@ ColumnLayout {
     Loader {
         Layout.fillWidth: true
         Layout.preferredHeight: root.expanded ? 44 : 0
+        visible: root.expanded
         active: root.expanded
         asynchronous: false
 

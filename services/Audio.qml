@@ -478,6 +478,12 @@ Singleton {
         if (pack === "classic") return Translation.tr("Classic")
         return root.builtinPacks.includes(pack) ? pack.charAt(0).toUpperCase() + pack.slice(1) : pack
     }
+    // What an event plays with no choice of its own: the pack's sound, or under Classic the theme's (some have none).
+    function eventDefaultLabel(eventId: string): string {
+        if (root.soundPack !== "classic") return Translation.tr("Sound pack (%1)").arg(root.packLabel(root.soundPack))
+        const name = root.soundEvents[eventId] ?? ""
+        return name.length > 0 ? Translation.tr("Theme default (%1)").arg(name) : Translation.tr("Silent")
+    }
     // A new pack answers at once with its notification, so a choice is heard where it is made.
     onSoundPackChanged: if (Config.ready && GlobalStates.shellEntryReady) root.previewEvent("notification", root.soundPack)
     function packDir(pack: string): string {

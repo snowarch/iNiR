@@ -3847,5 +3847,6 @@
   "See the rest screen": "查看休息屏幕",
   "Show dock when no window is focused (Empty workspace mode only)": "没有窗口获得焦点时显示程序坞（仅限空桌面模式）",
   "Swap accent colours": "交换强调色",
-  "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "配色方案的第三种颜色成为主色，强调色换到它的位置。仅限外壳：应用保持生成时的配色。"
+  "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "配色方案的第三种颜色成为主色，强调色换到它的位置。仅限外壳：应用保持生成时的配色。",
+  "Pick the sound each event plays: one from your sound theme, or any audio file": "选择每个事件播放的声音：来自你的音效主题，或任意音频文件"
 }

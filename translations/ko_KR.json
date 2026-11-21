@@ -3847,5 +3847,6 @@
   "See the rest screen": "휴식 화면 보기",
   "Show dock when no window is focused (Empty workspace mode only)": "포커스된 창이 없을 때 독 표시 (빈 작업 공간 모드에서만)",
   "Swap accent colours": "강조 색상 바꾸기",
-  "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "스킴의 세 번째 색이 앞에 서고, 강조색이 그 자리를 차지합니다. 셸에만 적용: 앱은 생성된 스킴을 그대로 유지합니다."
+  "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "스킴의 세 번째 색이 앞에 서고, 강조색이 그 자리를 차지합니다. 셸에만 적용: 앱은 생성된 스킴을 그대로 유지합니다.",
+  "Pick the sound each event plays: one from your sound theme, or any audio file": "각 이벤트가 재생하는 사운드를 선택하세요. 사운드 테마 또는 오디오 파일 중 하나"
 }

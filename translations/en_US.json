@@ -3847,5 +3847,6 @@
   "See the rest screen": "See the rest screen",
   "Show dock when no window is focused (Empty workspace mode only)": "Show dock when no window is focused (Empty workspace mode only)",
   "Swap accent colours": "Swap accent colours",
-  "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated."
+  "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.",
+  "Pick the sound each event plays: one from your sound theme, or any audio file": "Pick the sound each event plays: one from your sound theme, or any audio file"
 }

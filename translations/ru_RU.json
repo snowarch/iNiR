@@ -3847,5 +3847,6 @@
   "See the rest screen": "Показать экран покоя",
   "Show dock when no window is focused (Empty workspace mode only)": "Показывать док, когда ни одно окно не в фокусе (только режим Пустой рабочий стол)",
   "Swap accent colours": "Поменять акцентные цвета",
-  "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "Третий цвет схемы становится главным, а акцент занимает его место. Только в оболочке: приложения сохраняют схему как есть."
+  "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "Третий цвет схемы становится главным, а акцент занимает его место. Только в оболочке: приложения сохраняют схему как есть.",
+  "Pick the sound each event plays: one from your sound theme, or any audio file": "Выберите звук для каждого события: из вашей звуковой темы или любой аудиофайл"
 }
