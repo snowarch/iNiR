@@ -419,6 +419,15 @@ function _honestWidgets(obj) {
     return changed;
 }
 
+// Sound packs came with one of ours as the factory sound (lounge). A config written before them has no pack and keeps
+// what it played: the system theme's sounds (classic), so an update changes nothing a person hears until they pick one.
+function _soundsKeepTheme(obj) {
+    const sounds = obj.sounds;
+    if (!_isObject(sounds) || sounds.pack !== undefined) return false;
+    sounds.pack = "classic";
+    return true;
+}
+
 function migrate(obj) {
     if (!_isObject(obj)) return false;
     const fromV2 = Number(_get(obj, "iris.appearance.factoryLook") ?? 0) < 1;
@@ -429,6 +438,7 @@ function migrate(obj) {
     changed = _withdrawn(obj) || changed;
     changed = _customToBase(obj) || changed;
     changed = _honestWidgets(obj) || changed;
+    changed = _soundsKeepTheme(obj) || changed;
     for (const [from, to] of moves) {
         const value = _get(obj, from);
         if (value === undefined) continue;
