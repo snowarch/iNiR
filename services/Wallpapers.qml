@@ -782,8 +782,9 @@ Singleton {
     }
 
     // The image the desktop actually shows on an output: the backdrop's when it replaces the wallpaper
-    // ("show only the backdrop", ii and iRiS), the main wallpaper otherwise. Glass and Lume read this one,
-    // or they sample a wallpaper nobody sees.
+    // ("show only the backdrop", ii and iRiS), the active family's own when it keeps one (an output's own picture
+    // still wins, as on its desktop), the main wallpaper otherwise. Glass, Lume and the rest screens read this one,
+    // or they show a wallpaper nobody sees.
     readonly property bool desktopShowsBackdrop: !root.activeOwnBackground && root.useBackdropWallpaper
     readonly property real desktopDim: root.desktopShowsBackdrop
         ? Math.max(0, Math.min(1, Number(Config.options?.background?.backdrop?.dim ?? 0) / 100)) : 0
@@ -792,6 +793,11 @@ Singleton {
     function desktopWallpaperPath(monitorName = ""): string {
         if (root.desktopShowsBackdrop)
             return currentWallpaperPathForTarget("backdrop", monitorName)
+        const own = root.activeOwnBackground
+        const outputOwn = WallpaperListener.multiMonitorEnabled && monitorName
+            ? (WallpaperListener.effectivePerMonitor[monitorName]?.path ?? "") : ""
+        if (own && !(own.useMainWallpaper ?? true) && !outputOwn)
+            return own.wallpaperPath || currentMainWallpaperPath(monitorName)
         return currentMainWallpaperPath(monitorName)
     }
 
