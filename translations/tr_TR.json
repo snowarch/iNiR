@@ -3843,5 +3843,7 @@
   "Record the screen": "Ekranı kaydet",
   "Volume up": "Sesi artır",
   "Volume down": "Sesi azalt",
-  "Smoked": "Füme"
+  "Smoked": "Füme",
+  "See the rest screen": "Dinlenme ekranını gör",
+  "Show dock when no window is focused (Empty workspace mode only)": "Odakta pencere yokken dock'u göster (yalnızca Boş çalışma alanı modu)"
 }

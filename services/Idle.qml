@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs
 import qs.modules.common
 import qs.modules.common.functions
 import qs.services
@@ -29,8 +30,11 @@ Singleton {
     readonly property int suspendTimeout: batteryProfileActive
         ? (Config.options?.idle?.onBattery?.suspendTimeout ?? 600)
         : (Config.options?.idle?.suspendTimeout ?? 0)
+    // The rest screen is the same on battery: it costs nothing the screen-off timeout would save.
+    readonly property int restTimeout: Config.options?.idle?.restTimeout ?? 0
     readonly property string launcherPath: Quickshell.shellPath("scripts/inir")
 
+    onRestTimeoutChanged: _restartSwayidle()
     onScreenOffTimeoutChanged: _restartSwayidle()
     onLockTimeoutChanged: _restartSwayidle()
     onSuspendTimeoutChanged: _restartSwayidle()
@@ -52,6 +56,20 @@ Singleton {
         root.resumed()
     }
 
+    // The rest screen never shows over the lock or the session screen; whatever shows it, any input sends it away.
+    function showRest(): void {
+        if (GlobalStates.screenLocked || GlobalStates.sessionOpen)
+            return
+        // An open panel that holds the keyboard keeps it (Niri gives it to the oldest exclusive surface), and a key
+        // would then go to the panel under the rest screen instead of sending the rest screen away. So panels close.
+        DevNavigation.closeAll()
+        GlobalStates.restOpen = true
+    }
+
+    function hideRest(): void {
+        GlobalStates.restOpen = false
+    }
+
     function _restartSwayidle() {
         _stopSwayidle()
         if (!inhibit) _startSwayidleDelayed.start()
@@ -67,6 +85,11 @@ Singleton {
 
         const cmd = ["swayidle", "-w"]
         const lockBeforeSleep = Config.options?.idle?.lockBeforeSleep !== false
+
+        if (restTimeout > 0) {
+            const inir = StringUtils.shellSingleQuoteEscape(root.launcherPath);
+            cmd.push("timeout", restTimeout.toString(), `'${inir}' rest show`, "resume", `'${inir}' rest hide`)
+        }
 
         if (screenOffTimeout > 0 && CompositorService.isNiri) {
             const inir = StringUtils.shellSingleQuoteEscape(root.launcherPath);
@@ -121,6 +144,30 @@ Singleton {
         function onReadyChanged() {
             if (Config.ready) root._restartSwayidle()
         }
+    }
+
+    Connections {
+        target: GlobalStates
+        function onScreenLockedChanged() {
+            if (GlobalStates.screenLocked) root.hideRest()
+        }
+        function onSessionOpenChanged() {
+            if (GlobalStates.sessionOpen) root.hideRest()
+        }
+    }
+
+    /// The rest screen: the active family's calm clock over every screen, sent away by a key, a click or a moved pointer.
+    /// `idle.restTimeout` shows it after that many idle seconds (0 = never); it never shows over the lock.
+    IpcHandler {
+        target: "rest"
+        /// Show the rest screen
+        function show(): void { root.showRest() }
+        /// Send the rest screen away
+        function hide(): void { root.hideRest() }
+        /// Show or hide the rest screen
+        function toggle(): void { if (GlobalStates.restOpen) root.hideRest(); else root.showRest() }
+        /// "shown" or "hidden"
+        function status(): string { return GlobalStates.restOpen ? "shown" : "hidden" }
     }
 
     Connections {

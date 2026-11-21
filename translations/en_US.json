@@ -3843,5 +3843,7 @@
   "Record the screen": "Record the screen",
   "Volume up": "Volume up",
   "Volume down": "Volume down",
-  "Smoked": "Smoked"
+  "Smoked": "Smoked",
+  "See the rest screen": "See the rest screen",
+  "Show dock when no window is focused (Empty workspace mode only)": "Show dock when no window is focused (Empty workspace mode only)"
 }

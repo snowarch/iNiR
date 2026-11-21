@@ -176,10 +176,26 @@
      "args": [
       "event"
      ],
-     "description": "Play a shell event sound (e.g. `notification`, `batteryLow`, `timerDone`), honoring the user's per-event override",
+     "description": "Play a shell event sound (e.g. `notification`, `batteryLow`, `boot`, `open`) from the sound pack in use, honoring the user's per-event override and the session and interface switches",
      "values": [
       "batteryLow",
-      "timerDone"
+      "boot",
+      "open"
+     ]
+    },
+    {
+     "name": "previewEvent",
+     "args": [
+      "event",
+      "pack"
+     ],
+     "description": "Hear an event in a sound pack (`lounge`, `orbit`, `crystal`, `arcade`, `classic` or one of yours), whatever is switched on",
+     "values": [
+      "lounge",
+      "orbit",
+      "crystal",
+      "arcade",
+      "classic"
      ]
     },
     {
@@ -1200,6 +1216,21 @@
      "name": "list",
      "args": [],
      "description": "List the styles",
+     "values": []
+    }
+   ]
+  },
+  {
+   "name": "greeting",
+   "family": "shared",
+   "description": "The welcome screen the family shows once at startup. Settings play it with `inir greeting show`.",
+   "notes": "",
+   "example": "",
+   "functions": [
+    {
+     "name": "show",
+     "args": [],
+     "description": "Play the welcome screen now, whatever the startup setting says",
      "values": []
     }
    ]
@@ -3342,6 +3373,39 @@
      "name": "current",
      "args": [],
      "description": "Return the selector state (open/action/mode) as JSON",
+     "values": []
+    }
+   ]
+  },
+  {
+   "name": "rest",
+   "family": "shared",
+   "description": "The rest screen: the active family's calm clock over every screen, sent away by a key, a click or a moved pointer. `idle.restTimeout` shows it after that many idle seconds (0 = never); it never shows over the lock.",
+   "notes": "",
+   "example": "",
+   "functions": [
+    {
+     "name": "show",
+     "args": [],
+     "description": "Show the rest screen",
+     "values": []
+    },
+    {
+     "name": "hide",
+     "args": [],
+     "description": "Send the rest screen away",
+     "values": []
+    },
+    {
+     "name": "toggle",
+     "args": [],
+     "description": "Show or hide the rest screen",
+     "values": []
+    },
+    {
+     "name": "status",
+     "args": [],
+     "description": "\"shown\" or \"hidden\"",
      "values": []
     }
    ]

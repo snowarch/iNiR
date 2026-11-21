@@ -3843,5 +3843,7 @@
   "Record the screen": "Записать экран",
   "Volume up": "Громче",
   "Volume down": "Тише",
-  "Smoked": "Дымчатый"
+  "Smoked": "Дымчатый",
+  "See the rest screen": "Показать экран покоя",
+  "Show dock when no window is focused (Empty workspace mode only)": "Показывать док, когда ни одно окно не в фокусе (только режим Пустой рабочий стол)"
 }

@@ -361,6 +361,7 @@ JsonAdapter {
     }
 
     property JsonObject idle: JsonObject {
+        property int restTimeout: 0 // seconds, 0 = disabled: the family's rest screen (a calm clock) before the screen goes off
         property int screenOffTimeout: 300 // seconds, 0 = disabled
         property int lockTimeout: 600 // seconds, 0 = disabled
         property int suspendTimeout: 0 // seconds, 0 = disabled

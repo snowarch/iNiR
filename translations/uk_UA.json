@@ -3843,5 +3843,7 @@
   "Record the screen": "Записати екран",
   "Volume up": "Гучніше",
   "Volume down": "Тихіше",
-  "Smoked": "Димчастий"
+  "Smoked": "Димчастий",
+  "See the rest screen": "Переглянути екран спокою",
+  "Show dock when no window is focused (Empty workspace mode only)": "Показувати док, коли жодне вікно не у фокусі (лише режим Порожня стільниця)"
 }

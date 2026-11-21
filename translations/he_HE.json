@@ -3843,5 +3843,7 @@
   "Record the screen": "הקלטת המסך",
   "Volume up": "הגברת עוצמת הקול",
   "Volume down": "הנמכת עוצמת הקול",
-  "Smoked": "מעושן"
+  "Smoked": "מעושן",
+  "See the rest screen": "הצגת מסך המנוחה",
+  "Show dock when no window is focused (Empty workspace mode only)": "הצגת ה-Dock כשאף חלון אינו ממוקד (במצב שולחן עבודה ריק בלבד)"
 }

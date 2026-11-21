@@ -3843,5 +3843,7 @@
   "Record the screen": "Rekam layar",
   "Volume up": "Volume naik",
   "Volume down": "Volume turun",
-  "Smoked": "Berasap"
+  "Smoked": "Berasap",
+  "See the rest screen": "Lihat layar istirahat",
+  "Show dock when no window is focused (Empty workspace mode only)": "Tampilkan dok saat tidak ada jendela yang difokuskan (Hanya mode ruang kerja kosong)"
 }

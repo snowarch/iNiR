@@ -3843,5 +3843,7 @@
   "Record the screen": "تسجيل الشاشة",
   "Volume up": "رفع الصوت",
   "Volume down": "خفض الصوت",
-  "Smoked": "مدخَّن"
+  "Smoked": "مدخَّن",
+  "See the rest screen": "عرض شاشة الراحة",
+  "Show dock when no window is focused (Empty workspace mode only)": "إظهار Dock حين لا تكون أي نافذة مركّزة (في وضع سطح المكتب الفارغ فقط)"
 }

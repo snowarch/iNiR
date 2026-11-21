@@ -3843,5 +3843,7 @@
   "Record the screen": "录制屏幕",
   "Volume up": "调高音量",
   "Volume down": "调低音量",
-  "Smoked": "烟熏"
+  "Smoked": "烟熏",
+  "See the rest screen": "查看休息屏幕",
+  "Show dock when no window is focused (Empty workspace mode only)": "没有窗口获得焦点时显示程序坞（仅限空桌面模式）"
 }

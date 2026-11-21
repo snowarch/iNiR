@@ -3843,5 +3843,7 @@
   "Record the screen": "画面を録画",
   "Volume up": "音量を上げる",
   "Volume down": "音量を下げる",
-  "Smoked": "スモーク"
+  "Smoked": "スモーク",
+  "See the rest screen": "休止画面を見る",
+  "Show dock when no window is focused (Empty workspace mode only)": "どのウィンドウにもフォーカスがないときドックを表示（空のワークスペースモードのみ）"
 }

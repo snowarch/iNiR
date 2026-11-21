@@ -3843,5 +3843,7 @@
   "Record the screen": "स्क्रीन रिकॉर्ड करें",
   "Volume up": "आवाज़ बढ़ाएँ",
   "Volume down": "आवाज़ घटाएँ",
-  "Smoked": "धुँधला"
+  "Smoked": "धुँधला",
+  "See the rest screen": "विश्राम स्क्रीन देखें",
+  "Show dock when no window is focused (Empty workspace mode only)": "जब कोई विंडो फ़ोकस में न हो तब Dock दिखाएँ (सिर्फ़ खाली वर्कस्पेस मोड)"
 }

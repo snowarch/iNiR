@@ -1,0 +1,2 @@
+module qs.modules.shared.rest
+RestWindow 1.0 RestWindow.qml

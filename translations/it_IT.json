@@ -3843,5 +3843,7 @@
   "Record the screen": "Registra lo schermo",
   "Volume up": "Alza il volume",
   "Volume down": "Abbassa il volume",
-  "Smoked": "Fumé"
+  "Smoked": "Fumé",
+  "See the rest screen": "Vedi la schermata di riposo",
+  "Show dock when no window is focused (Empty workspace mode only)": "Mostra il dock quando nessuna finestra è a fuoco (solo modalità Desktop vuoto)"
 }

@@ -3843,5 +3843,7 @@
   "Record the screen": "화면 녹화",
   "Volume up": "볼륨 올리기",
   "Volume down": "볼륨 내리기",
-  "Smoked": "스모크"
+  "Smoked": "스모크",
+  "See the rest screen": "휴식 화면 보기",
+  "Show dock when no window is focused (Empty workspace mode only)": "포커스된 창이 없을 때 독 표시 (빈 작업 공간 모드에서만)"
 }

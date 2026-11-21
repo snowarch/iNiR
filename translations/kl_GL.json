@@ -3823,5 +3823,6 @@
   "Record the screen": "Sukkut immiuguk",
   "Volume up": "Naalagaaq qaffaruk",
   "Volume down": "Naalagaaq appaaruk",
-  "Smoked": "Pujortoq"
+  "Smoked": "Pujortoq",
+  "Show dock when no window is focused (Empty workspace mode only)": "Window focus-eqanngippat dock takutiguk (Empty workspace mode kisimi)"
 }

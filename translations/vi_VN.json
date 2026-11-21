@@ -3843,5 +3843,7 @@
   "Record the screen": "Ghi màn hình",
   "Volume up": "Tăng âm lượng",
   "Volume down": "Giảm âm lượng",
-  "Smoked": "Khói"
+  "Smoked": "Khói",
+  "See the rest screen": "Xem màn hình nghỉ",
+  "Show dock when no window is focused (Empty workspace mode only)": "Hiện dock khi không cửa sổ nào có tiêu điểm (chỉ chế độ Desktop trống)"
 }

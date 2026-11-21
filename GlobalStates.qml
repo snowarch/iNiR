@@ -18,6 +18,7 @@ Singleton {
     property bool bootGreetingOpen: false
     property bool bootGreetingDone: false
     property bool bootChimed: false // the session's boot sound played once (Audio "boot")
+    property bool restOpen: false // the family's rest screen over every screen; Idle opens it, any input closes it
     property bool startupLockDone: false
     property bool barOpen: true
     property bool crosshairOpen: false

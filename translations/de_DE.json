@@ -3843,5 +3843,7 @@
   "Record the screen": "Bildschirm aufnehmen",
   "Volume up": "Lauter",
   "Volume down": "Leiser",
-  "Smoked": "Rauchglas"
+  "Smoked": "Rauchglas",
+  "See the rest screen": "Ruhebildschirm ansehen",
+  "Show dock when no window is focused (Empty workspace mode only)": "Dock anzeigen, wenn kein Fenster fokussiert ist (nur Modus Leerer Desktop)"
 }

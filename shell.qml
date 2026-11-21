@@ -751,6 +751,15 @@ ShellRoot {
         function current(): int { return GlobalStates.settingsOverlayCurrentPage }
     }
 
+    /// The welcome screen the family shows once at startup. Settings play it with `inir greeting show`.
+    IpcHandler {
+        target: "greeting"
+        /// Play the welcome screen now, whatever the startup setting says
+        function show(): void {
+            GlobalStates.bootGreetingOpen = true
+        }
+    }
+
     // The Settings in use may keep a host in the shell (its plugin.json part `settingsHost`): page names, overlay.
     FamilyPartLoader { family: Plugins.settingsFamily; part: "settingsHost"; when: Config.ready }
 
