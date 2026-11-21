@@ -27,8 +27,11 @@ ProgressBar {
         animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }
     }
 
+    // Steps under two pixels (a song's position, read four times a second) land at once: an ease on each kept the
+    // window drawing at the screen's rate. The fill moves in half pixels.
     Behavior on value {
         enabled: Appearance.animationsEnabled
+            && Math.abs(targetValue - root.value) / Math.max(1e-9, Math.abs(root.to - root.from)) * root.width > 2
         animation: NumberAnimation { duration: Appearance.animation.elementMoveEnter.duration; easing.type: Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve }
     }
     
@@ -74,7 +77,7 @@ ProgressBar {
                 left: parent.left
                 verticalCenter: parent.verticalCenter
             }
-            width: Math.max(0, contentItem.width * root.visualPosition)
+            width: Math.max(0, Math.round(contentItem.width * root.visualPosition * 2) / 2)
             height: contentItem.height * (1 + 2 * Math.max(0.5, Math.abs(root.waveAmplitudeMultiplier)))
             active: (root.wavy || root.waveAmplitudeMultiplier > 0) && !Appearance.zzzEverywhere
             sourceComponent: WavyLine {
@@ -92,7 +95,7 @@ ProgressBar {
             active: !root.wavy && root.waveAmplitudeMultiplier <= 0 && !Appearance.zzzEverywhere
             sourceComponent: Rectangle {
                 anchors.left: parent.left
-                width: contentItem.width * root.visualPosition
+                width: Math.round(contentItem.width * root.visualPosition * 2) / 2
                 height: contentItem.height
                 radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : height / 2
                 color: root.highlightColor
@@ -102,7 +105,7 @@ ProgressBar {
         Rectangle { // Right remaining part fill
             visible: !Appearance.zzzEverywhere
             anchors.right: parent.right
-            width: Math.max(0, (1 - root.visualPosition) * parent.width - valueBarGap)
+            width: Math.max(0, Math.round((1 - root.visualPosition) * parent.width * 2) / 2 - valueBarGap)
             height: parent.height
             radius: Appearance.angelEverywhere ? Appearance.angel.roundingSmall : height / 2
             color: root.trackColor

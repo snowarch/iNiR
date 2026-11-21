@@ -75,13 +75,17 @@ Item {
 
     readonly property color inkFaint: ColorUtils.applyAlpha(ink, 0.26)
     readonly property color inkDim: ColorUtils.applyAlpha(ink, 0.62)
+    // In half-pixel steps of the rim, and only a visible jump eases: a song's position, read four times a second,
+    // moved the arc by a fraction of a pixel and restarted a 600 ms ease each time, so the desktop drew at the
+    // screen's rate while music played.
+    readonly property real rimSteps: Math.max(1, Math.ceil(2 * Math.PI * root.size))
     readonly property real progress: Number.isFinite(fraction)
-        ? Math.max(0, Math.min(1, fraction)) : 0
+        ? Math.round(Math.max(0, Math.min(1, fraction)) * root.rimSteps) / root.rimSteps : 0
     readonly property color cometOuter: showArc && showComet ? ColorUtils.applyAlpha(accent, 0.18) : "transparent"
     readonly property color cometInner: showArc && showComet ? ColorUtils.applyAlpha(accent, 0.38) : "transparent"
 
     Behavior on fraction {
-        enabled: animated
+        enabled: root.animated && Math.abs(targetValue - root.fraction) * Math.PI * root.size > 2
         NumberAnimation { duration: 600; easing.type: Easing.OutCubic }
     }
 

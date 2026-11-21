@@ -28,7 +28,11 @@ Item {
     implicitWidth: implicitSize
     implicitHeight: implicitSize
 
-    property real degree: value * 360
+    // The arc moves in half-pixel steps of its length, and only a visible jump (a seek, a new reading) eases. A
+    // song's position, read four times a second, moved a small ring by a fraction of a pixel: each move redrew the
+    // whole window, and an ease on every reading kept the window drawing at the screen's rate.
+    readonly property real arcSteps: Math.max(1, Math.ceil(4 * Math.PI * root.arcRadius))
+    property real degree: Math.round(root.value * root.arcSteps) / root.arcSteps * 360
     property real centerX: root.width / 2
     property real centerY: root.height / 2
     property real arcRadius: root.implicitSize / 2 - root.lineWidth
@@ -36,7 +40,7 @@ Item {
 
     Behavior on degree {
         enabled: root.visible && (root.Window.window?.visible ?? true)
-            && root.enableAnimation && Appearance.animationsEnabled
+            && root.enableAnimation && Appearance.animationsEnabled && Math.abs(targetValue - root.degree) * root.arcSteps / 360 > 4
         NumberAnimation {
             duration: root.animationDuration
             easing.type: root.easingType
