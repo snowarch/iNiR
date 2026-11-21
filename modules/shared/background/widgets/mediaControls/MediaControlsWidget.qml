@@ -336,62 +336,86 @@ AbstractBackgroundWidget {
                         Layout.preferredWidth: root.widgetWidth
                         Layout.preferredHeight: root.widgetHeight
 
-                        MediaOrganicEdgeAura {
-                            anchors.fill: parent
-                            // Organic lives outside the card as a sibling field. The
-                            // player occludes its interior while the field remains visible
-                            // beyond the rounded perimeter.
-                            z: -1
-                            visible: !root.instrument && root.vizType === "organic" && root.vizPosition !== "none"
-                            visualizerPoints: root.visualizerPoints
-                            audioActive: root.visualizerActive
-                            // Organic has its own idle motion. Keep the edge field alive
-                            // whenever a player exists; audio activity modulates it through
-                            // visualizerPoints instead of deciding whether it exists at all.
-                            active: root.hasPlayer && root.visible && root.powerActive
-                            animate: root.motionActive
-                            playerColor: root.widgetAccentVisible
-                            albumPalette: root.organicArtworkPalette
-                            accentPalette: [root.widgetAccentVisible,
-                                root.widgetAccent2Visible, root.widgetAccent3Visible]
-                            cardRadius: root.popupRounding
-                        }
+                        // The pointer brings the player home: its hover and press feedback draw where the input lands.
+                        HoverHandler { id: playerHover }
 
                         StyledRectangularShadow {
                             z: -2
-                            target: playerLoader
+                            target: playerLive
                             radius: root.popupRounding
                             visible: !root.familyDesign && !root.instrument && (root.vizType !== "organic" || root.vizPosition === "none")
                         }
 
-                        Loader {
-                            id: playerLoader
-                            z: 0
+                        // A playing preset moves every frame (the wave, the bars, the disc, the organic edge): once the
+                        // desktop is still around it, it draws in a surface of its own (LiveLayer), so the frames
+                        // damage its box and not the whole output. The copy that is not drawing holds still.
+                        LiveLayer {
+                            id: playerLive
                             anchors.fill: parent
-                            active: root.presetLoaderActive
-                            sourceComponent: root.instrument ? instrumentPlayerComponent
-                                : root.nativeIrisPlayer ? familyPlayerComponent : root.presetComponent
+                            live: !root.instrument && !root.nativeIrisPlayer && root.presetLoaderActive
+                                && root.motionActive && MprisController.isPlaying
+                            stay: playerHover.hovered
+                            pad: Math.ceil(playerLive.homeItem?.overflow ?? 0)
+                            content: Component {
+                                Item {
+                                    id: drawn
+                                    property bool drawing: false
+                                    // What the player draws past its box: the organic edge, or the cards' shadow.
+                                    readonly property real overflow: aura.visible ? aura.renderMargin : Appearance.sizes.elevationMargin
 
-                            onLoaded: {
-                                item.player = delegateRoot.modelData
-                                if (root.instrument)
-                                    return
-                                if (!root.nativeIrisPlayer) {
-                                    item.blendedColors = root._desktopInkOverride
-                                    item.themeSourceColor = Qt.binding(() => root.widgetAccentVisible)
-                                    item.visualizerPoints = Qt.binding(() => root.visualizerPoints)
-                                    item.radius = root.popupRounding
-                                    item.screenX = Qt.binding(() => root.widgetScreenPos.x)
-                                    item.screenY = Qt.binding(() => root.widgetScreenPos.y)
-                                    item.motion = Qt.binding(() => root.motionActive)
+                                    MediaOrganicEdgeAura {
+                                        id: aura
+                                        anchors.fill: parent
+                                        // Organic lives outside the card as a sibling field. The
+                                        // player occludes its interior while the field remains visible
+                                        // beyond the rounded perimeter.
+                                        z: -1
+                                        visible: !root.instrument && root.vizType === "organic" && root.vizPosition !== "none"
+                                        visualizerPoints: drawn.drawing ? root.visualizerPoints : []
+                                        audioActive: root.visualizerActive
+                                        // Organic has its own idle motion. Keep the edge field alive
+                                        // whenever a player exists; audio activity modulates it through
+                                        // visualizerPoints instead of deciding whether it exists at all.
+                                        active: root.hasPlayer && root.visible && root.powerActive
+                                        animate: root.motionActive && drawn.drawing
+                                        playerColor: root.widgetAccentVisible
+                                        albumPalette: root.organicArtworkPalette
+                                        accentPalette: [root.widgetAccentVisible,
+                                            root.widgetAccent2Visible, root.widgetAccent3Visible]
+                                        cardRadius: root.popupRounding
+                                    }
+
+                                    Loader {
+                                        id: playerLoader
+                                        z: 0
+                                        anchors.fill: parent
+                                        active: root.presetLoaderActive
+                                        sourceComponent: root.instrument ? instrumentPlayerComponent
+                                            : root.nativeIrisPlayer ? familyPlayerComponent : root.presetComponent
+
+                                        onLoaded: {
+                                            item.player = delegateRoot.modelData
+                                            if (root.instrument)
+                                                return
+                                            if (!root.nativeIrisPlayer) {
+                                                item.blendedColors = root._desktopInkOverride
+                                                item.themeSourceColor = Qt.binding(() => root.widgetAccentVisible)
+                                                item.visualizerPoints = Qt.binding(() => drawn.drawing ? root.visualizerPoints : [])
+                                                item.radius = root.popupRounding
+                                                item.screenX = Qt.binding(() => root.widgetScreenPos.x)
+                                                item.screenY = Qt.binding(() => root.widgetScreenPos.y)
+                                                item.motion = Qt.binding(() => root.motionActive && drawn.drawing)
+                                            }
+                                            const loadedPreset = root.effectiveRenderedPreset;
+                                            Qt.callLater(() => {
+                                                if (root.presetLoaderActive
+                                                        && root.effectiveRenderedPreset === loadedPreset
+                                                        && root.selectedPreset === loadedPreset)
+                                                    root.sizedPreset = loadedPreset;
+                                            });
+                                        }
+                                    }
                                 }
-                                const loadedPreset = root.effectiveRenderedPreset;
-                                Qt.callLater(() => {
-                                    if (root.presetLoaderActive
-                                            && root.effectiveRenderedPreset === loadedPreset
-                                            && root.selectedPreset === loadedPreset)
-                                        root.sizedPreset = loadedPreset;
-                                });
                             }
                         }
                     }

@@ -37,6 +37,7 @@ Item {
     PlayerBase {
         id: playerBase
         player: root.player
+        positionUpdatesActive: root.motion
     }
 
     // Adaptive colors from artwork
@@ -176,6 +177,7 @@ Item {
             edgeHeight: 35
             visualizerPoints: root.visualizerPoints
             active: playerBase.effectiveIsPlaying
+            animate: root.motion
             playerColor: root.themeSourceColor
         }
 

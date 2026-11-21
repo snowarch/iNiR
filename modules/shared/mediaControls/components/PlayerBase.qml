@@ -41,9 +41,13 @@ QtObject {
     // Artwork motion is keyed only by real art identity. Metadata-only updates
     // must not move the cover, or one track change animates twice.
     readonly property string mediaTransitionKey: (root.effectiveArtUrl ?? "").split("?")[0].split("#")[0]
-    readonly property real effectivePosition: isYtMusicPlayer 
-        ? YtMusic.currentPosition 
+    readonly property real livePosition: isYtMusicPlayer
+        ? YtMusic.currentPosition
         : MprisController.positionOf(player)
+    // Held where nobody watches it move (a covered desktop, the copy a LiveLayer keeps at home): the time and the
+    // bar then stay still instead of redrawing their window four times a second.
+    property real effectivePosition: 0
+    Binding on effectivePosition { value: root.livePosition; when: root.positionUpdatesActive; restoreMode: Binding.RestoreNone }
     readonly property real effectiveLength: isYtMusicPlayer 
         ? YtMusic.currentDuration 
         : MprisController.lengthOf(player)

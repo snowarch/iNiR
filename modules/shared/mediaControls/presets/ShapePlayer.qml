@@ -31,6 +31,7 @@ Item {
     PlayerBase {
         id: playerBase
         player: root.player
+        positionUpdatesActive: root.motion
     }
 
     property color themeSourceColor: playerBase.artDominantColor

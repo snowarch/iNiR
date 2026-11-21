@@ -9,6 +9,8 @@ import qs.services
 
 Item {
     id: root
+    // False where nobody sees it (a covered desktop, the copy a LiveLayer keeps at home): a new line snaps.
+    property bool motion: true
 
     property color textColor: Appearance.zzzEverywhere ? Appearance.zzz.inkMuted : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary : Appearance.colors.colSubtext
     property color activeColor: Appearance.zzzEverywhere ? Appearance.zzz.ink : Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnLayer0
@@ -60,7 +62,7 @@ Item {
         visible: opacity > 0
 
         Behavior on opacity {
-            enabled: Appearance.animationsEnabled
+            enabled: Appearance.animationsEnabled && root.motion
             NumberAnimation {
                 duration: Appearance.animation.elementMoveFast.duration
                 easing.type: Appearance.animation.elementMoveFast.type
@@ -115,7 +117,7 @@ Item {
         visible: opacity > 0
 
         Behavior on opacity {
-            enabled: Appearance.animationsEnabled
+            enabled: Appearance.animationsEnabled && root.motion
             NumberAnimation {
                 duration: Appearance.animation.elementMoveFast.duration
                 easing.type: Appearance.animation.elementMoveFast.type
@@ -146,7 +148,7 @@ Item {
             y: lyricColumn.targetY
 
             Behavior on y {
-                enabled: Appearance.animationsEnabled
+                enabled: Appearance.animationsEnabled && root.motion
                 NumberAnimation {
                     duration: Appearance.animation.elementMove.duration
                     easing.type: Appearance.animation.elementMove.type
@@ -200,7 +202,7 @@ Item {
                     scale: lyricLine.isActive ? root.activeScale : 1.0
 
                     Behavior on opacity {
-                        enabled: Appearance.animationsEnabled
+                        enabled: Appearance.animationsEnabled && root.motion
                         NumberAnimation {
                             duration: Appearance.animation.elementMove.duration
                             easing.type: Appearance.animation.elementMove.type
@@ -208,7 +210,7 @@ Item {
                         }
                     }
                     Behavior on scale {
-                        enabled: Appearance.animationsEnabled
+                        enabled: Appearance.animationsEnabled && root.motion
                         NumberAnimation {
                             duration: Appearance.animation.elementMoveEnter.duration
                             easing.type: Appearance.animation.elementMoveEnter.type
@@ -216,7 +218,7 @@ Item {
                         }
                     }
                     Behavior on color {
-                        enabled: Appearance.animationsEnabled
+                        enabled: Appearance.animationsEnabled && root.motion
                         ColorAnimation {
                             duration: Appearance.animation.elementMoveFast.duration
                             easing.type: Appearance.animation.elementMoveFast.type

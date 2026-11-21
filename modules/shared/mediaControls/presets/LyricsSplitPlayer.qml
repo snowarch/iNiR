@@ -30,6 +30,7 @@ Item {
     PlayerBase {
         id: playerBase
         player: root.player
+        positionUpdatesActive: root.motion
     }
 
     property color themeSourceColor: playerBase.artDominantColor
@@ -174,6 +175,7 @@ Item {
 
                     PlayerLyrics {
                         id: lyricSheet
+                        motion: root.motion
                         anchors.fill: parent
                         opacity: root.showSheet ? 1 : 0
                         showPlaceholder: false
@@ -215,6 +217,7 @@ Item {
                             edgeHeight: 42
                                             visualizerPoints: root.visualizerPoints
                             active: playerBase.effectiveIsPlaying
+                            animate: root.motion
                             playerColor: root.themeSourceColor
                         }
 

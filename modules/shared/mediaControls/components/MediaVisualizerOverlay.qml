@@ -14,6 +14,8 @@ Item {
 
     property var visualizerPoints: []
     property bool active: false
+    // False where nobody sees it (a covered desktop, the copy a LiveLayer keeps at home): the field holds still.
+    property bool animate: true
     property color playerColor: Appearance.colors.colPrimary
     property real edgeHeight: 35
 
@@ -49,6 +51,7 @@ Item {
             anchors.fill: parent
             points: root.visualizerPoints
             active: root.active
+            animate: root.animate
             visualizerType: root.visualizerType
             normalizationCeiling: CavaService.normalizationCeiling
             spectrumColors: root.palette

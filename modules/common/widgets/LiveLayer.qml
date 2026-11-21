@@ -25,6 +25,11 @@ Item {
     // does not know (rarely needed).
     property bool live: false
     property bool allowed: true
+    // Kept home while true without dropping the surface (the pointer over a control: hover and press feedback draw
+    // where the input lands, and the box moves out again once the pointer leaves).
+    property bool stay: false
+    // The instance drawn in place, for a host that sizes `pad` from what the content draws.
+    readonly property Item homeItem: home.item
     readonly property var host: root.QsWindow.window ?? null
     readonly property bool hostCalm: root.host?.liveCalm === true
     readonly property int hostEpoch: root.host?.liveEpoch ?? 0
@@ -90,7 +95,7 @@ Item {
     }
     // The composed opacity if the item may move out now, else −1.
     function eligible(): real {
-        if (!root.live || !root.allowed || !root.hostCalm || root.content === null || root.width <= 0 || root.height <= 0)
+        if (!root.live || !root.allowed || root.stay || !root.hostCalm || root.content === null || root.width <= 0 || root.height <= 0)
             return -1
         const opacity = root.composition()
         return opacity <= 0.001 ? -1 : opacity
@@ -134,6 +139,7 @@ Item {
     }
     onLiveChanged: root.evaluate()
     onAllowedChanged: root.evaluate()
+    onStayChanged: root.evaluate()
     onHostCalmChanged: root.evaluate()
     onVisibleChanged: root.evaluate()
     onWidthChanged: root.evaluate()
