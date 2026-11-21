@@ -428,6 +428,15 @@ function _soundsKeepTheme(obj) {
     return true;
 }
 
+// The welcome screen's panel was missing from the factory panel list (each family's own list has it): turned on, it
+// never showed until the family was switched.
+function _bootGreetingPanel(obj) {
+    const panels = obj.enabledPanels;
+    if (!Array.isArray(panels) || panels.includes("iiBootGreeting")) return false;
+    panels.push("iiBootGreeting");
+    return true;
+}
+
 function migrate(obj) {
     if (!_isObject(obj)) return false;
     const fromV2 = Number(_get(obj, "iris.appearance.factoryLook") ?? 0) < 1;
@@ -439,6 +448,7 @@ function migrate(obj) {
     changed = _customToBase(obj) || changed;
     changed = _honestWidgets(obj) || changed;
     changed = _soundsKeepTheme(obj) || changed;
+    changed = _bootGreetingPanel(obj) || changed;
     for (const [from, to] of moves) {
         const value = _get(obj, from);
         if (value === undefined) continue;

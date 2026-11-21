@@ -1513,7 +1513,7 @@
         "sort": "popular"
     },
     "idle": {
-        "restTimeout": 0,
+        "restTimeout": 120,
         "screenOffTimeout": 300,
         "lockTimeout": 600,
         "suspendTimeout": 0,
@@ -1613,7 +1613,7 @@
         "stronglyAdviseUpdateThreshold": 200
     },
     "bootGreeting": {
-        "enable": false,
+        "enable": true,
         "autoDismissDelay": 5000,
         "showWeather": true,
         "showDate": true
@@ -2884,6 +2884,7 @@
         "iiClipboard",
         "iiShellUpdate",
         "iiDashboard",
+        "iiBootGreeting",
         "iiMascotCompanion"
     ],
     "workspaceStrip": {
