@@ -77,6 +77,8 @@ Item { // Wrapper
 
         const baseIndex = appResults.currentIndex >= 0 ? appResults.currentIndex : (step > 0 ? -1 : 0)
         const targetIndex = Math.max(0, Math.min(baseIndex + step, appResults.count - 1))
+        if (targetIndex !== appResults.currentIndex)
+            Audio.playEvent("navigate")
         appResults.currentIndex = targetIndex
         return true
     }
@@ -87,6 +89,7 @@ Item { // Wrapper
 
         const targetIndex = appResults.currentIndex >= 0 ? Math.min(appResults.currentIndex, appResults.count - 1) : 0
         appResults.currentIndex = targetIndex
+        Audio.playEvent("select")
 
         const item = appResults.itemAtIndex(targetIndex)
         if (item && item.clicked) {

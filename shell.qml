@@ -188,6 +188,12 @@ ShellRoot {
             if (!GlobalStates.bootGreetingDone && (Config.options?.bootGreeting?.enable ?? true)) {
                 GlobalStates.bootGreetingOpen = true;
             }
+            // The desktop arrives with its sound once a session; a lock up at start greets with its own on unlock.
+            if (!GlobalStates.bootChimed) {
+                GlobalStates.bootChimed = true;
+                if (!GlobalStates.screenLocked)
+                    Audio.playEvent("boot");
+            }
             if (!root._bootDeferredAt) {
                 root._bootDeferredAt = Date.now();
             }

@@ -22,6 +22,7 @@ Singleton {
     readonly property string pictures: StandardPaths.standardLocations(StandardPaths.PicturesLocation)[0]
     readonly property string music: StandardPaths.standardLocations(StandardPaths.MusicLocation)[0]
     readonly property string videos: StandardPaths.standardLocations(StandardPaths.MoviesLocation)[0]
+    readonly property string genericData: StandardPaths.standardLocations(StandardPaths.GenericDataLocation)[0]
     readonly property string homePath: FileUtils.trimFileProtocol(home)
     readonly property string configPath: FileUtils.trimFileProtocol(config)
     readonly property string statePath: FileUtils.trimFileProtocol(state)
@@ -40,6 +41,8 @@ Singleton {
     property string stateUserPath: `${Directories.statePath}/user`
     property string wallpapersPath: Config.options?.wallpapers?.directory || `${Directories.picturesPath}/Wallpapers`
     property string screenshotsPath: Config.options?.regionSelector?.savePath || `${Directories.picturesPath}/Screenshots`
+    // Your own sound packs, one folder each (Audio.qml)
+    readonly property string soundPacksPath: `${FileUtils.trimFileProtocol(genericData)}/inir/sounds`
     property string persistentStatesPath: `${Directories.statePath}/states.json`
     // A plugin that is not a family keeps its own options here, never in config.json: removing it leaves the person's
     // settings as they were, and installing it again finds its options where it left them.

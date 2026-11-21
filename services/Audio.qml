@@ -1,5 +1,6 @@
 pragma Singleton
 pragma ComponentBehavior: Bound
+import qs
 import qs.modules.common
 import QtQuick
 import Quickshell
@@ -339,6 +340,7 @@ Singleton {
 
     function incrementVolume() {
         root.lastUserChange = Date.now()
+        root.playEvent("volume")
         // Fire wpctl relative increment first — works even when sink?.audio is not yet tracked.
         if (!wpctlIncrementSinkVolume.running)
             wpctlIncrementSinkVolume.running = true
@@ -346,6 +348,7 @@ Singleton {
 
     function decrementVolume() {
         root.lastUserChange = Date.now()
+        root.playEvent("volume")
         // Fire wpctl relative decrement first — works even when sink?.audio is not yet tracked.
         if (!wpctlDecrementSinkVolume.running)
             wpctlDecrementSinkVolume.running = true
@@ -431,8 +434,8 @@ Singleton {
         }
     }
 
-    // Event catalog: eventId → freedesktop sound name used when the user
-    // hasn't overridden it via sounds.events.<id> in config
+    // Event catalog: eventId → the system theme's sound for it, used by the Classic pack and when a pack has no file for
+    // an event. "" stays silent under Classic: the system theme has nothing that reads as a panel opening.
     readonly property var soundEvents: ({
         notification: "message-new-instant",
         notificationCritical: "dialog-warning",
@@ -442,8 +445,56 @@ Singleton {
         powerPlug: "power-plug",
         powerUnplug: "power-unplug",
         pomodoroDone: "alarm-clock-elapsed",
-        timerDone: "alarm-clock-elapsed"
+        timerDone: "alarm-clock-elapsed",
+        boot: "service-login",
+        login: "service-login",
+        lock: "service-logout",
+        open: "",
+        close: "",
+        navigate: "",
+        select: "",
+        toggleOn: "",
+        toggleOff: "",
+        volume: "audio-volume-change",
+        screenshot: "camera-shutter",
+        error: "dialog-error",
+        deviceAdded: "device-added",
+        deviceRemoved: "device-removed"
     })
+    // Session sounds (sounds.session) greet the desktop; interface sounds (sounds.ui) answer what you do, at their own
+    // volume, and keep quiet while a game holds the screen. The rest are alerts, which their callers gate.
+    readonly property var sessionEvents: ["boot", "login", "lock"]
+    readonly property var uiEvents: ["open", "close", "navigate", "select", "toggleOn", "toggleOff", "volume", "screenshot", "error", "deviceAdded", "deviceRemoved"]
+
+    // Sound packs: "classic" is the system theme (sounds.theme); the others are folders of <event>.oga, ours in
+    // assets/sounds (made by assets/sounds/generate.py) and yours in ~/.local/share/inir/sounds/<name>/, where any of
+    // .oga, .ogg, .wav, .flac or .mp3 plays. A pack without a file for an event falls back to the system theme.
+    readonly property var builtinPacks: ["lounge", "orbit", "crystal", "arcade"]
+    property var userPacks: []
+    readonly property string soundPack: Config.options?.sounds?.pack ?? "lounge"
+    // Every pack a person can choose, in the order settings list them.
+    readonly property var packs: root.builtinPacks.concat(["classic"], root.userPacks)
+    function packLabel(pack: string): string {
+        if (pack === "classic") return Translation.tr("Classic")
+        return root.builtinPacks.includes(pack) ? pack.charAt(0).toUpperCase() + pack.slice(1) : pack
+    }
+    // A new pack answers at once with its notification, so a choice is heard where it is made.
+    onSoundPackChanged: if (Config.ready && GlobalStates.shellEntryReady) root.previewEvent("notification", root.soundPack)
+    function packDir(pack: string): string {
+        return root.builtinPacks.includes(pack) ? Quickshell.shellPath("assets/sounds/" + pack) : Directories.soundPacksPath + "/" + pack
+    }
+    function refreshPacks(): void {
+        userPacksProc.running = false
+        userPacksProc.running = true
+    }
+    Process {
+        id: userPacksProc
+        command: ["/bin/sh", "-c", 'for d in "$1"/*/; do [ -d "$d" ] && basename "$d"; done 2>/dev/null', "sh", Directories.soundPacksPath]
+        stdout: StdioCollector {
+            onStreamFinished: root.userPacks = text.split("\n").map(name => name.trim())
+                .filter(name => name.length > 0 && name !== "classic" && !root.builtinPacks.includes(name))
+        }
+    }
 
     // Sound names available in the current theme (feeds settings pickers)
     property var themeSounds: []
@@ -456,33 +507,91 @@ Singleton {
         }
     }
 
-    // Play a shell event sound honoring the user's per-event override:
-    // "" = theme default; bare name = that sound from the current theme;
-    // absolute path or file:// = play the file directly
-    function playEvent(eventId) {
-        const override = Config.options?.sounds?.events?.[eventId] ?? "";
-        if (override.startsWith("/") || override.startsWith("file://")) {
-            const volume = Config.options?.sounds?.volume ?? 0.5;
-            const path = override.startsWith("file://") ? override.slice(7) : override;
-            Quickshell.execDetached(["pw-play", "--volume", volume.toString(), path]);
-            return;
-        }
-        playSystemSound(override.length > 0 ? override : (root.soundEvents[eventId] ?? "bell"));
+    // One sound per event at a time: a held key or a burst of opens would stack copies of the same tick.
+    property var _lastPlayed: ({})
+    function _settled(eventId: string): bool {
+        const now = Date.now()
+        if (now - (root._lastPlayed[eventId] ?? 0) < 70) return false
+        root._lastPlayed[eventId] = now
+        return true
     }
 
-    function playSystemSound(soundName) {
-        const volume = Config.options?.sounds?.volume ?? 0.5;
-        const base = `/usr/share/sounds/${root.audioTheme}/stereo/${soundName}`;
-        const q = s => `'${s.replace(/'/g, `'\\''`)}'`;
+    // Play a shell event sound: the person's override for it first ("" = the pack's, a bare name = that sound from the
+    // system theme, an absolute path or file:// = that file), then the pack's own file, then the system theme's.
+    function playEvent(eventId: string): void {
+        const sounds = Config.options?.sounds ?? ({})
+        const ui = root.uiEvents.includes(eventId)
+        if (ui && (!(sounds.ui ?? false) || GameMode.active)) return
+        if (root.sessionEvents.includes(eventId) && !(sounds.session ?? true)) return
+        if (!root._settled(eventId)) return
+        root._play(eventId, root.soundPack, ui ? (sounds.uiVolume ?? 0.6) : (sounds.volume ?? 0.5), true)
+    }
+
+    // Settings: hear an event in a pack whatever is switched on.
+    function previewEvent(eventId: string, pack: string): void {
+        const sounds = Config.options?.sounds ?? ({})
+        root._play(eventId, pack || root.soundPack,
+            root.uiEvents.includes(eventId) ? (sounds.uiVolume ?? 0.6) : (sounds.volume ?? 0.5), pack === "" || pack === undefined)
+    }
+
+    function _play(eventId: string, pack: string, volume: real, honorOverride: bool): void {
+        const override = honorOverride ? String(Config.options?.sounds?.events?.[eventId] ?? "") : ""
+        if (override.startsWith("/") || override.startsWith("file://")) {
+            Quickshell.execDetached(["pw-play", "--volume", String(volume), override.startsWith("file://") ? override.slice(7) : override])
+            return
+        }
+        const fallback = override.length > 0 ? override : (root.soundEvents[eventId] ?? "")
+        if (override.length > 0 || pack === "classic") {
+            if (fallback.length > 0) root.playSystemSound(fallback, volume)
+            return
+        }
+        const theme = fallback.length > 0 ? `/usr/share/sounds/${root.audioTheme}/stereo/${fallback}` : ""
+        Quickshell.execDetached(["/bin/sh", "-c",
+            'for f in "$1/$2.oga" "$1/$2.ogg" "$1/$2.wav" "$1/$2.flac" "$1/$2.mp3"; do [ -f "$f" ] && exec pw-play --volume "$3" "$f"; done; '
+            + '[ -n "$4" ] || exit 0; [ -f "$4.oga" ] && exec pw-play --volume "$3" "$4.oga"; exec pw-play --volume "$3" "$4.ogg"',
+            "sh", root.packDir(pack), eventId, String(volume), theme])
+    }
+
+    function playSystemSound(soundName: string, volume = -1): void {
+        const level = volume >= 0 ? volume : (Config.options?.sounds?.volume ?? 0.5)
         // pw-play volume range: 0.0 to 1.0. Try .oga then .ogg — firing
         // both blindly double-played on themes shipping both extensions.
         Quickshell.execDetached(["/bin/sh", "-c",
-            `pw-play --volume ${volume} ${q(base + ".oga")} 2>/dev/null || pw-play --volume ${volume} ${q(base + ".ogg")}`]);
+            '[ -f "$2.oga" ] && exec pw-play --volume "$1" "$2.oga"; exec pw-play --volume "$1" "$2.ogg"',
+            "sh", String(level), `/usr/share/sounds/${root.audioTheme}/stereo/${soundName}`])
+    }
+
+    // Panels opening and closing, whichever family draws them.
+    readonly property var _panelFlags: ["sidebarLeftOpen", "sidebarRightOpen", "overviewOpen", "searchOpen", "sessionOpen",
+        "settingsOverlayOpen", "controlPanelOpen", "dashboardOpen", "clipboardOpen", "wallpaperSelectorOpen", "cheatsheetOpen",
+        "mediaControlsOpen", "familyQuickSettingsOpen", "familyNotificationsOpen"]
+    readonly property int openPanels: root._panelFlags.filter(flag => GlobalStates[flag] === true).length
+    property int _openPanelsBefore: 0
+    onOpenPanelsChanged: {
+        const before = root._openPanelsBefore
+        root._openPanelsBefore = root.openPanels
+        if (!GlobalStates.shellEntryReady) return
+        // Choosing a result closes its panel: the choice already spoke for both.
+        if (root.openPanels < before && Date.now() - (root._lastPlayed["select"] ?? 0) < 400) return
+        root.playEvent(root.openPanels > before ? "open" : "close")
+    }
+
+    Connections {
+        target: GlobalStates
+        function onSettingsOverlayOpenChanged(): void {
+            if (GlobalStates.settingsOverlayOpen) root.refreshPacks()
+        }
+        function onScreenLockedChanged(): void {
+            if (!GlobalStates.shellEntryReady) return
+            root.playEvent(GlobalStates.screenLocked ? "lock" : "login")
+        }
     }
 
     Component.onCompleted: {
         _refreshMicState();
         themeSoundsProc.running = true;
+        userPacksProc.running = true;
+        root._openPanelsBefore = root.openPanels;
     }
 
     // IPC handlers for external control (keybinds, etc.)
@@ -505,10 +614,16 @@ Singleton {
             root.toggleMute();
         }
 
-        /// Play a shell event sound (e.g. `notification`, `batteryLow`, `timerDone`), honoring the user's per-event
-        /// override
+        /// Play a shell event sound (e.g. `notification`, `batteryLow`, `boot`, `open`) from the sound pack in use,
+        /// honoring the user's per-event override and the session and interface switches
         function playEvent(event: string): void {
             root.playEvent(event);
+        }
+
+        /// Hear an event in a sound pack (`lounge`, `orbit`, `crystal`, `arcade`, `classic` or one of yours), whatever is
+        /// switched on
+        function previewEvent(event: string, pack: string): void {
+            root.previewEvent(event, pack);
         }
 
         /// Toggle microphone mute

@@ -28,8 +28,12 @@ ColumnLayout {
     readonly property string currentValue: Config.options?.sounds?.events?.[root.eventId] ?? ""
     readonly property string themeDefault: Audio.soundEvents[root.eventId] ?? ""
     readonly property bool isFile: currentValue.startsWith("/") || currentValue.startsWith("file://")
+    // What plays with no choice of its own: the pack's sound, or under Classic the theme's (some events have none).
+    readonly property string defaultLabel: Audio.soundPack !== "classic"
+        ? Translation.tr("Sound pack (%1)").arg(Audio.packLabel(Audio.soundPack))
+        : root.themeDefault.length > 0 ? Translation.tr("Theme default (%1)").arg(root.themeDefault) : Translation.tr("Silent")
     readonly property string displayValue: currentValue === ""
-        ? Translation.tr("Theme default (%1)").arg(themeDefault)
+        ? root.defaultLabel
         : (isFile ? currentValue.split("/").pop() : currentValue)
 
     function setValue(value) {
@@ -95,7 +99,7 @@ ColumnLayout {
                 HoverHandler { id: previewHover }
                 TapHandler {
                     id: previewTap
-                    onTapped: Audio.playEvent(root.eventId)
+                    onTapped: Audio.previewEvent(root.eventId, "")
                 }
             }
 
@@ -151,9 +155,7 @@ ColumnLayout {
 
                         StyledText {
                             Layout.fillWidth: true
-                            text: row.modelData === ""
-                                ? Translation.tr("Theme default (%1)").arg(root.themeDefault)
-                                : row.modelData
+                            text: row.modelData === "" ? root.defaultLabel : row.modelData
                             font.pixelSize: Appearance.font.pixelSize.small
                             color: row.isSelected ? Appearance.colors.colOnPrimaryContainer
                                  : Appearance.colors.colOnLayer2
@@ -174,8 +176,8 @@ ColumnLayout {
                             HoverHandler { id: rowPlayHover }
                             TapHandler {
                                 id: rowPlayTap
-                                onTapped: Audio.playSystemSound(
-                                    row.modelData === "" ? root.themeDefault : row.modelData)
+                                onTapped: row.modelData === "" ? Audio.previewEvent(root.eventId, Audio.soundPack)
+                                    : Audio.playSystemSound(row.modelData)
                             }
                         }
                     }

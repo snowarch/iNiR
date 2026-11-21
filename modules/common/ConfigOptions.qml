@@ -2250,8 +2250,14 @@ JsonAdapter {
         property bool timer: false
         property bool pomodoro: false
         property string theme: "freedesktop"
+        // The sounds the shell speaks with: "classic" (the system theme above), "lounge", "orbit", "crystal", "arcade",
+        // or a folder of yours in ~/.local/share/inir/sounds
+        property string pack: "lounge"
         property bool notifications: true
         property real volume: 0.5
+        property bool session: true // the desktop arriving, locking and unlocking
+        property bool ui: false // panels opening and closing, selection, switches, volume, screenshots, devices
+        property real uiVolume: 0.6
         property JsonObject events: JsonObject {
             // Per-event override: "" = theme default; a bare name
             // plays that sound from the current theme; an absolute
@@ -2265,6 +2271,20 @@ JsonAdapter {
             property string powerUnplug: ""
             property string pomodoroDone: ""
             property string timerDone: ""
+            property string boot: ""
+            property string login: ""
+            property string lock: ""
+            property string open: ""
+            property string close: ""
+            property string navigate: ""
+            property string select: ""
+            property string toggleOn: ""
+            property string toggleOff: ""
+            property string volume: ""
+            property string screenshot: ""
+            property string error: ""
+            property string deviceAdded: ""
+            property string deviceRemoved: ""
         }
     }
 

@@ -34,6 +34,9 @@ Singleton {
         root.last = event
         root.sequence += 1
         root.happened(event)
+        // Things you plug in or pair answer in the sound pack; the charger has its own sounds (Battery).
+        if (["usb", "bluetooth", "drives", "displays", "audio"].includes(event.kind) && event.tone !== "warn")
+            Audio.playEvent(event.tone === "off" ? "deviceRemoved" : "deviceAdded")
     }
 
     // Plugging one thing in fires several subsystems (a headset is Bluetooth and then an audio

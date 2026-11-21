@@ -17,6 +17,7 @@ Singleton {
     // Startup lifecycle — singleton preserves one-shot state across hot reloads.
     property bool bootGreetingOpen: false
     property bool bootGreetingDone: false
+    property bool bootChimed: false // the session's boot sound played once (Audio "boot")
     property bool startupLockDone: false
     property bool barOpen: true
     property bool crosshairOpen: false

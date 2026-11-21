@@ -148,6 +148,7 @@ Scope {
                 root.unlockInProgress = false;
                 GlobalStates.screenUnlockFailed = true;
                 root.showFailure = true;
+                Audio.playEvent("error");
             }
         }
     }
