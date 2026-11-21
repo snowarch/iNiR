@@ -3797,5 +3797,13 @@
   "Day %1 of %2": "%2 में से दिन %1",
   "%1 h %2 min left": "%1 घं %2 मि बाकी",
   "%1 day left": "%1 दिन बाकी",
-  "%1 days left": "%1 दिन बाकी"
+  "%1 days left": "%1 दिन बाकी",
+  "This week": "इस सप्ताह",
+  "%1 min left": "%1 मि बाकी",
+  "Container": "कंटेनर",
+  "Wallpaper palette": "वॉलपेपर का पैलेट",
+  "Error": "त्रुटि",
+  "Play something with words": "बोल वाला कुछ चलाएँ",
+  "Instrumental": "वाद्य संगीत",
+  "No lyrics for this song": "इस गाने के बोल नहीं मिले"
 }

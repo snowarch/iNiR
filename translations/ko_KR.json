@@ -3797,5 +3797,13 @@
   "Day %1 of %2": "%2일 중 %1일째",
   "%1 h %2 min left": "%1시간 %2분 남음",
   "%1 day left": "%1일 남음",
-  "%1 days left": "%1일 남음"
+  "%1 days left": "%1일 남음",
+  "This week": "이번 주",
+  "%1 min left": "%1분 남음",
+  "Container": "컨테이너",
+  "Wallpaper palette": "바탕화면 팔레트",
+  "Error": "오류",
+  "Play something with words": "가사가 있는 곡을 재생하세요",
+  "Instrumental": "연주곡",
+  "No lyrics for this song": "이 곡의 가사가 없습니다"
 }

@@ -3797,5 +3797,13 @@
   "Day %1 of %2": "第 %1 天，共 %2 天",
   "%1 h %2 min left": "剩余 %1 小时 %2 分钟",
   "%1 day left": "剩余 %1 天",
-  "%1 days left": "剩余 %1 天"
+  "%1 days left": "剩余 %1 天",
+  "This week": "本周",
+  "%1 min left": "剩余 %1 分钟",
+  "Container": "容器",
+  "Wallpaper palette": "壁纸调色板",
+  "Error": "错误",
+  "Play something with words": "播放一首有歌词的歌",
+  "Instrumental": "纯音乐",
+  "No lyrics for this song": "这首歌没有歌词"
 }

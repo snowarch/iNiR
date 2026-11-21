@@ -3797,5 +3797,13 @@
   "Day %1 of %2": "Hari %1 dari %2",
   "%1 h %2 min left": "Sisa %1 j %2 mnt",
   "%1 day left": "Sisa %1 hari",
-  "%1 days left": "Sisa %1 hari"
+  "%1 days left": "Sisa %1 hari",
+  "This week": "Minggu ini",
+  "%1 min left": "Sisa %1 mnt",
+  "Container": "Kontainer",
+  "Wallpaper palette": "Palet wallpaper",
+  "Error": "Kesalahan",
+  "Play something with words": "Putar sesuatu yang ada liriknya",
+  "Instrumental": "Instrumental",
+  "No lyrics for this song": "Tidak ada lirik untuk lagu ini"
 }

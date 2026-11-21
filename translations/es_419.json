@@ -3797,5 +3797,13 @@
   "Day %1 of %2": "Día %1 de %2",
   "%1 h %2 min left": "Quedan %1 h %2 min",
   "%1 day left": "Queda %1 día",
-  "%1 days left": "Quedan %1 días"
+  "%1 days left": "Quedan %1 días",
+  "This week": "Esta semana",
+  "%1 min left": "Quedan %1 min",
+  "Container": "Contenedor",
+  "Wallpaper palette": "Paleta del fondo de pantalla",
+  "Error": "Error",
+  "Play something with words": "Reproduce algo con letra",
+  "Instrumental": "Instrumental",
+  "No lyrics for this song": "No hay letra para esta canción"
 }

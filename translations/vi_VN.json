@@ -3797,5 +3797,13 @@
   "Day %1 of %2": "Ngày %1 trên %2",
   "%1 h %2 min left": "Còn %1 giờ %2 phút",
   "%1 day left": "Còn %1 ngày",
-  "%1 days left": "Còn %1 ngày"
+  "%1 days left": "Còn %1 ngày",
+  "This week": "Tuần này",
+  "%1 min left": "Còn %1 phút",
+  "Container": "Vùng chứa",
+  "Wallpaper palette": "Bảng màu hình nền",
+  "Error": "Lỗi",
+  "Play something with words": "Phát bài nào có lời",
+  "Instrumental": "Không lời",
+  "No lyrics for this song": "Không có lời cho bài này"
 }

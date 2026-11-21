@@ -3797,5 +3797,13 @@
   "Day %1 of %2": "%2日中%1日目",
   "%1 h %2 min left": "残り %1 時間 %2 分",
   "%1 day left": "残り %1 日",
-  "%1 days left": "残り %1 日"
+  "%1 days left": "残り %1 日",
+  "This week": "今週",
+  "%1 min left": "残り %1 分",
+  "Container": "コンテナ",
+  "Wallpaper palette": "壁紙のパレット",
+  "Error": "エラー",
+  "Play something with words": "歌詞のある曲を再生しよう",
+  "Instrumental": "インストゥルメンタル",
+  "No lyrics for this song": "この曲の歌詞はありません"
 }

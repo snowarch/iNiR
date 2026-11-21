@@ -3797,5 +3797,13 @@
   "Day %1 of %2": "День %1 из %2",
   "%1 h %2 min left": "Осталось %1 ч %2 мин",
   "%1 day left": "Остался %1 день",
-  "%1 days left": "Осталось %1 дн."
+  "%1 days left": "Осталось %1 дн.",
+  "This week": "Эта неделя",
+  "%1 min left": "Осталось %1 мин",
+  "Container": "Контейнер",
+  "Wallpaper palette": "Палитра обоев",
+  "Error": "Ошибка",
+  "Play something with words": "Включите что-нибудь со словами",
+  "Instrumental": "Инструментал",
+  "No lyrics for this song": "Для этой песни нет текста"
 }

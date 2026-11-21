@@ -3797,5 +3797,13 @@
   "Day %1 of %2": "%2 günün %1. günü",
   "%1 h %2 min left": "%1 sa %2 dk kaldı",
   "%1 day left": "%1 gün kaldı",
-  "%1 days left": "%1 gün kaldı"
+  "%1 days left": "%1 gün kaldı",
+  "This week": "Bu hafta",
+  "%1 min left": "%1 dk kaldı",
+  "Container": "Kapsayıcı",
+  "Wallpaper palette": "Duvar kağıdı paleti",
+  "Error": "Hata",
+  "Play something with words": "Sözlü bir şey çal",
+  "Instrumental": "Enstrümantal",
+  "No lyrics for this song": "Bu şarkının sözleri yok"
 }

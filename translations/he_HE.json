@@ -3797,5 +3797,13 @@
   "Day %1 of %2": "יום %1 מתוך %2",
   "%1 h %2 min left": "נותרו %1 ש׳ %2 ד׳",
   "%1 day left": "נותר %1 יום",
-  "%1 days left": "נותרו %1 ימים"
+  "%1 days left": "נותרו %1 ימים",
+  "This week": "השבוע",
+  "%1 min left": "נותרו %1 ד׳",
+  "Container": "מכל",
+  "Wallpaper palette": "לוח הצבעים של הטפט",
+  "Error": "שגיאה",
+  "Play something with words": "הפעל משהו עם מילים",
+  "Instrumental": "אינסטרומנטלי",
+  "No lyrics for this song": "אין מילים לשיר הזה"
 }

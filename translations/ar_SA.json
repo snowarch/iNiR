@@ -3797,5 +3797,13 @@
   "Day %1 of %2": "اليوم %1 من %2",
   "%1 h %2 min left": "متبقٍ %1 س %2 د",
   "%1 day left": "يتبقى %1 يوم",
-  "%1 days left": "يتبقى %1 أيام"
+  "%1 days left": "يتبقى %1 أيام",
+  "This week": "هذا الأسبوع",
+  "%1 min left": "متبقٍ %1 د",
+  "Container": "الحاوية",
+  "Wallpaper palette": "لوحة ألوان الخلفية",
+  "Error": "خطأ",
+  "Play something with words": "شغّل شيئًا فيه كلمات",
+  "Instrumental": "موسيقى بلا كلمات",
+  "No lyrics for this song": "لا توجد كلمات لهذه الأغنية"
 }

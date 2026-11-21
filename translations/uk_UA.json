@@ -3797,5 +3797,13 @@
   "Day %1 of %2": "День %1 з %2",
   "%1 h %2 min left": "Залишилося %1 год %2 хв",
   "%1 day left": "Залишився %1 день",
-  "%1 days left": "Залишилося %1 дн."
+  "%1 days left": "Залишилося %1 дн.",
+  "This week": "Цей тиждень",
+  "%1 min left": "Залишилося %1 хв",
+  "Container": "Контейнер",
+  "Wallpaper palette": "Палітра шпалер",
+  "Error": "Помилка",
+  "Play something with words": "Увімкніть щось зі словами",
+  "Instrumental": "Інструментал",
+  "No lyrics for this song": "Для цієї пісні немає тексту"
 }
