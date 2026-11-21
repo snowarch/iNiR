@@ -1734,6 +1734,7 @@
             "fontFamily": "",
             "titleFontFamily": "",
             "highlight": "orange",
+            "swapAccents": false,
             "anime": {
                 "enabled": false,
                 "palette": "sakura",
