@@ -54,6 +54,28 @@ Item {
     // opacity (carried to the surface, the same math), or −1 when an ancestor runs an effect or a mask
     // (`layer.enabled`), or clips the item where it would show (a rounded ClippingRectangle included).
     property real composedOpacity: 1
+    // Whether the rect lies wholly inside the box, its rounded corners included. A rounded box is convex, so the
+    // rect's four corners decide. A capsule's radius is half its height: a band test (the radius off every side)
+    // left no room at all, and the Island's bars redrew the whole chassis at the screen's rate.
+    // The border draws over the content: the rect must clear it too.
+    function insideBox(box: var, r: rect, rounded: bool): bool {
+        const edge = rounded ? Math.max(0, Number(box.border?.width ?? 0)) : 0
+        const a = box.mapToItem(null, edge, edge), w = box.width - 2 * edge, h = box.height - 2 * edge
+        const xs = [r.x - a.x, r.x + r.width - a.x], ys = [r.y - a.y, r.y + r.height - a.y]
+        for (const x of xs) {
+            for (const y of ys) {
+                if (x < -0.5 || y < -0.5 || x > w + 0.5 || y > h + 0.5) return false
+                if (!rounded) continue
+                const left = x < w / 2, top = y < h / 2
+                const corner = top ? (left ? box.topLeftRadius : box.topRightRadius) : (left ? box.bottomLeftRadius : box.bottomRightRadius)
+                const rad = Math.max(0, Math.min(w / 2, h / 2, Number(corner ?? box.radius ?? 0) - edge))
+                const dx = left ? Math.max(0, rad - x) : Math.max(0, x - (w - rad))
+                const dy = top ? Math.max(0, rad - y) : Math.max(0, y - (h - rad))
+                if (dx * dx + dy * dy > rad * rad + 0.5) return false
+            }
+        }
+        return true
+    }
     function composition(): real {
         const r = root.sceneRect()
         let opacity = 1
@@ -62,11 +84,7 @@ Item {
             opacity *= item.opacity
             if (item !== root && item.layer && item.layer.enabled) return -1
             const rounded = item !== root && item.contentInsideBorder !== undefined
-            if (item !== root && (item.clip || rounded)) {
-                const a = item.mapToItem(null, 0, 0), inset = rounded ? Number(item.radius ?? 0) : 0
-                if (r.x < a.x + inset - 0.5 || r.y < a.y + inset - 0.5 || r.x + r.width > a.x + item.width - inset + 0.5
-                    || r.y + r.height > a.y + item.height - inset + 0.5) return -1
-            }
+            if (item !== root && (item.clip || rounded) && !root.insideBox(item, r, rounded)) return -1
         }
         return opacity
     }
