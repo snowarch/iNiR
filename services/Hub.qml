@@ -254,7 +254,8 @@ Singleton {
     // by `inir hub counts` when a page opens (the command keeps its last read five minutes), else the catalogue's
     // counts, the ones inir.space/hub shows. Every figure a page shows (who has it, votes, reactions) comes from here.
     // The person's own act is added to the others' while they share it, so it shows at once and is never counted
-    // twice; with sharing off `inir hub social` publishes an empty state, everyone else leaves them out, and so does this.
+    // twice; with sharing off `inir hub social` publishes an empty state, so the next read and the next catalogue leave
+    // them out, and this adds nothing of theirs.
     readonly property var quickReactions: ["❤️", "🔥", "✨", "😂", "🤯", "👏"] // inir-cli hub.Reactions
     readonly property int maxReactions: 12 // inir-cli maxReactions
     // the picker's first row with no search: the quick set and two more, eight across
