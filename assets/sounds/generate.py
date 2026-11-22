@@ -986,7 +986,8 @@ def tactile(e: str) -> np.ndarray:
     return m()
 
 
-PACKS = {"aurora": aurora, "tactile": tactile, "lounge": lounge, "orbit": orbit, "crystal": crystal, "arcade": arcade}
+# Order is the noise generator's: a new pack goes last, so a full run renders every older pack as it was.
+PACKS = {"lounge": lounge, "orbit": orbit, "crystal": crystal, "arcade": arcade, "aurora": aurora, "tactile": tactile}
 
 
 def write_wav(path: Path, x: np.ndarray) -> None:
