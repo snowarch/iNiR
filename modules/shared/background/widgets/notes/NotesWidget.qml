@@ -40,6 +40,13 @@ AbstractBackgroundWidget {
     readonly property real cardRadius: root.widgetCardRadius
     // Where a family face that draws its own head wants the text to start (-1: the family's usual gutter).
     property real faceTextTop: -1
+    // A family face's inks for the text on its plate (transparent: the widget's own), and whether its head carries the
+    // key that ends editing.
+    property color faceInk: "transparent"
+    property color faceMark: "transparent"
+    property bool faceDone: false
+    readonly property color textInk: root.familyFaced && root.faceInk.a > 0 ? root.faceInk : root.widgetInk
+    readonly property color textMark: root.familyFaced && root.faceMark.a > 0 ? root.faceMark : root.widgetAccentVisible
     property bool _syncingText: false
 
     function _loadPersistedText(): void {
@@ -219,14 +226,16 @@ AbstractBackgroundWidget {
         }
 
         TextEdit {
-            cursorDelegate: TextCursor {}
+            cursorDelegate: TextCursor {
+                accent: root.familyFaced && root.faceMark.a > 0 ? root.faceMark : Appearance.colors.colPrimary
+            }
             id: textEdit
             width: editorFlick.width
             height: Math.max(editorFlick.height, contentHeight)
             wrapMode: TextEdit.Wrap
-            color: root.widgetInk
-            selectionColor: ColorUtils.applyAlpha(root.widgetAccentVisible, 0.36)
-            selectedTextColor: root.widgetInk
+            color: root.textInk
+            selectionColor: ColorUtils.applyAlpha(root.textMark, 0.36)
+            selectedTextColor: root.textInk
             selectByMouse: true
             selectByKeyboard: true
             persistentSelection: true
@@ -338,18 +347,18 @@ AbstractBackgroundWidget {
         z: 5
         width: Math.round(30 * root.scaleFactor)
         height: width
-        visible: root.editing && !noteHeading.visible
+        visible: root.editing && !noteHeading.visible && !(root.familyFaced && root.faceDone)
         buttonRadius: Appearance.rounding.full
         colBackground: "transparent"
-        colBackgroundHover: ColorUtils.applyAlpha(root.widgetInk, 0.1)
-        colRipple: ColorUtils.applyAlpha(root.widgetInk, 0.16)
+        colBackgroundHover: ColorUtils.applyAlpha(root.textInk, 0.1)
+        colRipple: ColorUtils.applyAlpha(root.textInk, 0.16)
         downAction: root._finishEditing
 
         contentItem: MaterialSymbol {
             anchors.centerIn: parent
             text: "check"
             iconSize: Math.round(17 * root.scaleFactor)
-            color: root.widgetAccentVisible
+            color: root.textMark
         }
         StyledToolTip { text: Translation.tr("Done editing") }
     }
