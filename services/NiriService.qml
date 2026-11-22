@@ -689,6 +689,8 @@ Singleton {
                     updatedWorkspaces[id] = id === String(focusedWindow.workspace_id) ? updatedWs : root.workspaces[id]
                 }
                 root.workspaces = updatedWorkspaces
+                root.allWorkspaces = Object.values(updatedWorkspaces).sort((a, b) => a.idx - b.idx)
+                root.updateCurrentOutputWorkspaces()
             }
         }
     }
@@ -708,6 +710,9 @@ Singleton {
         for (const id in root.workspaces)
             updatedWorkspaces[id] = id === String(data.workspace_id) ? updatedWs : root.workspaces[id]
         root.workspaces = updatedWorkspaces
+        // The lists read the workspace's front window too: a list left behind points at a window that lost it.
+        root.allWorkspaces = Object.values(updatedWorkspaces).sort((a, b) => a.idx - b.idx)
+        root.updateCurrentOutputWorkspaces()
     }
 
     function handleWindowsChanged(data) {
