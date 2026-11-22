@@ -2727,6 +2727,7 @@
         },
         "bar": {
             "bottom": true,
+            "floating": true,
             "iconSize": 26,
             "leftAlignApps": false,
             "monochromeIcons": false,
