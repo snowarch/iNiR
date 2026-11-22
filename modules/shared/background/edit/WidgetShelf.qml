@@ -89,8 +89,8 @@ Item {
         return hits.map(hit => hit.entry)
     }
     property int highlight: 0
-    onQueryChanged: { root.highlight = 0; tiles.contentX = 0 }
-    onCategoryChanged: tiles.contentX = 0
+    onQueryChanged: { root.highlight = 0; tiles.page = 0 }
+    onCategoryChanged: tiles.page = 0
     function pick(category: string): void {
         GlobalStates.widgetSearchText = ""
         root.category = category
@@ -167,7 +167,7 @@ Item {
     // Where each picture sits on screen, for a widget taken away from the desktop to shrink into. A picture scrolled
     // out of view gives the nearest end of the row.
     function publishTiles(): void {
-        const view = root.screenRect(tiles)
+        const view = root.screenRect(tiles.view)
         const out = {}
         for (const child of tileRow.children) {
             if (!child.key) continue
@@ -261,44 +261,115 @@ Item {
     }
     Component.onCompleted: if (GlobalStates.widgetSearchOpen) Qt.callLater(root.openSearch)
 
+    // ── A row of plates turned a page at a time ──
+    // A page holds the plates that fit whole; the wheel, the keys at its ends and the search's arrows turn it. Nothing
+    // slides under the hand: dragging the row sideways lost the place.
+    readonly property real turnRoom: Math.round(34 * root.d)
+    component PagedRow: Item {
+        id: pager
+        required property Item row
+        default property alias plates: strip.flickableData
+        readonly property alias view: strip
+        readonly property alias contentX: strip.contentX
+        property int page: 0
+        // More than fits: the keys take room at both ends, never over a plate.
+        readonly property bool paged: pager.row.width > pager.width + 0.5
+        readonly property var starts: {
+            void pager.row.width
+            const out = [0]
+            const plates = Array.from(pager.row.children).filter(child => child.visible && child.width > 0).sort((a, b) => a.x - b.x)
+            for (const plate of plates) {
+                const start = out[out.length - 1]
+                if (plate.x > start + 0.5 && plate.x + plate.width > start + strip.width + 0.5)
+                    out.push(plate.x)
+            }
+            return out
+        }
+        readonly property int pages: pager.starts.length
+        onPagesChanged: if (pager.page >= pager.pages) pager.page = Math.max(0, pager.pages - 1)
+        function turn(by: int): void { pager.page = Math.max(0, Math.min(pager.pages - 1, pager.page + by)) }
+        function reveal(plate: Item): void {
+            let at = 0
+            for (let i = 0; i < pager.starts.length; i++)
+                if (pager.starts[i] <= plate.x + 0.5) at = i
+            pager.page = at
+        }
+
+        Flickable {
+            id: strip
+            x: pager.paged ? root.turnRoom : 0
+            width: pager.width - (pager.paged ? 2 * root.turnRoom : 0)
+            height: pager.height
+            interactive: false
+            clip: true
+            contentWidth: Math.max(pager.row.width, pager.starts[pager.starts.length - 1] + strip.width)
+            contentHeight: height
+            contentX: pager.starts[Math.min(pager.page, pager.pages - 1)] ?? 0
+            Behavior on contentX {
+                NumberAnimation { duration: root.face.duration(300); easing.type: Easing.BezierSpline; easing.bezierCurve: root.face.morphCurve }
+            }
+        }
+        // One notch, or a touchpad's small steps adding up to one, turns one page.
+        property real wheelRest: 0
+        Timer { id: wheelQuiet; interval: 400; onTriggered: pager.wheelRest = 0 }
+        WheelHandler {
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+            onWheel: event => {
+                pager.wheelRest += Math.abs(event.angleDelta.x) > Math.abs(event.angleDelta.y) ? event.angleDelta.x : event.angleDelta.y
+                wheelQuiet.restart()
+                if (Math.abs(pager.wheelRest) < 120)
+                    return
+                pager.turn(pager.wheelRest < 0 ? 1 : -1)
+                pager.wheelRest = 0
+            }
+        }
+        Repeater {
+            model: pager.paged ? [-1, 1] : []
+            delegate: Rectangle {
+                id: turnKey
+                required property int modelData
+                readonly property bool can: turnKey.modelData < 0 ? pager.page > 0 : pager.page < pager.pages - 1
+                x: turnKey.modelData < 0 ? 0 : pager.width - width
+                y: Math.round((root.pictureHeight - height) / 2)
+                width: Math.round(28 * root.d)
+                height: width
+                radius: width / 2
+                color: turnArea.containsMouse && turnKey.can ? root.face.fillActive : root.face.fillQuiet
+                border.width: 1
+                border.color: root.face.hairline
+                opacity: turnKey.can ? 1 : 0.35
+                Behavior on opacity { NumberAnimation { duration: root.face.duration(160); easing.type: root.face.feedbackEasing } }
+                MaterialSymbol {
+                    anchors.centerIn: parent
+                    text: turnKey.modelData < 0 ? "chevron_left" : "chevron_right"
+                    iconSize: Math.round(18 * root.d)
+                    color: root.face.ink
+                }
+                MouseArea {
+                    id: turnArea
+                    anchors.fill: parent
+                    enabled: turnKey.can
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    Accessible.role: Accessible.Button
+                    Accessible.name: turnKey.modelData < 0 ? Translation.tr("Previous") : Translation.tr("Next")
+                    onClicked: pager.turn(turnKey.modelData)
+                }
+            }
+        }
+    }
+
     // ── The row of pictures ──
-    Flickable {
+    PagedRow {
         id: tiles
+        row: tileRow
         visible: root.onWidgets
         transform: Translate { x: root.onWidgets ? root.pageShift : 0 }
         x: root.pad
         y: root.pad + root.headHeight + root.headGap
         width: root.width - 2 * root.pad
         height: root.pictureHeight + root.nameGap + root.nameHeight
-        contentWidth: tileRow.width
-        contentHeight: height
-        flickableDirection: Flickable.HorizontalFlick
-        boundsBehavior: Flickable.StopAtBounds
-        clip: true
         onContentXChanged: publishTimer.restart()
-        function reveal(tile: Item): void {
-            const left = tile.x
-            const right = tile.x + tile.width
-            if (left < tiles.contentX) tiles.contentX = left
-            else if (right > tiles.contentX + tiles.width) tiles.contentX = right - tiles.width
-        }
-        Behavior on contentX {
-            enabled: !tiles.dragging && !tiles.flicking && !wheelSettle.running
-            NumberAnimation { duration: root.face.duration(260); easing.type: Easing.BezierSpline; easing.bezierCurve: root.face.morphCurve }
-        }
-        Timer { id: wheelSettle; interval: 160 }
-        // The wheel scrolls the row sideways.
-        WheelHandler {
-            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-            onWheel: event => {
-                const delta = Math.abs(event.angleDelta.x) > Math.abs(event.angleDelta.y) ? event.angleDelta.x : event.angleDelta.y
-                const step = event.pixelDelta.x !== 0 || event.pixelDelta.y !== 0
-                    ? (Math.abs(event.pixelDelta.x) > Math.abs(event.pixelDelta.y) ? event.pixelDelta.x : event.pixelDelta.y)
-                    : delta / 120 * Math.round(180 * root.d)
-                wheelSettle.restart()
-                tiles.contentX = Math.max(0, Math.min(tiles.contentWidth - tiles.width, tiles.contentX - step))
-            }
-        }
 
         Row {
             id: tileRow
@@ -589,22 +660,11 @@ Item {
     // ── Saved desktops: save this one, wear one (Undo takes it back), rename or remove it in place. ──
     Component {
         id: presetsPage
-        Flickable {
+        PagedRow {
             id: presetRow
+            row: presetContent
             readonly property real plateWidth: Math.round(root.pictureHeight * 16 / 9)
             readonly property string worn: { Config.revision; return DesktopPresets.wornId() }
-            contentWidth: presetContent.width
-            contentHeight: height
-            flickableDirection: Flickable.HorizontalFlick
-            boundsBehavior: Flickable.StopAtBounds
-            clip: true
-            WheelHandler {
-                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                onWheel: event => {
-                    const delta = Math.abs(event.angleDelta.x) > Math.abs(event.angleDelta.y) ? event.angleDelta.x : event.angleDelta.y
-                    presetRow.contentX = Math.max(0, Math.min(presetRow.contentWidth - presetRow.width, presetRow.contentX - delta / 120 * Math.round(180 * root.d)))
-                }
-            }
             Row {
                 id: presetContent
                 spacing: root.tileGap
