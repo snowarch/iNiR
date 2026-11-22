@@ -25,6 +25,7 @@ Item {
     property bool panelVisible: true
     readonly property bool useWallpaperBackdrop: root.panelVisible && (root.angelStyle || root.auroraStyle) && !root.inirStyle && root.wallpaperUrl.length > 0
 
+
     // ── Screen & wallpaper for blur (angel/aurora) ──
     property int screenWidth: root.QsWindow?.window?.screen?.width ?? 1920
     property int screenHeight: root.QsWindow?.window?.screen?.height ?? 1080
@@ -128,7 +129,7 @@ Item {
     readonly property int dashboardMaxWidth: 560
     readonly property int dashboardHorizontalPadding: 12
     readonly property int dashboardVerticalPadding: 12
-    readonly property real dashboardSafeHeight: Math.max(260, root.availableHeight - (dashboardVerticalPadding * 2))
+    readonly property real dashboardSafeHeight: Math.floor(Math.max(260, root.availableHeight - (dashboardVerticalPadding * 2)))
 
     // ── Media-adaptive colors ──
     readonly property color mediaBg: {
@@ -153,8 +154,6 @@ Item {
         : (blendedColors?.colSecondaryContainer ?? Appearance.colors.colSecondaryContainer)
     readonly property color mediaHover: angelStyle ? Appearance.angel.colGlassCardHover : inirStyle ? Appearance.inir.colLayer2Hover
         : ColorUtils.transparentize(blendedColors?.colLayer1 ?? Appearance.colors.colLayer1, 0.5)
-    readonly property int weatherSystemMinHeight: 190
-    readonly property int weatherCardMinHeight: 132
 
     implicitWidth: dashContainer.implicitWidth + Appearance.sizes.elevationMargin * 2
     implicitHeight: dashContainer.implicitHeight + Appearance.sizes.elevationMargin * 2
@@ -180,6 +179,11 @@ Item {
         required property Item targetCard
         anchors.fill: parent
         visible: root.useWallpaperBackdrop
+        // Masked on its own: the card's content stays out of any layer, so it draws on the pixel grid.
+        layer.enabled: visible
+        layer.effect: GE.OpacityMask {
+            maskSource: Rectangle { width: blurBg.width; height: blurBg.height; radius: blurBg.targetCard?.radius ?? root.cardRadius }
+        }
 
         Image {
             id: blurBgImage
@@ -239,7 +243,7 @@ Item {
         anchors.centerIn: parent
         width: Math.min(root.dashboardMaxWidth, root.availableWidth - (root.dashboardHorizontalPadding * 2))
         implicitWidth: width
-        implicitHeight: Math.min(mainCol.implicitHeight + 24, root.dashboardSafeHeight)
+        implicitHeight: Math.round(Math.min(mainCol.implicitHeight + 24, root.dashboardSafeHeight))
         height: implicitHeight
         radius: root.containerRadius
         fallbackColor: Appearance.zzzEverywhere ? "transparent" : Appearance.colors.colBackgroundSurfaceContainer
@@ -291,7 +295,7 @@ Item {
 
             ColumnLayout {
                 id: mainCol
-                x: (dashboardFlick.width - width) / 2
+                x: Math.round((dashboardFlick.width - width) / 2)
                 y: 12
                 spacing: 10
                 width: Math.max(320, dashboardFlick.width - 20)
@@ -309,48 +313,7 @@ Item {
                 border.color: root.colBorder
                 clip: true
 
-                layer.enabled: root.useWallpaperBackdrop
-                layer.effect: GE.OpacityMask {
-                    maskSource: Rectangle { width: headerCard.width; height: headerCard.height; radius: headerCard.radius }
-                }
-
-                // Blurred wallpaper background (angel/aurora)
-                Image {
-                    anchors.centerIn: parent
-                    width: root.screenWidth
-                    height: root.screenHeight
-                    visible: root.useWallpaperBackdrop
-                    source: root.useWallpaperBackdrop ? root.wallpaperUrl : ""
-                    fillMode: Image.PreserveAspectCrop
-                    cache: true
-                    sourceSize.width: root.screenWidth
-                    sourceSize.height: root.screenHeight
-                    asynchronous: true
-
-                    layer.enabled: Appearance.effectsEnabled && root.useWallpaperBackdrop
-                    layer.effect: MultiEffect {
-                        saturation: root.angelStyle ? Appearance.angel.blurSaturation : 0.2
-                        blurEnabled: Appearance.effectsEnabled
-                        blurMax: 64
-                        blur: 1
-                    }
-
-                    Rectangle {
-                        anchors.fill: parent
-                        color: root.angelStyle
-                            ? ColorUtils.transparentize(Appearance.colors.colLayer0Base, Appearance.angel.overlayOpacity)
-                            : ColorUtils.transparentize(
-                                Appearance.colors.colLayer0Base,
-                                Math.max(0.08, Appearance.aurora.overlayTransparentize - 0.14)
-                            )
-                    }
-
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: headerCard.radius
-                        color: root.panelGlassTint
-                    }
-                }
+                BlurredCardBg { targetCard: headerCard }
 
                 // Solid background for material/inir
                 Rectangle {
@@ -503,11 +466,6 @@ Item {
                   border.color: root.colBorder
                   clip: true
 
-                  layer.enabled: (root.angelStyle || root.auroraStyle) && !root.inirStyle
-                  layer.effect: GE.OpacityMask {
-                      maskSource: Rectangle { width: togglesCard.width; height: togglesCard.height; radius: togglesCard.radius }
-                  }
-
                   BlurredCardBg { targetCard: togglesCard }
                   Rectangle { anchors.fill: parent; radius: togglesCard.radius; visible: !root.angelStyle && !root.auroraStyle; color: root.colCard }
 
@@ -586,11 +544,6 @@ Item {
                 border.color: root.colBorder
                 clip: true
 
-                layer.enabled: (root.angelStyle || root.auroraStyle) && !root.inirStyle
-                layer.effect: GE.OpacityMask {
-                    maskSource: Rectangle { width: slidersCard.width; height: slidersCard.height; radius: slidersCard.radius }
-                }
-
                 BlurredCardBg { targetCard: slidersCard }
                 Rectangle { anchors.fill: parent; radius: slidersCard.radius; visible: !root.angelStyle && !root.auroraStyle; color: root.colCard }
                 AngelPartialBorder { targetRadius: parent.radius; coverage: 0.45 }
@@ -646,28 +599,35 @@ Item {
                 border.color: root.colBorder
                 clip: true
 
-                layer.enabled: true
-                layer.effect: GE.OpacityMask {
-                    maskSource: Rectangle { width: mediaCard.width; height: mediaCard.height; radius: mediaCard.radius }
-                }
-
                 // Blurred wallpaper background (angel/aurora)
                 BlurredCardBg { targetCard: mediaCard }
 
                 // Solid background for material/inir
                 Rectangle { anchors.fill: parent; radius: mediaCard.radius; visible: !root.angelStyle && !root.auroraStyle; color: root.colCard }
 
-                // Blurred album art overlay
-                Image {
+                // Album art blurred whole: it reads as colour, not as a soft picture behind the text.
+                // Masked on its own, so the text stays out of any layer.
+                Item {
                     anchors.fill: parent
-                    source: root.downloaded ? root.displayedArtFilePath : ""
-                    fillMode: Image.PreserveAspectCrop
-                    asynchronous: true
-                    cache: false
-                    visible: root.displayedArtFilePath !== "" && status === Image.Ready
+                    visible: root.displayedArtFilePath !== "" && artBackdrop.status === Image.Ready
                     opacity: root.inirStyle ? 0.15 : (root.auroraStyle ? 0.25 : 0.4)
-                    layer.enabled: Appearance.effectsEnabled
-                    layer.effect: MultiEffect { blurEnabled: true; blur: 0.4; blurMax: 40; saturation: 0.3 }
+                    layer.enabled: visible
+                    layer.effect: GE.OpacityMask {
+                        maskSource: Rectangle { width: mediaCard.width; height: mediaCard.height; radius: mediaCard.radius }
+                    }
+
+                    Image {
+                        id: artBackdrop
+                        // Past the card's edges, so the blur has no rim to fade into.
+                        anchors { fill: parent; margins: -32 }
+                        source: root.downloaded ? root.displayedArtFilePath : ""
+                        sourceSize { width: 128; height: 128 }
+                        fillMode: Image.PreserveAspectCrop
+                        asynchronous: true
+                        cache: false
+                        layer.enabled: Appearance.effectsEnabled
+                        layer.effect: MultiEffect { blurEnabled: true; blur: 1; blurMax: 64; saturation: 0.3; autoPaddingEnabled: false }
+                    }
                 }
 
                 RowLayout {
@@ -883,18 +843,13 @@ Item {
                 id: weatherCard
                 Layout.fillWidth: true
                 visible: implicitHeight > 0
-                implicitHeight: (root.cfgWeather && Weather.enabled && (Weather.data?.temp ?? "") !== "" && !(Weather.data?.temp ?? "").startsWith("--")) ? Math.max(weatherContent.implicitHeight + 24, root.weatherCardMinHeight) : 0
+                implicitHeight: (root.cfgWeather && Weather.enabled && (Weather.data?.temp ?? "") !== "" && !(Weather.data?.temp ?? "").startsWith("--")) ? weatherContent.implicitHeight + 24 : 0
                 Behavior on implicitHeight { enabled: Appearance.animationsEnabled; NumberAnimation { duration: Appearance.animation.elementMoveEnter.duration; easing.type: Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve } }
                 radius: root.cardRadius
                 color: root.inirStyle ? root.colCard : "transparent"
                 border.width: root.bw
                 border.color: root.colBorder
                 clip: true
-
-                layer.enabled: (root.angelStyle || root.auroraStyle) && !root.inirStyle
-                layer.effect: GE.OpacityMask {
-                    maskSource: Rectangle { width: weatherCard.width; height: weatherCard.height; radius: weatherCard.radius }
-                }
 
                 BlurredCardBg { targetCard: weatherCard }
                 Rectangle { anchors.fill: parent; radius: weatherCard.radius; visible: !root.angelStyle && !root.auroraStyle; color: root.colCard }
@@ -1018,17 +973,12 @@ Item {
                 id: sysCard
                 Layout.fillWidth: true
                 visible: root.cfgSystem
-                implicitHeight: Math.max(sysContent.implicitHeight + 16, root.weatherSystemMinHeight)
+                implicitHeight: sysContent.implicitHeight + 16
                 radius: root.cardRadius
                 color: root.inirStyle ? root.colCard : "transparent"
                 border.width: root.bw
                 border.color: root.colBorder
                 clip: true
-
-                layer.enabled: (root.angelStyle || root.auroraStyle) && !root.inirStyle
-                layer.effect: GE.OpacityMask {
-                    maskSource: Rectangle { width: sysCard.width; height: sysCard.height; radius: sysCard.radius }
-                }
 
                 BlurredCardBg { targetCard: sysCard }
                 Rectangle { anchors.fill: parent; radius: sysCard.radius; visible: !root.angelStyle && !root.auroraStyle; color: root.colCard }
@@ -1433,8 +1383,8 @@ Item {
         property string icon
         property string value
 
-        implicitHeight: chipRow.implicitHeight + 10
-        implicitWidth: chipRow.implicitWidth + 20
+        implicitHeight: Math.ceil(chipRow.implicitHeight) + 10
+        implicitWidth: Math.ceil(chipRow.implicitWidth) + 20
         radius: Appearance.editorialEverywhere ? Appearance.rounding.small : Appearance.rounding.full
         color: root.angelStyle ? ColorUtils.transparentize(root.colPrimary, 0.78)
             : root.inirStyle ? Appearance.inir.colLayer2

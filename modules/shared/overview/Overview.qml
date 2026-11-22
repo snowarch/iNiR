@@ -1360,7 +1360,7 @@ Scope {
                     searchingText: root.searchingText
                     panelVisible: root.visible
                     // Centered mode: limit search results to 60% of screen height
-                    availableHeight: Math.max(220, root.height * 0.6)
+                    availableHeight: Math.round(Math.max(220, root.height * 0.6))
                     onSearchingTextChanged: if (searchingText !== root.searchingText) root.searchingText = searchingText
                 }
 
@@ -1551,7 +1551,7 @@ Scope {
                         availableWidth: root.orbitWorkingWidth
                             * Math.max(0.6, Math.min(1.0,
                                 (root.orbitOptions.maxPanelWidthPercent ?? 92) / 100))
-                        availableHeight: Math.max(1, root.height * 0.66)
+                        availableHeight: Math.round(Math.max(1, root.height * 0.66))
                         visible: root.searchingText == ""
                     }
                 }
@@ -1560,7 +1560,7 @@ Scope {
                     id: allAppsGridComponent
                     OverviewAllAppsGrid {
                         panelVisible: root.visible
-                        availableHeight: Math.max(400, root.height * 0.78)
+                        availableHeight: Math.round(Math.max(400, root.height * 0.78))
                         onAppLaunched: GlobalStates.overviewOpen = false
                     }
                 }
@@ -1577,7 +1577,7 @@ Scope {
                         OverviewDashboard {
                             panelVisible: root.visible
                             availableWidth: dashboardPanel.parent?.width ?? root.width
-                            availableHeight: Math.max(260, root.height * 0.78)
+                            availableHeight: Math.round(Math.max(260, root.height * 0.78))
                         }
                     }
 
