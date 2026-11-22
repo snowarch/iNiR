@@ -22,6 +22,20 @@ Singleton {
     readonly property bool receding: GlobalStates.widgetEditMode && Object.keys(root.stages).length > 0
     readonly property real gap: 22
 
+    // Room a family keeps beside the card (an inspector at its side): the card moves over and, when it must, shrinks.
+    property var asides: ({})
+    function setAside(output: string, left: real, right: real): void {
+        const now = root.asides[output]
+        if ((now?.left ?? 0) === left && (now?.right ?? 0) === right)
+            return
+        const next = Object.assign({}, root.asides)
+        if (left <= 0 && right <= 0)
+            delete next[output]
+        else
+            next[output] = { left: Math.max(0, left), right: Math.max(0, right) }
+        root.asides = next
+    }
+
     function setStage(output: string, progress: real, top: real, bottom: real): void {
         const now = root.stages[output]
         if (now && now.progress === progress && now.top === top && now.bottom === bottom)
@@ -61,11 +75,13 @@ Singleton {
             return { x: 0, y: 0, s: 1, p: 0, rest: 1 }
         const top = stage.top + root.gap
         const bottom = h - stage.bottom - root.gap
-        const fit = Math.max(0.2, Math.min((w - 4 * root.gap) / w, (bottom - top) / h))
+        const left = root.asides[output]?.left ?? 0
+        const right = root.asides[output]?.right ?? 0
+        const fit = Math.max(0.2, Math.min((w - left - right - 4 * root.gap) / w, (bottom - top) / h))
         // At rest the card is whole pixels from its corner to its size, so its picture lands texel on pixel.
         const s = Math.round(w * fit) / w
         const p = stage.progress
-        const x = Math.round((w - w * s) / 2)
+        const x = Math.round(left + (w - left - right - w * s) / 2)
         const y = Math.round(top + Math.max(0, (bottom - top - h * s) / 2))
         // `rest`: the scale it settles at, for what renders once at the size it will be shown.
         return { x: x * p, y: y * p, s: 1 + (s - 1) * p, p: p, rest: s }
