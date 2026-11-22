@@ -1666,6 +1666,8 @@
             "tint": "wallpaper",
             "legibleAlways": false,
             "design": "iris",
+            "prism": "quiet",
+            "prismLight": "white",
             "material": "glass",
             "blur": 100,
             "weight": "regular",
