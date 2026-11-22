@@ -269,7 +269,7 @@ Item {
         id: pager
         required property Item row
         default property alias plates: strip.flickableData
-        readonly property alias view: strip
+        readonly property alias view: frame
         readonly property alias contentX: strip.contentX
         property int page: 0
         // More than fits: the keys take room at both ends, never over a plate.
@@ -285,6 +285,14 @@ Item {
             }
             return out
         }
+        // Where each page's last whole plate ends: the frame shows that much, so no plate is cut at its edge.
+        readonly property var spans: pager.starts.map(start => {
+            let end = start
+            for (const plate of pager.row.children)
+                if (plate.visible && plate.width > 0 && plate.x > start - 0.5 && plate.x + plate.width < start + strip.width + 0.5)
+                    end = Math.max(end, plate.x + plate.width)
+            return end - start
+        })
         readonly property int pages: pager.starts.length
         onPagesChanged: if (pager.page >= pager.pages) pager.page = Math.max(0, pager.pages - 1)
         function turn(by: int): void { pager.page = Math.max(0, Math.min(pager.pages - 1, pager.page + by)) }
@@ -295,18 +303,26 @@ Item {
             pager.page = at
         }
 
-        Flickable {
-            id: strip
+        Item {
+            id: frame
             x: pager.paged ? root.turnRoom : 0
-            width: pager.width - (pager.paged ? 2 * root.turnRoom : 0)
+            width: pager.paged ? (pager.spans[Math.min(pager.page, pager.pages - 1)] ?? strip.width) : strip.width
             height: pager.height
-            interactive: false
             clip: true
-            contentWidth: Math.max(pager.row.width, pager.starts[pager.starts.length - 1] + strip.width)
-            contentHeight: height
-            contentX: pager.starts[Math.min(pager.page, pager.pages - 1)] ?? 0
-            Behavior on contentX {
+            Behavior on width {
                 NumberAnimation { duration: root.face.duration(300); easing.type: Easing.BezierSpline; easing.bezierCurve: root.face.morphCurve }
+            }
+            Flickable {
+                id: strip
+                width: pager.width - (pager.paged ? 2 * root.turnRoom : 0)
+                height: pager.height
+                interactive: false
+                contentWidth: Math.max(pager.row.width, pager.starts[pager.starts.length - 1] + strip.width)
+                contentHeight: height
+                contentX: pager.starts[Math.min(pager.page, pager.pages - 1)] ?? 0
+                Behavior on contentX {
+                    NumberAnimation { duration: root.face.duration(300); easing.type: Easing.BezierSpline; easing.bezierCurve: root.face.morphCurve }
+                }
             }
         }
         // One notch, or a touchpad's small steps adding up to one, turns one page.
