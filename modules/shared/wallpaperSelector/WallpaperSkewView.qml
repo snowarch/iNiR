@@ -453,14 +453,14 @@ Item {
         focus: false
 
         highlightRangeMode: ListView.StrictlyEnforceRange
-        preferredHighlightBegin: (width - root.expandedCardWidth) / 2
-        preferredHighlightEnd: (width + root.expandedCardWidth) / 2
+        preferredHighlightBegin: Math.round((width - root.expandedCardWidth) / 2)
+        preferredHighlightEnd: preferredHighlightBegin + root.expandedCardWidth
         highlightMoveDuration: root._suppressHighlightAnim ? 0
             : (root._rapidNavigation ? Appearance.animation.elementMoveFast.duration
                                      : Appearance.animation.elementResize.duration)
         highlightFollowsCurrentItem: true
-        header: Item { width: (skewView.width - root.expandedCardWidth) / 2; height: 1 }
-        footer: Item { width: (skewView.width - root.expandedCardWidth) / 2; height: 1 }
+        header: Item { width: Math.round((skewView.width - root.expandedCardWidth) / 2); height: 1 }
+        footer: Item { width: Math.round((skewView.width - root.expandedCardWidth) / 2); height: 1 }
 
         boundsBehavior: Flickable.StopAtBounds
         model: root.imageCount

@@ -105,75 +105,81 @@ Rectangle {
     border.color: "transparent"
 
     clip: true
-    
+
+    // Only the backdrop is masked. The content stays out of every layer: a layer draws its subtree into a texture,
+    // and at a fractional size or position that texture is resampled, which blurs each text and icon in it.
     // Hidden persistent surfaces must not retain their mask FBO. The decoded
     // wallpaper stays in Qt's shared image cache, so remapping remains warm.
-    layer.enabled: root.useWallpaperBackdrop && root.visible
-    layer.effect: GE.OpacityMask {
-        maskSource: Rectangle {
-            width: root.width
-            height: root.height
-            radius: root.radius
-        }
-    }
-    
-    // Blurred wallpaper backdrop for aurora/angel styles.
-    // OPTIMIZATION: layer.enabled is only active when the GlassBackground is
-    // actually visible, reducing GPU memory when panels are hidden.
-    Image {
-        id: blurredWallpaper
-        x: -root.screenX
-        y: -root.screenY
-        width: root.screenWidth
-        height: root.screenHeight
-        visible: root.useWallpaperBackdrop && status === Image.Ready
-        source: root.useWallpaperBackdrop ? root.wallpaperUrl : ""
-        fillMode: Image.PreserveAspectCrop
-        // All GlassBackground instances share the same wallpaper URL and sourceSize,
-        // so Qt's QPixmapCache serves a single decoded pixmap to all of them.
-        cache: true
-        asynchronous: true
-        // Blurred anyway: a quarter of the screen looks the same and every instance kept a full layer.
-        readonly property real blur: Appearance.effectsEnabled
-            ? (root.angelEverywhere ? Appearance.angel.blurIntensity : root.blurStrength) : 0
-        readonly property real grain: blur >= 0.3 ? 0.25 : 1
-        sourceSize.width: Math.round(root.screenWidth * grain)
-        sourceSize.height: Math.round(root.screenHeight * grain)
-        layer.textureSize: Qt.size(Math.round(width * grain), Math.round(height * grain))
-
-        // CRITICAL: Only enable blur layer when VISIBLE AND enabled.
-        // This releases the FBO when the panel is hidden, saving ~16 MiB per instance.
-        layer.enabled: Appearance.effectsEnabled && root.useWallpaperBackdrop && root.visible
-        layer.effect: MultiEffect {
-            source: blurredWallpaper
-            anchors.fill: source
-            contrast: Appearance.aurora.backdropContrast
-            brightness: Appearance.aurora.backdropBrightness
-            saturation: root.angelEverywhere && !root.forceNeutralMaterial
-                ? (Appearance.angel.blurSaturation * Appearance.angel.colorStrength)
-                : (Appearance.effectsEnabled ? root.saturationStrength : 0)
-            blurEnabled: Appearance.effectsEnabled
-            blurMax: 64
-            blur: blurredWallpaper.blur
-        }
-    }
-
-    Rectangle {
+    Item {
+        id: backdrop
         anchors.fill: parent
-        visible: root.useWallpaperBackdrop
-        color: root.angelEverywhere && !root.forceNeutralMaterial
-            ? ColorUtils.transparentize(Appearance.colors.colLayer0Base, Appearance.angel.overlayOpacity)
-            : ColorUtils.transparentize(root.overlayColor, root.auroraTransparency)
-    }
+        layer.enabled: root.useWallpaperBackdrop && root.visible
+        layer.effect: GE.OpacityMask {
+            maskSource: Rectangle {
+                width: backdrop.width
+                height: backdrop.height
+                radius: root.radius
+            }
+        }
 
-    // Inset glow — light-from-above on top edge, angel only
-    Rectangle {
-        anchors.top: parent.top
-        anchors.left: parent.left
-        anchors.right: parent.right
-        height: Appearance.angel.insetGlowHeight
-        visible: root.angelEverywhere && !root.forceNeutralMaterial
-        color: Appearance.angel.colInsetGlow
+        // Blurred wallpaper backdrop for aurora/angel styles.
+        // OPTIMIZATION: layer.enabled is only active when the GlassBackground is
+        // actually visible, reducing GPU memory when panels are hidden.
+        Image {
+            id: blurredWallpaper
+            x: -root.screenX
+            y: -root.screenY
+            width: root.screenWidth
+            height: root.screenHeight
+            visible: root.useWallpaperBackdrop && status === Image.Ready
+            source: root.useWallpaperBackdrop ? root.wallpaperUrl : ""
+            fillMode: Image.PreserveAspectCrop
+            // All GlassBackground instances share the same wallpaper URL and sourceSize,
+            // so Qt's QPixmapCache serves a single decoded pixmap to all of them.
+            cache: true
+            asynchronous: true
+            // Blurred anyway: a quarter of the screen looks the same and every instance kept a full layer.
+            readonly property real blur: Appearance.effectsEnabled
+                ? (root.angelEverywhere ? Appearance.angel.blurIntensity : root.blurStrength) : 0
+            readonly property real grain: blur >= 0.3 ? 0.25 : 1
+            sourceSize.width: Math.round(root.screenWidth * grain)
+            sourceSize.height: Math.round(root.screenHeight * grain)
+            layer.textureSize: Qt.size(Math.round(width * grain), Math.round(height * grain))
+
+            // CRITICAL: Only enable blur layer when VISIBLE AND enabled.
+            // This releases the FBO when the panel is hidden, saving ~16 MiB per instance.
+            layer.enabled: Appearance.effectsEnabled && root.useWallpaperBackdrop && root.visible
+            layer.effect: MultiEffect {
+                source: blurredWallpaper
+                anchors.fill: source
+                contrast: Appearance.aurora.backdropContrast
+                brightness: Appearance.aurora.backdropBrightness
+                saturation: root.angelEverywhere && !root.forceNeutralMaterial
+                    ? (Appearance.angel.blurSaturation * Appearance.angel.colorStrength)
+                    : (Appearance.effectsEnabled ? root.saturationStrength : 0)
+                blurEnabled: Appearance.effectsEnabled
+                blurMax: 64
+                blur: blurredWallpaper.blur
+            }
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            visible: root.useWallpaperBackdrop
+            color: root.angelEverywhere && !root.forceNeutralMaterial
+                ? ColorUtils.transparentize(Appearance.colors.colLayer0Base, Appearance.angel.overlayOpacity)
+                : ColorUtils.transparentize(root.overlayColor, root.auroraTransparency)
+        }
+
+        // Inset glow — light-from-above on top edge, angel only
+        Rectangle {
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: Appearance.angel.insetGlowHeight
+            visible: root.angelEverywhere && !root.forceNeutralMaterial
+            color: Appearance.angel.colInsetGlow
+        }
     }
 
     // Partial border — elegant half-borders, angel only

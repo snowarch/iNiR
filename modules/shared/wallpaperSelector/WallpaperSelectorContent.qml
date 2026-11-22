@@ -527,8 +527,8 @@ MouseArea {
                         property int currentIndex: 0
 
                         anchors.fill: parent
-                        cellWidth: width / root.columns
-                        cellHeight: cellWidth / root.previewCellAspectRatio
+                        cellWidth: Math.floor(width / root.columns)
+                        cellHeight: Math.floor(cellWidth / root.previewCellAspectRatio)
                         interactive: true
                         clip: true
                         keyNavigationWraps: true

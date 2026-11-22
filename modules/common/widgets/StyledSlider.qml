@@ -80,6 +80,8 @@ Slider {
         : (configuration === StyledSlider.Configuration.Wavy) ? 24 : Math.max(33, trackWidth + 9)
     property real handleWidth: root.pressed ? handlePressedWidth : handleDefaultWidth
     property real handleMargins: 4
+    // The handle and the fills meet on whole pixels: a 3 px handle at half a pixel draws as a soft 4 px smear.
+    readonly property real handleOffset: Math.round(root.visualPosition * root.effectiveDraggingWidth - root.handleWidth / 2)
     property real trackDotSize: 3
     property string tooltipContent: `${Math.round(value * 100)}%`
     // The wheel turns a slider the pointer rests on while the page is still (WheelIntent); a page in motion keeps the
@@ -206,7 +208,7 @@ Slider {
         required property real value
         property real normalizedValue: (value - root.from) / (root.to - root.from)
         anchors.verticalCenter: parent.verticalCenter
-        x: root.handleMargins + (normalizedValue * root.effectiveDraggingWidth) - (root.trackDotSize / 2)
+        x: Math.round(root.handleMargins + (normalizedValue * root.effectiveDraggingWidth) - (root.trackDotSize / 2))
         width: root.trackDotSize
         height: root.trackDotSize
         radius: Math.min(width, height) / 2
@@ -258,7 +260,7 @@ Slider {
                 verticalCenter: parent.verticalCenter
                 left: parent.left
             }
-            width: Math.max(0, root.visualPosition * root.effectiveDraggingWidth - handle.implicitWidth / 2)
+            width: Math.max(0, root.handleOffset)
             height: root.trackWidth
             // a fill shorter than half the handle reads as a stray dash beside it (a song's first seconds on a 2 px wave)
             visible: width >= Math.max(root.trackWidth, root.handleHeight / 2)
@@ -291,7 +293,7 @@ Slider {
                 verticalCenter: parent.verticalCenter
                 left: parent.left
             }
-            width: Math.max(0, root.visualPosition * root.effectiveDraggingWidth - handle.implicitWidth / 2)
+            width: Math.max(0, root.handleOffset)
             height: root.trackWidth * (1 + 2 * Math.max(0.5, Math.abs(root.waveAmplitudeMultiplier)))
             visible: width >= Math.max(root.trackWidth, root.handleHeight / 2)
             active: root.usesWaveTrack
@@ -312,7 +314,7 @@ Slider {
                 verticalCenter: parent.verticalCenter
                 right: parent.right
             }
-            width: Math.max(0, (1 - root.visualPosition) * root.effectiveDraggingWidth - handle.implicitWidth / 2)
+            width: Math.max(0, root.effectiveDraggingWidth - root.handleOffset - root.handleWidth)
             height: trackWidth
             color: root.trackColor
             topRightRadius: root.trackRadius
@@ -351,7 +353,7 @@ Slider {
 
         implicitWidth: root.handleWidth
         implicitHeight: root.handleHeight
-        x: root.handleMargins + (root.visualPosition * root.effectiveDraggingWidth) - (implicitWidth / 2)
+        x: root.handleMargins + root.handleOffset
         anchors.verticalCenter: parent.verticalCenter
         radius: Appearance.editorialEverywhere ? 2
             : Appearance.regaliaEverywhere ? 4 : Math.min(width, height) / 2

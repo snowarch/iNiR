@@ -1,4 +1,5 @@
 //@ pragma UseQApplication
+//@ pragma NativeTextRendering
 //@ pragma ShellId inir
 // The shell's own windows are its Settings (iRiS's window mode): they wear iNiR Settings' desktop entry and icon.
 //@ pragma AppId inir-settings
