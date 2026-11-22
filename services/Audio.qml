@@ -469,9 +469,9 @@ Singleton {
     // Sound packs: "classic" is the system theme (sounds.theme); the others are folders of <event>.oga, ours in
     // assets/sounds (made by assets/sounds/generate.py) and yours in ~/.local/share/inir/sounds/<name>/, where any of
     // .oga, .ogg, .wav, .flac or .mp3 plays. A pack without a file for an event falls back to the system theme.
-    readonly property var builtinPacks: ["lounge", "orbit", "crystal", "arcade"]
+    readonly property var builtinPacks: ["aurora", "tactile", "lounge", "orbit", "crystal", "arcade"]
     property var userPacks: []
-    readonly property string soundPack: Config.options?.sounds?.pack ?? "lounge"
+    readonly property string soundPack: Config.options?.sounds?.pack ?? "aurora"
     // Every pack a person can choose, in the order settings list them.
     readonly property var packs: root.builtinPacks.concat(["classic"], root.userPacks)
     function packLabel(pack: string): string {
@@ -626,8 +626,8 @@ Singleton {
             root.playEvent(event);
         }
 
-        /// Hear an event in a sound pack (`lounge`, `orbit`, `crystal`, `arcade`, `classic` or one of yours), whatever is
-        /// switched on
+        /// Hear an event in a sound pack (`aurora`, `tactile`, `lounge`, `orbit`, `crystal`, `arcade`, `classic` or one of
+        /// yours), whatever is switched on
         function previewEvent(event: string, pack: string): void {
             root.previewEvent(event, pack);
         }

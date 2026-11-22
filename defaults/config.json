@@ -1406,7 +1406,7 @@
         "notifications": true,
         "pomodoro": false,
         "theme": "freedesktop",
-        "pack": "lounge",
+        "pack": "aurora",
         "timer": false,
         "volume": 0.5,
         "session": true,

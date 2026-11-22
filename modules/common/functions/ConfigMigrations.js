@@ -419,7 +419,7 @@ function _honestWidgets(obj) {
     return changed;
 }
 
-// Sound packs came with one of ours as the factory sound (lounge). A config written before them has no pack and keeps
+// Sound packs came with one of ours as the factory sound. A config written before them has no pack and keeps
 // what it played: the system theme's sounds (classic), so an update changes nothing a person hears until they pick one.
 function _soundsKeepTheme(obj) {
     const sounds = obj.sounds;

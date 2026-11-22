@@ -2253,9 +2253,9 @@ JsonAdapter {
         property bool timer: false
         property bool pomodoro: false
         property string theme: "freedesktop"
-        // The sounds the shell speaks with: "classic" (the system theme above), "lounge", "orbit", "crystal", "arcade",
-        // or a folder of yours in ~/.local/share/inir/sounds
-        property string pack: "lounge"
+        // The sounds the shell speaks with: "classic" (the system theme above), "aurora", "tactile", "lounge", "orbit",
+        // "crystal", "arcade", or a folder of yours in ~/.local/share/inir/sounds
+        property string pack: "aurora"
         property bool notifications: true
         property real volume: 0.5
         property bool session: true // the desktop arriving, locking and unlocking

@@ -5,7 +5,8 @@ Every sound here is synthesised (no samples, no recordings), so the packs are ou
 `python3 assets/sounds/generate.py [pack...]` from the repo to rewrite assets/sounds/<pack>/<event>.oga.
 Needs numpy and ffmpeg built with libvorbis.
 
-Packs: lounge (warm mallets and felt, a living-room console), orbit (air, sub and wide chords, a dashboard),
+Packs: aurora (soft electric keys under a halo, the desktop's own four notes), tactile (dry keys and precise dots),
+lounge (warm mallets and felt, a living-room console), orbit (air, sub and wide chords, a dashboard),
 crystal (glass bells and sparkle), arcade (8-bit pulse and triangle).
 """
 from __future__ import annotations
@@ -202,8 +203,8 @@ def convolve(x: np.ndarray, ir: np.ndarray) -> np.ndarray:
     return np.fft.irfft(np.fft.rfft(x, size) * np.fft.rfft(ir, size), size)[:n]
 
 
-def reverb(x: np.ndarray, size: float = 1.4, damp: float = 5000, wet: float = 0.25, pre: float = 0.015) -> np.ndarray:
-    """A plate of decaying, darkened, decorrelated noise per side."""
+def wash(x: np.ndarray, size: float = 1.4, damp: float = 5000, pre: float = 0.015) -> np.ndarray:
+    """The room alone, no dry sound: a plate of decaying, darkened, decorrelated noise per side."""
     x = stereo(x)
     t = T(size)
     out = []
@@ -213,7 +214,12 @@ def reverb(x: np.ndarray, size: float = 1.4, damp: float = 5000, wet: float = 0.
         ir = np.concatenate([np.zeros(int(pre * SR)), ir])
         ir /= np.sqrt(np.sum(ir ** 2)) + 1e-9
         out.append(convolve(x[:, c], ir))
-    wet_sig = np.stack(out, 1)
+    return np.stack(out, 1)
+
+
+def reverb(x: np.ndarray, size: float = 1.4, damp: float = 5000, wet: float = 0.25, pre: float = 0.015) -> np.ndarray:
+    x = stereo(x)
+    wet_sig = wash(x, size, damp, pre)
     dry = np.zeros_like(wet_sig)
     dry[:len(x)] = x
     return dry * (1 - wet * 0.5) + wet_sig * wet
@@ -704,7 +710,283 @@ def arcade(e: str) -> np.ndarray:
     return m()
 
 
-PACKS = {"lounge": lounge, "orbit": orbit, "crystal": crystal, "arcade": arcade}
+# --- Aurora: soft electric keys, a warm pad and a halo heard only in the room --------------------------------------
+# One motif runs through it, D A E F#, the open fifths and the ninth of D major: the desktop's own four notes.
+def lumen(f, d: float = 0.9, bright: float = 1.0) -> np.ndarray:
+    """A soft electric key: an FM bloom that settles into a round tone, a tine's ding, a twin a few cents away."""
+    f0, t = note(f), T(d)
+    out = np.zeros_like(t)
+    for cents, amp in ((-4.0, 1.0), (4.0, 0.45)):
+        fr = f0 * 2 ** (cents / 1200)
+        idx = 1.15 * bright * np.exp(-t / 0.07) + 0.16
+        out += amp * np.sin(2 * np.pi * fr * t + idx * np.sin(2 * np.pi * fr * t + RNG.uniform(0, 2 * np.pi)))
+    out *= 0.72 * np.exp(-t / (d * 0.34)) + 0.28 * np.exp(-t / 0.06)
+    if f0 * 7.1 < 15000:
+        out += 0.1 * bright * np.sin(2 * np.pi * f0 * 7.1 * t) * np.exp(-t / 0.022)
+    # the last fifth fades on a raised cosine, so a key never ends on a step
+    tail = 0.5 + 0.5 * np.cos(np.pi * np.clip((t - d * 0.8) / (d * 0.2), 0, 1))
+    # 1:1 FM carries an offset that follows its index: filter it out, the filter's ringing falls in the cut lead-in
+    lead = int(0.02 * SR)
+    return band(np.concatenate([np.zeros(lead), out * np.minimum(1, t / 0.004) * tail]), 60)[lead:]
+
+
+def halo(notes, d: float, a: float = 0.05) -> np.ndarray:
+    """The glow over a key: its octave and twelfth, rising slowly. Sent only to the room."""
+    x = sum(chorus(note(n) * 2, d, 6, 2) + 0.35 * chorus(note(n) * 3, d, 9, 2) for n in notes) / len(notes)
+    return x * swell(d, a, d * 0.8)
+
+
+def drop(f0: float, f1: float, d: float = 0.05, decay: float = 0.013) -> np.ndarray:
+    """A water-drop tick: a pitch that bends as it fades."""
+    return sine(glide(f0, f1, min(d, 0.02)), d) * env(d, 0.0012, decay)
+
+
+def aurora_pad(notes, d: float, a: float, r: float) -> np.ndarray:
+    """A warm pad that opens as it rises: a dark layer first, a lit one after it."""
+    x = sum(chorus(n, d, cents=7, voices=3, wave=lambda f, dd: saw(f, dd, 0.8)) for n in notes) / len(notes)
+    return band(x, 70, 900) * swell(d, a, r) + band(x, 200, 3800) * swell(d, a * 1.6, r) * 0.35
+
+
+def bloom(dry: np.ndarray, send: Mix, size: float, wet: float, damp: float = 6500) -> np.ndarray:
+    x = reverb(dry, size, damp, wet, 0.02)
+    if len(send.buf):
+        x = Mix().add(x).add(wash(send(), size, damp, 0.02))()
+    return x
+
+
+def aurora(e: str) -> np.ndarray:
+    m, s = Mix(), Mix()
+    if e == "navigate":
+        m.add(drop(2300, 1900, 0.045, 0.012))
+        return bloom(m(), s, 0.35, 0.08)
+    elif e == "volume":
+        m.add(drop(1700, 1500, 0.05, 0.014))
+        return bloom(m(), s, 0.35, 0.08)
+    elif e == "select":
+        m.add(lumen("A5", 0.3, 0.6)).add(lumen("E6", 0.34, 0.6), 0.04, pan=0.15)
+        s.add(halo(["E6"], 0.4, 0.03), 0.04, gain=0.25)
+        return bloom(m(), s, 0.8, 0.14)
+    elif e == "open":
+        m.add(air(0.24, 400, 3200, 0.07, 0.15, 1.3), gain=0.35)
+        for i, n in enumerate(["D5", "A5", "E6"]):
+            m.add(lumen(n, 0.42, 0.55), 0.02 + i * 0.026, pan=-0.3 + i * 0.3, gain=1 - i * 0.15)
+        s.add(halo(["A5", "E6"], 0.5, 0.06), 0.04, gain=0.3)
+        return bloom(m(), s, 1.0, 0.18)
+    elif e == "close":
+        m.add(air(0.2, 2800, 420, 0.03, 0.14, 1.3), gain=0.3)
+        for i, n in enumerate(["E6", "A5", "D5"]):
+            m.add(lumen(n, 0.32, 0.45), i * 0.024, pan=0.3 - i * 0.3, gain=0.75 + i * 0.1)
+        return bloom(m(), s, 0.8, 0.13)
+    elif e == "toggleOn":
+        m.add(drop(1500, 2000, 0.04, 0.012), gain=0.6).add(lumen("A6", 0.26, 0.5), 0.018)
+        return bloom(m(), s, 0.6, 0.12)
+    elif e == "toggleOff":
+        m.add(lumen("E6", 0.22, 0.4)).add(drop(1900, 1400, 0.04, 0.012), 0.02, gain=0.5)
+        return bloom(m(), s, 0.6, 0.1)
+    elif e == "notification":
+        m.add(lumen("A5", 1.0, 0.9), pan=-0.1).add(lumen("F#6", 1.3, 0.8), 0.11, pan=0.12, gain=0.85)
+        s.add(halo(["F#6"], 1.4, 0.12), 0.12, gain=0.35)
+        return bloom(m(), s, 1.8, 0.24)
+    elif e == "notificationCritical":
+        for i in range(3):
+            m.add(lumen("D6", 0.4, 1.1), i * 0.17).add(lumen("A6", 0.4, 0.9), i * 0.17, gain=0.6)
+        m.add(lumen("D4", 1.0, 0.5), 0, gain=0.5)
+        return bloom(m(), s, 1.2, 0.18)
+    elif e == "error":
+        m.add(lumen("F4", 0.3, 0.3)).add(lumen("D4", 0.45, 0.3), 0.11).add(thump(75, 0.16), 0, gain=0.45)
+        return bloom(m(), s, 0.6, 0.1, 3500)
+    elif e == "screenshot":
+        m.add(click(0.01, 1500, 6000, 0.002)).add(click(0.014, 900, 4200, 0.003), 0.06, gain=0.9)
+        s.add(halo(["A6", "E7"], 0.5, 0.01), 0.05, gain=0.25)
+        return bloom(m(), s, 0.7, 0.12, 8000)
+    elif e == "boot":
+        m.add(aurora_pad(["D3", "A3", "E4", "F#4", "C#5"], 3.6, 1.1, 1.8), gain=0.5)
+        m.add(air(1.4, 160, 3800, 1.1, 0.3, 1.1), 0, gain=0.16)
+        m.add(thump(50, 0.6), 1.05, gain=0.45).add(lumen("D4", 2.4, 0.4), 1.08, gain=0.45)
+        for i, n in enumerate(["D5", "A5", "E6", "F#6"]):
+            m.add(lumen(n, 1.8 - i * 0.1, 0.8), 1.08 + i * 0.14, pan=-0.45 + i * 0.3, gain=0.75)
+        m.add(lumen("A6", 2.2, 0.6), 1.72, pan=0.2, gain=0.5)
+        s.add(halo(["E6", "F#6", "A6"], 2.6, 0.3), 1.3, gain=0.35)
+        return bloom(m(), s, 2.6, 0.34, 6000)
+    elif e == "login":
+        m.add(aurora_pad(["D4", "A4", "F#5"], 1.9, 0.3, 1.2), gain=0.4)
+        for i, n in enumerate(["A5", "E6", "F#6"]):
+            m.add(lumen(n, 1.1, 0.75), 0.06 + i * 0.1, pan=-0.3 + i * 0.3, gain=0.8)
+        s.add(halo(["F#6", "A6"], 1.4, 0.15), 0.25, gain=0.3)
+        return bloom(m(), s, 1.9, 0.28)
+    elif e == "lock":
+        m.add(lumen("F#6", 0.6, 0.6)).add(lumen("E6", 0.6, 0.55), 0.1).add(lumen("A5", 0.95, 0.5), 0.2)
+        m.add(air(0.4, 2600, 300, 0.03, 0.3, 1.2), 0.05, gain=0.25)
+        return bloom(m(), s, 1.4, 0.22)
+    elif e == "batteryLow":
+        m.add(lumen("F#5", 0.6)).add(lumen("D5", 0.8), 0.17)
+        return bloom(m(), s, 1.0, 0.18)
+    elif e == "batteryCritical":
+        for i, n in enumerate(["F#5", "D5", "B4"]):
+            m.add(lumen(n, 0.7, 1.0), i * 0.16)
+        m.add(thump(55, 0.35), 0.32, gain=0.45)
+        return bloom(m(), s, 1.1, 0.18)
+    elif e == "batteryFull":
+        for i, n in enumerate(["D5", "F#5", "A5", "D6"]):
+            m.add(lumen(n, 0.8), i * 0.07, pan=-0.3 + i * 0.2)
+        s.add(halo(["D6"], 1.0, 0.1), 0.21, gain=0.3)
+        return bloom(m(), s, 1.4, 0.24)
+    elif e == "powerPlug":
+        m.add(thump(85, 0.12), gain=0.6).add(air(0.25, 300, 2600, 0.1, 0.12, 1.3), 0, gain=0.3)
+        m.add(lumen("A4", 0.4), 0.02).add(lumen("E5", 0.6), 0.09)
+        return bloom(m(), s, 0.9, 0.18)
+    elif e == "powerUnplug":
+        m.add(lumen("E5", 0.4)).add(lumen("A4", 0.6), 0.09).add(thump(75, 0.12), 0.09, gain=0.5)
+        return bloom(m(), s, 0.9, 0.16)
+    elif e == "deviceAdded":
+        m.add(air(0.2, 600, 3600, 0.08, 0.1, 1.5), 0, gain=0.3).add(lumen("D6", 0.35), 0.01).add(lumen("A6", 0.5), 0.07)
+        return bloom(m(), s, 0.9, 0.18)
+    elif e == "deviceRemoved":
+        m.add(air(0.2, 3600, 600, 0.04, 0.12, 1.5), 0, gain=0.3).add(lumen("A6", 0.35), 0.01).add(lumen("D6", 0.5), 0.07)
+        return bloom(m(), s, 0.9, 0.16)
+    elif e == "timerDone":
+        for rep in range(2):
+            for i, n in enumerate(["A5", "E6", "F#6", "E6"]):
+                m.add(lumen(n, 0.6), rep * 0.85 + i * 0.15, pan=(-0.2, 0.2)[i % 2])
+        return bloom(m(), s, 1.3, 0.22)
+    elif e == "pomodoroDone":
+        m.add(aurora_pad(["D4", "A4", "E5"], 1.8, 0.3, 1.1), 0.3, gain=0.35)
+        for i, n in enumerate(["D5", "A5", "E6", "F#6", "A6"]):
+            m.add(lumen(n, 1.0), i * 0.09, pan=-0.4 + i * 0.2)
+        s.add(halo(["F#6", "A6"], 1.6, 0.2), 0.3, gain=0.3)
+        return bloom(m(), s, 1.8, 0.28)
+    return m()
+
+
+# --- Tactile: dry keys and precise dots, close and quiet ---------------------------------------------------------
+# A in pentatonic, near-dry: rhythm says what happened (dot dot dash), pitch only says up or down.
+def key(ring: float = 3200.0, d: float = 0.03, weight: float = 1.0) -> np.ndarray:
+    """A switch under a finger: a scrape of noise, the case's ring and a small knock."""
+    t = T(d)
+    scrape = band(noise(d), ring * 0.4, ring * 1.5) * np.exp(-t / 0.0009) * 0.7
+    case = np.sin(2 * np.pi * ring * t) * np.exp(-t / 0.005) * 0.5 + np.sin(2 * np.pi * ring * 2.37 * t) * np.exp(-t / 0.0022) * 0.2
+    knock = sine(glide(320, 160, 0.01), d) * np.exp(-t / 0.007) * 0.55 * weight
+    return fade(scrape + case + knock, 0.0003, 0.004)
+
+
+def dot(f, d: float = 0.12, decay: float | None = None) -> np.ndarray:
+    """A clean point of tone: a sine that lands a hair sharp and settles."""
+    f0 = note(f)
+    ph = phase(f0 * (1 + 0.006 * np.exp(-T(d) / 0.008)), d)
+    return (np.sin(ph) + 0.12 * np.sin(2 * ph)) * env(d, 0.0008, decay or d * 0.35)
+
+
+def dash(f, d: float = 0.24) -> np.ndarray:
+    ph = phase(note(f), d)
+    return (np.sin(ph) + 0.12 * np.sin(2 * ph)) * env(d, 0.002, 0.05, max(0.0, d - 0.1))
+
+
+def room(x: np.ndarray, size: float = 0.35, wet: float = 0.07) -> np.ndarray:
+    return reverb(x, size, 9000, wet, 0.004)
+
+
+def tactile(e: str) -> np.ndarray:
+    m = Mix()
+    if e == "navigate":
+        m.add(key(3400, 0.025, 0.6))
+    elif e == "volume":
+        m.add(key(2800, 0.025, 0.5)).add(dot("A6", 0.03), 0, gain=0.3)
+    elif e == "select":
+        m.add(key(3000)).add(dot("E7", 0.06), 0.005, gain=0.5)
+        return room(m())
+    elif e == "open":
+        m.add(key(2600, 0.03, 0.5))
+        for i, n in enumerate(["A5", "E6", "A6"]):
+            m.add(dot(n, 0.06), 0.01 + i * 0.03, pan=-0.2 + i * 0.2, gain=0.6)
+        return room(m())
+    elif e == "close":
+        for i, n in enumerate(["A6", "E6"]):
+            m.add(dot(n, 0.06), i * 0.03, pan=0.2 - i * 0.2, gain=0.55)
+        m.add(key(2400, 0.03, 0.7), 0.06)
+        return room(m())
+    elif e == "toggleOn":
+        m.add(key(2600)).add(key(3600, 0.03, 0.6), 0.05).add(dot("A6", 0.07), 0.05, gain=0.45)
+        return room(m())
+    elif e == "toggleOff":
+        m.add(key(3600, 0.03, 0.6)).add(key(2400), 0.045).add(dot("E6", 0.06), 0.045, gain=0.4)
+        return room(m())
+    elif e == "notification":
+        m.add(dot("A6", 0.07)).add(dot("A6", 0.07), 0.11).add(dash("E7", 0.28), 0.22, gain=0.8)
+        m.add(dot("A5", 0.4), 0.22, gain=0.35)
+        return room(m(), 0.6, 0.12)
+    elif e == "notificationCritical":
+        for g in range(2):
+            for i in range(3):
+                m.add(dot("E6", 0.06), g * 0.38 + i * 0.075, pan=(-0.15, 0.15)[g])
+            m.add(dash("A4", 0.2), g * 0.38, gain=0.5)
+        return room(m(), 0.5, 0.1)
+    elif e == "error":
+        m.add(dot("A3", 0.18)).add(key(900, 0.04, 1.4), 0, gain=0.7)
+        m.add(dot("G3", 0.22), 0.13).add(key(800, 0.04, 1.4), 0.13, gain=0.7)
+        return room(m(), 0.3, 0.05)
+    elif e == "screenshot":
+        m.add(key(1900, 0.03, 1.2)).add(band(noise(0.06), 2000, 9000) * env(0.06, 0.001, 0.015), 0, gain=0.5)
+        m.add(key(2700, 0.03, 0.9), 0.05)
+        return room(m(), 0.4, 0.08)
+    elif e == "boot":
+        at, gap = 0.0, 0.11
+        for i, n in enumerate(["A4", "C#5", "E5", "F#5", "A5", "C#6", "E6", "F#6", "A6", "C#7"]):
+            m.add(dot(n, 0.12), at, pan=float(np.sin(i * 0.9)) * 0.5, gain=0.55 + i * 0.03)
+            at, gap = at + gap, gap * 0.84
+        for n, g, p in (("A5", 0.8, -0.2), ("E6", 0.6, 0.2), ("A6", 0.55, -0.1), ("C#7", 0.3, 0.3)):
+            m.add(dot(n, 1.4, 0.5), at + 0.05, pan=p, gain=g)
+        m.add(thump(55, 0.5), at + 0.05, gain=0.7).add(key(2400, 0.03, 1.0), at + 0.05, gain=0.6)
+        return room(m(), 0.6, 0.18)
+    elif e == "login":
+        for i, n in enumerate(["A5", "C#6", "E6", "A6"]):
+            m.add(dot(n, 0.1), i * 0.05, pan=-0.3 + i * 0.2, gain=0.6)
+        for n, g in (("E6", 0.6), ("A6", 0.5), ("C#7", 0.25)):
+            m.add(dot(n, 1.0, 0.36), 0.22, gain=g)
+        m.add(thump(60, 0.3), 0.22, gain=0.45)
+        return room(m(), 0.5, 0.14)
+    elif e == "lock":
+        for i, n in enumerate(["A6", "E6", "A5"]):
+            m.add(dot(n, 0.12), i * 0.07, pan=0.2 - i * 0.2, gain=0.6)
+        m.add(key(1800, 0.04, 1.2), 0.21)
+        return room(m(), 0.4, 0.1)
+    elif e == "batteryLow":
+        m.add(dash("E6", 0.18)).add(dash("C#6", 0.26), 0.22)
+        return room(m(), 0.4, 0.08)
+    elif e == "batteryCritical":
+        for i, n in enumerate(["E6", "C#6", "A5"]):
+            m.add(dash(n, 0.16), i * 0.2)
+        m.add(dot("A3", 0.4), 0.4, gain=0.7)
+        return room(m(), 0.4, 0.08)
+    elif e == "batteryFull":
+        for i, n in enumerate(["A5", "C#6", "E6", "A6"]):
+            m.add(dot(n, 0.14), i * 0.06, pan=-0.3 + i * 0.2, gain=0.65)
+        m.add(dot("A6", 0.6, 0.22), 0.24, gain=0.4)
+        return room(m(), 0.5, 0.12)
+    elif e == "powerPlug":
+        m.add(key(1500, 0.04, 1.3)).add(dot("E6", 0.1), 0.05, gain=0.55).add(dot("A6", 0.16), 0.1, gain=0.55)
+        return room(m(), 0.4, 0.08)
+    elif e == "powerUnplug":
+        m.add(dot("A6", 0.1), 0, gain=0.55).add(dot("E6", 0.16), 0.05, gain=0.55).add(key(1400, 0.04, 1.3), 0.1)
+        return room(m(), 0.4, 0.07)
+    elif e == "deviceAdded":
+        m.add(key(2200, 0.03, 0.8)).add(dot("E6", 0.1), 0.01, gain=0.55).add(dot("A6", 0.16), 0.08, gain=0.55)
+        return room(m(), 0.4, 0.08)
+    elif e == "deviceRemoved":
+        m.add(dot("A6", 0.1), 0, gain=0.55).add(dot("E6", 0.16), 0.07, gain=0.55).add(key(2000, 0.03, 0.8), 0.07)
+        return room(m(), 0.4, 0.07)
+    elif e == "timerDone":
+        for rep in range(3):
+            m.add(dot("A6", 0.08), rep * 0.5).add(dot("A6", 0.08), rep * 0.5 + 0.1).add(dot("A5", 0.3), rep * 0.5, gain=0.3)
+        return room(m(), 0.5, 0.1)
+    elif e == "pomodoroDone":
+        for i, n in enumerate(["A5", "C#6", "E6", "A6", "C#7"]):
+            m.add(dot(n, 0.12), i * 0.07, pan=-0.4 + i * 0.2, gain=0.6)
+        m.add(dash("A6", 0.6), 0.42, gain=0.6).add(dot("A4", 1.0, 0.4), 0.42, gain=0.45)
+        return room(m(), 0.6, 0.14)
+    return m()
+
+
+PACKS = {"aurora": aurora, "tactile": tactile, "lounge": lounge, "orbit": orbit, "crystal": crystal, "arcade": arcade}
 
 
 def write_wav(path: Path, x: np.ndarray) -> None:

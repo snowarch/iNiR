@@ -189,8 +189,10 @@
       "event",
       "pack"
      ],
-     "description": "Hear an event in a sound pack (`lounge`, `orbit`, `crystal`, `arcade`, `classic` or one of yours), whatever is switched on",
+     "description": "Hear an event in a sound pack (`aurora`, `tactile`, `lounge`, `orbit`, `crystal`, `arcade`, `classic` or one of yours), whatever is switched on",
      "values": [
+      "aurora",
+      "tactile",
       "lounge",
       "orbit",
       "crystal",
