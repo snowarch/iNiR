@@ -2451,6 +2451,41 @@ Scope {
                     }
                 }
 
+                // A body carried while arranging (a bar or a dock taken to another edge) moves the widgets it now
+                // covers aside, each to its nearest free spot, as a widget that grew does. A body that only comes or
+                // goes moves nothing, and nothing moves at rest. The moves land in the same history step as the carry.
+                property var _bodyRects: ({})
+                function clearMovedBodies(): void {
+                    const bodies = DesktopArrange.bodiesOf(bgRoot.screenName)
+                    const before = widgetCanvas._bodyRects
+                    const now = {}
+                    const moved = []
+                    for (const b of bodies) {
+                        now[b.id] = [b.x, b.y, b.w, b.h].join(",")
+                        if (before[b.id] !== undefined && before[b.id] !== now[b.id])
+                            moved.push({ x: b.x, y: b.y, width: b.w, height: b.h })
+                    }
+                    widgetCanvas._bodyRects = now
+                    if (moved.length === 0 || !widgetCanvas.settled || !GlobalStates.widgetEditMode)
+                        return
+                    const all = widgetCanvas.arrangeNeighbours("")
+                    const moving = all.filter(n => !n.locked && n.item.placementStrategy === "free"
+                        && moved.some(body => widgetCanvas._rectOverlaps(n, body, 0)))
+                    if (moving.length === 0)
+                        return
+                    const settled = all.filter(n => moving.indexOf(n) < 0)
+                        .concat(bodies.map(b => ({ x: b.x, y: b.y, width: b.w, height: b.h })))
+                    for (const n of moving) {
+                        const spot = widgetCanvas._nearestFreePosition(n, n.x, n.y, settled, widgetCanvas.arrangeRoom)
+                        settled.push({ x: spot.x, y: spot.y, width: n.width, height: n.height })
+                        n.item._setOutputValues({ x: spot.x, y: spot.y, placementStrategy: "free" })
+                    }
+                }
+                Connections {
+                    target: DesktopArrange
+                    function onBodiesChanged(): void { widgetCanvas.clearMovedBodies() }
+                }
+
                 function initializeOutputWidgetLayout(): void {
                     if (!Config.ready || !widgetCanvas.visible)
                         return
