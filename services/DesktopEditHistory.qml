@@ -8,10 +8,15 @@ import qs.modules.common
 
 // Undo and redo while arranging the desktop, for every family: which widgets are out, where they sit, their order and
 // stacks. One snapshot per settled change (320 ms after the last write), sixty deep; the head says back what it did.
+// Cancel puts back the desktop as it was when the mode opened.
 Singleton {
     id: root
 
     readonly property bool active: GlobalStates.widgetEditMode
+    // A family's own settings that arranging can change (where its bar or its popups sit): tracked with the widgets,
+    // so Undo and Cancel take them back too. Leaf paths; one the config does not hold is left out.
+    property var familyPaths: []
+    onFamilyPathsChanged: if (root.active) root.adopt()
     function trackedPaths(): var {
         // The widgets' look travels with them: a saved or factory desktop wears its material and accents too.
         const out = ["background.widgets.outputOverrides", "background.widgets.layerOrder", "background.widgets.stacks",
@@ -33,10 +38,19 @@ Singleton {
         for (const key of Object.keys(value)) out[key] = root.plain(value[key])
         return out
     }
-    function snapshot(): var {
+    // The widgets alone, as a saved desktop holds them.
+    function widgetSnapshot(): var {
         const values = {}
         for (const path of root.trackedPaths())
             values[path] = root.plain(Config.getNestedValue(path, path.endsWith(".enable") ? false : path.startsWith("iris.") ? "" : []))
+        return values
+    }
+    function snapshot(): var {
+        const values = root.widgetSnapshot()
+        for (const path of root.familyPaths) {
+            const value = Config.getNestedValue(path, undefined)
+            if (value !== undefined) values[path] = root.plain(value)
+        }
         return values
     }
 
@@ -44,14 +58,38 @@ Singleton {
     property var redoStack: []
     property var lastSnapshot: null
     property string lastKey: ""
+    property var entry: null
+    property string entryKey: ""
+    // Something differs from how the desktop was when the mode opened.
+    readonly property bool changed: root.lastKey !== root.entryKey
     property bool restoring: false
     property string notice: ""
     function say(text: string): void { root.notice = text; noticeTimer.restart() }
     function reset(): void {
         root.lastSnapshot = root.snapshot()
         root.lastKey = JSON.stringify(root.lastSnapshot)
+        root.entry = root.lastSnapshot
+        root.entryKey = root.lastKey
         root.undoStack = []
         root.redoStack = []
+    }
+    // Paths a family names once the mode is open start from what they hold now, in the entry as in the last snapshot.
+    function adopt(): void {
+        const now = root.snapshot()
+        for (const snap of [root.entry, root.lastSnapshot])
+            if (snap)
+                for (const path of Object.keys(now))
+                    if (!(path in snap)) snap[path] = now[path]
+        root.entryKey = JSON.stringify(root.entry)
+        root.lastKey = JSON.stringify(root.lastSnapshot)
+    }
+    // Leaves the mode with everything as it was when it opened.
+    function cancel(): void {
+        if (root.entry && JSON.stringify(root.snapshot()) !== root.entryKey) {
+            root.restoring = true
+            Config.setNestedValues(root.entry)
+        }
+        GlobalStates.setWidgetEditMode(false)
     }
     function record(): void {
         const snap = root.snapshot()

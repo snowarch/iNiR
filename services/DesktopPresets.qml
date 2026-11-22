@@ -97,7 +97,7 @@ Singleton {
     function save(name: string): string {
         const clean = String(name ?? "").trim() || root.nextName()
         const id = String(Date.now())
-        root.presets = [{ id: id, name: clean, at: Date.now(), values: DesktopEditHistory.snapshot() }]
+        root.presets = [{ id: id, name: clean, at: Date.now(), values: DesktopEditHistory.widgetSnapshot() }]
             .concat(root.presets).slice(0, root.most)
         root.write()
         DesktopEditHistory.say(Translation.tr("Saved as %1").arg(clean))
@@ -131,9 +131,9 @@ Singleton {
     }
     // The one the desktop wears now, if any: the same snapshot, value for value.
     function wornId(): string {
-        const snap = DesktopEditHistory.snapshot()
+        const snap = DesktopEditHistory.widgetSnapshot()
         const now = JSON.stringify(snap)
-        const saved = root.presets.find(preset => JSON.stringify(Object.assign(DesktopEditHistory.snapshot(), preset.values)) === now)?.id ?? ""
+        const saved = root.presets.find(preset => JSON.stringify(Object.assign(DesktopEditHistory.widgetSnapshot(), preset.values)) === now)?.id ?? ""
         if (saved.length > 0) return saved
         // A factory desktop is worn while exactly its widgets are out in its look; where they settled is theirs.
         const out = Object.keys(snap).filter(path => path.endsWith(".enable") && snap[path] === true).map(path => path.split(".")[2]).sort()
