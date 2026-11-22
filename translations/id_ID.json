@@ -3849,5 +3849,7 @@
   "Swap accent colours": "Tukar warna aksen",
   "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "Warna ketiga skema memimpin, dan aksen mengambil tempatnya. Hanya shell: aplikasi tetap memakai skema seperti yang dibuat.",
   "Pick the sound each event plays: one from your sound theme, or any audio file": "Pilih suara yang dimainkan setiap acara: satu dari tema suara Anda, atau berkas audio apa pun",
-  "Until": "Sampai"
+  "Until": "Sampai",
+  "Light mode": "Mode terang",
+  "floating": "mengambang"
 }

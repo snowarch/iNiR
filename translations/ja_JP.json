@@ -3849,5 +3849,7 @@
   "Swap accent colours": "アクセントカラーを入れ替え",
   "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "スキームの3番目の色が主役になり、アクセントがその位置に移ります。シェルのみ:アプリは生成されたスキームのままです。",
   "Pick the sound each event plays: one from your sound theme, or any audio file": "各イベントで鳴らす音を選びます: 音テーマの音か、任意の音声ファイル",
-  "Until": "終了"
+  "Until": "終了",
+  "Light mode": "ライトモード",
+  "floating": "フローティング"
 }

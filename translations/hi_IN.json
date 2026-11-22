@@ -3849,5 +3849,7 @@
   "Swap accent colours": "एक्सेंट रंग बदलें",
   "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "स्कीम का तीसरा रंग आगे आता है, और एक्सेंट उसकी जगह लेता है। केवल शेल में: ऐप्स स्कीम को वैसा ही रखते हैं जैसा वह बना था।",
   "Pick the sound each event plays: one from your sound theme, or any audio file": "प्रत्येक ईवेंट द्वारा चलाए जाने वाले ध्वनि को चुनें: आपकी ध्वनि थीम से एक, या किसी ऑडियो फ़ाइल से",
-  "Until": "तक"
+  "Until": "तक",
+  "Light mode": "लाइट मोड",
+  "floating": "तैरता"
 }

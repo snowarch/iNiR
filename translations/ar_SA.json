@@ -3849,5 +3849,7 @@
   "Swap accent colours": "تبديل ألوان التمييز",
   "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "يتصدّر اللون الثالث في المخطط، ويأخذ لون التمييز مكانه. للواجهة فقط: تحتفظ التطبيقات بالمخطط كما أُنشئ.",
   "Pick the sound each event plays: one from your sound theme, or any audio file": "اختر الصوت الذي يُشغَّل لكل حدث: صوت من سمة الأصوات لديك، أو أي ملف صوتي",
-  "Until": "حتى"
+  "Until": "حتى",
+  "Light mode": "الوضع الفاتح",
+  "floating": "عائم"
 }

@@ -3849,5 +3849,7 @@
   "Swap accent colours": "Intercambiar colores de acento",
   "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "El tercer color del esquema pasa adelante, y el acento toma su lugar. Solo el shell: las apps mantienen el esquema tal como se generó.",
   "Pick the sound each event plays: one from your sound theme, or any audio file": "Elige el sonido de cada evento: uno del tema de sonidos o cualquier archivo de audio",
-  "Until": "Hasta"
+  "Until": "Hasta",
+  "Light mode": "Modo claro",
+  "floating": "flotante"
 }

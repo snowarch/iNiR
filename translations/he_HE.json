@@ -3849,5 +3849,7 @@
   "Swap accent colours": "החלפת צבעי ההדגשה",
   "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "הצבע השלישי של הסכמה מוביל, וצבע ההדגשה תופס את מקומו. במעטפת בלבד: היישומים שומרים על הסכמה כפי שנוצרה.",
   "Pick the sound each event plays: one from your sound theme, or any audio file": "בחר את הצליל שמשמיע כל אירוע: אחד מתוך נושא הצליל שלך, או מכל קובץ שמע",
-  "Until": "עד"
+  "Until": "עד",
+  "Light mode": "מצב בהיר",
+  "floating": "צפה"
 }
