@@ -280,14 +280,16 @@ Singleton {
         if (enabled) {
             shellLayoutEditMode = false
         }
-        else {
+        widgetEditMode = enabled
+        // Leaving lets the selection go after the mode: a desk that saw the selection drop while it still stood
+        // dressed the widget under the pointer on its way out.
+        if (!enabled) {
             selectedDesktopWidget = ""
             selectedDesktopItem = ""
             desktopWidgetQuickControls = ""
             widgetSearchOpen = false
             widgetSearchText = ""
         }
-        widgetEditMode = enabled
     }
 
     function selectDesktopWidget(instanceKey: string): void {
