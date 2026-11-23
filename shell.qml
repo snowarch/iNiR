@@ -149,8 +149,22 @@ ShellRoot {
             // otherwise the shell comes up with stale/unthemed colors and icons.
             Qt.callLater(() => ThemeService.applyCurrentTheme());
             Qt.callLater(() => IconThemeService.ensureInitialized());
+            root._openBootGreeting();
             shellEntryTimer.start();
         }
+    }
+
+    // The welcome is the first thing on screen: it opens with the config and the family builds it before its own parts.
+    function _openBootGreeting(): void {
+        if (!GlobalStates.bootGreetingDone && (Config.options?.bootGreeting?.enable ?? true))
+            GlobalStates.bootGreetingOpen = true;
+        desktopReadyFailsafe.start();
+    }
+    // A family whose first part never stands still lets the welcome go.
+    Timer {
+        id: desktopReadyFailsafe
+        interval: 8000
+        onTriggered: GlobalStates.desktopReady = true
     }
 
     // Shell entry animation: panels start hidden, slide in after a brief delay
@@ -168,6 +182,13 @@ ShellRoot {
             // The wallpaper is the first thing anyone sees: its daemon starts with the first frame, not
             // when a late surface first asks for the backend (2.3 s later).
             void AwwwBackend.enabled;
+            // The desktop arrives with its sound once a session, with the welcome; a lock up at start greets with its
+            // own on unlock.
+            if (!GlobalStates.bootChimed) {
+                GlobalStates.bootChimed = true;
+                if (!GlobalStates.screenLocked)
+                    Audio.playEvent("boot");
+            }
             deferredInitTimer.start();
         }
     }
@@ -185,16 +206,6 @@ ShellRoot {
             Hyprsunset.load();
             GlobalStates.deferredPanelsReady = true;
             root._ensureScreenTimeService();
-            // Boot greeting: show once per session (singleton preserves bootGreetingDone across hot-reload)
-            if (!GlobalStates.bootGreetingDone && (Config.options?.bootGreeting?.enable ?? true)) {
-                GlobalStates.bootGreetingOpen = true;
-            }
-            // The desktop arrives with its sound once a session; a lock up at start greets with its own on unlock.
-            if (!GlobalStates.bootChimed) {
-                GlobalStates.bootChimed = true;
-                if (!GlobalStates.screenLocked)
-                    Audio.playEvent("boot");
-            }
             if (!root._bootDeferredAt) {
                 root._bootDeferredAt = Date.now();
             }
@@ -267,6 +278,7 @@ ShellRoot {
                     root._bootConfigReadyAt = Date.now();
                     console.info("[Boot] T+" + (root._bootConfigReadyAt - root._bootCompletedAt) + "ms: Config.ready (async)");
                 }
+                root._openBootGreeting();
                 root._log("[Boot] Applying theme and icon theme");
                 Qt.callLater(() => ThemeService.applyCurrentTheme());
                 Qt.callLater(() => IconThemeService.ensureInitialized());
@@ -1004,13 +1016,34 @@ ShellRoot {
             // dropping the source would delete the component under a load still running.
             property bool criticalUsed: false
             property bool panelsUsed: false
+            // The welcome at startup comes first: built at once, before the family's own parts, which start under it
+            // once its first frames are out (their first compile held the screen empty for half a second). A family
+            // draws its own (its plugin.json part `greeting`), else the base's; it is let go as it closes.
+            readonly property bool greeting: family.chosen && GlobalStates.bootGreetingOpen
+            readonly property bool greetingDue: GlobalStates.bootGreetingOpen
+                || (!GlobalStates.bootGreetingDone && (Config.options?.bootGreeting?.enable ?? true))
+            property bool greetingShown: false
+            property Timer greetingSettle: Timer {
+                interval: 120
+                onTriggered: family.greetingShown = true
+            }
+            onGreetingChanged: if (family.greeting) family.greetingSettle.restart()
+            readonly property bool criticalWanted: family.chosen && (family.greetingShown || !family.greetingDue)
+            onCriticalWantedChanged: if (family.criticalWanted) family.criticalUsed = true
+            LazyLoader {
+                id: greetingPart
+                source: family.greeting
+                    ? (Plugins.part(family.modelData, "greeting") || Plugins.baseUrl("modules/shared/bootGreeting/BootGreeting.qml"))
+                    : ""
+                active: greetingPart.source !== ""
+            }
+
             onChosenChanged: {
                 if (!family.chosen) {
                     family.release.restart()
                     return
                 }
                 family.release.stop()
-                family.criticalUsed = true
                 if (root._transitionInProgress) Qt.callLater(family.finishNow)
             }
             // A family left behind lets its parts go once the switch is well over, so what it compiled can be freed:
@@ -1034,41 +1067,61 @@ ShellRoot {
             // The switch's curtain lifts once the chosen family stands: lifted on the swap alone, Material was still
             // building its panels on screen for a second or two (his 10-30: "se lagea todo").
             Binding { when: family.chosen; target: root; property: "_familyUp"; value: family.up }
-            // A part that doesn't compile leaves the person without panels: the update reads these lines and rolls the
-            // family back (robust-update.sh, restart_shell_and_verify). The type loader compiles it once for both.
-            function checkPart(url: string) {
+            // A part compiles on the type loader's own thread first and reaches its LazyLoader compiled: handed the
+            // file straight, the LazyLoader compiled it on the main thread (iRiS's bar held it 1.2 s and froze the
+            // welcome over an empty screen). A part that doesn't compile leaves the person without panels: the update
+            // reads these lines and rolls the family back (robust-update.sh, restart_shell_and_verify).
+            property var criticalCompiled: null
+            property var panelsCompiled: null
+            function compile(name: string, done: var): void {
+                const url = Plugins.part(family.modelData, name)
                 if (url === "") return
-                const part = Qt.createComponent(url, Component.PreferSynchronous)
-                if (part.status === Component.Error)
-                    console.error(`[Plugins] family ${family.modelData} failed to load: ${part.errorString().trim()}`)
-                part.destroy()
+                const part = Qt.createComponent(url, Component.Asynchronous)
+                const settle = () => {
+                    if (part.status === Component.Loading) return
+                    if (part.status === Component.Error)
+                        console.error(`[Plugins] family ${family.modelData} failed to load: ${part.errorString().trim()}`)
+                    done(part)
+                    if (root._transitionInProgress) Qt.callLater(family.finishNow)
+                }
+                if (part.status === Component.Loading) part.statusChanged.connect(settle)
+                else settle()
             }
-            readonly property string criticalSource: criticalParts.source
-            readonly property string panelsSource: panelParts.source
+            onCriticalUsedChanged: {
+                if (!family.criticalUsed) {
+                    family.criticalCompiled = null
+                    return
+                }
+                console.info(`[Plugins] family ${family.modelData} loading`)
+                family.compile("critical", part => family.criticalCompiled = part)
+            }
+            onPanelsUsedChanged: {
+                if (!family.panelsUsed) {
+                    family.panelsCompiled = null
+                    return
+                }
+                family.compile("panels", part => family.panelsCompiled = part)
+            }
             readonly property bool up: panelParts.item !== null
-            onCriticalSourceChanged: {
-                if (family.criticalSource !== "")
-                    console.info(`[Plugins] family ${family.modelData} loading`)
-                family.checkPart(family.criticalSource)
-            }
-            onPanelsSourceChanged: family.checkPart(family.panelsSource)
+            readonly property bool standing: criticalParts.item !== null
+            onStandingChanged: if (family.chosen && family.standing) GlobalStates.desktopReady = true
             onUpChanged: if (family.up) console.info(`[Plugins] family ${family.modelData} loaded`)
             Component.onCompleted: {
-                family.criticalUsed = family.criticalUsed || family.chosen
+                family.criticalUsed = family.criticalUsed || family.criticalWanted
                 family.panelsUsed = family.panelsUsed || family.panelsWanted
             }
 
             // loading reads the source too: neither runtime starts a load asked for before its component came
             LazyLoader {
                 id: criticalParts
-                source: family.criticalUsed ? Plugins.part(family.modelData, "critical") : ""
-                loading: family.chosen && criticalParts.source !== ""
-                activeAsync: family.chosen && criticalParts.source !== ""
+                source: family.criticalUsed && family.criticalCompiled ? Plugins.part(family.modelData, "critical") : ""
+                loading: family.criticalWanted && criticalParts.source !== ""
+                activeAsync: family.criticalWanted && criticalParts.source !== ""
             }
 
             LazyLoader {
                 id: panelParts
-                source: family.panelsUsed ? Plugins.part(family.modelData, "panels") : ""
+                source: family.panelsUsed && family.panelsCompiled ? Plugins.part(family.modelData, "panels") : ""
                 loading: family.panelsWanted && panelParts.source !== ""
                 activeAsync: family.panelsWanted && panelParts.source !== ""
             }

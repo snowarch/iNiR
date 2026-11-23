@@ -61,7 +61,22 @@ Scope {
         id: autoDismissTimer
         interval: root.autoDismissDelay
         repeat: false
-        onTriggered: root.dismiss()
+        onTriggered: root.dismissWhenReady()
+    }
+    // The desktop opens once it stands under the welcome: on its timing alone it opened onto a wallpaper with no bar.
+    property bool held: false
+    function dismissWhenReady(): void {
+        root.held = !GlobalStates.desktopReady
+        if (!root.held)
+            root.dismiss()
+    }
+    Connections {
+        target: GlobalStates
+        enabled: root.held
+        function onDesktopReadyChanged(): void {
+            if (GlobalStates.desktopReady)
+                root.dismiss()
+        }
     }
 
     function beginEntrance(): void {

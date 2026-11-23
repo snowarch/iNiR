@@ -2410,7 +2410,7 @@ JsonAdapter {
         property bool openTerminalOnUpdate: true
     }
     property JsonObject bootGreeting: JsonObject {
-        property bool enable: false
+        property bool enable: true
         property int autoDismissDelay: 5000
         property bool showWeather: true
         property bool showDate: true
