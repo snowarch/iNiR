@@ -54,16 +54,17 @@ QtObject {
         todo: { style: "instrument", instrumentRules: false }
     })
 
-    // Other designs the family's own faces draw (`faces` in `widgetDesign`: value, label, glyph, part, ignores): each
-    // lists its faces as parts `<part>.<face>`; a widget it has no face for keeps the family's face. `ignores` names
-    // the widget keys it draws its own way, whose rows hide while it draws.
+    // Other designs the family's own faces draw (`faces` in `widgetDesign`: value, label, glyph, part, ignores, family):
+    // each lists its faces as parts `<part>.<face>`; a widget it has no face for keeps the family's face. `ignores` names
+    // the widget keys it draws its own way, whose rows hide while it draws. `family`: the installed family whose parts
+    // draw it, when the family wears another one's faces (the active family by default).
     readonly property var faceDesigns: Array.from(root.spec.faces ?? [])
     function faceDesignOf(design: string): var { return root.faceDesigns.find(entry => entry.value === design) ?? null }
     function partOf(widget: string, design: string): string {
         const entry = root.faceDesignOf(design)
         const face = DesktopWidgetRegistry.entry(widget)?.face ?? ""
         if (!entry) return ""
-        return face.length > 0 ? Plugins.part(Plugins.active, entry.part + "." + face) : DesktopWidgetRegistry.customFace(widget, design)
+        return face.length > 0 ? Plugins.part(entry.family ?? Plugins.active, entry.part + "." + face) : DesktopWidgetRegistry.customFace(widget, design)
     }
     function drawsIn(widget: string, design: string): bool { return root.partOf(widget, design).length > 0 }
 
