@@ -17,6 +17,7 @@ Singleton {
     // Startup lifecycle — singleton preserves one-shot state across hot reloads.
     property bool bootGreetingOpen: false
     property bool bootGreetingDone: false
+    property bool bootGreetingStill: false // the welcome's entrance played: the shell builds the desktop under it from here
     property bool desktopReady: false // the chosen family's first surfaces stood once this session: the welcome opens onto them
     property bool bootChimed: false // the session's boot sound played once (Audio "boot")
     property bool restOpen: false // the family's rest screen over every screen; Idle opens it, any input closes it

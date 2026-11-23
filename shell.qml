@@ -150,7 +150,7 @@ ShellRoot {
             Qt.callLater(() => ThemeService.applyCurrentTheme());
             Qt.callLater(() => IconThemeService.ensureInitialized());
             root._openBootGreeting();
-            shellEntryTimer.start();
+            root._startShellEntry();
         }
     }
 
@@ -159,6 +159,33 @@ ShellRoot {
         if (!GlobalStates.bootGreetingDone && (Config.options?.bootGreeting?.enable ?? true))
             GlobalStates.bootGreetingOpen = true;
         desktopReadyFailsafe.start();
+    }
+    // The welcome's entrance plays alone: the shell starts the desktop under it once the welcome stands still
+    // (bootGreetingStill), at the latest 2.5 s on. Started under its motion, the family's parts and the first services
+    // held its frames 150-600 ms at a time (a nest).
+    readonly property bool _greetingEntering: GlobalStates.bootGreetingOpen && !GlobalStates.bootGreetingStill
+    property bool _shellEntryHeld: false
+    function _startShellEntry(): void {
+        if (root._greetingEntering)
+            root._shellEntryHeld = true
+        else
+            shellEntryTimer.start()
+    }
+    Connections {
+        target: GlobalStates
+        enabled: root._shellEntryHeld
+        function onBootGreetingStillChanged(): void {
+            if (!GlobalStates.bootGreetingStill)
+                return
+            root._shellEntryHeld = false
+            console.info("[Boot] T+" + (Date.now() - root._bootCompletedAt) + "ms: welcome still")
+            shellEntryTimer.start()
+        }
+    }
+    Timer {
+        interval: 2500
+        running: root._greetingEntering
+        onTriggered: GlobalStates.bootGreetingStill = true
     }
     // A family whose first part never stands still lets the welcome go.
     Timer {
@@ -173,7 +200,8 @@ ShellRoot {
     // Tier 1-2: Implicit — UI-critical services load with panels (Audio, Battery, etc.)
     Timer {
         id: shellEntryTimer
-        interval: Appearance.animationsEnabled ? 200 : 0
+        // Under the welcome nothing waits on a first frame: the desktop is built out of sight (see deferredInitTimer).
+        interval: Appearance.animationsEnabled && !GlobalStates.bootGreetingOpen ? 200 : 0
         repeat: false
         onTriggered: {
             if (!root._bootShellEntryAt) root._bootShellEntryAt = Date.now();
@@ -198,7 +226,9 @@ ShellRoot {
     // Tier 3: T+500ms — display/interaction services needed soon after first frame
     Timer {
         id: deferredInitTimer
-        interval: 500
+        // The tiers are spread out so that a desktop on screen keeps drawing. Under the welcome, which stands still
+        // while they run, they follow at once: spread, they held the welcome up 1.7 s on timers alone.
+        interval: GlobalStates.bootGreetingOpen ? 50 : 500
         repeat: false
         onTriggered: {
             root._log("[Boot] T+" + (Date.now() - root._bootCompletedAt) + "ms: Tier 3 (display/interaction)");
@@ -230,7 +260,7 @@ ShellRoot {
     property real _bootLateFeaturesAt: 0
     Timer {
         id: lateFeaturesTimer
-        interval: 1000  // +1000ms after Tier 3 = T+1500ms total
+        interval: GlobalStates.bootGreetingOpen ? 50 : 1000  // +1000ms after Tier 3 = T+1500ms total
         repeat: false
         onTriggered: {
             root._log("[Boot] T+" + (Date.now() - root._bootCompletedAt) + "ms: Tier 4 (background features)");
@@ -285,7 +315,7 @@ ShellRoot {
                 // Kick off shell entry animation after panels have been created.
                 // Tier 3 is scheduled by shellEntryTimer so its 500 ms delay is
                 // measured from the first frame, not concurrently with it.
-                shellEntryTimer.start();
+                root._startShellEntry();
                 root._settlePanels();
             }
         }
@@ -1017,18 +1047,14 @@ ShellRoot {
             property bool criticalUsed: false
             property bool panelsUsed: false
             // The welcome at startup comes first: built at once, before the family's own parts, which start under it
-            // once its first frames are out (their first compile held the screen empty for half a second). A family
-            // draws its own (its plugin.json part `greeting`), else the base's; it is let go as it closes.
+            // once its entrance has played (bootGreetingStill, see _greetingEntering). A family draws its own (its
+            // plugin.json part `greeting`), else the base's; it is let go as it closes.
             readonly property bool greeting: family.chosen && GlobalStates.bootGreetingOpen
             readonly property bool greetingDue: GlobalStates.bootGreetingOpen
                 || (!GlobalStates.bootGreetingDone && (Config.options?.bootGreeting?.enable ?? true))
-            property bool greetingShown: false
-            property Timer greetingSettle: Timer {
-                interval: 120
-                onTriggered: family.greetingShown = true
-            }
-            onGreetingChanged: if (family.greeting) family.greetingSettle.restart()
-            readonly property bool criticalWanted: family.chosen && (family.greetingShown || !family.greetingDue)
+            // Wanted once this session, the parts stay wanted: a welcome played again later holds nothing back.
+            readonly property bool criticalWanted: family.chosen
+                && (family.criticalUsed || GlobalStates.bootGreetingStill || !family.greetingDue)
             onCriticalWantedChanged: if (family.criticalWanted) family.criticalUsed = true
             LazyLoader {
                 id: greetingPart
@@ -1036,6 +1062,13 @@ ShellRoot {
                     ? (Plugins.part(family.modelData, "greeting") || Plugins.baseUrl("modules/shared/bootGreeting/BootGreeting.qml"))
                     : ""
                 active: greetingPart.source !== ""
+                // The parts compile on the loader's thread while the welcome enters, and are made once it stands still:
+                // compiled only then, they kept the welcome up a second longer. Started with the welcome, they held
+                // its own compile back 1.4 s (a nest).
+                onItemChanged: if (greetingPart.item) {
+                    family.compile("critical", part => family.criticalCompiled = part)
+                    family.compile("panels", part => family.panelsCompiled = part)
+                }
             }
 
             onChosenChanged: {

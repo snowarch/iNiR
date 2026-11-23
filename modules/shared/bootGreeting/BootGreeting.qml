@@ -43,6 +43,8 @@ Scope {
     property bool _visible: false
     property bool _panelVisible: false  // stays true until cleanup finishes (covers exit animation)
     property bool _dismissing: false
+    // The entrance has played: the shell builds the desktop under the welcome from here (GlobalStates.bootGreetingStill).
+    property bool still: false
 
     Timer {
         id: cascadeTimer
@@ -53,7 +55,16 @@ Scope {
                 root._cascade++
             } else {
                 cascadeTimer.stop()
+                stillTimer.restart()
             }
+        }
+    }
+    Timer {
+        id: stillTimer
+        interval: Appearance.animation.elementMoveEnter.duration
+        onTriggered: {
+            root.still = true
+            GlobalStates.bootGreetingStill = true
         }
     }
 
@@ -86,6 +97,7 @@ Scope {
         root._visible = true
         root._cascade = 0
         root._dismissing = false
+        root.still = false
         // Start cascade after a brief frame to let the scrim morph in.
         Qt.callLater(() => cascadeTimer.start())
         autoDismissTimer.start()
@@ -105,6 +117,8 @@ Scope {
         if (root._dismissing) return
         root._dismissing = true
         autoDismissTimer.stop()
+        stillTimer.stop()
+        GlobalStates.bootGreetingStill = true
         // Reverse: cascade collapses, then scrim fades
         root._cascade = 0
         _exitTimer.start()
@@ -160,10 +174,12 @@ Scope {
 
             readonly property int blurOverflow: 64
 
+            // Drawn only through the blur: shown as well, the sharp wallpaper was one more full-screen pass a frame.
             Item {
                 id: blurSource
                 anchors.fill: parent
                 anchors.margins: -scrim.blurOverflow
+                visible: false
 
                 Image {
                     anchors.fill: parent
@@ -318,6 +334,9 @@ Scope {
                     surface: "bootGreeting"
                     pose: "wave-loop"
                     visible: active && status !== Image.Error && !parent.dramaticBoot
+                    // She waves through the entrance and rests at the end of her loop once the desktop is being built
+                    // under the welcome: a loop held up by that work stuttered.
+                    playing: active && visible && Appearance.animationsEnabled && !(root.still && currentFrame === 0)
                 }
 
                 MascotImage {
