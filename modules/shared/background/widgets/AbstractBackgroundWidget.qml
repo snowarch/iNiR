@@ -23,9 +23,12 @@ AbstractWidget {
     // How this family's widgets read: colours, type, shapes (its part `widgetLook`); the lending family's while it
     // wears another family's faces.
     readonly property string lookFamily: String(DesktopWidgetDesign.faceDesignOf(root.familyFaceDesign)?.family ?? "")
-    readonly property var look: DesktopWidgetLook.lookOf(root.lookFamily)
+    // The family whose look the widget reads now: moved by the face loader between one face and the next, so no face
+    // ever reads a look that is not its own.
+    property string faceFamily: ""
+    readonly property var look: DesktopWidgetLook.lookOf(root.faceFamily)
     // That look is the family's (or it has none): what the family draws over this widget may load.
-    readonly property bool lookIn: DesktopWidgetLook.holds(root.look, root.lookFamily)
+    readonly property bool lookIn: DesktopWidgetLook.holds(root.look, root.faceFamily)
     // The Background it sits on; a host with no desktop behind it (the lock) sets these itself.
     property var desktop: null
     property int screenWidth: root.desktop?.screen?.width ?? 0
@@ -1123,7 +1126,14 @@ AbstractWidget {
         // A face answers to its own rows (Material, Opacity in iRiS Settings); Material's Opacity and Dimming are hidden
         // while a face is drawn, and a value left there from before faded it to a ghost with no row to undo it.
         opacity: 1
+        property string named: ""
         function loadNamed(): void {
+            if (root.faceFamily === root.lookFamily && faceLoader.named === root.faceUrl) return
+            if (root.faceFamily !== root.lookFamily) {
+                faceLoader.setSource("")
+                root.faceFamily = root.lookFamily
+            }
+            faceLoader.named = root.faceUrl
             if (root.faceUrl.length > 0)
                 setSource(root.faceUrl, root.printPart.length > 0 ? { widget: root, part: root.printPart } : { widget: root })
         }
@@ -1131,6 +1141,7 @@ AbstractWidget {
         Connections {
             target: root
             function onFaceUrlChanged(): void { faceLoader.loadNamed() }
+            function onLookFamilyChanged(): void { faceLoader.loadNamed() }
         }
     }
 
