@@ -7,7 +7,8 @@ import Quickshell.Io
 import qs.modules.common
 
 /**
- * FontSyncService - Synchronizes shell fonts with GTK and KDE applications.
+ * FontSyncService - Synchronizes shell fonts with GTK and KDE applications, and hands the shell's type and shape to
+ * iNiR's own apps.
  *
  * When the user changes typography settings in iNiR, this service automatically
  * updates the system font settings for GTK (via gsettings) and KDE (via kwriteconfig6).
@@ -25,6 +26,29 @@ Singleton {
         Config.options?.appearance?.typography?.mainFont ?? "Roboto Flex"))
     readonly property string monoFont: Config.options?.appearance?.typography?.monospaceFont ?? "JetBrainsMono Nerd Font"
     readonly property real sizeScale: Config.options?.appearance?.typography?.sizeScale ?? 1.0
+
+    // What the shell hands its own apps (iNiR Files) in generated/app-look.json, beside app-palette.json: the faces it
+    // draws with (the family's own when it keeps one), its size scale and how round its corners are (1 is Material's
+    // standard ladder, 0 square). It touches no system setting, so it is written whether syncWithSystem is on or not.
+    readonly property string familyFont: String(Plugins.setting(Plugins.active, "font", ""))
+    readonly property string appLook: JSON.stringify({
+        font: root.familyFont || Appearance.font.family.main,
+        title: root.familyFont || Appearance.font.family.title,
+        mono: root.monoFont,
+        sizeScale: root.sizeScale,
+        rounding: Math.round(Math.max(0, Math.min(2, Appearance.rounding.normal / 17)) * 100) / 100
+    })
+    onAppLookChanged: lookWrite.restart()
+    Timer {
+        id: lookWrite
+        interval: 300
+        onTriggered: lookFile.setText(root.appLook + "\n")
+    }
+    FileView {
+        id: lookFile
+        path: Directories.generatedAppLookPath
+        printErrors: false
+    }
 
     // Calculate font size (base 11pt scaled)
     readonly property int fontSize: Math.round(11 * sizeScale)
@@ -124,6 +148,7 @@ Singleton {
 
     // Initialize on load
     Component.onCompleted: {
+        lookWrite.restart()
         if (syncEnabled) {
             // Reconcile persisted desktop settings on every shell start. The old
             // implementation only synced after a value changed, leaving GTK/KDE
