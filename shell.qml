@@ -1104,7 +1104,33 @@ ShellRoot {
             }
             readonly property bool up: panelParts.item !== null
             readonly property bool standing: criticalParts.item !== null
-            onStandingChanged: if (family.chosen && family.standing) GlobalStates.desktopReady = true
+            // The welcome opens onto a desktop that is whole and still. Let go on the first part alone, it opened while
+            // the panels, the late services and the parts' own loaders were still being made and every surface drew
+            // its first frames, and its motion fell to 5-8 frames a second over them (a nest, iRiS). Still: the main
+            // thread, which makes and draws everything, kept time for 300 ms.
+            readonly property bool settling: family.chosen && family.standing && family.up && root._bootLateFeaturesAt > 0
+                && !GlobalStates.desktopReady
+            property real tickAt: 0
+            property real stillSince: 0
+            property Timer settle: Timer {
+                interval: 50
+                repeat: true
+                running: family.settling
+                onRunningChanged: if (family.settle.running) {
+                    family.tickAt = Date.now()
+                    family.stillSince = family.tickAt
+                }
+                onTriggered: {
+                    const now = Date.now()
+                    if (now - family.tickAt > 80)
+                        family.stillSince = now
+                    family.tickAt = now
+                    if (now - family.stillSince < 300)
+                        return
+                    console.info("[Boot] T+" + (now - root._bootCompletedAt) + "ms: desktop still")
+                    GlobalStates.desktopReady = true
+                }
+            }
             onUpChanged: if (family.up) console.info(`[Plugins] family ${family.modelData} loaded`)
             Component.onCompleted: {
                 family.criticalUsed = family.criticalUsed || family.criticalWanted
