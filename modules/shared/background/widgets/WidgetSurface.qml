@@ -47,6 +47,6 @@ Item {
         id: plate
         anchors.fill: parent
         // A family's plate reads its family's look (the widget's `lookIn`); the plain one reads nothing it lacks.
-        active: root.visible && (!(root.widget?.wearsFamily ?? true) || (root.widget?.lookIn ?? DesktopWidgetLook.holds(DesktopWidgetLook.look)))
+        active: root.visible && (!(root.widget?.wearsFamily ?? true) || (root.widget?.lookIn ?? DesktopWidgetLook.holds(DesktopWidgetLook.look, "")))
     }
 }

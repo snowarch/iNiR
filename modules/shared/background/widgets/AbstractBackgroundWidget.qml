@@ -20,10 +20,12 @@ AbstractWidget {
     readonly property bool familyDesign: DesktopWidgetDesign.faceDesign.length > 0
         && (root._designResolved.face || (root.faceOnly && root.widgetSharedDesign === "individual"))
     readonly property bool wearsFamily: DesktopWidgetDesign.faceDesign.length === 0 || root.familyDesign
-    // How this family's widgets read: colours, type, shapes (its part `widgetLook`).
-    readonly property var look: DesktopWidgetLook.look
+    // How this family's widgets read: colours, type, shapes (its part `widgetLook`); the lending family's while it
+    // wears another family's faces.
+    readonly property string lookFamily: String(DesktopWidgetDesign.faceDesignOf(root.familyFaceDesign)?.family ?? "")
+    readonly property var look: DesktopWidgetLook.lookOf(root.lookFamily)
     // That look is the family's (or it has none): what the family draws over this widget may load.
-    readonly property bool lookIn: DesktopWidgetLook.holds(root.look)
+    readonly property bool lookIn: DesktopWidgetLook.holds(root.look, root.lookFamily)
     // The Background it sits on; a host with no desktop behind it (the lock) sets these itself.
     property var desktop: null
     property int screenWidth: root.desktop?.screen?.width ?? 0
