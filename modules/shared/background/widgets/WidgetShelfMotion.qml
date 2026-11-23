@@ -38,11 +38,10 @@ Item {
     function retake(): void {
         if (root.picturing) pictureTimer.restart()
     }
+    // takePicture wrote it to disk when it took it: writing it again here encoded a PNG per widget on the way out.
     Component.onDestruction: {
         DesktopEditStage.forgetPicture(root)
-        if (!root.picture) return
-        root.picture.saveToFile(DesktopEditStage.savedPicture(root.widget.configEntryName))
-        DesktopEditStage.setPicture(root.widget.configEntryName, "", 0, 0)
+        if (root.picture) DesktopEditStage.setPicture(root.widget.configEntryName, "", 0, 0)
     }
 
     // `shelf` runs 0 (the picture) to 1 (the widget in place).
