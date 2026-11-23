@@ -171,16 +171,13 @@ ShellRoot {
         else
             shellEntryTimer.start()
     }
-    Connections {
-        target: GlobalStates
-        enabled: root._shellEntryHeld
-        function onBootGreetingStillChanged(): void {
-            if (!GlobalStates.bootGreetingStill)
-                return
-            root._shellEntryHeld = false
-            console.info("[Boot] T+" + (Date.now() - root._bootCompletedAt) + "ms: welcome still")
-            shellEntryTimer.start()
-        }
+    // Still, or closed before its entrance ended (a click): either way the desktop is built from here.
+    on_GreetingEnteringChanged: {
+        if (root._greetingEntering || !root._shellEntryHeld)
+            return
+        root._shellEntryHeld = false
+        console.info("[Boot] T+" + (Date.now() - root._bootCompletedAt) + "ms: welcome still")
+        shellEntryTimer.start()
     }
     Timer {
         interval: 2500
