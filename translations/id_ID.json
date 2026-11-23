@@ -1560,7 +1560,7 @@
   "Let her rearrange widgets": "Biarkan dia mengatur ulang widget",
   "Light ink": "Tinta terang",
   "Linear": "Linear",
-  "Little thuds and bells from the system sound theme when she hits things": "Suara dentuman dan lonceng kecil dari tema suara sistem saat dia menyentuh sesuatu",
+  "Little thuds and bells from the sound pack when she hits things": "Suara dentuman dan lonceng kecil dari paket suara saat dia menyentuh sesuatu",
   "Live model from %1": "Model langsung dari %1",
   "Live preview for the active workspace and refreshed snapshots for hidden workspaces": "Pratinjau langsung untuk ruang kerja aktif dan snapshot yang diperbarui untuk ruang kerja tersembunyi",
   "Local Whisper": "Whisper Lokal",
@@ -1763,7 +1763,6 @@
   "The provider": "Penyedia",
   "The selected model uses an API protocol that iNiR does not support yet.": "Model yang dipilih menggunakan protokol API yang belum didukung oleh iNiR.",
   "The unified snip menu reopens with the action and shape last picked in its toolbar. Dedicated screenshot, OCR and visual-search shortcuts always keep their explicit action. Recording is never remembered. When off, the menu opens as a rectangle screenshot.": "Menu cuplikan terpadu terbuka kembali dengan tindakan dan bentuk yang terakhir dipilih di bilah alatnya. Pintasan tangkapan layar, OCR, dan pencarian visual khusus selalu mempertahankan tindakan eksplisitnya. Perekaman tidak pernah diingat. Saat dimatikan, menu terbuka sebagai tangkapan layar persegi panjang.",
-  "Theme default (%1)": "Tema default (%1)",
   "Theme palette": "Palet tema",
   "They're all the same workspace to me.": "Bagi saya, semuanya adalah ruang kerja yang sama.",
   "This model": "Model ini",
@@ -3848,8 +3847,8 @@
   "Show dock when no window is focused (Empty workspace mode only)": "Tampilkan dok saat tidak ada jendela yang difokuskan (Hanya mode ruang kerja kosong)",
   "Swap accent colours": "Tukar warna aksen",
   "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "Warna ketiga skema memimpin, dan aksen mengambil tempatnya. Hanya shell: aplikasi tetap memakai skema seperti yang dibuat.",
-  "Pick the sound each event plays: one from your sound theme, or any audio file": "Pilih suara yang dimainkan setiap acara: satu dari tema suara Anda, atau berkas audio apa pun",
   "Until": "Sampai",
   "Light mode": "Mode terang",
-  "floating": "mengambang"
+  "floating": "mengambang",
+  "Pick the sound each event plays: one from any sound pack, or any audio file": "Pilih suara yang dimainkan setiap acara: satu dari paket suara mana pun, atau berkas audio apa pun"
 }

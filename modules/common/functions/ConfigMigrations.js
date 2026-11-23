@@ -419,12 +419,20 @@ function _honestWidgets(obj) {
     return changed;
 }
 
-// Sound packs came with one of ours as the factory sound. A config written before them has no pack and keeps
-// what it played: the system theme's sounds (classic), so an update changes nothing a person hears until they pick one.
-function _soundsKeepTheme(obj) {
+// The system sound theme (pack "classic", per-event names such as "message-new-instant") left the shell: every sound
+// is one of ours. Step 1 moves a file off it once, onto Aurora, so a pack of yours chosen later for an event stays.
+const soundSteps = 1;
+function _ownSounds(obj) {
+    if (!_isObject(obj.sounds)) obj.sounds = {};
     const sounds = obj.sounds;
-    if (!_isObject(sounds) || sounds.pack !== undefined) return false;
-    sounds.pack = "classic";
+    if (Number(sounds.steps ?? 0) >= soundSteps) return false;
+    if (sounds.pack === undefined || sounds.pack === "classic") sounds.pack = "aurora";
+    if (_isObject(sounds.events))
+        for (const [event, value] of Object.entries(sounds.events))
+            if (typeof value === "string" && value !== "" && !value.startsWith("/") && !value.startsWith("file://"))
+                sounds.events[event] = "";
+    delete sounds.theme;
+    sounds.steps = soundSteps;
     return true;
 }
 
@@ -455,7 +463,7 @@ function migrate(obj) {
     changed = _withdrawn(obj) || changed;
     changed = _customToBase(obj) || changed;
     changed = _honestWidgets(obj) || changed;
-    changed = _soundsKeepTheme(obj) || changed;
+    changed = _ownSounds(obj) || changed;
     changed = _factoryPanels(obj) || changed;
     for (const [from, to] of moves) {
         const value = _get(obj, from);

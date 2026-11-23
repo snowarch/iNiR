@@ -1560,7 +1560,7 @@
   "Let her rearrange widgets": "Araçları yeniden düzenlemesine izin ver",
   "Light ink": "Açık mürekkep",
   "Linear": "Doğrusal",
-  "Little thuds and bells from the system sound theme when she hits things": "Bir yerlere çarptığında sistem ses temasından gelen hafif gümbürtü ve zil sesleri",
+  "Little thuds and bells from the sound pack when she hits things": "Bir yerlere çarptığında ses paketinden gelen hafif gümbürtü ve zil sesleri",
   "Live model from %1": "%1 sağlayıcısından canlı model",
   "Live preview for the active workspace and refreshed snapshots for hidden workspaces": "Etkin çalışma alanı için canlı önizleme ve gizli çalışma alanları için yenilenen anlık görüntüler",
   "Local Whisper": "Yerel Whisper",
@@ -1763,7 +1763,6 @@
   "The provider": "Sağlayıcı",
   "The selected model uses an API protocol that iNiR does not support yet.": "Seçili model, iNiR'in henüz desteklemediği bir API protokolünü kullanıyor.",
   "The unified snip menu reopens with the action and shape last picked in its toolbar. Dedicated screenshot, OCR and visual-search shortcuts always keep their explicit action. Recording is never remembered. When off, the menu opens as a rectangle screenshot.": "Birleşik alıntı menüsü, araç çubuğunda son seçilen eylem ve şekille yeniden açılır. Özel ekran görüntüsü, OCR ve görsel arama kısayolları açıkça belirtilen eylemlerini daima korur. Kayıt seçimi asla hatırlanmaz. Kapalıyken menü dikdörtgen ekran görüntüsü olarak açılır.",
-  "Theme default (%1)": "Tema varsayılanı (%1)",
   "Theme palette": "Tema paleti",
   "They're all the same workspace to me.": "Benim için hepsi aynı çalışma alanı.",
   "This model": "Bu model",
@@ -3848,8 +3847,8 @@
   "Show dock when no window is focused (Empty workspace mode only)": "Odakta pencere yokken dock'u göster (yalnızca Boş çalışma alanı modu)",
   "Swap accent colours": "Vurgu renklerini değiştir",
   "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "Şemanın üçüncü rengi öne geçer, vurgu onun yerini alır. Yalnızca kabukta: uygulamalar şemayı üretildiği gibi tutar.",
-  "Pick the sound each event plays: one from your sound theme, or any audio file": "Her olayda çalacak sesi seçin: ses temanızdan bir ses veya herhangi bir ses dosyası",
   "Until": "Şuna kadar",
   "Light mode": "Açık mod",
-  "floating": "yüzen"
+  "floating": "yüzen",
+  "Pick the sound each event plays: one from any sound pack, or any audio file": "Her olayda çalacak sesi seçin: herhangi bir ses paketinden bir ses veya herhangi bir ses dosyası"
 }

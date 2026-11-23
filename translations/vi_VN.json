@@ -1560,7 +1560,7 @@
   "Let her rearrange widgets": "Cho phép cô ấy sắp xếp lại các tiện ích",
   "Light ink": "Mực nhạt",
   "Linear": "Tuyến tính",
-  "Little thuds and bells from the system sound theme when she hits things": "Những tiếng chuông nhỏ từ chủ đề âm thanh hệ thống khi cô chạm vào mọi thứ",
+  "Little thuds and bells from the sound pack when she hits things": "Những tiếng động và tiếng chuông nhỏ từ gói âm thanh khi cô chạm vào mọi thứ",
   "Live model from %1": "Mô hình trực tiếp từ %1",
   "Live preview for the active workspace and refreshed snapshots for hidden workspaces": "Xem trước trực tiếp cho không gian làm việc đang hoạt động và ảnh chụp nhanh làm mới cho không gian làm việc ẩn không gian làm việc",
   "Local Whisper": "Lời thì thầm cục bộ",
@@ -1763,7 +1763,6 @@
   "The provider": "Nhà cung cấp",
   "The selected model uses an API protocol that iNiR does not support yet.": "Mô hình đã chọn sử dụng giao thức API mà iNiR chưa hỗ trợ.",
   "The unified snip menu reopens with the action and shape last picked in its toolbar. Dedicated screenshot, OCR and visual-search shortcuts always keep their explicit action. Recording is never remembered. When off, the menu opens as a rectangle screenshot.": "Menu cắt hợp nhất mở lại với hành động và hình dạng được chọn gần nhất trên thanh công cụ. Các phím tắt riêng cho ảnh chụp màn hình, OCR và tìm kiếm hình ảnh luôn giữ đúng hành động. Chế độ ghi không bao giờ được ghi nhớ. Khi tắt, menu mở ở chế độ chụp hình chữ nhật.",
-  "Theme default (%1)": "Mặc định của chủ đề ( %1 )",
   "Theme palette": "Bảng màu chủ đề",
   "They're all the same workspace to me.": "Đối với tôi, chúng đều là cùng một không gian làm việc.",
   "This model": "Mô hình này",
@@ -3848,8 +3847,8 @@
   "Show dock when no window is focused (Empty workspace mode only)": "Hiện dock khi không cửa sổ nào có tiêu điểm (chỉ chế độ Desktop trống)",
   "Swap accent colours": "Hoán đổi màu nhấn",
   "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "Màu thứ ba của bảng màu dẫn đầu, và màu nhấn thế chỗ của nó. Chỉ trong shell: ứng dụng giữ bảng màu như đã tạo.",
-  "Pick the sound each event plays: one from your sound theme, or any audio file": "Chọn âm thanh mà mỗi sự kiện phát: một âm thanh từ chủ đề âm thanh của bạn hoặc bất kỳ tệp âm thanh nào",
   "Until": "Đến",
   "Light mode": "Chế độ sáng",
-  "floating": "nổi"
+  "floating": "nổi",
+  "Pick the sound each event plays: one from any sound pack, or any audio file": "Chọn âm thanh mà mỗi sự kiện phát: một âm thanh từ bất kỳ gói âm thanh nào hoặc bất kỳ tệp âm thanh nào"
 }

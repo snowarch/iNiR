@@ -87,11 +87,10 @@ PanelWindow {
         return pool.length ? Translation.tr(pool[Math.floor(Math.random() * pool.length)]) : ""
     }
 
-    // Impact foley from the freedesktop sound theme (opt-out via chaos.sfx)
-    function _sfx(name: string): void {
+    // Impact foley from the sound pack in use (opt-out via chaos.sfx)
+    function _sfx(eventId: string): void {
         if (!(Config.options?.mascot?.chaos?.sfx ?? true)) return
-        Quickshell.execDetached(["sh", "-c",
-            `paplay /usr/share/sounds/freedesktop/stereo/${name}.oga 2>/dev/null || true`])
+        Audio.previewEvent(eventId, "")
     }
 
     // Bigger widgets attract more violence ("the ones hogging the screen")
@@ -296,7 +295,7 @@ PanelWindow {
         id: aftershockTimer
         interval: 1300
         onTriggered: {
-            romp._sfx("bell")
+            romp._sfx("select")
             MascotChaos.panelShake(1.5, romp.rompScreen.name)
             for (const t of MascotChaos.targets(romp.rompScreen.name))
                 MascotChaos.impact(t.key, (Math.random() - 0.5) * 60, 0, "bounce")
@@ -461,7 +460,7 @@ PanelWindow {
         }
         if (romp.phase === "act" && stop.kind === "cleanup") {
             MascotChaos.tidy()
-            romp._sfx("complete")
+            romp._sfx("toggleOn")
             const act = romp._chaosCfg.cleanup ?? ({})
             romp.pose = romp._pickActPose(act.after, "stomp-victory")
             romp.line = ""
@@ -585,16 +584,16 @@ PanelWindow {
             if (stop.kind === "quake") {
                 // no two quakes alike: variable magnitude, and sometimes
                 // an aftershock rolls through a beat later
-                romp._sfx("dialog-warning")
+                romp._sfx("error")
                 MascotChaos.panelShake(1 + Math.random() * 1.4, romp.rompScreen.name)
                 for (const t of MascotChaos.targets(romp.rompScreen.name))
                     MascotChaos.impact(t.key, (Math.random() - 0.5) * (90 + Math.random() * 130), 0, "bounce")
                 if (Math.random() < 0.35) aftershockTimer.restart()
             } else if (stop.kind === "punt") {
-                romp._sfx("dialog-warning")
+                romp._sfx("error")
                 MascotChaos.panelShake(2.4, romp.rompScreen.name)
             } else {
-                romp._sfx(stop.mode === "vanish" ? "trash-empty" : (stop.mode === "wreck" ? "dialog-error" : "bell"))
+                romp._sfx(stop.mode === "vanish" ? "close" : (stop.mode === "wreck" ? "error" : "select"))
                 MascotChaos.impact(stop.key, stop.vx, stop.vy, stop.mode)
                 romp._checkDomino(stop)
             }

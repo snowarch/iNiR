@@ -1560,7 +1560,7 @@
   "Let her rearrange widgets": "उसे विजेट्स को पुनर्व्यवस्थित करने दें",
   "Light ink": "हल्की स्याही",
   "Linear": "रैखिक",
-  "Little thuds and bells from the system sound theme when she hits things": "जब वह चीजों को हिट करती है तो सिस्टम थीम से छोटी गड़गड़ाहट और घंटियाँ बजती हैं",
+  "Little thuds and bells from the sound pack when she hits things": "जब वह चीजों से टकराती है तो साउंड पैक से छोटी गड़गड़ाहट और घंटियाँ",
   "Live model from %1": "%1 से लाइव मॉडल",
   "Live preview for the active workspace and refreshed snapshots for hidden workspaces": "सक्रिय वर्कस्पेस के लिए लाइव पूर्वावलोकन और छिपे हुए वर्कस्पेस के लिए ताज़ा स्नैपशॉट",
   "Local Whisper": "लोकल व्हिस्पर",
@@ -1763,7 +1763,6 @@
   "The provider": "प्रदाता",
   "The selected model uses an API protocol that iNiR does not support yet.": "चयनित मॉडल API प्रोटोकॉल का उपयोग करता है जिसे iNiR अभी तक समर्थित नहीं करता है।",
   "The unified snip menu reopens with the action and shape last picked in its toolbar. Dedicated screenshot, OCR and visual-search shortcuts always keep their explicit action. Recording is never remembered. When off, the menu opens as a rectangle screenshot.": "एकीकृत स्निप मेनू टूलबार में पिछली चुनी गई क्रिया और आकार के साथ दोबारा खुलता है। स्क्रीनशॉट, OCR और विज़ुअल सर्च के अलग शॉर्टकट हमेशा अपनी तय क्रिया रखते हैं। रिकॉर्डिंग मोड कभी याद नहीं रखा जाता। बंद होने पर मेनू आयताकार स्क्रीनशॉट के रूप में खुलता है।",
-  "Theme default (%1)": "थीम डिफ़ॉल्ट (%1)",
   "Theme palette": "थीम पैलेट",
   "They're all the same workspace to me.": "वे सभी मेरे लिए एक ही कार्यक्षेत्र हैं।",
   "This model": "यह मॉडल",
@@ -3848,8 +3847,8 @@
   "Show dock when no window is focused (Empty workspace mode only)": "जब कोई विंडो फ़ोकस में न हो तब Dock दिखाएँ (सिर्फ़ खाली वर्कस्पेस मोड)",
   "Swap accent colours": "एक्सेंट रंग बदलें",
   "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "स्कीम का तीसरा रंग आगे आता है, और एक्सेंट उसकी जगह लेता है। केवल शेल में: ऐप्स स्कीम को वैसा ही रखते हैं जैसा वह बना था।",
-  "Pick the sound each event plays: one from your sound theme, or any audio file": "प्रत्येक ईवेंट द्वारा चलाए जाने वाले ध्वनि को चुनें: आपकी ध्वनि थीम से एक, या किसी ऑडियो फ़ाइल से",
   "Until": "तक",
   "Light mode": "लाइट मोड",
-  "floating": "तैरता"
+  "floating": "तैरता",
+  "Pick the sound each event plays: one from any sound pack, or any audio file": "प्रत्येक ईवेंट द्वारा चलाई जाने वाली ध्वनि चुनें: किसी भी साउंड पैक से एक, या कोई भी ऑडियो फ़ाइल"
 }

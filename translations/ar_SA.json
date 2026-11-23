@@ -1560,7 +1560,7 @@
   "Let her rearrange widgets": "دعها تعيد ترتيب الودجات",
   "Light ink": "حبر فاتح",
   "Linear": "خطي",
-  "Little thuds and bells from the system sound theme when she hits things": "أصوات ارتطام وأجراس خفيفة من سمة أصوات النظام عندما تصطدم بالأشياء",
+  "Little thuds and bells from the sound pack when she hits things": "أصوات ارتطام وأجراس خفيفة من حزمة الأصوات عندما تصطدم بالأشياء",
   "Live model from %1": "نموذج حي من %1",
   "Live preview for the active workspace and refreshed snapshots for hidden workspaces": "معاينة حية لمساحة العمل النشطة ولقطات محدَّثة لمساحات العمل المخفية",
   "Local Whisper": "Whisper المحلي",
@@ -1763,7 +1763,6 @@
   "The provider": "المزوّد",
   "The selected model uses an API protocol that iNiR does not support yet.": "النموذج المختار يستخدم بروتوكول API لا يدعمه iNiR بعد.",
   "The unified snip menu reopens with the action and shape last picked in its toolbar. Dedicated screenshot, OCR and visual-search shortcuts always keep their explicit action. Recording is never remembered. When off, the menu opens as a rectangle screenshot.": "تُعاد قائمة القص الموحّدة بآخر إجراء وشكل اختيرا من شريط أدواتها. أما اختصارات لقطة الشاشة وOCR والبحث المرئي المخصصة فتحتفظ دائمًا بإجرائها الصريح. ولا يُتذكَّر التسجيل أبدًا. وعند الإيقاف تُفتح القائمة كلقطة شاشة مستطيلة.",
-  "Theme default (%1)": "افتراضي السمة (%1)",
   "Theme palette": "لوحة ألوان السمة",
   "They're all the same workspace to me.": "كلها مساحة عمل واحدة بالنسبة لي.",
   "This model": "هذا النموذج",
@@ -3848,8 +3847,8 @@
   "Show dock when no window is focused (Empty workspace mode only)": "إظهار Dock حين لا تكون أي نافذة مركّزة (في وضع سطح المكتب الفارغ فقط)",
   "Swap accent colours": "تبديل ألوان التمييز",
   "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "يتصدّر اللون الثالث في المخطط، ويأخذ لون التمييز مكانه. للواجهة فقط: تحتفظ التطبيقات بالمخطط كما أُنشئ.",
-  "Pick the sound each event plays: one from your sound theme, or any audio file": "اختر الصوت الذي يُشغَّل لكل حدث: صوت من سمة الأصوات لديك، أو أي ملف صوتي",
   "Until": "حتى",
   "Light mode": "الوضع الفاتح",
-  "floating": "عائم"
+  "floating": "عائم",
+  "Pick the sound each event plays: one from any sound pack, or any audio file": "اختر الصوت الذي يُشغَّل لكل حدث: صوت من أي حزمة أصوات، أو أي ملف صوتي"
 }

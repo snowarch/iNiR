@@ -136,7 +136,7 @@ JsonAdapter {
         property JsonObject chaos: JsonObject {
             property bool enable: false // Chaos mode: she may run across the desktop and mess with widgets/panels
             property bool allowRearrange: false // Let her actually relocate widgets (otherwise everything bounces back)
-            property bool sfx: true // Impact foley from the freedesktop sound theme during chaos
+            property bool sfx: true // Impact foley from the sound pack during chaos
             property bool systemEvents: true // Rare romps reacting to low battery, notification pileup, or late-night hours
             property string artStyle: "jrpg"
             property int intervalMinutes: 45
@@ -2252,19 +2252,19 @@ JsonAdapter {
         property bool battery: false
         property bool timer: false
         property bool pomodoro: false
-        property string theme: "freedesktop"
-        // The sounds the shell speaks with: "classic" (the system theme above), "aurora", "tactile", "lounge", "orbit",
-        // "crystal", "arcade", or a folder of yours in ~/.local/share/inir/sounds
+        // The sounds the shell speaks with: "aurora", "tactile", "lounge", "orbit", "crystal", "arcade", or a folder of
+        // yours in ~/.local/share/inir/sounds. Every sound is the shell's own: none comes from a system sound theme.
         property string pack: "aurora"
+        property int steps: 0 // The last step of ConfigMigrations' sound steps this file took
         property bool notifications: true
         property real volume: 0.5
         property bool session: true // the desktop arriving, locking and unlocking
         property bool ui: false // panels opening and closing, selection, switches, volume, screenshots, devices
         property real uiVolume: 0.6
         property JsonObject events: JsonObject {
-            // Per-event override: "" = theme default; a bare name
-            // plays that sound from the current theme; an absolute
-            // path (or file://) plays the file directly
+            // Per-event choice: "" = the pack in use; a pack's name
+            // plays that pack's sound; an absolute path (or file://)
+            // plays the file directly
             property string notification: ""
             property string notificationCritical: ""
             property string batteryLow: ""

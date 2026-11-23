@@ -1560,7 +1560,7 @@
   "Let her rearrange widgets": "Дозвольте їй переставляти віджети",
   "Light ink": "Світле чорнило",
   "Linear": "Лінійний",
-  "Little thuds and bells from the system sound theme when she hits things": "Маленькі удари та дзвіночки із звукової теми системи, коли вона торкається речей",
+  "Little thuds and bells from the sound pack when she hits things": "Маленькі удари та дзвіночки з набору звуків, коли вона торкається речей",
   "Live model from %1": "Жива модель із %1",
   "Live preview for the active workspace and refreshed snapshots for hidden workspaces": "Попередній перегляд у режимі реального часу для активної робочої області та оновлені знімки для прихованих робочих областей",
   "Local Whisper": "Локальний шепот",
@@ -1763,7 +1763,6 @@
   "The provider": "Постачальник",
   "The selected model uses an API protocol that iNiR does not support yet.": "Вибрана модель використовує протокол API, який iNiR ще не підтримує.",
   "The unified snip menu reopens with the action and shape last picked in its toolbar. Dedicated screenshot, OCR and visual-search shortcuts always keep their explicit action. Recording is never remembered. When off, the menu opens as a rectangle screenshot.": "Об’єднане меню захоплення знову відкривається з останніми вибраними дією та формою. Окремі скорочення для знімка екрана, OCR і візуального пошуку завжди зберігають свою дію. Режим запису не запам’ятовується. Коли вимкнено, меню відкривається для прямокутного знімка.",
-  "Theme default (%1)": "Тема за замовчуванням ( %1 )",
   "Theme palette": "Палітра тем",
   "They're all the same workspace to me.": "Для мене вони однакові робочі області.",
   "This model": "Ця модель",
@@ -3848,8 +3847,8 @@
   "Show dock when no window is focused (Empty workspace mode only)": "Показувати док, коли жодне вікно не у фокусі (лише режим Порожня стільниця)",
   "Swap accent colours": "Поміняти акцентні кольори",
   "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "Третій колір схеми стає головним, а акцент займає його місце. Лише в оболонці: застосунки зберігають схему як є.",
-  "Pick the sound each event plays: one from your sound theme, or any audio file": "Виберіть звук, який відтворюватиме кожна подія: один із вашої звукової теми чи будь-якого аудіофайлу",
   "Until": "До",
   "Light mode": "Світлий режим",
-  "floating": "плаваюча"
+  "floating": "плаваюча",
+  "Pick the sound each event plays: one from any sound pack, or any audio file": "Виберіть звук, який відтворюватиме кожна подія: один з будь-якого набору звуків або будь-який аудіофайл"
 }

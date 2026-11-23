@@ -7,15 +7,15 @@ import qs.services
 
 /**
  * Config-backed event-sound row: the collapsed row names the sound in use
- * and previews it; it expands into the current theme's sound list with
- * per-row preview, plus a custom file path field. No dropdowns.
+ * and previews it; it expands into the event's sound in every pack, each
+ * with its own preview, plus a custom file path field. No dropdowns.
  *
  * Shared by both families (registered in this folder's qmldir), styled
  * with Appearance tokens on purpose. Usage:
  *
  *   SoundPicker {
  *       label: Translation.tr("Notification")
- *       eventId: "notification"   // key in Audio.soundEvents / sounds.events
+ *       eventId: "notification"   // a pack file's name and its key in sounds.events
  *   }
  */
 ColumnLayout {
@@ -27,10 +27,10 @@ ColumnLayout {
 
     readonly property string currentValue: Config.options?.sounds?.events?.[root.eventId] ?? ""
     readonly property bool isFile: currentValue.startsWith("/") || currentValue.startsWith("file://")
-    readonly property string defaultLabel: Audio.eventDefaultLabel(root.eventId)
+    readonly property string defaultLabel: Audio.packInUseLabel
     readonly property string displayValue: currentValue === ""
         ? root.defaultLabel
-        : (isFile ? currentValue.split("/").pop() : currentValue)
+        : (isFile ? currentValue.split("/").pop() : Audio.packLabel(currentValue))
 
     function setValue(value) {
         Config.setNestedValue("sounds.events." + root.eventId, value)
@@ -113,7 +113,7 @@ ColumnLayout {
         }
     }
 
-    // Expanded: theme sound list with per-row preview
+    // Expanded: the event in every other pack, each with its preview
     Loader {
         Layout.fillWidth: true
         Layout.preferredHeight: root.expanded ? 280 : 0
@@ -131,7 +131,7 @@ ColumnLayout {
                 anchors.fill: parent
                 anchors.margins: 8
                 clip: true
-                model: [""].concat(Audio.themeSounds)
+                model: [""].concat(Audio.packs.filter(pack => pack !== Audio.soundPack))
 
                 delegate: Rectangle {
                     id: row
@@ -153,7 +153,7 @@ ColumnLayout {
 
                         StyledText {
                             Layout.fillWidth: true
-                            text: row.modelData === "" ? root.defaultLabel : row.modelData
+                            text: row.modelData === "" ? root.defaultLabel : Audio.packLabel(row.modelData)
                             font.pixelSize: Appearance.font.pixelSize.small
                             color: row.isSelected ? Appearance.colors.colOnPrimaryContainer
                                  : Appearance.colors.colOnLayer2
@@ -174,8 +174,7 @@ ColumnLayout {
                             HoverHandler { id: rowPlayHover }
                             TapHandler {
                                 id: rowPlayTap
-                                onTapped: row.modelData === "" ? Audio.previewEvent(root.eventId, Audio.soundPack)
-                                    : Audio.playSystemSound(row.modelData)
+                                onTapped: Audio.previewEvent(root.eventId, row.modelData || Audio.soundPack)
                             }
                         }
                     }

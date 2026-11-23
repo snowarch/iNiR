@@ -1560,7 +1560,7 @@
   "Let her rearrange widgets": "Lasciale riorganizzare i widget",
   "Light ink": "Inchiostro chiaro",
   "Linear": "Lineare",
-  "Little thuds and bells from the system sound theme when she hits things": "Piccoli tonfi e campanelli dal tema sonoro del sistema quando colpisce le cose",
+  "Little thuds and bells from the sound pack when she hits things": "Piccoli tonfi e campanelli dal pacchetto di suoni quando colpisce le cose",
   "Live model from %1": "Modello dal vivo da %1",
   "Live preview for the active workspace and refreshed snapshots for hidden workspaces": "Anteprima live per l'area di lavoro attiva e snapshot aggiornati per le aree di lavoro nascoste",
   "Local Whisper": "Whisper locale",
@@ -1763,7 +1763,6 @@
   "The provider": "Il provider",
   "The selected model uses an API protocol that iNiR does not support yet.": "Il modello scelto usa un protocollo API che iNiR non supporta ancora.",
   "The unified snip menu reopens with the action and shape last picked in its toolbar. Dedicated screenshot, OCR and visual-search shortcuts always keep their explicit action. Recording is never remembered. When off, the menu opens as a rectangle screenshot.": "Il menu di ritaglio unificato si riapre con l'azione e la forma scelte per ultime nella sua barra strumenti. Le scorciatoie dedicate a schermata, OCR e ricerca visiva mantengono sempre la loro azione esplicita. La registrazione non viene mai ricordata. Quando è disattivo, il menu si apre come schermata rettangolare.",
-  "Theme default (%1)": "Tema predefinito (%1)",
   "Theme palette": "Palette tema",
   "They're all the same workspace to me.": "Per me sono tutti lo stesso spazio di lavoro.",
   "This model": "Questo modello",
@@ -3848,8 +3847,8 @@
   "Show dock when no window is focused (Empty workspace mode only)": "Mostra il dock quando nessuna finestra è a fuoco (solo modalità Desktop vuoto)",
   "Swap accent colours": "Scambia i colori d'accento",
   "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "Il terzo colore dello schema passa in testa, e l'accento prende il suo posto. Solo la shell: le app mantengono lo schema come generato.",
-  "Pick the sound each event plays: one from your sound theme, or any audio file": "Scegli il suono riprodotto da ogni evento: uno dal tuo tema sonoro o qualsiasi file audio",
   "Until": "Fino a",
   "Light mode": "Modalità chiara",
-  "floating": "mobile"
+  "floating": "mobile",
+  "Pick the sound each event plays: one from any sound pack, or any audio file": "Scegli il suono riprodotto da ogni evento: uno da qualsiasi pacchetto di suoni o qualsiasi file audio"
 }

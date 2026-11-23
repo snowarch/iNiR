@@ -1560,7 +1560,7 @@
   "Let her rearrange widgets": "Deixar que ela reorganize os widgets",
   "Light ink": "Tinta clara",
   "Linear": "Linear",
-  "Little thuds and bells from the system sound theme when she hits things": "Baques e sininhos discretos do tema de som do sistema quando ela esbarra nas coisas",
+  "Little thuds and bells from the sound pack when she hits things": "Baques e sininhos discretos do pacote de sons quando ela esbarra nas coisas",
   "Live model from %1": "Modelo ao vivo de %1",
   "Live preview for the active workspace and refreshed snapshots for hidden workspaces": "Prévia ao vivo da área de trabalho ativa e capturas atualizadas das ocultas",
   "Local Whisper": "Whisper local",
@@ -1763,7 +1763,6 @@
   "The provider": "O provedor",
   "The selected model uses an API protocol that iNiR does not support yet.": "O modelo escolhido usa um protocolo de API que o iNiR ainda não suporta.",
   "The unified snip menu reopens with the action and shape last picked in its toolbar. Dedicated screenshot, OCR and visual-search shortcuts always keep their explicit action. Recording is never remembered. When off, the menu opens as a rectangle screenshot.": "O menu de recorte unificado reabre com a ação e a forma escolhidas por último na barra de ferramentas dele. Os atalhos dedicados de captura, OCR e busca visual sempre mantêm a ação explícita deles. A gravação nunca é lembrada. Quando desligado, o menu abre como captura retangular.",
-  "Theme default (%1)": "Padrão do tema (%1)",
   "Theme palette": "Paleta do tema",
   "They're all the same workspace to me.": "Para mim é tudo a mesma área de trabalho.",
   "This model": "Este modelo",
@@ -3848,8 +3847,8 @@
   "Show dock when no window is focused (Empty workspace mode only)": "Mostrar o dock quando nenhuma janela está em foco (só no modo Área de trabalho vazia)",
   "Swap accent colours": "Trocar cores de destaque",
   "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "A terceira cor do esquema passa à frente, e o destaque fica no lugar dela. Só no shell: os apps mantêm o esquema como foi gerado.",
-  "Pick the sound each event plays: one from your sound theme, or any audio file": "Escolha o som que cada evento toca: um do seu tema de som, ou qualquer arquivo de áudio",
   "Until": "Até",
   "Light mode": "Modo claro",
-  "floating": "flutuante"
+  "floating": "flutuante",
+  "Pick the sound each event plays: one from any sound pack, or any audio file": "Escolha o som que cada evento toca: um de qualquer pacote de sons, ou qualquer arquivo de áudio"
 }

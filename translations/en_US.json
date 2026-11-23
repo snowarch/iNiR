@@ -1560,7 +1560,7 @@
   "Let her rearrange widgets": "Let her rearrange widgets",
   "Light ink": "Light ink",
   "Linear": "Linear",
-  "Little thuds and bells from the system sound theme when she hits things": "Little thuds and bells from the system sound theme when she hits things",
+  "Little thuds and bells from the sound pack when she hits things": "Little thuds and bells from the sound pack when she hits things",
   "Live model from %1": "Live model from %1",
   "Live preview for the active workspace and refreshed snapshots for hidden workspaces": "Live preview for the active workspace and refreshed snapshots for hidden workspaces",
   "Local Whisper": "Local Whisper",
@@ -1763,7 +1763,6 @@
   "The provider": "The provider",
   "The selected model uses an API protocol that iNiR does not support yet.": "The selected model uses an API protocol that iNiR does not support yet.",
   "The unified snip menu reopens with the action and shape last picked in its toolbar. Dedicated screenshot, OCR and visual-search shortcuts always keep their explicit action. Recording is never remembered. When off, the menu opens as a rectangle screenshot.": "The unified snip menu reopens with the action and shape last picked in its toolbar. Dedicated screenshot, OCR and visual-search shortcuts always keep their explicit action. Recording is never remembered. When off, the menu opens as a rectangle screenshot.",
-  "Theme default (%1)": "Theme default (%1)",
   "Theme palette": "Theme palette",
   "They're all the same workspace to me.": "They're all the same workspace to me.",
   "This model": "This model",
@@ -3848,8 +3847,8 @@
   "Show dock when no window is focused (Empty workspace mode only)": "Show dock when no window is focused (Empty workspace mode only)",
   "Swap accent colours": "Swap accent colours",
   "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.",
-  "Pick the sound each event plays: one from your sound theme, or any audio file": "Pick the sound each event plays: one from your sound theme, or any audio file",
   "Until": "Until",
   "Light mode": "Light mode",
-  "floating": "floating"
+  "floating": "floating",
+  "Pick the sound each event plays: one from any sound pack, or any audio file": "Pick the sound each event plays: one from any sound pack, or any audio file"
 }

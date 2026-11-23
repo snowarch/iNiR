@@ -28,7 +28,6 @@ Singleton {
     }
     readonly property real hardMaxValue: 2.00
     readonly property real ceiling: Math.min(root.hardMaxValue, (Config.options?.audio?.protection?.maxAllowed ?? 100) / 100)
-    property string audioTheme: Config.options?.sounds?.theme ?? "freedesktop"
     property real value: sink?.audio?.volume ?? rawSink?.audio?.volume ?? 0
     property bool micBeingAccessed: Pipewire.links.values.filter(link =>
         !link.source.isStream && !link.source.isSink && link.target.isStream
@@ -434,56 +433,24 @@ Singleton {
         }
     }
 
-    // Event catalog: eventId → the system theme's sound for it, used by the Classic pack and when a pack has no file for
-    // an event. "" stays silent under Classic: the system theme has nothing that reads as a panel opening.
-    readonly property var soundEvents: ({
-        notification: "message-new-instant",
-        notificationCritical: "dialog-warning",
-        batteryLow: "dialog-warning",
-        batteryCritical: "suspend-error",
-        batteryFull: "complete",
-        powerPlug: "power-plug",
-        powerUnplug: "power-unplug",
-        pomodoroDone: "alarm-clock-elapsed",
-        timerDone: "alarm-clock-elapsed",
-        boot: "service-login",
-        login: "service-login",
-        lock: "service-logout",
-        open: "",
-        close: "",
-        navigate: "",
-        select: "",
-        toggleOn: "",
-        toggleOff: "",
-        volume: "audio-volume-change",
-        screenshot: "camera-shutter",
-        error: "dialog-error",
-        deviceAdded: "device-added",
-        deviceRemoved: "device-removed"
-    })
     // Session sounds (sounds.session) greet the desktop; interface sounds (sounds.ui) answer what you do, at their own
     // volume, and keep quiet while a game holds the screen. The rest are alerts, which their callers gate.
     readonly property var sessionEvents: ["boot", "login", "lock"]
     readonly property var uiEvents: ["open", "close", "navigate", "select", "toggleOn", "toggleOff", "volume", "screenshot", "error", "deviceAdded", "deviceRemoved"]
 
-    // Sound packs: "classic" is the system theme (sounds.theme); the others are folders of <event>.oga, ours in
-    // assets/sounds (made by assets/sounds/generate.py) and yours in ~/.local/share/inir/sounds/<name>/, where any of
-    // .oga, .ogg, .wav, .flac or .mp3 plays. A pack without a file for an event falls back to the system theme.
+    // Sound packs are folders of <event>.oga: ours in assets/sounds (made by assets/sounds/generate.py), yours in
+    // ~/.local/share/inir/sounds/<name>/, where any of .oga, .ogg, .wav, .flac or .mp3 plays. Every sound is the shell's
+    // own: an event a pack of yours has no file for plays Aurora's.
     readonly property var builtinPacks: ["aurora", "tactile", "lounge", "orbit", "crystal", "arcade"]
     property var userPacks: []
     readonly property string soundPack: Config.options?.sounds?.pack ?? "aurora"
     // Every pack a person can choose, in the order settings list them.
-    readonly property var packs: root.builtinPacks.concat(["classic"], root.userPacks)
+    readonly property var packs: root.builtinPacks.concat(root.userPacks)
     function packLabel(pack: string): string {
-        if (pack === "classic") return Translation.tr("Classic")
         return root.builtinPacks.includes(pack) ? pack.charAt(0).toUpperCase() + pack.slice(1) : pack
     }
-    // What an event plays with no choice of its own: the pack's sound, or under Classic the theme's (some have none).
-    function eventDefaultLabel(eventId: string): string {
-        if (root.soundPack !== "classic") return Translation.tr("Sound pack (%1)").arg(root.packLabel(root.soundPack))
-        const name = root.soundEvents[eventId] ?? ""
-        return name.length > 0 ? Translation.tr("Theme default (%1)").arg(name) : Translation.tr("Silent")
-    }
+    // What an event plays with no choice of its own.
+    readonly property string packInUseLabel: Translation.tr("Sound pack (%1)").arg(root.packLabel(root.soundPack))
     // A new pack answers at once with its notification, so a choice is heard where it is made.
     onSoundPackChanged: if (Config.ready && GlobalStates.shellEntryReady) root.previewEvent("notification", root.soundPack)
     function packDir(pack: string): string {
@@ -498,18 +465,7 @@ Singleton {
         command: ["/bin/sh", "-c", 'for d in "$1"/*/; do [ -d "$d" ] && basename "$d"; done 2>/dev/null', "sh", Directories.soundPacksPath]
         stdout: StdioCollector {
             onStreamFinished: root.userPacks = text.split("\n").map(name => name.trim())
-                .filter(name => name.length > 0 && name !== "classic" && !root.builtinPacks.includes(name))
-        }
-    }
-
-    // Sound names available in the current theme (feeds settings pickers)
-    property var themeSounds: []
-    onAudioThemeChanged: themeSoundsProc.running = true
-    Process {
-        id: themeSoundsProc
-        command: ["/bin/sh", "-c", `ls /usr/share/sounds/${root.audioTheme}/stereo/ 2>/dev/null | sed 's/\\.[^.]*$//' | sort -u`]
-        stdout: StdioCollector {
-            onStreamFinished: root.themeSounds = text.trim().length > 0 ? text.trim().split("\n") : []
+                .filter(name => name.length > 0 && !root.builtinPacks.includes(name))
         }
     }
 
@@ -522,8 +478,8 @@ Singleton {
         return true
     }
 
-    // Play a shell event sound: the person's override for it first ("" = the pack's, a bare name = that sound from the
-    // system theme, an absolute path or file:// = that file), then the pack's own file, then the system theme's.
+    // Play a shell event sound: the person's choice for it first ("" = the pack in use, a pack's name = that pack's
+    // sound, an absolute path or file:// = that file), then the pack's own file.
     function playEvent(eventId: string): void {
         const sounds = Config.options?.sounds ?? ({})
         const ui = root.uiEvents.includes(eventId)
@@ -533,7 +489,7 @@ Singleton {
         root._play(eventId, root.soundPack, ui ? (sounds.uiVolume ?? 0.6) : (sounds.volume ?? 0.5), true)
     }
 
-    // Settings: hear an event in a pack whatever is switched on.
+    // Hear an event in a pack whatever is switched on: settings previews, and callers with a switch of their own.
     function previewEvent(eventId: string, pack: string): void {
         const sounds = Config.options?.sounds ?? ({})
         root._play(eventId, pack || root.soundPack,
@@ -546,25 +502,10 @@ Singleton {
             Quickshell.execDetached(["pw-play", "--volume", String(volume), override.startsWith("file://") ? override.slice(7) : override])
             return
         }
-        const fallback = override.length > 0 ? override : (root.soundEvents[eventId] ?? "")
-        if (override.length > 0 || pack === "classic") {
-            if (fallback.length > 0) root.playSystemSound(fallback, volume)
-            return
-        }
-        const theme = fallback.length > 0 ? `/usr/share/sounds/${root.audioTheme}/stereo/${fallback}` : ""
         Quickshell.execDetached(["/bin/sh", "-c",
-            'for f in "$1/$2.oga" "$1/$2.ogg" "$1/$2.wav" "$1/$2.flac" "$1/$2.mp3"; do [ -f "$f" ] && exec pw-play --volume "$3" "$f"; done; '
-            + '[ -n "$4" ] || exit 0; [ -f "$4.oga" ] && exec pw-play --volume "$3" "$4.oga"; exec pw-play --volume "$3" "$4.ogg"',
-            "sh", root.packDir(pack), eventId, String(volume), theme])
-    }
-
-    function playSystemSound(soundName: string, volume = -1): void {
-        const level = volume >= 0 ? volume : (Config.options?.sounds?.volume ?? 0.5)
-        // pw-play volume range: 0.0 to 1.0. Try .oga then .ogg — firing
-        // both blindly double-played on themes shipping both extensions.
-        Quickshell.execDetached(["/bin/sh", "-c",
-            '[ -f "$2.oga" ] && exec pw-play --volume "$1" "$2.oga"; exec pw-play --volume "$1" "$2.ogg"',
-            "sh", String(level), `/usr/share/sounds/${root.audioTheme}/stereo/${soundName}`])
+            'for d in "$1" "$4"; do for f in "$d/$2.oga" "$d/$2.ogg" "$d/$2.wav" "$d/$2.flac" "$d/$2.mp3"; do '
+            + '[ -f "$f" ] && exec pw-play --volume "$3" "$f"; done; done',
+            "sh", root.packDir(override.length > 0 ? override : pack), eventId, String(volume), root.packDir(root.builtinPacks[0])])
     }
 
     // Panels opening and closing, whichever family draws them.
@@ -595,7 +536,6 @@ Singleton {
 
     Component.onCompleted: {
         _refreshMicState();
-        themeSoundsProc.running = true;
         userPacksProc.running = true;
         root._openPanelsBefore = root.openPanels;
     }
@@ -626,8 +566,8 @@ Singleton {
             root.playEvent(event);
         }
 
-        /// Hear an event in a sound pack (`aurora`, `tactile`, `lounge`, `orbit`, `crystal`, `arcade`, `classic` or one of
-        /// yours), whatever is switched on
+        /// Hear an event in a sound pack (`aurora`, `tactile`, `lounge`, `orbit`, `crystal`, `arcade` or one of yours),
+        /// whatever is switched on
         function previewEvent(event: string, pack: string): void {
             root.previewEvent(event, pack);
         }

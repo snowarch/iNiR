@@ -1560,7 +1560,7 @@
   "Let her rearrange widgets": "Позволить ей переставлять виджеты",
   "Light ink": "Светлая тушь",
   "Linear": "Линейно",
-  "Little thuds and bells from the system sound theme when she hits things": "Тихие стуки и колокольчики из системной звуковой темы, когда она обо что-то ударяется",
+  "Little thuds and bells from the sound pack when she hits things": "Тихие стуки и колокольчики из набора звуков, когда она обо что-то ударяется",
   "Live model from %1": "Живая модель от %1",
   "Live preview for the active workspace and refreshed snapshots for hidden workspaces": "Живой предпросмотр активного рабочего места и обновлённые снимки скрытых",
   "Local Whisper": "Локальный Whisper",
@@ -1763,7 +1763,6 @@
   "The provider": "Поставщик",
   "The selected model uses an API protocol that iNiR does not support yet.": "Выбранная модель использует протокол API, который iNiR пока не поддерживает.",
   "The unified snip menu reopens with the action and shape last picked in its toolbar. Dedicated screenshot, OCR and visual-search shortcuts always keep their explicit action. Recording is never remembered. When off, the menu opens as a rectangle screenshot.": "Единое меню обрезки открывается снова с действием и формой, выбранными последними на его панели инструментов. Отдельные сочетания для снимка экрана, OCR и визуального поиска всегда сохраняют своё явное действие. Запись никогда не запоминается. Когда выключено, меню открывается как прямоугольный снимок экрана.",
-  "Theme default (%1)": "По умолчанию в теме (%1)",
   "Theme palette": "Палитра темы",
   "They're all the same workspace to me.": "Для меня это всё одно рабочее место.",
   "This model": "Эта модель",
@@ -3848,8 +3847,8 @@
   "Show dock when no window is focused (Empty workspace mode only)": "Показывать док, когда ни одно окно не в фокусе (только режим Пустой рабочий стол)",
   "Swap accent colours": "Поменять акцентные цвета",
   "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "Третий цвет схемы становится главным, а акцент занимает его место. Только в оболочке: приложения сохраняют схему как есть.",
-  "Pick the sound each event plays: one from your sound theme, or any audio file": "Выберите звук для каждого события: из вашей звуковой темы или любой аудиофайл",
   "Until": "До",
   "Light mode": "Светлый режим",
-  "floating": "плавающая"
+  "floating": "плавающая",
+  "Pick the sound each event plays: one from any sound pack, or any audio file": "Выберите звук для каждого события: из любого набора звуков или любой аудиофайл"
 }

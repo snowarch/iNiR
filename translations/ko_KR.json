@@ -1560,7 +1560,7 @@
   "Let her rearrange widgets": "위젯을 재배치하도록 허용",
   "Light ink": "라이트 잉크",
   "Linear": "선형",
-  "Little thuds and bells from the system sound theme when she hits things": "그녀가 물건을 칠 때 시스템 사운드 테마에서 작은 쿵 소리와 종소리가 들립니다.",
+  "Little thuds and bells from the sound pack when she hits things": "그녀가 물건을 칠 때 사운드 팩에서 작은 쿵 소리와 종소리가 들립니다.",
   "Live model from %1": "%1의 라이브 모델",
   "Live preview for the active workspace and refreshed snapshots for hidden workspaces": "활성 작업공간에 대한 실시간 미리보기 및 숨겨진 작업공간에 대한 새로 고침된 스냅샷",
   "Local Whisper": "지역 속삭임",
@@ -1763,7 +1763,6 @@
   "The provider": "제공자",
   "The selected model uses an API protocol that iNiR does not support yet.": "선택한 모델은 iNiR이 아직 지원하지 않는 API 프로토콜을 사용합니다.",
   "The unified snip menu reopens with the action and shape last picked in its toolbar. Dedicated screenshot, OCR and visual-search shortcuts always keep their explicit action. Recording is never remembered. When off, the menu opens as a rectangle screenshot.": "통합 캡처 메뉴는 도구 모음에서 마지막으로 선택한 작업 및 모양으로 다시 열립니다. 전용 스크린샷, OCR 및 시각적 검색 바로가기는 항상 명시적인 작업을 유지합니다. 녹음은 기억되지 않습니다. 끄면 메뉴가 직사각형 스크린샷으로 열립니다.",
-  "Theme default (%1)": "테마 기본값( %1 )",
   "Theme palette": "테마 팔레트",
   "They're all the same workspace to me.": "그들은 나에게 모두 같은 작업 공간입니다.",
   "This model": "이 모델",
@@ -3848,8 +3847,8 @@
   "Show dock when no window is focused (Empty workspace mode only)": "포커스된 창이 없을 때 독 표시 (빈 작업 공간 모드에서만)",
   "Swap accent colours": "강조 색상 바꾸기",
   "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "스킴의 세 번째 색이 앞에 서고, 강조색이 그 자리를 차지합니다. 셸에만 적용: 앱은 생성된 스킴을 그대로 유지합니다.",
-  "Pick the sound each event plays: one from your sound theme, or any audio file": "각 이벤트가 재생하는 사운드를 선택하세요. 사운드 테마 또는 오디오 파일 중 하나",
   "Until": "종료",
   "Light mode": "라이트 모드",
-  "floating": "플로팅"
+  "floating": "플로팅",
+  "Pick the sound each event plays: one from any sound pack, or any audio file": "각 이벤트가 재생하는 사운드를 선택하세요. 사운드 팩 중 하나 또는 오디오 파일"
 }

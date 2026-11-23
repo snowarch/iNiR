@@ -1560,7 +1560,7 @@
   "Let her rearrange widgets": "ウィジェットを並べ替えさせる",
   "Light ink": "明るい墨",
   "Linear": "リニア",
-  "Little thuds and bells from the system sound theme when she hits things": "物にぶつかったときに鳴る、システム音テーマの小さな音や鈴の音",
+  "Little thuds and bells from the sound pack when she hits things": "物にぶつかったときに鳴る、サウンドパックの小さな音や鈴の音",
   "Live model from %1": "%1 のライブモデル",
   "Live preview for the active workspace and refreshed snapshots for hidden workspaces": "アクティブなワークスペースのライブプレビューと、隠れたワークスペースの更新済みスナップショット",
   "Local Whisper": "ローカルの Whisper",
@@ -1763,7 +1763,6 @@
   "The provider": "プロバイダー",
   "The selected model uses an API protocol that iNiR does not support yet.": "選んだモデルは、iNiR がまだ対応していない API プロトコルを使っています。",
   "The unified snip menu reopens with the action and shape last picked in its toolbar. Dedicated screenshot, OCR and visual-search shortcuts always keep their explicit action. Recording is never remembered. When off, the menu opens as a rectangle screenshot.": "統合された切り取りメニューは、ツールバーで最後に選んだ操作と形で開き直します。スクリーンショット、OCR、画像検索の専用ショートカットは、いつでもそれぞれの操作を保ちます。録画が覚えられることはありません。オフのときは、長方形のスクリーンショットとして開きます。",
-  "Theme default (%1)": "テーマの既定 (%1)",
   "Theme palette": "テーマのパレット",
   "They're all the same workspace to me.": "私にはどれも同じワークスペースです。",
   "This model": "このモデル",
@@ -3848,8 +3847,8 @@
   "Show dock when no window is focused (Empty workspace mode only)": "どのウィンドウにもフォーカスがないときドックを表示（空のワークスペースモードのみ）",
   "Swap accent colours": "アクセントカラーを入れ替え",
   "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "スキームの3番目の色が主役になり、アクセントがその位置に移ります。シェルのみ:アプリは生成されたスキームのままです。",
-  "Pick the sound each event plays: one from your sound theme, or any audio file": "各イベントで鳴らす音を選びます: 音テーマの音か、任意の音声ファイル",
   "Until": "終了",
   "Light mode": "ライトモード",
-  "floating": "フローティング"
+  "floating": "フローティング",
+  "Pick the sound each event plays: one from any sound pack, or any audio file": "各イベントで鳴らす音を選びます: いずれかのサウンドパックの音か、任意の音声ファイル"
 }

@@ -1560,7 +1560,7 @@
   "Let her rearrange widgets": "允许她重新摆放小部件",
   "Light ink": "浅色墨",
   "Linear": "线性",
-  "Little thuds and bells from the system sound theme when she hits things": "她撞到东西时，来自系统音效主题的轻微碰撞声和铃声",
+  "Little thuds and bells from the sound pack when she hits things": "她撞到东西时，来自声音包的轻微碰撞声和铃声",
   "Live model from %1": "来自 %1 的实时模型",
   "Live preview for the active workspace and refreshed snapshots for hidden workspaces": "活动工作区实时预览，隐藏工作区刷新快照",
   "Local Whisper": "本地 Whisper",
@@ -1763,7 +1763,6 @@
   "The provider": "该供应商",
   "The selected model uses an API protocol that iNiR does not support yet.": "所选模型使用了 iNiR 尚未支持的 API 协议。",
   "The unified snip menu reopens with the action and shape last picked in its toolbar. Dedicated screenshot, OCR and visual-search shortcuts always keep their explicit action. Recording is never remembered. When off, the menu opens as a rectangle screenshot.": "统一截取菜单会以其工具栏中上次选择的操作和形状重新打开。专门的截图、OCR 和视觉搜索快捷键始终保留各自明确的操作。录制永远不会被记住。关闭时，菜单以矩形截图打开。",
-  "Theme default (%1)": "主题默认值 (%1)",
   "Theme palette": "主题配色",
   "They're all the same workspace to me.": "在我看来都是同一个工作区。",
   "This model": "此模型",
@@ -3848,8 +3847,8 @@
   "Show dock when no window is focused (Empty workspace mode only)": "没有窗口获得焦点时显示程序坞（仅限空桌面模式）",
   "Swap accent colours": "交换强调色",
   "The scheme's third colour leads, and the accent takes its place. Shell only: apps keep the scheme as generated.": "配色方案的第三种颜色成为主色，强调色换到它的位置。仅限外壳：应用保持生成时的配色。",
-  "Pick the sound each event plays: one from your sound theme, or any audio file": "选择每个事件播放的声音：来自你的音效主题，或任意音频文件",
   "Until": "直到",
   "Light mode": "浅色模式",
-  "floating": "悬浮"
+  "floating": "悬浮",
+  "Pick the sound each event plays: one from any sound pack, or any audio file": "选择每个事件播放的声音：来自任意声音包，或任意音频文件"
 }

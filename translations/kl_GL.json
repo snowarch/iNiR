@@ -1560,7 +1560,7 @@
   "Let her rearrange widgets": "Widget-it nammineq rearrange-gisinnaatiguk",
   "Light ink": "Qaamasoq ink",
   "Linear": "Toqqaannartoq",
-  "Little thuds and bells from the system sound theme when she hits things": "System sound theme-mit thud/bell mikisut arlaannut aporaangat",
+  "Little thuds and bells from the sound pack when she hits things": "Sound pack-mit thud/bell mikisut arlaannut aporaangat",
   "Live model from %1": "%1-mit live model",
   "Live preview for the active workspace and refreshed snapshots for hidden workspaces": "Active workspace-imut live preview aamma hidden workspace-t refreshed snapshot-it",
   "Local Whisper": "Najukkami Whisper",
@@ -1763,7 +1763,6 @@
   "The provider": "Provider",
   "The selected model uses an API protocol that iNiR does not support yet.": "Model toqqagaq API protocol iNiR-ip suli support-iginngisaanik atorpaa.",
   "The unified snip menu reopens with the action and shape last picked in its toolbar. Dedicated screenshot, OCR and visual-search shortcuts always keep their explicit action. Recording is never remembered. When off, the menu opens as a rectangle screenshot.": "Unified snip menu toolbar-imi action/shape kingullermik toqqagaq atorlugu ammarseqqittarpoq. Screenshot, OCR aamma visual-search shortcut-it explicit action attatiinnartarpaat. Recording eqqaamaneqanngilaq. Off-imi menu rectangle screenshot-itut ammartarpoq.",
-  "Theme default (%1)": "Theme nalinginnaasoq (%1)",
   "Theme palette": "Theme palette-a",
   "They're all the same workspace to me.": "Uannut workspace taanna ataasiinnaavoq.",
   "This model": "Model una",
@@ -3825,8 +3824,8 @@
   "Volume down": "Naalagaaq appaaruk",
   "Smoked": "Pujortoq",
   "Show dock when no window is focused (Empty workspace mode only)": "Window focus-eqanngippat dock takutiguk (Empty workspace mode kisimi)",
-  "Pick the sound each event plays: one from your sound theme, or any audio file": "Event tamarmik nipi play-gassaa toqqaruk: sound theme-mit ataaseq imaluunniit audio file sumilluunniit",
   "Until": "Tikillugu",
   "Light mode": "Qaamasoq",
-  "floating": "puttasoq"
+  "floating": "puttasoq",
+  "Pick the sound each event plays: one from any sound pack, or any audio file": "Event tamarmik nipi play-gassaa toqqaruk: sound pack-mit ataaseq imaluunniit audio file sumilluunniit"
 }
