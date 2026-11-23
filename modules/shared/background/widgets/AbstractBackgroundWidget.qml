@@ -1138,10 +1138,12 @@ AbstractWidget {
                 setSource(root.faceUrl, root.printPart.length > 0 ? { widget: root, part: root.printPart } : { widget: root })
         }
         Component.onCompleted: loadNamed()
+        // On the next turn of the event loop: the url and the family move on one change of design, and the first notice
+        // comes while the other still reads the design before.
         Connections {
             target: root
-            function onFaceUrlChanged(): void { faceLoader.loadNamed() }
-            function onLookFamilyChanged(): void { faceLoader.loadNamed() }
+            function onFaceUrlChanged(): void { Qt.callLater(faceLoader.loadNamed) }
+            function onLookFamilyChanged(): void { Qt.callLater(faceLoader.loadNamed) }
         }
     }
 
