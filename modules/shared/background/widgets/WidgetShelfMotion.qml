@@ -15,6 +15,7 @@ Item {
         && root.widget.width > 0 && root.widget.height > 0 && root.widget.configEntryName.length > 0
     property var picture: null
     property int takes: 0
+    property bool saved: false
     function takePicture(): void {
         const widget = root.widget
         if (widget._editEngaged || widget.isDragging || widget._isResizing || root.moving || !root.Window.window?.visible)
@@ -25,7 +26,8 @@ Item {
             root.picture = result
             // On disk at once: the shelf reads a file at the size it shows it, sharp; a grab's own url can't be.
             const path = DesktopEditStage.savedPicture(widget.configEntryName)
-            DesktopEditStage.setPicture(widget.configEntryName, result.saveToFile(path)
+            root.saved = result.saveToFile(path)
+            DesktopEditStage.setPicture(widget.configEntryName, root.saved
                 ? "file://" + path + "?" + (++root.takes) : result.url, w, h)
         }, Qt.size(w, h))
     }
@@ -38,10 +40,13 @@ Item {
     function retake(): void {
         if (root.picturing) pictureTimer.restart()
     }
-    // takePicture wrote it to disk when it took it: writing it again here encoded a PNG per widget on the way out.
+    // takePicture wrote it to disk when it took it; only a write that failed is tried again on the way out (one PNG
+    // encode per widget there stalled leaving the mode).
     Component.onDestruction: {
         DesktopEditStage.forgetPicture(root)
-        if (root.picture) DesktopEditStage.setPicture(root.widget.configEntryName, "", 0, 0)
+        if (!root.picture) return
+        if (!root.saved) root.picture.saveToFile(DesktopEditStage.savedPicture(root.widget.configEntryName))
+        DesktopEditStage.setPicture(root.widget.configEntryName, "", 0, 0)
     }
 
     // `shelf` runs 0 (the picture) to 1 (the widget in place).
