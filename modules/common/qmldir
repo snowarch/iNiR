@@ -17,3 +17,4 @@ singleton Persistent 1.0 Persistent.qml
 singleton ThemePresets 1.0 ThemePresets.qml
 singleton Voice 1.0 Voice.qml
 ToastManager 1.0 ToastManager.qml
+KeepWarm 1.0 KeepWarm.qml

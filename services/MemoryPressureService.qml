@@ -66,6 +66,8 @@ Singleton {
             threshold: root.deletedMappingsThreshold,
             notificationShown: root.notificationShown,
             userDismissed: root.userDismissed,
+            residentMb: root.residentMb,
+            budgetMb: root.budgetMb,
             enabled: root.enabled,
             notifyEnabled: root.notifyEnabled
         })
@@ -135,6 +137,26 @@ Singleton {
                 root._notifyUser()
             }
         }
+    }
+
+    // ── Budget ────────────────────────────────────────────────────────────
+    // The shell's resident size, read every 15 s. Over the budget, what is kept built after its close (Settings, the
+    // gallery, Spotlight, Orbit: KeepWarm and the families' panel keeps) lets go at once, and the runtime purges what
+    // that freed.
+    readonly property int budgetMb: 480
+    property int residentMb: 0
+    readonly property bool over: root.residentMb > root.budgetMb
+    FileView {
+        id: status
+        path: "/proc/self/status"
+        onLoaded: root.residentMb = Math.round(Number(status.text().match(/VmRSS:\s*(\d+)/)?.[1] ?? 0) / 1024)
+    }
+    Timer {
+        interval: 15000
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: status.reload()
     }
 
     // ── IPC ───────────────────────────────────────────────────────────────
