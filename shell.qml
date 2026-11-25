@@ -1052,7 +1052,7 @@ ShellRoot {
             // Wanted once this session, the parts stay wanted: a welcome played again later holds nothing back.
             readonly property bool criticalWanted: family.chosen
                 && (family.criticalUsed || GlobalStates.bootGreetingStill || !family.greetingDue)
-            onCriticalWantedChanged: if (family.criticalWanted) family.criticalUsed = true
+            onCriticalWantedChanged: if (family.criticalWanted && !family.criticalUsed) Qt.callLater(() => { if (family.criticalWanted) family.criticalUsed = true })
             LazyLoader {
                 id: greetingPart
                 source: family.greeting
