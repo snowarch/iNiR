@@ -1552,6 +1552,7 @@ run_extras() {
 
     local action
     local -a extra_choices=(
+        "${ICON_DOT}|Install/configure iNiR Files|Native QML + Rust file manager (~2.5 MiB, auto-updated by inir update)"
         "${ICON_DOT}|Install iNiR-Walls|Download optional wallpaper pack and copy image files"
         "${ICON_DOT}|Install ii-pixel-sddm|Install/apply iNiR SDDM login theme"
         "${ICON_DOT}|Install YAMIS icons|Install/update yet-another-monochrome-icon-set (GPL-3, ~23 MiB)"
@@ -1567,6 +1568,10 @@ run_extras() {
     action=$(tui_choose_rich "Extras" "${extra_choices[@]}")
 
     case "$action" in
+        "Install/configure iNiR Files")
+            echo ""
+            extras_install_inir_files
+            ;;
         "Install iNiR-Walls")
             echo ""
             extras_install_inir_walls

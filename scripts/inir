@@ -3508,6 +3508,10 @@ _show_part_versions() (
     fi
     have="$(readlink "$data/accel/current" 2>/dev/null)"; have="${have##*/}"
     _part_version_line inir-accel "$have" "$(jq -r '.parts["inir-accel"].version // empty' "$pins" 2>/dev/null)"
+    have="$(readlink "$data/files/current" 2>/dev/null)"; have="${have##*/}"
+    want="$(jq -r '.parts["inir-files"].version // empty' "$pins" 2>/dev/null)"
+    [[ "$(uname -m)" == x86_64 ]] || want=""
+    [[ -n "$have" || -n "$want" ]] && _part_version_line inir-files "$have" "$want"
     have="$(jq -r '(.items // {}) | to_entries | map("\(.key) \(.value.version)") | join(", ")' \
         "${XDG_STATE_HOME:-$HOME/.local/state}/inir/hub/installed.json" 2>/dev/null)"
     [[ -z "$have" ]] || printf 'hub: %s\n' "$have"

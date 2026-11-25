@@ -519,6 +519,7 @@ uninstall_remove_inir_only() {
 
     # the venv may stay (Quickshell shared resources): its python3 goes back to the real one before accel/ goes
     rm -f "$(_prebuilt_home)/accel/current" && prebuilt_accel_hooks
+    rm -f "$(_prebuilt_home)/files/current" && prebuilt_files_hooks
 
     # Pre-count existing items for N/M progress display
     local total=0

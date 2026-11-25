@@ -619,3 +619,42 @@ extras_install_mascot_pack() {
   rm -rf "$tmp"
   return 0
 }
+
+# Install or update iNiR Files via the pinned prebuilt tarball, and optionally set it as the default file manager.
+extras_install_inir_files() {
+  tui_info "iNiR Files: native QML + Rust file manager (~2.5 MiB prebuilt, auto-updated by 'inir update')."
+  if [[ "$(uname -m)" != "x86_64" ]]; then
+    log_warning "Prebuilt iNiR Files requires qs-rs (currently x86_64 only)."
+    return 0
+  fi
+  if ! prebuilt_fetch; then
+    log_warning "Could not download iNiR Files."
+    return 1
+  fi
+  prebuilt_activate
+  log_success "iNiR Files installed ($(readlink "$(_prebuilt_home)/files/current" 2>/dev/null || echo ready))"
+
+  local set_default="no"
+  if [[ -t 0 && -t 1 ]]; then
+    local choice
+    choice=$(tui_choose "Set iNiR Files as your default file manager?" \
+      "Yes (folders and browser 'Show in folder' open in iNiR Files)" \
+      "No (keep my current file manager; you can toggle this anytime in iNiR Files Settings)")
+    [[ "$choice" == Yes* ]] && set_default="yes"
+  fi
+  if [[ "$set_default" == "yes" ]]; then
+    local data_home="${XDG_DATA_HOME:-$HOME/.local/share}"
+    local bin="${HOME}/.local/bin/inir-files"
+    [[ -x "$bin" ]] || bin="$(_prebuilt_home)/files/current/bin/inir-files"
+    mkdir -p "${data_home}/dbus-1/services"
+    printf '[D-BUS Service]\nName=org.freedesktop.FileManager1\nExec=%s --service\n' "$bin" \
+      > "${data_home}/dbus-1/services/inir-files.FileManager1.service"
+    chmod 644 "${data_home}/dbus-1/services/inir-files.FileManager1.service"
+    if command -v xdg-mime >/dev/null 2>&1; then
+      mkdir -p "${XDG_CONFIG_HOME:-$HOME/.config}"
+      xdg-mime default inir-files.desktop inode/directory || true
+    fi
+    log_success "iNiR Files set as default file manager"
+  fi
+  return 0
+}

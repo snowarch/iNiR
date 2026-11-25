@@ -24,6 +24,7 @@ let
   qsPin = pins.parts.qs-rs;
   webPin = pins.parts.qs-rs-webengine // { inherit (qsPin) version; };
   accelPin = if arch == "x86_64" then pins.parts.inir-accel else pins.parts."inir-accel-${arch}";
+  filesPin = pins.parts.inir-files;
 in
 rec {
   # qs-rs is built for x86_64 alone (sdata/prebuilt.json); on aarch64 the shell runs on nixpkgs' Quickshell
@@ -122,6 +123,30 @@ rec {
       license = lib.licenses.gpl3Only;
       sourceProvenance = [ lib.sourceTypes.binaryNativeCode ];
       platforms = [ "x86_64-linux" "aarch64-linux" ];
+    };
+  };
+
+  inir-files = if arch != "x86_64" then null else stdenv.mkDerivation {
+    pname = "inir-files";
+    inherit (filesPin) version;
+    src = release filesPin;
+    dontStrip = true;
+    nativeBuildInputs = [ pkgs.autoPatchelfHook ];
+    buildInputs = [ stdenv.cc.cc.lib ];
+    installPhase = ''
+      runHook preInstall
+      dir="$out/${filesPin.dest}/${filesPin.version}"
+      mkdir -p "$dir"
+      cp -a . "$dir/"
+      echo ${filesPin.sha256} > "$dir/.sha256"
+      runHook postInstall
+    '';
+    meta = {
+      description = "The native QML + Rust file manager of the iNiR desktop";
+      homepage = "https://github.com/snowarch/inir-files";
+      license = lib.licenses.gpl3Only;
+      sourceProvenance = [ lib.sourceTypes.binaryNativeCode ];
+      platforms = [ "x86_64-linux" ];
     };
   };
 

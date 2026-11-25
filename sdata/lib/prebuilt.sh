@@ -180,6 +180,7 @@ prebuilt_activate() {
             [[ "$old" == "$ver" || "$old" == "$prev" || "$old" == current ]] || rm -rf "${home:?}/$dest/$old"
         done
         [[ "$dest" == accel ]] && prebuilt_accel_hooks
+        [[ "$dest" == files ]] && prebuilt_files_hooks
     done < <(prebuilt_parts)
     return 0
 }
@@ -223,6 +224,31 @@ prebuilt_accel_hooks_ok() {
     for go in "${_PREBUILT_GO[@]/#/user/generated/bin/}"; do
         [[ "$(readlink "$state/$go")" != */accel/current/inir-accel ]] || return 1
     done
+}
+
+# prebuilt_files_hooks: links ~/.local/bin/inir-files and installs the .desktop entry without overriding a local
+# developer checkout symlink or changing the person's default file manager (Settings -> Default file manager does that).
+prebuilt_files_hooks() {
+    local base bin link apps desktop dbus
+    base="$(_prebuilt_home)/files/current"
+    bin="$base/bin/inir-files"
+    link="$HOME/.local/bin/inir-files"
+    apps="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
+    desktop="$apps/inir-files.desktop"
+    dbus="${XDG_DATA_HOME:-$HOME/.local/share}/dbus-1/services/inir-files.FileManager1.service"
+    if [[ ! -x "$bin" ]]; then
+        [[ -L "$link" && "$(readlink "$link")" == */files/current/bin/inir-files ]] && rm -f "$link"
+        [[ -f "$desktop" ]] && rm -f "$desktop"
+        [[ -f "$dbus" ]] && rm -f "$dbus"
+        return 0
+    fi
+    mkdir -p "$HOME/.local/bin" "$apps"
+    if [[ ! -e "$link" && ! -L "$link" ]] || [[ -L "$link" && "$(readlink "$link")" == */files/current/bin/inir-files ]]; then
+        ln -sfn "$bin" "$link"
+    fi
+    [[ -f "$base/share/applications/inir-files.desktop" ]] &&
+        install -Dm644 "$base/share/applications/inir-files.desktop" "$desktop"
+    return 0
 }
 
 # prebuilt_runtime_off: the shell back on Quickshell when qs-rs did not load (the launcher takes runtime/current
