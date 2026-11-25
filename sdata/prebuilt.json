@@ -34,9 +34,9 @@
     "inir-files": {
       "repo": "inir-files",
       "dest": "files",
-      "version": "0.1.1",
-      "file": "inir-files-0.1.1-x86_64.tar.gz",
-      "sha256": "aff7ac5b3c463b70652005c774ed1667495de31faa650deea3be75d74dfbe665"
+      "version": "0.1.2",
+      "file": "inir-files-0.1.2-x86_64.tar.gz",
+      "sha256": "ff9bd1ae23088a88ceddccbaa8a157c6c3b6f552280f4f8170ec7c6f51fc71ec"
     },
     "qs-rs-webengine": {
       "repo": "qs-rs",
