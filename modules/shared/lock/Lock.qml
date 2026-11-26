@@ -16,7 +16,8 @@ Scope {
 
     readonly property bool _lockActivating: lockActivateDelay.running
     // The compositor session the lock belongs to: a lock survives a shell restart only inside the same one.
-    readonly property string _sessionSocket: CompositorService.niriNative ? Quickshell.env("NIRI_SOCKET") : CompositorService.umbrielSocket
+    readonly property string _sessionSocket: CompositorService.niriNative ? Quickshell.env("NIRI_SOCKET")
+        : CompositorService.isRin ? CompositorService.rinSocket : CompositorService.umbrielSocket
     readonly property string _lockRecoveryPath: {
         const runtimeDir = Quickshell.env("XDG_RUNTIME_DIR")
         return runtimeDir.length > 0 ? runtimeDir + "/inir-session-lock.state" : ""
