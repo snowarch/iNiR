@@ -7,9 +7,8 @@ import qs.modules.common
 import qs.services
 
 /**
- * Service to manage "minimized" windows in Niri.
- * Since Niri doesn't have native minimize, stashed windows share an otherwise
- * empty workspace on their original output.
+ * Minimized windows. Rin minimizes natively and this service only mirrors its list.
+ * Niri has no minimize: stashed windows share an otherwise empty workspace on their original output.
  */
 Singleton {
     id: root
@@ -21,9 +20,27 @@ Singleton {
     property list<int> minimizedIds: []
     property bool recoveredPersistentState: false
     readonly property bool actionReady: CompositorService.isNiri && Persistent.ready && NiriService.actionReady
+    readonly property bool byCompositor: NiriService.minimizeAvailable
+
+    // Rin holds the minimized windows: mirror them, in the order they went away.
+    function syncNative() {
+        const away = (NiriService.windows ?? []).filter(window => window.is_minimized);
+        const awayIds = away.map(window => window.id);
+        const ids = minimizedIds.filter(id => awayIds.includes(id)).concat(awayIds.filter(id => !minimizedIds.includes(id)));
+        const next = {};
+        for (const window of away) {
+            next[window.id] = {
+                appId: window.app_id || "",
+                title: window.title || "",
+                originalOutput: NiriService.workspaces?.[window.workspace_id]?.output ?? ""
+            };
+        }
+        if (JSON.stringify(next) !== JSON.stringify(minimizedWindows)) minimizedWindows = next;
+        if (JSON.stringify(ids) !== JSON.stringify(Array.from(minimizedIds))) minimizedIds = ids;
+    }
 
     function persistState() {
-        if (!Persistent.ready) return;
+        if (!Persistent.ready || root.byCompositor) return;
         Persistent.states.orbit.stashEntries = minimizedIds.map(id => {
             const info = minimizedWindows[id];
             return JSON.stringify({
@@ -38,7 +55,7 @@ Singleton {
     }
 
     function recoverPersistentState() {
-        if (recoveredPersistentState || !Persistent.ready || !CompositorService.isNiri) return;
+        if (recoveredPersistentState || !Persistent.ready || !CompositorService.isNiri || root.byCompositor) return;
         const entries = Persistent.states.orbit.stashEntries ?? [];
         if (entries.length > 0 && (NiriService.windows ?? []).length === 0) return;
 
@@ -70,6 +87,10 @@ Singleton {
     }
 
     function pruneMissingWindows() {
+        if (root.byCompositor) {
+            syncNative();
+            return;
+        }
         if (!recoveredPersistentState) {
             recoverPersistentState();
             return;
@@ -100,6 +121,7 @@ Singleton {
     
     // A workspace that holds only stashed windows is the stash, not somewhere a person works.
     function isStashWorkspace(workspaceId) {
+        if (root.byCompositor) return false;
         const held = (NiriService.windows ?? []).filter(window => window.workspace_id === workspaceId);
         return held.length > 0 && held.every(window => minimizedIds.includes(window.id));
     }
@@ -165,6 +187,7 @@ Singleton {
         }
         
         if (!targetWindow || !windowId) return false;
+        if (root.byCompositor) return !targetWindow.is_minimized && NiriService.minimizeWindow(windowId);
         
         // Don't minimize the main quickshell shell (but allow settings window)
         // Skip this check for now - allow all windows to be minimized
@@ -200,7 +223,12 @@ Singleton {
     function restore(windowId) {
         if (!root.actionReady) return;
         if (!isMinimized(windowId)) return;
-        
+        // Rin shows it again where it was, on its own workspace.
+        if (root.byCompositor) {
+            NiriService.focusWindow(windowId);
+            return;
+        }
+
         const info = minimizedWindows[windowId];
         if (!info) return;
         
@@ -216,6 +244,10 @@ Singleton {
     function restoreOriginal(windowId) {
         if (!root.actionReady) return;
         if (!isMinimized(windowId)) return;
+        if (root.byCompositor) {
+            NiriService.focusWindow(windowId);
+            return;
+        }
 
         const info = minimizedWindows[windowId];
         if (!info) return;
@@ -287,10 +319,10 @@ Singleton {
         }
     }
 
-    Component.onCompleted: recoverPersistentState()
+    Component.onCompleted: root.byCompositor ? syncNative() : recoverPersistentState()
     
     // IPC handler for external control
-    /// Window minimization (Niri workaround - moves windows to hidden workspace).
+    /// Window minimization: native on Rin; on Niri the window moves to a hidden workspace.
     IpcHandler {
         target: "minimize"
         

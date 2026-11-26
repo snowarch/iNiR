@@ -210,6 +210,7 @@ function actionRequests(ids, request, ctx) {
     case "ToggleScratchpad": return [_a("scratchpad-toggle", { scratchpad: args.scratchpad })]
     case "FocusWindow": return [_a("window-focus", { window: win(args.id) })]
     case "CloseWindow": return [_a("window-close", { window: win(args.id) })]
+    case "MinimizeWindow": return ctx.rin ? [_a("window-minimize", { window: win(args.id) })] : []
     case "ToggleWindowFloating": return [_a("window-toggle-floating", { window: win(args.id) })]
     case "FullscreenWindow": return onWindow(args.id, [_a("window-toggle-fullscreen")], false)
     case "FocusWorkspace": {

@@ -1144,6 +1144,12 @@ Singleton {
         return root.umbriel && send({ "Action": { "ToggleScratchpad": { "scratchpad": name || root._scratchpadOf(-1) } } })
     }
 
+    // Rin puts a window away itself, and a tile comes back where it was: no stash workspace there.
+    readonly property bool minimizeAvailable: CompositorService.isRin
+    function minimizeWindow(windowId): bool {
+        return root.minimizeAvailable && send({ "Action": { "MinimizeWindow": { "id": windowId } } })
+    }
+
     function closeWindow(windowId) {
         return send({
                         "Action": {
