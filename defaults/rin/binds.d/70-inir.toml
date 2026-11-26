@@ -6,6 +6,9 @@
 # Rin reads every *.toml in this folder in name order and reloads on save. Rebind or unbind a key in a later file,
 # such as 90-user.toml: a key set there replaces this one, `"Mod+X" = ""` unbinds it. A file that does not parse
 # is skipped as a whole, and the keys stay as they were.
+# A client that inhibits shortcuts (a VM, a remote desktop) gets every key except the binds with
+# `allow-inhibiting = false`; Mod+Escape pauses its inhibitor. A wheel bind runs once a notch, at most once each
+# `cooldown-ms`, so a fast spin does not race to the last workspace.
 
 [binds]
 
@@ -13,6 +16,7 @@
 "Mod+Tab" = "shell taskview toggle"
 "Mod+Shift+E" = "shell session toggle"
 "Mod+Shift+O" = "power-off-monitors"
+"Mod+Escape" = { action = "toggle-keyboard-shortcuts-inhibit", allow-inhibiting = false }
 
 # iNiR tools
 "Super+G" = "shell overlay toggle"
@@ -41,10 +45,11 @@
 "Super+W" = "spawn inir browser"
 
 # Windows
-"Mod+Q" = "shell closeConfirm trigger"
+"Mod+Q" = { action = "shell closeConfirm trigger", allow-inhibiting = false }
 "Mod+D" = "maximize-column"
 "Mod+F" = "fullscreen-window"
 "Mod+A" = "toggle-window-floating"
+"Mod+Shift+V" = "switch-focus-between-floating-and-tiling"
 
 # Columns and sizes
 "Mod+R" = "switch-preset-column-width"
@@ -68,6 +73,10 @@
 "Mod+J" = "focus-window-down"
 "Mod+Home" = "focus-column-first"
 "Mod+End" = "focus-column-last"
+"Mod+WheelScrollRight" = "focus-column-right"
+"Mod+WheelScrollLeft" = "focus-column-left"
+"Mod+Shift+WheelScrollDown" = "focus-column-right"
+"Mod+Shift+WheelScrollUp" = "focus-column-left"
 
 # Move
 "Mod+Shift+Left" = "move-column-left"
@@ -123,6 +132,10 @@
 "Mod+Page_Up" = "focus-workspace-up"
 "Mod+Ctrl+Page_Down" = "move-column-to-workspace-down"
 "Mod+Ctrl+Page_Up" = "move-column-to-workspace-up"
+"Mod+WheelScrollDown" = { action = "focus-workspace-down", cooldown-ms = 150 }
+"Mod+WheelScrollUp" = { action = "focus-workspace-up", cooldown-ms = 150 }
+"Mod+Ctrl+WheelScrollDown" = { action = "move-column-to-workspace-down", cooldown-ms = 150 }
+"Mod+Ctrl+WheelScrollUp" = { action = "move-column-to-workspace-up", cooldown-ms = 150 }
 
 # Screenshots
 "Print" = "shell region screenshot"
