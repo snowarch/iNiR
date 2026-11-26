@@ -13,7 +13,8 @@
 [binds]
 
 # Session and Rin
-"Mod+Tab" = "shell taskview toggle"
+"Mod+Tab" = "overview-toggle"
+"Mod+Shift+Tab" = "overview-layout-next"
 "Mod+Shift+E" = "shell session toggle"
 "Mod+Shift+O" = "power-off-monitors"
 "Mod+Escape" = { action = "toggle-keyboard-shortcuts-inhibit", allow-inhibiting = false }

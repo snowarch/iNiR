@@ -819,10 +819,8 @@ ShellRoot {
 
     LazyLoader {
         active: Config.ready
-            && ((((Config.options?.panelFamily ?? "ii") === "ii") && !root.iiAltSwitcherNoVisual)
-                || (CompositorService.isRin
-                    && (Config.options?.panelFamily ?? "ii") !== "waffle"
-                    && (NiriService.rinSwitcher !== null || GlobalStates.altSwitcherOpen)))
+            && (Config.options?.panelFamily ?? "ii") === "ii"
+            && !root.iiAltSwitcherNoVisual
         source: "modules/shared/altSwitcher/AltSwitcher.qml"
     }
 
