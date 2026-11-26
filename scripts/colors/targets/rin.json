@@ -1,0 +1,8 @@
+{
+  "id": "rin",
+  "label": "Rin",
+  "module": "16-rin.sh",
+  "category": "compositor",
+  "inputs": ["theme-meta.json"],
+  "description": "Rin's window edges, focus outline, title bars and window switcher in a Material You scheme from the theme's own seed, scheme and mode."
+}

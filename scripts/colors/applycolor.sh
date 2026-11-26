@@ -34,6 +34,8 @@ inputs_fingerprint() {
       if [[ -f "$path/profiles.ini" ]]; then stat -c '%n %s' "$path/profiles.ini"; fi
     done < <(firefox_profile_roots)
     installed_chromium_browsers
+    # The first Rin session themes Rin, which keeps the colours in its own settings from then on.
+    if [[ -n "${RIN_SOCKET:-}" ]]; then printf 'rin\n'; fi
   } 2>/dev/null | sha1sum | cut -d' ' -f1
 }
 
