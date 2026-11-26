@@ -3946,5 +3946,15 @@
   "Quit Niri": "Salir de Niri",
   "Niri hotkey overlay": "Atajos de Niri en pantalla",
   "Next window of this app": "Siguiente ventana de esta app",
-  "Previous window of this app": "Ventana anterior de esta app"
+  "Previous window of this app": "Ventana anterior de esta app",
+  "Glass style": "Estilo de vidrio",
+  "Glass material": "Material de vidrio",
+  "Glass blurs what lies behind; Liquid adds GPU lens refraction.": "Vidrio difumina lo que hay detrás; Líquido agrega refracción de lente por GPU.",
+  "How far the compositor blur reaches in logical pixels.": "Hasta dónde llega el desenfoque del compositor en píxeles lógicos.",
+  "Snap layouts bar": "Barra de zonas de acople",
+  "Dragging a window to the top edge reveals the snap layouts.": "Arrastrar una ventana al borde superior muestra las zonas de acople.",
+  "Snap assist": "Asistente de acople",
+  "Snapping a window offers the other windows for the remaining zones.": "Al acoplar una ventana, ofrece las demás para las zonas libres.",
+  "Resize snapped windows together": "Redimensionar juntas las ventanas acopladas",
+  "Dragging a shared edge resizes the snapped windows beside it.": "Arrastrar un borde compartido redimensiona las ventanas acopladas al lado."
 }

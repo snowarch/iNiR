@@ -83,7 +83,7 @@ Singleton {
     property var wanted: []
 
     // ---- Rin: each domain as its settings service reads it (defaults included), and its schema ----
-    readonly property var rinDomains: ["rin.windows", "rin.pointer", "rin.animation", "rin.ime", "rin.displays"]
+    readonly property var rinDomains: ["rin.windows", "rin.pointer", "rin.animation", "rin.ime", "rin.displays", "rin.appearance"]
     // Rin's screens as its outputs reply gives them; takeRinOutputs() adds what rin.displays says of each.
     property var rinHeads: []
     property var rinData: ({})
@@ -104,10 +104,20 @@ Singleton {
         "layout:focus-ring.enabled": { domain: "rin.windows", key: "focus-outline" },
         "layout:focus-ring.width": { domain: "rin.windows", key: "focus-outline-width", round: true },
         "layout:stacking.drop-zones": { domain: "rin.windows", key: "snap" },
+        "layout:stacking.snap-bar": { domain: "rin.windows", key: "snap-bar", only: true },
+        "layout:stacking.snap-assist": { domain: "rin.windows", key: "snap-assist", only: true },
+        "layout:stacking.resize-together": { domain: "rin.windows", key: "snap-resize-together", only: true },
         "window-rules:corner-radius": { domain: "rin.windows", key: "corner-radius", round: true },
         "titlebar:shown": { domain: "rin.windows", key: "title-bars", only: true },
         "windows:resize-on-border": { domain: "rin.windows", key: "resize-on-border", only: true },
         "windows:tearing": { domain: "rin.windows", key: "allow-tearing", only: true },
+        "input:focus-on-activate": { domain: "rin.windows", key: "focus-on-activate" },
+        "blur:enabled": { domain: "rin.appearance", key: "blur" },
+        "blur:radius": { domain: "rin.appearance", key: "blur-radius", round: true, only: true },
+        "blur:background": { domain: "rin.appearance", key: "background", only: true },
+        "glass:enabled": { domain: "rin.appearance", key: "blur" },
+        "glass:blur-radius": { domain: "rin.appearance", key: "blur-radius", round: true, only: true },
+        "glass:style": { domain: "rin.appearance", key: "background", only: true },
         "animations:enabled": { domain: "rin.animation", key: "enabled" },
         // Each keyboard layout is a source of its own, with its variant and input method: a layout that stays keeps them.
         "input:keyboard.layout": { domain: "rin.ime", whole: true,

@@ -101,7 +101,8 @@ Singleton {
     // Master switches for effects and animations
     property bool effectsEnabled: !Config.options?.performance?.lowPower && !_gameModeDisablesEffects
     property bool animationsEnabled: !_gameModeDisablesAnimations && !(Config.options?.performance?.reduceAnimations ?? false)
-    property bool nativeBlurSupported: false
+    property bool _niriBlurSupported: false
+    readonly property bool nativeBlurSupported: (CompositorService?.isRin ?? false) || _niriBlurSupported
 
     Process {
         id: nativeBlurVersionProbe
@@ -111,21 +112,21 @@ Singleton {
             onStreamFinished: {
                 const match = text.match(/(\d+)\.(\d+)/)
                 if (!match) {
-                    root.nativeBlurSupported = false
+                    root._niriBlurSupported = false
                     return
                 }
                 const major = Number(match[1])
                 const minor = Number(match[2])
-                root.nativeBlurSupported = major > 26 || (major === 26 && minor >= 4)
+                root._niriBlurSupported = major > 26 || (major === 26 && minor >= 4)
             }
         }
         onExited: exitCode => {
             if (exitCode !== 0)
-                root.nativeBlurSupported = false
+                root._niriBlurSupported = false
         }
     }
 
-    // Niri 26.04+ handles this request through ext-background-effect-v1. Only
+    // Niri 26.04+ and Rin handle this request through ext-background-effect-v1. Only
     // surfaces that publish a shape-accurate Region may use this global capability.
     readonly property bool compositorBlurActive: effectsEnabled
         && (Config.options?.performance?.compositorBlur ?? true)
