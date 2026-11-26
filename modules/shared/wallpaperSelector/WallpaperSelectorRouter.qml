@@ -50,8 +50,9 @@ Scope {
 
     function _openOnFocusedMonitor(surface: string,
             launcherMode: string): void {
-        // Umbriel's focused output is already in the model; Niri's is asked for (the model lags a pointer move).
-        if (CompositorService.isUmbriel) {
+        // Umbriel's and Rin's focused output is already in the model; Niri's is asked for (the model lags a pointer
+        // move).
+        if (CompositorService.isUmbriel || CompositorService.isRin) {
             root._openResolvedSurface(surface, NiriService.currentOutput || root.defaultMonitorName, launcherMode)
             return
         }

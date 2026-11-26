@@ -8,9 +8,10 @@ Item {
     property Item host: null
     readonly property bool streaming: stream.hasContent
 
-    // Umbriel names its windows by its own ids. `toplevelId` exists only on runtimes with toplevel-image-copy, the
-    // only ones that load this view there (CompositorService.windowCapture), so it is set rather than bound.
-    readonly property string toplevelId: CompositorService.isUmbriel
+    // Umbriel and Rin name their windows by their own ids. `toplevelId` exists only on runtimes with
+    // toplevel-image-copy, the only ones that load this view there (CompositorService.windowCapture), so it is set
+    // rather than bound.
+    readonly property string toplevelId: CompositorService.isUmbriel || CompositorService.isRin
         ? String(NiriService.umbrielWindowKey(view.host?.windowId ?? -1) ?? "") : ""
     onToplevelIdChanged: stream.toplevelId = view.toplevelId
 
