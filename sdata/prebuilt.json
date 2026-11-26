@@ -19,17 +19,17 @@
     "inir-accel": {
       "repo": "inir-accel",
       "dest": "accel",
-      "version": "0.1.5",
-      "file": "inir-accel-0.1.5-x86_64.tar.gz",
-      "sha256": "5c8ed2321f800793874549ee4f35698aaaf65ceecfcf2f8b07b09a23039de557"
+      "version": "0.1.6",
+      "file": "inir-accel-0.1.6-x86_64.tar.gz",
+      "sha256": "b3b5d07b0bea4b1fc984e3f2b8a9d86eb6668612154e6f816e811bf83679f370"
     },
     "inir-accel-aarch64": {
       "repo": "inir-accel",
       "dest": "accel",
       "arch": "aarch64",
-      "version": "0.1.5",
-      "file": "inir-accel-0.1.5-aarch64.tar.gz",
-      "sha256": "7c1fb9618a495cc27388fb9a8fa5da215563fab8c8a1483f20004a913e367a19"
+      "version": "0.1.6",
+      "file": "inir-accel-0.1.6-aarch64.tar.gz",
+      "sha256": "22e5224f295e18a4c75ba3dae83f209693575546f196134d8612aead42a5b143"
     },
     "inir-files": {
       "repo": "inir-files",
