@@ -3941,5 +3941,10 @@
   "Move right": "Move right",
   "Mute microphone": "Mute microphone",
   "Focus left": "Focus left",
-  "Focus right": "Focus right"
+  "Focus right": "Focus right",
+  "Niri overview": "Niri overview",
+  "Quit Niri": "Quit Niri",
+  "Niri hotkey overlay": "Niri hotkey overlay",
+  "Next window of this app": "Next window of this app",
+  "Previous window of this app": "Previous window of this app"
 }

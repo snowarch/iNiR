@@ -3941,5 +3941,10 @@
   "Move right": "दाईं ओर बढ़ें",
   "Mute microphone": "माइक्रोफ़ोन म्यूट करें",
   "Focus left": "बाईं ओर फ़ोकस करें",
-  "Focus right": "दाईं ओर फ़ोकस करें"
+  "Focus right": "दाईं ओर फ़ोकस करें",
+  "Niri overview": "Niri सिंहावलोकन",
+  "Quit Niri": "Niri से बाहर निकलें",
+  "Niri hotkey overlay": "Niri हॉटकी ओवरले",
+  "Next window of this app": "इस ऐप की अगली विंडो",
+  "Previous window of this app": "इस ऐप की पिछली विंडो"
 }

@@ -3941,5 +3941,10 @@
   "Move right": "Mover para a direita",
   "Mute microphone": "Silenciar o microfone",
   "Focus left": "Focar à esquerda",
-  "Focus right": "Focar à direita"
+  "Focus right": "Focar à direita",
+  "Niri overview": "Visão geral do Niri",
+  "Quit Niri": "Sair do Niri",
+  "Niri hotkey overlay": "Atalhos do Niri na tela",
+  "Next window of this app": "Próxima janela deste app",
+  "Previous window of this app": "Janela anterior deste app"
 }

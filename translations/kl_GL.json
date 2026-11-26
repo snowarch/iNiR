@@ -3918,5 +3918,10 @@
   "Move right": "Talerperlermut nuuguk",
   "Mute microphone": "Microphone mute",
   "Focus left": "Saamut focus",
-  "Focus right": "Talerpimmut focus"
+  "Focus right": "Talerpimmut focus",
+  "Niri overview": "Niri overview",
+  "Quit Niri": "Niri matuguk",
+  "Niri hotkey overlay": "Niri-p shortcut-ii",
+  "Next window of this app": "App-ip uuma igalaava tulleq",
+  "Previous window of this app": "App-ip uuma igalaava siusinnerusoq"
 }

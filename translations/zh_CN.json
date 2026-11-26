@@ -3941,5 +3941,10 @@
   "Move right": "向右移动",
   "Mute microphone": "静音麦克风",
   "Focus left": "向左聚焦",
-  "Focus right": "向右聚焦"
+  "Focus right": "向右聚焦",
+  "Niri overview": "Niri 概览",
+  "Quit Niri": "退出 Niri",
+  "Niri hotkey overlay": "Niri 快捷键浮层",
+  "Next window of this app": "此应用的下一个窗口",
+  "Previous window of this app": "此应用的上一个窗口"
 }

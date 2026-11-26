@@ -3941,5 +3941,10 @@
   "Move right": "右に移動",
   "Mute microphone": "マイクをミュート",
   "Focus left": "左にフォーカス",
-  "Focus right": "右にフォーカス"
+  "Focus right": "右にフォーカス",
+  "Niri overview": "Niri の概要",
+  "Quit Niri": "Niri を終了",
+  "Niri hotkey overlay": "Niri のショートカット一覧",
+  "Next window of this app": "このアプリの次のウィンドウ",
+  "Previous window of this app": "このアプリの前のウィンドウ"
 }

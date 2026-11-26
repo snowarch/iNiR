@@ -3941,5 +3941,10 @@
   "Move right": "تحرك لليمين",
   "Mute microphone": "كتم الميكروفون",
   "Focus left": "التركيز يسارًا",
-  "Focus right": "التركيز يمينًا"
+  "Focus right": "التركيز يمينًا",
+  "Niri overview": "نظرة عامة على Niri",
+  "Quit Niri": "الخروج من Niri",
+  "Niri hotkey overlay": "طبقة اختصارات Niri",
+  "Next window of this app": "النافذة التالية لهذا التطبيق",
+  "Previous window of this app": "النافذة السابقة لهذا التطبيق"
 }

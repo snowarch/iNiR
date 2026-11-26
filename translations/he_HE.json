@@ -3941,5 +3941,10 @@
   "Move right": "זז ימינה",
   "Mute microphone": "השתקת המיקרופון",
   "Focus left": "מיקוד שמאלה",
-  "Focus right": "מיקוד ימינה"
+  "Focus right": "מיקוד ימינה",
+  "Niri overview": "סקירה כללית של Niri",
+  "Quit Niri": "יציאה מ-Niri",
+  "Niri hotkey overlay": "שכבת קיצורי Niri",
+  "Next window of this app": "החלון הבא של היישום",
+  "Previous window of this app": "החלון הקודם של היישום"
 }

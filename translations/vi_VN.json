@@ -3941,5 +3941,10 @@
   "Move right": "Di chuyển sang phải",
   "Mute microphone": "Tắt tiếng micro",
   "Focus left": "Chuyển tiêu điểm sang trái",
-  "Focus right": "Chuyển tiêu điểm sang phải"
+  "Focus right": "Chuyển tiêu điểm sang phải",
+  "Niri overview": "Tổng quan Niri",
+  "Quit Niri": "Thoát Niri",
+  "Niri hotkey overlay": "Lớp phủ phím tắt Niri",
+  "Next window of this app": "Cửa sổ tiếp theo của ứng dụng này",
+  "Previous window of this app": "Cửa sổ trước của ứng dụng này"
 }

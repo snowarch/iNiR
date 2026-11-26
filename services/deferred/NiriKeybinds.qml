@@ -20,6 +20,10 @@ import "../UmbrielToml.js" as Toml
  *
  * Read/write support: setBind() and removeBind() write back to the keybinds KDL file via
  * inir-accel niri-config under Niri, to Settings' own 95-settings.toml under Umbriel and Rin (CompositorConfig.bind).
+ *
+ * inir-accel words Niri's binds as UmbrielModel words Rin's and Umbriel's, so one catalog key serves all three. Its
+ * Niri-only words keep their keys through this line: "Niri overview", "Quit Niri", "Niri hotkey overlay",
+ * "Next window of this app", "Previous window of this app".
  */
 Singleton {
     id: root

@@ -3941,5 +3941,10 @@
   "Move right": "Двигайтесь вправо",
   "Mute microphone": "Выключить микрофон",
   "Focus left": "Фокус влево",
-  "Focus right": "Фокус вправо"
+  "Focus right": "Фокус вправо",
+  "Niri overview": "Обзор Niri",
+  "Quit Niri": "Выйти из Niri",
+  "Niri hotkey overlay": "Подсказка сочетаний Niri",
+  "Next window of this app": "Следующее окно этого приложения",
+  "Previous window of this app": "Предыдущее окно этого приложения"
 }

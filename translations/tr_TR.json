@@ -3941,5 +3941,10 @@
   "Move right": "Sağa taşı",
   "Mute microphone": "Mikrofonu sessize al",
   "Focus left": "Sola odaklan",
-  "Focus right": "Sağa odaklan"
+  "Focus right": "Sağa odaklan",
+  "Niri overview": "Niri genel bakışı",
+  "Quit Niri": "Niri'den çık",
+  "Niri hotkey overlay": "Niri kısayol katmanı",
+  "Next window of this app": "Bu uygulamanın sonraki penceresi",
+  "Previous window of this app": "Bu uygulamanın önceki penceresi"
 }

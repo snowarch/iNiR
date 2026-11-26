@@ -3941,5 +3941,10 @@
   "Move right": "Sposta a destra",
   "Mute microphone": "Disattiva il microfono",
   "Focus left": "Attiva a sinistra",
-  "Focus right": "Attiva a destra"
+  "Focus right": "Attiva a destra",
+  "Niri overview": "Panoramica di Niri",
+  "Quit Niri": "Esci da Niri",
+  "Niri hotkey overlay": "Scorciatoie di Niri a schermo",
+  "Next window of this app": "Finestra successiva di questa app",
+  "Previous window of this app": "Finestra precedente di questa app"
 }

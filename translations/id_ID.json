@@ -3941,5 +3941,10 @@
   "Move right": "Pindahkan ke kanan",
   "Mute microphone": "Bisukan mikrofon",
   "Focus left": "Fokus ke kiri",
-  "Focus right": "Fokus ke kanan"
+  "Focus right": "Fokus ke kanan",
+  "Niri overview": "Ringkasan Niri",
+  "Quit Niri": "Keluar dari Niri",
+  "Niri hotkey overlay": "Overlay pintasan Niri",
+  "Next window of this app": "Jendela berikutnya dari aplikasi ini",
+  "Previous window of this app": "Jendela sebelumnya dari aplikasi ini"
 }

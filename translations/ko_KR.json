@@ -3941,5 +3941,10 @@
   "Move right": "오른쪽으로 이동",
   "Mute microphone": "마이크 음소거",
   "Focus left": "왼쪽에 포커스",
-  "Focus right": "오른쪽에 포커스"
+  "Focus right": "오른쪽에 포커스",
+  "Niri overview": "Niri 개요",
+  "Quit Niri": "Niri 종료",
+  "Niri hotkey overlay": "Niri 단축키 오버레이",
+  "Next window of this app": "이 앱의 다음 창",
+  "Previous window of this app": "이 앱의 이전 창"
 }
