@@ -83,7 +83,9 @@ Singleton {
     property var wanted: []
 
     // ---- Rin: each domain as its settings service reads it (defaults included), and its schema ----
-    readonly property var rinDomains: ["rin.windows", "rin.pointer", "rin.animation", "rin.ime"]
+    readonly property var rinDomains: ["rin.windows", "rin.pointer", "rin.animation", "rin.ime", "rin.displays"]
+    // Rin's screens as its outputs reply gives them; takeRinOutputs() adds what rin.displays says of each.
+    property var rinHeads: []
     property var rinData: ({})
     // domain -> key -> its default; "domain/key" -> { min, max }.
     property var rinDefaults: ({})
@@ -269,7 +271,8 @@ Singleton {
         const item = root.rinQueue[0]
         root.rinQueue = root.rinQueue.slice(1)
         rinWriter.item = item
-        rinWriter.command = ["rin", "msg", "settings", "set", item.domain, item.key, JSON.stringify(item.value)]
+        rinWriter.command = item.reset ? ["rin", "msg", "settings", "reset", item.domain, item.key]
+            : ["rin", "msg", "settings", "set", item.domain, item.key, JSON.stringify(item.value)]
         rinWriter.running = true
     }
 
@@ -463,7 +466,7 @@ Singleton {
         if (!root.available) return
         if (!devices.running) devices.running = true
         if (!cursorReader.running) cursorReader.running = true
-        if (root.rin) { root.readRin(); root.readRinBinds(); return }
+        if (root.rin) { root.readRin(); root.readRinBinds(); root.reload(["outputs"]); return }
         if (root.niri) { root.reload(Object.keys(root.stale).filter(part => root.stale[part])); return }
         if (!schemaReader.running && Object.keys(root.schema).length === 0) {
             schemaReader.running = true
@@ -481,11 +484,15 @@ Singleton {
         }
         function onOutputsChanged(): void {
             root.stale.outputs = true
-            if (root.umbriel && root.settingsAsked) outputsSettle.restart()
+            if ((root.umbriel || root.rin) && root.settingsAsked) outputsSettle.restart()
         }
     }
     function reload(parts: var): void {
         for (const part of parts) {
+            if (root.rin) {
+                if (part === "outputs" && !rinOutputsReader.running) rinOutputsReader.running = true
+                continue
+            }
             if (root.umbriel) {
                 if (part === "outputs" && !umbrielState.running) umbrielState.running = true
                 else if (part !== "outputs") root.readUmbriel()
@@ -1019,6 +1026,45 @@ Singleton {
             new_width: Number(config.layout?.scrolling?.default_extent_fraction ?? 0)
         }
     }
+    // Rin names each screen in rin.displays by a slug, its "<slug>-name" key holding "Make Model (connector)".
+    function rinSlug(out: var): string {
+        const table = root.rinData["rin.displays"] ?? {}
+        for (const key of Object.keys(table)) {
+            if (!key.endsWith("-name")) continue
+            const label = String(table[key])
+            if (label === out.name || label.endsWith(`(${out.name})`)) return key.slice(0, -5)
+        }
+        return ""
+    }
+    // Rin's outputs reply has Umbriel's shape; what only rin.displays says (VRR, HDR) is read from there.
+    function takeRinOutputs(): void {
+        const table = root.rinData["rin.displays"] ?? {}
+        root.outputs = root.rinHeads.map(out => {
+            const slug = root.rinSlug(out)
+            const said = key => table[`${slug}-${key}`]
+            return Object.assign(root.fromUmbriel(out, null, null), {
+                configName: slug,
+                vrr_supported: out.adaptive_sync_supported === true,
+                vrr_mode: ({ always: "on", automatic: "on-demand" })[String(said("adaptive-sync") ?? "never")] ?? "off",
+                hdr_supported: said("hdr") !== undefined,
+                hdr_mode: said("hdr") === true ? "on" : "off",
+                sdr_white: Number(said("sdr-brightness") ?? 203)
+            })
+        })
+        root.stale.outputs = false
+        root.revision++
+    }
+    // One of rin.displays' keys: shown at once, then written. A value equal to Rin's own leaves the file.
+    function setRinDisplay(key: string, value: var): void {
+        const data = Object.assign({}, root.rinData)
+        data["rin.displays"] = Object.assign({}, data["rin.displays"], { [key]: value })
+        root.rinData = data
+        const asRin = root.same(value, root.rinDefaults["rin.displays"]?.[key])
+        root.rinQueue = root.rinQueue.filter(item => !(item.domain === "rin.displays" && item.key === key))
+            .concat([{ domain: "rin.displays", key: key, value: value, reset: asRin }])
+        root.takeRinOutputs()
+        root.rinNext()
+    }
     function outputConfig(out: var): var {
         const all = root.effective.output ?? {}
         return Object.assign({}, all[out.name] ?? {}, all[out.config_name ?? out.configName ?? ""] ?? {})
@@ -1080,10 +1126,12 @@ Singleton {
         if (!anyScreen && out.enabled === false && key !== "on" && key !== "screen") return false
         if (key === "vrr") return out.vrr_supported === true
         if (["screen", "resolution", "rate", "scale", "transform"].includes(key)) return true
-        if (!root.umbriel) return false
+        if (!root.umbriel && !root.rin) return false
         // The last screen on has no switch: nothing would be left to turn it on from.
         if (key === "on") return root.outputs.length > 1 && (out.enabled === false || root.activeOutputs.length > 1)
         if (key === "hdr" || key === "sdr-white") return out.hdr_supported === true
+        // Rin sets a screen's mode, scale, turn, place, switch, VRR and HDR; the rest is Umbriel's.
+        if (root.rin) return false
         if (key === "bit-depth") return out.deep_colour === true
         if (key === "limited-range") return String(out.name).startsWith("HDMI")
         if (key === "sdr-transfer") return out.hdr_supported === true
@@ -1130,7 +1178,7 @@ Singleton {
         if (key === "rate") return out.current_rate_string
         if (key === "scale") return Number(out.scale)
         if (key === "transform") return root.transformOf(out)
-        if (key === "vrr") return root.umbriel ? String(out.vrr_mode ?? "off") : out.vrr_enabled ? String(out.vrr_mode ?? "on") : "off"
+        if (key === "vrr") return root.umbriel || root.rin ? String(out.vrr_mode ?? "off") : out.vrr_enabled ? String(out.vrr_mode ?? "on") : "off"
         if (key === "place") return root.placeOf(out, root.neighbour(out))
         if (key === "on") return out.enabled !== false
         if (key === "hdr") return String(out.hdr_mode ?? "off")
@@ -1191,6 +1239,7 @@ Singleton {
         }
         if (key === "vrr") return [{ label: "Off", value: "off" }, { label: "In games", value: "on-demand" }, { label: "Always", value: "on" }]
         if (key === "place") return [{ label: "Left", value: "left", glyph: "west" }, { label: "Right", value: "right", glyph: "east" }, { label: "Above", value: "above", glyph: "north" }, { label: "Below", value: "below", glyph: "south" }]
+        if (key === "hdr" && root.rin) return [{ label: "Off", value: "off" }, { label: "On", value: "on" }]
         if (key === "hdr") return [{ label: "Off", value: "off" }, { label: "When asked", value: "auto" }, { label: "Fullscreen", value: "fullscreen" }, { label: "Always", value: "on" }]
         if (key === "bit-depth") return [{ label: "8 bit", value: 8 }, { label: "10 bit", value: 10 }]
         if (key === "workspace-axis") return [{ label: "Stacked", value: "vertical", glyph: "swap_vert" }, { label: "Side by side", value: "horizontal", glyph: "swap_horiz" }]
@@ -1223,6 +1272,28 @@ Singleton {
             const marked = root.rangeMarked().filter(name => name !== out.configName).concat(next === true || next === "true" ? [out.configName] : [])
             Config.setNestedValue("display.limitedRange", marked)
             root.writeOwn(root.withRange(root.own, marked))
+            return
+        }
+        if (root.rin) {
+            const suffix = ({ mode: "mode", scale: "scale", transform: "transform", on: "enabled", vrr: "adaptive-sync", hdr: "hdr", "sdr-white": "sdr-brightness" })[setting]
+            if (!suffix || !out.configName) return
+            // A value as the row says it, in rin.displays' own words.
+            const inRin = value => {
+                if (setting === "scale" || setting === "sdr-white") return Number(value)
+                if (setting === "on") return value === true || value === "true"
+                if (setting === "hdr") return value === "on"
+                if (setting === "vrr") return ({ on: "always", "on-demand": "automatic" })[value] ?? "never"
+                return value
+            }
+            const written = inRin(wanted)
+            if (setting === "on" && written === false && root.activeOutputs.length < 2) return
+            const rinKey = `${out.configName}-${suffix}`
+            if (["mode", "scale", "transform", "on", "hdr"].includes(setting)) {
+                root.pending = { output: out.name, key: setting, value: wanted, previous: previous, rinKey: rinKey, back: inRin(previous) }
+                root.secondsLeft = root.revertAfter
+                countdown.restart()
+            }
+            root.setRinDisplay(rinKey, written)
             return
         }
         if (root.umbriel) {
@@ -1332,6 +1403,11 @@ Singleton {
         if (Object.keys(layout).length === 0) return
         root.outputs = root.outputs.map(out => layout[out.name] ? Object.assign({}, out, { position: layout[out.name] }) : out)
         root.revision++
+        if (root.rin) {
+            for (const out of root.outputs) if (layout[out.name] && out.configName)
+                root.setRinDisplay(`${out.configName}-position`, `${Math.round(layout[out.name].x)},${Math.round(layout[out.name].y)}`)
+            return
+        }
         if (root.umbriel) {
             let made = root.own
             for (const out of root.outputs) if (layout[out.name]) made = Toml.set(made, ["output", out.configName, "position"], [Math.round(layout[out.name].x), Math.round(layout[out.name].y)])
@@ -1355,6 +1431,7 @@ Singleton {
         if (!change) return
         countdown.stop()
         root.pending = null
+        if (root.rin) return
         if (root.umbriel) { root.tidyLater(change.path); return }
         persister.command = [root.accelRun, "niri-config", "persist-output", change.output, `${change.key}=${change.value}`]
         persister.running = true
@@ -1364,6 +1441,7 @@ Singleton {
         if (!change) return
         countdown.stop()
         root.pending = null
+        if (root.rin) { root.setRinDisplay(change.rinKey, change.back); return }
         if (root.umbriel) {
             // Umbriel keeps a screen as it is when its line goes: the old value is written so the screen returns, and
             // a line that was not there before leaves once the screen is back.
@@ -1495,8 +1573,18 @@ Singleton {
                 root.rinData = root.takeRin(text, root.rinData)
                 root.forget("")
                 root.rinRead = true
-                root.revision++
+                root.takeRinOutputs()
             }
+        }
+    }
+    Process {
+        id: rinOutputsReader
+        command: ["rin", "msg", "-j", "outputs"]
+        stdout: StdioCollector {
+            onStreamFinished: root.parse(text, value => {
+                root.rinHeads = Array.isArray(value?.ok) ? value.ok : []
+                root.takeRinOutputs()
+            })
         }
     }
     Process {
@@ -1533,6 +1621,7 @@ Singleton {
         onExited: exitCode => {
             root.error = exitCode === 0 ? "" : rinWriterErrors.text.trim().replace(/^rin msg: /, "")
             if (exitCode !== 0) root.readRin()
+            if (rinWriter.item?.domain === "rin.displays") outputsSettle.restart()
             root.written(String(rinWriter.item?.domain ?? ""))
             root.rinNext()
         }
