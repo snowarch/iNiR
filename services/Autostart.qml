@@ -13,6 +13,9 @@ import Quickshell.Io
  * quoted command per line: Umbriel replaces an array a later include sets, so
  * the section lives inside the one array, never in a file of its own).
  *
+ * On Rin, whose session starts xdg-desktop-autostart.target, each managed entry is a desktop file in
+ * ~/.config/autostart (see the Rin section below).
+ *
  * Source of truth is the niri startup file
  *   ~/.config/niri/config.d/50-startup.kdl
  * which uses `spawn-at-startup` / `spawn-sh-at-startup` directives run by the
@@ -49,16 +52,21 @@ Singleton {
 
     // ── Paths / environment ──────────────────────────────────────────────
 
-    readonly property bool isNiri: CompositorService.isNiri
+    readonly property bool rin: CompositorService.isRin
+    // iNiR manages login apps on Niri and Umbriel (their startup file) and on Rin (XDG autostart).
+    readonly property bool supported: CompositorService.isNiri || root.rin
+    // The name the families read; it means `supported`.
+    readonly property bool isNiri: root.supported
     // Umbriel's TOML: entries are array strings, comments start with #.
     readonly property bool toml: CompositorService.isUmbriel
     readonly property string _comment: toml ? "#" : "//"
 
     readonly property string startupDir: {
+        if (root.rin) return `${Directories.configPath}/autostart`
         const home = Directories.homePath ?? ""
         return home.length === 0 ? "" : `${home}/.config/${root.toml ? "umbriel" : "niri"}/config.d`
     }
-    readonly property string startupFilePath: startupDir.length === 0 ? ""
+    readonly property string startupFilePath: root.rin ? root.startupDir : startupDir.length === 0 ? ""
         : `${startupDir}/50-startup.${root.toml ? "toml" : "kdl"}`
 
     readonly property string beginMarker: `${_comment} >>> inir-managed-autostart >>>`
@@ -95,9 +103,18 @@ Singleton {
             root.status = root.isNiri ? "read" : "notniri"
             if (root.isNiri) root.reload()
         }
+        function onIsRinChanged() {
+            root.status = root.isNiri ? "read" : "notniri"
+            if (root.isNiri) root.reload()
+        }
     }
 
     function reload(): void {
+        if (root.rin) {
+            rinReader.running = false
+            rinReader.running = true
+            return
+        }
         if (!isNiri || startupFilePath.length === 0) {
             root.status = isNiri ? "missing" : "notniri"
             return
@@ -298,6 +315,10 @@ Singleton {
     }
 
     function _write(): void {
+        if (root.rin) {
+            root._writeRin()
+            return
+        }
         if (!isNiri || startupFilePath.length === 0) {
             root.status = isNiri ? "missing" : "notniri"
             return
@@ -377,7 +398,7 @@ Singleton {
     function isAppExternal(app): bool {
         const lines = root.externalLines ?? []
         for (let i = 0; i < lines.length; i++) {
-            if (lines[i].enabled && _appMatchesTokens(app, lines[i].tokens))
+            if (lines[i].enabled && (lines[i].id === String(app.id ?? "").toLowerCase() || _appMatchesTokens(app, lines[i].tokens)))
                 return true
         }
         return false
@@ -420,7 +441,7 @@ Singleton {
 
     // ── IPC (scripts / keybinds) ────────────────────────────────
 
-    /// Niri login autostart manager. Reads and writes the managed section of `~/.config/niri/config.d/50-startup.kdl`
+    /// Login autostart manager. On Rin each entry is a desktop file in `~/.config/autostart`; on Niri: Reads and writes the managed section of `~/.config/niri/config.d/50-startup.kdl`
     /// (delimited by `// >>> inir-managed-autostart >>>` / `// <<< inir-managed-autostart <<<`). Base iNiR lines and
     /// any hand-written `spawn-at-startup` lines outside the markers are preserved verbatim; toggling an entry
     /// comments the line out instead of deleting it. Safe no-op on non-Niri compositors (the page shows a guard
@@ -454,6 +475,103 @@ Singleton {
         function reload(): string {
             root.reload()
             return "ok"
+        }
+    }
+
+    // ── Rin: XDG autostart ───────────────────────────────────────────────
+    // Rin's session starts xdg-desktop-autostart.target, so each managed entry is its own desktop file,
+    // ~/.config/autostart/inir-autostart-NNN.desktop, marked X-iNiR-Autostart; a disabled one carries Hidden=true.
+    // A command runs from base64 through sh: systemd's generator reads `$` and `\` in Exec its own way. Every
+    // other desktop file there is external.
+    readonly property string rinPrefix: "inir-autostart-"
+    property bool _rinAgain: false
+
+    function _desktopValue(s): string {
+        return String(s ?? "").replace(/\\/g, "\\\\").replace(/\n/g, "\\n")
+    }
+
+    function _desktopText(s): string {
+        return String(s ?? "").replace(/\\(.)/g, (_, c) => c === "n" ? "\n" : c === "t" ? "\t" : c === "s" ? " " : c)
+    }
+
+    function _applyRin(listing): void {
+        const entries = []
+        const external = []
+        for (const chunk of String(listing ?? "").split("\x1e")) {
+            const lines = chunk.split("\n")
+            const name = String(lines.shift() ?? "").trim()
+            if (!name.endsWith(".desktop")) continue
+            const keys = {}
+            let group = ""
+            for (const line of lines) {
+                const t = line.trim()
+                if (t.startsWith("[")) { group = t; continue }
+                const eq = t.indexOf("=")
+                if (group !== "[Desktop Entry]" || eq <= 0) continue
+                const key = t.slice(0, eq).trim()
+                if (keys[key] === undefined) keys[key] = t.slice(eq + 1).trim()
+            }
+            const enabled = keys["Hidden"] !== "true" && keys["X-GNOME-Autostart-enabled"] !== "false"
+            const kind = name.startsWith(root.rinPrefix) ? keys["X-iNiR-Autostart"] : undefined
+            if (kind === "app") {
+                entries.push({ type: "app", desktopId: root._desktopText(keys["X-iNiR-App"]), enabled: enabled })
+            } else if (kind === "command") {
+                entries.push({ type: "command", command: root._desktopText(keys["X-iNiR-Command"]), enabled: enabled })
+            } else {
+                const tokens = root._desktopText(keys["Exec"]).replace(/%[a-zA-Z%]/g, "").replace(/"/g, "")
+                    .split(/\s+/).filter(t => t.length > 0)
+                external.push({ tokens: tokens, enabled: enabled, raw: name, id: name.replace(/\.desktop$/, "").toLowerCase() })
+            }
+        }
+        root.entries = entries
+        root.externalLines = external
+        root.ready = true
+        root.status = "read"
+        _log("[Autostart] Read", entries.length, "managed +", external.length, "external autostart files")
+    }
+
+    function _writeRin(): void {
+        if (rinWriter.running) {
+            root._rinAgain = true
+            return
+        }
+        const args = []
+        for (const e of root.entries) {
+            const app = e.type === "app"
+            const what = String((app ? e.desktopId : e.command) ?? "")
+            const name = app ? (DesktopEntries.byId(what)?.name ?? what) : what
+            args.push(app ? "app" : "command", what, root._desktopValue(what), root._desktopValue(name), e.enabled ? "" : "Hidden=true")
+        }
+        rinWriter.command = ["/bin/sh", "-c", root.rinWrite, "sh", root.startupDir].concat(args)
+        rinWriter.running = true
+    }
+
+    // $1: the folder, then five words an entry: kind, what it starts, the same as a desktop value, its name, Hidden=true or "".
+    readonly property string rinWrite: 'dir=$1; shift; mkdir -p "$dir" || exit 1; rm -f "$dir"/inir-autostart-*.desktop; i=0; '
+        + 'while [ $# -ge 5 ]; do i=$((i + 1)); f="$dir/inir-autostart-$(printf %03d "$i").desktop"; '
+        + 'if [ "$1" = app ]; then run="gtk-launch $2"; key="X-iNiR-App=$3"; '
+        + 'else run="sh -c \\"echo $(printf %s "$2" | base64 -w0) | base64 -d | sh\\""; key="X-iNiR-Command=$3"; fi; '
+        + 'printf "[Desktop Entry]\\nType=Application\\nName=%s\\nExec=%s\\nX-iNiR-Autostart=%s\\n%s\\n" "$4" "$run" "$1" "$key" > "$f" || exit 1; '
+        + '[ -z "$5" ] || printf "%s\\n" "$5" >> "$f"; shift 5; done'
+
+    Process {
+        id: rinReader
+        command: ["/bin/sh", "-c", 'for f in "$1"/*.desktop; do [ -f "$f" ] || continue; printf "\\036%s\\n" "${f##*/}"; cat "$f"; echo; done', "sh", root.startupDir]
+        stdout: StdioCollector {
+            onStreamFinished: root._applyRin(text)
+        }
+    }
+
+    Process {
+        id: rinWriter
+        onExited: exitCode => {
+            if (exitCode !== 0) root.status = "write"
+            if (root._rinAgain) {
+                root._rinAgain = false
+                root._writeRin()
+            } else {
+                root.reload()
+            }
         }
     }
 
