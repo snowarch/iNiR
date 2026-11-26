@@ -141,7 +141,12 @@ Singleton {
         "input:touchpad.disabled-on-external-mouse": { domain: "rin.pointer", key: "touchpad-used",
             read: used => used === "no-mouse", write: off => off ? "no-mouse" : "always" },
         "input:cursor.xcursor-theme": { domain: "rin.pointer", key: "cursor-theme" },
-        "input:cursor.xcursor-size": { domain: "rin.pointer", key: "cursor-size", round: true }
+        "input:cursor.xcursor-size": { domain: "rin.pointer", key: "cursor-size", round: true },
+        // Hot corners are Rin's keys, not its settings: `corner` names the line of [hot-corners] in binds.d.
+        "corners:top-left": { corner: "top-left", only: true },
+        "corners:top-right": { corner: "top-right", only: true },
+        "corners:bottom-left": { corner: "bottom-left", only: true },
+        "corners:bottom-right": { corner: "bottom-right", only: true }
     })
     // One row's value in one of Rin's tables (what it reads, or its defaults).
     function rinValue(entry: var, from: var, spec: var): var {
@@ -155,6 +160,58 @@ Singleton {
         if (!rinReader.running) rinReader.running = true
         if (Object.keys(root.rinDefaults).length === 0 && !rinDescriber.running) rinDescriber.running = true
     }
+    // Rin's keys and hot corners: every *.toml of binds.d in name order, a later file's line over an earlier one's.
+    // Settings writes its corners to its own file there, which loads after iNiR's keys (70-inir.toml) and the person's.
+    readonly property string rinBindsDir: `${Directories.configPath}/rin/binds.d`
+    readonly property string rinBindsOwn: `${root.rinBindsDir}/95-settings.toml`
+    // [hot-corners] as Rin runs it, as the files below Settings' give it, and Settings' own lines; in the choices' words.
+    property var rinCorners: ({})
+    property var rinCornersBelow: ({})
+    property var rinCornersOwn: ({})
+    property bool rinBindsRead: false
+    function readRinBinds(): void {
+        if (!rinBindsReader.running) rinBindsReader.running = true
+    }
+    function takeRinBinds(text: string): void {
+        const below = {}, own = {}
+        let files = 0
+        for (const chunk of text.split("\n#@@inir-file ").slice(1)) {
+            const cut = chunk.indexOf("\n")
+            const name = chunk.slice(0, cut < 0 ? chunk.length : cut)
+            let corners = null
+            // A file that does not parse is one Rin does not take either (an editor's half-written save).
+            try { corners = Toml.parse(cut < 0 ? "" : chunk.slice(cut + 1))["hot-corners"] ?? {} } catch (e) { continue }
+            files++
+            for (const corner of Object.keys(corners)) (name === root.rinBindsOwn ? own : below)[corner] = root.cornerAction(corners[corner])
+        }
+        // With no file at all Rin runs its own keys, and its top-left corner opens the overview.
+        if (files === 0) below["top-left"] = root.cornerAction("overview-toggle")
+        root.rinCornersBelow = below
+        root.rinCornersOwn = own
+        root.rinCorners = Object.assign({}, below, own)
+        root.rinBindsRead = true
+        root.forget("corners:")
+        root.revision++
+    }
+    function writeRinBinds(): void {
+        if (rinBindsWriter.running) { rinBindsWriter.again = true; return }
+        const lines = ["# iNiR Settings writes this file: the hot corners picked in Settings. It loads after iNiR's keys",
+            "# (70-inir.toml); your own keys go in 90-user.toml, and a corner set in both follows Settings.", "", "[hot-corners]"]
+        for (const corner of ["top-left", "top-right", "bottom-left", "bottom-right"])
+            if (corner in root.rinCornersOwn) lines.push(`${corner} = ${JSON.stringify(String(root.rinCornersOwn[corner]))}`)
+        rinBindsWriter.command = ["sh", "-c", root.rinBindsScript, "sh", root.rinBindsDir, lines.join("\n") + "\n",
+            Quickshell.shellPath("defaults/rin/binds.d/70-inir.toml")]
+        rinBindsWriter.running = true
+    }
+    // Once binds.d holds a file, Rin takes the folder as the whole keymap: iNiR's keys go in first, as a login under Rin
+    // puts them. Each file is written beside its place and renamed, so Rin never reads half of one.
+    readonly property string rinBindsScript: [
+        'd="$1"; mkdir -p "$d" || exit 1',
+        'if [ -z "$(find "$d" -maxdepth 1 -name "*.toml" ! -name 95-settings.toml -print -quit)" ] && [ -f "$3" ]; then',
+        '  install -m 644 "$3" "$d/.70-inir.part" && mv -f "$d/.70-inir.part" "$d/70-inir.toml" || exit 1',
+        'fi',
+        'printf %s "$2" > "$d/.95-settings.part" && mv -f "$d/.95-settings.part" "$d/95-settings.toml"'
+    ].join("\n")
     // Every line of a read answers one domain, in the order asked; a domain that failed leaves what was known.
     function takeRin(text: string, into: var): var {
         const next = Object.assign({}, into)
@@ -287,8 +344,18 @@ Singleton {
         // Closing the lid takes the laptop's own screen out of the desktop and opening it brings it back.
         "power:lid-screen-off": { toml: "events.lid_close", only: true, wants: "lid", lid: true }
     })
-    // What a hot corner can do, in the shell's words; the value is what the compositor runs.
-    readonly property var cornerActions: [
+    // What a hot corner can do, in the shell's words; the value is what the compositor runs. Rin hands `shell` words to
+    // iNiR over its socket, so a corner there spawns nothing; its overview is iNiR's own.
+    readonly property var cornerActions: root.rin ? [
+        { label: "Nothing", value: "", glyph: "block" },
+        { label: "Overview", value: "shell overview toggle", also: ["overview-toggle", "toggle-overview", "overview-open", "open-overview", "spawn inir overview toggle"], glyph: "overview_key" },
+        { label: "Windows", value: "shell taskview toggle", also: ["spawn inir taskview toggle"], glyph: "select_window" },
+        { label: "Search", value: "shell search toggle", also: ["spawn inir search toggle"], glyph: "search" },
+        { label: "Clipboard", value: "shell clipboard toggle", also: ["spawn inir clipboard toggle"], glyph: "content_paste" },
+        { label: "Screenshot", value: "shell region screenshot", also: ["spawn inir region screenshot"], glyph: "screenshot_region" },
+        { label: "Power menu", value: "shell session toggle", also: ["spawn inir session toggle"], glyph: "power_settings_new" },
+        { label: "Lock", value: "shell lock activate", also: ["spawn inir lock activate"], glyph: "lock" }
+    ] : [
         { label: "Nothing", value: "", glyph: "block" },
         { label: "Overview", value: "overview-toggle", also: ["overview-open"], glyph: "overview_key" },
         { label: "App launcher", value: "spawn inir overview toggle", glyph: "apps" },
@@ -298,15 +365,21 @@ Singleton {
         { label: "Power menu", value: "spawn inir session toggle", glyph: "power_settings_new" },
         { label: "Lock", value: "spawn inir lock activate", glyph: "lock" }
     ]
+    // An action as the corner choices name it: one of their other spellings reads as that choice.
+    function cornerAction(action: var): string {
+        const text = String(action ?? "").trim()
+        return root.cornerActions.find(known => known.value === text || (known.also ?? []).includes(text))?.value ?? text
+    }
 
     // A corner the compositor itself acts on (Niri's overview corner, any of Umbriel's hot corners), in the shell's
     // names (topLeft ...): a shell piece aiming at a corner leaves it free.
     function cornerTaken(outputName: string, corner: string): bool {
         if (root.niri) return NiriService.isOverviewHotCornerActive(outputName, corner)
-        if (!root.umbriel) return false
+        if (!root.umbriel && !root.rin) return false
         if (!root.asked) Qt.callLater(root.ask)
         root.revision
         const key = ({ topLeft: "top-left", topRight: "top-right", bottomLeft: "bottom-left", bottomRight: "bottom-right" })[corner]
+        if (root.rin) return key !== undefined && String(root.rinCorners[key] ?? "").length > 0
         return key !== undefined && String(root.value({ comp: "corners", key: key, fallback: "" })).length > 0
     }
     // Loaded, it does nothing: a surface reading a capability is not asking. Umbriel's files are read once a corner
@@ -316,8 +389,10 @@ Singleton {
     function ask(): void {
         root.asked = true
         if (root.umbriel && !root.umbrielRead) root.readUmbriel()
+        if (root.rin && !root.rinBindsRead) root.readRinBinds()
     }
     onUmbrielChanged: if (root.asked) root.ask()
+    onRinChanged: if (root.asked) root.ask()
 
     function entryOf(section: string, key: string): var {
         const entry = root.umbrielKeys[section + ":" + key]
@@ -330,6 +405,7 @@ Singleton {
         if (root.rin) {
             root.revision
             const rinEntry = root.rinKeys[section + ":" + key]
+            if (rinEntry?.corner) return root.rinBindsRead
             return Boolean(rinEntry) && rinEntry.domain in root.rinData
         }
         const entry = root.entryOf(section, key)
@@ -347,7 +423,7 @@ Singleton {
         if (!root.available) return
         if (!devices.running) devices.running = true
         if (!cursorReader.running) cursorReader.running = true
-        if (root.rin) { root.readRin(); return }
+        if (root.rin) { root.readRin(); root.readRinBinds(); return }
         if (root.niri) { root.reload(Object.keys(root.stale).filter(part => root.stale[part])); return }
         if (!schemaReader.running && Object.keys(root.schema).length === 0) {
             schemaReader.running = true
@@ -401,6 +477,7 @@ Singleton {
         if (id in root.local) return root.local[id]
         if (root.rin) {
             const entry = root.rinKeys[id]
+            if (entry?.corner) return root.rinCorners[entry.corner] ?? spec.fallback
             return entry ? root.rinValue(entry, root.rinData, spec) : spec.fallback
         }
         if (root.umbriel) {
@@ -417,6 +494,7 @@ Singleton {
         if (spec.comp === "display") return undefined
         if (root.rin) {
             const entry = root.rinKeys[spec.comp + ":" + spec.key]
+            if (entry?.corner) return root.rinBindsRead ? root.rinCornersBelow[entry.corner] ?? "" : undefined
             return entry && entry.domain in root.rinDefaults ? root.rinValue(entry, root.rinDefaults, spec) : undefined
         }
         if (root.niri) {
@@ -457,6 +535,18 @@ Singleton {
         if (root.rin) {
             const entry = root.rinKeys[spec.comp + ":" + spec.key]
             if (!entry) return
+            if (entry.corner) {
+                // Settings' file keeps only the corners it changed: one put back as the files below have it leaves no line.
+                if (!root.rinBindsRead) return
+                const own = Object.assign({}, root.rinCornersOwn)
+                const wanted = root.cornerAction(next)
+                if (wanted === String(root.rinCornersBelow[entry.corner] ?? "")) delete own[entry.corner]
+                else own[entry.corner] = wanted
+                root.rinCornersOwn = own
+                root.rinCorners = Object.assign({}, root.rinCornersBelow, own)
+                root.writeRinBinds()
+                return
+            }
             const written = entry.write ? entry.write(next, root.rinData[entry.domain] ?? ({})) : next
             const values = entry.whole ? Object.assign({}, written) : ({ [entry.key]: written })
             if (entry.round) for (const key of Object.keys(values)) values[key] = Math.round(Number(values[key]))
@@ -1394,6 +1484,22 @@ Singleton {
             if (exitCode !== 0) root.readRin()
             root.written(String(rinWriter.item?.domain ?? ""))
             root.rinNext()
+        }
+    }
+    Process {
+        id: rinBindsReader
+        command: ["sh", "-c", 'for f in "$1"/*.toml; do [ -f "$f" ] && printf "\\n#@@inir-file %s\\n" "$f" && cat -- "$f"; done; :', "sh", root.rinBindsDir]
+        stdout: StdioCollector { onStreamFinished: root.takeRinBinds(text) }
+    }
+    Process {
+        id: rinBindsWriter
+        property bool again: false
+        stderr: StdioCollector { id: rinBindsErrors }
+        onExited: exitCode => {
+            root.error = exitCode === 0 ? "" : rinBindsErrors.text.trim() || Translation.tr("Could not save the hot corners.")
+            root.errorFile = exitCode === 0 ? "" : root.rinBindsOwn
+            if (rinBindsWriter.again) { rinBindsWriter.again = false; root.writeRinBinds() }
+            else root.readRinBinds()
         }
     }
     Process {
