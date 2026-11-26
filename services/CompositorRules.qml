@@ -193,7 +193,10 @@ Scope {
         watchChanges: true
         printErrors: false
         onFileChanged: rinOwn.reload()
-        onLoadFailed: root.rinRead = true
+        onLoadFailed: {
+            root.rinRules = []
+            root.rinRead = true
+        }
         onLoaded: {
             root.rinRead = true
             if (!rinWriter.running) root.rinRules = root.rinParse(rinOwn.text())
