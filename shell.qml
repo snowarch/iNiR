@@ -822,7 +822,7 @@ ShellRoot {
             && ((((Config.options?.panelFamily ?? "ii") === "ii") && !root.iiAltSwitcherNoVisual)
                 || (CompositorService.isRin
                     && (Config.options?.panelFamily ?? "ii") !== "waffle"
-                    && NiriService.rinSwitcher !== null))
+                    && (NiriService.rinSwitcher !== null || GlobalStates.altSwitcherOpen)))
         source: "modules/shared/altSwitcher/AltSwitcher.qml"
     }
 

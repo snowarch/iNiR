@@ -2029,6 +2029,11 @@ Scope {
             root.applyRinSwitcher(NiriService.rinSwitcher)
     }
 
+    Component.onDestruction: {
+        if (root._openedByRin)
+            GlobalStates.altSwitcherOpen = false
+    }
+
     // Pre-warm: construir snapshot en background después de que el shell inicie
     // para evitar lag en la primera apertura
     Timer {
