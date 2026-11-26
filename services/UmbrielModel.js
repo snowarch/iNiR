@@ -288,6 +288,7 @@ const _shellNames = {
     "search toggle": "Search", "clipboard toggle": "Clipboard", "cheatsheet toggle": "Cheatsheet", "settings": "Settings",
     "session toggle": "Power menu", "lock activate": "Lock screen", "lock focus": "Focus the lock screen",
     "region menu": "Region tools", "region screenshot": "Screenshot a region", "region screen": "Screenshot the screen",
+    "region window": "Screenshot the focused window",
     "region ocr": "Read text in a region", "region search": "Search a region by image",
     "region recordWithSound": "Record a region with sound", "wallpaperSelector toggle": "Wallpaper selector",
     "panelFamily cycle": "Next panel style", "equalizer toggle": "Equalizer", "altSwitcher next": "Next window",

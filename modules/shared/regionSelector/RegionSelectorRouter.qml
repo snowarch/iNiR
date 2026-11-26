@@ -21,6 +21,18 @@ Scope {
     // menu is the only entry point allowed to restore a previous toolbar choice.
     function screenshot(): void { GlobalStates.openRegionScreenshot() }
     function screen(): void { GlobalStates.openScreenScreenshot() }
+    // Niri shoots a window itself; on Umbriel and Rin a window's id is the identifier grim captures it by.
+    function window(): void {
+        if (CompositorService.niriNative) {
+            Quickshell.execDetached(["niri", "msg", "action", "screenshot-window"])
+            return
+        }
+        const focused = (NiriService.windows ?? []).find(w => w.is_focused)
+        const key = focused ? NiriService.umbrielWindowKey(focused.id) : null
+        const size = focused?.layout?.window_size
+        if (key && size?.[0] > 0 && size?.[1] > 0)
+            GlobalStates.openWindowScreenshot(String(key), size)
+    }
     function search(): void {
         open(RegionSelection.SnipAction.Search,
             (Config.options?.search?.imageSearch?.useCircleSelection ?? false)
@@ -46,6 +58,8 @@ Scope {
         function screenshot(): void { root.screenshot() }
         /// Screenshot the focused screen whole: saved and copied, nothing to draw
         function screen(): void { root.screen() }
+        /// Screenshot the focused window: its own pixels, saved and copied
+        function window(): void { root.window() }
         /// Image search (Google Lens)
         function search(): void { root.search() }
         /// Start a region capture for Google Lens

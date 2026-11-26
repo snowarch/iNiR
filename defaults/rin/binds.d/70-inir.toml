@@ -141,6 +141,7 @@
 "Print" = "shell region screenshot"
 "Ctrl+Print" = "shell region screen"
 "Mod+Print" = "shell region screen"
+"Alt+Print" = "shell region window"
 
 # Media and hardware keys (they work on the lock screen)
 "XF86AudioRaiseVolume" = { action = "shell audio volumeUp", allow-when-locked = true }

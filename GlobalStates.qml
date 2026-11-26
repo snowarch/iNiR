@@ -229,10 +229,24 @@ Singleton {
     // The focused screen whole (`region screen`, Ctrl+Print on Umbriel and Rin): the selector opens on that screen
     // alone, draws nothing and snips at once, so the shot is saved and copied like any region.
     property bool regionSelectorWholeScreen: false
-    onRegionSelectorOpenChanged: if (!regionSelectorOpen) regionSelectorWholeScreen = false
+    // The focused window whole (`region window`, Alt+Print): { key, size } of a window grim captures by its
+    // foreign-toplevel identifier, so the shot holds its own pixels and nothing over it.
+    property var regionSelectorWindow: null
+    onRegionSelectorOpenChanged: if (!regionSelectorOpen) {
+        regionSelectorWholeScreen = false
+        regionSelectorWindow = null
+    }
     function openScreenScreenshot(): void {
         regionSelectorAction = 0
         regionSelectorMode = 0
+        regionSelectorWindow = null
+        regionSelectorWholeScreen = true
+        regionSelectorOpen = true
+    }
+    function openWindowScreenshot(key: string, size: var): void {
+        regionSelectorAction = 0
+        regionSelectorMode = 0
+        regionSelectorWindow = { key: key, size: size }
         regionSelectorWholeScreen = true
         regionSelectorOpen = true
     }

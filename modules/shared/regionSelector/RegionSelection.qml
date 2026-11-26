@@ -123,6 +123,7 @@ PanelWindow {
         ? (NiriService.focusedWorkspaceIndex ?? 0)
         : (hyprlandMonitor && hyprlandMonitor.activeWorkspace ? hyprlandMonitor.activeWorkspace.id : 0)
     property string screenshotPath: `${root.screenshotDir}/image-${screen.name}`
+    readonly property var shotWindow: GlobalStates.regionSelectorWholeScreen ? GlobalStates.regionSelectorWindow : null
     property bool screenshotReady: false
     property real dragStartX: 0
     property real dragStartY: 0
@@ -301,7 +302,7 @@ PanelWindow {
     Process {
         id: screenshotProc
         running: false
-        command: ["bash", "-c", `mkdir -p '${StringUtils.shellSingleQuoteEscape(root.screenshotDir)}' && grim -o '${StringUtils.shellSingleQuoteEscape(root.screen.name)}' '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}'`]
+        command: ["bash", "-c", `mkdir -p '${StringUtils.shellSingleQuoteEscape(root.screenshotDir)}' && grim ${root.shotWindow ? "-T '" + StringUtils.shellSingleQuoteEscape(root.shotWindow.key) + "'" : "-o '" + StringUtils.shellSingleQuoteEscape(root.screen.name) + "'"} '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}'`]
         onExited: (exitCode, exitStatus) => {
             root.captured = true
             if (exitCode !== 0) {
@@ -334,7 +335,9 @@ PanelWindow {
             return;
         }
         if (GlobalStates.regionSelectorWholeScreen) {
-            if (root.screenshotReady)
+            if (root.screenshotReady && root.shotWindow)
+                root.snipWindow();
+            else if (root.screenshotReady)
                 root.snipFullscreen();
             else
                 root.dismiss();
@@ -387,8 +390,9 @@ PanelWindow {
         const ry = Math.round(root.regionY * root.monitorScale);
         const rw = Math.round(root.regionWidth * root.monitorScale);
         const rh = Math.round(root.regionHeight * root.monitorScale);
+        // A window shot is the window's own image already: it is kept whole.
         const cropBase = `magick '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}' `
-            + `-crop ${rw}x${rh}+${rx}+${ry}`
+            + (root.shotWindow ? "" : `-crop ${rw}x${rh}+${rx}+${ry}`)
         const cropToStdout = `${cropBase} -`
         const cropInPlace = `${cropBase} '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}'`
         const cleanup = `rm '${StringUtils.shellSingleQuoteEscape(root.screenshotPath)}'`
@@ -466,6 +470,14 @@ PanelWindow {
     }
 
     // Capture the whole screen with the current action (no region drawing).
+    function snipWindow() {
+        root.dragStartX = 0;
+        root.dragStartY = 0;
+        root.draggingX = root.shotWindow.size[0];
+        root.draggingY = root.shotWindow.size[1];
+        root.snip();
+    }
+
     function snipFullscreen() {
         root.dragStartX = 0;
         root.dragStartY = 0;

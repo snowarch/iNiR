@@ -140,6 +140,7 @@
 "Print" = "spawn inir region screenshot"
 "Ctrl+Print" = "spawn inir region screen"
 "Mod+Print" = "spawn inir region screen"
+"Alt+Print" = "spawn inir region window"
 
 # Media and hardware keys (work on the lock screen)
 "XF86AudioRaiseVolume" = { action = "spawn inir audio volumeUp", allow_when_locked = true }
