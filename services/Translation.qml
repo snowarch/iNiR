@@ -235,12 +235,12 @@ Singleton {
         return translation;
     }
 
-    // A label that may end in a number or a size ("Focus workspace 3", "Shrink column 10%"): its own key first, else
+    // A label that may end in a number or a size ("Focus workspace 3", "Shrink column 10%", "Column width 800 px"): its own key first, else
     // its words with %1 where the number stands, so one key covers every number.
     function trLabel(text) {
         const key = String(text ?? "")
         if (!key || root?.activeTranslations?.hasOwnProperty(key)) return root.tr(key)
-        const numbered = key.match(/^(.+ )(\d+%?)$/)
+        const numbered = key.match(/^(.+ )(\d+(?:%| px)?)$/)
         return numbered ? root.tr(numbered[1] + "%1").arg(numbered[2]) : key
     }
 

@@ -372,7 +372,9 @@ function _humanize(action, names) {
         if (_numbered[verb] && /^\d+$/.test(arg)) return _numbered[verb].replace("%1", arg)
         const step = _sized[verb] ? arg.match(/^([+-]?)(\d*\.?\d+)(%?)$/) : null
         if (step) {
-            const amount = (step[3] ? Number(step[2]) : Math.round(Number(step[2]) * 100)) + "%"
+            // Umbriel's extent is a fraction of the output; Niri's and Rin's bare number is logical pixels.
+            const amount = step[3] ? Number(step[2]) + "%"
+                : verb.startsWith("window-modify-") ? Math.round(Number(step[2]) * 100) + "%" : Number(step[2]) + " px"
             return _sized[verb][step[1] === "-" ? 0 : step[1] === "+" ? 1 : 2].replace("%1", amount)
         }
         if (verb === "spawn" || verb === "spawn-sh") {
