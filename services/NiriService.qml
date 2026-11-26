@@ -86,8 +86,12 @@ Singleton {
             if (!socketConnected)
                 return
             if (root.umbriel) {
-                // Whole snapshots of each family, now and on every change.
-                send({ cmd: "subscribe", events: ["outputs", "workspaces", "windows", "overview", "keyboard_layout"] })
+                // Whole snapshots of each family, now and on every change. Rin also sends this shell its keys and
+                // hot corners (`shell`): once subscribed, it no longer starts `inir` for each one.
+                const events = ["outputs", "workspaces", "windows", "overview", "keyboard_layout"]
+                if (CompositorService.isRin)
+                    events.push("shell")
+                send({ cmd: "subscribe", events: events })
                 refreshOverviewHotCorners()
                 return
             }
@@ -238,10 +242,24 @@ Singleton {
         case "keyboard_layout":
             root.applyKeyboardLayouts(UmbrielModel.keyboardLayouts(data))
             break
+        case "shell":
+            root.runShellWords(data?.args ?? [])
+            break
         default:
             if (event?.err !== undefined)
                 console.warn("NiriService: Umbriel refused the subscription:", event.err)
         }
+    }
+
+    // `inir WORDS` from the compositor (a Rin key or hot corner). A target this shell declares runs in process
+    // (qs-rs Ipc.call); the rest (launcher commands, kebab-case aliases, an older runtime) goes to the `inir` CLI.
+    function runShellWords(words: var): void {
+        if (!Array.isArray(words) || words.length === 0)
+            return
+        const text = words.map(String)
+        if (text.length >= 2 && SystemInfo.runtimeHas(["ipc-call"]) && Ipc.call(text[0], text[1], text.slice(2)))
+            return
+        Quickshell.execDetached(["inir"].concat(text))
     }
 
     Process {
