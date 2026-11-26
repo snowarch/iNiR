@@ -1062,8 +1062,32 @@ Singleton {
         const asRin = root.same(value, root.rinDefaults["rin.displays"]?.[key])
         root.rinQueue = root.rinQueue.filter(item => !(item.domain === "rin.displays" && item.key === key))
             .concat([{ domain: "rin.displays", key: key, value: value, reset: asRin }])
+        root.patchRinHead(key, value)
         root.takeRinOutputs()
         root.rinNext()
+    }
+    // The screen as written until the next outputs read brings Rin's own: a row never snaps back meanwhile.
+    function patchRinHead(key: string, value: var): void {
+        const found = /^(.*)-(mode|scale|transform|enabled|position)$/.exec(key)
+        if (!found) return
+        root.rinHeads = root.rinHeads.map(out => {
+            if (root.rinSlug(out) !== found[1]) return out
+            const next = Object.assign({}, out)
+            if (found[2] === "scale") next.scale = Number(value)
+            else if (found[2] === "transform") next.transform = String(value)
+            else if (found[2] === "enabled") next.enabled = value === true
+            else if (found[2] === "position") {
+                const place = String(value).split(",").map(Number)
+                next.position = { x: place[0] || 0, y: place[1] || 0 }
+            } else {
+                const mode = /^(\d+)x(\d+)@([\d.]+)$/.exec(String(value))
+                if (mode) next.modes = (out.modes ?? []).map(each => Object.assign({}, each, {
+                    current: each.width === Number(mode[1]) && each.height === Number(mode[2])
+                        && Math.abs(each.refresh_mhz - Number(mode[3]) * 1000) < 1.5
+                }))
+            }
+            return next
+        })
     }
     function outputConfig(out: var): var {
         const all = root.effective.output ?? {}
