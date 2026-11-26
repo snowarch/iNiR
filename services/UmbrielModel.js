@@ -273,14 +273,71 @@ function actionRequests(ids, request, ctx) {
 // keys replace or, set to "", remove ours) in the cheatsheet's shape: categories from the `# Heading` comment above
 // each group, `Mod` as Super.
 
+// Niri's, Rin's and Umbriel's actions in the words Niri's cheatsheet uses, so a key reads, and translates, the same
+// on every compositor. Umbriel's own come first; `names` in _humanize puts a compositor's own words before these.
 const _names = {
     "overview-toggle": "Umbriel overview", "session-quit": "Quit Umbriel", "dpms-off": "Turn screens off",
     "shortcuts-inhibit-toggle": "Toggle shortcuts inhibit", "config-reload": "Reload Umbriel config",
-    "window-toggle-maximize": "Maximize window", "window-toggle-fullscreen": "Fullscreen window",
-    "window-toggle-floating": "Float window", "window-close": "Close window", "column-toggle-tabbed": "Tab the column",
+    "window-toggle-maximize": "Maximize window", "window-toggle-fullscreen": "Fullscreen",
+    "window-toggle-floating": "Toggle floating", "window-close": "Close window", "column-toggle-tabbed": "Tab the column",
     "window-toggle-pinned": "Pin window on every workspace", "scratchpad-toggle": "Show the scratchpad",
-    "window-toggle-scratchpad": "Send window to the scratchpad", "workspace-set-layout toggle": "Next workspace layout"
+    "window-toggle-scratchpad": "Send window to the scratchpad", "workspace-set-layout toggle": "Next workspace layout",
+    "window-focus-switch-floating": "Switch float/tile focus", "window-cycle-primary-extent": "Cycle column width",
+    "column-center": "Center column", "window-consume-or-expel-left": "Consume/expel left",
+    "window-consume-or-expel-right": "Consume/expel right", "window-focus-left": "Focus left",
+    "window-focus-right": "Focus right", "window-focus-up": "Focus up", "window-focus-down": "Focus down",
+    "column-focus-first": "Focus first column", "column-focus-last": "Focus last column", "column-move-left": "Move left",
+    "column-move-right": "Move right", "window-move-up": "Move up", "window-move-down": "Move down",
+    "column-move-to-first": "Move to first", "column-move-to-last": "Move to last", "workspace-next": "Next workspace",
+    "workspace-previous": "Previous workspace", "column-move-to-workspace-next": "Move to next workspace",
+    "column-move-to-workspace-previous": "Move to previous workspace",
+    // Niri's and Rin's spellings.
+    "power-off-monitors": "Turn screens off", "toggle-keyboard-shortcuts-inhibit": "Toggle shortcuts inhibit",
+    "close-window": "Close window", "maximize-column": "Maximize column", "maximize-window-to-edges": "Maximize to edges",
+    "fullscreen-window": "Fullscreen", "toggle-window-floating": "Toggle floating",
+    "switch-focus-between-floating-and-tiling": "Switch float/tile focus", "center-column": "Center column",
+    "center-visible-columns": "Center visible columns", "expand-column-to-available-width": "Expand to available width",
+    "consume-or-expel-window-left": "Consume/expel left", "consume-or-expel-window-right": "Consume/expel right",
+    "expel-window-from-column": "Expel from column", "consume-window-into-column": "Consume into column",
+    "switch-preset-column-width": "Cycle column width", "switch-preset-window-height": "Cycle window height",
+    "reset-window-height": "Reset window height", "toggle-column-tabbed-display": "Toggle tabbed display",
+    "focus-column-left": "Focus left", "focus-column-right": "Focus right", "focus-window-up": "Focus up",
+    "focus-window-down": "Focus down", "focus-column-first": "Focus first column", "focus-column-last": "Focus last column",
+    "move-column-left": "Move left", "move-column-right": "Move right", "move-window-up": "Move up",
+    "move-window-down": "Move down", "move-column-to-first": "Move to first", "move-column-to-last": "Move to last",
+    "focus-workspace-up": "Previous workspace", "focus-workspace-down": "Next workspace",
+    "move-column-to-workspace-up": "Move to previous workspace", "move-column-to-workspace-down": "Move to next workspace",
+    "move-workspace-up": "Move workspace up", "move-workspace-down": "Move workspace down",
+    "screenshot": "Screenshot", "screenshot-screen": "Screenshot the screen", "screenshot-window": "Screenshot the window",
+    "switch-layout next": "Next keyboard layout", "switch-layout prev": "Previous keyboard layout",
+    "keyboard-layout-next": "Next keyboard layout", "keyboard-layout-prev": "Previous keyboard layout",
+    "keyboard-layout-previous": "Previous keyboard layout"
 }
+// Written out whole, so each label is a key the translation tools find.
+const _monitors = {
+    left: ["Focus monitor left", "Move to monitor left"], right: ["Focus monitor right", "Move to monitor right"],
+    up: ["Focus monitor up", "Move to monitor up"], down: ["Focus monitor down", "Move to monitor down"]
+}
+for (const side in _monitors) {
+    _names[`focus-monitor-${side}`] = _names[`output-focus-${side}`] = _monitors[side][0]
+    _names[`move-column-to-monitor-${side}`] = _names[`column-move-to-output-${side}`] = _monitors[side][1]
+}
+
+// An action that takes a workspace number: the words around it.
+const _numbered = {
+    "focus-workspace": "Focus workspace %1", "workspace-switch": "Focus workspace %1",
+    "move-column-to-workspace": "Move to workspace %1", "column-move-to-workspace": "Move to workspace %1",
+    "move-window-to-workspace": "Move window to workspace %1", "window-move-to-workspace": "Move window to workspace %1",
+    "window-move-to-workspace-silent": "Send window to workspace %1", "switch-layout": "Keyboard layout %1"
+}
+// A size step, shrink or grow or set: Niri's and Rin's in percent, Umbriel's as a fraction of the output.
+const _column = ["Shrink column %1", "Grow column %1", "Column width %1"]
+const _window = ["Shrink window %1", "Grow window %1", "Window height %1"]
+const _sized = { "set-column-width": _column, "window-modify-primary-extent": _column, "set-window-height": _window,
+    "window-modify-secondary-extent": _window }
+const _apps = [["Terminal", ["foot", "kitty", "alacritty", "wezterm", "ghostty", "konsole", "gnome-terminal"]],
+    ["File manager", ["dolphin", "nautilus", "thunar", "nemo", "pcmanfm", "ranger", "inir-files"]],
+    ["Browser", ["firefox", "zen-browser", "chromium", "brave", "vivaldi"]]]
 
 // iNiR's own calls by what they do: Umbriel runs `inir TARGET FUNCTION`, Rin sends `shell TARGET FUNCTION`.
 const _shellNames = {
@@ -288,13 +345,14 @@ const _shellNames = {
     "search toggle": "Search", "clipboard toggle": "Clipboard", "cheatsheet toggle": "Cheatsheet", "settings": "Settings",
     "session toggle": "Power menu", "lock activate": "Lock screen", "lock focus": "Focus the lock screen",
     "region menu": "Region tools", "region screenshot": "Screenshot a region", "region screen": "Screenshot the screen",
-    "region window": "Screenshot the focused window",
+    "region window": "Screenshot the window",
     "region ocr": "Read text in a region", "region search": "Search a region by image",
-    "region recordWithSound": "Record a region with sound", "wallpaperSelector toggle": "Wallpaper selector",
+    "region recordWithSound": "Record a region with sound", "region record": "Record a region",
+    "wallpaperSelector toggle": "Wallpaper selector",
     "panelFamily cycle": "Next panel style", "equalizer toggle": "Equalizer", "altSwitcher next": "Next window",
     "altSwitcher previous": "Previous window", "closeConfirm trigger": "Close window", "close": "Close window",
-    "audio volumeUp": "Volume up", "audio volumeDown": "Volume down", "audio mute": "Mute",
-    "audio micMute": "Mute the microphone", "brightness increment": "Brightness up",
+    "audio volumeUp": "Volume up", "audio volumeDown": "Volume down", "audio mute": "Mute audio",
+    "audio micMute": "Mute microphone", "brightness increment": "Brightness up",
     "brightness decrement": "Brightness down", "mpris playPause": "Play or pause", "mpris next": "Next track",
     "mpris previous": "Previous track", "terminal": "Terminal", "browser": "Browser"
 }
@@ -309,7 +367,22 @@ function _humanize(action, names) {
         const pair = call[2] ? `${call[1]} ${call[2]}` : call[1]
         if (_shellNames[pair]) return _shellNames[pair]
         text = pair.replace(/([a-z])([A-Z])/g, "$1 $2")
-    } else if (text.startsWith("spawn ")) text = "Run " + text.slice(6)
+    } else {
+        const [verb, arg = ""] = text.split(/\s+(.*)/)
+        if (_numbered[verb] && /^\d+$/.test(arg)) return _numbered[verb].replace("%1", arg)
+        const step = _sized[verb] ? arg.match(/^([+-]?)(\d*\.?\d+)(%?)$/) : null
+        if (step) {
+            const amount = (step[3] ? Number(step[2]) : Math.round(Number(step[2]) * 100)) + "%"
+            return _sized[verb][step[1] === "-" ? 0 : step[1] === "+" ? 1 : 2].replace("%1", amount)
+        }
+        if (verb === "spawn" || verb === "spawn-sh") {
+            const app = arg.split(/\s+/)[0].replace(/^.*\//, "")
+            const kind = _apps.find(pair => pair[1].includes(app))
+            if (kind) return kind[0]
+            text = "Run " + arg
+            return text
+        }
+    }
     // A dash between words is a space; one before a number is its sign ("set-column-width -10%").
     text = text.replace(/(\w)-(?=\w)/g, "$1 ").trim().toLowerCase()
     return text.charAt(0).toUpperCase() + text.slice(1)

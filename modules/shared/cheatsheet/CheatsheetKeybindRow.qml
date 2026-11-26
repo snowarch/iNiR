@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import qs.modules.common
+import qs.services
 import qs.modules.common.widgets
 import qs.modules.common.functions
 import QtQuick
@@ -16,11 +17,13 @@ Item {
     property var keyBlacklist: ["Super_L"]
     property var keySubstitutions: ({})
     property bool showDivider: true
+    // Off inside a category card: its heading already names the category.
+    property bool showCategory: true
     
     readonly property string category: keybindData?.category ?? ""
     readonly property string mainKey: keybindData?.key ?? ""
     readonly property var modifiers: keybindData?.mods ?? []
-    readonly property string description: keybindData?.comment ?? ""
+    readonly property string description: Translation.trLabel(keybindData?.comment ?? "")
     readonly property bool hasModifiers: modifiers.length > 0
     readonly property bool showMainKey: !keyBlacklist.includes(mainKey)
     
@@ -62,10 +65,11 @@ Item {
         
         // Category column - flexible width
         StyledText {
-            Layout.preferredWidth: 140
+            visible: root.showCategory
+            Layout.preferredWidth: 170
             Layout.minimumWidth: 100
             Layout.alignment: Qt.AlignVCenter
-            text: root.category
+            text: Translation.tr(root.category)
             font.pixelSize: Appearance.font.pixelSize.small
             color: Appearance.zzzEverywhere ? Appearance.zzz.ghostInk
                  : Appearance.inirEverywhere ? Appearance.inir.colTextSecondary
@@ -80,6 +84,7 @@ Item {
         
         // Keys column - flexible width for keys
         Row {
+            Layout.leftMargin: root.showCategory ? 0 : 12
             Layout.preferredWidth: 220
             Layout.minimumWidth: 150
             Layout.alignment: Qt.AlignVCenter

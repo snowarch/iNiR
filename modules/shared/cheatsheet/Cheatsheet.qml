@@ -228,7 +228,8 @@ Scope {
                 Item {
                     id: navRailWrapper
                     Layout.fillHeight: true
-                    implicitWidth: navRail.expanded ? 150 : 60
+                    // As wide as the longest label: a translated one runs past 150.
+                    implicitWidth: navRail.expanded ? Math.max(150, navRail.implicitWidth) : 60
                     Behavior on implicitWidth {
                         enabled: Appearance.animationsEnabled
                         animation: NumberAnimation { duration: Appearance.animation.elementMoveFast.duration; easing.type: Appearance.animation.elementMoveFast.type; easing.bezierCurve: Appearance.animation.elementMoveFast.bezierCurve }

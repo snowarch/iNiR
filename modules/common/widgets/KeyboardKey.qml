@@ -26,7 +26,12 @@ Rectangle {
         "Backspace": "backspace", "Delete": "delete",
         "Home": "first_page", "End": "last_page",
         "Page_Up": "expand_less", "Page_Down": "expand_more",
-        "Space": "space_bar", "Print": "screenshot_monitor"
+        "Space": "space_bar", "Print": "screenshot_monitor",
+        // Media and screen keys wear their glyph, not "XF86MonBrightnessUp".
+        "XF86AudioRaiseVolume": "volume_up", "XF86AudioLowerVolume": "volume_down", "XF86AudioMute": "volume_off",
+        "XF86AudioMicMute": "mic_off", "XF86AudioPlay": "play_arrow", "XF86AudioPause": "pause", "XF86AudioStop": "stop",
+        "XF86AudioNext": "skip_next", "XF86AudioPrev": "skip_previous",
+        "XF86MonBrightnessUp": "brightness_high", "XF86MonBrightnessDown": "brightness_low"
     })
 
     // A wheel chord shows its notch as a word and an arrow, not as "WheelScrollDown".

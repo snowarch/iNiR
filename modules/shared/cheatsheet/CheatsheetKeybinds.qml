@@ -38,7 +38,9 @@ StyledFlickable {
             kb.key?.toLowerCase().includes(q) ||
             kb.mods?.some(m => m.toLowerCase().includes(q)) ||
             kb.comment?.toLowerCase().includes(q) ||
-            kb.category?.toLowerCase().includes(q)
+            Translation.trLabel(kb.comment).toLowerCase().includes(q) ||
+            kb.category?.toLowerCase().includes(q) ||
+            Translation.tr(kb.category).toLowerCase().includes(q)
         )
     }
     
@@ -121,11 +123,10 @@ StyledFlickable {
                 text: root.searchText
                 placeholderText: Translation.tr("Search (Ctrl+F)...")
                 onTextChanged: root.searchText = text
+                // A key handler accepts its key by default: an empty field passes Escape on, which closes the sheet.
                 Keys.onEscapePressed: event => {
-                    if (text.length > 0) {
-                        text = ""
-                        event.accepted = true
-                    }
+                    event.accepted = text.length > 0
+                    if (event.accepted) text = ""
                 }
             }
             
@@ -229,7 +230,7 @@ StyledFlickable {
                             }
 
                             StyledText {
-                                text: catCard.catName
+                                text: Translation.tr(catCard.catName)
                                 font.pixelSize: Appearance.font.pixelSize.small
                                 font.weight: Appearance.editorialEverywhere ? Appearance.editorial.titleWeight : Font.DemiBold
                                 color: Appearance.colors.colPrimary
@@ -276,6 +277,7 @@ StyledFlickable {
                             required property int index
                             width: catColumn.width
                             keybindData: Object.assign({category: catCard.catName}, modelData)
+                            showCategory: false
                             keyBlacklist: root.keyBlacklist
                             keySubstitutions: root.keySubstitutions
                             showDivider: index < catCard.catKeybinds.length - 1
