@@ -85,14 +85,22 @@ compositor_units() {
     return 1
 }
 
-# A session start under Rin: iNiR's keys and hot corner are its own file in Rin's binds.d, brought up to date on
-# every login (Rin reloads it live). The person's keys go in a later file, such as 90-user.toml, which wins.
+# A session start under Rin: iNiR's keys, hot corner and default window rules live in their own files in Rin's
+# binds.d and rules.d, brought up to date on every login (Rin reloads them live). The person's overrides go in later
+# files, such as 90-user.toml, which win.
 compositor_rin_session_start() {
-    local src="$1/binds.d/70-inir.toml" dest="${XDG_CONFIG_HOME:-$HOME/.config}/rin/binds.d"
-    [[ "$(compositor_name)" == rin && -f "$src" ]] || return 0
-    cmp -s "$src" "$dest/70-inir.toml" && return 0
-    # written beside it and renamed: Rin never reads half a file
-    mkdir -p "$dest" && install -m 644 "$src" "$dest/.70-inir.part" && mv -f "$dest/.70-inir.part" "$dest/70-inir.toml"
+    [[ "$(compositor_name)" == rin ]] || return 0
+    local base="${XDG_CONFIG_HOME:-$HOME/.config}/rin"
+    local src dest name
+    for pair in "binds.d:70-inir.toml" "rules.d:30-inir.toml"; do
+        dest="$base/${pair%%:*}"
+        name="${pair#*:}"
+        src="$1/${pair%%:*}/$name"
+        [[ -f "$src" ]] || continue
+        cmp -s "$src" "$dest/$name" && continue
+        # written beside it and renamed: Rin never reads half a file
+        mkdir -p "$dest" && install -m 644 "$src" "$dest/.${name}.part" && mv -f "$dest/.${name}.part" "$dest/$name"
+    done
 }
 
 # A session start under Umbriel: the first login with no config of their own gets iNiR's (the early port's one is

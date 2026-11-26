@@ -39,6 +39,8 @@ Scope {
 
     property bool animationsEnabled: root.effectiveEnableAnimation
     property bool panelVisible: false
+    readonly property bool rinDriven: CompositorService.isRin && NiriService.rinSwitcher !== null
+    property bool _openedByRin: false
     property real panelRightMargin: -panelWidth
     // Snapshot actual de ventanas ordenadas que se usa mientras el panel está abierto
     property var itemSnapshot: []
@@ -408,7 +410,10 @@ Scope {
 
             MouseArea {
                 anchors.fill: parent
-                onClicked: GlobalStates.altSwitcherOpen = false
+                onClicked: {
+                    if (root.rinDriven) NiriService.rinSwitcherDismiss(NiriService.rinSwitcher.serial)
+                    else GlobalStates.altSwitcherOpen = false
+                }
             }
         }
     }
@@ -420,7 +425,7 @@ Scope {
         color: "transparent"
         WlrLayershell.namespace: "quickshell:altSwitcher"
         WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.keyboardFocus: PolkitService.active ? WlrKeyboardFocus.None : root.panelVisible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+        WlrLayershell.keyboardFocus: (PolkitService.active || root.rinDriven) ? WlrKeyboardFocus.None : root.panelVisible ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
         anchors {
             top: true
             bottom: true
@@ -436,7 +441,8 @@ Scope {
                 // Cerramos el AltSwitcher solo si el click cae fuera del rectángulo visual del panel.
                 if (mouse.x < panel.x || mouse.x > panel.x + panel.width
                         || mouse.y < panel.y || mouse.y > panel.y + panel.height) {
-                    GlobalStates.altSwitcherOpen = false
+                    if (root.rinDriven) NiriService.rinSwitcherDismiss(NiriService.rinSwitcher.serial)
+                    else GlobalStates.altSwitcherOpen = false
                 }
             }
         }
@@ -1726,7 +1732,10 @@ Scope {
 
                         function activate() {
                             if (modelData && modelData.id !== undefined) {
-                                NiriService.focusWindow(modelData.id)
+                                if (root.rinDriven)
+                                    NiriService.rinSwitcherChoose(NiriService.rinSwitcher.serial, modelData.id)
+                                else
+                                    NiriService.focusWindow(modelData.id)
                             }
                         }
                     }
@@ -1957,14 +1966,67 @@ Scope {
             const idx = listView.currentIndex
             if (idx >= 0 && idx < (itemSnapshot?.length ?? 0)) {
                 const item = itemSnapshot[idx]
-                if (item?.id !== undefined)
-                    NiriService.focusWindow(item.id)
+                if (item?.id !== undefined) {
+                    if (root.rinDriven)
+                        NiriService.rinSwitcherChoose(NiriService.rinSwitcher.serial, item.id)
+                    else
+                        NiriService.focusWindow(item.id)
+                }
             }
             return
         }
         if (listView.currentItem && listView.currentItem.activate) {
             listView.currentItem.activate()
         }
+    }
+
+    function applyRinSwitcher(sw: var): void {
+        if (!sw || !Array.isArray(sw.windows) || sw.windows.length === 0) {
+            if (root._openedByRin) {
+                root._openedByRin = false
+                GlobalStates.altSwitcherOpen = false
+            }
+            return
+        }
+        autoHideTimer.stop()
+        const allWins = NiriService.windows || []
+        const byId = {}
+        for (const w of allWins) byId[w.id] = w
+        const orderedWins = []
+        const orderedIds = []
+        for (const cand of sw.windows) {
+            const id = NiriService.rinWindowId(String(cand.id ?? ""))
+            const found = id >= 0 ? byId[id] : null
+            if (found) {
+                orderedWins.push(found)
+                orderedIds.push(found.id)
+            }
+        }
+        if (orderedWins.length === 0) return
+        const built = buildItemsFrom(orderedWins, NiriService.workspaces || {}, orderedIds)
+        const byBuiltId = {}
+        for (const it of built) byBuiltId[it.id] = it
+        itemSnapshot = orderedIds.map(id => byBuiltId[id]).filter(Boolean)
+        root._openedByRin = true
+        ensureOpen()
+        if (root.skewStyle)
+            root.skewCardVisible = true
+        const idx = Math.max(0, Math.min(itemSnapshot.length - 1, Number(sw.selected ?? 0)))
+        listView.currentIndex = idx
+        listView.positionViewAtIndex(idx, ListView.Visible)
+    }
+
+    Connections {
+        target: NiriService
+        enabled: CompositorService.isRin
+        function onRinSwitcherChanged(): void {
+            root.applyRinSwitcher(NiriService.rinSwitcher)
+        }
+    }
+
+    Component.onCompleted: {
+        if (CompositorService.isRin && NiriService.rinSwitcher !== null)
+            root.applyRinSwitcher(NiriService.rinSwitcher)
     }
 
     // Pre-warm: construir snapshot en background después de que el shell inicie

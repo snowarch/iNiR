@@ -90,7 +90,7 @@ Singleton {
                 // hot corners (`shell`): once subscribed, it no longer starts `inir` for each one.
                 const events = ["outputs", "workspaces", "windows", "overview", "keyboard_layout"]
                 if (CompositorService.isRin)
-                    events.push("shell")
+                    events.push("shell", "switcher")
                 send({ cmd: "subscribe", events: events })
                 refreshOverviewHotCorners()
                 return
@@ -127,6 +127,32 @@ Singleton {
     property var _umbrielIds: UmbrielModel.newIds()
     // Umbriel's own id for one of its window numbers (also its foreign-toplevel identifier, what captures take).
     function umbrielWindowKey(id: int): var { return root.umbriel ? UmbrielModel.windowKey(root._umbrielIds, id) ?? null : null }
+    function rinWindowId(key: string): int {
+        if (!CompositorService.isRin || !key) return -1
+        for (const w of root.liveWindows ?? []) {
+            if (root.umbrielWindowKey(w.id) === key) return w.id
+        }
+        return -1
+    }
+    // Live state of Rin's compositor-owned Alt+Tab switcher (null when idle).
+    property var rinSwitcher: null
+    function rinSwitcherSelect(serial: int, id: int): bool {
+        const key = root.umbrielWindowKey(id)
+        return CompositorService.isRin && key !== null
+            ? root._umbrielSend([{ cmd: "action", action: "switcher-select", serial: serial, window: key }])
+            : false
+    }
+    function rinSwitcherChoose(serial: int, id: int): bool {
+        const key = root.umbrielWindowKey(id)
+        return CompositorService.isRin && key !== null
+            ? root._umbrielSend([{ cmd: "action", action: "switcher-choose", serial: serial, window: key }])
+            : false
+    }
+    function rinSwitcherDismiss(serial: int): bool {
+        return CompositorService.isRin
+            ? root._umbrielSend([{ cmd: "action", action: "switcher-dismiss", serial: serial }])
+            : false
+    }
     property var _umbrielQueue: []
     property var _umbrielUnmapped: ({})
     property var _umbrielWorkspaces: null
@@ -245,6 +271,9 @@ Singleton {
             break
         case "shell":
             root.runShellWords(data?.args ?? [])
+            break
+        case "switcher":
+            root.rinSwitcher = (data && typeof data === "object" && Array.isArray(data.windows)) ? data : null
             break
         default:
             if (event?.err !== undefined)

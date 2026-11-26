@@ -35,8 +35,9 @@
 "Mod+Shift+W" = "shell panelFamily cycle"
 "Mod+Shift+Q" = "shell session toggle"
 "Ctrl+Alt+F" = "shell equalizer toggle"
-"Alt+Tab" = "shell altSwitcher next"
-"Alt+Shift+Tab" = "shell altSwitcher previous"
+"Alt+Tab" = "window-switcher"
+"Alt+Shift+Tab" = "window-switcher-back"
+"Mod+Shift+Space" = "switch-layout next"
 
 # Apps
 "Mod+T" = "spawn inir terminal"

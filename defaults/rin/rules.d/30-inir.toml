@@ -1,0 +1,25 @@
+# 30 — Default window rules for iNiR on Rin
+# Loaded in name order before user files and 90-settings.toml (iNiR Settings).
+
+[[window-rule]]
+match = [
+    { app-id = '^(inir|inir-settings|org\.quickshell)$', title = '^iNiR Settings$' },
+    { app-id = '^(inir|inir-settings|org\.quickshell)$', title = '^Settings — iNiR$' },
+]
+default-column-width = 0.66667
+
+[[window-rule]]
+match = { app-id = '^rin-cast-picker$' }
+open-floating = true
+
+[[window-rule]]
+match = { title = '(?i)^picture.in.picture$' }
+open-floating = true
+
+[[window-rule]]
+match = { app-id = '^steam$', title = '^notificationtoasts_\d+_desktop$' }
+open-floating = true
+
+[[window-rule]]
+match = { app-id = '^xembedsniproxy$' }
+open-floating = true
