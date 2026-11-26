@@ -5,8 +5,8 @@ Description=iNiR shell
 # guarantees DISPLAY, WAYLAND_DISPLAY and NIRI_SOCKET or UMBRIEL_SOCKET are
 # already published to the user manager before iNiR starts.  Only a wants link
 # under one of them starts it ('inir service enable'); stopping it stops iNiR.
-PartOf=niri.service umbriel.service
-After=niri.service umbriel.service
+PartOf=niri.service umbriel.service rin-session.target
+After=niri.service umbriel.service rin-session.target
 # Keep the StatusNotifier watcher ready before desktop autostart applications
 # register tray items.  Niri also orders itself before this target.
 Before=xdg-desktop-autostart.target
@@ -29,7 +29,7 @@ Environment=QT_SCALE_FACTOR_ROUNDING_POLICY=RoundPreferFloor
 Environment=QT_LOGGING_RULES=quickshell.dbus.properties=false;quickshell.dbus.objectmanager.warning=false;qt.qml.settings.warning=false;qt.core.qsettings.warning=false;kf.xmlgui=false;kf.coreaddons=false;kf.config.core=false;kf.iconthemes=false;qt.qpa.wayland.textinput.warning=false
 
 # Started by hand outside a session (a TTY, another desktop): skip, never a failure.
-ExecCondition=/bin/sh -c 'systemctl --user is-active --quiet niri.service || systemctl --user is-active --quiet umbriel.service'
+ExecCondition=/bin/sh -c 'systemctl --user is-active --quiet niri.service || systemctl --user is-active --quiet umbriel.service || systemctl --user is-active --quiet rin-session.target'
 ExecStart=/usr/bin/inir run --session
 SuccessExitStatus=143
 

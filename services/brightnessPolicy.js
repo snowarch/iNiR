@@ -119,21 +119,36 @@ function wakeCommandQueue(pinnedNames, umbriel) {
     return cmds
 }
 
-// The same four acts on Umbriel (`umbriel msg`), when `umbriel` is true.
-function niriPowerOffMonitorsArgs(umbriel) {
-    return umbriel ? ["umbriel", "msg", "dpms-off"] : ["niri", "msg", "action", "power-off-monitors"]
+// The same four acts on Umbriel (`umbriel msg`), Rin (`rin msg`), or Niri (`niri msg`).
+// Accepts either a compositor name ("rin" | "umbriel" | "niri") or legacy boolean `umbriel`.
+function _dpmsBackend(target) {
+    if (target === "rin") return "rin"
+    if (target === "umbriel" || target === true) return "umbriel"
+    return "niri"
 }
 
-function niriPowerOnMonitorsArgs(umbriel) {
-    return umbriel ? ["umbriel", "msg", "dpms-on"] : ["niri", "msg", "action", "power-on-monitors"]
+function niriPowerOffMonitorsArgs(target) {
+    const b = _dpmsBackend(target)
+    if (b === "rin") return ["rin", "msg", "dpms-off"]
+    return b === "umbriel" ? ["umbriel", "msg", "dpms-off"] : ["niri", "msg", "action", "power-off-monitors"]
 }
 
-function niriOutputOffArgs(name, umbriel) {
-    return umbriel ? ["umbriel", "msg", "output-disable", String(name)] : ["niri", "msg", "output", String(name), "off"]
+function niriPowerOnMonitorsArgs(target) {
+    const b = _dpmsBackend(target)
+    if (b === "rin") return ["rin", "msg", "dpms-on"]
+    return b === "umbriel" ? ["umbriel", "msg", "dpms-on"] : ["niri", "msg", "action", "power-on-monitors"]
 }
 
-function niriOutputOnArgs(name, umbriel) {
-    return umbriel ? ["umbriel", "msg", "output-enable", String(name)] : ["niri", "msg", "output", String(name), "on"]
+function niriOutputOffArgs(name, target) {
+    const b = _dpmsBackend(target)
+    if (b === "rin") return ["rin", "msg", "dpms-off"]
+    return b === "umbriel" ? ["umbriel", "msg", "output-disable", String(name)] : ["niri", "msg", "output", String(name), "off"]
+}
+
+function niriOutputOnArgs(name, target) {
+    const b = _dpmsBackend(target)
+    if (b === "rin") return ["rin", "msg", "dpms-on"]
+    return b === "umbriel" ? ["umbriel", "msg", "output-enable", String(name)] : ["niri", "msg", "output", String(name), "on"]
 }
 
 function wakeOutputRetryLimit() {

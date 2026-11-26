@@ -14,10 +14,12 @@ import "UmbrielModel.js" as UmbrielModel
 Singleton {
     id: root
 
-    // Niri's socket, or Umbriel's: under Umbriel this service speaks its IPC and serves the same model
-    // (UmbrielModel.js), so nothing that reads windows, workspaces or outputs needs to know which one runs.
-    readonly property bool umbriel: CompositorService.isUmbriel
-    readonly property string socketPath: root.umbriel ? CompositorService.umbrielSocket : Quickshell.env("NIRI_SOCKET")
+    // Niri's socket, Umbriel's, or Rin's: under Umbriel and Rin this service speaks their JSON-lines IPC
+    // and serves the same model (UmbrielModel.js), so surfaces never need to branch on which one runs.
+    readonly property bool umbriel: CompositorService.isUmbriel || CompositorService.isRin
+    readonly property string socketPath: CompositorService.isRin
+        ? CompositorService.rinSocket
+        : (CompositorService.isUmbriel ? CompositorService.umbrielSocket : Quickshell.env("NIRI_SOCKET"))
 
     property var workspaces: ({})
     property var allWorkspaces: []
@@ -1105,8 +1107,8 @@ Singleton {
     // ── Scratchpad (Umbriel's: hidden windows that drop over any workspace and go back) ──────────────────────────────
     // Without named pads Umbriel keeps one implicit pad; with them every action names one, so ours names the pad the
     // window is in, or the one already holding windows.
-    readonly property bool scratchpadAvailable: root.umbriel
-    readonly property var scratchpadWindows: root.umbriel ? root.windows.filter(w => w.scratchpad) : []
+    readonly property bool scratchpadAvailable: CompositorService.isUmbriel
+    readonly property var scratchpadWindows: CompositorService.isUmbriel ? root.windows.filter(w => w.scratchpad) : []
     readonly property bool scratchpadShown: root.scratchpadWindows.some(w => w.is_visible)
 
     function _scratchpadOf(windowId): string {

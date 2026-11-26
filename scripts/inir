@@ -2259,7 +2259,7 @@ is_inir_service_enabled() {
     # systemd knows: without this, a call while the shell is down starts one the service doesn't own
     local wanted_by
     wanted_by=" $(systemctl --user show -p WantedBy --value inir.service 2>/dev/null) "
-    [[ "$wanted_by" == *" niri.service "* || "$wanted_by" == *" umbriel.service "* ]]
+    [[ "$wanted_by" == *" niri.service "* || "$wanted_by" == *" umbriel.service "* || "$wanted_by" == *" rin-session.target "* ]]
 }
 
 detect_compositor_service() {

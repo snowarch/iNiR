@@ -3,7 +3,9 @@
 
 # niri, umbriel, hyprland or nothing. Umbriel first: a nested one inherits the outer NIRI_SOCKET.
 compositor_name() {
-    if [ -n "${UMBRIEL_SOCKET:-}" ] && [ -S "$UMBRIEL_SOCKET" ] && command -v umbriel >/dev/null 2>&1; then
+    if [ -n "${RIN_SOCKET:-}" ] && [ -S "$RIN_SOCKET" ] && command -v rin >/dev/null 2>&1; then
+        echo rin
+    elif [ -n "${UMBRIEL_SOCKET:-}" ] && [ -S "$UMBRIEL_SOCKET" ] && command -v umbriel >/dev/null 2>&1; then
         echo umbriel
     elif [ -n "${NIRI_SOCKET:-}" ] && command -v niri >/dev/null 2>&1; then
         echo niri
@@ -15,6 +17,7 @@ compositor_name() {
 # The output the pointer and keyboard are on, by its connector name (DP-1).
 compositor_focused_output() {
     case "$(compositor_name)" in
+        rin) rin msg outputs 2>/dev/null | jq -r '.ok | map(select(.focused))[0].name // ""' ;;
         umbriel) umbriel outputs --json 2>/dev/null | jq -r 'map(select(.focused))[0].name // ""' ;;
         niri) niri msg -j focused-output 2>/dev/null | jq -r '.name // ""' ;;
         hyprland) hyprctl monitors -j 2>/dev/null | jq -r 'map(select(.focused))[0].name // ""' ;;
@@ -25,6 +28,7 @@ compositor_focused_output() {
 compositor_workspace_range() {
     local output="$1"
     case "$(compositor_name)" in
+        rin) rin msg workspaces 2>/dev/null | jq -r --arg o "$output" '[.ok[] | select(.output == $o) | .index] | sort | "\(first // "") \(last // "")"' ;;
         umbriel) umbriel workspaces --json 2>/dev/null | jq -r --arg o "$output" '[.[] | select(.output == $o) | .index] | sort | "\(first // "") \(last // "")"' ;;
         niri) niri msg -j workspaces 2>/dev/null | jq -r --arg o "$output" '[.[] | select(.output == $o) | .idx] | sort | "\(first // "") \(last // "")"' ;;
     esac
@@ -33,6 +37,7 @@ compositor_workspace_range() {
 # The widest current mode across outputs, as WIDTHxHEIGHT.
 compositor_max_resolution() {
     case "$(compositor_name)" in
+        rin) rin msg outputs 2>/dev/null | jq -r '[.ok[] | .modes[]? | select(.current)] | max_by(.width * .height) // empty | "\(.width)x\(.height)"' ;;
         umbriel) umbriel outputs --json 2>/dev/null | jq -r '[.[] | .modes[]? | select(.current)] | max_by(.width * .height) // empty | "\(.width)x\(.height)"' ;;
         niri) niri msg -j outputs 2>/dev/null | jq -r '[.[] | .current_mode as $c | .modes[$c]? // empty] | max_by(.width * .height) // empty | "\(.width)x\(.height)"' ;;
     esac
@@ -70,10 +75,11 @@ compositor_umbriel_wanted() { [[ "$(compositor_choice)" != niri ]]; }
 # later starts the shell too), only Niri's when the person picked Niri alone. Nothing when neither is installed.
 compositor_units() {
     local unit
-    for unit in niri.service umbriel.service; do
+    for unit in niri.service umbriel.service rin-session.target; do
         systemctl --user cat "$unit" &>/dev/null || continue
         echo niri.service
         compositor_umbriel_wanted && echo umbriel.service
+        systemctl --user cat rin-session.target &>/dev/null && echo rin-session.target
         return 0
     done
     return 1

@@ -9,27 +9,26 @@ import Quickshell.Hyprland
 Singleton {
     id: root
 
-    // Which compositor the session runs: "niri", "umbriel", "hyprland" or "" (none iNiR drives).
+    // Which compositor the session runs: "niri", "umbriel", "rin", "hyprland" or "" (none iNiR drives).
     property string compositor: ""
     property bool isHyprland: false
-    // The window, workspace and output model every surface reads (NiriService) is live: Niri itself, or Umbriel,
-    // whose IPC NiriService speaks too (services/UmbrielModel.js turns its snapshots into Niri's shapes).
+    // The window, workspace and output model every surface reads (NiriService) is live: Niri itself, Umbriel, or Rin,
+    // whose JSON-lines IPC NiriService speaks too (services/UmbrielModel.js turns its snapshots into Niri's shapes).
     property bool isNiri: false
     property bool isUmbriel: false
+    property bool isRin: false
     // Niri itself runs: its binary, `niri msg` and its KDL config are there. Gate those on this, never on isNiri.
     readonly property bool niriNative: compositor === "niri"
-    // ext-background-effect-v1 blur regions: Niri 26.04 takes them; Umbriel blurs by its layer rules instead (iNiR
-    // writes the one compositor glass asks for), so a surface leaves its region unset there.
-    readonly property bool blurRegions: niriNative
+    // ext-background-effect-v1 blur regions: Niri 26.04 and Rin take them; Umbriel blurs by its layer rules instead.
+    readonly property bool blurRegions: niriNative || isRin
     // Live window pictures (qs-rs). A runtime with toplevel-image-copy asks the compositor (its image-copy globals, or
-    // niri's ScreenCast); an older one streams niri windows only. Umbriel's windows go by its own ids
+    // niri's ScreenCast); an older one streams niri windows only. Umbriel and Rin use foreign-toplevel ids
     // (NiriService.umbrielWindowKey), which only the newer runtime takes.
     readonly property bool windowCapture: SystemInfo.runtimeHas(["toplevel-image-copy"])
-        ? (niriNative || isUmbriel) && ToplevelManager.canCaptureWindows
+        ? (niriNative || isUmbriel || isRin) && ToplevelManager.canCaptureWindows
         : niriNative && SystemInfo.runtimeHas(["niri-window-capture"])
-    // A captured window off screen keeps drawing: Umbriel sends it frames while captured. Niri (26.04 and main) sends
-    // windows it doesn't show one frame callback a second, cast or not (niri-wm/niri#2609 is still open).
-    readonly property bool capturedWindowsDraw: isUmbriel
+    // A captured window off screen keeps drawing: Umbriel and Rin send it frames while captured.
+    readonly property bool capturedWindowsDraw: isUmbriel || isRin
 
     readonly property string hyprlandSignature: Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE")
     readonly property string niriSocket: Quickshell.env("NIRI_SOCKET")
@@ -39,6 +38,12 @@ Singleton {
         if (set && set.length > 0) return set
         const runtime = Quickshell.env("XDG_RUNTIME_DIR"), display = Quickshell.env("WAYLAND_DISPLAY")
         return root._desktopIs("umbriel") && runtime && display ? `${runtime}/umbriel-${display}.sock` : ""
+    }
+    readonly property string rinSocket: {
+        const set = Quickshell.env("RIN_SOCKET")
+        if (set && set.length > 0) return set
+        const runtime = Quickshell.env("XDG_RUNTIME_DIR"), display = Quickshell.env("WAYLAND_DISPLAY")
+        return root._desktopIs("rin") && runtime && display ? `${runtime}/rin-${display}.sock` : ""
     }
 
     function _desktopIs(name: string): bool {
@@ -426,10 +431,22 @@ Singleton {
 
     function detectCompositor() {
         // A compositor started inside another inherits the outer one's socket too: the desktop it names wins.
+        const rin = root.rinSocket.length > 0
         const umbriel = root.umbrielSocket.length > 0
         const niri = !!niriSocket && niriSocket.length > 0
+        if (rin && (!niri || !root._desktopIs("niri")) && (!umbriel || !root._desktopIs("umbriel"))) {
+            compositor = "rin"
+            isRin = true
+            isUmbriel = false
+            isNiri = true
+            isHyprland = false
+            console.info("CompositorService: Detected Rin with socket:", root.rinSocket)
+            return
+        }
+
         if (umbriel && (!niri || !root._desktopIs("niri"))) {
             compositor = "umbriel"
+            isRin = false
             isUmbriel = true
             isNiri = true
             isHyprland = false
@@ -439,6 +456,8 @@ Singleton {
 
         if (hyprlandSignature && hyprlandSignature.length > 0) {
             compositor = "hyprland"
+            isRin = false
+            isUmbriel = false
             isHyprland = true
             isNiri = false
             console.info("CompositorService: Detected Hyprland")
@@ -450,6 +469,8 @@ Singleton {
 
         if (niri) {
             compositor = "niri"
+            isRin = false
+            isUmbriel = false
             isNiri = true
             isHyprland = false
             console.info("CompositorService: Detected Niri with socket:", niriSocket)
@@ -457,6 +478,8 @@ Singleton {
         }
 
         compositor = ""
+        isRin = false
+        isUmbriel = false
         isHyprland = false
         isNiri = false
     }

@@ -30,12 +30,12 @@ Singleton {
     readonly property string sessionMarkerPath: previewDir + "/.niri-session"
     // Niri's window ids live as long as its session; Umbriel's are strings NiriService numbers per shell run, so there
     // a preview file belongs to this run only.
-    readonly property string sessionKey: (NiriService.socketPath ?? "") + (CompositorService.isUmbriel ? "#" + root._runStamp : "")
+    readonly property string sessionKey: (NiriService.socketPath ?? "") + ((CompositorService.isUmbriel || CompositorService.isRin) ? "#" + root._runStamp : "")
     readonly property string _runStamp: String(Date.now())
 
-    // The capture command for these window numbers: Niri's screenshot-window, or grim on Umbriel's toplevel ids.
+    // The capture command for these window numbers: Niri's screenshot-window, or grim on Umbriel/Rin toplevel ids.
     function _captureCommand(ids: var, all: bool): var {
-        if (CompositorService.isUmbriel)
+        if (CompositorService.isUmbriel || CompositorService.isRin)
             return ["bash", Quickshell.shellPath("scripts/capture-windows-umbriel.sh")]
                 .concat(ids.map(id => id + "=" + (NiriService.umbrielWindowKey(id) ?? "")))
         const cmd = ShellExec.supportsFish()
