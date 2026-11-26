@@ -22,8 +22,8 @@ focused_id=$(printf '%s' "$focused_window_json" | grep -o '"id":[0-9]*' | grep -
 focused_app_id=$(printf '%s' "$focused_window_json" | grep -o '"app_id":"[^"]*"' | sed 's/"app_id":"\([^"]*\)"/\1/')
 
 close_focused() {
-    if [ "$compositor" = umbriel ]; then
-        umbriel msg window-close >/dev/null 2>&1
+    if [ "$compositor" = umbriel ] || [ "$compositor" = rin ]; then
+        "$compositor" msg window-close >/dev/null 2>&1
         return 0
     fi
     if [ "${focused_app_id,,}" = "spotify" ]; then

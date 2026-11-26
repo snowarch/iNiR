@@ -85,6 +85,16 @@ compositor_units() {
     return 1
 }
 
+# A session start under Rin: iNiR's keys and hot corner are its own file in Rin's binds.d, brought up to date on
+# every login (Rin reloads it live). The person's keys go in a later file, such as 90-user.toml, which wins.
+compositor_rin_session_start() {
+    local src="$1/binds.d/70-inir.toml" dest="${XDG_CONFIG_HOME:-$HOME/.config}/rin/binds.d"
+    [[ "$(compositor_name)" == rin && -f "$src" ]] || return 0
+    cmp -s "$src" "$dest/70-inir.toml" && return 0
+    # written beside it and renamed: Rin never reads half a file
+    mkdir -p "$dest" && install -m 644 "$src" "$dest/.70-inir.part" && mv -f "$dest/.70-inir.part" "$dest/70-inir.toml"
+}
+
 # A session start under Umbriel: the first login with no config of their own gets iNiR's (the early port's one is
 # moved aside), and every login brings their Niri keys and keyboard along, so nothing has to be typed. Their own
 # config is never touched. Quiet; the launcher runs it beside the shell.

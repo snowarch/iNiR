@@ -1,0 +1,153 @@
+# 70 — Key bindings and hot corners
+#
+# The same keys as iNiR's Niri and Umbriel configs, in Rin's actions (docs: `rin msg --help`). Mod is Super (Alt
+# when Rin runs in a window). `shell TARGET FUNCTION` goes to iNiR in its own process; `spawn inir ...` runs the
+# `inir` command, for what is not an IPC call (settings, terminal, browser).
+# Rin reads every *.toml in this folder in name order and reloads on save. Rebind or unbind a key in a later file,
+# such as 90-user.toml: a key set there replaces this one, `"Mod+X" = ""` unbinds it. A file that does not parse
+# is skipped as a whole, and the keys stay as they were.
+
+[binds]
+
+# Session and Rin
+"Mod+Tab" = "shell taskview toggle"
+"Mod+Shift+E" = "shell session toggle"
+"Mod+Shift+O" = "power-off-monitors"
+
+# iNiR tools
+"Super+G" = "shell overlay toggle"
+"Mod+Space" = "shell overview toggle"
+"Mod+V" = "shell clipboard toggle"
+"Mod+Alt+L" = { action = "shell lock activate", allow-when-locked = true }
+"Mod+Ctrl+Shift+L" = { action = "shell lock focus", allow-when-locked = true }
+"Mod+Shift+S" = "shell region menu"
+"Ctrl+Shift+S" = "shell region menu"
+"Mod+Shift+X" = "shell region ocr"
+"Mod+Shift+A" = "shell region search"
+"Mod+Shift+R" = "shell region recordWithSound"
+"Ctrl+Alt+T" = "shell wallpaperSelector toggle"
+"Mod+Comma" = "spawn inir settings"
+"Mod+Slash" = "shell cheatsheet toggle"
+"Mod+Shift+W" = "shell panelFamily cycle"
+"Mod+Shift+Q" = "shell session toggle"
+"Ctrl+Alt+F" = "shell equalizer toggle"
+"Alt+Tab" = "shell altSwitcher next"
+"Alt+Shift+Tab" = "shell altSwitcher previous"
+
+# Apps
+"Mod+T" = "spawn inir terminal"
+"Mod+Return" = "spawn inir terminal"
+"Super+E" = "spawn nautilus"
+"Super+W" = "spawn inir browser"
+
+# Windows
+"Mod+Q" = "shell closeConfirm trigger"
+"Mod+D" = "maximize-column"
+"Mod+F" = "fullscreen-window"
+"Mod+A" = "toggle-window-floating"
+
+# Columns and sizes
+"Mod+R" = "switch-preset-column-width"
+"Mod+Ctrl+R" = "reset-window-height"
+"Mod+C" = "center-column"
+"Mod+Minus" = "set-column-width -10%"
+"Mod+Equal" = "set-column-width +10%"
+"Mod+Shift+Minus" = "set-window-height -10%"
+"Mod+Shift+Equal" = "set-window-height +10%"
+"Mod+BracketLeft" = "consume-or-expel-window-left"
+"Mod+BracketRight" = "consume-or-expel-window-right"
+
+# Focus
+"Mod+Left" = "focus-column-left"
+"Mod+Right" = "focus-column-right"
+"Mod+H" = "focus-column-left"
+"Mod+L" = "focus-column-right"
+"Mod+Up" = "focus-window-up"
+"Mod+Down" = "focus-window-down"
+"Mod+K" = "focus-window-up"
+"Mod+J" = "focus-window-down"
+"Mod+Home" = "focus-column-first"
+"Mod+End" = "focus-column-last"
+
+# Move
+"Mod+Shift+Left" = "move-column-left"
+"Mod+Shift+Right" = "move-column-right"
+"Mod+Shift+H" = "move-column-left"
+"Mod+Shift+L" = "move-column-right"
+"Mod+Shift+Up" = "move-window-up"
+"Mod+Shift+Down" = "move-window-down"
+"Mod+Shift+K" = "move-window-up"
+"Mod+Shift+J" = "move-window-down"
+"Mod+Ctrl+Home" = "move-column-to-first"
+"Mod+Ctrl+End" = "move-column-to-last"
+
+# Monitors
+"Mod+Ctrl+Left" = "focus-monitor-left"
+"Mod+Ctrl+Right" = "focus-monitor-right"
+"Mod+Ctrl+Up" = "focus-monitor-up"
+"Mod+Ctrl+Down" = "focus-monitor-down"
+"Mod+Ctrl+Shift+Left" = "move-column-to-monitor-left"
+"Mod+Ctrl+Shift+Right" = "move-column-to-monitor-right"
+"Mod+Ctrl+Shift+Up" = "move-column-to-monitor-up"
+"Mod+Ctrl+Shift+Down" = "move-column-to-monitor-down"
+
+# Workspaces
+"Mod+1" = "focus-workspace 1"
+"Mod+2" = "focus-workspace 2"
+"Mod+3" = "focus-workspace 3"
+"Mod+4" = "focus-workspace 4"
+"Mod+5" = "focus-workspace 5"
+"Mod+6" = "focus-workspace 6"
+"Mod+7" = "focus-workspace 7"
+"Mod+8" = "focus-workspace 8"
+"Mod+9" = "focus-workspace 9"
+"Mod+Ctrl+1" = "move-column-to-workspace 1"
+"Mod+Ctrl+2" = "move-column-to-workspace 2"
+"Mod+Ctrl+3" = "move-column-to-workspace 3"
+"Mod+Ctrl+4" = "move-column-to-workspace 4"
+"Mod+Ctrl+5" = "move-column-to-workspace 5"
+"Mod+Ctrl+6" = "move-column-to-workspace 6"
+"Mod+Ctrl+7" = "move-column-to-workspace 7"
+"Mod+Ctrl+8" = "move-column-to-workspace 8"
+"Mod+Ctrl+9" = "move-column-to-workspace 9"
+"Mod+Shift+1" = "window-move-to-workspace-silent 1"
+"Mod+Shift+2" = "window-move-to-workspace-silent 2"
+"Mod+Shift+3" = "window-move-to-workspace-silent 3"
+"Mod+Shift+4" = "window-move-to-workspace-silent 4"
+"Mod+Shift+5" = "window-move-to-workspace-silent 5"
+"Mod+Shift+6" = "window-move-to-workspace-silent 6"
+"Mod+Shift+7" = "window-move-to-workspace-silent 7"
+"Mod+Shift+8" = "window-move-to-workspace-silent 8"
+"Mod+Shift+9" = "window-move-to-workspace-silent 9"
+"Mod+Page_Down" = "focus-workspace-down"
+"Mod+Page_Up" = "focus-workspace-up"
+"Mod+Ctrl+Page_Down" = "move-column-to-workspace-down"
+"Mod+Ctrl+Page_Up" = "move-column-to-workspace-up"
+
+# Screenshots
+"Print" = "shell region screenshot"
+"Ctrl+Print" = "shell region screen"
+"Mod+Print" = "shell region screen"
+
+# Media and hardware keys (they work on the lock screen)
+"XF86AudioRaiseVolume" = { action = "shell audio volumeUp", allow-when-locked = true }
+"XF86AudioLowerVolume" = { action = "shell audio volumeDown", allow-when-locked = true }
+"XF86AudioMute" = { action = "shell audio mute", allow-when-locked = true }
+"XF86AudioMicMute" = { action = "shell audio micMute", allow-when-locked = true }
+"XF86MonBrightnessUp" = { action = "shell brightness increment", allow-when-locked = true }
+"XF86MonBrightnessDown" = { action = "shell brightness decrement", allow-when-locked = true }
+"XF86AudioPlay" = "shell mpris playPause"
+"XF86AudioPause" = "shell mpris playPause"
+"XF86AudioNext" = "shell mpris next"
+"XF86AudioPrev" = "shell mpris previous"
+"Ctrl+Mod+Space" = "shell mpris playPause"
+"Mod+Shift+P" = "shell mpris playPause"
+"Mod+Alt+N" = "shell mpris next"
+"Mod+Shift+N" = "shell mpris next"
+"Mod+Alt+P" = "shell mpris previous"
+"Mod+Shift+B" = "shell mpris previous"
+"Mod+Shift+M" = "shell audio mute"
+
+# The pointer in a corner of a screen. Top-left opens iNiR's overview, as Niri's corner opens its own.
+[hot-corners]
+top-left = "shell overview toggle"
