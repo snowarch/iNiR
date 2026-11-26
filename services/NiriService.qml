@@ -186,6 +186,7 @@ Singleton {
 
     function _umbrielRequests(request): var {
         const requests = UmbrielModel.actionRequests(root._umbrielIds, request, {
+            rin: CompositorService.isRin,
             workspaceRef: id => {
                 const ws = root.workspaces[id]
                 return ws ? { workspace: ws.idx, output: ws.output } : null
@@ -1624,7 +1625,8 @@ Singleton {
         }
     }
 
-    /// Keyboard layout switching (Niri only). Cycles through configured keyboard layouts and queries layout info.
+    /// Keyboard layout switching under Niri and Rin (Umbriel only steps forward). Cycles through the configured
+    /// keyboard layouts and queries layout info.
     ///
     /// ```kdl
     /// Mod+Alt+K { spawn "inir" "keyboard" "switchLayout"; }

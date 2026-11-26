@@ -255,7 +255,13 @@ function actionRequests(ids, request, ctx) {
     case "SetColumnWidth": return _extent(args.change ?? args, "primary")
     case "SetWindowHeight": return _extent(args.change ?? args, "secondary")
     case "SwitchPresetColumnWidth": return [_a("window-cycle-primary-extent")]
-    case "SwitchLayout": return [_a("keyboard-layout-next")]
+    // Umbriel only steps forward; Rin also steps back and takes an index.
+    case "SwitchLayout": {
+        const layout = args.layout ?? "Next"
+        if (!ctx.rin || layout === "Next") return [_a("keyboard-layout-next")]
+        if (layout === "Prev") return [_a("keyboard-layout-prev")]
+        return layout?.Index !== undefined ? [_a("switch-layout", { args: String(Number(layout.Index)) })] : []
+    }
     case "Spawn": return Array.isArray(args.command) && args.command.length > 0
         ? [_a("spawn", { command: args.command.map(p => /^[\w@%+=:,./-]+$/.test(p) ? p : "'" + String(p).replace(/'/g, "'\\''") + "'").join(" ") })] : []
     }
