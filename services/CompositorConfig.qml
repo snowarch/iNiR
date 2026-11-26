@@ -140,7 +140,9 @@ Singleton {
             read: method => method === "fingers" ? "clickfinger" : "button-areas", write: method => method === "clickfinger" ? "fingers" : "areas" },
         "input:touchpad.disabled-on-external-mouse": { domain: "rin.pointer", key: "touchpad-used",
             read: used => used === "no-mouse", write: off => off ? "no-mouse" : "always" },
-        "input:cursor.xcursor-theme": { domain: "rin.pointer", key: "cursor-theme" },
+        // Unset, Rin takes the theme it started with, which it hands on to everything as XCURSOR_THEME.
+        "input:cursor.xcursor-theme": { domain: "rin.pointer", key: "cursor-theme",
+            read: value => String(value ?? "").length > 0 ? value : Quickshell.env("XCURSOR_THEME") || "default" },
         "input:cursor.xcursor-size": { domain: "rin.pointer", key: "cursor-size", round: true },
         // Hot corners are Rin's keys, not its settings: `corner` names the line of [hot-corners] in binds.d.
         "corners:top-left": { corner: "top-left", only: true },
