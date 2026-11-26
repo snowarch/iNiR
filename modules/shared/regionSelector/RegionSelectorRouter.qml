@@ -14,6 +14,7 @@ Scope {
     function open(action, mode): void {
         GlobalStates.regionSelectorAction = action
         GlobalStates.regionSelectorMode = mode
+        GlobalStates.regionSelectorWholeScreen = false
         GlobalStates.regionSelectorOpen = true
     }
     // Dedicated screenshot calls are always a rectangular capture. The unified

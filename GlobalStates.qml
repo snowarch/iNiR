@@ -222,6 +222,7 @@ Singleton {
     function openRegionScreenshot(): void {
         regionSelectorAction = 0
         regionSelectorMode = 0
+        regionSelectorWholeScreen = false
         regionSelectorOpen = true
     }
 
@@ -250,6 +251,7 @@ Singleton {
         }
         regionSelectorAction = action
         regionSelectorMode = mode
+        regionSelectorWholeScreen = false
         regionSelectorOpen = true
     }
     property bool tilingOverlayPickerOpen: false
