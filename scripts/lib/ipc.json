@@ -2252,7 +2252,7 @@
   {
    "name": "keyboard",
    "family": "shared",
-   "description": "Keyboard layout switching (Niri only). Cycles through configured keyboard layouts and queries layout info.",
+   "description": "Keyboard layout switching under Niri and Rin (Umbriel only steps forward). Cycles through the configured keyboard layouts and queries layout info.",
    "notes": "```kdl\nMod+Alt+K { spawn \"inir\" \"keyboard\" \"switchLayout\"; }\n```",
    "example": "Mod+Alt+K { spawn \"inir\" \"keyboard\" \"switchLayout\"; }",
    "functions": [
@@ -3326,6 +3326,12 @@
      "name": "screen",
      "args": [],
      "description": "Screenshot the focused screen whole: saved and copied, nothing to draw",
+     "values": []
+    },
+    {
+     "name": "window",
+     "args": [],
+     "description": "Screenshot the focused window: its own pixels, saved and copied",
      "values": []
     },
     {
