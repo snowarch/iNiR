@@ -175,10 +175,14 @@ Singleton {
     property var rinBindFiles: []
     property var rinOwnBinds: ({})
     property bool rinBindsRead: false
+    // A read asked for while one runs follows it: the running one may have started before the last change.
     function readRinBinds(): void {
-        if (!rinBindsReader.running) rinBindsReader.running = true
+        if (rinBindsReader.running) rinBindsReader.again = true
+        else rinBindsReader.running = true
     }
     function takeRinBinds(text: string): void {
+        // Settings' lines in memory are newer than the files while a write runs; its own read follows it.
+        if (rinBindsWriter.running) return
         const below = {}, own = {}
         const files = []
         let ownBinds = {}
@@ -187,8 +191,13 @@ Singleton {
             const name = chunk.slice(0, cut < 0 ? chunk.length : cut)
             const body = cut < 0 ? "" : chunk.slice(cut + 1)
             let parsed = null
-            // A file that does not parse is one Rin does not take either (an editor's half-written save).
-            try { parsed = Toml.parse(body) } catch (e) { continue }
+            // One file that does not parse (an editor's half-written save) and Rin takes none of the folder: it keeps
+            // the keys it had, and so does iNiR, saying which file stops it.
+            try { parsed = Toml.parse(body) } catch (e) {
+                root.error = Translation.tr("%1 does not parse: Rin keeps the keys it had.").arg(name.split("/").pop())
+                root.errorFile = name
+                return
+            }
             files.push({ path: name, text: body })
             const corners = parsed["hot-corners"] ?? {}
             if (name === root.rinBindsOwn) ownBinds = parsed.binds ?? {}
@@ -198,6 +207,7 @@ Singleton {
         if (files.length === 0) below["top-left"] = root.cornerAction("overview-toggle")
         root.rinOwnBinds = ownBinds
         root.rinBindFiles = files
+        if (root.errorFile.startsWith(root.rinBindsDir + "/")) { root.error = ""; root.errorFile = "" }
         root.rinCornersBelow = below
         root.rinCornersOwn = own
         root.rinCorners = Object.assign({}, below, own)
@@ -1529,8 +1539,14 @@ Singleton {
     }
     Process {
         id: rinBindsReader
+        property bool again: false
         command: ["sh", "-c", 'for f in "$1"/*.toml; do [ -f "$f" ] && printf "\\n#@@inir-file %s\\n" "$f" && cat -- "$f"; done; :', "sh", root.rinBindsDir]
-        stdout: StdioCollector { onStreamFinished: root.takeRinBinds(text) }
+        stdout: StdioCollector { id: rinBindsText }
+        onExited: {
+            if (!rinBindsReader.again) { root.takeRinBinds(rinBindsText.text); return }
+            rinBindsReader.again = false
+            rinBindsReader.running = true
+        }
     }
     Process {
         id: rinBindsWriter

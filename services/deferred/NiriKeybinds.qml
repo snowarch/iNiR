@@ -4,6 +4,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs
 import qs.services
 import "../UmbrielModel.js" as UmbrielModel
 import "../UmbrielToml.js" as Toml
@@ -121,7 +122,15 @@ Singleton {
         printErrors: false
         onLoaded: if (CompositorConfig.rinBindsRead) root._readRinBinds()
     }
-    // A save from an editor reaches Rin at once; iNiR reads the files again.
+    // Rin takes any file of the folder at once; iNiR reads them again when they are shown (Settings reads them as it
+    // opens), and on a save to the two files people edit.
+    Connections {
+        target: GlobalStates
+        enabled: root.rin
+        function onCheatsheetOpenChanged() {
+            if (GlobalStates.cheatsheetOpen) CompositorConfig.readRinBinds()
+        }
+    }
     FileView {
         path: root.rin ? CompositorConfig.rinBindsDir + "/70-inir.toml" : ""
         watchChanges: true
