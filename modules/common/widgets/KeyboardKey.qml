@@ -1,4 +1,5 @@
 import qs.modules.common
+import qs.services
 import QtQuick
 
 /**
@@ -27,6 +28,9 @@ Rectangle {
         "Page_Up": "expand_less", "Page_Down": "expand_more",
         "Space": "space_bar", "Print": "screenshot_monitor"
     })
+
+    // A wheel chord shows its notch as a word and an arrow, not as "WheelScrollDown".
+    readonly property var wheelArrows: ({ "WheelScrollUp": "↑", "WheelScrollDown": "↓", "WheelScrollLeft": "←", "WheelScrollRight": "→" })
 
     readonly property bool isSpecialKey: key in specialKeyIcons
     readonly property string specialKeyIcon: specialKeyIcons[key] ?? ""
@@ -95,7 +99,7 @@ Rectangle {
                 font.family: Appearance.font.family.monospace
                 font.pixelSize: Appearance.font.pixelSize.smaller
                 color: Appearance.inirEverywhere ? Appearance.inir.colText : Appearance.colors.colOnSurface
-                text: root.key
+                text: root.key in root.wheelArrows ? Translation.tr("Wheel") + " " + root.wheelArrows[root.key] : root.key
             }
         }
     }
