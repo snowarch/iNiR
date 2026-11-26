@@ -3855,5 +3855,6 @@
   "Drag any edge of a window to change its size.": "Seret tepi mana pun dari jendela untuk mengubah ukurannya.",
   "Let full-screen games tear": "Izinkan tearing pada game layar penuh",
   "A game that asks for it shows each frame at once, for less delay.": "Game yang memintanya menampilkan setiap bingkai seketika, dengan jeda lebih kecil.",
-  "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.": "Bilah untuk menyeret jendela, dengan tombolnya, pada jendela yang menyerahkan bingkainya ke compositor."
+  "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.": "Bilah untuk menyeret jendela, dengan tombolnya, pada jendela yang menyerahkan bingkainya ke compositor.",
+  "Mute the microphone": "Bisukan mikrofon"
 }

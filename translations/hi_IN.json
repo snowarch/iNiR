@@ -3855,5 +3855,6 @@
   "Drag any edge of a window to change its size.": "आकार बदलने के लिए विंडो का कोई भी किनारा खींचें।",
   "Let full-screen games tear": "फ़ुल-स्क्रीन गेम में टियरिंग की अनुमति दें",
   "A game that asks for it shows each frame at once, for less delay.": "जो गेम इसे माँगता है वह हर फ़्रेम तुरंत दिखाता है, कम देरी के साथ।",
-  "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.": "उन विंडो पर बटन वाली एक खींचने की पट्टी, जो अपना फ़्रेम कंपोज़िटर पर छोड़ती हैं।"
+  "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.": "उन विंडो पर बटन वाली एक खींचने की पट्टी, जो अपना फ़्रेम कंपोज़िटर पर छोड़ती हैं।",
+  "Mute the microphone": "माइक्रोफ़ोन म्यूट करें"
 }

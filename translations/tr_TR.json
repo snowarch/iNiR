@@ -3855,5 +3855,6 @@
   "Drag any edge of a window to change its size.": "Boyutunu değiştirmek için pencerenin herhangi bir kenarını sürükleyin.",
   "Let full-screen games tear": "Tam ekran oyunlarda yırtılmaya izin ver",
   "A game that asks for it shows each frame at once, for less delay.": "Bunu isteyen bir oyun her kareyi hemen gösterir, daha az gecikmeyle.",
-  "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.": "Çerçevesini bileşikleştiriciye bırakan pencerelerde, düğmeleriyle birlikte pencereyi sürüklemek için bir çubuk."
+  "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.": "Çerçevesini bileşikleştiriciye bırakan pencerelerde, düğmeleriyle birlikte pencereyi sürüklemek için bir çubuk.",
+  "Mute the microphone": "Mikrofonu sustur"
 }

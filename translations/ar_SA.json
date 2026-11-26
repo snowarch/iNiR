@@ -3855,5 +3855,6 @@
   "Drag any edge of a window to change its size.": "اسحب أي حافة من النافذة لتغيير حجمها.",
   "Let full-screen games tear": "السماح بتمزق الصورة في الألعاب بملء الشاشة",
   "A game that asks for it shows each frame at once, for less delay.": "اللعبة التي تطلب ذلك تعرض كل إطار فورًا، بتأخير أقل.",
-  "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.": "شريط لسحب النافذة، مع أزرارها، في النوافذ التي تترك إطارها للمُركِّب."
+  "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.": "شريط لسحب النافذة، مع أزرارها، في النوافذ التي تترك إطارها للمُركِّب.",
+  "Mute the microphone": "كتم الميكروفون"
 }

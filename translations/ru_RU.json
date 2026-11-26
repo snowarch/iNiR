@@ -3855,5 +3855,6 @@
   "Drag any edge of a window to change its size.": "Потяните за любой край окна, чтобы изменить его размер.",
   "Let full-screen games tear": "Разрешить разрывы кадра в полноэкранных играх",
   "A game that asks for it shows each frame at once, for less delay.": "Игра, которая это запрашивает, показывает каждый кадр сразу, с меньшей задержкой.",
-  "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.": "Панель для перетаскивания окна, с его кнопками, у окон, которые оставляют рамку композитору."
+  "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.": "Панель для перетаскивания окна, с его кнопками, у окон, которые оставляют рамку композитору.",
+  "Mute the microphone": "Отключить микрофон"
 }

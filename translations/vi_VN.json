@@ -3855,5 +3855,6 @@
   "Drag any edge of a window to change its size.": "Kéo bất kỳ cạnh nào của cửa sổ để đổi kích thước.",
   "Let full-screen games tear": "Cho phép xé hình trong trò chơi toàn màn hình",
   "A game that asks for it shows each frame at once, for less delay.": "Trò chơi yêu cầu điều này sẽ hiện mỗi khung hình ngay lập tức, ít độ trễ hơn.",
-  "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.": "Thanh để kéo cửa sổ, kèm các nút, trên các cửa sổ để compositor vẽ khung."
+  "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.": "Thanh để kéo cửa sổ, kèm các nút, trên các cửa sổ để compositor vẽ khung.",
+  "Mute the microphone": "Tắt tiếng micrô"
 }

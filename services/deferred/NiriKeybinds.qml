@@ -14,10 +14,11 @@ import "../UmbrielToml.js" as Toml
  * Falls back to defaults if parsing fails.
  *
  * Under Umbriel it reads ~/.config/umbriel/config.d/70-binds.toml, 90-user-extra.toml and Settings'
- * 95-settings.toml instead, in the same shape (UmbrielModel.bindListFrom).
+ * 95-settings.toml instead, in the same shape (UmbrielModel.bindListFrom). Under Rin it reads every file of
+ * ~/.config/rin/binds.d, as CompositorConfig reads them (rinBindFiles).
  *
  * Read/write support: setBind() and removeBind() write back to the keybinds KDL file via
- * inir-accel niri-config under Niri, to Settings' own 95-settings.toml under Umbriel (CompositorConfig.bind).
+ * inir-accel niri-config under Niri, to Settings' own 95-settings.toml under Umbriel and Rin (CompositorConfig.bind).
  */
 Singleton {
     id: root
@@ -51,8 +52,16 @@ Singleton {
 
     readonly property bool umbriel: CompositorService.isUmbriel
     readonly property string umbrielConfigDir: Quickshell.env("HOME") + "/.config/umbriel/config.d"
+    readonly property bool rin: CompositorService.isRin
+    // Keys that live in TOML files, Settings' own loading last: written through CompositorConfig.bind.
+    readonly property bool tomlBinds: root.umbriel || root.rin
 
     function reload(): void {
+        if (root.rin) {
+            CompositorConfig.readRinBinds()
+            if (CompositorConfig.rinBindsRead) root._readRinBinds()
+            return
+        }
         if (root.umbriel) {
             root._readUmbrielBinds()
             return
@@ -73,10 +82,57 @@ Singleton {
     property string _settingsSeen: ""
     Connections {
         target: CompositorConfig
-        enabled: root.umbriel
+        enabled: root.tomlBinds
         function onRevisionChanged() {
-            if (root._settingsText() !== root._settingsSeen) root._readUmbrielBinds()
+            if (root.umbriel && root._settingsText() !== root._settingsSeen) root._readUmbrielBinds()
         }
+        function onRinBindFilesChanged() {
+            if (root.rin) root._readRinBinds()
+        }
+    }
+
+    // Rin's words where they name something else than Umbriel's.
+    readonly property var _rinNames: ({ "overview-toggle": "iNiR overview", "toggle-overview": "iNiR overview",
+        "quit": "Quit Rin", "session-quit": "Quit Rin", "window-switcher": "Next window", "window-switcher-back": "Previous window" })
+    // Rin's [binds] read as Umbriel's [keybinds]: the same lines, only the table's name differs.
+    function _rinText(text: string): string {
+        return String(text ?? "").replace(/^[ \t]*\[binds\][ \t]*$/gm, "[keybinds]").replace(/^[ \t]*\[binds\.(?=")/gm, "[keybinds.")
+    }
+    // The files under Settings' own: what a key goes back to.
+    property var _rinBelow: []
+    function _readRinBinds(): void {
+        const files = CompositorConfig.rinBindFiles ?? []
+        const below = files.filter(file => file.path !== CompositorConfig.rinBindsOwn).map(file => root._rinText(file.text))
+        // With no file Rin runs its own keys; the first change puts iNiR's in, so those are shown.
+        root._rinBelow = below.length > 0 ? below : [root._rinText(rinShippedBinds.text())]
+        const shown = files.length > 0 ? files.map(file => root._rinText(file.text)) : root._rinBelow
+        const list = UmbrielModel.bindListFrom(shown, root._rinNames)
+        root.allBinds = list.binds
+        root.enrichedCategories = list.categories
+        root.shippedBinds = UmbrielModel.bindListFrom(root._rinBelow, root._rinNames).binds
+        const groups = UmbrielModel.bindsFrom(shown, "Super", root._rinNames)
+        if (groups.length > 0) root.keybinds = { children: groups, configPath: CompositorConfig.rinBindsDir }
+        root.configPath = CompositorConfig.rinBindsDir
+        root.loaded = files.length > 0 && groups.length > 0
+    }
+    FileView {
+        id: rinShippedBinds
+        path: root.rin ? Quickshell.shellPath("defaults/rin/binds.d/70-inir.toml") : ""
+        printErrors: false
+        onLoaded: if (CompositorConfig.rinBindsRead) root._readRinBinds()
+    }
+    // A save from an editor reaches Rin at once; iNiR reads the files again.
+    FileView {
+        path: root.rin ? CompositorConfig.rinBindsDir + "/70-inir.toml" : ""
+        watchChanges: true
+        printErrors: false
+        onFileChanged: CompositorConfig.readRinBinds()
+    }
+    FileView {
+        path: root.rin ? CompositorConfig.rinBindsDir + "/90-user.toml" : ""
+        watchChanges: true
+        printErrors: false
+        onFileChanged: CompositorConfig.readRinBinds()
     }
 
     function _readUmbrielBinds(): void {
@@ -125,15 +181,19 @@ Singleton {
         return out
     }
     // Is this key set by a file under Settings' own (iNiR's 70 or the person's 90)? Removing it then needs "".
-    function _umbrielBelow(keyCombo: string): bool {
-        return UmbrielModel.bindListFrom([umbrielBinds.text(), umbrielUserBinds.text()]).binds.some(bind => bind.key_combo === keyCombo)
+    function _bindBelow(keyCombo: string): bool {
+        const texts = root.rin ? root._rinBelow : [umbrielBinds.text(), umbrielUserBinds.text()]
+        return UmbrielModel.bindListFrom(texts).binds.some(bind => bind.key_combo === keyCombo)
+    }
+    function _stillReading(): string {
+        return root.rin ? Translation.tr("Rin's files are still being read") : Translation.tr("Umbriel's files are still being read")
     }
 
     // False when a save is already in flight; the result comes back as bindSaved or bindError.
     function setBind(keyCombo: string, action: string, options: string): bool {
-        if (root.umbriel) {
+        if (root.tomlBinds) {
             if (!CompositorConfig.bind(keyCombo, root._umbrielValue(action, options))) {
-                root.bindError(Translation.tr("Umbriel's files are still being read"))
+                root.bindError(root._stillReading())
                 return false
             }
             root.bindSaved(keyCombo)
@@ -181,11 +241,11 @@ Singleton {
         while (root._steps.length > 0 && !setBindProcess.running && !removeBindProcess.running) {
             const step = root._steps[0]
             root._steps = root._steps.slice(1)
-            if (root.umbriel) {
+            if (root.tomlBinds) {
                 const value = step.shipped ? undefined
                     : String(step.action ?? "").length > 0 ? root._umbrielValue(step.action, step.options ?? "")
-                    : root._umbrielBelow(step.combo) ? "" : undefined
-                if (!CompositorConfig.bind(step.combo, value)) root.bindError(Translation.tr("Umbriel's files are still being read"))
+                    : root._bindBelow(step.combo) ? "" : undefined
+                if (!CompositorConfig.bind(step.combo, value)) root.bindError(root._stillReading())
                 continue
             }
             if (!CompositorService.niriNative) { root._steps = []; return }
@@ -197,20 +257,20 @@ Singleton {
     }
 
     function removeBind(keyCombo: string): void {
-        if (!CompositorService.niriNative && !root.umbriel) return
+        if (!CompositorService.niriNative && !root.tomlBinds) return
         root._removeBind(keyCombo, true)
     }
 
     // A rename drops the old combo after saving the new one: nothing was removed, so no Undo.
     function removeBindQuietly(keyCombo: string): void {
-        if (!CompositorService.niriNative && !root.umbriel) return
+        if (!CompositorService.niriNative && !root.tomlBinds) return
         root._removeBind(keyCombo, false)
     }
 
     function _removeBind(keyCombo: string, offerUndo: bool): void {
         const gone = root.allBinds.find(bind => bind.key_combo === keyCombo)
-        if (root.umbriel) {
-            if (!CompositorConfig.bind(keyCombo, root._umbrielBelow(keyCombo) ? "" : undefined)) return
+        if (root.tomlBinds) {
+            if (!CompositorConfig.bind(keyCombo, root._bindBelow(keyCombo) ? "" : undefined)) return
             root.bindRemoved(keyCombo)
             if (offerUndo && gone)
                 Undo.offer(Translation.tr("Removed %1").arg(keyCombo), () => root.setBind(keyCombo, gone.action_raw, gone.options ?? ""))

@@ -168,24 +168,34 @@ Singleton {
     property var rinCorners: ({})
     property var rinCornersBelow: ({})
     property var rinCornersOwn: ({})
+    // Every file of binds.d that parses, in name order ({ path, text }), and the keys Settings' own file binds: what
+    // NiriKeybinds shows and edits on Rin.
+    property var rinBindFiles: []
+    property var rinOwnBinds: ({})
     property bool rinBindsRead: false
     function readRinBinds(): void {
         if (!rinBindsReader.running) rinBindsReader.running = true
     }
     function takeRinBinds(text: string): void {
         const below = {}, own = {}
-        let files = 0
+        const files = []
+        let ownBinds = {}
         for (const chunk of text.split("\n#@@inir-file ").slice(1)) {
             const cut = chunk.indexOf("\n")
             const name = chunk.slice(0, cut < 0 ? chunk.length : cut)
-            let corners = null
+            const body = cut < 0 ? "" : chunk.slice(cut + 1)
+            let parsed = null
             // A file that does not parse is one Rin does not take either (an editor's half-written save).
-            try { corners = Toml.parse(cut < 0 ? "" : chunk.slice(cut + 1))["hot-corners"] ?? {} } catch (e) { continue }
-            files++
+            try { parsed = Toml.parse(body) } catch (e) { continue }
+            files.push({ path: name, text: body })
+            const corners = parsed["hot-corners"] ?? {}
+            if (name === root.rinBindsOwn) ownBinds = parsed.binds ?? {}
             for (const corner of Object.keys(corners)) (name === root.rinBindsOwn ? own : below)[corner] = root.cornerAction(corners[corner])
         }
         // With no file at all Rin runs its own keys, and its top-left corner opens the overview.
-        if (files === 0) below["top-left"] = root.cornerAction("overview-toggle")
+        if (files.length === 0) below["top-left"] = root.cornerAction("overview-toggle")
+        root.rinOwnBinds = ownBinds
+        root.rinBindFiles = files
         root.rinCornersBelow = below
         root.rinCornersOwn = own
         root.rinCorners = Object.assign({}, below, own)
@@ -193,13 +203,31 @@ Singleton {
         root.forget("corners:")
         root.revision++
     }
+    // A key's value in Rin's words: the action, or an inline table with its options ({ action = "…", allow-when-locked = true }).
+    function rinBindText(value: var): string {
+        if (value === null || typeof value !== "object") return JSON.stringify(String(value ?? ""))
+        return "{ " + Object.keys(value).map(name => (/^[A-Za-z0-9_-]+$/.test(name) ? name : JSON.stringify(name)) + " = "
+            + (typeof value[name] === "string" ? JSON.stringify(value[name]) : String(value[name]))).join(", ") + " }"
+    }
+    function rinOwnText(): string {
+        const lines = ["# iNiR Settings writes this file: the keys and hot corners changed in Settings. It loads after iNiR's",
+            "# keys (70-inir.toml) and yours (90-user.toml); a key or corner set in both follows Settings."]
+        const combos = Object.keys(root.rinOwnBinds)
+        if (combos.length > 0) lines.push("", "[binds]")
+        for (const combo of combos) lines.push(`${JSON.stringify(combo)} = ${root.rinBindText(root.rinOwnBinds[combo])}`)
+        const corners = ["top-left", "top-right", "bottom-left", "bottom-right"].filter(corner => corner in root.rinCornersOwn)
+        if (corners.length > 0) lines.push("", "[hot-corners]")
+        for (const corner of corners) lines.push(`${corner} = ${JSON.stringify(String(root.rinCornersOwn[corner]))}`)
+        return lines.join("\n") + "\n"
+    }
     function writeRinBinds(): void {
+        // What is written shows at once; the read after the write gives the folder as Rin takes it.
+        const text = root.rinOwnText()
+        root.rinBindFiles = root.rinBindFiles.filter(file => file.path !== root.rinBindsOwn)
+            .concat([{ path: root.rinBindsOwn, text: text }]).sort((a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0)
+        root.revision++
         if (rinBindsWriter.running) { rinBindsWriter.again = true; return }
-        const lines = ["# iNiR Settings writes this file: the hot corners picked in Settings. It loads after iNiR's keys",
-            "# (70-inir.toml); your own keys go in 90-user.toml, and a corner set in both follows Settings.", "", "[hot-corners]"]
-        for (const corner of ["top-left", "top-right", "bottom-left", "bottom-right"])
-            if (corner in root.rinCornersOwn) lines.push(`${corner} = ${JSON.stringify(String(root.rinCornersOwn[corner]))}`)
-        rinBindsWriter.command = ["sh", "-c", root.rinBindsScript, "sh", root.rinBindsDir, lines.join("\n") + "\n",
+        rinBindsWriter.command = ["sh", "-c", root.rinBindsScript, "sh", root.rinBindsDir, text,
             Quickshell.shellPath("defaults/rin/binds.d/70-inir.toml")]
         rinBindsWriter.running = true
     }
@@ -809,8 +837,19 @@ Singleton {
     // A key of Umbriel's [keybinds] in Settings' own file, which loads last: an action (or a table with its options),
     // "" to unbind a key the files below set, undefined to drop Settings' line. False until the files were read: a
     // write before that would replace Settings' file with this one line.
+    // On Rin the same goes to binds.d's 95-settings.toml, [binds].
     function bind(combo: string, action: var): bool {
-        if (!root.umbriel || !root.umbrielRead || combo.length === 0) return false
+        if (combo.length === 0) return false
+        if (root.rin) {
+            if (!root.rinBindsRead) return false
+            const own = Object.assign({}, root.rinOwnBinds)
+            if (action === undefined) delete own[combo]
+            else own[combo] = action
+            root.rinOwnBinds = own
+            root.writeRinBinds()
+            return true
+        }
+        if (!root.umbriel || !root.umbrielRead) return false
         root.writeOwn(Toml.set(root.own, ["keybinds", combo], action))
         return true
     }
@@ -1496,7 +1535,7 @@ Singleton {
         property bool again: false
         stderr: StdioCollector { id: rinBindsErrors }
         onExited: exitCode => {
-            root.error = exitCode === 0 ? "" : rinBindsErrors.text.trim() || Translation.tr("Could not save the hot corners.")
+            root.error = exitCode === 0 ? "" : rinBindsErrors.text.trim() || Translation.tr("Could not save Rin's keys.")
             root.errorFile = exitCode === 0 ? "" : root.rinBindsOwn
             if (rinBindsWriter.again) { rinBindsWriter.again = false; root.writeRinBinds() }
             else root.readRinBinds()

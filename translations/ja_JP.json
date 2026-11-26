@@ -3855,5 +3855,6 @@
   "Drag any edge of a window to change its size.": "ウィンドウの任意の端をドラッグしてサイズを変更します。",
   "Let full-screen games tear": "フルスクリーンのゲームでティアリングを許可",
   "A game that asks for it shows each frame at once, for less delay.": "要求したゲームは各フレームをすぐに表示し、遅延を減らします。",
-  "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.": "枠をコンポジターに任せるウィンドウに、ボタン付きのドラッグ用バーを表示します。"
+  "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.": "枠をコンポジターに任せるウィンドウに、ボタン付きのドラッグ用バーを表示します。",
+  "Mute the microphone": "マイクをミュート"
 }

@@ -3855,5 +3855,6 @@
   "Drag any edge of a window to change its size.": "Drag any edge of a window to change its size.",
   "Let full-screen games tear": "Let full-screen games tear",
   "A game that asks for it shows each frame at once, for less delay.": "A game that asks for it shows each frame at once, for less delay.",
-  "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.": "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor."
+  "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.": "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.",
+  "Mute the microphone": "Mute the microphone"
 }

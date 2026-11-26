@@ -3855,5 +3855,6 @@
   "Drag any edge of a window to change its size.": "拖动窗口的任意边缘即可调整其大小。",
   "Let full-screen games tear": "允许全屏游戏画面撕裂",
   "A game that asks for it shows each frame at once, for less delay.": "请求此项的游戏会立即显示每一帧，以降低延迟。",
-  "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.": "为将边框交给合成器的窗口显示一条带按钮的拖动栏。"
+  "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.": "为将边框交给合成器的窗口显示一条带按钮的拖动栏。",
+  "Mute the microphone": "麦克风静音"
 }

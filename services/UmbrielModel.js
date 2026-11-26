@@ -276,13 +276,35 @@ const _names = {
     "window-toggle-scratchpad": "Send window to the scratchpad", "workspace-set-layout toggle": "Next workspace layout"
 }
 
-function _humanize(action) {
+// iNiR's own calls by what they do: Umbriel runs `inir TARGET FUNCTION`, Rin sends `shell TARGET FUNCTION`.
+const _shellNames = {
+    "overview toggle": "iNiR overview", "overlay toggle": "iNiR overlay", "taskview toggle": "Task view",
+    "search toggle": "Search", "clipboard toggle": "Clipboard", "cheatsheet toggle": "Cheatsheet", "settings": "Settings",
+    "session toggle": "Power menu", "lock activate": "Lock screen", "lock focus": "Focus the lock screen",
+    "region menu": "Region tools", "region screenshot": "Screenshot a region", "region screen": "Screenshot the screen",
+    "region ocr": "Read text in a region", "region search": "Search a region by image",
+    "region recordWithSound": "Record a region with sound", "wallpaperSelector toggle": "Wallpaper selector",
+    "panelFamily cycle": "Next panel style", "equalizer toggle": "Equalizer", "altSwitcher next": "Next window",
+    "altSwitcher previous": "Previous window", "closeConfirm trigger": "Close window", "close": "Close window",
+    "audio volumeUp": "Volume up", "audio volumeDown": "Volume down", "audio mute": "Mute",
+    "audio micMute": "Mute the microphone", "brightness increment": "Brightness up",
+    "brightness decrement": "Brightness down", "mpris playPause": "Play or pause", "mpris next": "Next track",
+    "mpris previous": "Previous track", "terminal": "Terminal", "browser": "Browser"
+}
+
+// `names` gives the compositor's own words first (Rin's overview-toggle is iNiR's overview, not Umbriel's).
+function _humanize(action, names) {
     let text = String(action ?? "").trim()
-    if (_names[text]) return _names[text]
-    const inir = text.match(/^spawn\s+inir\s+(\S+)(?:\s+(\S+))?/)
-    if (inir) text = `${inir[1]} ${inir[2] ?? ""}`.replace(/([a-z])([A-Z])/g, "$1 $2")
-    else if (text.startsWith("spawn ")) text = "Run " + text.slice(6)
-    text = text.replace(/-/g, " ").trim().toLowerCase()
+    const named = (names ?? {})[text] ?? _names[text]
+    if (named) return named
+    const call = text.match(/^(?:spawn\s+inir|shell)\s+(\S+)(?:\s+(\S+))?/)
+    if (call) {
+        const pair = call[2] ? `${call[1]} ${call[2]}` : call[1]
+        if (_shellNames[pair]) return _shellNames[pair]
+        text = pair.replace(/([a-z])([A-Z])/g, "$1 $2")
+    } else if (text.startsWith("spawn ")) text = "Run " + text.slice(6)
+    // A dash between words is a space; one before a number is its sign ("set-column-width -10%").
+    text = text.replace(/(\w)-(?=\w)/g, "$1 ").trim().toLowerCase()
     return text.charAt(0).toUpperCase() + text.slice(1)
 }
 
@@ -341,7 +363,7 @@ function _bindLines(texts) {
     return binds
 }
 
-function bindsFrom(texts, modKey) {
+function bindsFrom(texts, modKey, names) {
     const groups = []
     const index = {}
     for (const bind of _bindLines(texts)) {
@@ -352,13 +374,13 @@ function bindsFrom(texts, modKey) {
             index[bind.heading] = groups.length
             groups.push({ name: bind.heading, children: [{ keybinds: [] }] })
         }
-        groups[index[bind.heading]].children[0].keybinds.push({ mods: mods, key: key, comment: _humanize(bind.action) })
+        groups[index[bind.heading]].children[0].keybinds.push({ mods: mods, key: key, comment: _humanize(bind.action, names) })
     }
     return groups
 }
 
 // The same binds in the shape inir-accel's `niri-config get-binds` gives Niri's, so one editor reads both.
-function bindListFrom(texts) {
+function bindListFrom(texts, names) {
     const binds = []
     const categories = []
     for (const bind of _bindLines(texts)) {
@@ -366,7 +388,7 @@ function bindListFrom(texts) {
         if (!category) { category = { name: bind.heading, binds: [] }; categories.push(category) }
         category.binds.push(binds.length)
         binds.push({ key_combo: bind.combo, options: bind.options, action: bind.action, action_raw: bind.action,
-            category: bind.heading, description: _humanize(bind.action), commented: false })
+            category: bind.heading, description: _humanize(bind.action, names), commented: false })
     }
     return { binds: binds, categories: categories }
 }

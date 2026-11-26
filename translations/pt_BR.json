@@ -3855,5 +3855,6 @@
   "Drag any edge of a window to change its size.": "Arraste qualquer borda de uma janela para mudar seu tamanho.",
   "Let full-screen games tear": "Permitir tearing em jogos em tela cheia",
   "A game that asks for it shows each frame at once, for less delay.": "Um jogo que pede isso mostra cada quadro na hora, com menos atraso.",
-  "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.": "Uma barra para arrastar a janela, com seus botões, nas janelas que deixam a moldura para o compositor."
+  "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.": "Uma barra para arrastar a janela, com seus botões, nas janelas que deixam a moldura para o compositor.",
+  "Mute the microphone": "Silenciar o microfone"
 }

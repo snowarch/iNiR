@@ -3832,5 +3832,6 @@
   "Drag any edge of a window to change its size.": "Window-p killinga sumiluunniit nusutsiguk angissusia allanngortinniarlugu.",
   "Let full-screen games tear": "Pinnguarnerni full-screen-iusuni tearing akuerisiguk",
   "A game that asks for it shows each frame at once, for less delay.": "Pinnguaq piumasoq frame tamaasa erngerluni takutittarpai, kinguaattoorneq annikinnerulluni.",
-  "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.": "Window-p nusunnissaanut bar, button-ilerlugu, window-ini frame-tik compositor-imut qimattagaanni."
+  "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.": "Window-p nusunnissaanut bar, button-ilerlugu, window-ini frame-tik compositor-imut qimattagaanni.",
+  "Mute the microphone": "Mikrofoni nipeqanngitsoortiguk"
 }

@@ -3855,5 +3855,6 @@
   "Drag any edge of a window to change its size.": "창의 아무 가장자리나 끌어 크기를 바꿉니다.",
   "Let full-screen games tear": "전체 화면 게임의 티어링 허용",
   "A game that asks for it shows each frame at once, for less delay.": "요청한 게임은 각 프레임을 즉시 표시하여 지연을 줄입니다.",
-  "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.": "테두리를 컴포지터에 맡기는 창에 버튼이 있는 끌기용 막대를 표시합니다."
+  "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.": "테두리를 컴포지터에 맡기는 창에 버튼이 있는 끌기용 막대를 표시합니다.",
+  "Mute the microphone": "마이크 음소거"
 }
