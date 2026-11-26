@@ -3850,5 +3850,10 @@
   "Until": "Şuna kadar",
   "Light mode": "Açık mod",
   "floating": "yüzen",
-  "Pick the sound each event plays: one from any sound pack, or any audio file": "Her olayda çalacak sesi seçin: herhangi bir ses paketinden bir ses veya herhangi bir ses dosyası"
+  "Pick the sound each event plays: one from any sound pack, or any audio file": "Her olayda çalacak sesi seçin: herhangi bir ses paketinden bir ses veya herhangi bir ses dosyası",
+  "Resize from the edges": "Kenarlardan yeniden boyutlandır",
+  "Drag any edge of a window to change its size.": "Boyutunu değiştirmek için pencerenin herhangi bir kenarını sürükleyin.",
+  "Let full-screen games tear": "Tam ekran oyunlarda yırtılmaya izin ver",
+  "A game that asks for it shows each frame at once, for less delay.": "Bunu isteyen bir oyun her kareyi hemen gösterir, daha az gecikmeyle.",
+  "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.": "Çerçevesini bileşikleştiriciye bırakan pencerelerde, düğmeleriyle birlikte pencereyi sürüklemek için bir çubuk."
 }

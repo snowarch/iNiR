@@ -3850,5 +3850,10 @@
   "Until": "حتى",
   "Light mode": "الوضع الفاتح",
   "floating": "عائم",
-  "Pick the sound each event plays: one from any sound pack, or any audio file": "اختر الصوت الذي يُشغَّل لكل حدث: صوت من أي حزمة أصوات، أو أي ملف صوتي"
+  "Pick the sound each event plays: one from any sound pack, or any audio file": "اختر الصوت الذي يُشغَّل لكل حدث: صوت من أي حزمة أصوات، أو أي ملف صوتي",
+  "Resize from the edges": "تغيير الحجم من الحواف",
+  "Drag any edge of a window to change its size.": "اسحب أي حافة من النافذة لتغيير حجمها.",
+  "Let full-screen games tear": "السماح بتمزق الصورة في الألعاب بملء الشاشة",
+  "A game that asks for it shows each frame at once, for less delay.": "اللعبة التي تطلب ذلك تعرض كل إطار فورًا، بتأخير أقل.",
+  "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.": "شريط لسحب النافذة، مع أزرارها، في النوافذ التي تترك إطارها للمُركِّب."
 }

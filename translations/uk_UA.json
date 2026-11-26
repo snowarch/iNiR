@@ -3850,5 +3850,10 @@
   "Until": "До",
   "Light mode": "Світлий режим",
   "floating": "плаваюча",
-  "Pick the sound each event plays: one from any sound pack, or any audio file": "Виберіть звук, який відтворюватиме кожна подія: один з будь-якого набору звуків або будь-який аудіофайл"
+  "Pick the sound each event plays: one from any sound pack, or any audio file": "Виберіть звук, який відтворюватиме кожна подія: один з будь-якого набору звуків або будь-який аудіофайл",
+  "Resize from the edges": "Змінювати розмір за краї",
+  "Drag any edge of a window to change its size.": "Потягніть за будь-який край вікна, щоб змінити його розмір.",
+  "Let full-screen games tear": "Дозволити розриви кадру в повноекранних іграх",
+  "A game that asks for it shows each frame at once, for less delay.": "Гра, яка цього просить, показує кожен кадр одразу, з меншою затримкою.",
+  "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.": "Панель для перетягування вікна, з його кнопками, на вікнах, що залишають рамку композитору."
 }

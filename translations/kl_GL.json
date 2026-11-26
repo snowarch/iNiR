@@ -3827,5 +3827,10 @@
   "Until": "Tikillugu",
   "Light mode": "Qaamasoq",
   "floating": "puttasoq",
-  "Pick the sound each event plays: one from any sound pack, or any audio file": "Event tamarmik nipi play-gassaa toqqaruk: sound pack-mit ataaseq imaluunniit audio file sumilluunniit"
+  "Pick the sound each event plays: one from any sound pack, or any audio file": "Event tamarmik nipi play-gassaa toqqaruk: sound pack-mit ataaseq imaluunniit audio file sumilluunniit",
+  "Resize from the edges": "Killinginit angissusia allanngortiguk",
+  "Drag any edge of a window to change its size.": "Window-p killinga sumiluunniit nusutsiguk angissusia allanngortinniarlugu.",
+  "Let full-screen games tear": "Pinnguarnerni full-screen-iusuni tearing akuerisiguk",
+  "A game that asks for it shows each frame at once, for less delay.": "Pinnguaq piumasoq frame tamaasa erngerluni takutittarpai, kinguaattoorneq annikinnerulluni.",
+  "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.": "Window-p nusunnissaanut bar, button-ilerlugu, window-ini frame-tik compositor-imut qimattagaanni."
 }

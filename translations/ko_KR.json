@@ -3850,5 +3850,10 @@
   "Until": "종료",
   "Light mode": "라이트 모드",
   "floating": "플로팅",
-  "Pick the sound each event plays: one from any sound pack, or any audio file": "각 이벤트가 재생하는 사운드를 선택하세요. 사운드 팩 중 하나 또는 오디오 파일"
+  "Pick the sound each event plays: one from any sound pack, or any audio file": "각 이벤트가 재생하는 사운드를 선택하세요. 사운드 팩 중 하나 또는 오디오 파일",
+  "Resize from the edges": "가장자리에서 크기 조절",
+  "Drag any edge of a window to change its size.": "창의 아무 가장자리나 끌어 크기를 바꿉니다.",
+  "Let full-screen games tear": "전체 화면 게임의 티어링 허용",
+  "A game that asks for it shows each frame at once, for less delay.": "요청한 게임은 각 프레임을 즉시 표시하여 지연을 줄입니다.",
+  "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.": "테두리를 컴포지터에 맡기는 창에 버튼이 있는 끌기용 막대를 표시합니다."
 }

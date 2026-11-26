@@ -12,14 +12,18 @@ import "UmbrielToml.js" as Toml
 // or option name. has() says whether the compositor in use can do it; what it cannot is not shown.
 //   Niri     its own config through inir-accel niri-config (it reloads the file itself).
 //   Umbriel  one file Settings owns, config.d/95-settings.toml, included last; Umbriel applies it on save.
+//   Rin      its settings service, through `rin msg settings`; Rin applies each write at once and keeps it.
 Singleton {
     id: root
 
     readonly property string accelRun: Quickshell.shellPath("scripts/lib/accel-run")
     readonly property bool niri: CompositorService.niriNative
     readonly property bool umbriel: CompositorService.isUmbriel
-    readonly property bool available: root.niri || root.umbriel
-    readonly property string compositorName: root.niri ? "Niri" : root.umbriel ? "Umbriel" : ""
+    readonly property bool rin: CompositorService.isRin
+    readonly property bool available: root.niri || root.umbriel || root.rin
+    readonly property string compositorName: root.niri ? "Niri" : root.umbriel ? "Umbriel" : root.rin ? "Rin" : ""
+    // The arrangements the compositor in use offers, in the shell's words.
+    readonly property var layoutModes: root.rin ? ["scrolling", "dwindle", "stacking"] : ["scrolling", "dwindle", "master", "stacking"]
     // A fullscreen window stays above the Top layer at rest on both; in the overview both draw Top above it (Niri
     // since 25.05), so a surface there never needs Overlay to be seen. The keyboard differs: Niri gives a Top surface
     // the keys in the overview, Umbriel refuses Top the keys while its output has a fullscreen window, overview or not.
@@ -77,6 +81,100 @@ Singleton {
     property bool linked: true
     property var files: ({})
     property var wanted: []
+
+    // ---- Rin: each domain as its settings service reads it (defaults included), and its schema ----
+    readonly property var rinDomains: ["rin.windows", "rin.pointer", "rin.animation", "rin.ime"]
+    property var rinData: ({})
+    // domain -> key -> its default; "domain/key" -> { min, max }.
+    property var rinDefaults: ({})
+    property var rinLimits: ({})
+    property bool rinRead: false
+    property var rinQueue: []
+    // The shared vocabulary under Rin. `key` is the one key a row reads, `read` and `write` turn its value into the
+    // row's and back (`write` also gets the domain as it stands); `whole` reads the domain and writes several keys; `round` marks a whole number; `only` marks
+    // what Niri has no equal for.
+    readonly property var rinKeys: ({
+        "layout:mode": { domain: "rin.windows", whole: true,
+            read: table => table.layout === "floating" ? "stacking" : table.scrolling === false ? "dwindle" : "scrolling",
+            write: mode => mode === "stacking" ? { layout: "floating" } : { layout: "tiling", scrolling: mode !== "dwindle" } },
+        "layout:gaps": { domain: "rin.windows", whole: true, round: true, limits: "gap-inner",
+            read: table => table["gap-inner"], write: gap => ({ "gap-inner": gap, "gap-outer": gap }) },
+        "layout:focus-ring.enabled": { domain: "rin.windows", key: "focus-outline" },
+        "layout:focus-ring.width": { domain: "rin.windows", key: "focus-outline-width", round: true },
+        "layout:stacking.drop-zones": { domain: "rin.windows", key: "snap" },
+        "window-rules:corner-radius": { domain: "rin.windows", key: "corner-radius", round: true },
+        "titlebar:shown": { domain: "rin.windows", key: "title-bars", only: true },
+        "windows:resize-on-border": { domain: "rin.windows", key: "resize-on-border", only: true },
+        "windows:tearing": { domain: "rin.windows", key: "allow-tearing", only: true },
+        "animations:enabled": { domain: "rin.animation", key: "enabled" },
+        // Each keyboard layout is a source of its own, with its variant and input method: a layout that stays keeps them.
+        "input:keyboard.layout": { domain: "rin.ime", whole: true,
+            read: table => (table.sources ?? []).map(source => String(source.layout ?? "")).join(","),
+            write: (text, table) => {
+                const layouts = String(text).split(",").map(layout => layout.trim()).filter(layout => layout.length > 0)
+                const old = table.sources ?? []
+                return { sources: (layouts.length > 0 ? layouts : ["us"]).map(layout => old.find(source => source.layout === layout) ?? { layout: layout }) }
+            } },
+        "input:keyboard.variant": { domain: "rin.ime", whole: true,
+            read: table => (table.sources ?? []).map(source => String(source.variant ?? "")).join(",").replace(/,+$/, ""),
+            write: (text, table) => {
+                const variants = String(text).split(",").map(variant => variant.trim())
+                return { sources: (table.sources ?? []).map((source, at) => {
+                    const next = Object.assign({}, source)
+                    if (variants[at]) next.variant = variants[at]
+                    else delete next.variant
+                    return next
+                }) }
+            } },
+        "input:keyboard.options": { domain: "rin.ime", key: "keyboard-options" },
+        "input:mouse.accel-speed": { domain: "rin.pointer", key: "mouse-speed" },
+        "input:mouse.accel-profile": { domain: "rin.pointer", key: "mouse-acceleration" },
+        "input:mouse.natural-scroll": { domain: "rin.pointer", key: "mouse-natural-scroll" },
+        "input:mouse.left-handed": { domain: "rin.pointer", key: "mouse-left-handed" },
+        "input:mouse.middle-emulation": { domain: "rin.pointer", key: "mouse-middle-emulation" },
+        "input:touchpad.tap": { domain: "rin.pointer", key: "touchpad-tap" },
+        "input:touchpad.natural-scroll": { domain: "rin.pointer", key: "touchpad-natural-scroll" },
+        "input:touchpad.accel-speed": { domain: "rin.pointer", key: "touchpad-speed" },
+        "input:touchpad.dwt": { domain: "rin.pointer", key: "touchpad-disable-while-typing" },
+        "input:touchpad.click-method": { domain: "rin.pointer", key: "touchpad-click-method",
+            read: method => method === "fingers" ? "clickfinger" : "button-areas", write: method => method === "clickfinger" ? "fingers" : "areas" },
+        "input:touchpad.disabled-on-external-mouse": { domain: "rin.pointer", key: "touchpad-used",
+            read: used => used === "no-mouse", write: off => off ? "no-mouse" : "always" },
+        "input:cursor.xcursor-theme": { domain: "rin.pointer", key: "cursor-theme" },
+        "input:cursor.xcursor-size": { domain: "rin.pointer", key: "cursor-size", round: true }
+    })
+    // One row's value in one of Rin's tables (what it reads, or its defaults).
+    function rinValue(entry: var, from: var, spec: var): var {
+        const table = from[entry.domain]
+        if (!table) return spec.fallback
+        const found = entry.whole ? entry.read(table) : table[entry.key]
+        if (found === undefined || found === null) return spec.fallback
+        return entry.read && !entry.whole ? entry.read(found) : found
+    }
+    function readRin(): void {
+        if (!rinReader.running) rinReader.running = true
+        if (Object.keys(root.rinDefaults).length === 0 && !rinDescriber.running) rinDescriber.running = true
+    }
+    // Every line of a read answers one domain, in the order asked; a domain that failed leaves what was known.
+    function takeRin(text: string, into: var): var {
+        const next = Object.assign({}, into)
+        const lines = text.trim().split("\n")
+        root.rinDomains.forEach((domain, at) => {
+            try {
+                const parsed = JSON.parse(lines[at] ?? "")
+                if (parsed && typeof parsed === "object" && !("error" in parsed)) next[domain] = parsed
+            } catch (e) {}
+        })
+        return next
+    }
+    function rinNext(): void {
+        if (rinWriter.running || root.rinQueue.length === 0) return
+        const item = root.rinQueue[0]
+        root.rinQueue = root.rinQueue.slice(1)
+        rinWriter.item = item
+        rinWriter.command = ["rin", "msg", "settings", "set", item.domain, item.key, JSON.stringify(item.value)]
+        rinWriter.running = true
+    }
 
     // The shared vocabulary under Umbriel. A string is the option's path; `dash` trades Niri's a-b for a_b; `only`
     // marks what Niri has no equal for. Colours are not here: the theme writes Umbriel's.
@@ -229,8 +327,13 @@ Singleton {
     function has(section: string, key: string): bool {
         if (!root.available) return false
         if (section === "display") return root.displayHas(key, false)
+        if (root.rin) {
+            root.revision
+            const rinEntry = root.rinKeys[section + ":" + key]
+            return Boolean(rinEntry) && rinEntry.domain in root.rinData
+        }
         const entry = root.entryOf(section, key)
-        if (root.niri) return !entry?.only
+        if (root.niri) return !entry?.only && !root.rinKeys[section + ":" + key]?.only
         if (!entry) return false
         root.revision
         if (entry.wants && !root.hardware(entry.wants)) return false
@@ -244,6 +347,7 @@ Singleton {
         if (!root.available) return
         if (!devices.running) devices.running = true
         if (!cursorReader.running) cursorReader.running = true
+        if (root.rin) { root.readRin(); return }
         if (root.niri) { root.reload(Object.keys(root.stale).filter(part => root.stale[part])); return }
         if (!schemaReader.running && Object.keys(root.schema).length === 0) {
             schemaReader.running = true
@@ -295,6 +399,10 @@ Singleton {
         if (spec.comp === "display") return root.displayValue(spec.key)
         const id = spec.comp + ":" + spec.key
         if (id in root.local) return root.local[id]
+        if (root.rin) {
+            const entry = root.rinKeys[id]
+            return entry ? root.rinValue(entry, root.rinData, spec) : spec.fallback
+        }
         if (root.umbriel) {
             const entry = root.entryOf(spec.comp, spec.key)
             return entry ? root.readFrom(root.effective, entry, spec) : spec.fallback
@@ -307,6 +415,10 @@ Singleton {
     function factory(spec: var): var {
         root.revision
         if (spec.comp === "display") return undefined
+        if (root.rin) {
+            const entry = root.rinKeys[spec.comp + ":" + spec.key]
+            return entry && entry.domain in root.rinDefaults ? root.rinValue(entry, root.rinDefaults, spec) : undefined
+        }
         if (root.niri) {
             if (!(spec.comp in root.shipped) || root.personal.includes(spec.comp + ":" + spec.key)) return undefined
             const found = root.lookup(spec.comp, root.readPath(spec), root.shipped)
@@ -342,6 +454,21 @@ Singleton {
         local[spec.comp + ":" + spec.key] = next
         root.local = local
         root.revision++
+        if (root.rin) {
+            const entry = root.rinKeys[spec.comp + ":" + spec.key]
+            if (!entry) return
+            const written = entry.write ? entry.write(next, root.rinData[entry.domain] ?? ({})) : next
+            const values = entry.whole ? Object.assign({}, written) : ({ [entry.key]: written })
+            if (entry.round) for (const key of Object.keys(values)) values[key] = Math.round(Number(values[key]))
+            const data = Object.assign({}, root.rinData)
+            data[entry.domain] = Object.assign({}, data[entry.domain], values)
+            root.rinData = data
+            const queue = root.rinQueue.filter(item => !(item.domain === entry.domain && item.key in values))
+            for (const key of Object.keys(values)) queue.push({ domain: entry.domain, key: key, value: values[key] })
+            root.rinQueue = queue
+            root.rinNext()
+            return
+        }
         if (root.umbriel) {
             const entry = root.entryOf(spec.comp, spec.key)
             if (!entry) return
@@ -437,6 +564,10 @@ Singleton {
     }
     // The limits the compositor itself gives a range, when it says them.
     function limits(spec: var): var {
+        if (root.rin) {
+            const rinEntry = root.rinKeys[spec.comp + ":" + spec.key]
+            return rinEntry ? root.rinLimits[rinEntry.domain + "/" + (rinEntry.limits ?? rinEntry.key)] ?? null : null
+        }
         const entry = root.umbriel ? root.entryOf(spec.comp, spec.key) : null
         return entry ? root.schemaLimits[entry.toml] ?? null : null
     }
@@ -1214,6 +1345,56 @@ Singleton {
     Process {
         id: applier
         onExited: root.reload(["outputs"])
+    }
+    Process {
+        id: rinReader
+        command: ["rin", "msg", "settings", "read"].concat(root.rinDomains)
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.rinData = root.takeRin(text, root.rinData)
+                root.forget("")
+                root.rinRead = true
+                root.revision++
+            }
+        }
+    }
+    Process {
+        id: rinDescriber
+        command: ["rin", "msg", "settings", "describe"].concat(root.rinDomains)
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const lines = text.trim().split("\n")
+                const defaults = Object.assign({}, root.rinDefaults)
+                const limits = Object.assign({}, root.rinLimits)
+                for (const line of lines) {
+                    try {
+                        const schema = JSON.parse(line)
+                        if (!schema?.domain) continue
+                        const table = {}
+                        for (const key of schema.keys ?? []) {
+                            table[key.name] = key.default
+                            const range = key.constraint?.range
+                            if (range) limits[schema.domain + "/" + key.name] = { min: Number(range.min), max: Number(range.max) }
+                        }
+                        defaults[schema.domain] = table
+                    } catch (e) {}
+                }
+                root.rinDefaults = defaults
+                root.rinLimits = limits
+                root.revision++
+            }
+        }
+    }
+    Process {
+        id: rinWriter
+        property var item: null
+        stderr: StdioCollector { id: rinWriterErrors }
+        onExited: exitCode => {
+            root.error = exitCode === 0 ? "" : rinWriterErrors.text.trim().replace(/^rin msg: /, "")
+            if (exitCode !== 0) root.readRin()
+            root.written(String(rinWriter.item?.domain ?? ""))
+            root.rinNext()
+        }
     }
     Process {
         id: persister

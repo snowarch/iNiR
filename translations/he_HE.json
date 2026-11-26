@@ -3850,5 +3850,10 @@
   "Until": "עד",
   "Light mode": "מצב בהיר",
   "floating": "צפה",
-  "Pick the sound each event plays: one from any sound pack, or any audio file": "בחר את הצליל שמשמיע כל אירוע: אחד מכל חבילת צלילים, או מכל קובץ שמע"
+  "Pick the sound each event plays: one from any sound pack, or any audio file": "בחר את הצליל שמשמיע כל אירוע: אחד מכל חבילת צלילים, או מכל קובץ שמע",
+  "Resize from the edges": "שינוי גודל מהקצוות",
+  "Drag any edge of a window to change its size.": "גררו כל קצה של חלון כדי לשנות את גודלו.",
+  "Let full-screen games tear": "לאפשר קריעת תמונה במשחקים במסך מלא",
+  "A game that asks for it shows each frame at once, for less delay.": "משחק שמבקש זאת מציג כל פריים מיד, עם פחות השהיה.",
+  "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.": "פס לגרירת החלון, עם הכפתורים שלו, בחלונות שמשאירים את המסגרת למרכיב התצוגה."
 }

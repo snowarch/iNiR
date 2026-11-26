@@ -3850,5 +3850,10 @@
   "Until": "Hasta",
   "Light mode": "Modo claro",
   "floating": "flotante",
-  "Pick the sound each event plays: one from any sound pack, or any audio file": "Elige el sonido de cada evento: uno de cualquier paquete de sonidos o cualquier archivo de audio"
+  "Pick the sound each event plays: one from any sound pack, or any audio file": "Elige el sonido de cada evento: uno de cualquier paquete de sonidos o cualquier archivo de audio",
+  "Resize from the edges": "Redimensionar desde los bordes",
+  "Drag any edge of a window to change its size.": "Arrastra cualquier borde de una ventana para cambiar su tamaño.",
+  "Let full-screen games tear": "Permitir tearing en juegos a pantalla completa",
+  "A game that asks for it shows each frame at once, for less delay.": "Un juego que lo pide muestra cada cuadro al instante, con menos retraso.",
+  "A bar to drag a window by, with its buttons, on windows that leave their frame to the compositor.": "Una barra para arrastrar la ventana, con sus botones, en las ventanas que dejan su marco al compositor."
 }
