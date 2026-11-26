@@ -225,6 +225,17 @@ Singleton {
         regionSelectorOpen = true
     }
 
+    // The focused screen whole (`region screen`, Ctrl+Print on Umbriel and Rin): the selector opens on that screen
+    // alone, draws nothing and snips at once, so the shot is saved and copied like any region.
+    property bool regionSelectorWholeScreen: false
+    onRegionSelectorOpenChanged: if (!regionSelectorOpen) regionSelectorWholeScreen = false
+    function openScreenScreenshot(): void {
+        regionSelectorAction = 0
+        regionSelectorMode = 0
+        regionSelectorWholeScreen = true
+        regionSelectorOpen = true
+    }
+
     // The unified snip menu may restore the last toolbar choice. Raw ordinals
     // mirror RegionSelection's enums: action 0 Shot, 1 Edit, 2 Search, 3 OCR
     // (record and 6 Pin are never restored); mode 0 rectangle, 1 circle.

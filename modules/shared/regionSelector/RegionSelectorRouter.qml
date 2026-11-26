@@ -19,6 +19,7 @@ Scope {
     // Dedicated screenshot calls are always a rectangular capture. The unified
     // menu is the only entry point allowed to restore a previous toolbar choice.
     function screenshot(): void { GlobalStates.openRegionScreenshot() }
+    function screen(): void { GlobalStates.openScreenScreenshot() }
     function search(): void {
         open(RegionSelection.SnipAction.Search,
             (Config.options?.search?.imageSearch?.useCircleSelection ?? false)
@@ -42,6 +43,8 @@ Scope {
         target: "region"
         /// Take a rectangular region screenshot
         function screenshot(): void { root.screenshot() }
+        /// Screenshot the focused screen whole: saved and copied, nothing to draw
+        function screen(): void { root.screen() }
         /// Image search (Google Lens)
         function search(): void { root.search() }
         /// Start a region capture for Google Lens

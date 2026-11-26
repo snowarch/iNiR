@@ -333,6 +333,13 @@ PanelWindow {
             root.dismiss();
             return;
         }
+        if (GlobalStates.regionSelectorWholeScreen) {
+            if (root.screenshotReady)
+                root.snipFullscreen();
+            else
+                root.dismiss();
+            return;
+        }
         Qt.callLater(() => { root.visible = true; });
     }
 
@@ -527,7 +534,7 @@ PanelWindow {
     Rectangle {
         anchors.fill: parent
         color: "transparent"
-        opacity: root.captured ? 1 : 0
+        opacity: root.captured && !GlobalStates.regionSelectorWholeScreen ? 1 : 0
 
         Image {
             anchors.fill: parent

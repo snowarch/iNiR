@@ -30,6 +30,7 @@ Scope {
             id: regionSelectorLoader
             required property var modelData
             active: GlobalStates.regionSelectorOpen
+                && (!GlobalStates.regionSelectorWholeScreen || regionSelectorLoader.modelData === GlobalStates.focusedScreen)
 
             sourceComponent: RegionSelection {
                 screen: regionSelectorLoader.modelData

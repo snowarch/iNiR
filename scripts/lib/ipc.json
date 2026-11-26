@@ -189,15 +189,14 @@
       "event",
       "pack"
      ],
-     "description": "Hear an event in a sound pack (`aurora`, `tactile`, `lounge`, `orbit`, `crystal`, `arcade`, `classic` or one of yours), whatever is switched on",
+     "description": "Hear an event in a sound pack (`aurora`, `tactile`, `lounge`, `orbit`, `crystal`, `arcade` or one of yours), whatever is switched on",
      "values": [
       "aurora",
       "tactile",
       "lounge",
       "orbit",
       "crystal",
-      "arcade",
-      "classic"
+      "arcade"
      ]
     },
     {
@@ -3321,6 +3320,12 @@
      "name": "screenshot",
      "args": [],
      "description": "Take a rectangular region screenshot",
+     "values": []
+    },
+    {
+     "name": "screen",
+     "args": [],
+     "description": "Screenshot the focused screen whole: saved and copied, nothing to draw",
      "values": []
     },
     {
