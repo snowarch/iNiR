@@ -258,6 +258,7 @@ Loader {
             }
             // The panel's own layer, so a menu reads as part of the bar or dock it opens from.
             followWindow: true
+            compositorBacked: popupWindow.nativeBlurActive
             fallbackColor: Appearance.regaliaEverywhere ? "transparent"
                 : Appearance.editorialEverywhere || Appearance.cookieEverywhere || Appearance.zzzEverywhere ? Appearance.colors.colSurfaceContainer
                 : Appearance.auroraEverywhere && popupWindow.nativeBlurActive ? ColorUtils.applyAlpha(Appearance.colors.colLayer0, 0.46)

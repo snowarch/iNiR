@@ -164,17 +164,15 @@ Singleton {
             return requested
         if (requested === "compositor")
             return compositorBlurActive && topologyExact ? "compositor" : "wallpaper"
-        // Auto is fidelity-first. Native blur is an explicit backend choice,
-        // never a reason to replace a style-owned wallpaper material.
-        if (area === "islands" || area === "waffle")
-            return "wallpaper"
-        if (auroraEverywhere || angelEverywhere)
-            return "wallpaper"
-        if (editorialEverywhere && editorial.glassActive)
-            return "wallpaper"
-        if (zzzEverywhere && (root.styleConfig?.zzz?.glass ?? true))
-            return "wallpaper"
-        return "off"
+        // Auto is fidelity-first: only where a style wants glass. On Niri native blur is an explicit choice, never a
+        // reason to replace a style-owned wallpaper material. On Rin the compositor's glass is the material: it sees
+        // what is really behind and keeps the shape a surface publishes exactly.
+        const wantsGlass = area === "islands" || area === "waffle" || auroraEverywhere || angelEverywhere
+            || (editorialEverywhere && editorial.glassActive)
+            || (zzzEverywhere && (root.styleConfig?.zzz?.glass ?? true))
+        if (!wantsGlass)
+            return "off"
+        return (CompositorService?.isRin ?? false) && compositorBlurActive && topologyExact ? "compositor" : "wallpaper"
     }
 
     function useCompositorBlur(area: string, topology): bool {

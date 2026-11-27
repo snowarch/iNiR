@@ -85,17 +85,20 @@ Rectangle {
     property real blurStrength: Appearance.editorialEverywhere && Appearance.editorial.glassActive
         ? Appearance.editorial.glassBlur : 1
     property real saturationStrength: Appearance.editorialEverywhere && Appearance.editorial.glassActive ? 0.04 : Appearance.aurora.backdropSaturation
-    readonly property bool useWallpaperBackdrop: root.forceBackdrop
+    // The compositor blurs what is behind this plate (its window publishes the plate's region): the plate keeps its
+    // veil and edges, and draws no wallpaper of its own beneath them.
+    property bool compositorBacked: false
+    readonly property bool useWallpaperBackdrop: !root.compositorBacked && (root.forceBackdrop
         ? Appearance.effectsEnabled
         : (Appearance.blurBackendFor("panels", Appearance.blurTopology.unsupported) === "wallpaper"
-            && root.wallpaperBackdropEnabled)
+            && root.wallpaperBackdropEnabled))
     readonly property bool backdropReady: !root.useWallpaperBackdrop
         || blurredWallpaper.status === Image.Ready
     
     // Never expose a raw transparent hole while the wallpaper is loading or
     // unavailable. Consumers can provide a solid style base as fallback; once
     // the backdrop is ready this becomes transparent and the glass stack takes over.
-    color: root.useWallpaperBackdrop && root.backdropReady ? "transparent"
+    color: root.compositorBacked || (root.useWallpaperBackdrop && root.backdropReady) ? "transparent"
         : root.inirEverywhere ? root.inirColor
         : root.fallbackColor
     
@@ -165,7 +168,7 @@ Rectangle {
 
         Rectangle {
             anchors.fill: parent
-            visible: root.useWallpaperBackdrop
+            visible: root.useWallpaperBackdrop || root.compositorBacked
             color: root.angelEverywhere && !root.forceNeutralMaterial
                 ? ColorUtils.transparentize(Appearance.colors.colLayer0Base, Appearance.angel.overlayOpacity)
                 : ColorUtils.transparentize(root.overlayColor, root.auroraTransparency)
