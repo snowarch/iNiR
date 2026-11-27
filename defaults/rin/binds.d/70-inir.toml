@@ -1,6 +1,6 @@
 # 70 — Key bindings and hot corners
 #
-# The same keys as iNiR's Niri and Umbriel configs, in Rin's actions (docs: `rin msg --help`). Mod is Super (Alt
+# The same keys as iNiR's Niri and Umbriel configs, in Rin's actions (every action: ../README.md). Mod is Super (Alt
 # when Rin runs in a window). `shell TARGET FUNCTION` goes to iNiR in its own process; `spawn inir ...` runs the
 # `inir` command, for what is not an IPC call (settings, terminal, browser).
 # Rin reads every *.toml in this folder in name order and reloads on save. Rebind or unbind a key in a later file,

@@ -87,12 +87,12 @@ compositor_units() {
 
 # A session start under Rin: iNiR's keys, hot corner and default window rules live in their own files in Rin's
 # binds.d and rules.d, brought up to date on every login (Rin reloads them live). The person's overrides go in later
-# files, such as 90-user.toml, which win.
+# files, such as 90-user.toml, which win. A README beside them says which file does what.
 compositor_rin_session_start() {
     [[ "$(compositor_name)" == rin ]] || return 0
     local base="${XDG_CONFIG_HOME:-$HOME/.config}/rin"
     local src dest name
-    for pair in "binds.d:70-inir.toml" "rules.d:30-inir.toml"; do
+    for pair in "binds.d:70-inir.toml" "rules.d:30-inir.toml" ".:README.md"; do
         dest="$base/${pair%%:*}"
         name="${pair#*:}"
         src="$1/${pair%%:*}/$name"
