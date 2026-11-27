@@ -95,23 +95,34 @@ Singleton {
     // Qt and Niri blend in sRGB, not linear light, so veils and frosts are solved in gamma levels: in linear light a frost
     // over a dark region read far darker than planned, and a veil came out thicker than needed.
     // Alpha of a veil of `surface` over the backdrop so `ink` keeps `contrast` on its brightest part.
-    function veil(level: real, spread: real, spreadWeight: real, surface: color, ink: color, contrast: real, floor: real, cap: real): real {
+    // `plate`: a translucent fill the ink sits on, laid over the veil (a group); left out or transparent for none. The
+    // veil is solved for the ground the ink really has, the plate over the veiled backdrop.
+    function veil(level: real, spread: real, spreadWeight: real, surface: color, ink: color, contrast: real, floor: real, cap: real, plate: var): real {
         if (level < 0) return Math.max(floor, 0.42)
         const worst = Math.min(1, level + spread * spreadWeight)
         const base = Math.pow(ColorUtils.relativeLuminance(surface), 1 / 2.2)
-        const allowed = Math.pow(Math.max(0, (ColorUtils.relativeLuminance(ink) + 0.05) / contrast - 0.05), 1 / 2.2)
+        const onPlate = Math.pow(Math.max(0, (ColorUtils.relativeLuminance(ink) + 0.05) / contrast - 0.05), 1 / 2.2)
+        const allowed = root.underPlate(onPlate, plate)
         const needed = worst > allowed ? (worst - allowed) / Math.max(0.001, worst - base) : 0
         return Math.max(floor, Math.min(cap, needed))
     }
 
     // Alpha of a frost of `surface` so dark `ink` keeps `contrast` on the backdrop's darkest part.
-    function frost(level: real, spread: real, spreadWeight: real, surface: color, ink: color, contrast: real, floor: real, cap: real): real {
+    function frost(level: real, spread: real, spreadWeight: real, surface: color, ink: color, contrast: real, floor: real, cap: real, plate: var): real {
         if (level < 0) return Math.max(floor, 0.42)
         const darkest = Math.max(0, level - spread * spreadWeight)
-        const needed = Math.pow(Math.max(0, (ColorUtils.relativeLuminance(ink) + 0.05) * contrast - 0.05), 1 / 2.2)
+        const onPlate = Math.pow(Math.max(0, (ColorUtils.relativeLuminance(ink) + 0.05) * contrast - 0.05), 1 / 2.2)
+        const needed = root.underPlate(onPlate, plate)
         const surfaceLevel = Math.pow(ColorUtils.relativeLuminance(surface), 1 / 2.2)
         const alpha = darkest < needed ? (needed - darkest) / Math.max(0.001, surfaceLevel - darkest) : 0
         return Math.max(floor, Math.min(cap, alpha))
+    }
+
+    // The ground level under a plate of alpha a that gives `onPlate` once the plate lies on it (both in gamma).
+    function underPlate(onPlate: real, plate: var): real {
+        const a = plate ? Qt.color(plate).a : 0
+        if (a <= 0) return onPlate
+        return (onPlate - a * Math.pow(ColorUtils.relativeLuminance(Qt.color(plate)), 1 / 2.2)) / Math.max(0.001, 1 - a)
     }
 
     // `seed`'s own hue at the lightness that keeps `contrast` on the worst part of a backdrop: deeper for dark ink,
