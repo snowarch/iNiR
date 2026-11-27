@@ -1169,6 +1169,101 @@ Scope {
         // Keep background behind the lock surface. Moving this to Overlay can capture input.
         WlrLayershell.layer: WlrLayer.Bottom
         WlrLayershell.namespace: "quickshell:background"
+        // On Rin, render live video wallpapers in a dedicated Background-layer window underneath
+        // this Bottom-layer widget surface so Rin's GPU Glass/Liquid Glass refracts live video
+        // behind desktop widgets AND Rin's Workspaces overview clones the live video into every card.
+        readonly property bool rinLiveVideoLayer: CompositorService.isRin
+            && bgRoot.wallpaperIsVideo
+            && !bgRoot.webWallpaperActive
+            && !bgRoot.backdropActive
+            && !bgRoot.wallpaperSafetyTriggered
+            && bgRoot._familyOwnsScreen
+            && !glyphsLoader.active
+            && !textureLoader.active
+            && !GlobalStates.widgetEditMode
+        readonly property bool compositorWidgetGlass: CompositorService.isRin
+            && (bgRoot.externalMainWallpaperActive || bgRoot.rinLiveVideoLayer)
+            && !GlobalStates.widgetEditMode
+        property var _widgetBlurMap: ({})
+        property var _widgetBlurList: []
+        function setWidgetBlurRect(key: string, rect: var): void {
+            if (!key) return
+            const next = Object.assign({}, bgRoot._widgetBlurMap)
+            if (!rect || !(rect.width >= 8) || !(rect.height >= 8)) delete next[key]
+            else next[key] = rect
+            bgRoot._widgetBlurMap = next
+            bgRoot._rebuildWidgetBlur()
+        }
+        function clearWidgetBlurRect(key: string): void {
+            if (!key || !(key in bgRoot._widgetBlurMap)) return
+            const next = Object.assign({}, bgRoot._widgetBlurMap)
+            delete next[key]
+            bgRoot._widgetBlurMap = next
+            bgRoot._rebuildWidgetBlur()
+        }
+        function _rebuildWidgetBlur(): void {
+            const list = Object.keys(bgRoot._widgetBlurMap).map(k => bgRoot._widgetBlurMap[k])
+            bgRoot._widgetBlurList = list
+            rinWidgetBlur.sync(list)
+        }
+        onCompositorWidgetGlassChanged: rinWidgetBlur.sync(bgRoot._widgetBlurList)
+
+        Region {
+            id: rinWidgetBlur
+            property var pool: []
+            readonly property Component rectComp: Component {
+                Region {
+                    property var spec: null
+                    x: spec ? Math.round(spec.x) : 0
+                    y: spec ? Math.round(spec.y) : 0
+                    width: spec ? Math.max(0, Math.round(spec.width)) : 0
+                    height: spec ? Math.max(0, Math.round(spec.height)) : 0
+                    radius: spec ? Math.max(0, Math.round(spec.radius ?? 0)) : 0
+                }
+            }
+            function sync(list: var): void {
+                if (!CompositorService.blurRegions) return
+                const active = bgRoot.compositorWidgetGlass && list.length > 0
+                while (pool.length < list.length) {
+                    const piece = rectComp.createObject(rinWidgetBlur)
+                    rinWidgetBlur.regions.push(piece)
+                    pool.push(piece)
+                }
+                for (let i = 0; i < pool.length; i++) {
+                    pool[i].spec = active && i < list.length ? list[i] : null
+                }
+                bgRoot.BackgroundEffect.blurRegion = null
+                if (active) bgRoot.BackgroundEffect.blurRegion = rinWidgetBlur
+                if (bgRoot.visible && bgRoot.contentItem?.Window.window)
+                    bgRoot.contentItem.Window.window.update()
+            }
+        }
+
+        Loader {
+            id: rinLiveVideoHost
+            active: bgRoot.rinLiveVideoLayer
+            sourceComponent: PanelWindow {
+                screen: bgRoot.screen
+                exclusionMode: ExclusionMode.Ignore
+                WlrLayershell.layer: WlrLayer.Background
+                WlrLayershell.namespace: "quickshell:rin-live-wallpaper"
+                WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+                anchors { top: true; bottom: true; left: true; right: true }
+                color: "black"
+                mask: Region {}
+                VideoCrossfader {
+                    anchors.fill: parent
+                    source: bgRoot.wallpaperPathRaw
+                    fillMode: Wallpapers.videoFillFor(bgRoot.fillMode)
+                    enableTransitions: Config.options?.background?.transition?.enable ?? true
+                    transitionBaseDuration: Config.options?.background?.transition?.duration ?? 800
+                    shouldPlay: bgRoot.enableAnimation && !GlobalStates.screenLocked
+                        && !Appearance._gameModeActive && !Wallpapers.batteryPauseActive
+                        && Wallpapers.videoMotionAllowedOn(bgRoot.screenName)
+                        && bgRoot._familyOwnsScreen
+                }
+            }
+        }
         // Host for LiveLayer (continuous motion in a widget moves to a small surface of its own instead of
         // repainting this whole output every frame): nothing here covers or moves a still widget outside edit.
         readonly property bool liveCalm: !GlobalStates.widgetEditMode && !GlobalStates.shellLayoutEditMode
@@ -1767,9 +1862,9 @@ Scope {
                 VideoCrossfader {
                     id: videoWallpaper
                     anchors.fill: parent
-                    visible: opacity > 0 && !blurLoader.active && !bgRoot.backdropActive
+                    visible: opacity > 0 && !blurLoader.active && !bgRoot.backdropActive && !bgRoot.rinLiveVideoLayer
                         && (bgRoot.wallpaperIsVideo || bgRoot._outgoingVideo.length > 0)
-                    opacity: bgRoot.wallpaperIsVideo || videoHandoff.running ? 1 : 0
+                    opacity: (bgRoot.wallpaperIsVideo || videoHandoff.running) && !bgRoot.rinLiveVideoLayer ? 1 : 0
                     onOpacityChanged: if (opacity === 0 && !bgRoot.wallpaperIsVideo) bgRoot._outgoingVideo = ""
                     Behavior on opacity {
                         enabled: Appearance.animationsEnabled
@@ -1782,7 +1877,7 @@ Scope {
                     // the source releases the decoder outright instead of only
                     // pausing it; the transition overlay covers the swap.
                     source: {
-                        if (bgRoot.webWallpaperActive || bgRoot.wallpaperSafetyTriggered || bgRoot.backdropActive) return "";
+                        if (bgRoot.webWallpaperActive || bgRoot.wallpaperSafetyTriggered || bgRoot.backdropActive || bgRoot.rinLiveVideoLayer) return "";
                         if (!bgRoot._familyOwnsScreen) return "";
                         return bgRoot.wallpaperIsVideo ? bgRoot.wallpaperPathRaw : bgRoot._outgoingVideo;
                     }

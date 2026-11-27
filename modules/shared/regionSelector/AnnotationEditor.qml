@@ -531,7 +531,7 @@ PanelWindow {
             # Clipboard ownership lives outside inir.service so editing/copying
             # never leaves a wl-copy process behind when the shell restarts.
             _clip_helper='${StringUtils.shellSingleQuoteEscape(Quickshell.shellPath("scripts/clipboard-copy.sh"))}';
-            if "$_clip_helper" < "$_ss" 2>/dev/null && printf '%s' "$_ss" | "$_clip_helper" --primary 2>/dev/null; then
+            if "$_clip_helper" --type image/png < "$_ss" 2>/dev/null && printf '%s' "$_ss" | "$_clip_helper" --primary 2>/dev/null; then
                 _body='${StringUtils.shellSingleQuoteEscape(Translation.tr("Saved in %1 and copied").arg(root.savedIn))}';
             else
                 _body='${StringUtils.shellSingleQuoteEscape(Translation.tr("Saved in %1. Copying needs wl-clipboard").arg(root.savedIn))}';

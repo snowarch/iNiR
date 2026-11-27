@@ -414,7 +414,7 @@ PanelWindow {
             // never read a half-written PNG ("Unsupported image format").
             case RegionSelection.SnipAction.Copy:
                 Audio.playEvent("screenshot")
-                snipProc.command = ["bash", "-c", `_dir='${screenshotSaveDir}' && mkdir -p "$_dir" && _ss="$_dir/$(date +'${StringUtils.shellSingleQuoteEscape(root.screenshotNameFormat)}').png" && _part="$_dir/.$(basename "$_ss").part" && ${cropToStdout} | tee "$_part" | '${clipboardCopy}' && mv -f "$_part" "$_ss" && printf '%s' "$_ss" | '${clipboardCopy}' --primary && ${cleanup} && notify-send '${copiedTitle}' '${copiedBody}' -a Screenshot -i camera-photo -t 3000`]
+                snipProc.command = ["bash", "-c", `_dir='${screenshotSaveDir}' && mkdir -p "$_dir" && _ss="$_dir/$(date +'${StringUtils.shellSingleQuoteEscape(root.screenshotNameFormat)}').png" && _part="$_dir/.$(basename "$_ss").part" && ${cropToStdout} | tee "$_part" | '${clipboardCopy}' --type image/png && mv -f "$_part" "$_ss" && printf '%s' "$_ss" | '${clipboardCopy}' --primary && ${cleanup} && notify-send '${copiedTitle}' '${copiedBody}' -a Screenshot -i camera-photo -t 3000`]
                 break;
             case RegionSelection.SnipAction.Edit:
                 if (Config.options?.regionSelector?.annotation?.useNativeEditor ?? true) {

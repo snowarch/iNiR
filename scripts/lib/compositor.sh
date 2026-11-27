@@ -102,8 +102,20 @@ compositor_rin_session_start() {
         mkdir -p "$dest" && install -m 644 "$src" "$dest/.${name}.part" && mv -f "$dest/.${name}.part" "$dest/$name"
     done
     # Rin's title bars, outlines, switcher and overview take the current theme now, not at the next theme change.
-    local colors="${1%/defaults/rin}/scripts/colors/modules/16-rin.sh"
+    local root_dir="${1%/defaults/rin}"
+    local colors="$root_dir/scripts/colors/modules/16-rin.sh"
     [[ -f "$colors" ]] && bash "$colors" >/dev/null 2>&1 || true
+    # Keep clipboard history populated on Rin just as Niri and Umbriel startup configs do.
+    if command -v wl-paste >/dev/null 2>&1 && command -v cliphist >/dev/null 2>&1; then
+        if ! pgrep -u "$USER" -f 'wl-paste.*clipboard-store' >/dev/null 2>&1; then
+            systemd-run --user --quiet --unit="inir-cliphist-text" --collect --service-type=simple \
+                wl-paste --no-newline --type text --watch "$root_dir/scripts/lib/accel-run" clipboard-store >/dev/null 2>&1 || true
+        fi
+        if ! pgrep -u "$USER" -f 'wl-paste.*clipboard-image-store' >/dev/null 2>&1; then
+            systemd-run --user --quiet --unit="inir-cliphist-image" --collect --service-type=simple \
+                wl-paste --type image --watch "$root_dir/scripts/clipboard-image-store.sh" >/dev/null 2>&1 || true
+        fi
+    fi
 }
 
 # A session start under Umbriel: the first login with no config of their own gets iNiR's (the early port's one is

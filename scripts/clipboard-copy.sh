@@ -10,10 +10,30 @@ has_usable_systemd_user_manager() {
 }
 
 selection_args=()
-if [[ "${1:-}" == "--primary" ]]; then
-  selection_args=(--primary)
-  shift
-fi
+mime_type=""
+while (($# > 0)); do
+  case "$1" in
+    --primary)
+      selection_args+=(--primary)
+      shift
+      ;;
+    --type)
+      mime_type="${2:-}"
+      shift 2
+      ;;
+    --type=*)
+      mime_type="${1#--type=}"
+      shift
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
 
 wl_copy_bin="$(command -v wl-copy 2>/dev/null || true)"
 [[ -n "$wl_copy_bin" ]] || { echo "wl-copy is not installed" >&2; exit 127; }
@@ -27,6 +47,21 @@ if (($# > 0)); then
   printf '%s' "$*" > "$data_file"
 else
   cat > "$data_file"
+fi
+
+# Sniff image headers before systemd unlinks the temp file so wl-copy always
+# advertises the real MIME type instead of falling back to octet-stream.
+if [[ -z "$mime_type" && -s "$data_file" ]]; then
+  magic="$(od -An -tx1 -N 12 "$data_file" 2>/dev/null | tr -d ' \n')"
+  case "$magic" in
+    89504e470d0a1a0a*) mime_type="image/png" ;;
+    ffd8ff*) mime_type="image/jpeg" ;;
+    52494646*57454250) mime_type="image/webp" ;;
+    47494638*) mime_type="image/gif" ;;
+  esac
+fi
+if [[ -n "$mime_type" ]]; then
+  selection_args+=(--type "$mime_type")
 fi
 
 # wl-copy is a long-lived Wayland selection owner. Let systemd own the

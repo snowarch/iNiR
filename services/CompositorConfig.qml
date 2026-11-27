@@ -102,6 +102,11 @@ Singleton {
         "layout:gaps": { domain: "rin.windows", key: "gap-inner", round: true },
         "layout:gap-outer": { domain: "rin.windows", key: "gap-outer", round: true, only: true },
         "overview:layout": { domain: "rin.windows", key: "overview-layout", only: true },
+        "overview:show-workspaces": { domain: "rin.windows", key: "overview-show-workspaces", only: true },
+        "overview:show-labels": { domain: "rin.windows", key: "overview-show-labels", only: true },
+        "overview:dim": { domain: "rin.windows", key: "overview-dim", round: true, only: true },
+        "overview:scale": { domain: "rin.windows", key: "overview-scale", round: true, only: true },
+        "switcher:scale": { domain: "rin.windows", key: "switcher-scale", round: true, only: true },
         "layout:focus-ring.enabled": { domain: "rin.windows", key: "focus-outline" },
         "layout:focus-ring.width": { domain: "rin.windows", key: "focus-outline-width", round: true },
         "layout:stacking.drop-zones": { domain: "rin.windows", key: "snap" },
@@ -116,6 +121,13 @@ Singleton {
         "blur:enabled": { domain: "rin.appearance", key: "blur" },
         "blur:radius": { domain: "rin.appearance", key: "blur-radius", round: true, only: true },
         "blur:background": { domain: "rin.appearance", key: "background", only: true },
+        "blur:liquid-bevel": { domain: "rin.appearance", key: "liquid-bevel", round: true, only: true },
+        "blur:liquid-depth": { domain: "rin.appearance", key: "liquid-depth", round: true, only: true },
+        "blur:liquid-bulge": { domain: "rin.appearance", key: "liquid-bulge", only: true },
+        "blur:liquid-frost": { domain: "rin.appearance", key: "liquid-frost", only: true },
+        "blur:liquid-ior": { domain: "rin.appearance", key: "liquid-ior", only: true },
+        "blur:liquid-dispersion": { domain: "rin.appearance", key: "liquid-dispersion", only: true },
+        "blur:liquid-adapt": { domain: "rin.appearance", key: "liquid-adapt", only: true },
         "glass:enabled": { domain: "rin.appearance", key: "blur" },
         "glass:blur-radius": { domain: "rin.appearance", key: "blur-radius", round: true, only: true },
         "glass:style": { domain: "rin.appearance", key: "background", only: true },
@@ -140,6 +152,7 @@ Singleton {
                 }) }
             } },
         "input:keyboard.options": { domain: "rin.ime", key: "keyboard-options" },
+        "input:keyboard.numlock": { domain: "rin.ime", key: "numlock" },
         "input:mouse.accel-speed": { domain: "rin.pointer", key: "mouse-speed" },
         "input:mouse.accel-profile": { domain: "rin.pointer", key: "mouse-acceleration" },
         "input:mouse.natural-scroll": { domain: "rin.pointer", key: "mouse-natural-scroll" },
@@ -402,7 +415,8 @@ Singleton {
     // iNiR over its socket, so a corner there spawns nothing; its overview is iNiR's own.
     readonly property var cornerActions: root.rin ? [
         { label: "Nothing", value: "", glyph: "block" },
-        { label: "Overview", value: "shell overview toggle", also: ["overview-toggle", "toggle-overview", "overview-open", "open-overview", "spawn inir overview toggle"], glyph: "overview_key" },
+        { label: "Overview", value: "overview-toggle", also: ["toggle-overview", "overview-open", "open-overview"], glyph: "overview_key" },
+        { label: "App launcher", value: "shell overview toggle", also: ["spawn inir overview toggle"], glyph: "apps" },
         { label: "Windows", value: "shell taskview toggle", also: ["spawn inir taskview toggle"], glyph: "select_window" },
         { label: "Search", value: "shell search toggle", also: ["spawn inir search toggle"], glyph: "search" },
         { label: "Clipboard", value: "shell clipboard toggle", also: ["spawn inir clipboard toggle"], glyph: "content_paste" },
@@ -1056,10 +1070,11 @@ Singleton {
             return Object.assign(root.fromUmbriel(out, null, null), {
                 configName: slug,
                 vrr_supported: out.adaptive_sync_supported === true,
-                vrr_mode: ({ always: "on", automatic: "on-demand" })[String(said("adaptive-sync") ?? "never")] ?? "off",
+                vrr_mode: ({ always: "on", automatic: "on-demand" })[String(said("adaptive-sync") ?? "automatic")] ?? "off",
                 hdr_supported: said("hdr") !== undefined,
                 hdr_mode: said("hdr") === true ? "on" : "off",
-                sdr_white: Number(said("sdr-brightness") ?? 203)
+                sdr_white: Number(said("sdr-brightness") ?? 203),
+                tearing: (root.rinData["rin.windows"]?.["allow-tearing"] ?? true) === true
             })
         })
         root.stale.outputs = false
@@ -1159,14 +1174,14 @@ Singleton {
         if (key === "arrange") return root.outputs.length > 1
         // A screen turned off has only its switch.
         if (!anyScreen && out.enabled === false && key !== "on" && key !== "screen") return false
-        if (key === "vrr") return out.vrr_supported === true
+        if (key === "vrr") return out.vrr_supported === true || (root.rin && Boolean(out.configName))
         if (["screen", "resolution", "rate", "scale", "transform"].includes(key)) return true
         if (!root.umbriel && !root.rin) return false
         // The last screen on has no switch: nothing would be left to turn it on from.
         if (key === "on") return root.outputs.length > 1 && (out.enabled === false || root.activeOutputs.length > 1)
         if (key === "hdr" || key === "sdr-white") return out.hdr_supported === true
-        // Rin sets a screen's mode, scale, turn, place, switch, VRR and HDR; the rest is Umbriel's.
-        if (root.rin) return false
+        // Rin sets a screen's mode, scale, turn, place, switch, VRR, HDR and fullscreen tearing; the rest is Umbriel's.
+        if (root.rin) return key === "tearing"
         if (key === "bit-depth") return out.deep_colour === true
         if (key === "limited-range") return String(out.name).startsWith("HDMI")
         if (key === "sdr-transfer") return out.hdr_supported === true
@@ -1219,7 +1234,7 @@ Singleton {
         if (key === "hdr") return String(out.hdr_mode ?? "off")
         if (key === "sdr-white") return Number(out.sdr_white ?? 203)
         if (key === "bit-depth") return Number(out.bit_depth ?? 8)
-        if (key === "tearing") return out.tearing === true
+        if (key === "tearing") return root.rin ? (root.rinData["rin.windows"]?.["allow-tearing"] ?? true) === true : out.tearing === true
         if (key === "main") return out.main === true
         if (key === "workspace-axis") return String(out.workspace_axis ?? "vertical")
         if (key === "limited-range") return root.rangeMarked().includes(out.configName)
@@ -1310,6 +1325,12 @@ Singleton {
             return
         }
         if (root.rin) {
+            if (setting === "tearing") {
+                const allow = next === true || next === "true"
+                root.set({ comp: "windows", key: "tearing" }, allow)
+                root.outputs = root.outputs.map(entry => Object.assign({}, entry, { tearing: allow }))
+                return
+            }
             const suffix = ({ mode: "mode", scale: "scale", transform: "transform", on: "enabled", vrr: "adaptive-sync", hdr: "hdr", "sdr-white": "sdr-brightness" })[setting]
             if (!suffix || !out.configName) return
             // A value as the row says it, in rin.displays' own words.

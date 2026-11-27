@@ -164,6 +164,6 @@
 "Mod+Shift+B" = "shell mpris previous"
 "Mod+Shift+M" = "shell audio mute"
 
-# The pointer in a corner of a screen. Top-left opens iNiR's overview, as Niri's corner opens its own.
+# The pointer in a corner of a screen. Top-left opens Rin's overview, as Niri's and Umbriel's do.
 [hot-corners]
-top-left = "shell overview toggle"
+top-left = "overview-toggle"
