@@ -13,10 +13,10 @@ iNiR writes most of them. Edit only the files marked "you".
 | rin.windows.toml | iNiR Settings > Windows | Layout, gaps, corners, snap, overview layout, tearing. |
 | rin.appearance.toml | iNiR Settings | Blur, blur radius, glass or liquid background. |
 | rin.animation.toml | iNiR Settings | Animations on or off. |
-| rin.pointer.toml | iNiR Settings, rin-settings | Mouse, touchpad, cursor theme and size. |
-| rin.ime.toml | iNiR Settings, rin-settings | Keyboard layouts and options. |
-| rin.displays.toml | iNiR Settings > Displays, rin-settings | Mode, position, scale, VRR, HDR per display. |
-| rin.network.toml | rin-settings > Network | Proxy. |
+| rin.pointer.toml | iNiR Settings | Mouse, touchpad, cursor theme and size. |
+| rin.ime.toml | iNiR Settings | Keyboard layouts and options. |
+| rin.displays.toml | iNiR Settings > Displays | Mode, position, scale, VRR, HDR per display. |
+| rin.network.toml | you | Proxy. |
 
 Rin reads no other file here.
 
