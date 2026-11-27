@@ -127,7 +127,6 @@ Singleton {
         "blur:liquid-frost": { domain: "rin.appearance", key: "liquid-frost", only: true },
         "blur:liquid-ior": { domain: "rin.appearance", key: "liquid-ior", only: true },
         "blur:liquid-dispersion": { domain: "rin.appearance", key: "liquid-dispersion", only: true },
-        "blur:liquid-adapt": { domain: "rin.appearance", key: "liquid-adapt", only: true },
         "glass:enabled": { domain: "rin.appearance", key: "blur" },
         "glass:blur-radius": { domain: "rin.appearance", key: "blur-radius", round: true, only: true },
         "glass:style": { domain: "rin.appearance", key: "background", only: true },
@@ -1620,6 +1619,14 @@ Singleton {
     Process {
         id: applier
         onExited: root.reload(["outputs"])
+    }
+    // Whoever changes Rin's settings, its event says which domains: read them again, so no row shows a stale value.
+    Connections {
+        target: NiriService
+        enabled: root.rin
+        function onRinSettingsChanged(domains: var): void {
+            if (domains.some(domain => root.rinDomains.includes(domain))) root.readRin()
+        }
     }
     Process {
         id: rinReader
