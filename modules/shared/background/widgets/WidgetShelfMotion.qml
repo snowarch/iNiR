@@ -40,6 +40,10 @@ Item {
     function retake(): void {
         if (root.picturing) pictureTimer.restart()
     }
+    Connections {
+        target: DesktopEditStage
+        function onLookChanged(): void { root.retake() }
+    }
     // takePicture wrote it to disk when it took it; only a write that failed is tried again on the way out (one PNG
     // encode per widget there stalled leaving the mode).
     Component.onDestruction: {

@@ -161,6 +161,13 @@ Singleton {
     }
     property string look: "default"
     property var pictures: ({})
+    // Another look (a scheme or Design changed while arranging): the pictures of the old one go at once, and every
+    // widget takes its own again once it has redrawn (WidgetShelfMotion); before, the shelf kept the old look's plates.
+    onLookChanged: {
+        root.pictures = ({})
+        root._pictureQueue = []
+        pictureBeat.stop()
+    }
     readonly property string pictureDir: (Quickshell.env("XDG_CACHE_HOME") || (Quickshell.env("HOME") + "/.cache")) + "/inir/widget-pictures"
     // An empty url drops the live picture (its grab is gone); the shelf falls back to the one on disk.
     function setPicture(key: string, url: string, width: real, height: real): void {
