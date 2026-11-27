@@ -4574,7 +4574,7 @@ case "$command_name" in
             if [[ -n "${UMBRIEL_SOCKET:-}" ]] && source_compositor_helper; then
                 compositor_umbriel_session_start "$config_dir/defaults/umbriel" </dev/null >/dev/null 2>&1 &
             fi
-            # Under Rin: iNiR's keys in Rin's binds.d, current on every login.
+            # Under Rin: iNiR's keys, rules and colours, current on every login.
             if [[ -n "${RIN_SOCKET:-}" ]] && source_compositor_helper; then
                 compositor_rin_session_start "$config_dir/defaults/rin" </dev/null >/dev/null 2>&1 &
             fi

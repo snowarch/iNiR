@@ -14,7 +14,8 @@ META="$STATE_DIR/user/generated/theme-meta.json"
 command -v rin >/dev/null 2>&1 || exit 0
 command -v jq >/dev/null 2>&1 || exit 0
 
-seed="$(jq -r '.accent_seed // .seed_color // empty' "$META" 2>/dev/null | tr 'A-F' 'a-f')"
+# An unset accent is written as "", which jq's // does not skip.
+seed="$(jq -r '[.accent_seed, .seed_color] | map(select(type == "string" and . != "")) | .[0] // empty' "$META" 2>/dev/null | tr 'A-F' 'a-f')"
 [[ "$seed" =~ ^#[0-9a-f]{6}$ ]] || exit 0
 style="$(jq -r '.scheme // empty' "$META" 2>/dev/null)"
 style="${style#scheme-}"

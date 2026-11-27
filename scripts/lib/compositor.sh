@@ -101,6 +101,9 @@ compositor_rin_session_start() {
         # written beside it and renamed: Rin never reads half a file
         mkdir -p "$dest" && install -m 644 "$src" "$dest/.${name}.part" && mv -f "$dest/.${name}.part" "$dest/$name"
     done
+    # Rin's title bars, outlines, switcher and overview take the current theme now, not at the next theme change.
+    local colors="${1%/defaults/rin}/scripts/colors/modules/16-rin.sh"
+    [[ -f "$colors" ]] && bash "$colors" >/dev/null 2>&1 || true
 }
 
 # A session start under Umbriel: the first login with no config of their own gets iNiR's (the early port's one is
