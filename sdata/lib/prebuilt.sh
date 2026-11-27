@@ -229,17 +229,20 @@ prebuilt_accel_hooks_ok() {
 # prebuilt_files_hooks: links ~/.local/bin/inir-files and installs the .desktop entry without overriding a local
 # developer checkout symlink or changing the person's default file manager (Settings -> Default file manager does that).
 prebuilt_files_hooks() {
-    local base bin link apps desktop dbus
+    local base bin link apps desktop dbus f
     base="$(_prebuilt_home)/files/current"
     bin="$base/bin/inir-files"
     link="$HOME/.local/bin/inir-files"
     apps="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
     desktop="$apps/inir-files.desktop"
-    dbus="${XDG_DATA_HOME:-$HOME/.local/share}/dbus-1/services/inir-files.FileManager1.service"
+    dbus="${XDG_DATA_HOME:-$HOME/.local/share}/dbus-1/services"
     if [[ ! -x "$bin" ]]; then
         [[ -L "$link" && "$(readlink "$link")" == */files/current/bin/inir-files ]] && rm -f "$link"
         [[ -f "$desktop" ]] && rm -f "$desktop"
-        [[ -f "$dbus" ]] && rm -f "$dbus"
+        # org.freedesktop.FileManager1.service is the name iNiR Files writes; the other one, releases up to 0.2.0.
+        for f in "$dbus/org.freedesktop.FileManager1.service" "$dbus/inir-files.FileManager1.service"; do
+            [[ -f "$f" ]] && grep -q '^Exec=.*inir-files' "$f" && rm -f "$f"
+        done
         return 0
     fi
     mkdir -p "$HOME/.local/bin" "$apps"
