@@ -1187,12 +1187,15 @@ Scope {
             && !GlobalStates.widgetEditMode
         property var _widgetBlurMap: ({})
         property var _widgetBlurList: []
+        // A face may hand its item: its pane is then mapped at each rebuild, through every transform above it (the
+        // edit card's zoom, the canvas's arrival, parallax). A rect computed by the face missed those, and the glass
+        // stayed where the widget was before a wallpaper change or an edit.
         function setWidgetBlurRect(key: string, rect: var): void {
             if (!key) return
             const prev = bgRoot._widgetBlurMap[key]
             const valid = Boolean(rect && rect.width >= 8 && rect.height >= 8)
             if (!valid && !prev) return
-            if (valid && prev
+            if (valid && prev && !rect.item
                 && Math.round(prev.x) === Math.round(rect.x)
                 && Math.round(prev.y) === Math.round(rect.y)
                 && Math.round(prev.width) === Math.round(rect.width)
@@ -1213,11 +1216,28 @@ Scope {
             bgRoot._widgetBlurMap = next
             rinWidgetBlurTimer.restart()
         }
+        function _mapWidgetBlur(rect: var): var {
+            const item = rect.item
+            if (!item) return rect
+            const root = bgRoot.contentItem
+            if (!root || !item.visible || !(item.width >= 8) || !(item.height >= 8)) return null
+            const a = item.mapToItem(root, 0, 0)
+            const b = item.mapToItem(root, item.width, item.height)
+            const width = b.x - a.x
+            const height = b.y - a.y
+            if (!(width >= 8) || !(height >= 8)) return null
+            return { x: a.x, y: a.y, width: width, height: height, radius: Number(rect.radius ?? 0) * width / item.width }
+        }
         function _rebuildWidgetBlur(): void {
-            const list = Object.keys(bgRoot._widgetBlurMap).map(k => bgRoot._widgetBlurMap[k])
+            const list = Object.keys(bgRoot._widgetBlurMap).map(k => bgRoot._mapWidgetBlur(bgRoot._widgetBlurMap[k]))
+                .filter(rect => rect !== null)
             bgRoot._widgetBlurList = list
             rinWidgetBlur.sync(list)
         }
+        function _restackWidgetBlur(): void {
+            if (bgRoot.compositorWidgetGlass) rinWidgetBlurTimer.restart()
+        }
+        onEditCardChanged: bgRoot._restackWidgetBlur()
         Timer {
             id: rinWidgetBlurTimer
             interval: 0
@@ -2322,6 +2342,7 @@ Scope {
                     NumberAnimation { duration: Appearance.animation.elementMoveEnter.duration * 1.4; easing.type: Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Appearance.animation.elementMoveEnter.bezierCurve }
                 }
                 scale: arrival >= 1 ? 1 : 1.025 - 0.025 * arrival
+                onScaleChanged: bgRoot._restackWidgetBlur()
                 opacity: {
                     const dynOp = Math.max(0, Math.min(100, Number(Config.options?.background?.widgets?.dynamicOpacity) || 0));
                     const presence = dynOp <= 0 || !bgRoot.focusWindowsPresent ? 1 : 1 - (dynOp / 100) * bgRoot.focusPresenceProgress;
@@ -2341,6 +2362,8 @@ Scope {
                 // Parallax widget depth: translate the canvas as a whole to create
                 // layered movement relative to the wallpaper.
                 transform: Translate {
+                    onXChanged: bgRoot._restackWidgetBlur()
+                    onYChanged: bgRoot._restackWidgetBlur()
                     // Whole pixels: native text on a fractional offset is resampled and goes soft.
                     x: widgetCanvas._parallaxActive ? Math.round(bgRoot.parallaxTotalX * wallpaperContainer.activeValueX * (1 - bgRoot.parallaxWidgetDepth)) : 0
                     y: widgetCanvas._parallaxActive ? Math.round(bgRoot.parallaxTotalY * wallpaperContainer.activeValueY * (1 - bgRoot.parallaxWidgetDepth)) : 0

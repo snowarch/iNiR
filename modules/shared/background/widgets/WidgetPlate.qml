@@ -97,7 +97,7 @@ Rectangle {
         }
         const pos = root.mapToItem(win.contentItem, 0, 0)
         win.setWidgetBlurRect(root._blurKey, {
-            x: pos.x, y: pos.y, width: root.width, height: root.height, radius: root.radius
+            item: root, x: pos.x, y: pos.y, width: root.width, height: root.height, radius: root.radius
         })
     }
     onCompositorGlassChanged: root._syncCompositorBlur()
