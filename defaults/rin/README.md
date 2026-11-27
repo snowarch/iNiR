@@ -30,6 +30,14 @@ Rin reads no other file here.
 - A bind is a table to set more: { action = "...", allow-when-locked = true, allow-inhibiting = false }.
 - A file that does not parse is skipped as a whole; the keys stay as they were.
 
+## In the overview (Mod+Tab)
+
+- Tab: next layout (Exposé, Workspaces, Grid, Carousel). Settings > Windows picks the first one.
+- Click a window: open it. Middle click or Delete: close it.
+- Workspaces layout: click another card or thumbnail to show it; drag a window onto one to move the window there.
+- Wheel, PageUp/PageDown, Ctrl+Left/Right, 1 to 9: show a workspace.
+- Arrows: pick a window. Enter: open it. Esc or a click on empty space: close the overview.
+
 ## Actions
 
 Rin also takes Niri's spelling of each action (focus-column-left for window-focus-left).
