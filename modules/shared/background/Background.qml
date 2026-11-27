@@ -1169,20 +1169,21 @@ Scope {
         // Keep background behind the lock surface. Moving this to Overlay can capture input.
         WlrLayershell.layer: WlrLayer.Bottom
         WlrLayershell.namespace: "quickshell:background"
-        // On Rin, render live video wallpapers in a dedicated Background-layer window underneath
-        // this Bottom-layer widget surface so Rin's GPU Glass/Liquid Glass refracts live video
-        // behind desktop widgets AND Rin's Workspaces overview clones the live video into every card.
-        readonly property bool rinLiveVideoLayer: CompositorService.isRin
-            && bgRoot.wallpaperIsVideo
+        // On Rin, render the desktop wallpaper (static, shader transitions, GIF, or live video) in a
+        // dedicated Background-layer window underneath this Bottom-layer widget surface whenever awww
+        // is not already drawing it. That guarantees Rin's GPU Glass/Liquid Glass blurs and refracts
+        // the real wallpaper behind every desktop widget AND Rin's Workspaces overview clones it live.
+        readonly property bool rinBackgroundLayerActive: CompositorService.isRin
+            && !bgRoot.externalMainWallpaperActive
             && !bgRoot.webWallpaperActive
             && !bgRoot.backdropActive
             && !bgRoot.wallpaperSafetyTriggered
             && bgRoot._familyOwnsScreen
             && !glyphsLoader.active
             && !textureLoader.active
-            && !GlobalStates.widgetEditMode
+        readonly property bool rinLiveVideoLayer: bgRoot.rinBackgroundLayerActive && bgRoot.wallpaperIsVideo
         readonly property bool compositorWidgetGlass: CompositorService.isRin
-            && (bgRoot.externalMainWallpaperActive || bgRoot.rinLiveVideoLayer)
+            && (bgRoot.externalMainWallpaperActive || bgRoot.rinBackgroundLayerActive)
             && !GlobalStates.widgetEditMode
         property var _widgetBlurMap: ({})
         property var _widgetBlurList: []
@@ -1207,18 +1208,24 @@ Scope {
             rinWidgetBlur.sync(list)
         }
         onCompositorWidgetGlassChanged: rinWidgetBlur.sync(bgRoot._widgetBlurList)
+        onVisibleChanged: if (bgRoot.visible) rinWidgetBlur.sync(bgRoot._widgetBlurList)
 
         Region {
             id: rinWidgetBlur
             property var pool: []
             readonly property Component rectComp: Component {
                 Region {
+                    id: piece
                     property var spec: null
-                    x: spec ? Math.round(spec.x) : 0
-                    y: spec ? Math.round(spec.y) : 0
-                    width: spec ? Math.max(0, Math.round(spec.width)) : 0
-                    height: spec ? Math.max(0, Math.round(spec.height)) : 0
-                    radius: spec ? Math.max(0, Math.round(spec.radius ?? 0)) : 0
+                    x: piece.spec ? Math.round(piece.spec.x) : 0
+                    y: piece.spec ? Math.round(piece.spec.y) : 0
+                    width: piece.spec ? Math.max(0, Math.round(piece.spec.width)) : 0
+                    height: piece.spec ? Math.max(0, Math.round(piece.spec.height)) : 0
+                    readonly property bool disc: piece.spec !== null
+                        && Math.abs(piece.spec.width - piece.spec.height) < 1
+                        && Number(piece.spec.radius ?? 0) >= piece.spec.width / 2 - 0.5
+                    shape: piece.disc ? RegionShape.Ellipse : RegionShape.Rect
+                    radius: piece.spec && !piece.disc ? Math.max(0, Math.round(piece.spec.radius ?? 0)) : 0
                 }
             }
             function sync(list: var): void {
@@ -1240,24 +1247,52 @@ Scope {
         }
 
         Loader {
-            id: rinLiveVideoHost
-            active: bgRoot.rinLiveVideoLayer
+            id: rinWallpaperHost
+            active: bgRoot.rinBackgroundLayerActive
             sourceComponent: PanelWindow {
                 screen: bgRoot.screen
                 exclusionMode: ExclusionMode.Ignore
                 WlrLayershell.layer: WlrLayer.Background
-                WlrLayershell.namespace: "quickshell:rin-live-wallpaper"
+                WlrLayershell.namespace: "quickshell:rin-wallpaper"
                 WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
                 anchors { top: true; bottom: true; left: true; right: true }
                 color: "black"
                 mask: Region {}
+
+                WallpaperCrossfader {
+                    anchors.fill: parent
+                    visible: !bgRoot.wallpaperIsVideo && !bgRoot.wallpaperIsGif
+                    source: (!bgRoot.wallpaperIsVideo && !bgRoot.wallpaperIsGif) ? bgRoot.wallpaperPath : ""
+                    enableTransitions: Config.options?.background?.transition?.enable ?? true
+                    transitionType: Config.options?.background?.transition?.type ?? "crossfade"
+                    transitionDirection: Config.options?.background?.transition?.direction ?? "right"
+                    transitionBaseDuration: bgRoot.wallpaperTransitionMs
+                    fillMode: Wallpapers.imageFillFor(bgRoot.fillMode)
+                    sourceSize: bgRoot.fillMode === "tile" || bgRoot.fillMode === "center" ? Qt.size(0, 0)
+                        : Qt.size(Math.ceil((bgRoot.screen?.width ?? 0) * bgRoot.devicePixelRatio),
+                            Math.ceil((bgRoot.screen?.height ?? 0) * bgRoot.devicePixelRatio))
+                }
+
+                AnimatedImage {
+                    anchors.fill: parent
+                    visible: bgRoot.wallpaperIsGif
+                    source: bgRoot.wallpaperIsGif ? bgRoot.wallpaperPathRaw : ""
+                    fillMode: Wallpapers.imageFillFor(bgRoot.fillMode)
+                    asynchronous: true
+                    cache: false
+                    playing: visible && bgRoot.enableAnimation && !GlobalStates.screenLocked
+                        && !Appearance._gameModeActive && !Wallpapers.batteryPauseActive
+                        && Wallpapers.videoMotionAllowedOn(bgRoot.screenName)
+                }
+
                 VideoCrossfader {
                     anchors.fill: parent
-                    source: bgRoot.wallpaperPathRaw
+                    visible: bgRoot.wallpaperIsVideo
+                    source: bgRoot.wallpaperIsVideo ? bgRoot.wallpaperPathRaw : ""
                     fillMode: Wallpapers.videoFillFor(bgRoot.fillMode)
                     enableTransitions: Config.options?.background?.transition?.enable ?? true
                     transitionBaseDuration: Config.options?.background?.transition?.duration ?? 800
-                    shouldPlay: bgRoot.enableAnimation && !GlobalStates.screenLocked
+                    shouldPlay: bgRoot.wallpaperIsVideo && bgRoot.enableAnimation && !GlobalStates.screenLocked
                         && !Appearance._gameModeActive && !Wallpapers.batteryPauseActive
                         && Wallpapers.videoMotionAllowedOn(bgRoot.screenName)
                         && bgRoot._familyOwnsScreen
@@ -1536,11 +1571,9 @@ Scope {
         // frame already has everything: nothing pops in on the way and no frame on it builds a part.
         readonly property bool editAsked: GlobalStates.widgetEditMode && DesktopEditStage.card && bgRoot.editStagePart.length > 0
         readonly property bool editStaged: bgRoot.editCard.p > 0 || bgRoot.editAsked
-        readonly property bool editMaking: bgRoot.editAsked && bgRoot.editCard.p <= 0 && !(
-            editUnderLoader.status === Loader.Ready && (editUnderLoader.item?.ready ?? true)
-            && editOverLoader.status === Loader.Ready
-            && (!bgRoot.externalMainWallpaperActive || editStill.status === Image.Ready || editStill.status === Image.Error))
-        onEditMakingChanged: DesktopEditStage.setPreparing(bgRoot.screenName, bgRoot.editMaking)
+        // Never hold the zoom waiting on slow blur/still decodes: animate on frame 0.
+        readonly property bool editMaking: false
+        onEditMakingChanged: DesktopEditStage.setPreparing(bgRoot.screenName, false)
         // A still that never decodes never holds the mode.
         Timer {
             running: bgRoot.editMaking
@@ -1589,17 +1622,16 @@ Scope {
                 fragmentShader: Qt.resolvedUrl("edit/CardPicture.frag.qsb")
             }
 
-            // A wallpaper another program draws (awww) stays full size under the shell: the card carries its still.
+            // A wallpaper another layer/program draws (awww or Rin Background layer) stays full size under the shell: the card carries its still.
             Image {
                 id: editStill
                 anchors.fill: parent
                 z: -1
-                // Decoded at the ask, shown once the card moves: until then it is the picture the other program draws.
-                visible: bgRoot.editCard.p > 0 && bgRoot.externalMainWallpaperActive
-                source: bgRoot.editStaged && bgRoot.externalMainWallpaperActive ? Wallpapers.stillUrlFor(bgRoot.wallpaperPathRaw) : ""
+                readonly property bool needed: bgRoot.externalMainWallpaperActive || bgRoot.rinBackgroundLayerActive
+                visible: bgRoot.editCard.p > 0 && editStill.needed
+                source: bgRoot.editStaged && editStill.needed ? Wallpapers.stillUrlFor(bgRoot.wallpaperPathRaw) : ""
                 sourceSize: Qt.size(bgRoot.width, bgRoot.height)
                 fillMode: Image.PreserveAspectCrop
-                // Shrunk with the card: a mipmap keeps a pixel-art wall from breaking into uneven pixels.
                 mipmap: true
                 asynchronous: true
                 cache: true
@@ -1657,6 +1689,7 @@ Scope {
                     && !bgRoot.wallpaperIsVideo
                     && !bgRoot.externalMainWallpaperActive
                 readonly property bool showInternalStaticWallpaper: !bgRoot.externalMainWallpaperActive
+                    && !bgRoot.rinBackgroundLayerActive
                 readonly property bool localBlurNeedsStaticTexture: Appearance.effectsEnabled
                     && bgRoot.blurProgress > 0
                     && !Config.options?.performance?.lowPower
@@ -1664,6 +1697,7 @@ Scope {
                     && (GlobalStates.screenLocked || scaleAnim.running)
                 readonly property bool needsStaticTexture: !bgRoot.backdropActive
                     && !bgRoot.wallpaperIsGif && !bgRoot.wallpaperIsVideo
+                    && !bgRoot.rinBackgroundLayerActive
                     && (showInternalStaticWallpaper || localBlurNeedsStaticTexture
                         || lockBlurNeedsStaticTexture
                         || bgRoot.internalShaderTransitionRequested)
@@ -1775,7 +1809,8 @@ Scope {
                             || bgRoot.internalShaderPreviewActive
                             || AwwwBackend.shaderHandoffPending)
                     anchors.fill: parent
-                    visible: !bgRoot.webWallpaperActive && !blurLoader.active && !bgRoot.backdropActive && !bgRoot.wallpaperIsGif && !bgRoot.wallpaperIsVideo
+                    visible: !bgRoot.webWallpaperActive && !blurLoader.active && !bgRoot.backdropActive
+                        && !bgRoot.wallpaperIsGif && !bgRoot.wallpaperIsVideo && !bgRoot.rinBackgroundLayerActive
                     opacity: (wallpaperContainer.showInternalStaticWallpaper
                         || wallpaper.shaderOverlayHeld ? 1 : 0) * bgRoot._awwwRevealOpacity
                     // The backdrop replaces the desktop wallpaper outright: this
@@ -1827,7 +1862,8 @@ Scope {
                 AnimatedImage {
                     id: gifWallpaper
                     anchors.fill: parent
-                    visible: opacity > 0 && !blurLoader.active && !bgRoot.backdropActive && bgRoot.wallpaperIsGif && !bgRoot.externalMainWallpaperActive
+                    visible: opacity > 0 && !blurLoader.active && !bgRoot.backdropActive && bgRoot.wallpaperIsGif
+                        && !bgRoot.externalMainWallpaperActive && !bgRoot.rinBackgroundLayerActive
                     opacity: (status === AnimatedImage.Ready && bgRoot.wallpaperIsGif) ? 1 : 0
                     Behavior on opacity {
                         enabled: Appearance.animationsEnabled

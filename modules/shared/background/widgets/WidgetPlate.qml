@@ -83,8 +83,42 @@ Rectangle {
         border.color: root.rimColor
     }
 
-    // The mask and the blur targets go during fullscreen and game pauses; the decoded wallpaper stays for a quick resume.
-    layer.enabled: root.glass && root.visible && root.surface.powerActive
+    // On Rin, desktop widgets sit above the Background wallpaper layer so Rin's GPU blur /
+    // Liquid Glass blurs and refracts natively with zero per-widget Qt blur FBOs.
+    readonly property var _host: QsWindow.window ?? root.QsWindow?.window ?? null
+    readonly property bool compositorGlass: root.glass && root.visible && Boolean(root._host?.compositorWidgetGlass)
+    readonly property string _blurKey: "plate:" + String(root.surface?.widget?.configEntryName ?? "") + "@" + String(root)
+    function _syncCompositorBlur(): void {
+        const win = root._host
+        if (!win || typeof win.setWidgetBlurRect !== "function") return
+        if (!root.compositorGlass || !root.backed || !(root.width >= 8) || !(root.height >= 8)) {
+            win.clearWidgetBlurRect(root._blurKey)
+            return
+        }
+        const pos = root.mapToItem(win.contentItem, 0, 0)
+        win.setWidgetBlurRect(root._blurKey, {
+            x: pos.x, y: pos.y, width: root.width, height: root.height, radius: root.radius
+        })
+    }
+    onCompositorGlassChanged: root._syncCompositorBlur()
+    onBackedChanged: root._syncCompositorBlur()
+    onWidthChanged: if (root.compositorGlass) root._syncCompositorBlur()
+    onHeightChanged: if (root.compositorGlass) root._syncCompositorBlur()
+    onRadiusChanged: if (root.compositorGlass) root._syncCompositorBlur()
+    Connections {
+        target: root.surface?.widget ?? null
+        ignoreUnknownSignals: true
+        function onXChanged(): void { if (root.compositorGlass) root._syncCompositorBlur() }
+        function onYChanged(): void { if (root.compositorGlass) root._syncCompositorBlur() }
+    }
+    Component.onCompleted: if (root.compositorGlass) Qt.callLater(root._syncCompositorBlur)
+    Component.onDestruction: {
+        const win = root._host
+        if (win && typeof win.clearWidgetBlurRect === "function") win.clearWidgetBlurRect(root._blurKey)
+    }
+
+    // The mask and the blur targets go during fullscreen, game pauses, or when Rin compositor glass draws it.
+    layer.enabled: root.glass && !root.compositorGlass && !GlobalStates.widgetEditMode && root.visible && root.surface.powerActive
     layer.effect: GE.OpacityMask {
         maskSource: Rectangle {
             width: root.width
@@ -95,10 +129,9 @@ Rectangle {
 
     // On the desktop the glass copies the window's own wallpaper layer, what is really seen there (the glyph wallpaper,
     // a playing video), and again on each of its frames while it moves; elsewhere (the lock) the picture itself.
-    readonly property var _host: root.QsWindow?.window ?? null
     readonly property Item _layer: root._host?.wallpaperLayer ?? null
     Loader {
-        active: root.glass && root.visible && root._layer !== null
+        active: root.glass && !root.compositorGlass && !GlobalStates.widgetEditMode && root.visible && root._layer !== null
         sourceComponent: ShaderEffectSource {
             id: frosted
             readonly property int revision: root._host?.wallpaperLayerRevision ?? 0
@@ -132,7 +165,7 @@ Rectangle {
         }
     }
     Loader {
-        active: root.glass && root.visible && root._layer === null
+        active: root.glass && !root.compositorGlass && !GlobalStates.widgetEditMode && root.visible && root._layer === null
         sourceComponent: Image {
             id: blurredWallpaper
             x: -root.surface.screenX
