@@ -143,6 +143,7 @@ Item {
     }
 
     function _cancelShaderTexturePrime(): void {
+        shaderPrimeFallback.stop()
         root._shaderTexturePrimePending = false
         root._shaderTexturePrimeSource = ""
         root._shaderTexturePrimeSwaps = 0
@@ -175,6 +176,34 @@ Item {
         root._shaderTexturePrimeSource = pending
         root._shaderTexturePrimeSwaps = 0
         root._shaderTexturePrimePending = true
+        // Static layer windows (such as Rin's Background wallpaper host) have no other animating
+        // items, so explicitly pump frame updates and guard with a short fallback timer so shader
+        // transitions never stall waiting on swap #2.
+        const win = root.Window.window
+        if (win) win.requestUpdate()
+        shaderPrimeFallback.restart()
+    }
+
+    Timer {
+        id: shaderPrimeFallback
+        interval: 90
+        repeat: false
+        onTriggered: {
+            if (!root._shaderTexturePrimePending)
+                return
+            const pending = String(internal.pendingSource ?? "")
+            const inactive = internal.inactiveImage()
+            if (pending === "" || pending !== root._shaderTexturePrimeSource
+                    || String(inactive.source) !== pending || inactive.status !== Image.Ready
+                    || root._transitioning) {
+                root._cancelShaderTexturePrime()
+                return
+            }
+            root._shaderTexturePrimePending = false
+            root._shaderTexturePrimeSource = ""
+            root._shaderTexturePrimeSwaps = 0
+            internal.performSwitch()
+        }
     }
 
     function _normalizedTransitionType(rawType: string): string {
@@ -473,13 +502,20 @@ Item {
                 return
             }
 
-            if (shaderTransition.status !== ShaderEffect.Compiled)
+            if (shaderTransition.status !== ShaderEffect.Compiled) {
+                const win = root.Window.window
+                if (win) win.requestUpdate()
                 return
+            }
 
             root._shaderTexturePrimeSwaps++
-            if (root._shaderTexturePrimeSwaps < 2)
+            if (root._shaderTexturePrimeSwaps < 2) {
+                const win = root.Window.window
+                if (win) win.requestUpdate()
                 return
+            }
 
+            shaderPrimeFallback.stop()
             root._shaderTexturePrimePending = false
             root._shaderTexturePrimeSource = ""
             root._shaderTexturePrimeSwaps = 0

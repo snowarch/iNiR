@@ -110,8 +110,21 @@ Rectangle {
         ignoreUnknownSignals: true
         function onXChanged(): void { if (root.compositorGlass) root._syncCompositorBlur() }
         function onYChanged(): void { if (root.compositorGlass) root._syncCompositorBlur() }
+        function onVisibleChanged(): void { root._syncCompositorBlur() }
     }
-    Component.onCompleted: if (root.compositorGlass) Qt.callLater(root._syncCompositorBlur)
+    Connections {
+        target: root.surface?.widget?.parent ?? null
+        ignoreUnknownSignals: true
+        function onXChanged(): void { if (root.compositorGlass) root._syncCompositorBlur() }
+        function onYChanged(): void { if (root.compositorGlass) root._syncCompositorBlur() }
+    }
+    Timer {
+        id: blurSettleTimer
+        interval: 80
+        repeat: false
+        onTriggered: if (root.compositorGlass) root._syncCompositorBlur()
+    }
+    Component.onCompleted: if (root.compositorGlass) { Qt.callLater(root._syncCompositorBlur); blurSettleTimer.restart() }
     Component.onDestruction: {
         const win = root._host
         if (win && typeof win.clearWidgetBlurRect === "function") win.clearWidgetBlurRect(root._blurKey)

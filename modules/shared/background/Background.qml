@@ -1189,26 +1189,45 @@ Scope {
         property var _widgetBlurList: []
         function setWidgetBlurRect(key: string, rect: var): void {
             if (!key) return
+            const prev = bgRoot._widgetBlurMap[key]
+            const valid = Boolean(rect && rect.width >= 8 && rect.height >= 8)
+            if (!valid && !prev) return
+            if (valid && prev
+                && Math.round(prev.x) === Math.round(rect.x)
+                && Math.round(prev.y) === Math.round(rect.y)
+                && Math.round(prev.width) === Math.round(rect.width)
+                && Math.round(prev.height) === Math.round(rect.height)
+                && Math.round(prev.radius ?? 0) === Math.round(rect.radius ?? 0)) {
+                return
+            }
             const next = Object.assign({}, bgRoot._widgetBlurMap)
-            if (!rect || !(rect.width >= 8) || !(rect.height >= 8)) delete next[key]
+            if (!valid) delete next[key]
             else next[key] = rect
             bgRoot._widgetBlurMap = next
-            bgRoot._rebuildWidgetBlur()
+            rinWidgetBlurTimer.restart()
         }
         function clearWidgetBlurRect(key: string): void {
             if (!key || !(key in bgRoot._widgetBlurMap)) return
             const next = Object.assign({}, bgRoot._widgetBlurMap)
             delete next[key]
             bgRoot._widgetBlurMap = next
-            bgRoot._rebuildWidgetBlur()
+            rinWidgetBlurTimer.restart()
         }
         function _rebuildWidgetBlur(): void {
             const list = Object.keys(bgRoot._widgetBlurMap).map(k => bgRoot._widgetBlurMap[k])
             bgRoot._widgetBlurList = list
             rinWidgetBlur.sync(list)
         }
-        onCompositorWidgetGlassChanged: rinWidgetBlur.sync(bgRoot._widgetBlurList)
-        onVisibleChanged: if (bgRoot.visible) rinWidgetBlur.sync(bgRoot._widgetBlurList)
+        Timer {
+            id: rinWidgetBlurTimer
+            interval: 0
+            repeat: false
+            onTriggered: bgRoot._rebuildWidgetBlur()
+        }
+        onCompositorWidgetGlassChanged: rinWidgetBlurTimer.restart()
+        onVisibleChanged: if (bgRoot.visible) rinWidgetBlurTimer.restart()
+        onWidthChanged: if (bgRoot.compositorWidgetGlass) rinWidgetBlurTimer.restart()
+        onHeightChanged: if (bgRoot.compositorWidgetGlass) rinWidgetBlurTimer.restart()
 
         Region {
             id: rinWidgetBlur
@@ -1260,6 +1279,7 @@ Scope {
                 mask: Region {}
 
                 WallpaperCrossfader {
+                    id: rinWallpaperCrossfader
                     anchors.fill: parent
                     visible: !bgRoot.wallpaperIsVideo && !bgRoot.wallpaperIsGif
                     source: (!bgRoot.wallpaperIsVideo && !bgRoot.wallpaperIsGif) ? bgRoot.wallpaperPath : ""
@@ -1271,6 +1291,15 @@ Scope {
                     sourceSize: bgRoot.fillMode === "tile" || bgRoot.fillMode === "center" ? Qt.size(0, 0)
                         : Qt.size(Math.ceil((bgRoot.screen?.width ?? 0) * bgRoot.devicePixelRatio),
                             Math.ceil((bgRoot.screen?.height ?? 0) * bgRoot.devicePixelRatio))
+                    onTransitionStarted: {
+                        if (!bgRoot.dynamicParallaxRequested || !bgRoot.pauseParallaxDuringTransitions)
+                            return
+                        bgRoot.beginParallaxTransition(true, "wallpaper")
+                    }
+                    onTransitionFinished: {
+                        if (bgRoot._parallaxWaitingCrossfader && bgRoot._parallaxTransitionReason === "wallpaper")
+                            bgRoot.settleParallaxAfterTransition()
+                    }
                 }
 
                 AnimatedImage {
