@@ -50,6 +50,9 @@ Rin also takes Niri's spelling of each action (focus-column-left for window-focu
 - Overview: overview-toggle, overview-open, overview-close, overview-layout-next,
   overview-layout expose|workspaces|grid|carousel
 - Switcher: window-switcher, window-switcher-back
+- iNiR panels: toggle-launcher, toggle-control-center, toggle-notifications, toggle-assistant,
+  toggle-session-menu, toggle-keyboard, clipboard-history, screenshot-screen, screenshot-region,
+  record-region, color-picker, lock-screen
 - Keyboard: keyboard-layout-next, keyboard-layout-prev, switch-layout next|prev|N
 
 ## Commands
