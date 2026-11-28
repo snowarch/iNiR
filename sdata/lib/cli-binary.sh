@@ -1,8 +1,30 @@
 # shellcheck shell=bash
-# The inir binary (snowarch/inir-cli) next to the bash launcher, as ADR-0006 describes: scripts/inir
-# hands over to ${XDG_DATA_HOME:-~/.local/share}/inir/cli/inir when it is there. The Hub lives in it, so
-# every install and update fetches the tag `cli.version` in sdata/prebuilt.json names; INIR_FETCH_CLI=0 skips that, INIR_CLI_RELEASES points at another
-# release directory (a mirror, or file:// in the bench). A failed or unverified download keeps the old copy.
+# The inir binary (snowarch/inir-cli), required (docs/adr/0007): the shell runs it, scripts/inir hands over to it and
+# the Hub lives in it. Every install and update fetches the tag `cli.version` in sdata/prebuilt.json names into
+# ${XDG_DATA_HOME:-~/.local/share}/inir/cli/inir; INIR_FETCH_CLI=0 skips that (a package ships it, INIR_CLI names it),
+# INIR_CLI_RELEASES points at another release directory (a mirror, or file:// in the bench). A failed or unverified
+# download keeps the old copy.
+
+# The binary that runs here, in the order the launcher looks for it.
+inir_cli_binary_path() {
+  local cli
+  for cli in "${INIR_CLI:-}" "${XDG_DATA_HOME:-$HOME/.local/share}/inir/cli/inir" \
+             /usr/local/lib/inir/inir /usr/lib/inir/inir; do
+    [[ -n "$cli" && -f "$cli" && -x "$cli" ]] || continue
+    "$cli" cli version >/dev/null 2>&1 && { printf '%s\n' "$cli"; return 0; }
+  done
+  return 1
+}
+
+# Fetches the pinned binary; true only when one that runs is here afterwards (the new one, or the copy a failed
+# download kept).
+require_inir_cli_binary() {
+  install_inir_cli_binary
+  inir_cli_binary_path >/dev/null && return 0
+  printf '  the inir command is required and none runs here%s\n' \
+    "$([[ "${INIR_FETCH_CLI:-1}" == 1 ]] || printf ' (INIR_FETCH_CLI=0: the package or INIR_CLI must provide it)')" >&2
+  return 1
+}
 
 install_inir_cli_binary() {
   [[ "${INIR_FETCH_CLI:-1}" == 1 ]] || return 0

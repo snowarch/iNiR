@@ -45,8 +45,10 @@ Singleton {
         }
     })
 
+    // `inir TARGET FUNCTION ARGS...` on this shell (ShellExec.ipc).
     function runLauncher(args): void {
-        Quickshell.execDetached([Quickshell.shellPath("scripts/inir")].concat(args ?? []))
+        const words = Array.from(args ?? []).map(String)
+        if (words.length >= 2) ShellExec.ipc(words[0], words[1], words.slice(2))
     }
 
     function applyGlobalStyle(styleId: string): void {

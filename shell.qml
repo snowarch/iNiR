@@ -743,7 +743,7 @@ ShellRoot {
             const args = ["env"]
             if (index >= 0)
                 args.push(`QS_SETTINGS_PAGE=${index}`)
-            args.push(Quickshell.shellPath("scripts/inir"), "settings-window")
+            args.push(Directories.inir, "settings-window")
             Quickshell.execDetached(args)
             GlobalStates.setSettingsOverlay(false)
             GlobalStates.settingsOverlayOpen = false
@@ -1353,7 +1353,7 @@ ShellRoot {
             "switch-family",
             targetFamily,
             JSON.stringify(basePanels),
-            Quickshell.shellPath("scripts/inir")
+            Directories.inir
         ])
         familyRestartFallbackTimer.restart()
     }

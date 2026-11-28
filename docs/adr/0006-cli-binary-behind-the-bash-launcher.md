@@ -46,4 +46,5 @@ A test holds the hand-over to these rules, and
 exit code through the bash launcher alone, through the binary, and through the
 launcher with the binary installed.
 
-Status: accepted; setup and update fetch the binary from its releases.
+Status: accepted; setup and update fetch the binary from its releases. Superseded in part by ADR-0007: the binary
+is required, and the shell calls it (or its own handlers) directly.

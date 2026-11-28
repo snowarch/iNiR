@@ -126,8 +126,7 @@ RowLayout {
         Layout.bottomMargin: 4
         onClicked: {
             GlobalStates.overviewOpen = false;
-            // Use IPC to trigger region search (works for both Hyprland and Niri)
-            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "region", "googleLens"]);
+            ShellExec.ipc("region", "googleLens");
         }
         text: "image_search"
         StyledToolTip {

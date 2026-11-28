@@ -244,7 +244,7 @@ Scope {
 
     function chooseFamily(id: string): void {
         root.requestedFamily = id
-        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "panelFamily", "set", id])
+        ShellExec.ipc("panelFamily", "set", [id])
     }
 
     onCurrentStepChanged: if (root.firstRunSetup) root._enterStep(root.currentStep)

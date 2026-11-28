@@ -40,6 +40,25 @@ Singleton {
         return root._fishAvailable === 1
     }
 
+    // A standalone window (Settings, the welcome) is a process of its own holding some of the shell's services: its
+    // calls must reach the shell, never that window's copy of a handler.
+    readonly property bool _inShell: Quickshell.env("INIR_STANDALONE_WINDOW") !== "1"
+
+    // `inir TARGET FUNCTION ARGS...`, the shell calling one of its own IpcHandlers. In the shell on qs-rs it runs in
+    // process (Ipc.call): no process, no socket. Elsewhere the binary makes the call (`inir ipc`, which no command
+    // name shadows).
+    function ipc(target: string, fn: string, args = []): void {
+        const words = Array.from(args ?? []).map(String)
+        if (root._inShell && SystemInfo.runtimeHas(["ipc-call"]) && Ipc.call(target, fn, words))
+            return
+        Quickshell.execDetached([Directories.inir, "ipc", target, fn, ...words])
+    }
+
+    // `inir COMMAND ARGS...`, a command of the inir binary (settings-window, hub, service, kill-dialog...).
+    function inir(args): void {
+        Quickshell.execDetached([Directories.inir, ...Array.from(args ?? []).map(String)])
+    }
+
     function execDetachedArgs(args, description = "", workingDirectory = ""): void {
         const argv = Array.from(args ?? []).map(arg => String(arg ?? "")).filter(arg => arg.length > 0)
         if (argv.length === 0) return
@@ -131,7 +150,7 @@ Singleton {
             for _var in $INIR_SHELL_GPU_POLICY_VARS; do
                 restore_from_manager "$_var"
             done
-            unset INIR_SHELL_GPU_POLICY_VARS INIR_DISABLE_HOT_RELOAD
+            unset INIR_SHELL_GPU_POLICY_VARS INIR_DISABLE_HOT_RELOAD INIR_CLI INIR_BASH_LAUNCHER
 
             # Fill missing user/session values from the live user manager rather
             # than trusting Quickshell's process snapshot.

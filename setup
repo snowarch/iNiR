@@ -2778,7 +2778,11 @@ run_update() {
             # a past update whose packages failed is finished here, not only by doctor
             _update_dependencies
             # The binary has its own releases: an up-to-date shell still gets a newer one.
-            install_inir_cli_binary || tui_warn "Could not fetch the inir binary; the Hub needs it (inir update tries again)"
+            if ! require_inir_cli_binary; then
+                _report_update_failure 25 "Could not get the inir command iNiR runs on$(_net_cause github.com). inir update tries again"
+                tui_error "Could not get the inir command iNiR runs on (the reason is just above). Run inir update again once it is solved"
+                return 25
+            fi
             _update_hub_plugins || true
             # last: each step above reports progress, and a progress marker left behind reads as an update in flight
             # to the shell, which kept showing the update card (11-04)
@@ -2794,11 +2798,16 @@ run_update() {
 
     # The base carries no family (sdata/lib/hub-plugins.sh): the binary and every plugin this person has are in
     # hand before anything is synced, or nothing changes.
-    local hub_plugins=() hub_runtime="${XDG_CONFIG_HOME}/quickshell/inir" needed cli_fetched=false
+    local hub_plugins=() hub_runtime="${XDG_CONFIG_HOME}/quickshell/inir" needed
     [[ ! -f "$hub_runtime/shell.qml" && -f "${XDG_CONFIG_HOME}/quickshell/ii/shell.qml" ]] && hub_runtime="${XDG_CONFIG_HOME}/quickshell/ii"
+    # the shell runs the binary (docs/adr/0007): without one that runs, nothing changes
+    if ! require_inir_cli_binary; then
+        _report_update_failure 25 "Could not get the inir command iNiR runs on, so nothing changed$(_net_cause github.com). inir update tries again"
+        tui_error "Could not get the inir command iNiR runs on (the reason is just above), so nothing changed. Run inir update again once it is solved"
+        return 25
+    fi
     if [[ "$(realpath "$REPO_ROOT")" != "$(realpath "$hub_runtime" 2>/dev/null)" ]]; then
         tui_info "Fetching your families from the hub..."
-        install_inir_cli_binary && cli_fetched=true
         # shellcheck disable=SC2086
         if ! needed="$(hub_plugins_needed "$hub_runtime" "$REPO_ROOT")" || ! hub_fetch_plugins "$(get_repo_version)" $needed; then
             local cause
@@ -3028,7 +3037,6 @@ run_update() {
     repair_update_owned_state false
 
     _step_phase_header 4 "Finalizing"
-    $cli_fetched || install_inir_cli_binary || tui_warn "Could not fetch the inir binary; the Hub needs it (inir update tries again)"
     if has_usable_systemd_user_manager; then
         if inir_user_service_is_masked; then
             tui_warn "User inir.service is masked; leaving it unchanged (restore with: inir service install && inir service enable)"

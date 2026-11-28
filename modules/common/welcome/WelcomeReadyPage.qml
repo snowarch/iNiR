@@ -299,11 +299,7 @@ Flickable {
                             title: modelData.label
                             subtitle: modelData.sub
 
-                            onClicked: Quickshell.execDetached([
-                                Quickshell.shellPath("scripts/inir"),
-                                modelData.target,
-                                modelData.fn
-                            ])
+                            onClicked: ShellExec.ipc(modelData.target, modelData.fn)
                         }
                     }
                 }
@@ -320,7 +316,7 @@ Flickable {
             WelcomeActionButton {
                 materialIcon: "settings"
                 label: Translation.tr("Settings")
-                onClicked: Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"])
+                onClicked: ShellExec.inir(["settings"])
             }
 
             WelcomeActionButton {

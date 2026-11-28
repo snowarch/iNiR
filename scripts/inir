@@ -1890,9 +1890,24 @@ shell_exec_bin() {
     fi
 }
 
+# The shell runs the inir binary itself (docs/adr/0007, Directories.inir), and the binary hands what it does not know
+# to this tree's launcher. A named binary that cannot run is dropped, so the shell falls back to the launcher.
+export_inir_cli_for_shell() {
+    local cli found=""
+    for cli in "${INIR_CLI:-}" "${XDG_DATA_HOME:-$HOME/.local/share}/inir/cli/inir" \
+               /usr/local/lib/inir/inir /usr/lib/inir/inir; do
+        [[ -n "$cli" && -f "$cli" && -x "$cli" ]] && { found="$cli"; break; }
+    done
+    if [[ -n "$found" ]]; then export INIR_CLI="$found"; else unset INIR_CLI; fi
+    local launcher="${config_dir:+$config_dir/scripts/inir}"
+    [[ -n "$launcher" && -x "$launcher" ]] || launcher="$script_dir/$(basename -- "${BASH_SOURCE[0]}")"
+    export INIR_BASH_LAUNCHER="$launcher"
+}
+
 apply_qt_runtime_env() {
     # Must run before Qt reads env at QGuiApplication construction.
     apply_gpu_policy
+    export_inir_cli_for_shell
     # A runtime with its own Qt (qt.conf beside it: setup's qs-rs) loads only its own plugins and QML modules: the
     # session's paths (Nix sets them for its Qt) hold builds for another Qt, which crash it. Apps get them back
     # (ShellExec).

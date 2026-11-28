@@ -579,6 +579,17 @@ check_repo_checkout_state() {
 }
 
 check_launcher_health() {
+    # The shell runs the inir binary (docs/adr/0007); a plain doctor is its own job, so this runs only without one.
+    if declare -F inir_cli_binary_path >/dev/null 2>&1 && ! inir_cli_binary_path >/dev/null; then
+        if install_inir_cli_binary >/dev/null 2>&1 && inir_cli_binary_path >/dev/null; then
+            doctor_fix "Installed the inir command"
+        else
+            doctor_fail "The inir command is missing; iNiR runs on it"
+            echo -e "    ${STY_FAINT}Run: ./setup update (it downloads it from github.com)${STY_RST}"
+            return 1
+        fi
+    fi
+
     local installed_strategy
     installed_strategy="$(get_installed_update_strategy)"
 

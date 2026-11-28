@@ -32,7 +32,7 @@ Singleton {
     function handleFirstRun(): void {
         if (root.defaultWallpaperPath.length > 0)
             Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, root.defaultWallpaperPath])
-        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "welcome"])
+        ShellExec.inir(["welcome"])
     }
 
     Process {

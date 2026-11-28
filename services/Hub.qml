@@ -5,6 +5,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.modules.common
+import qs.modules.common.functions
 import qs.services.deferred
 
 // The community hub (github.com/snowarch/inir-hub) as every family's Hub page sees it.
@@ -14,7 +15,9 @@ import qs.services.deferred
 Singleton {
     id: root
 
-    readonly property string launcher: Quickshell.shellPath("scripts/inir")
+    readonly property string launcher: Directories.inir
+    // The shell that asks is the one whose version decides what fits.
+    readonly property string _runtimeDir: Quickshell.shellDir
 
     property var items: []
     property var sources: []
@@ -168,7 +171,7 @@ Singleton {
         return Boolean(item?.installed) || (item?.kind === "family" && Plugins.families.includes(item.id))
     }
     function useFamily(id: string): void {
-        Quickshell.execDetached([root.launcher, "panelFamily", "set", id])
+        ShellExec.ipc("panelFamily", "set", [id])
     }
     // The line under a card's name, for the family whose page shows it.
     function whereOf(item: var, family: string): string {
@@ -591,7 +594,7 @@ Singleton {
         id: statusProcess
         // The shell that asks is the one whose version decides what fits: without it the command looked only in
         // ~/.config/quickshell/inir, read 0.0.0 for a shell run from elsewhere and called every item too new.
-        environment: ({ INIR_RUNTIME_DIR: root.launcher.replace(/\/scripts\/inir$/, "") })
+        environment: ({ INIR_RUNTIME_DIR: root._runtimeDir })
         stdout: StdioCollector {
             id: statusOut
             onStreamFinished: {
@@ -647,7 +650,7 @@ Singleton {
     Process {
         id: actionProcess
         // It reads the catalogue again itself; no `hub changed` call back into this shell.
-        environment: ({ INIR_HUB_FROM_SHELL: "1", INIR_RUNTIME_DIR: root.launcher.replace(/\/scripts\/inir$/, "") })
+        environment: ({ INIR_HUB_FROM_SHELL: "1", INIR_RUNTIME_DIR: root._runtimeDir })
         stdout: StdioCollector {
             id: actionOut
             onStreamFinished: {

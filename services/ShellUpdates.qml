@@ -275,7 +275,7 @@ Singleton {
 
     Process {
         id: hubCheck
-        command: [Quickshell.shellPath("scripts/inir"), "hub", "status", "--json"]
+        command: [Directories.inir, "hub", "status", "--json"]
         stdout: StdioCollector {
             onStreamFinished: {
                 let items = []

@@ -6,6 +6,7 @@ import QtQuick.Layouts
 import Quickshell
 import qs.services
 import qs.modules.common
+import qs.modules.common.functions
 import qs.modules.common.widgets
 import qs.modules.shared.background.widgets
 /**
@@ -620,7 +621,7 @@ AbstractBackgroundWidget {
         enabled: !GlobalStates.widgetEditMode && sprite.visible
         onTapped: {
             if (root.customPath.length > 0) {
-                Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "mascot", "poke"])
+                ShellExec.ipc("mascot", "poke")
             } else {
                 root._reactToClick()
             }

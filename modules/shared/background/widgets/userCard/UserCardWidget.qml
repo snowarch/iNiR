@@ -59,7 +59,7 @@ AbstractBackgroundWidget {
     }
 
     function lockScreen(): void {
-        Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "lock", "activate"]);
+        ShellExec.ipc("lock", "activate");
     }
 
     Loader {

@@ -37,6 +37,9 @@ Singleton {
     // Other dirs used by the shell, without "file://"
     property string assetsPath: Quickshell.shellPath("assets")
     property string scriptPath: Quickshell.shellPath("scripts")
+    // The inir binary (inir-cli), required (docs/adr/0007). The launcher that starts the shell names it (INIR_CLI); a
+    // shell started any other way reaches it through this tree's launcher, which hands over to it.
+    readonly property string inir: Quickshell.env("INIR_CLI") || Quickshell.shellPath("scripts/inir")
     property string scriptsPath: FileUtils.trimFileProtocol(scriptPath)
     property string stateUserPath: `${Directories.statePath}/user`
     property string wallpapersPath: Config.options?.wallpapers?.directory || `${Directories.picturesPath}/Wallpapers`

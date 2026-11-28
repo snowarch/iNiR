@@ -32,7 +32,7 @@ Singleton {
         : (Config.options?.idle?.suspendTimeout ?? 0)
     // The rest screen is the same on battery: it costs nothing the screen-off timeout would save.
     readonly property int restTimeout: Config.options?.idle?.restTimeout ?? 120
-    readonly property string launcherPath: Quickshell.shellPath("scripts/inir")
+    readonly property string launcherPath: Directories.inir
 
     onRestTimeoutChanged: _restartSwayidle()
     onScreenOffTimeoutChanged: _restartSwayidle()

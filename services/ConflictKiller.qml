@@ -59,7 +59,7 @@ Singleton {
             else Quickshell.execDetached(["killall", "mako", "dunst"])
         }
         if (openDialog) {
-            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "kill-dialog"])
+            ShellExec.inir(["kill-dialog"])
         }
     }
 

@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import qs
 import qs.modules.common
+import qs.modules.common.functions
 import qs.services
 
 Singleton {
@@ -83,10 +84,10 @@ Singleton {
         interval: OverlayLook.closeDuration + 40
         onTriggered: {
             root.closing = false
-            if (root._pending.length > 0) {
-                Quickshell.execDetached(root._pending)
-                root._pending = []
-                if (root._check) RecorderStatus.scheduleQuickCheck()
+            if (root._pending) {
+                const pending = root._pending
+                root._pending = null
+                root._run(pending, root._check)
             }
         }
     }
@@ -231,20 +232,25 @@ Singleton {
     }
 
     // Capture from the bench: it closes first, so nothing of it lands in the picture.
-    property list<string> _pending: []
+    // a command line, or a function (a call into the shell itself)
+    property var _pending: null
     property bool _check: false
     // `check`: the recorder's state is read again right after (a recording starts or stops).
-    function afterClose(command: list<string>, check: bool): void {
+    function afterClose(command: var, check: bool): void {
         if (GlobalStates.overlayOpen) {
             root._pending = command
             root._check = check
             GlobalStates.overlayOpen = false
         } else {
-            Quickshell.execDetached(command)
-            if (check) RecorderStatus.scheduleQuickCheck()
+            root._run(command, check)
         }
     }
-    function screenshotRegion(): void { root.afterClose([Quickshell.shellPath("scripts/inir"), "region", "screenshot"], false) }
+    function _run(command: var, check: bool): void {
+        if (typeof command === "function") command()
+        else Quickshell.execDetached(command)
+        if (check) RecorderStatus.scheduleQuickCheck()
+    }
+    function screenshotRegion(): void { root.afterClose(() => ShellExec.ipc("region", "screenshot"), false) }
     function copyScreen(): void { root.afterClose(["bash", "-c", "grim - | wl-copy"], false) }
     // How a recording takes sound; the recorder's control and every capture tile name it the same way.
     readonly property var audioModes: [
@@ -257,7 +263,7 @@ Singleton {
         const found = root.audioModes.find(m => m.value === mode)
         return Translation.tr(found ? found.long : "System audio")
     }
-    function recordRegion(): void { root.afterClose([Quickshell.shellPath("scripts/inir"), "region", "recordWithSound"], true) }
+    function recordRegion(): void { root.afterClose(() => ShellExec.ipc("region", "recordWithSound"), true) }
     function recordScreen(): void { root.afterClose([Directories.recordScriptPath, "--fullscreen", "--sound"], true) }
     function stopRecording(): void {
         Quickshell.execDetached([Directories.recordScriptPath, "--stop"])

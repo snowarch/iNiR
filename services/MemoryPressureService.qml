@@ -5,6 +5,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.modules.common
+import qs.modules.common.functions
 import qs.services
 
 // Memory pressure monitoring for JSGCHeap accumulation (#164).
@@ -43,7 +44,7 @@ Singleton {
         ])
         // Small delay so notification shows
         Qt.callLater(() => {
-            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "service", "restart"])
+            ShellExec.inir(["service", "restart"])
         })
     }
 

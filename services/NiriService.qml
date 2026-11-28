@@ -278,14 +278,14 @@ Singleton {
     }
 
     // `inir WORDS` from the compositor (a Rin key or hot corner). A target this shell declares runs in process
-    // (qs-rs Ipc.call); the rest (launcher commands, kebab-case aliases, an older runtime) goes to the `inir` CLI.
+    // (qs-rs Ipc.call); the rest (launcher commands, kebab-case aliases, an older runtime) goes to the inir binary.
     function runShellWords(words: var): void {
         if (!Array.isArray(words) || words.length === 0)
             return
         const text = words.map(String)
         if (text.length >= 2 && SystemInfo.runtimeHas(["ipc-call"]) && Ipc.call(text[0], text[1], text.slice(2)))
             return
-        Quickshell.execDetached(["inir"].concat(text))
+        Quickshell.execDetached([Directories.inir].concat(text))
     }
 
     Process {

@@ -169,7 +169,7 @@ Singleton {
             const args = ["env", `QS_SETTINGS_PAGE=${key.length > 0 ? key : index}`]
             if (requestedSection.length > 0)
                 args.push(`QS_SETTINGS_SECTION=${requestedSection}`)
-            args.push(Quickshell.shellPath("scripts/inir"), "settings-window")
+            args.push(Directories.inir, "settings-window")
             Quickshell.execDetached(args)
         }
     }
@@ -179,7 +179,7 @@ Singleton {
             if (root.settingsOverlayOpen) root.settingsRaiseRequest++
             root.settingsOverlayOpen = true
         } else {
-            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings-window"])
+            Quickshell.execDetached([Directories.inir, "settings-window"])
         }
     }
 
@@ -188,7 +188,7 @@ Singleton {
             if (root.settingsOverlayOpen && root.settingsWindowBehind) root.settingsRaiseRequest++
             else root.settingsOverlayOpen = !root.settingsOverlayOpen
         } else {
-            Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings-window", "--toggle"])
+            Quickshell.execDetached([Directories.inir, "settings-window", "--toggle"])
         }
     }
 

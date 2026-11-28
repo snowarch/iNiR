@@ -4,6 +4,7 @@ import qs
 import qs.services
 import qs.services.deferred
 import qs.modules.common
+import qs.modules.common.functions
 import QtQuick
 import Quickshell
 import Quickshell.Io
@@ -61,11 +62,7 @@ Scope {
     }
 
     function routeToWaffle(functionName: string): void {
-        Quickshell.execDetached([
-            Quickshell.shellPath("scripts/inir"),
-            "waffleAltSwitcher",
-            functionName
-        ])
+        ShellExec.ipc("waffleAltSwitcher", functionName)
     }
 
     function buildSnapshot(): var {
