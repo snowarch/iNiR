@@ -4,8 +4,8 @@ set -euo pipefail
 # The inir binary (snowarch/inir-cli) is the front door when it is installed: it does
 # what it knows and hands the rest back to this file (INIR_CLI_DELEGATED set). Nothing
 # here changes without it. INIR_NO_CLI=1 skips it; a binary that cannot run is skipped too.
-# A session start goes straight to the shell: the binary only hands `run --session` back.
-if [[ -z "${INIR_CLI_DELEGATED:-}" && -z "${INIR_NO_CLI:-}" && "${1:-} ${2:-}" != "run --session" ]]; then
+# The binary starts the session itself (`run --session`, `cleanup-orphans`); one released before it hands them back.
+if [[ -z "${INIR_CLI_DELEGATED:-}" && -z "${INIR_NO_CLI:-}" ]]; then
     for _inir_cli in "${INIR_CLI:-}" "${XDG_DATA_HOME:-$HOME/.local/share}/inir/cli/inir" \
                      /usr/local/lib/inir/inir /usr/lib/inir/inir; do
         [[ -n "$_inir_cli" && -f "$_inir_cli" && -x "$_inir_cli" ]] || continue
