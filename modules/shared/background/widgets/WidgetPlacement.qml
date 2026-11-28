@@ -1,6 +1,4 @@
 import QtQuick
-import Quickshell
-import Quickshell.Io
 import qs.modules.common
 import qs.services
 
@@ -142,7 +140,7 @@ Item {
             root.snapToZone(root.strategy)
         } else {
             root.syncFree()
-            region.item?.find()
+            root.find()
         }
     }
     function applyLater(): void { later.restart() }
@@ -170,7 +168,7 @@ Item {
             if (root.onZone) {
                 root.snapToZone(root.strategy)
             } else if (root.onWallpaper) {
-                region.item?.find()
+                root.find()
             } else if (root.strategy === "free") {
                 const x = root.clampX(root.widget.x)
                 const y = root.clampY(root.widget.y)
@@ -182,55 +180,50 @@ Item {
         }
     }
 
-    // The quietest or busiest spot still searches the whole wallpaper in a process, so only such a widget holds one.
-    function refresh(): void { region.item?.find() }
-    Loader {
-        id: region
-        active: root.onWallpaper
-        sourceComponent: Item {
-            id: finder
-            readonly property string path: root.widget.wallpaperPath
-            onPathChanged: if (finder.path.length > 0) searchLater.restart()
-            function find(): void {
-                if (!Config.ready || finder.path.length === 0)
-                    return
-                search.running = false
-                search.running = true
-            }
-            Component.onCompleted: finder.find()
-            Timer {
-                id: searchLater
-                interval: 500
-                onTriggered: finder.find()
-            }
-            Process {
-                id: search
-                readonly property real scale: Math.max(root.widget.wallpaperScale, 0.001)
-                command: [Quickshell.shellPath("scripts/lib/accel-run"), "region",
-                    "--screen-width", Math.round(root.widget.scaledScreenWidth),
-                    "--screen-height", Math.round(root.widget.scaledScreenHeight),
-                    "--width", Math.max(1, Math.round(root.widget.width / search.scale)),
-                    "--height", Math.max(1, Math.round(root.widget.height / search.scale)),
-                    "--horizontal-padding", 48,
-                    "--vertical-padding", 48,
-                    finder.path,
-                    ...(root.strategy === "mostBusy" ? ["--busiest"] : [])]
-                stdout: StdioCollector {
-                    id: found
-                    onStreamFinished: {
-                        if (found.text.length === 0 || !root.onWallpaper)
-                            return
-                        try {
-                            const spot = JSON.parse(found.text)
-                            const scale = root.widget.wallpaperScale
-                            root.wallpaperX = root.clampX(spot.center_x * scale - root.widget.width / 2)
-                            root.wallpaperY = root.clampY(spot.center_y * scale - root.widget.height / 2)
-                        } catch (e) {
-                            console.warn("[Widgets] Failed to parse placement output:", e)
-                        }
-                    }
-                }
-            }
+    // The quietest or busiest spot, read from the wallpaper's luma grid (Lume, one analysis per wallpaper for every
+    // widget) and clear of the other widgets and the shell's bodies. Of two widgets that place themselves, the one
+    // with the later key steps around the earlier, so they never chase each other.
+    readonly property string _key: root.widget.editInstanceKey
+    property bool _pending: false
+    function find(): void {
+        if (!Config.ready || !root.onWallpaper || root.widget.width <= 0 || root.widget.height <= 0)
+            return
+        const avoid = DesktopArrange.othersOf(root.widget.outputName, root._key, root.widget._stackId)
+            .filter(r => !(r.auto && r.id > root._key))
+        const pad = 48
+        const bounds = {
+            left: Math.max(pad, root.safeLeft + DesktopArrange.gap),
+            top: Math.max(pad, root.safeTop + DesktopArrange.gap),
+            right: Math.min(root.widget.scaledScreenWidth - pad, root.safeRight - DesktopArrange.gap),
+            bottom: Math.min(root.widget.scaledScreenHeight - pad, root.safeBottom - DesktopArrange.gap)
+        }
+        const spot = Lume.quietest(root.widget._wallpaperOutput, root.widget.width, root.widget.height, bounds, avoid,
+            DesktopArrange.gap, root.strategy === "mostBusy")
+        root._pending = spot === null
+        if (!spot)
+            return
+        root.wallpaperX = root.clampX(spot.x)
+        root.wallpaperY = root.clampY(spot.y)
+    }
+    function refresh(): void { root.find() }
+    Timer {
+        id: searchLater
+        interval: 250
+        onTriggered: root.find()
+    }
+    readonly property string _wallpaper: root.onWallpaper ? root.widget.wallpaperPath : ""
+    on_WallpaperChanged: if (root._wallpaper.length > 0) searchLater.restart()
+    Connections {
+        target: Lume
+        enabled: root._pending
+        function onRevisionChanged(): void { root.find() }
+    }
+    Connections {
+        target: DesktopArrange
+        enabled: root.onWallpaper
+        function onMoved(output: string, key: string): void {
+            if (output === root.widget.outputName && key !== root._key)
+                searchLater.restart()
         }
     }
 }

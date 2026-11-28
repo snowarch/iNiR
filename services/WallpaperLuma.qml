@@ -99,6 +99,62 @@ Singleton {
         }
     }
 
+    // Where a w x h rect is quietest (or busiest) inside `bounds` ({ left, top, right, bottom }, grid px) and clear
+    // of every rect in `avoid` ({ x, y, w, h }) by `gap`: { x, y } of its top-left corner, or null until the
+    // wallpaper is read. With no clear spot it takes the quietest anywhere. Prefix sums over the grid make each
+    // candidate O(1): one search costs about a millisecond and no process.
+    function quietest(path: string, width: int, height: int, w: real, h: real, bounds: var, avoid: var, gap: real, busiest: bool, mode = "fill"): var {
+        const data = root.maps[root.keyFor(path, width, height, mode)]
+        if (data === undefined) {
+            root.request(path, width, height, mode)
+            return null
+        }
+        const c = data.cell
+        const span = data.cols + 1
+        if (!data.sumMean) {
+            const sm = new Float64Array(span * (data.rows + 1))
+            const sq = new Float64Array(span * (data.rows + 1))
+            for (let row = 0; row < data.rows; row++)
+                for (let col = 0; col < data.cols; col++) {
+                    const i = (row + 1) * span + col + 1
+                    sm[i] = data.mean[row * data.cols + col] + sm[i - 1] + sm[i - span] - sm[i - span - 1]
+                    sq[i] = data.sq[row * data.cols + col] + sq[i - 1] + sq[i - span] - sq[i - span - 1]
+                }
+            data.sumMean = sm
+            data.sumSq = sq
+        }
+        const sm = data.sumMean, sq = data.sumSq
+        const left = Math.max(0, bounds.left), top = Math.max(0, bounds.top)
+        const right = Math.max(left + w, Math.min(data.width, bounds.right))
+        const bottom = Math.max(top + h, Math.min(data.height, bounds.bottom))
+        const spots = (from, to) => {
+            const out = []
+            for (let v = from; v < to; v += c) out.push(v)
+            out.push(to)
+            return out
+        }
+        const xs = spots(left, right - w), ys = spots(top, bottom - h)
+        const others = (avoid ?? []).filter(r => r && r.w > 0 && r.h > 0)
+        let free = null, any = null
+        for (const y of ys) {
+            const row0 = Math.max(0, Math.floor(y / c)), row1 = Math.min(data.rows, Math.max(row0 + 1, Math.ceil((y + h) / c)))
+            for (const x of xs) {
+                const col0 = Math.max(0, Math.floor(x / c)), col1 = Math.min(data.cols, Math.max(col0 + 1, Math.ceil((x + w) / c)))
+                const n = (row1 - row0) * (col1 - col0)
+                const at = (s, r, k) => s[r * span + k]
+                const m = (at(sm, row1, col1) - at(sm, row0, col1) - at(sm, row1, col0) + at(sm, row0, col0)) / n
+                const s2 = (at(sq, row1, col1) - at(sq, row0, col1) - at(sq, row1, col0) + at(sq, row0, col0)) / n
+                const score = busiest ? m * m - s2 : s2 - m * m
+                if (!any || score < any.score) any = { x: x, y: y, score: score }
+                if (free && score >= free.score) continue
+                const clear = others.every(r => x >= r.x + r.w + gap || x + w + gap <= r.x || y >= r.y + r.h + gap || y + h + gap <= r.y)
+                if (clear) free = { x: x, y: y, score: score }
+            }
+        }
+        const best = free ?? any
+        return best ? { x: best.x, y: best.y } : null
+    }
+
     Timer {
         id: startTimer
         interval: 0

@@ -35,7 +35,6 @@ AbstractWidget {
     property int screenHeight: root.desktop?.screen?.height ?? 0
     property int scaledScreenWidth: root.screenWidth
     property int scaledScreenHeight: root.screenHeight
-    property real wallpaperScale: 1
     property string outputName: root.desktop?.screen?.name ?? ""
     readonly property string _configPath: "background.widgets." + root.configEntryName
 
@@ -342,19 +341,25 @@ AbstractWidget {
     readonly property real _neighbourMagnet: 12
     readonly property bool _arranging: GlobalStates.widgetEditMode && root.configEntryName.length > 0
     readonly property string _stackId: root.stack?.id ?? ""
+    // Where it stands, always: the arranging maths reads it in edit mode, a widget that places itself on the wallpaper
+    // steps around it at any time.
     function _report(): void {
-        if (!root._arranging)
+        if (root.configEntryName.length === 0)
             return
         DesktopArrange.report(root.outputName, root.editInstanceKey, root.x, root.y, root.width, root.height,
-            root.visible && root.opacity > 0.01 && !root._shelfMoving && !root._departure, root._stackId)
+            root.visible && root.opacity > 0.01 && !root._shelfMoving && !root._departure, root._stackId, root.placement.onWallpaper)
     }
     on_ArrangingChanged: root._report()
+    readonly property bool _placesItself: root.placement.onWallpaper
+    on_PlacesItselfChanged: root._report()
     property bool _snapping: false
     function _arrangeMoved(): void {
         if (root.isDragging)
             stacking.item?.probe()
-        if (!root._arranging)
+        if (!root._arranging) {
+            root._report()
             return
+        }
         if (root.isDragging && root._dropKey.length === 0 && !root._snapping) {
             root._snapping = true
             const p = DesktopArrange.snap(root.outputName, root.editInstanceKey, root.x, root.y, root.width, root.height,
@@ -384,6 +389,7 @@ AbstractWidget {
     on_ShelfMovingChanged: root._report()
     readonly property var _departure: shelf.item?.departure ?? null
     Component.onDestruction: {
+        DesktopArrange.report(root.outputName, root.editInstanceKey, 0, 0, 0, 0, false, "", false)
         DesktopEditStage.inspect(root.outputName, root, false)
         DesktopEditStage.choose(root.outputName, root, false)
         DesktopEditStage.point(root.outputName, root, false)

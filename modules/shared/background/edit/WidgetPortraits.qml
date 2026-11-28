@@ -88,7 +88,7 @@ Item {
             watchdog.restart()
             sitter.setSource(root.fileOf(key), {
                 screenWidth: root.screenWidth, screenHeight: root.screenHeight,
-                scaledScreenWidth: root.screenWidth, scaledScreenHeight: root.screenHeight, wallpaperScale: 1
+                scaledScreenWidth: root.screenWidth, scaledScreenHeight: root.screenHeight
             })
         }
     }

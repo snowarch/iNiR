@@ -79,6 +79,28 @@ Singleton {
         return WallpaperLuma.sample(path, Math.round(screen.width), Math.round(screen.height), x, y, w, h, mode)
     }
 
+    // The top-left of the quietest (busiest) spot for a w x h rect on the output's wallpaper, output coordinates, clear of
+    // `avoid` by `gap` and inside `bounds`; null until the wallpaper is read (`revision` moves then).
+    function quietest(output: string, w: real, h: real, bounds: var, avoid: var, gap: real, busiest: bool): var {
+        void root.revision
+        const screen = root.screenNamed(output)
+        const path = root.wallpaperOf(output)
+        if (!screen || !path) return null
+        const mode = Wallpapers.fillMode
+        let dx = 0, dy = 0, width = Math.round(screen.width), height = Math.round(screen.height)
+        if (mode === "span") {
+            const area = Wallpapers.spanArea
+            dx = screen.x - area.x
+            dy = screen.y - area.y
+            width = Math.round(area.width)
+            height = Math.round(area.height)
+        }
+        const moved = { left: bounds.left + dx, top: bounds.top + dy, right: bounds.right + dx, bottom: bounds.bottom + dy }
+        const others = (avoid ?? []).map(r => ({ x: r.x + dx, y: r.y + dy, w: r.w, h: r.h }))
+        const spot = WallpaperLuma.quietest(path, width, height, w, h, moved, others, gap, busiest, mode === "span" ? "fill" : mode)
+        return spot ? { x: spot.x - dx, y: spot.y - dy } : null
+    }
+
     // Windows are open on the output's active workspace: compositor blur shows them, not the wallpaper.
     function covered(output: string): bool {
         if (!CompositorService.isNiri) return false

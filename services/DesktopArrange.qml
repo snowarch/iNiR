@@ -7,8 +7,9 @@ import qs
 import qs.modules.common
 import "root:modules/common/functions/ArrangeMath.js" as AM
 
-// Arranging the desktop: the state every widget and each output's guides share. Widgets report where they are
-// (plain writes, no bindings re-read the map), a carried one asks `snap()` on every move (neighbours, the screen's
+// Arranging the desktop: the state every widget and each output's guides share. Widgets report where they are, in and
+// out of edit mode (plain writes, no bindings re-read the map; `moved` tells a widget that places itself on the
+// wallpaper to look again, clear of the others), a carried one asks `snap()` on every move (neighbours, the screen's
 // centre, the grid: O(n)) and `end()` on release, which settles it beside its neighbours when it was let go on top of
 // one. The maths is ArrangeMath.js. The guides tell the story by `phase`:
 //   drag     the grid shows, the carried widget is pulled onto lines, what it lines up with is drawn lightly
@@ -43,13 +44,25 @@ Singleton {
         else delete next[output]
         root.rooms = next
     }
-    // `stack`: the pages of one stack move together and never pull each other.
-    function report(output: string, key: string, x: real, y: real, w: real, h: real, present: bool, stack: string): void {
+    // `stack`: the pages of one stack move together and never pull each other. `auto`: it places itself on the
+    // wallpaper's quietest or busiest spot.
+    signal moved(string output, string key)
+    function report(output: string, key: string, x: real, y: real, w: real, h: real, present: bool, stack: string, auto: bool): void {
         if (output.length === 0 || key.length === 0)
             return
         const rects = root._rects[output] ?? (root._rects[output] = {})
-        if (!present || w < 2 || h < 2) delete rects[key]
-        else rects[key] = { id: key, x: x, y: y, w: w, h: h, stack: stack }
+        const was = rects[key]
+        if (!present || w < 2 || h < 2) {
+            if (!was) return
+            delete rects[key]
+        } else {
+            const rect = { id: key, x: Math.round(x), y: Math.round(y), w: Math.round(w), h: Math.round(h), stack: stack, auto: auto === true }
+            if (was && was.x === rect.x && was.y === rect.y && was.w === rect.w && was.h === rect.h
+                    && was.stack === rect.stack && was.auto === rect.auto)
+                return
+            rects[key] = rect
+        }
+        root.moved(output, key)
     }
     function rectOf(output: string, key: string): var { return root._rects[output]?.[key] ?? null }
     function othersOf(output: string, key: string, stack: string): var {
@@ -180,7 +193,7 @@ Singleton {
     Timer { id: holdTimer; interval: root.holdMs; onTriggered: { root.phase = "fade"; fadeTimer.restart() } }
     Timer { id: fadeTimer; interval: root.fadeMs + 40; onTriggered: root.cancel() }
 
-    // Leaving edit mode wipes it all.
+    // Leaving edit mode ends a carry; where the widgets are stays (they report it always).
     readonly property bool _editing: GlobalStates.widgetEditMode
-    on_EditingChanged: if (!root._editing) { root.cancel(); root._rects = ({}) }
+    on_EditingChanged: if (!root._editing) root.cancel()
 }
