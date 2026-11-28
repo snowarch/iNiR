@@ -346,20 +346,8 @@ Item {
 
             pendingSource = newSource
 
-            if (!root._canTransition) {
-                const active = activeImage()
-                active.source = newSource
-                if (activeIndex === 0)
-                    img1.source = ""
-                else
-                    img0.source = ""
-                displayedSource = newSource
-                pendingSource = ""
-                loadingSource = ""
-                resetTransition()
-                return
-            }
-
+            // Without a transition the new picture still loads in the hidden slot: set on the shown one, it emptied
+            // the slot while it decoded and the blurred backdrop behind Edit Mode flashed black at every pick.
             if (newSource === displayedSource && !root._transitioning && loadingSource === "") {
                 pendingSource = ""
                 loadingSource = ""
@@ -427,6 +415,18 @@ Item {
         function performSwitch(): void {
             if (pendingSource === "" || pendingSource === displayedSource)
                 return
+
+            if (!root._canTransition) {
+                // Ready in the hidden slot: it takes the place at once and the old picture is let go.
+                const shown = activeImage()
+                resetTransition()
+                activeIndex = activeIndex === 0 ? 1 : 0
+                displayedSource = pendingSource
+                pendingSource = ""
+                loadingSource = ""
+                shown.source = ""
+                return
+            }
 
             if (!root.shaderTransitionRequested)
                 root._activeShader = ""
