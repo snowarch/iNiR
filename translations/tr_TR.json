@@ -1995,7 +1995,6 @@
   "Your checkout has commits from the old remote history. Repair & Update preserves ambiguous/local work and automatically realigns only when Git proves this is a clean upstream force-push case.": "Checkout'ınız eski uzak depo geçmişinden commit'ler içeriyor. Onar ve Güncelle, belirsiz/yerel çalışmaları korur ve yalnızca Git bunun temiz bir upstream force-push durumu olduğunu kanıtlarsa otomatik olarak yeniden hizalar.",
   "Flow": "Akış",
   "Glass": "Cam",
-  "Glass style": "Cam stili",
   "%1 tasks left": "%1 görev kaldı",
   "%1 wallpapers": "%1 duvar kâğıdı",
   "%1 windows held outside the workspace flow": "%1 pencere çalışma alanı akışının dışında tutuluyor",
@@ -3982,5 +3981,6 @@
   "Liquid frost": "Sıvı buzlanma",
   "Frosted diffusion mixed into liquid glass surfaces.": "Sıvı cam yüzeylere karışan buzlu difüzyon.",
   "Lens dome": "Mercek bombesi",
-  "Subtle convex bulge across the centre of liquid glass.": "Sıvı camın merkezinde hafif dışbükey kavis."
+  "Subtle convex bulge across the centre of liquid glass.": "Sıvı camın merkezinde hafif dışbükey kavis.",
+  "Group": "Grupla"
 }

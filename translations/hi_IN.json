@@ -1995,7 +1995,6 @@
   "Your checkout has commits from the old remote history. Repair & Update preserves ambiguous/local work and automatically realigns only when Git proves this is a clean upstream force-push case.": "आपके checkout में पुराने remote इतिहास के commit हैं। Repair & Update अस्पष्ट/स्थानीय काम को सुरक्षित रखता है और केवल तभी अपने-आप दोबारा संरेखित करता है, जब Git प्रमाणित करे कि यह साफ़ upstream force-push का मामला है।",
   "Flow": "प्रवाह",
   "Glass": "ग्लास",
-  "Glass style": "ग्लास का अंदाज",
   "%1 tasks left": "%1 कार्य बाकी",
   "%1 wallpapers": "%1 वॉलपेपर",
   "%1 windows held outside the workspace flow": "%1 विंडो workspace प्रवाह से बाहर रखी गई हैं",
@@ -3982,5 +3981,6 @@
   "Liquid frost": "लिक्विड फ्रॉस्ट",
   "Frosted diffusion mixed into liquid glass surfaces.": "लिक्विड ग्लास सतहों में मिला हुआ धुंधला फैलाव।",
   "Lens dome": "लेंस गुंबद",
-  "Subtle convex bulge across the centre of liquid glass.": "लिक्विड ग्लास के केंद्र में हल्का उत्तल उभार।"
+  "Subtle convex bulge across the centre of liquid glass.": "लिक्विड ग्लास के केंद्र में हल्का उत्तल उभार।",
+  "Group": "समूह"
 }

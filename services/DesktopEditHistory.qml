@@ -124,6 +124,14 @@ Singleton {
         else Wallpapers.clearWallpaperPreview()
     }
     // Done: keeps the arrangement and applies the drafted wallpaper.
+    // A fullscreen window taking an output (a game) ends arranging, as Escape does: the mode covers what it shows.
+    Connections {
+        target: GameMode
+        enabled: root.active
+        function onHasVisibleFullscreenWindowChanged(): void {
+            if (GameMode.hasVisibleFullscreenWindow) GlobalStates.setWidgetEditMode(false)
+        }
+    }
     function finish(): void {
         root.applyWallpaperDraft()
         GlobalStates.setWidgetEditMode(false)

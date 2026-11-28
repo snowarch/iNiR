@@ -1995,7 +1995,6 @@
   "Your checkout has commits from the old remote history. Repair & Update preserves ambiguous/local work and automatically realigns only when Git proves this is a clean upstream force-push case.": "현재 checkout에 이전 remote 기록의 commit이 있습니다. 복구 및 업데이트는 모호하거나 로컬에서 수행한 작업을 보존하며, Git이 깨끗한 upstream force-push 상황임을 입증한 경우에만 자동으로 기록을 다시 맞춥니다.",
   "Flow": "흐름",
   "Glass": "글래스",
-  "Glass style": "글래스 스타일",
   "%1 tasks left": "남은 작업 %1개",
   "%1 wallpapers": "배경화면 %1개",
   "%1 windows held outside the workspace flow": "워크스페이스 흐름 외부에 유지된 창 %1개",
@@ -3982,5 +3981,6 @@
   "Liquid frost": "리퀴드 프로스트",
   "Frosted diffusion mixed into liquid glass surfaces.": "리퀴드 글라스 표면에 섞이는 불투명 확산입니다.",
   "Lens dome": "렌즈 돔",
-  "Subtle convex bulge across the centre of liquid glass.": "리퀴드 글라스 중앙의 미세한 볼록 곡면입니다."
+  "Subtle convex bulge across the centre of liquid glass.": "리퀴드 글라스 중앙의 미세한 볼록 곡면입니다.",
+  "Group": "그룹"
 }

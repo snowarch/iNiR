@@ -1995,7 +1995,6 @@
   "Your checkout has commits from the old remote history. Repair & Update preserves ambiguous/local work and automatically realigns only when Git proves this is a clean upstream force-push case.": "Checkout-it old remote history-mit commit-eqarpoq. Repair & Update ambiguous/local work preserve-gissavaa, clean upstream force-push case Git uppernarsarpagu aatsaat auto-realign-garluni.",
   "Flow": "Ingerlaarneq",
   "Glass": "Glasi",
-  "Glass style": "Glasip isikkua",
   "%1 tasks left": "%1 task sinnerupput",
   "%1 wallpapers": "%1 tunuliaqutit",
   "%1 windows held outside the workspace flow": "%1 window workspace flow-p avataani tigummineqartut",
@@ -3982,5 +3981,6 @@
   "Liquid frost": "Imerpalasoq qerinerusoq",
   "Frosted diffusion mixed into liquid glass surfaces.": "Igalaap imerpalasup qaavani ersernerlunneq.",
   "Lens dome": "Linsip quleraa",
-  "Subtle convex bulge across the centre of liquid glass.": "Igalaap imerpalasup qeqqani quleralersineq."
+  "Subtle convex bulge across the centre of liquid glass.": "Igalaap imerpalasup qeqqani quleralersineq.",
+  "Group": "Gruppi"
 }

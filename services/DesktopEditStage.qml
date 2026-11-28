@@ -148,11 +148,24 @@ Singleton {
     function forgetPicture(taker: var): void {
         root._pictureQueue = root._pictureQueue.filter(entry => entry !== taker)
     }
+    // A grab renders the widget again and writes a PNG on this thread: never while a stage still moves (opening,
+    // closing, a panel resizing the card), so the motion keeps every frame; the queue waits for it to come to rest.
+    property bool stageMoving: false
+    onStagesChanged: {
+        root.stageMoving = true
+        stageRest.restart()
+    }
+    Timer {
+        id: stageRest
+        interval: 160
+        onTriggered: root.stageMoving = false
+    }
     Timer {
         id: pictureBeat
         interval: 90
         repeat: true
         onTriggered: {
+            if (root.stageMoving) return
             const next = root._pictureQueue[0]
             root._pictureQueue = root._pictureQueue.slice(1)
             if (next) next.takePicture()
@@ -160,10 +173,14 @@ Singleton {
         }
     }
     property string look: "default"
+    // What a picture shows: the family's look and the language its words are in (a picture taken in English kept
+    // showing English on the shelf after the language changed).
+    readonly property string pictureKey: root.look + "-" + (Translation.loadedLanguageCode || "en_US")
     property var pictures: ({})
-    // Another look (a scheme or Design changed while arranging): the pictures of the old one go at once, and every
-    // widget takes its own again once it has redrawn (WidgetShelfMotion); before, the shelf kept the old look's plates.
-    onLookChanged: {
+    // Another look or language (a scheme or Design changed while arranging): the pictures of the old one go at once,
+    // and every widget takes its own again once it has redrawn (WidgetShelfMotion); before, the shelf kept the old
+    // look's plates.
+    onPictureKeyChanged: {
         root.pictures = ({})
         root._pictureQueue = []
         pictureBeat.stop()
@@ -177,7 +194,7 @@ Singleton {
         root.pictures = next
     }
     function savedPicture(key: string): string {
-        return root.pictureDir + "/" + key.replace(/[^A-Za-z0-9._-]/g, "_") + "-" + root.look + ".png"
+        return root.pictureDir + "/" + key.replace(/[^A-Za-z0-9._-]/g, "_") + "-" + root.pictureKey + ".png"
     }
 
     // ── Pulling a widget off the shelf ──

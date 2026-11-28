@@ -1995,7 +1995,6 @@
   "Your checkout has commits from the old remote history. Repair & Update preserves ambiguous/local work and automatically realigns only when Git proves this is a clean upstream force-push case.": "当前检出包含旧远程历史中的提交。“修复并更新”会保留存在歧义的内容和本地工作，仅在 Git 确认上游发生明确的强制推送时自动重新对齐。",
   "Flow": "流动",
   "Glass": "玻璃",
-  "Glass style": "玻璃风格",
   "%1 tasks left": "剩余 %1 个任务",
   "%1 wallpapers": "%1 张壁纸",
   "%1 windows held outside the workspace flow": "%1 个窗口脱离工作区流",
@@ -3982,5 +3981,6 @@
   "Liquid frost": "液态磨砂",
   "Frosted diffusion mixed into liquid glass surfaces.": "混入液态玻璃表面的磨砂漫射效果。",
   "Lens dome": "透镜弧度",
-  "Subtle convex bulge across the centre of liquid glass.": "液态玻璃中央的细微凸面弧度。"
+  "Subtle convex bulge across the centre of liquid glass.": "液态玻璃中央的细微凸面弧度。",
+  "Group": "分组"
 }

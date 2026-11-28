@@ -1995,7 +1995,6 @@
   "Your checkout has commits from the old remote history. Repair & Update preserves ambiguous/local work and automatically realigns only when Git proves this is a clean upstream force-push case.": "Checkout Anda memiliki commit dari riwayat remote lama. Perbaiki & Perbarui menyimpan pekerjaan lokal atau yang ambigu, dan hanya menyelaraskan ulang otomatis jika Git membuktikan ini kasus force-push upstream yang bersih.",
   "Flow": "Alir",
   "Glass": "Kaca",
-  "Glass style": "Gaya kaca",
   "%1 tasks left": "%1 tugas tersisa",
   "%1 wallpapers": "%1 wallpaper",
   "%1 windows held outside the workspace flow": "%1 jendela ditahan di luar alur ruang kerja",
@@ -3982,5 +3981,6 @@
   "Liquid frost": "Kabut kaca cair",
   "Frosted diffusion mixed into liquid glass surfaces.": "Difusi buram yang tercampur di permukaan kaca cair.",
   "Lens dome": "Kubah lensa",
-  "Subtle convex bulge across the centre of liquid glass.": "Lengkungan cembung halus di tengah kaca cair."
+  "Subtle convex bulge across the centre of liquid glass.": "Lengkungan cembung halus di tengah kaca cair.",
+  "Group": "Grup"
 }

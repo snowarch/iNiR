@@ -1995,7 +1995,6 @@
   "Your checkout has commits from the old remote history. Repair & Update preserves ambiguous/local work and automatically realigns only when Git proves this is a clean upstream force-push case.": "В checkout есть коммиты из старой истории remote. «Восстановить и обновить» сохраняет неоднозначные и локальные изменения и автоматически синхронизирует историю только тогда, когда Git подтверждает, что это однозначный случай force-push в upstream.",
   "Flow": "Поток",
   "Glass": "Стекло",
-  "Glass style": "Стиль стекла",
   "%1 tasks left": "Осталось задач: %1",
   "%1 wallpapers": "Обои: %1",
   "%1 windows held outside the workspace flow": "Окон вне потока рабочих столов: %1",
@@ -3982,5 +3981,6 @@
   "Liquid frost": "Матовость жидкого стекла",
   "Frosted diffusion mixed into liquid glass surfaces.": "Матовое рассеивание на поверхностях жидкого стекла.",
   "Lens dome": "Выпуклость линзы",
-  "Subtle convex bulge across the centre of liquid glass.": "Лёгкая выпуклость в центре жидкого стекла."
+  "Subtle convex bulge across the centre of liquid glass.": "Лёгкая выпуклость в центре жидкого стекла.",
+  "Group": "Группа"
 }

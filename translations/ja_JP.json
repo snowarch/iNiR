@@ -1995,7 +1995,6 @@
   "Your checkout has commits from the old remote history. Repair & Update preserves ambiguous/local work and automatically realigns only when Git proves this is a clean upstream force-push case.": "現在の checkout には古い remote 履歴の commit があります。「修復して更新」は曖昧な作業やローカル作業を保持し、Git がクリーンな upstream の force-push と証明できる場合にのみ自動で再同期します。",
   "Flow": "フロー",
   "Glass": "ガラス",
-  "Glass style": "ガラスのスタイル",
   "%1 tasks left": "残り%1タスク",
   "%1 wallpapers": "壁紙%1枚",
   "%1 windows held outside the workspace flow": "ワークスペースフロー外に保持されたウィンドウ%1件",
@@ -3982,5 +3981,6 @@
   "Liquid frost": "リキッドフロスト",
   "Frosted diffusion mixed into liquid glass surfaces.": "リキッドガラス表面に混ざるすりガラス拡散。",
   "Lens dome": "レンズドーム",
-  "Subtle convex bulge across the centre of liquid glass.": "リキッドガラス中央のわずかな凸曲面。"
+  "Subtle convex bulge across the centre of liquid glass.": "リキッドガラス中央のわずかな凸曲面。",
+  "Group": "グループ"
 }

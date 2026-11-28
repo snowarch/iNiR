@@ -1995,7 +1995,6 @@
   "Your checkout has commits from the old remote history. Repair & Update preserves ambiguous/local work and automatically realigns only when Git proves this is a clean upstream force-push case.": "La branche actuellement extraite contient des commits issus de l’ancien historique distant. Réparer et mettre à jour préserve le travail local ou ambigu et ne réaligne automatiquement la branche que lorsque Git confirme un cas propre de force-push en amont.",
   "Flow": "Flux",
   "Glass": "Verre",
-  "Glass style": "Style du verre",
   "%1 tasks left": "%1 tâches restantes",
   "%1 wallpapers": "%1 fonds d’écran",
   "%1 windows held outside the workspace flow": "%1 fenêtres maintenues hors du flux de l’espace de travail",
@@ -3982,5 +3981,6 @@
   "Liquid frost": "Givre liquide",
   "Frosted diffusion mixed into liquid glass surfaces.": "Diffusion dépolie mêlée aux surfaces en verre liquide.",
   "Lens dome": "Dôme de lentille",
-  "Subtle convex bulge across the centre of liquid glass.": "Bombement convexe subtil au centre du verre liquide."
+  "Subtle convex bulge across the centre of liquid glass.": "Bombement convexe subtil au centre du verre liquide.",
+  "Group": "Groupe"
 }

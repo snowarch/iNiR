@@ -461,8 +461,16 @@ Item {
                             readonly property real dpr: tilePicture.Window.window?.devicePixelRatio ?? 1
                             anchors.fill: parent
                             anchors.margins: Math.round(8 * root.d)
-                            // Shown once decoded: a plate never goes empty between the glyph and the picture.
-                            visible: tile.pictured && tilePicture.status === Image.Ready
+                            // Shown once decoded, and kept on screen while a retaken picture decodes (each entry retakes
+                            // them): gated on status it went back to the glyph for a frame, a blink on every entry.
+                            visible: tile.pictured && tilePicture.painted
+                            retainWhileLoading: true
+                            property bool painted: false
+                            Component.onCompleted: tilePicture.painted = tilePicture.status === Image.Ready
+                            onStatusChanged: {
+                                if (tilePicture.status === Image.Ready) tilePicture.painted = true
+                                else if (tilePicture.status === Image.Null || tilePicture.status === Image.Error) tilePicture.painted = false
+                            }
                             source: tile.pictureUrl
                             sourceSize: Qt.size(Math.ceil(tilePicture.width * tilePicture.dpr), Math.ceil(tilePicture.height * tilePicture.dpr))
                             fillMode: Image.PreserveAspectFit
@@ -475,7 +483,7 @@ Item {
                         // Never seen yet: its glyph stands in.
                         MaterialSymbol {
                             anchors.centerIn: parent
-                            visible: !(tile.pictured && tilePicture.status === Image.Ready)
+                            visible: !(tile.pictured && tilePicture.painted)
                             text: tile.modelData.glyph
                             iconSize: Math.round(40 * root.d)
                             fill: 1

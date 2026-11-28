@@ -30,7 +30,7 @@ Item {
     function url(key: string): string {
         const live = DesktopEditStage.pictures[key]
         if (live) return live.url
-        const made = root.made[key + "@" + DesktopEditStage.look]
+        const made = root.made[key + "@" + DesktopEditStage.pictureKey]
         if (made) return made
         const path = DesktopEditStage.savedPicture(key)
         return root.saved[path.slice(path.lastIndexOf("/") + 1)] ? "file://" + path : ""
@@ -69,7 +69,7 @@ Item {
         if (!root.running || !root.savedRead) return []
         Config.revision
         DesktopEditStage.pictures
-        return root.keys.filter(key => root.url(key).length === 0 && !root.failed[key + "@" + DesktopEditStage.look]
+        return root.keys.filter(key => root.url(key).length === 0 && !root.failed[key + "@" + DesktopEditStage.pictureKey]
             && !root.onDesktop(key) && root.fileOf(key).length > 0)
     }
     property string sitting: ""
@@ -109,7 +109,7 @@ Item {
     }
     function giveUp(): void {
         const next = Object.assign({}, root.failed)
-        next[root.sitting + "@" + DesktopEditStage.look] = true
+        next[root.sitting + "@" + DesktopEditStage.pictureKey] = true
         root.failed = next
         root.release()
     }
@@ -132,7 +132,7 @@ Item {
         onTriggered: {
             const widget = sitter.item
             const key = root.sitting
-            const look = DesktopEditStage.look
+            const look = DesktopEditStage.pictureKey
             const w = Math.round(widget?.width ?? 0)
             const h = Math.round(widget?.height ?? 0)
             if (!widget || w < 8 || h < 8 || !sitter.Window.window?.visible) {
@@ -141,7 +141,7 @@ Item {
             }
             const asked = widget.grabToImage(result => {
                 const path = DesktopEditStage.savedPicture(key)
-                if (look !== DesktopEditStage.look || root.sitting !== key || !result.saveToFile(path)) { root.giveUp(); return }
+                if (look !== DesktopEditStage.pictureKey || root.sitting !== key || !result.saveToFile(path)) { root.giveUp(); return }
                 probe.path = path
                 probe.url = "file://" + path + "?" + Date.now()
                 probe.loadImage(probe.url)
@@ -177,7 +177,7 @@ Item {
                 return
             }
             const next = Object.assign({}, root.made)
-            next[root.sitting + "@" + DesktopEditStage.look] = url
+            next[root.sitting + "@" + DesktopEditStage.pictureKey] = url
             root.made = next
             root.madeAny = true
             root.release()

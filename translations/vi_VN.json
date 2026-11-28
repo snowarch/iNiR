@@ -1995,7 +1995,6 @@
   "Your checkout has commits from the old remote history. Repair & Update preserves ambiguous/local work and automatically realigns only when Git proves this is a clean upstream force-push case.": "Checkout của bạn có các commit từ lịch sử remote cũ. Sửa chữa & Cập nhật sẽ giữ lại phần việc cục bộ hoặc chưa rõ nguồn gốc, và chỉ tự động căn chỉnh lại khi Git xác nhận đây là trường hợp upstream force-push thuần túy.",
   "Flow": "Luồng",
   "Glass": "Kính",
-  "Glass style": "Phong cách kính",
   "%1 tasks left": "Còn %1 tác vụ",
   "%1 wallpapers": "%1 hình nền",
   "%1 windows held outside the workspace flow": "%1 cửa sổ được giữ ngoài luồng không gian làm việc",
@@ -3982,5 +3981,6 @@
   "Liquid frost": "Độ mờ kính lỏng",
   "Frosted diffusion mixed into liquid glass surfaces.": "Độ khuếch tán mờ hòa trộn vào bề mặt kính lỏng.",
   "Lens dome": "Độ cong thấu kính",
-  "Subtle convex bulge across the centre of liquid glass.": "Độ cong lồi nhẹ ở giữa bề mặt kính lỏng."
+  "Subtle convex bulge across the centre of liquid glass.": "Độ cong lồi nhẹ ở giữa bề mặt kính lỏng.",
+  "Group": "Nhóm"
 }
