@@ -29,6 +29,8 @@ Item {
     // Read-only state — `ready` stays true during transitions so that
     // external consumers (blur layers, visibility guards) don't flicker.
     readonly property bool ready: img0.status === Image.Ready || img1.status === Image.Ready
+    // Nothing waits to load or to arrive: the picture asked for shows, or never will (it failed).
+    readonly property bool settled: internal.pendingSource === "" && internal.loadingSource === "" && !root._transitioning
     readonly property alias activeIndex: internal.activeIndex
 
     // Transition signals for external consumers (e.g. defer magick identify)
@@ -54,15 +56,12 @@ Item {
     readonly property bool _canTransition: enableTransitions && Appearance.animationsEnabled && _normalizedTransitionType(transitionType) !== "none"
     readonly property string _effectiveType: _canTransition ? _normalizedTransitionType(transitionType) : "none"
     readonly property real _zoomEnterFrom: 1.12
-    readonly property real _zoomExitTo: 0.9
     readonly property real _wipeIncomingParallax: 0.08
     readonly property real _wipeOutgoingParallax: 0.045
     readonly property real _slideExitDistance: 0.32
     readonly property real _pushDistance: 1.05
     readonly property real _crossfadeIncomingScale: 1.018
-    readonly property real _crossfadeOutgoingScale: 0.985
     readonly property real _blurFadeIncomingScale: 1.035
-    readonly property real _blurFadeOutgoingScale: 0.96
     readonly property real _blurFadeMax: 0.82
     readonly property list<real> transitionProgressCurve: _progressCurveFor(_effectiveType)
     property real _transitionWidthSnapshot: 0
@@ -553,17 +552,19 @@ Item {
             return (isFrom || isTo) ? 1 : 0
         case "wipe":
             return isFrom ? _lerp(1, 0.86, progress) : isTo ? _lerp(0.74, 1, progress) : 0
+        // The incoming picture covers the whole slot (scale >= 1), so the outgoing one stays opaque under it: fading both
+        // at once left the pair 25 % see-through halfway (1 - p + p^2) and every change dimmed to what lies beneath.
         case "zoom":
-            return isFrom ? (1 - progress) : isTo ? progress : 0
+            return isFrom ? 1 : isTo ? progress : 0
         case "blurFade":
-            return isFrom ? (1 - progress) : isTo ? _clamp01((progress - 0.08) / 0.92) : 0
+            return isFrom ? 1 : isTo ? _clamp01((progress - 0.08) / 0.92) : 0
         case "fadeThrough": {
             const outProgress = _clamp01(progress / 0.4)
             const inProgress = progress <= 0.5 ? 0 : _clamp01((progress - 0.5) / 0.5)
             return isFrom ? (1 - outProgress) : isTo ? inProgress : 0
         }
         default:
-            return isFrom ? (1 - progress) : isTo ? progress : 0
+            return isFrom ? 1 : isTo ? progress : 0
         }
     }
 
@@ -668,9 +669,10 @@ Item {
         const isTo = internal.transitionToIndex === slotIndex
 
         switch (_effectiveType) {
+        // The outgoing picture holds its size: shrunk under a half-faded incoming one, its edges showed what lies beneath.
         case "crossfade":
             if (isFrom)
-                return _lerp(1, _crossfadeOutgoingScale, progress)
+                return 1
             if (isTo)
                 return _lerp(_crossfadeIncomingScale, 1, progress)
             return 1
@@ -682,13 +684,13 @@ Item {
             return 1
         case "zoom":
             if (isFrom)
-                return _lerp(1, _zoomExitTo, progress)
+                return 1
             if (isTo)
                 return _lerp(_zoomEnterFrom, 1, progress)
             return 1
         case "blurFade":
             if (isFrom)
-                return _lerp(1, _blurFadeOutgoingScale, progress)
+                return 1
             if (isTo)
                 return _lerp(_blurFadeIncomingScale, 1, progress)
             return 1
