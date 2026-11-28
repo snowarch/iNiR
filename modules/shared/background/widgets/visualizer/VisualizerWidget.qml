@@ -319,7 +319,7 @@ AbstractBackgroundWidget {
                     border.width: Math.max(1, Math.round(root.scaleFactor))
                     border.color: ColorUtils.applyAlpha(root._organicPrimary, 0.34)
 
-                    Image {
+                    StyledImage {
                         anchors.fill: parent
                         source: root._organicDisplayedArt
                         sourceSize: Qt.size(Math.max(128, Math.ceil(width * 2)),
@@ -330,7 +330,6 @@ AbstractBackgroundWidget {
                         cache: true
                         smooth: true
                         mipmap: true
-                        visible: status === Image.Ready
                     }
 
                     MaterialSymbol {

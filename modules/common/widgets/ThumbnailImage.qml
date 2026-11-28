@@ -48,6 +48,7 @@ StyledImage {
     smooth: true
     mipmap: false
 
+    // Gated on Ready, not on painted: a reused tile must not show the picture it held before while the new one decodes.
     opacity: status === Image.Ready ? 1 : 0
     Behavior on opacity {
         enabled: Appearance.animationsEnabled
