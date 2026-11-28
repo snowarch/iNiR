@@ -646,7 +646,8 @@ FocusScope {
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
             onWheel: event => {
                 const maxY = Math.max(0, sectionViewport.contentHeight - sectionViewport.height)
-                const delta = event.pixelDelta.y !== 0 ? event.pixelDelta.y : event.angleDelta.y
+                // A touchpad (in phases) by its pixels; a wheel by its notches: Qt on Wayland gives a notch 15 px too.
+                const delta = event.phase !== Qt.NoScrollPhase && event.pixelDelta.y !== 0 ? event.pixelDelta.y : event.angleDelta.y
                 if (maxY > 0)
                     sectionViewport.contentY = Math.max(0, Math.min(maxY,
                         sectionViewport.contentY - delta))

@@ -512,13 +512,13 @@ AbstractWidget {
         }
     }
 
-    // With a shelf out, a right click puts the widget back on it (it shrinks into its picture); without one it opens
-    // the widget's controls.
+    // With a shelf out, a right click puts the widget back on it (it shrinks into its picture when the shelf says where
+    // it is); without one it opens the widget's controls.
     TapHandler {
         enabled: GlobalStates.widgetEditMode
         acceptedButtons: Qt.RightButton
         onTapped: {
-            if (DesktopEditStage.hosted(root.outputName) && DesktopEditStage.tiles[root.configEntryName]) {
+            if (DesktopEditStage.hosted(root.outputName)) {
                 if (GlobalStates.selectedDesktopWidget === root.editInstanceKey)
                     GlobalStates.clearDesktopWidgetSelection()
                 root.takeAway()
