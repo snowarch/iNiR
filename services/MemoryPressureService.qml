@@ -67,7 +67,9 @@ Singleton {
             notificationShown: root.notificationShown,
             userDismissed: root.userDismissed,
             residentMb: root.residentMb,
-            budgetMb: root.budgetMb,
+            availableMb: root.availableMb,
+            floorMb: root.floorMb,
+            over: root.over,
             enabled: root.enabled,
             notifyEnabled: root.notifyEnabled
         })
@@ -139,24 +141,42 @@ Singleton {
         }
     }
 
-    // ── Budget ────────────────────────────────────────────────────────────
-    // The shell's resident size, read every 15 s. Over the budget, what is kept built after its close (Settings, the
-    // gallery, Spotlight, Orbit: KeepWarm and the families' panel keeps) lets go at once, and the runtime purges what
-    // that freed.
-    readonly property int budgetMb: 480
+    // ── Pressure ──────────────────────────────────────────────────────────
+    // What the system has left, read every 15 s. Short of it, what is kept built after its close (Settings, the
+    // gallery, Spotlight, Orbit: KeepWarm and the families' panel keeps) lets go at once. The pressure is the system's,
+    // never the shell's own size: a fixed budget on the shell (480 MB until 11-28) sat under what a desktop with
+    // widgets uses, so Settings was dropped at every close and rebuilt, slowly, at every open.
     property int residentMb: 0
-    readonly property bool over: root.residentMb > root.budgetMb
+    property int availableMb: -1
+    property int totalMb: 0
+    readonly property int floorMb: Math.max(768, Math.round(root.totalMb * 0.1))
+    readonly property bool over: root.availableMb >= 0 && root.availableMb < root.floorMb
+    function kib(text: string, key: string): int {
+        return Math.round(Number(text.match(new RegExp(key + ":\\s*(\\d+)"))?.[1] ?? 0) / 1024)
+    }
     FileView {
         id: status
         path: "/proc/self/status"
-        onLoaded: root.residentMb = Math.round(Number(status.text().match(/VmRSS:\s*(\d+)/)?.[1] ?? 0) / 1024)
+        onLoaded: root.residentMb = root.kib(status.text(), "VmRSS")
+    }
+    FileView {
+        id: meminfo
+        path: "/proc/meminfo"
+        onLoaded: {
+            const text = meminfo.text()
+            root.totalMb = root.kib(text, "MemTotal")
+            root.availableMb = root.kib(text, "MemAvailable")
+        }
     }
     Timer {
         interval: 15000
         running: true
         repeat: true
         triggeredOnStart: true
-        onTriggered: status.reload()
+        onTriggered: {
+            status.reload()
+            meminfo.reload()
+        }
     }
 
     // ── IPC ───────────────────────────────────────────────────────────────

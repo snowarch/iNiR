@@ -3,7 +3,7 @@ import QtQuick
 import qs.services
 
 // Keeps a surface built while it is wanted or still on screen (`busy`: a close in motion), and `keepMs` after; then
-// lets it go, at once while the shell is over its memory budget (MemoryPressureService.over). Bind a Loader's
+// lets it go, at once while the system is short of memory (MemoryPressureService.over). Bind a Loader's
 // `active` to `warm`. Give `wanted` the request, never a state read off the loaded item: that would loop.
 QtObject {
     id: root
