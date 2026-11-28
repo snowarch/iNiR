@@ -333,108 +333,110 @@ AbstractBackgroundWidget {
         }
     }
 
-    Grid {
-        id: timerGrid
+    // The Material cards, built only while no family face is worn: hidden under a face they held ~700 objects.
+    Loader {
         anchors.centerIn: parent
-        opacity: 1
-        visible: !root.familyFaced
-        enabled: !GlobalStates.widgetEditMode
-        move: Transition {
-            enabled: root.animateGeometry
-            NumberAnimation { properties: "x,y"; duration: Appearance.animation.elementMove.duration; easing.type: Easing.OutCubic }
-        }
-        columns: root.sizedColumns
-        spacing: root.cardSpacing
+        active: !root.familyFaced
+        sourceComponent: Grid {
+            id: timerGrid
+            enabled: !GlobalStates.widgetEditMode
+            move: Transition {
+                enabled: root.animateGeometry
+                NumberAnimation { properties: "x,y"; duration: Appearance.animation.elementMove.duration; easing.type: Easing.OutCubic }
+            }
+            columns: root.sizedColumns
+            spacing: root.cardSpacing
 
-        TimerCard {
-            icon: TimerService.pomodoroBreak ? "coffee" : "target"
-            value: root.formatSeconds(TimerService.pomodoroSecondsLeft)
-            label: TimerService.pomodoroLongBreak ? Translation.tr("Long break")
-                : TimerService.pomodoroBreak ? Translation.tr("Break") : Translation.tr("Focus")
-            cardKey: "focus"
-            running: TimerService.pomodoroRunning
-            paused: TimerService.pomodoroPaused
-            shape: MaterialShape.Shape.Flower
-            semanticRole: root.widgetTertiaryRole
-            toggleAction: () => TimerService.togglePomodoro()
-            resetAction: () => TimerService.resetPomodoro()
-            progressMeaningful: true
-            progress: 1 - TimerService.pomodoroSecondsLeft / Math.max(1, TimerService.pomodoroLapDuration)
-        }
+            TimerCard {
+                icon: TimerService.pomodoroBreak ? "coffee" : "target"
+                value: root.formatSeconds(TimerService.pomodoroSecondsLeft)
+                label: TimerService.pomodoroLongBreak ? Translation.tr("Long break")
+                    : TimerService.pomodoroBreak ? Translation.tr("Break") : Translation.tr("Focus")
+                cardKey: "focus"
+                running: TimerService.pomodoroRunning
+                paused: TimerService.pomodoroPaused
+                shape: MaterialShape.Shape.Flower
+                semanticRole: root.widgetTertiaryRole
+                toggleAction: () => TimerService.togglePomodoro()
+                resetAction: () => TimerService.resetPomodoro()
+                progressMeaningful: true
+                progress: 1 - TimerService.pomodoroSecondsLeft / Math.max(1, TimerService.pomodoroLapDuration)
+            }
 
-        TimerCard {
-            icon: "timer"
-            value: root.instrument ? root.formatStopwatch(TimerService.stopwatchTime)
-                : root.formatSeconds(TimerService.stopwatchTime / 100)
-            label: Translation.tr("Stopwatch")
-            cardKey: "stopwatch"
-            running: TimerService.stopwatchRunning
-            paused: TimerService.stopwatchPaused
-            shape: MaterialShape.Shape.Sunny
-            semanticRole: root.widgetSecondaryRole
-            toggleAction: () => TimerService.toggleStopwatch()
-            resetAction: () => TimerService.stopwatchReset()
-            secondaryAction: TimerService.stopwatchRunning ? (() => TimerService.stopwatchRecordLap()) : null
-            secondaryIcon: "flag"
-            secondaryTip: Translation.tr("Record lap")
-        }
+            TimerCard {
+                icon: "timer"
+                value: root.instrument ? root.formatStopwatch(TimerService.stopwatchTime)
+                    : root.formatSeconds(TimerService.stopwatchTime / 100)
+                label: Translation.tr("Stopwatch")
+                cardKey: "stopwatch"
+                running: TimerService.stopwatchRunning
+                paused: TimerService.stopwatchPaused
+                shape: MaterialShape.Shape.Sunny
+                semanticRole: root.widgetSecondaryRole
+                toggleAction: () => TimerService.toggleStopwatch()
+                resetAction: () => TimerService.stopwatchReset()
+                secondaryAction: TimerService.stopwatchRunning ? (() => TimerService.stopwatchRecordLap()) : null
+                secondaryIcon: "flag"
+                secondaryTip: Translation.tr("Record lap")
+            }
 
-        TimerCard {
-            id: countdownCard
-            icon: "hourglass_top"
-            value: root.formatSeconds(TimerService.countdownSecondsLeft)
-            label: Translation.tr("Countdown")
-            cardKey: "countdown"
-            running: TimerService.countdownRunning
-            paused: TimerService.countdownPaused
-            shape: MaterialShape.Shape.Bun
-            semanticRole: root.widgetPrimaryRole
-            toggleAction: () => TimerService.toggleCountdown()
-            resetAction: () => TimerService.resetCountdown()
-            progressMeaningful: true
-            progress: 1 - TimerService.countdownSecondsLeft / Math.max(1, TimerService.countdownDuration)
+            TimerCard {
+                id: countdownCard
+                icon: "hourglass_top"
+                value: root.formatSeconds(TimerService.countdownSecondsLeft)
+                label: Translation.tr("Countdown")
+                cardKey: "countdown"
+                running: TimerService.countdownRunning
+                paused: TimerService.countdownPaused
+                shape: MaterialShape.Shape.Bun
+                semanticRole: root.widgetPrimaryRole
+                toggleAction: () => TimerService.toggleCountdown()
+                resetAction: () => TimerService.resetCountdown()
+                progressMeaningful: true
+                progress: 1 - TimerService.countdownSecondsLeft / Math.max(1, TimerService.countdownDuration)
 
-            RowLayout {
-                id: minuteKeys
-                anchors.fill: parent
-                spacing: Math.round(4 * root.scaleFactor)
+                RowLayout {
+                    id: minuteKeys
+                    anchors.fill: parent
+                    spacing: Math.round(4 * root.scaleFactor)
 
-                // a wide card keeps its keys as two pills at the right: stretched across it they read as stray text
-                Item {
-                    visible: !countdownCard.narrow && !root.instrument
-                    Layout.fillWidth: true
-                }
+                    // a wide card keeps its keys as two pills at the right: stretched across it they read as stray text
+                    Item {
+                        visible: !countdownCard.narrow && !root.instrument
+                        Layout.fillWidth: true
+                    }
 
-                Repeater {
-                    // a narrow slot keeps one key: two ran past the card
-                    model: minuteKeys.width < Math.round(72 * root.scaleFactor) ? [5] : [1, 5]
-                    RippleButton {
-                        id: minuteButton
-                        required property int modelData
-                        Layout.fillWidth: countdownCard.narrow || root.instrument
-                        Layout.preferredWidth: Math.round(48 * root.scaleFactor)
-                        Layout.minimumWidth: Math.round(32 * root.scaleFactor)
-                        Layout.fillHeight: true
-                        buttonRadius: root.instrument || root.widgetEditorial
-                            ? root.widgetControlRadius : Appearance.rounding.full
-                        colBackground: root.instrument
-                            ? "transparent" : ColorUtils.applyAlpha(root.primaryInk, 0.14)
-                        colBackgroundHover: ColorUtils.applyAlpha(
-                            root.instrument ? root.widgetAccentVisible : root.primaryInk, 0.16)
-                        colRipple: ColorUtils.applyAlpha(
-                            root.instrument ? root.widgetAccentVisible : root.primaryInk, 0.24)
-                        onClicked: root.addCountdownMinutes(minuteButton.modelData)
+                    Repeater {
+                        // a narrow slot keeps one key: two ran past the card
+                        model: minuteKeys.width < Math.round(72 * root.scaleFactor) ? [5] : [1, 5]
+                        RippleButton {
+                            id: minuteButton
+                            required property int modelData
+                            Layout.fillWidth: countdownCard.narrow || root.instrument
+                            Layout.preferredWidth: Math.round(48 * root.scaleFactor)
+                            Layout.minimumWidth: Math.round(32 * root.scaleFactor)
+                            Layout.fillHeight: true
+                            buttonRadius: root.instrument || root.widgetEditorial
+                                ? root.widgetControlRadius : Appearance.rounding.full
+                            colBackground: root.instrument
+                                ? "transparent" : ColorUtils.applyAlpha(root.primaryInk, 0.14)
+                            colBackgroundHover: ColorUtils.applyAlpha(
+                                root.instrument ? root.widgetAccentVisible : root.primaryInk, 0.16)
+                            colRipple: ColorUtils.applyAlpha(
+                                root.instrument ? root.widgetAccentVisible : root.primaryInk, 0.24)
+                            onClicked: root.addCountdownMinutes(minuteButton.modelData)
 
-                        contentItem: StyledText {
-                            anchors.centerIn: parent
-                            text: "+" + modelData + "m"
-                            color: root.instrument ? root.widgetInkMuted : root.primaryInk
-                            font.family: root.widgetNumbersFamily
-                            font.pixelSize: Math.max(11, Math.round(12 * root.scaleFactor))
-                            font.weight: root.instrument || root.widgetEditorial
-                                ? root.widgetLabelWeight : Font.DemiBold
+                            contentItem: StyledText {
+                                anchors.centerIn: parent
+                                text: "+" + modelData + "m"
+                                color: root.instrument ? root.widgetInkMuted : root.primaryInk
+                                font.family: root.widgetNumbersFamily
+                                font.pixelSize: Math.max(11, Math.round(12 * root.scaleFactor))
+                                font.weight: root.instrument || root.widgetEditorial
+                                    ? root.widgetLabelWeight : Font.DemiBold
+                            }
+
                         }
-
                     }
                 }
             }

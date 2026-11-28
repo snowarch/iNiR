@@ -83,7 +83,9 @@ Singleton {
 
     function _checkMemoryPressure(): void {
         if (!root.enabled) return
-        _mapsReader.running = true
+        // With preload off, text() starts the read; onLoaded counts.
+        _maps.reload()
+        _maps.text()
     }
 
     function _notifyUser(): void {
@@ -113,27 +115,15 @@ Singleton {
     }
 
     // ── Maps reader ───────────────────────────────────────────────────────
-    Process {
-        id: _mapsReader
-        // /proc/$PPID, not /proc/self: this runs in an sh child of the shell, so
-        // /proc/self is that sh process (zero JSGCHeap mappings) and the counter
-        // always read 0 — the threshold could never trip. $PPID is the shell.
-        command: ["sh", "-c", "grep -c 'JSGCHeap.*deleted' /proc/$PPID/maps 2>/dev/null || echo 0; grep -c JSGCHeap /proc/$PPID/maps 2>/dev/null || echo 0"]
-        stdout: SplitParser {
-            property int lineNum: 0
-            onRead: line => {
-                const val = parseInt(line.trim()) || 0
-                if (lineNum === 0) {
-                    root.currentDeletedMappings = val
-                } else {
-                    root.currentTotalMappings = val
-                }
-                lineNum++
-            }
-        }
-        onExited: (code, status) => {
-            _mapsReader.stdout.lineNum = 0
-            
+    // The shell's own maps, read in process: a grep in an sh child ran a shell every check.
+    FileView {
+        id: _maps
+        path: "/proc/self/maps"
+        preload: false
+        onLoaded: {
+            const lines = _maps.text().split("\n").filter(l => l.includes("JSGCHeap"))
+            root.currentTotalMappings = lines.length
+            root.currentDeletedMappings = lines.filter(l => l.includes("deleted")).length
             if (root.currentDeletedMappings >= root.deletedMappingsThreshold) {
                 _log("threshold exceeded:", root.currentDeletedMappings, ">=", root.deletedMappingsThreshold)
                 root._notifyUser()
