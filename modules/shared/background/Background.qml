@@ -2254,7 +2254,7 @@ Scope {
                     { text: Translation.tr("Widget settings"), iconName: "settings", monochromeIcon: true,
                         action: () => GlobalStates.openSettingsAt("widgets") },
                     { text: Translation.tr("Done editing"), iconName: "check", monochromeIcon: true,
-                        action: () => GlobalStates.setWidgetEditMode(false) }
+                        action: () => DesktopEditHistory.finish() }
                 ] : [
                     { text: Translation.tr("Settings"), iconName: "settings", monochromeIcon: true,
                         action: () => { Quickshell.execDetached([Quickshell.shellPath("scripts/inir"), "settings"]) } },

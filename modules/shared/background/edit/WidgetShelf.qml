@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import Qt.labs.folderlistmodel
 import Quickshell
 import Quickshell.Widgets
 import qs
@@ -120,24 +119,16 @@ Item {
         }
     }
 
-    // The last looks on disk, read once per arranging; a widget with none shows its glyph.
-    FolderListModel {
-        id: savedFolder
-        folder: "file://" + DesktopEditStage.pictureDir
-        nameFilters: ["*.png"]
-        showDirs: false
-        onStatusChanged: if (savedFolder.status === FolderListModel.Ready) root.readSaved()
-        onCountChanged: if (savedFolder.status === FolderListModel.Ready) root.readSaved()
-    }
-    property var saved: ({})
-    function readSaved(): void {
-        const out = {}
-        for (let i = 0; i < savedFolder.count; i++) out[savedFolder.get(i, "fileName")] = true
-        root.saved = out
+    // Every widget's picture: its own while it is out, the last look on disk, or one made once for a widget never put out.
+    WidgetPortraits {
+        id: portraits
+        keys: root.entries.map(entry => entry.key)
+        outputName: root.outputName
+        screenWidth: root.Window.window?.width ?? 1920
+        screenHeight: root.Window.window?.height ?? 1080
     }
     function savedUrl(key: string): string {
-        const path = DesktopEditStage.savedPicture(key)
-        return root.saved[path.slice(path.lastIndexOf("/") + 1)] ? "file://" + path : ""
+        return DesktopEditStage.pictures[key] ? "" : portraits.url(key)
     }
 
     // ── Taking a widget out and putting it back ──

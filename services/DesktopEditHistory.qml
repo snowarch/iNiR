@@ -5,6 +5,7 @@ import QtQuick
 import Quickshell
 import qs
 import qs.modules.common
+import qs.modules.common.functions
 
 // Undo and redo while arranging the desktop, for every family: which widgets are out, where they sit, their order and
 // stacks. One snapshot per settled change (320 ms after the last write), sixty deep; the head says back what it did.
@@ -83,8 +84,53 @@ Singleton {
         root.entryKey = JSON.stringify(root.entry)
         root.lastKey = JSON.stringify(root.lastSnapshot)
     }
+    // A wallpaper picked while arranging is a draft: the desktop shows it at once, Done applies it, and any other way out
+    // (Escape, Cancel, another mode) puts back the one that was there. Previewed on the output it will land on, so
+    // applying adopts the frame on screen instead of painting it again.
+    property string wallpaperDraft: ""
+    property string wallpaperDraftOutput: ""
+    function draftOutput(outputName: string): string {
+        return (Config.options?.background?.multiMonitor?.enable ?? false) ? String(outputName ?? "") : ""
+    }
+    function draftWallpaper(path: string, outputName: string): void {
+        const clean = FileUtils.trimFileProtocol(String(path ?? ""))
+        if (!root.active || clean.length === 0) return
+        const output = root.draftOutput(outputName)
+        const target = Wallpapers.resolveSelectionTarget("", output)
+        if (clean === FileUtils.trimFileProtocol(Wallpapers.currentWallpaperPathForTarget(target, output))) {
+            root.dropWallpaperDraft()
+            return
+        }
+        root.wallpaperDraft = clean
+        root.wallpaperDraftOutput = output
+        Wallpapers.previewWallpaper(clean, output)
+    }
+    function dropWallpaperDraft(): void {
+        if (root.wallpaperDraft.length === 0) return
+        root.wallpaperDraft = ""
+        root.wallpaperDraftOutput = ""
+        Wallpapers.cancelWallpaperPreview()
+    }
+    function applyWallpaperDraft(): void {
+        const path = root.wallpaperDraft
+        const output = root.wallpaperDraftOutput
+        if (path.length === 0) return
+        root.wallpaperDraft = ""
+        root.wallpaperDraftOutput = ""
+        const target = Wallpapers.resolveSelectionTarget("", output)
+        if (target === "main") Wallpapers.apply(path, Appearance.m3colors.darkmode, output)
+        else Wallpapers.applySelectionTarget(path, target, Appearance.m3colors.darkmode, output)
+        if (Wallpapers.isBackdropTarget(target)) Wallpapers.cancelWallpaperPreview()
+        else Wallpapers.clearWallpaperPreview()
+    }
+    // Done: keeps the arrangement and applies the drafted wallpaper.
+    function finish(): void {
+        root.applyWallpaperDraft()
+        GlobalStates.setWidgetEditMode(false)
+    }
     // Leaves the mode with everything as it was when it opened.
     function cancel(): void {
+        root.dropWallpaperDraft()
         if (root.entry && JSON.stringify(root.snapshot()) !== root.entryKey) {
             root.restoring = true
             Config.setNestedValues(root.entry)
@@ -128,5 +174,8 @@ Singleton {
         enabled: root.active
         function onRevisionChanged(): void { recordTimer.restart() }
     }
-    onActiveChanged: if (root.active) root.reset()
+    onActiveChanged: {
+        if (root.active) root.reset()
+        else root.dropWallpaperDraft()
+    }
 }

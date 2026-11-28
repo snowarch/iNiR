@@ -1,2 +1,3 @@
 module qs.modules.shared.background.edit
 WidgetShelf 1.0 WidgetShelf.qml
+WidgetPortraits 1.0 WidgetPortraits.qml
