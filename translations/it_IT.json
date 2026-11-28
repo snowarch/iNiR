@@ -1995,6 +1995,7 @@
   "Your checkout has commits from the old remote history. Repair & Update preserves ambiguous/local work and automatically realigns only when Git proves this is a clean upstream force-push case.": "Il checkout contiene commit della vecchia cronologia remota. Ripara e aggiorna conserva il lavoro locale o ambiguo e lo riallinea automaticamente solo quando Git conferma che si tratta chiaramente di un force-push upstream.",
   "Flow": "Flusso",
   "Glass": "Vetro",
+  "Glass style": "Stile del vetro",
   "%1 tasks left": "%1 attività rimaste",
   "%1 wallpapers": "%1 sfondi",
   "%1 windows held outside the workspace flow": "%1 finestre mantenute fuori dal flusso degli spazi di lavoro",

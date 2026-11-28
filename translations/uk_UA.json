@@ -1995,6 +1995,7 @@
   "Your checkout has commits from the old remote history. Repair & Update preserves ambiguous/local work and automatically realigns only when Git proves this is a clean upstream force-push case.": "Ваш checkout містить коміти зі старої історії віддаленого репозиторію. «Відновити й оновити» зберігає неоднозначні або локальні зміни й автоматично вирівнює історію лише тоді, коли Git підтверджує, що це випадок чистого force-push в upstream.",
   "Flow": "Плин",
   "Glass": "Скло",
+  "Glass style": "Стиль скла",
   "%1 tasks left": "Залишилося завдань: %1",
   "%1 wallpapers": "Шпалер: %1",
   "%1 windows held outside the workspace flow": "Вікон поза потоком робочого простору: %1",
