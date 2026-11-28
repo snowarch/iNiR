@@ -130,8 +130,9 @@ Rectangle {
         if (win && typeof win.clearWidgetBlurRect === "function") win.clearWidgetBlurRect(root._blurKey)
     }
 
-    // The mask and the blur targets go during fullscreen, game pauses, or when Rin compositor glass draws it.
-    layer.enabled: root.glass && !root.compositorGlass && !GlobalStates.widgetEditMode && root.visible && root.surface.powerActive
+    // The mask and the blur targets go during fullscreen, game pauses, or when Rin compositor glass draws it. Edit Mode
+    // keeps the glass: a plate is judged there as it will look.
+    layer.enabled: root.glass && !root.compositorGlass && root.visible && root.surface.powerActive
     layer.effect: GE.OpacityMask {
         maskSource: Rectangle {
             width: root.width
@@ -144,7 +145,7 @@ Rectangle {
     // a playing video), and again on each of its frames while it moves; elsewhere (the lock) the picture itself.
     readonly property Item _layer: root._host?.wallpaperLayer ?? null
     Loader {
-        active: root.glass && !root.compositorGlass && !GlobalStates.widgetEditMode && root.visible && root._layer !== null
+        active: root.glass && !root.compositorGlass && root.visible && root._layer !== null
         sourceComponent: ShaderEffectSource {
             id: frosted
             readonly property int revision: root._host?.wallpaperLayerRevision ?? 0
@@ -160,7 +161,9 @@ Rectangle {
             width: root.width + margin * 2
             height: root.height + margin * 2
             sourceItem: root._layer
-            live: GlobalStates.widgetEditMode
+            // Retaken when the wallpaper, its frame or the plate's place changes (below); live only while the widget flies
+            // to or from the Edit Mode shelf by a transform its place does not show.
+            live: Boolean(root.surface.widget?._shelfMoving)
             sourceRect: Qt.rect(at.x - margin, at.y - margin, width, height)
             textureSize: Qt.size(Math.max(1, Math.round(width * root._blurScale)), Math.max(1, Math.round(height * root._blurScale)))
             smooth: true
@@ -178,7 +181,7 @@ Rectangle {
         }
     }
     Loader {
-        active: root.glass && !root.compositorGlass && !GlobalStates.widgetEditMode && root.visible && root._layer === null
+        active: root.glass && !root.compositorGlass && root.visible && root._layer === null
         sourceComponent: Image {
             id: blurredWallpaper
             x: -root.surface.screenX
